@@ -17,16 +17,35 @@ export const SEED_EQUIPMENT = [
   {
     id: 'eq_001',
     name: '銅の剣',
-    icon: '⚔️',
+    icon: 'swords',
     slot: 'rightHand',
     stats: { atk: 5, def: 0, matk: 0, mdef: 0, spd: 0 },
   },
   {
     id: 'eq_002',
     name: '布の服',
-    icon: '👕',
+    icon: 'checkroom',
     slot: 'armor',
     stats: { atk: 0, def: 3, matk: 0, mdef: 1, spd: 0 },
+  },
+  {
+    id: 'eq_003',
+    name: '木の棒',
+    icon: 'swords',
+    image: './assets/weapon/wooden_stick.webp',
+    slot: 'rightHand',
+    stats: { atk: 2, def: 0, matk: 0, mdef: 0, spd: 1 },
+  },
+];
+
+// ─── Initial Inventory (Drops, etc.) ───────────────────────
+export const SEED_INVENTORY = [
+  {
+    id: 'inv_001',
+    name: 'スライムのゼリー',
+    icon: 'water_drop',
+    quantity: 5,
+    description: 'スライムが落としたプルプルのゼリー。',
   },
 ];
 
@@ -35,7 +54,8 @@ export const SEED_CHARACTERS = [
   {
     id: 1,
     name: 'アレックス',
-    jobName: 'ヒーロー',
+    jobName: 'ノービス',
+    jobId: 'norvice',
     level: 1,
     jobLevel: 1,
     hp:  { current: 100, max: 100 },
@@ -48,7 +68,7 @@ export const SEED_CHARACTERS = [
 
     // Equipment slots — reference equipment IDs (null = empty)
     equipment: {
-      rightHand:  'eq_001',
+      rightHand:  'eq_003',
       leftHand:   null,
       armor:      'eq_002',
       accessory1: null,
@@ -72,7 +92,7 @@ export const SEED_CHARACTERS = [
     },
 
     // Display
-    iconGradient: ['#ef4444', '#f97316'],
-    iconEmoji: '⚔️',
+    iconGradient: ['#8B7355', '#C4A776'],
+    iconImage: './assets/job/job_norvice.webp',
   },
 ];

@@ -22,7 +22,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
   const {
     name, jobName, level, jobLevel,
     hp, mp, exp, jp,
-    iconGradient, iconEmoji,
+    iconGradient, iconImage,
   } = character;
 
   // ── Equipment Rows ──
@@ -36,8 +36,8 @@ export function createCharacterCard(character, finalStats, equippedItems) {
     if (item) {
       return `
         <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0">
-          <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded text-[11px] shrink-0
-                       border border-gray-700/40">${item.icon}</span>
+          <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded shrink-0
+                       border border-gray-700/40"><span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span></span>
           <span class="text-[9px] text-gray-500 shrink-0 w-14 text-right">${label}</span>
           <span class="text-[10px] text-gray-300 truncate">${item.name}</span>
         </div>
@@ -72,10 +72,12 @@ export function createCharacterCard(character, finalStats, equippedItems) {
       <!-- Row 1: Icon + Name & Level Info -->
       <div class="flex gap-2">
         <!-- Character Icon -->
-        <div class="w-14 h-14 rounded-lg flex items-center justify-center text-xl shrink-0
-                    shadow-md border border-white/10"
+        <div class="w-14 h-14 rounded-lg flex items-center justify-center shrink-0
+                    shadow-md border border-white/10 overflow-hidden cursor-pointer
+                    hover:scale-105 hover:shadow-lg hover:border-blue-400/50 hover:shadow-blue-500/30 transition-all char-icon-clickable"
+             data-char-id="${character.id}"
              style="background: linear-gradient(135deg, ${iconGradient[0]}, ${iconGradient[1]});">
-          ${iconEmoji}
+          <img src="${iconImage}" alt="${jobName}" class="w-full h-full object-contain" />
         </div>
 
         <!-- Name & Level Info -->

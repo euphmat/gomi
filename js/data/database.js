@@ -54,6 +54,11 @@ class GameDatabase {
         if (!db.objectStoreNames.contains('equipment')) {
           db.createObjectStore('equipment', { keyPath: 'id' });
         }
+
+        // inventory store
+        if (!db.objectStoreNames.contains('inventory')) {
+          db.createObjectStore('inventory', { keyPath: 'id' });
+        }
       };
 
       request.onsuccess = (event) => resolve(event.target.result);
@@ -80,6 +85,13 @@ class GameDatabase {
     // Seed equipment
     for (const item of SEED_EQUIPMENT) {
       await this.putEquipment(item);
+    }
+
+    // Seed inventory (drops, etc.)
+    if (typeof SEED_INVENTORY !== 'undefined') {
+      for (const item of SEED_INVENTORY) {
+        await this.putInventoryItem(item);
+      }
     }
 
     // Seed characters
@@ -200,6 +212,52 @@ class GameDatabase {
    */
   putEquipment(item) {
     return this._write('equipment', (store) => store.put(item));
+  }
+
+  /**
+   * Get all equipment that is NOT currently equipped by any character.
+   * @returns {Promise<Array>}
+   */
+  async getWarehouseEquipment() {
+    const allEq = await this.getAllEquipment();
+    const chars = await this.getAllCharacters();
+    const equippedIds = new Set();
+    chars.forEach(c => {
+      if (c.equipment) {
+        Object.values(c.equipment).forEach(eqId => {
+          if (eqId) equippedIds.add(eqId);
+        });
+      }
+    });
+    return allEq.filter(eq => !equippedIds.has(eq.id));
+  }
+
+  // ─── Inventory (Drops/Items) ─────────────────────────────
+
+  /**
+   * Get an inventory item by ID.
+   * @param {string} id
+   * @returns {Promise<Object|undefined>}
+   */
+  getInventoryItem(id) {
+    return this._read('inventory', (store) => store.get(id));
+  }
+
+  /**
+   * Get all inventory items.
+   * @returns {Promise<Array>}
+   */
+  getAllInventory() {
+    return this._read('inventory', (store) => store.getAll());
+  }
+
+  /**
+   * Insert or update an inventory item.
+   * @param {Object} item
+   * @returns {Promise<void>}
+   */
+  putInventoryItem(item) {
+    return this._write('inventory', (store) => store.put(item));
   }
 }
 

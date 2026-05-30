@@ -8,6 +8,7 @@
 import { createCharacterCard, createEmptySlotCard } from '../components/character-card.js';
 import { GameDB } from '../data/database.js';
 import { calcFinalStats, buildEquipmentMap, getEquippedItems } from '../data/stat-calculator.js';
+import { showEquipmentModal } from '../components/equipment-modal.js';
 
 const MAX_PARTY_SIZE = 4;
 
@@ -67,6 +68,19 @@ async function _loadStatusData(container) {
         ${cards.join('')}
       </div>
     `;
+
+    // Bind equipment modal click events
+    const iconClickables = container.querySelectorAll('.char-icon-clickable');
+    iconClickables.forEach(el => {
+      el.addEventListener('click', () => {
+        const charId = parseInt(el.getAttribute('data-char-id'), 10);
+        const character = characters.find(c => c.id === charId);
+        if (character) {
+          showEquipmentModal(character, () => _loadStatusData(container));
+        }
+      });
+    });
+
   } catch (error) {
     console.error('[StatusPage] Failed to load data:', error);
     container.innerHTML = `
