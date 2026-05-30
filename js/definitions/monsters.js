@@ -11,7 +11,6 @@ export const MONSTERS = [
   {
     id: 'slime',
     name: 'スライム',
-    image: './assets/monster/slime.webp',
     stats: {
       hp: 15,       // ヒットポイント（体力）
       mp: 0,        // マジックポイント（魔力）
@@ -35,7 +34,6 @@ export const MONSTERS = [
   {
     id: 'goblin',
     name: 'ゴブリン',
-    image: './assets/monster/goblin.webp',
     stats: {
       hp: 25,
       mp: 0,
@@ -53,6 +51,5 @@ export const MONSTERS = [
       { itemId: 'goblin_fang', rate: 0.3 }
     ]
   }
-  // ↓ 新しいモンスターを追加する場合はここから下にコピー＆ペーストしてください
-  
-];
+].map(item => ({ ...item, image: `./assets/monster/${item.id}.webp` }));
+

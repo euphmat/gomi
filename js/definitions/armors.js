@@ -11,7 +11,6 @@ export const ARMORS = [
   {
     id: 'cloth_armor',
     name: '布の服',
-    image: './assets/armor/cloth_armor.webp',
     slot: 'armor',
     stats: {
       atk: 0,
@@ -27,7 +26,6 @@ export const ARMORS = [
   {
     id: 'leather_armor',
     name: '皮の鎧',
-    image: './assets/armor/leather_armor.webp',
     slot: 'armor',
     stats: {
       atk: 0,
@@ -36,10 +34,9 @@ export const ARMORS = [
       mdef: 2,
       spd: -1
     },
-    elements: { fire: 0, water: 0, wind: 0, earth: 0, light: 0, dark: 0 }, // 属性値（属性耐性）
-    statusEffects: { poison: 0, paralyze: 0, sleep: 0, confusion: 0 }, // 状態異常値（耐性など）
+    elements: { fire: 0, water: 0, wind: 0, earth: 0, light: 0, dark: 0 },
+    statusEffects: { poison: 0, paralyze: 0, sleep: 0, confusion: 0 },
     price: 100,
   }
-  // ↓ 新しい鎧を追加する場合はここから下にコピー＆ペーストしてください
-  
-];
+].map(item => ({ ...item, image: `./assets/armor/${item.id}.webp` }));
+
