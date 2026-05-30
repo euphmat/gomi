@@ -26,6 +26,8 @@ const NAV_TABS = [
 export function createNavBar(router) {
   const currentPath = router.getCurrentRoute();
 
+  const isBattle = currentPath === '/battle';
+
   const tabsHTML = NAV_TABS.map(tab => {
     const isActive = currentPath === tab.path;
 
@@ -35,11 +37,15 @@ export function createNavBar(router) {
       ? 'bg-green-700 text-white border-t-2 border-green-400 shadow-[0_-2px_10px_rgba(96,169,23,0.3)]'
       : 'bg-gray-900/80 text-gray-500 border-t-2 border-transparent hover:text-gray-300 hover:bg-gray-800/80';
 
+    const disabledAttr = isBattle ? 'disabled' : '';
+    const disabledClass = isBattle ? 'opacity-30 pointer-events-none grayscale' : 'cursor-pointer';
+
     return `
       <button data-nav-path="${tab.path}"
               id="nav-${tab.id}"
+              ${disabledAttr}
               class="flex-1 flex flex-col items-center justify-center py-2
-                     ${classes} transition-all duration-200 active:scale-95 cursor-pointer">
+                     ${classes} ${disabledClass} transition-all duration-200 active:scale-95">
         <span class="material-symbols-outlined text-lg leading-none">${tab.icon}</span>
         <span class="text-[10px] font-semibold mt-0.5 tracking-wide">${tab.label}</span>
       </button>

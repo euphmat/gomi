@@ -75,29 +75,54 @@ class BattleManager {
     `).join('');
 
     this.elements.partyArea.innerHTML = this.party.map(p => `
-      <div id="${p.elementId}" class="relative flex flex-col bg-gray-800/80 rounded border ${this.activeCharacter === p ? 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]' : 'border-gray-700'} p-1.5 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all'}">
-        <div class="flex flex-col items-center mb-1.5">
-          <div class="w-12 h-12 rounded-full border border-gray-600 mb-1 overflow-hidden shadow-md" style="background: linear-gradient(135deg, ${p.iconGradient[0]}, ${p.iconGradient[1]})">
+      <div id="${p.elementId}" class="relative flex flex-col bg-gray-800/80 rounded border ${this.activeCharacter === p ? 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]' : 'border-gray-700'} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all'}">
+        <div class="flex flex-col items-center mb-1">
+          <div class="w-10 h-10 rounded-full border border-gray-600 mb-0.5 overflow-hidden shadow-md" style="background: linear-gradient(135deg, ${p.iconGradient[0]}, ${p.iconGradient[1]})">
             <img src="${p.iconImage}" class="w-full h-full object-cover">
           </div>
-          <span class="text-[10px] font-bold text-gray-200 truncate w-full text-center drop-shadow">${p.name}</span>
+          <span class="text-[9px] font-bold text-gray-200 truncate w-full text-center drop-shadow">${p.name}</span>
+          <div class="w-[80%] h-1 bg-gray-900 rounded overflow-hidden mt-0.5 shadow-inner">
+            <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
+          </div>
         </div>
         
-        <div class="flex flex-col gap-1 mb-1.5">
-          <div class="flex items-center gap-1"><span class="text-[9px] font-bold text-red-400 w-4 shadow-sm">HP</span><div class="flex-1 h-2 bg-gray-900 rounded overflow-hidden shadow-inner"><div class="bg-red-500 h-full transition-all duration-300" style="width: ${(p.hp.current / p.hp.max) * 100}%"></div></div></div>
-          <div class="flex items-center gap-1"><span class="text-[9px] font-bold text-blue-400 w-4 shadow-sm">MP</span><div class="flex-1 h-2 bg-gray-900 rounded overflow-hidden shadow-inner"><div class="bg-blue-500 h-full transition-all duration-300" style="width: ${(p.mp.current / p.mp.max) * 100}%"></div></div></div>
-        </div>
-        
-        <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden mb-1.5 shadow-inner">
-          <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
+        <div class="flex flex-col gap-[3px] mb-1">
+          <div class="flex items-center gap-1">
+            <span class="text-[8px] font-bold text-red-400 w-3">HP</span>
+            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+              <div class="bg-red-600 h-full transition-all duration-300" style="width: ${(p.hp.current / p.hp.max) * 100}%"></div>
+              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.hp.current)}/${p.hp.max}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[8px] font-bold text-blue-400 w-3">MP</span>
+            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+              <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${(p.mp.current / p.mp.max) * 100}%"></div>
+              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.mp.current)}/${p.mp.max}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[8px] font-bold text-green-400 w-3">EX</span>
+            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+              <div class="bg-green-600 h-full" style="width: ${(p.exp.current / p.exp.max) * 100}%"></div>
+              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.exp.current)}/${p.exp.max}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-[8px] font-bold text-purple-400 w-3">JP</span>
+            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+              <div class="bg-purple-600 h-full" style="width: ${(p.jp.current / p.jp.max) * 100}%"></div>
+              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.jp.current)}/${p.jp.max}</div>
+            </div>
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9px] text-gray-400">
-          <div class="flex justify-between"><span>ATK</span><span class="text-gray-200">${p.stats.atk}</span></div>
-          <div class="flex justify-between"><span>DEF</span><span class="text-gray-200">${p.stats.def}</span></div>
-          <div class="flex justify-between"><span>MAT</span><span class="text-gray-200">${p.stats.matk}</span></div>
-          <div class="flex justify-between"><span>MDF</span><span class="text-gray-200">${p.stats.mdef}</span></div>
-          <div class="col-span-2 flex justify-center gap-1 text-gray-500 mt-0.5"><span>SPD ${p.stats.spd}</span></div>
+        <div class="flex flex-col gap-0 text-[10px] text-gray-400 mt-auto leading-tight w-full px-0.5">
+          <div class="flex justify-between items-center"><span>ATK</span><span class="text-gray-200 font-bold">${p.stats.atk}</span></div>
+          <div class="flex justify-between items-center"><span>DEF</span><span class="text-gray-200 font-bold">${p.stats.def}</span></div>
+          <div class="flex justify-between items-center"><span>MAT</span><span class="text-gray-200 font-bold">${p.stats.matk}</span></div>
+          <div class="flex justify-between items-center"><span>MDF</span><span class="text-gray-200 font-bold">${p.stats.mdef}</span></div>
+          <div class="flex justify-between items-center"><span>SPD</span><span class="text-gray-200 font-bold">${p.stats.spd}</span></div>
         </div>
       </div>
     `).join('');
@@ -311,7 +336,7 @@ export function renderBattlePage() {
       </div>
 
       <!-- Party Area -->
-      <div id="party-area" class="grid grid-cols-4 gap-2 px-2 mt-4">
+      <div id="party-area" class="grid grid-cols-4 gap-1 px-1 mt-1">
         <!-- Party will be injected here -->
       </div>
       
