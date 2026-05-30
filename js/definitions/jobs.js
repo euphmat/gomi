@@ -8,14 +8,6 @@ export const JOBS = {
   norvice: {
     id: 'norvice',
     name: 'ノービス',
-    statGrowth: {
-      hp: 10,
-      mp: 2,
-      atk: 2,
-      def: 2,
-      matk: 2,
-      mdef: 2,
-      spd: 2
-    }
+    statGrowth: { hp: 5, mp: 1, atk: 1, def: 1, matk: 1, mdef: 1, spd: 1 }
   }
 };

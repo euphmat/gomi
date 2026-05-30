@@ -24,7 +24,7 @@ import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
  */
 export function createCharacterCard(character, finalStats, equippedItems) {
   const {
-    name, jobName, level, jobLevel,
+    name, jobName, level, jobLevel, sp = 0,
     hp, mp, exp, jp,
     iconImage,
   } = character;
@@ -95,10 +95,18 @@ export function createCharacterCard(character, finalStats, equippedItems) {
           <div class="text-[11px] text-gray-100 font-bold truncate">${name}
             <span class="text-[9px] text-gray-400 font-normal ml-1">${jobName}</span>
           </div>
-          <div class="text-[10px] text-gray-200 bg-gray-800/70 rounded px-1.5 py-[2px] border border-gray-700/30
-                      font-mono tracking-tight">Lv : ${level}</div>
-          <div class="text-[10px] text-gray-200 bg-gray-800/70 rounded px-1.5 py-[2px] border border-gray-700/30
-                      font-mono tracking-tight">Job Lv : ${jobLevel}</div>
+          <div class="flex gap-1">
+            <div class="flex-1 text-[10px] text-gray-200 bg-gray-800/70 rounded px-1 py-[2px] border border-gray-700/30 font-mono tracking-tight text-center">
+              Lv ${level}
+            </div>
+            <div class="flex-1 text-[10px] text-gray-200 bg-gray-800/70 rounded px-1 py-[2px] border border-gray-700/30 font-mono tracking-tight text-center">
+              JLv ${jobLevel}
+            </div>
+          </div>
+          <div class="flex justify-between items-center text-[10px] text-yellow-400 bg-gray-800/70 rounded px-1.5 py-[2px] border border-gray-700/30 font-mono tracking-tight shadow-[inset_0_0_8px_rgba(234,179,8,0.1)]">
+            <span>SP</span>
+            <span class="font-bold text-[11px] drop-shadow-md">${sp}</span>
+          </div>
         </div>
       </div>
 

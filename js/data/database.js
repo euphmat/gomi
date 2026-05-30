@@ -45,19 +45,11 @@ class GameDatabase {
         const db = event.target.result;
 
         // gameState store (key-value)
-        if (!db.objectStoreNames.contains('gameState')) {
-          db.createObjectStore('gameState', { keyPath: 'key' });
-        }
-
+        if (!db.objectStoreNames.contains('gameState')) { db.createObjectStore('gameState', { keyPath: 'key' }); }
         // characters store
-        if (!db.objectStoreNames.contains('characters')) {
-          db.createObjectStore('characters', { keyPath: 'id' });
-        }
-
+        if (!db.objectStoreNames.contains('characters')) { db.createObjectStore('characters', { keyPath: 'id' }); }
         // equipment store
-        if (!db.objectStoreNames.contains('equipment')) {
-          db.createObjectStore('equipment', { keyPath: 'id' });
-        }
+        if (!db.objectStoreNames.contains('equipment')) { db.createObjectStore('equipment', { keyPath: 'id' }); }
 
         // inventory store
         if (!db.objectStoreNames.contains('inventory')) {
@@ -82,14 +74,10 @@ class GameDatabase {
     if (chars.length > 0) return; // Already seeded
 
     // Seed game state
-    for (const entry of SEED_GAME_STATE) {
-      await this.setGameState(entry.key, entry.value);
-    }
+    for (const entry of SEED_GAME_STATE) { await this.setGameState(entry.key, entry.value); }
 
     // Seed equipment
-    for (const item of SEED_EQUIPMENT) {
-      await this.putEquipment(item);
-    }
+    for (const item of SEED_EQUIPMENT) { await this.putEquipment(item); }
 
     // Seed inventory (drops, etc.)
     if (typeof SEED_INVENTORY !== 'undefined') {

@@ -360,6 +360,7 @@ class BattleManager {
             p.jp.current -= p.jp.max;
             p.jp.max = Math.floor(p.jp.max * 1.2);
             p.jobLevel = (p.jobLevel || 1) + 1;
+            p.sp = (p.sp || 0) + 1;
             leveledUp = true;
           }
 
@@ -484,6 +485,7 @@ class BattleManager {
       if (original) {
         original.level = p.level;
         original.jobLevel = p.jobLevel;
+        original.sp = p.sp;
         original.baseStats = p.baseStats;
         original.hp = p.hp;
         original.mp = p.mp;
