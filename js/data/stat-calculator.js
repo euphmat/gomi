@@ -1,0 +1,90 @@
+/**
+ * Stat Calculator
+ *
+ * Computes final character stats by combining:
+ *   1. Base stats (from character level/class)
+ *   2. Equipment bonuses (from equipped items)
+ *   3. Modifier bonuses (from passive skills, buffs, etc.)
+ *
+ * Formula:
+ *   finalStat = baseStat + Σ(equipment.stats) + Σ(modifier.stats)
+ */
+
+import { STAT_KEYS } from './mock-data.js';
+
+/**
+ * Calculate the final stats for a character.
+ *
+ * @param {Object} character - Character data with baseStats, equipment, modifiers
+ * @param {Map<string, Object>} equipmentMap - Map of equipment ID → equipment data
+ * @returns {{ atk: number, def: number, matk: number, mdef: number, spd: number }}
+ */
+export function calcFinalStats(character, equipmentMap) {
+  const statKeys = STAT_KEYS.map(s => s.key);
+
+  // Start with base stats
+  const result = {};
+  for (const key of statKeys) {
+    result[key] = character.baseStats[key] || 0;
+  }
+
+  // Add equipment bonuses
+  if (character.equipment) {
+    const slots = ['rightHand', 'leftHand', 'armor', 'accessory1', 'accessory2'];
+    for (const slot of slots) {
+      const eqId = character.equipment[slot];
+      if (!eqId) continue;
+
+      const item = equipmentMap.get(eqId);
+      if (!item || !item.stats) continue;
+
+      for (const key of statKeys) {
+        result[key] += item.stats[key] || 0;
+      }
+    }
+  }
+
+  // Add modifier bonuses
+  if (character.modifiers && character.modifiers.length > 0) {
+    for (const mod of character.modifiers) {
+      if (!mod.stats) continue;
+      for (const key of statKeys) {
+        result[key] += mod.stats[key] || 0;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Get equipped items as an array of { slot, item } pairs.
+ * Resolves equipment IDs to full equipment data.
+ *
+ * @param {Object} character - Character data
+ * @param {Map<string, Object>} equipmentMap - Map of equipment ID → equipment data
+ * @returns {Array<{ slotKey: string, item: Object|null }>}
+ */
+export function getEquippedItems(character, equipmentMap) {
+  const slots = ['rightHand', 'leftHand', 'armor', 'accessory1', 'accessory2'];
+
+  return slots.map(slotKey => {
+    const eqId = character.equipment?.[slotKey];
+    const item = eqId ? (equipmentMap.get(eqId) || null) : null;
+    return { slotKey, item };
+  });
+}
+
+/**
+ * Build a Map from an array of equipment items for fast lookup.
+ *
+ * @param {Array<Object>} equipmentArray
+ * @returns {Map<string, Object>}
+ */
+export function buildEquipmentMap(equipmentArray) {
+  const map = new Map();
+  for (const item of equipmentArray) {
+    map.set(item.id, item);
+  }
+  return map;
+}

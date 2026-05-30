@@ -1,11 +1,12 @@
 /**
  * App Entry Point
- * 
+ *
  * Initializes the SPA shell:
- * 1. Renders the fixed header and navigation
- * 2. Sets up the router with all page modules
- * 3. Starts routing
- * 
+ * 1. Opens IndexedDB connection (seeds initial data if first launch)
+ * 2. Renders the fixed header and navigation
+ * 3. Sets up the router with all page modules
+ * 4. Starts routing
+ *
  * To add a new page:
  *   1. Create js/pages/your-page.js with a render function
  *   2. Import it here
@@ -15,7 +16,7 @@
 import { Router } from './router.js';
 import { createHeader } from './components/header.js';
 import { createNavBar, initNavBar } from './components/nav-bar.js';
-import { gameState } from './data/mock-data.js';
+import { GameDB } from './data/database.js';
 
 // ─── Page Imports ────────────────────────────────────────
 import { renderStatusPage }  from './pages/status.js';
@@ -31,8 +32,23 @@ class App {
     this.init();
   }
 
-  init() {
-    // ── 1. Render the app shell ──
+  async init() {
+    // ── 0. Initialize Database ──
+    try {
+      await GameDB.open();
+      console.log('[App] Database initialized.');
+    } catch (error) {
+      console.error('[App] Failed to open database:', error);
+    }
+
+    // ── 1. Read game state from DB ──
+    const gameState = {
+      location: await GameDB.getGameState('location') || 'はじまりの街',
+      version:  await GameDB.getGameState('version')  || '0.1.0',
+      gold:     await GameDB.getGameState('gold')      ?? 0,
+    };
+
+    // ── 2. Render the app shell ──
     this.appEl.innerHTML = `
       <div class="flex flex-col h-dvh bg-[#0b0b19]">
         <!-- Header (fixed) -->
@@ -50,10 +66,10 @@ class App {
       </div>
     `;
 
-    // ── 2. Render Header ──
+    // ── 3. Render Header ──
     document.getElementById('header-container').innerHTML = createHeader(gameState);
 
-    // ── 3. Setup Router ──
+    // ── 4. Setup Router ──
     this.router = new Router(document.getElementById('content'));
     this.router
       .register('/status',  renderStatusPage)
@@ -62,12 +78,145 @@ class App {
       .register('/shop',    renderShopPage)
       .register('/library', renderLibraryPage);
 
-    // ── 4. Navigation ──
+    // ── 5. Navigation ──
     this.renderNav();
     window.addEventListener('routechange', () => this.renderNav());
 
-    // ── 5. Start ──
+    // ── 6. Settings Button (Data Reset) ──
+    this.initSettingsButton();
+
+    // ── 7. Start ──
     this.router.start();
+  }
+
+  /**
+   * Bind the settings button to open a settings modal.
+   */
+  initSettingsButton() {
+    const btn = document.getElementById('btn-setting');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => this.showSettingsModal());
+  }
+
+  /**
+   * Show the settings modal overlay.
+   */
+  showSettingsModal() {
+    // Prevent duplicate modals
+    if (document.getElementById('settings-modal')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'settings-modal';
+    overlay.className = `
+      fixed inset-0 z-50 flex items-center justify-center
+      bg-black/70 backdrop-blur-sm
+      animate-[fade-in_0.15s_ease-out]
+    `;
+    overlay.style.animation = 'fade-in 0.15s ease-out';
+
+    overlay.innerHTML = `
+      <div class="bg-gray-900 border border-gray-700/60 rounded-xl mx-3 w-full max-w-[calc(100vw-24px)]
+                  shadow-2xl shadow-black/50 flex flex-col overflow-hidden
+                  animate-[slide-up_0.2s_ease-out]"
+           style="animation: slide-up 0.2s ease-out">
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700/40">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg text-gray-400">settings</span>
+            <span class="text-sm font-bold text-gray-100">設定</span>
+          </div>
+          <button id="settings-close"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg
+                         text-gray-400 hover:text-gray-200 hover:bg-gray-800
+                         transition-colors duration-150 cursor-pointer">
+            <span class="material-symbols-outlined text-xl">close</span>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="px-4 py-4 flex flex-col gap-3">
+
+          <!-- Data Reset Section -->
+          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="material-symbols-outlined text-base text-red-400">delete_forever</span>
+              <span class="text-xs font-bold text-gray-200">セーブデータリセット</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mb-3 leading-relaxed">
+              すべてのセーブデータ・キャッシュを削除し、初期状態に戻します。この操作は取り消せません。
+            </p>
+            <button id="settings-reset"
+                    class="w-full py-2.5 rounded-lg text-xs font-bold
+                           bg-red-900/40 border border-red-700/50 text-red-300
+                           hover:bg-red-800/50 hover:border-red-600/60 hover:text-red-200
+                           active:scale-[0.98] transition-all duration-150 cursor-pointer">
+              <span class="material-symbols-outlined text-sm align-middle mr-1">warning</span>
+              セーブデータを削除してリセット
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // ── Close button ──
+    document.getElementById('settings-close').addEventListener('click', () => {
+      overlay.remove();
+    });
+
+    // ── Close on backdrop click ──
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    // ── Reset button ──
+    document.getElementById('settings-reset').addEventListener('click', () => {
+      if (!window.confirm('本当にリセットしますか？')) return;
+      this.performDataReset();
+    });
+  }
+
+  /**
+   * Delete all save data, clear caches, and hard reload.
+   */
+  async performDataReset() {
+    try {
+      // 1. Close DB connection
+      if (GameDB.db) {
+        GameDB.db.close();
+        GameDB.db = null;
+      }
+
+      // 2. Delete IndexedDB
+      await new Promise((resolve, reject) => {
+        const req = indexedDB.deleteDatabase('rpg_game_db');
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+        req.onblocked = () => {
+          console.warn('[Settings] DB delete blocked, forcing reload...');
+          resolve();
+        };
+      });
+      console.log('[Settings] IndexedDB deleted.');
+
+      // 3. Clear Cache API
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+        console.log('[Settings] Caches cleared.');
+      }
+
+      // 4. Hard reload
+      window.location.reload();
+    } catch (error) {
+      console.error('[Settings] Reset failed:', error);
+      alert('リセットに失敗しました。ページを手動でリロードしてください。');
+      window.location.reload();
+    }
   }
 
   renderNav() {

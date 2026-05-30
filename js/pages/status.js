@@ -1,24 +1,78 @@
 /**
  * Status Page
- * 
- * Displays a 2×2 grid of character cards showing
- * the full party status overview.
+ *
+ * Displays a 2×2 grid of party member cards.
+ * Filled slots show character status, empty slots show placeholder cards.
+ * Maximum party size: 4
  */
-import { createCharacterCard } from '../components/character-card.js';
-import { characters } from '../data/mock-data.js';
+import { createCharacterCard, createEmptySlotCard } from '../components/character-card.js';
+import { GameDB } from '../data/database.js';
+import { calcFinalStats, buildEquipmentMap, getEquippedItems } from '../data/stat-calculator.js';
+
+const MAX_PARTY_SIZE = 4;
 
 /**
  * Render the status page.
- * @returns {string} HTML string
+ * Returns a container element that will be populated asynchronously from IndexedDB.
+ * @returns {HTMLElement}
  */
 export function renderStatusPage() {
-  const cardsHTML = characters
-    .map(char => createCharacterCard(char))
-    .join('');
+  const container = document.createElement('div');
+  container.className = 'p-2';
 
-  return `
-    <div class="grid grid-cols-2 gap-2 p-2">
-      ${cardsHTML}
+  // Show loading state
+  container.innerHTML = `
+    <div class="flex items-center justify-center py-12">
+      <div class="animate-pulse text-gray-500 text-sm">読み込み中...</div>
     </div>
   `;
+
+  // Load data from IndexedDB asynchronously
+  _loadStatusData(container);
+
+  return container;
+}
+
+/**
+ * Load character and equipment data from IndexedDB and render cards.
+ * @param {HTMLElement} container
+ * @private
+ */
+async function _loadStatusData(container) {
+  try {
+    const [characters, allEquipment] = await Promise.all([
+      GameDB.getAllCharacters(),
+      GameDB.getAllEquipment(),
+    ]);
+
+    const equipmentMap = buildEquipmentMap(allEquipment);
+
+    // Build cards: character cards + empty slot placeholders
+    const cards = [];
+
+    for (const char of characters) {
+      const finalStats = calcFinalStats(char, equipmentMap);
+      const equippedItems = getEquippedItems(char, equipmentMap);
+      cards.push(createCharacterCard(char, finalStats, equippedItems));
+    }
+
+    // Fill remaining slots with empty placeholders
+    const emptyCount = MAX_PARTY_SIZE - characters.length;
+    for (let i = 0; i < emptyCount; i++) {
+      cards.push(createEmptySlotCard(characters.length + i + 1));
+    }
+
+    container.innerHTML = `
+      <div class="grid grid-cols-2 gap-2">
+        ${cards.join('')}
+      </div>
+    `;
+  } catch (error) {
+    console.error('[StatusPage] Failed to load data:', error);
+    container.innerHTML = `
+      <div class="flex items-center justify-center py-12">
+        <div class="text-red-400 text-sm">データの読み込みに失敗しました</div>
+      </div>
+    `;
+  }
 }
