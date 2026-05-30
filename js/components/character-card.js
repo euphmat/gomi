@@ -26,7 +26,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
   const {
     name, jobName, level, jobLevel,
     hp, mp, exp, jp,
-    iconGradient, iconImage,
+    iconImage,
   } = character;
 
   // ── Equipment Rows ──
@@ -86,8 +86,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
       <div class="flex gap-2">
         <!-- Character Icon -->
         <div class="w-14 h-14 rounded-lg flex items-center justify-center shrink-0
-                    shadow-md border border-white/10 overflow-hidden"
-             style="background: linear-gradient(135deg, ${iconGradient[0]}, ${iconGradient[1]});">
+                    shadow-md border border-white/10 overflow-hidden bg-gray-800">
           <img src="${iconImage}" alt="${jobName}" class="w-full h-full object-contain" />
         </div>
 

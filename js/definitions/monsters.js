@@ -20,7 +20,8 @@ export const MONSTERS = [
       spd: 2
     },
     rewards: {
-      exp: 2,
+      exp: 50,
+      jp: 20,
       gold: 5
     },
     drops: [

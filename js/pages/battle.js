@@ -3,6 +3,7 @@ import { MONSTERS } from '../definitions/monsters.js';
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
+import { JOBS } from '../definitions/jobs.js';
 
 class BattleManager {
   constructor(container) {
@@ -31,7 +32,7 @@ class BattleManager {
   async init() {
     const rawParty = await GameDB.getAllCharacters();
     const rawEquip = await GameDB.getAllEquipment();
-    const equipMap = buildEquipmentMap(rawEquip);
+    this.equipMap = buildEquipmentMap(rawEquip);
 
     this.currentDungeonId = await GameDB.getGameState('currentDungeon') || 'slime_forest';
     this.currentFloorNum = await GameDB.getGameState('currentFloor') || 1;
@@ -39,7 +40,7 @@ class BattleManager {
     this.floorDef = this.dungeonDef.floors.find(f => f.level === this.currentFloorNum) || this.dungeonDef.floors[this.dungeonDef.floors.length - 1];
 
     this.party = rawParty.map((char, index) => {
-      const stats = calcFinalStats(char, equipMap);
+      const stats = calcFinalStats(char, this.equipMap);
       return {
         ...char,
         stats,
@@ -86,7 +87,7 @@ class BattleManager {
     this.elements.partyArea.innerHTML = this.party.map(p => `
       <div id="${p.elementId}" class="relative flex flex-col bg-gray-800/80 rounded border ${this.activeCharacter === p ? 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]' : 'border-gray-700'} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all'}">
         <div class="flex flex-col items-center mb-1">
-          <div class="w-10 h-10 rounded-full border border-gray-600 mb-0.5 overflow-hidden shadow-md" style="background: linear-gradient(135deg, ${p.iconGradient[0]}, ${p.iconGradient[1]})">
+          <div class="w-10 h-10 rounded-full border border-gray-600 mb-0.5 overflow-hidden shadow-md bg-gray-800">
             <img src="${p.iconImage}" class="w-full h-full object-cover">
           </div>
           <span class="text-[11px] font-bold text-gray-200 truncate w-full text-center drop-shadow">${p.name}</span>
@@ -282,6 +283,16 @@ class BattleManager {
     setTimeout(() => dmgText.remove(), 600);
   }
 
+  showLevelUp(elementId) {
+    const el = this.container.querySelector(`#${elementId}`);
+    if (!el) return;
+    const lvlText = document.createElement('div');
+    lvlText.textContent = 'LEVEL UP!';
+    lvlText.className = 'absolute -top-4 left-1/2 -translate-x-1/2 text-white font-black text-xl z-30 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pointer-events-none animate-[slide-up_1s_ease-out_forwards] text-green-400';
+    el.appendChild(lvlText);
+    setTimeout(() => lvlText.remove(), 1000);
+  }
+
   checkBattleEnd() {
     const allEnemiesDead = this.enemies.every(e => e.isDead);
     if (allEnemiesDead) {
@@ -303,23 +314,65 @@ class BattleManager {
     const gold = enemy.rewards.gold || 0;
     if (gold > 0) {
       const currentGold = await GameDB.getGameState('gold') || 0;
-      await GameDB.setGameState('gold', currentGold + gold);
+      const newGold = currentGold + gold;
+      await GameDB.setGameState('gold', newGold);
+      const goldDisplay = document.getElementById('header-gold-display');
+      if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
       drops.push({ text: `+${gold}`, icon: 'paid', color: 'text-yellow-400' });
     }
 
     // Add EXP / JP to party members
     const exp = enemy.rewards.exp || 0;
-    if (exp > 0) {
+    const jp = enemy.rewards.jp || 0;
+    if (exp > 0 || jp > 0) {
       for (const p of this.party) {
         if (!p.isDead) {
           if (!p.exp) p.exp = { current: 0, max: 100 };
           if (!p.jp) p.jp = { current: 0, max: 100 };
           p.exp.current += exp;
-          p.jp.current += exp;
+          p.jp.current += jp;
+
+          let leveledUp = false;
+
+          // Level Up Logic
+          while (p.exp.current >= p.exp.max) {
+            p.exp.current -= p.exp.max;
+            p.exp.max = Math.floor(p.exp.max * 1.2);
+            p.level = (p.level || 1) + 1;
+            
+            const jobGrowth = JOBS[p.jobId]?.statGrowth;
+            if (jobGrowth) {
+              p.hp.max += jobGrowth.hp;
+              p.hp.current += jobGrowth.hp;
+              p.mp.max += jobGrowth.mp;
+              p.mp.current += jobGrowth.mp;
+              p.baseStats.atk += jobGrowth.atk;
+              p.baseStats.def += jobGrowth.def;
+              p.baseStats.matk += jobGrowth.matk;
+              p.baseStats.mdef += jobGrowth.mdef;
+              p.baseStats.spd += jobGrowth.spd;
+            }
+            leveledUp = true;
+          }
+
+          // Job Level Up Logic
+          while (p.jp.current >= p.jp.max) {
+            p.jp.current -= p.jp.max;
+            p.jp.max = Math.floor(p.jp.max * 1.2);
+            p.jobLevel = (p.jobLevel || 1) + 1;
+            leveledUp = true;
+          }
+
+          if (leveledUp) {
+            p.stats = calcFinalStats(p, this.equipMap);
+            this.showLevelUp(p.elementId);
+            this.renderEntities(); // re-render to update max HP/MP and stats display
+          }
         }
       }
       this.savePartyState(); // Save to DB
-      drops.push({ text: `+${exp} EXP`, icon: 'star', color: 'text-blue-300' });
+      if (exp > 0) drops.push({ text: `+${exp} EXP`, icon: 'star', color: 'text-blue-300' });
+      if (jp > 0) drops.push({ text: `+${jp} JP`, icon: 'star', color: 'text-purple-300' });
     }
 
     // Process Drops
@@ -429,6 +482,9 @@ class BattleManager {
     for (const p of this.party) {
       const original = await GameDB.getCharacter(p.id);
       if (original) {
+        original.level = p.level;
+        original.jobLevel = p.jobLevel;
+        original.baseStats = p.baseStats;
         original.hp = p.hp;
         original.mp = p.mp;
         original.exp = p.exp;

@@ -132,8 +132,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
         <!-- Header -->
         <div class="flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-700/50 relative z-20">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-600 shrink-0"
-                 style="background: linear-gradient(135deg, ${character.iconGradient[0]}, ${character.iconGradient[1]});">
+            <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-600 shrink-0 bg-gray-800">
               <img src="${character.iconImage}" class="w-full h-full object-contain" />
             </div>
             <div>
