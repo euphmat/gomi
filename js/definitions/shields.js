@@ -13,13 +13,7 @@ export const SHIELDS = [
     id: 'wooden_shield',
     name: '木の盾',
     slot: 'leftHand',
-    stats: {
-      atk: 0,
-      def: 2,
-      matk: 0,
-      mdef: 1,
-      spd: -1
-    },
+    stats: { atk: 0, def: 2, matk: 0, mdef: 1, spd: -1 },
     elements: { fire: 0, water: 0, wind: 0, earth: 0, light: 0, dark: 0 },
     statusEffects: { poison: 0, paralyze: 0, sleep: 0, confusion: 0 },
     price: 30,

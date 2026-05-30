@@ -47,11 +47,16 @@ class App {
     }
 
     // ── 1. Read game state from DB ──
-    const gameState = {
-      location: await GameDB.getGameState('location') || 'はじまりの街',
-      version:  await GameDB.getGameState('version')  || '0.1.0',
-      gold:     await GameDB.getGameState('gold')      ?? 0,
-    };
+    let gameState = { location: 'はじまりの街', version: '0.1.0', gold: 0 };
+    try {
+      if (GameDB.db) {
+        gameState.location = await GameDB.getGameState('location') || 'はじまりの街';
+        gameState.version  = await GameDB.getGameState('version')  || '0.1.0';
+        gameState.gold     = await GameDB.getGameState('gold')      ?? 0;
+      }
+    } catch (e) {
+      console.warn('[App] Could not read game state, using defaults.', e);
+    }
 
     // ── 2. Render the app shell ──
     this.appEl.innerHTML = `
@@ -197,12 +202,13 @@ class App {
       }
 
       // 2. Delete IndexedDB
+      await new Promise(resolve => setTimeout(resolve, 100)); // wait for close
       await new Promise((resolve, reject) => {
         const req = indexedDB.deleteDatabase('rpg_game_db');
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
         req.onblocked = () => {
-          console.warn('[Settings] DB delete blocked, forcing reload...');
+          console.warn('[Settings] DB delete blocked, proceeding...');
           resolve();
         };
       });
@@ -214,9 +220,12 @@ class App {
         await Promise.all(keys.map(key => caches.delete(key)));
         console.log('[Settings] Caches cleared.');
       }
+      
+      // Clear localStorage just in case
+      localStorage.clear();
 
-      // 4. Hard reload
-      window.location.reload();
+      // 4. Hard reload (drop hash to reset view)
+      window.location.href = window.location.pathname;
     } catch (error) {
       console.error('[Settings] Reset failed:', error);
       alert('リセットに失敗しました。ページを手動でリロードしてください。');

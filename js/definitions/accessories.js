@@ -11,7 +11,7 @@ export const ACCESSORIES = [
   {
     id: 'power_ring',
     name: '力の指輪',
-    slot: 'accessory', 
+    slot: 'accessory',
     stats: {
       atk: 3,
       def: 0,

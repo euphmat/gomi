@@ -12,23 +12,19 @@ export const MONSTERS = [
     id: 'slime',
     name: 'スライム',
     stats: {
-      hp: 15,       // ヒットポイント（体力）
-      mp: 0,        // マジックポイント（魔力）
-      atk: 3,       // 攻撃力
-      def: 2,       // 防御力
-      matk: 0,      // 魔法攻撃力
-      mdef: 1,      // 魔法防御力
-      spd: 2        // 速度
+      hp: 15,
+      atk: 3,
+      def: 2,
+      matk: 0,
+      mdef: 1,
+      spd: 2
     },
-    // 倒した時に得られる経験値とゴールド
     rewards: {
       exp: 2,
       gold: 5
     },
-    // 倒した時に落とす可能性のあるアイテム（素材など）
-    // itemId: 落とすアイテムのID, rate: 落とす確率（0.0〜1.0）
     drops: [
-      { itemId: 'slime_jelly', rate: 0.5 } // 50%の確率でスライムのゼリーを落とす
+      { itemId: 'slime_jelly', rate: 0.5 }
     ]
   },
   {
@@ -36,7 +32,6 @@ export const MONSTERS = [
     name: 'ゴブリン',
     stats: {
       hp: 25,
-      mp: 0,
       atk: 6,
       def: 3,
       matk: 0,

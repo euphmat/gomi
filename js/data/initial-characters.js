@@ -38,7 +38,7 @@ export const SEED_CHARACTERS = [
     name: 'アレックス',
     baseStats: { atk: 10, def: 10, matk: 10, mdef: 10, spd: 10 },
     equipment: {
-      rightHand:  'copper_sword', // 銅の剣
+      rightHand:  null,
       leftHand:   null,
       armor:      null,
       accessory1: null,

@@ -8,15 +8,7 @@
  */
 
 export const MATERIALS = [
-  {
-    id: 'slime_jelly',
-    name: 'スライムのゼリー',
-    price: 5,
-  },
-  {
-    id: 'goblin_fang',
-    name: 'ゴブリンの牙',
-    price: 12,
+  { id: 'slime_jelly', name: 'スライムのゼリー', price: 5,
   }
 ].map(item => ({ ...item, image: `./assets/material/${item.id}.webp` }));
 

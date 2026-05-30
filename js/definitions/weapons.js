@@ -10,31 +10,10 @@
 
 export const WEAPONS = [
   {
-    id: 'copper_sword',
-    name: '銅の剣',
-    slot: 'rightHand',
-    stats: {
-      atk: 5,
-      def: 0,
-      matk: 0,
-      mdef: 0,
-      spd: 0
-    },
-    elements: { fire: 0, water: 0, wind: 0, earth: 0, light: 0, dark: 0 },
-    statusEffects: { poison: 0, paralyze: 0, sleep: 0, confusion: 0 },
-    price: 50,
-  },
-  {
     id: 'wooden_staff',
-    name: '木の杖',
+    name: '木の棒',
     slot: 'rightHand',
-    stats: {
-      atk: 2,
-      def: 0,
-      matk: 5,
-      mdef: 0,
-      spd: 1
-    },
+    stats: { atk: 2, def: 0, matk: 5, mdef: 0, spd: 1 },
     elements: { fire: 0, water: 0, wind: 0, earth: 0, light: 0, dark: 0 },
     statusEffects: { poison: 0, paralyze: 0, sleep: 0, confusion: 0 },
     price: 60,
