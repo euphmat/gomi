@@ -1,22 +1,24 @@
+import { renderInnTab } from './guild-tabs/inn.js';
 import { renderChangeJobTab } from './guild-tabs/change-job.js';
 import { renderReceiveRewardTab } from './guild-tabs/receive-reward.js';
 import { renderAcquireSkillTab } from './guild-tabs/acquire-skill.js';
 
 /**
  * このファイルは「ギルド」画面のメインコンテナです。
- * 内部で3つのタブ（転職、報酬受け取り、スキル獲得）を切り替えて表示します。
+ * 内部で複数のタブを切り替えて表示します。
  */
 export function renderGuildPage() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full bg-[#0b0b19]';
 
-  // タブの定義
+  // タブの定義 (宿屋を一番左に追加)
   const TABS = [
+    { id: 'inn', label: '宿屋' },
     { id: 'skill', label: 'スキル獲得' },
     { id: 'job', label: '転職' },
     { id: 'reward', label: '報酬受け取り' }
   ];
-  let activeTabId = 'skill';
+  let activeTabId = 'inn';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');
@@ -55,6 +57,7 @@ export function renderGuildPage() {
     let tabContent;
 
     switch (activeTabId) {
+      case 'inn': tabContent = renderInnTab(); break;
       case 'skill': tabContent = renderAcquireSkillTab(); break;
       case 'job': tabContent = renderChangeJobTab(); break;
       case 'reward': tabContent = renderReceiveRewardTab(); break;

@@ -11,7 +11,7 @@ export const MONSTERS = [
   {
     id: 'slime',
     name: 'スライム',
-    stats:   { hp: 10, atk: 1, def: 1, matk: 0, mdef: 1, spd: 1 },
+    stats:   { hp: 12, atk: 1, def: 0, matk: 1, mdef: 1, spd: 1 },
     rewards: { exp: 2, jp: 1,  gold: 1 },
     drops: [
       { itemId: 'slime_jelly', rate: 0.5 }

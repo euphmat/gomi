@@ -3,7 +3,7 @@ import { MONSTERS } from '../definitions/monsters.js';
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
-import { JOBS } from '../definitions/jobs.js';
+import { JOBS } from '../jobs/index.js';
 
 class BattleManager {
   constructor(container) {
@@ -23,13 +23,19 @@ class BattleManager {
       resultOverlay: container.querySelector('#battle-result'),
       resultTitle: container.querySelector('#result-title'),
       resultText: container.querySelector('#result-text'),
-      btnResultOk: container.querySelector('#btn-result-ok')
+      btnResultOk: container.querySelector('#btn-result-ok'),
+      tabBtnSkill: container.querySelector('#tab-btn-skill'),
+      tabBtnItem: container.querySelector('#tab-btn-item'),
+      tabBtnInfo: container.querySelector('#tab-btn-info'),
+      tabContent: container.querySelector('#tab-content')
     };
     
+    this.currentTab = 'skill';
     this.selectedEnemyTarget = null;
   }
   
   async init() {
+    this.elements.enemyArea.innerHTML = '';
     const rawParty = await GameDB.getAllCharacters();
     const rawEquip = await GameDB.getAllEquipment();
     this.equipMap = buildEquipmentMap(rawEquip);
@@ -70,6 +76,11 @@ class BattleManager {
   }
 
   renderEntities() {
+    if (this.elements.enemyArea.children.length > 0) {
+      this.updateEntities();
+      return;
+    }
+
     this.elements.enemyArea.innerHTML = this.enemies.map(e => `
       <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" data-id="${e.uniqueId}">
         <div class="relative w-16 h-16 bg-gray-800 rounded-lg border-2 ${this.selectedEnemyTarget === e ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
@@ -86,13 +97,25 @@ class BattleManager {
 
     this.elements.partyArea.innerHTML = this.party.map(p => `
       <div id="${p.elementId}" class="relative flex flex-col bg-gray-800/80 rounded border ${this.activeCharacter === p ? 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]' : 'border-gray-700'} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all'}">
-        <div class="flex flex-col items-center mb-1">
-          <div class="w-10 h-10 rounded-full border border-gray-600 mb-0.5 overflow-hidden shadow-md bg-gray-800">
-            <img src="${p.iconImage}" class="w-full h-full object-cover">
+        <div class="flex flex-col mb-1.5 w-full">
+          <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
+            <!-- ICON -->
+            <div class="w-10 h-10 rounded border border-gray-600 overflow-hidden shadow-md bg-gray-800 shrink-0">
+              <img src="${p.iconImage}" class="w-full h-full object-cover">
+            </div>
+            <!-- LV / JLV / SP -->
+            <div class="flex flex-col flex-1 text-[9px] text-gray-300 font-bold leading-tight justify-center gap-[2px]">
+              <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">LV:</span> <span class="${p.elementId}-lv text-gray-100">${p.level || 1}</span></div>
+              <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">JLV:</span> <span class="${p.elementId}-jlv text-gray-100">${p.jobLevel || 1}</span></div>
+              <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">SP:</span> <span class="${p.elementId}-sp text-gray-100">${p.sp || 0}</span></div>
+            </div>
           </div>
-          <span class="text-[11px] font-bold text-gray-200 truncate w-full text-center drop-shadow">${p.name}</span>
-          <div class="w-[85%] h-1.5 bg-gray-900 rounded overflow-hidden mt-0.5 shadow-inner">
-            <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
+          <!-- Name & ATB -->
+          <div class="px-0.5">
+            <div class="text-[10px] font-bold text-gray-100 truncate w-full drop-shadow mb-0.5">${p.name}</div>
+            <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+              <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
+            </div>
           </div>
         </div>
         
@@ -114,14 +137,14 @@ class BattleManager {
           <div class="flex items-center gap-0.5">
             <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
             <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div class="bg-green-600 h-full" style="width: ${(p.exp.current / p.exp.max) * 100}%"></div>
+              <div class="bg-green-600 h-full transition-all duration-300" style="width: ${(p.exp.current / p.exp.max) * 100}%"></div>
               <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.exp.current)}/${p.exp.max}</div>
             </div>
           </div>
           <div class="flex items-center gap-0.5">
             <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
             <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div class="bg-purple-600 h-full" style="width: ${(p.jp.current / p.jp.max) * 100}%"></div>
+              <div class="bg-purple-600 h-full transition-all duration-300" style="width: ${(p.jp.current / p.jp.max) * 100}%"></div>
               <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.jp.current)}/${p.jp.max}</div>
             </div>
           </div>
@@ -143,6 +166,8 @@ class BattleManager {
       this.elements.commandBlocker.classList.remove('hidden');
     }
 
+    this.renderTabContent();
+
     this.elements.enemyArea.querySelectorAll('.enemy-card').forEach(el => {
       el.addEventListener('click', (e) => {
         const uniqueId = e.currentTarget.dataset.id;
@@ -154,11 +179,112 @@ class BattleManager {
       });
     });
   }
+
+  updateEntities() {
+    this.enemies.forEach(e => {
+      const el = this.container.querySelector(`#${e.elementId}`);
+      if (!el) return;
+      
+      const iconContainer = el.children[0];
+      const hpContainer = el.children[1];
+      const hpBar = hpContainer.children[0];
+      const atbContainer = el.children[2];
+
+      if (e.isDead) {
+        el.classList.remove('cursor-pointer', 'hover:scale-105', 'transition-transform');
+        iconContainer.classList.add('opacity-0');
+        hpContainer.classList.add('opacity-0');
+        atbContainer.classList.add('opacity-0');
+      }
+
+      if (this.selectedEnemyTarget === e) {
+        iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+        iconContainer.classList.remove('border-gray-700');
+      } else {
+        iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+        iconContainer.classList.add('border-gray-700');
+      }
+
+      hpBar.style.width = `${(e.currentHp / e.maxHp) * 100}%`;
+    });
+
+    this.party.forEach(p => {
+      const el = this.container.querySelector(`#${p.elementId}`);
+      if (!el) return;
+
+      if (this.activeCharacter === p) {
+        el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        el.classList.remove('border-gray-700');
+      } else {
+        el.classList.remove('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        el.classList.add('border-gray-700');
+      }
+
+      if (p.isDead) {
+        el.classList.add('opacity-40', 'grayscale');
+        el.classList.remove('transition-all');
+      } else {
+        el.classList.remove('opacity-40', 'grayscale');
+        el.classList.add('transition-all');
+      }
+
+      const lvEl = el.querySelector(`.${p.elementId}-lv`);
+      if (lvEl) lvEl.textContent = p.level || 1;
+
+      const jlvEl = el.querySelector(`.${p.elementId}-jlv`);
+      if (jlvEl) jlvEl.textContent = p.jobLevel || 1;
+
+      const spEl = el.querySelector(`.${p.elementId}-sp`);
+      if (spEl) spEl.textContent = p.sp || 0;
+
+      const hpBar = el.querySelector('.bg-red-600');
+      if (hpBar) {
+        hpBar.style.width = `${(p.hp.current / p.hp.max) * 100}%`;
+        hpBar.nextElementSibling.textContent = `${Math.floor(p.hp.current)}/${p.hp.max}`;
+      }
+
+      const mpBar = el.querySelector('.bg-blue-600');
+      if (mpBar) {
+        mpBar.style.width = `${(p.mp.current / p.mp.max) * 100}%`;
+        mpBar.nextElementSibling.textContent = `${Math.floor(p.mp.current)}/${p.mp.max}`;
+      }
+
+      const expBar = el.querySelector('.bg-green-600');
+      if (expBar) {
+        expBar.style.width = `${(p.exp.current / p.exp.max) * 100}%`;
+        expBar.nextElementSibling.textContent = `${Math.floor(p.exp.current)}/${p.exp.max}`;
+      }
+
+      const jpBar = el.querySelector('.bg-purple-600');
+      if (jpBar) {
+        jpBar.style.width = `${(p.jp.current / p.jp.max) * 100}%`;
+        jpBar.nextElementSibling.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
+      }
+
+      const statBlocks = el.querySelectorAll('.text-gray-200.font-bold');
+      if (statBlocks.length >= 5) {
+        statBlocks[0].textContent = p.stats.atk;
+        statBlocks[1].textContent = p.stats.def;
+        statBlocks[2].textContent = p.stats.matk;
+        statBlocks[3].textContent = p.stats.mdef;
+        statBlocks[4].textContent = p.stats.spd;
+      }
+    });
+
+    if (this.activeCharacter) {
+      this.elements.commandBlocker.classList.add('hidden');
+    } else {
+      this.elements.commandBlocker.classList.remove('hidden');
+    }
+
+    // Refresh tab content in case MP/SP changed or active character changed
+    this.renderTabContent();
+  }
   
   setupListeners() {
     this.elements.btnRun.onclick = () => {
       if (!this.activeCharacter) return;
-      this.endBattle(false, '逃げ出した！');
+      this.endBattle(false, '逃げ出した！', false);
     };
 
     this.elements.btnAttack.onclick = () => {
@@ -190,9 +316,188 @@ class BattleManager {
         window.location.hash = '/dungeon';
       }
     };
+
+    [
+      { btn: this.elements.tabBtnSkill, id: 'skill' },
+      { btn: this.elements.tabBtnItem, id: 'item' },
+      { btn: this.elements.tabBtnInfo, id: 'info' }
+    ].forEach(({btn, id}) => {
+      btn.onclick = () => {
+        this.currentTab = id;
+        this.updateTabStyles();
+        this.renderTabContent();
+      };
+    });
+
+    // 初期状態のタブスタイルを適用
+    this.updateTabStyles();
+  }
+
+  updateTabStyles() {
+    const tabs = [
+      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', label: 'スキル' },
+      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', label: 'アイテム' },
+      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', label: 'インフォ' }
+    ];
+
+    tabs.forEach(({btn, id, icon, label}) => {
+      if (this.currentTab === id) {
+        btn.className = 'flex-1 py-2 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t-xl text-[11px] font-black shadow-[0_-4px_10px_rgba(0,0,0,0.2)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-1 transition-all';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[16px] text-green-400">${icon}</span>${label}`;
+      } else {
+        btn.className = 'flex-1 py-2 bg-gray-900/80 text-gray-500 rounded-t-xl text-[11px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-1';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${icon}</span>${label}`;
+      }
+    });
+  }
+
+  renderTabContent() {
+    if (!this.activeCharacter) {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">行動順を待っています...</div>';
+      return;
+    }
+
+    if (this.currentTab === 'skill') {
+      this.renderSkillTab();
+    } else if (this.currentTab === 'item') {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">（バックパック未実装）</div>';
+    } else {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">（インフォ未実装）</div>';
+    }
+  }
+
+  renderSkillTab() {
+    const p = this.activeCharacter;
+    if (!p.jobSkills) {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
+      return;
+    }
+
+    let skillListHtml = '';
+    const learnedSkills = [];
+
+    // Gather learned skills from all jobs
+    for (const [jobId, skillsMap] of Object.entries(p.jobSkills)) {
+      const jobDef = JOBS[jobId];
+      if (!jobDef) continue;
+      
+      for (const [skillId, level] of Object.entries(skillsMap)) {
+        if (level > 0) {
+          const skillDef = jobDef.skills.find(s => s.id === skillId);
+          if (skillDef) {
+            learnedSkills.push({ skillDef, level });
+          }
+        }
+      }
+    }
+
+    if (learnedSkills.length === 0) {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
+      return;
+    }
+
+    skillListHtml += '<div class="flex flex-col gap-2">';
+    learnedSkills.forEach(({ skillDef, level }) => {
+      const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
+      const canCast = p.mp.current >= levelConfig.mpCost;
+      const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
+
+      if (canCast) {
+        skillListHtml += `
+          <button class="skill-btn relative w-full flex items-center gap-3 p-2.5 bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-600 rounded-xl hover:border-green-400 hover:shadow-[0_0_12px_rgba(74,222,128,0.15)] active:scale-[0.98] transition-all group overflow-hidden" data-skill-id="${skillDef.id}" data-level="${level}">
+            <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="w-11 h-11 rounded-lg bg-gray-900 flex items-center justify-center border border-gray-700 shrink-0 shadow-inner group-hover:border-green-500/40 transition-colors z-10">
+              <span class="material-symbols-outlined text-green-400 text-[26px] group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
+            </div>
+            <div class="flex flex-col text-left flex-1 min-w-0 z-10">
+              <div class="flex justify-between items-end mb-1">
+                <div class="text-[13px] font-black text-gray-100 tracking-wide truncate pr-2">${skillDef.name} <span class="text-green-400 text-[10px] ml-0.5">Lv${level}</span></div>
+                ${levelConfig.mpCost > 0 ? `<div class="text-[10px] font-bold text-blue-300 bg-blue-900/40 px-1.5 py-0.5 rounded border border-blue-700/50 shadow-inner shrink-0">MP ${levelConfig.mpCost}</div>` : ''}
+              </div>
+              <div class="text-[10px] text-gray-400 leading-snug break-words pr-1 font-medium">${desc}</div>
+            </div>
+          </button>
+        `;
+      } else {
+        skillListHtml += `
+          <button class="relative w-full flex items-center gap-3 p-2.5 bg-gray-900/80 border border-gray-800 rounded-xl opacity-60 cursor-not-allowed overflow-hidden grayscale" disabled>
+            <div class="w-11 h-11 rounded-lg bg-gray-950 flex items-center justify-center border border-gray-800 shrink-0 shadow-inner z-10">
+              <span class="material-symbols-outlined text-gray-500 text-[26px]" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
+            </div>
+            <div class="flex flex-col text-left flex-1 min-w-0 z-10">
+              <div class="flex justify-between items-end mb-1">
+                <div class="text-[13px] font-black text-gray-400 tracking-wide truncate pr-2">${skillDef.name} <span class="text-gray-500 text-[10px] ml-0.5">Lv${level}</span></div>
+                ${levelConfig.mpCost > 0 ? `<div class="text-[10px] font-bold text-red-400 bg-red-900/20 px-1.5 py-0.5 rounded border border-red-900/50 shadow-inner shrink-0">MP不足</div>` : ''}
+              </div>
+              <div class="text-[10px] text-gray-500 leading-snug break-words pr-1 font-medium">${desc}</div>
+            </div>
+          </button>
+        `;
+      }
+    });
+    skillListHtml += '</div>';
+
+    this.elements.tabContent.innerHTML = skillListHtml;
+
+    this.elements.tabContent.querySelectorAll('.skill-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (btn.disabled || !this.activeCharacter) return;
+        const skillId = btn.dataset.skillId;
+        const level = parseInt(btn.dataset.level, 10);
+        
+        let foundSkillDef = null;
+        let foundJobId = null;
+        for (const [jobId, skillsMap] of Object.entries(this.activeCharacter.jobSkills)) {
+          if (skillsMap[skillId]) {
+            foundSkillDef = JOBS[jobId]?.skills.find(s => s.id === skillId);
+            foundJobId = jobId;
+            break;
+          }
+        }
+
+        if (foundSkillDef) {
+          const levelConfig = foundSkillDef.levels.find(l => l.level === level) || foundSkillDef.levels[foundSkillDef.levels.length - 1];
+          this.executeSkill(this.activeCharacter, foundSkillDef, levelConfig);
+        }
+      });
+    });
+  }
+
+  executeSkill(caster, skillDef, levelConfig) {
+    if (caster.mp.current < levelConfig.mpCost) return;
+
+    // Execution Logic
+    // For now, we assume skills like first_aid don't need a specific target besides caster
+    // If a skill needs a target, we would check selectedEnemyTarget or allow party target.
+    // However, first_aid's execute logic currently handles its own effect:
+    
+    // Show skill name animation
+    this.showSkillName(caster.elementId, skillDef.name);
+
+    if (skillDef.execute) {
+      skillDef.execute(caster, levelConfig);
+    }
+    
+    // Some visual effect (e.g. heal popup)
+    if (skillDef.id === 'first_aid') {
+      this.showDamage(caster.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+    }
+
+    caster.atb = 0;
+    this.activeCharacter = null;
+    this.renderEntities();
+    this.checkBattleEnd();
   }
 
   startAtbLoop() {
+    let totalSpd = 0;
+    let entityCount = 0;
+    this.party.forEach(p => { totalSpd += p.stats.spd; entityCount++; });
+    this.enemies.forEach(e => { totalSpd += e.stats.spd; entityCount++; });
+    const avgSpd = entityCount > 0 ? (totalSpd / entityCount) : 1;
+    
+    const BASE_TICK_RATE = 1000 / 70;
+
     this.atbLoop = setInterval(() => {
       if (this.activeCharacter) return;
       
@@ -200,7 +505,8 @@ class BattleManager {
       
       this.party.forEach(p => {
         if (p.isDead) return;
-        p.atb += p.stats.spd * 1.5;
+        const speedRatio = p.stats.spd / avgSpd;
+        p.atb += speedRatio * BASE_TICK_RATE;
         if (p.atb >= 1000) {
           p.atb = 1000;
           if (!nextActor) nextActor = { type: 'party', entity: p };
@@ -212,7 +518,8 @@ class BattleManager {
       
       this.enemies.forEach(e => {
         if (e.isDead) return;
-        e.atb += e.stats.spd * 1.5;
+        const speedRatio = e.stats.spd / avgSpd;
+        e.atb += speedRatio * BASE_TICK_RATE;
         if (e.atb >= 1000) {
           e.atb = 1000;
           if (!nextActor) nextActor = { type: 'enemy', entity: e };
@@ -269,28 +576,115 @@ class BattleManager {
     this.executeAttack(enemy, target, false);
   }
 
-  showDamage(elementId, damage) {
+  showDamage(elementId, damage, customColorClass = 'text-red-500') {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
-    el.classList.add('animate-[shake_0.4s_ease-in-out]');
-    setTimeout(() => el.classList.remove('animate-[shake_0.4s_ease-in-out]'), 400);
+    // Apply shake to the element on the next tick so it survives renderEntities()
+    setTimeout(() => {
+      const newEl = this.container.querySelector(`#${elementId}`);
+      if (newEl) {
+        newEl.classList.add('animate-[shake_0.4s_ease-in-out]');
+        setTimeout(() => newEl.classList.remove('animate-[shake_0.4s_ease-in-out]'), 400);
+      }
+    }, 0);
+
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const topY = rect.top + 10;
 
     const dmgText = document.createElement('div');
     dmgText.textContent = damage;
-    dmgText.className = 'absolute top-0 left-1/2 -translate-x-1/2 text-white font-black text-2xl z-30 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pointer-events-none animate-[slide-up_0.6s_ease-out_forwards] text-red-500';
-    el.appendChild(dmgText);
-    setTimeout(() => dmgText.remove(), 600);
+    dmgText.className = `fixed font-black text-3xl z-[9999] pointer-events-none ${customColorClass}`;
+    dmgText.style.left = `${centerX}px`;
+    dmgText.style.top = `${topY}px`;
+    dmgText.style.webkitTextStroke = '1px white';
+    dmgText.style.textShadow = '0 2px 4px rgba(0,0,0,0.8)';
+    
+    const spreadX = (Math.random() - 0.5) * 40;
+
+    dmgText.animate([
+      { transform: `translate(-50%, 0) scale(0.5)`, opacity: 0 },
+      { transform: `translate(calc(-50% + ${spreadX}px), -40px) scale(1.5)`, opacity: 1, offset: 0.2 },
+      { transform: `translate(calc(-50% + ${spreadX * 1.5}px), -50px) scale(1)`, opacity: 1, offset: 0.8 },
+      { transform: `translate(calc(-50% + ${spreadX * 1.8}px), -30px) scale(0.5)`, opacity: 0 }
+    ], {
+      duration: 800,
+      easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      fill: 'forwards'
+    });
+
+    document.body.appendChild(dmgText);
+    setTimeout(() => dmgText.remove(), 800);
   }
 
-  showLevelUp(elementId) {
+  showSkillName(elementId, skillName) {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const topY = rect.top - 20;
+
+    const textEl = document.createElement('div');
+    textEl.textContent = skillName;
+    textEl.className = 'fixed font-black text-[13px] text-green-300 z-[9999] pointer-events-none tracking-widest whitespace-nowrap bg-black/50 px-2 py-0.5 rounded-full border border-green-500/50';
+    textEl.style.left = `${centerX}px`;
+    textEl.style.top = `${topY}px`;
+    textEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.8)';
+    
+    textEl.animate([
+      { transform: `translate(-50%, 10px)`, opacity: 0 },
+      { transform: `translate(-50%, -10px)`, opacity: 1, offset: 0.2 },
+      { transform: `translate(-50%, -15px)`, opacity: 1, offset: 0.8 },
+      { transform: `translate(-50%, -25px)`, opacity: 0 }
+    ], {
+      duration: 1200,
+      easing: 'ease-out',
+      fill: 'forwards'
+    });
+
+    document.body.appendChild(textEl);
+    setTimeout(() => textEl.remove(), 1200);
+  }
+
+  showLevelUp(elementId, type = 'base') {
+    const el = this.container.querySelector(`#${elementId}`);
+    if (!el) return;
+
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const topY = rect.top - 5;
+
+    const isJob = type === 'job';
+    const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
+    const shadowColor = isJob ? 'rgba(239,68,68,0.6)' : 'rgba(249,115,22,0.6)'; // red vs orange
+    const iconColor = isJob ? 'text-red-300' : 'text-orange-300';
+    const gradient = isJob 
+      ? 'from-white via-red-400 to-red-600'
+      : 'from-white via-orange-400 to-orange-600';
+
     const lvlText = document.createElement('div');
-    lvlText.textContent = 'LEVEL UP!';
-    lvlText.className = 'absolute -top-4 left-1/2 -translate-x-1/2 text-white font-black text-xl z-30 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] pointer-events-none animate-[slide-up_1s_ease-out_forwards] text-green-400';
-    el.appendChild(lvlText);
-    setTimeout(() => lvlText.remove(), 1000);
+    lvlText.className = 'fixed flex items-center justify-center gap-0.5 z-[9999] pointer-events-none whitespace-nowrap';
+    lvlText.style.left = `${centerX}px`;
+    lvlText.style.top = `${topY}px`;
+    lvlText.style.filter = `drop-shadow(0 2px 3px rgba(0,0,0,0.8)) drop-shadow(0 0 8px ${shadowColor})`;
+
+    lvlText.innerHTML = `
+      <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+      <span class="font-black text-[13px] italic tracking-widest text-transparent bg-clip-text bg-gradient-to-b ${gradient}">${textStr}</span>
+      <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+    `;
+    
+    lvlText.animate([
+      { opacity: 0, transform: `translate(-50%, 10px) scale(0.5)` },
+      { opacity: 1, transform: `translate(-50%, -15px) scale(1.2)`, offset: 0.2 },
+      { opacity: 1, transform: `translate(-50%, -20px) scale(1)`, offset: 0.7 },
+      { opacity: 0, transform: `translate(-50%, -30px) scale(0.8)` }
+    ], { duration: 1600, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
+
+    document.body.appendChild(lvlText);
+    setTimeout(() => lvlText.remove(), 1600);
   }
 
   checkBattleEnd() {
@@ -332,7 +726,8 @@ class BattleManager {
           p.exp.current += exp;
           p.jp.current += jp;
 
-          let leveledUp = false;
+          let baseLevelUp = false;
+          let jobLevelUp = false;
 
           // Level Up Logic
           while (p.exp.current >= p.exp.max) {
@@ -352,7 +747,7 @@ class BattleManager {
               p.baseStats.mdef += jobGrowth.mdef;
               p.baseStats.spd += jobGrowth.spd;
             }
-            leveledUp = true;
+            baseLevelUp = true;
           }
 
           // Job Level Up Logic
@@ -361,12 +756,15 @@ class BattleManager {
             p.jp.max = Math.floor(p.jp.max * 1.2);
             p.jobLevel = (p.jobLevel || 1) + 1;
             p.sp = (p.sp || 0) + 1;
-            leveledUp = true;
+            jobLevelUp = true;
           }
 
-          if (leveledUp) {
+          if (baseLevelUp || jobLevelUp) {
             p.stats = calcFinalStats(p, this.equipMap);
-            this.showLevelUp(p.elementId);
+            if (baseLevelUp) this.showLevelUp(p.elementId, 'base');
+            if (jobLevelUp) {
+              setTimeout(() => this.showLevelUp(p.elementId, 'job'), baseLevelUp ? 400 : 0);
+            }
             this.renderEntities(); // re-render to update max HP/MP and stats display
           }
         }
@@ -396,37 +794,45 @@ class BattleManager {
     if (!el) return;
     
     const rect = el.getBoundingClientRect();
-    const containerRect = this.container.getBoundingClientRect();
-    const centerX = rect.left - containerRect.left + rect.width / 2;
-    const centerY = rect.top - containerRect.top + rect.height / 2;
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
 
     const dropContainer = document.createElement('div');
-    dropContainer.style.position = 'absolute';
+    dropContainer.style.position = 'fixed';
     dropContainer.style.left = `${centerX}px`;
     dropContainer.style.top = `${centerY}px`;
-    dropContainer.className = `w-40 -translate-x-1/2 -translate-y-1/2 flex flex-wrap justify-center items-center gap-1.5 z-50 pointer-events-none transition-opacity duration-1000`;
-    this.container.appendChild(dropContainer);
+    dropContainer.className = `w-40 -translate-x-1/2 -translate-y-1/2 flex flex-wrap justify-center items-center gap-1.5 z-[9999] pointer-events-none transition-opacity duration-1000`;
+    document.body.appendChild(dropContainer);
 
     // Show floating elements inside dropContainer
     drops.forEach((drop, i) => {
-      setTimeout(() => {
-        const dropEl = document.createElement('div');
-        dropEl.className = `flex flex-row items-center gap-0.5 animate-[drop-bounce_0.3s_ease-out_forwards] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/40 px-1.5 py-0.5 rounded-full`;
-        
-        let innerHtml = '';
-        if (drop.image) {
-          innerHtml += `<img src="${drop.image}" class="w-3.5 h-3.5 object-contain">`;
-        } else if (drop.icon) {
-          innerHtml += `<span class="material-symbols-outlined text-[13px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
-        }
-        
-        if (drop.text) {
-          innerHtml += `<span class="font-bold text-[9px] tracking-wide ${drop.color} drop-shadow-[0_1px_1px_rgba(0,0,0,1)] leading-none mt-0.5">${drop.text}</span>`;
-        }
-        
-        dropEl.innerHTML = innerHtml;
-        dropContainer.appendChild(dropEl);
-      }, 150 + i * 70); 
+      const dropEl = document.createElement('div');
+      dropEl.className = `flex flex-row items-center gap-[2px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/60 px-1.5 py-[2px] rounded-full border border-gray-700/50 opacity-0`;
+      
+      let innerHtml = '';
+      if (drop.image) {
+        innerHtml += `<img src="${drop.image}" class="w-3 h-3 object-contain">`;
+      } else if (drop.icon) {
+        innerHtml += `<span class="material-symbols-outlined text-[11px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
+      }
+      
+      if (drop.text) {
+        innerHtml += `<span class="font-bold text-[8px] tracking-wide ${drop.color} drop-shadow-[0_1px_1px_rgba(0,0,0,1)] leading-none mt-0.5">${drop.text}</span>`;
+      }
+      
+      dropEl.innerHTML = innerHtml;
+      dropContainer.appendChild(dropEl);
+
+      dropEl.animate([
+        { opacity: 0, transform: `translateY(15px) scale(0.5)` },
+        { opacity: 1, transform: `translateY(-5px) scale(1.1)`, offset: 0.5 },
+        { opacity: 1, transform: `translateY(0) scale(1)` }
+      ], { 
+        duration: 600, 
+        delay: i * 100, 
+        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', 
+        fill: 'both' 
+      });
     });
 
     // Fade out and remove the entire container after 2.5 seconds
@@ -436,11 +842,16 @@ class BattleManager {
     }, 2500);
   }
 
-  endBattle(isWin, text) {
+  endBattle(isWin, text, showModal = true) {
     clearInterval(this.atbLoop);
     this.activeCharacter = null;
     
     this.savePartyState();
+
+    if (!showModal) {
+      window.location.hash = '/dungeon';
+      return;
+    }
 
     this.elements.resultTitle.textContent = isWin ? 'VICTORY' : 'DEFEAT';
     this.elements.resultTitle.className = isWin 
@@ -533,13 +944,13 @@ export function renderBattlePage() {
       <!-- Tabs & Tab Content Area -->
       <div class="flex flex-col flex-1 mt-4 px-2 mb-4">
         <!-- Tabs -->
-        <div class="flex gap-2">
-          <button class="flex-1 py-1.5 bg-green-700 text-white rounded-t-lg text-[11px] font-bold shadow-md">スキル</button>
-          <button class="flex-1 py-1.5 bg-gray-800 border-t border-x border-gray-700 text-gray-400 rounded-t-lg text-[11px] font-bold">バックパック</button>
-          <button class="flex-1 py-1.5 bg-gray-800 border-t border-x border-gray-700 text-gray-400 rounded-t-lg text-[11px] font-bold">インフォ</button>
+        <div class="flex px-1 gap-1">
+          <button id="tab-btn-skill" class="flex-1 py-2 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t-xl text-[11px] font-black shadow-[0_-4px_10px_rgba(0,0,0,0.2)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-1 transition-all"><span class="material-symbols-outlined text-[16px] text-green-400">auto_awesome</span>スキル</button>
+          <button id="tab-btn-item" class="flex-1 py-2 bg-gray-900/80 text-gray-500 rounded-t-xl text-[11px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">backpack</span>アイテム</button>
+          <button id="tab-btn-info" class="flex-1 py-2 bg-gray-900/80 text-gray-500 rounded-t-xl text-[11px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">info</span>インフォ</button>
         </div>
         <!-- Tab Content -->
-        <div class="flex-1 bg-gray-800/40 border border-gray-700 rounded-b-lg rounded-tr-lg p-2 min-h-[120px]">
+        <div id="tab-content" class="flex-1 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700 rounded-b-xl rounded-tr-xl p-3 min-h-[140px] overflow-y-auto shadow-inner mb-2">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）

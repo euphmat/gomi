@@ -1,14 +1,7 @@
 import { GameDB } from '../../data/database.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 
-// モック用のジョブデータ
-const MOCK_JOBS = [
-  { id: 'warrior', name: '戦士', icon: 'swords' },
-  { id: 'mage', name: '魔法使い', icon: 'magic_button' },
-  { id: 'cleric', name: '僧侶', icon: 'healing' },
-  { id: 'thief', name: '盗賊', icon: 'visibility_off' },
-  { id: 'archer', name: '狩人', icon: 'sports_martial_arts' },
-];
+import { JOBS } from '../../jobs/index.js';
 
 /**
  * 「転職」タブの画面
@@ -40,7 +33,7 @@ export function renderChangeJobTab() {
     
     // スクロールバーのスタイルはindex.htmlのCSSに依存
     
-    MOCK_JOBS.forEach(job => {
+    Object.values(JOBS).forEach(job => {
       const row = document.createElement('div');
       row.className = 'flex items-center gap-3 p-3 bg-gray-800/80 rounded-xl border border-gray-700/50';
       
