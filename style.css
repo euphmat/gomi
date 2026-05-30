@@ -34,6 +34,13 @@ body {
     radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 85% 30%, rgba(217, 70, 239, 0.05) 0%, transparent 50%);
   background-attachment: fixed;
+  
+  /* Prevent double-tap zoom on iOS Safari */
+  touch-action: manipulation;
+  
+  /* Disable text selection on UI elements to prevent accidental highlighting */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #app {
@@ -302,12 +309,13 @@ body {
   border: none;
   border-right: 1px solid rgba(255,255,255,0.05);
   color: var(--text-secondary);
-  padding: 1rem 0;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 1.5rem 0; /* Increased height for better accessibility and premium feel */
+  font-size: 0.95rem; /* Slightly larger text for readability */
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: var(--font-main);
+  touch-action: manipulation;
 }
 
 .nav-item:last-child {
