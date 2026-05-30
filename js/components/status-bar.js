@@ -24,9 +24,12 @@ export function createStatusBar({ label, current, max, colorFrom, colorTo }) {
       <div class="status-bar-fill absolute inset-y-0 left-0 rounded-sm transition-[width] duration-1000 ease-out"
            style="width: ${percentage}%; background: linear-gradient(90deg, ${colorFrom}, ${colorTo});">
       </div>
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div class="absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
         <span class="text-white text-[9px] font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] tracking-wide">
           ${label}
+        </span>
+        <span class="text-gray-100 text-[10px] font-mono font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap">
+          ${current} / ${max}
         </span>
       </div>
     </div>

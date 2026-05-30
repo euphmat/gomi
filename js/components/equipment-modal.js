@@ -79,10 +79,6 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
 
     return `
       <div class="flex flex-col h-full gap-2 relative z-10">
-        <div class="flex items-center justify-between shrink-0">
-          <span class="text-xs font-medium px-2 py-0.5 bg-blue-900/50 text-blue-300 rounded border border-blue-700/50">${slotLabel}</span>
-          ${isEquipped ? '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/40 px-1.5 py-0.5 rounded">装備中</span>' : ''}
-        </div>
         <div class="grid grid-cols-2 gap-1 mt-1 overflow-y-auto pr-1 custom-scrollbar shrink-0 pb-1">
           ${statsHtml}
         </div>
@@ -142,7 +138,6 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
             </div>
             <div>
               <div class="text-sm font-bold text-gray-100 leading-tight">装備変更</div>
-              <div class="text-[10px] text-gray-400 leading-tight">${character.name}</div>
             </div>
           </div>
           <button id="eq-modal-close" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
