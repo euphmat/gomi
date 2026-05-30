@@ -1,5 +1,7 @@
 import { GameDB } from '../data/database.js';
 import { MONSTERS } from '../definitions/monsters.js';
+import { DUNGEONS } from '../definitions/dungeons.js';
+import { MATERIALS } from '../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
 
 class BattleManager {
@@ -31,6 +33,11 @@ class BattleManager {
     const rawEquip = await GameDB.getAllEquipment();
     const equipMap = buildEquipmentMap(rawEquip);
 
+    this.currentDungeonId = await GameDB.getGameState('currentDungeon') || 'slime_forest';
+    this.currentFloorNum = await GameDB.getGameState('currentFloor') || 1;
+    this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId);
+    this.floorDef = this.dungeonDef.floors.find(f => f.level === this.currentFloorNum) || this.dungeonDef.floors[this.dungeonDef.floors.length - 1];
+
     this.party = rawParty.map((char, index) => {
       const stats = calcFinalStats(char, equipMap);
       return {
@@ -43,16 +50,18 @@ class BattleManager {
       };
     });
 
-    const slimeDef = MONSTERS.find(m => m.id === 'slime');
-    this.enemies = [1, 2].map(i => ({
-      ...slimeDef,
-      uniqueId: `enemy-${i}`,
-      currentHp: slimeDef.stats.hp,
-      maxHp: slimeDef.stats.hp,
-      atb: 0,
-      isDead: false,
-      elementId: `enemy-${i}`
-    }));
+    this.enemies = this.floorDef.monsters.map((monsterId, i) => {
+      const monsterDef = MONSTERS.find(m => m.id === monsterId);
+      return {
+        ...monsterDef,
+        uniqueId: `enemy-${i}`,
+        currentHp: monsterDef.stats.hp,
+        maxHp: monsterDef.stats.hp,
+        atb: 0,
+        isDead: false,
+        elementId: `enemy-${i}`
+      };
+    });
 
     this.renderEntities();
     this.setupListeners();
@@ -61,14 +70,14 @@ class BattleManager {
 
   renderEntities() {
     this.elements.enemyArea.innerHTML = this.enemies.map(e => `
-      <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 ${e.isDead ? 'opacity-30 grayscale' : 'cursor-pointer hover:scale-105 transition-transform'}" data-id="${e.uniqueId}">
-        <div class="relative w-16 h-16 bg-gray-800 rounded-lg border-2 ${this.selectedEnemyTarget === e ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden">
+      <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" data-id="${e.uniqueId}">
+        <div class="relative w-16 h-16 bg-gray-800 rounded-lg border-2 ${this.selectedEnemyTarget === e ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
           <img src="${e.image}" class="w-full h-full object-contain p-1 drop-shadow-md">
         </div>
-        <div class="w-16 bg-gray-900 h-2 rounded overflow-hidden shadow-inner">
+        <div class="w-16 bg-gray-900 h-2 rounded overflow-hidden shadow-inner ${e.isDead ? 'opacity-0' : ''}">
           <div class="bg-red-500 h-full transition-all duration-300" style="width: ${(e.currentHp / e.maxHp) * 100}%"></div>
         </div>
-        <div class="w-16 bg-gray-900 h-1 rounded overflow-hidden mt-0.5 shadow-inner">
+        <div class="w-16 bg-gray-900 h-1 rounded overflow-hidden mt-0.5 shadow-inner ${e.isDead ? 'opacity-0' : ''}">
           <div id="${e.elementId}-atb" class="bg-orange-500 h-full" style="width: ${e.atb / 10}%"></div>
         </div>
       </div>
@@ -80,44 +89,44 @@ class BattleManager {
           <div class="w-10 h-10 rounded-full border border-gray-600 mb-0.5 overflow-hidden shadow-md" style="background: linear-gradient(135deg, ${p.iconGradient[0]}, ${p.iconGradient[1]})">
             <img src="${p.iconImage}" class="w-full h-full object-cover">
           </div>
-          <span class="text-[9px] font-bold text-gray-200 truncate w-full text-center drop-shadow">${p.name}</span>
-          <div class="w-[80%] h-1 bg-gray-900 rounded overflow-hidden mt-0.5 shadow-inner">
+          <span class="text-[11px] font-bold text-gray-200 truncate w-full text-center drop-shadow">${p.name}</span>
+          <div class="w-[85%] h-1.5 bg-gray-900 rounded overflow-hidden mt-0.5 shadow-inner">
             <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
           </div>
         </div>
         
-        <div class="flex flex-col gap-[3px] mb-1">
-          <div class="flex items-center gap-1">
-            <span class="text-[8px] font-bold text-red-400 w-3">HP</span>
-            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+        <div class="flex flex-col gap-[3px] mb-1.5">
+          <div class="flex items-center gap-0.5">
+            <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
+            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
               <div class="bg-red-600 h-full transition-all duration-300" style="width: ${(p.hp.current / p.hp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.hp.current)}/${p.hp.max}</div>
+              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.hp.current)}/${p.hp.max}</div>
             </div>
           </div>
-          <div class="flex items-center gap-1">
-            <span class="text-[8px] font-bold text-blue-400 w-3">MP</span>
-            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+          <div class="flex items-center gap-0.5">
+            <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
+            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
               <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${(p.mp.current / p.mp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.mp.current)}/${p.mp.max}</div>
+              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.mp.current)}/${p.mp.max}</div>
             </div>
           </div>
-          <div class="flex items-center gap-1">
-            <span class="text-[8px] font-bold text-green-400 w-3">EX</span>
-            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+          <div class="flex items-center gap-0.5">
+            <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
+            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
               <div class="bg-green-600 h-full" style="width: ${(p.exp.current / p.exp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.exp.current)}/${p.exp.max}</div>
+              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.exp.current)}/${p.exp.max}</div>
             </div>
           </div>
-          <div class="flex items-center gap-1">
-            <span class="text-[8px] font-bold text-purple-400 w-3">JP</span>
-            <div class="flex-1 relative h-3 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+          <div class="flex items-center gap-0.5">
+            <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
+            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
               <div class="bg-purple-600 h-full" style="width: ${(p.jp.current / p.jp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[7px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter scale-90 origin-center">${Math.floor(p.jp.current)}/${p.jp.max}</div>
+              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.jp.current)}/${p.jp.max}</div>
             </div>
           </div>
         </div>
 
-        <div class="flex flex-col gap-0 text-[10px] text-gray-400 mt-auto leading-tight w-full px-0.5">
+        <div class="flex flex-col gap-0 text-[11px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5">
           <div class="flex justify-between items-center"><span>ATK</span><span class="text-gray-200 font-bold">${p.stats.atk}</span></div>
           <div class="flex justify-between items-center"><span>DEF</span><span class="text-gray-200 font-bold">${p.stats.def}</span></div>
           <div class="flex justify-between items-center"><span>MAT</span><span class="text-gray-200 font-bold">${p.stats.matk}</span></div>
@@ -146,12 +155,12 @@ class BattleManager {
   }
   
   setupListeners() {
-    this.elements.btnRun.addEventListener('click', () => {
+    this.elements.btnRun.onclick = () => {
       if (!this.activeCharacter) return;
       this.endBattle(false, '逃げ出した！');
-    });
+    };
 
-    this.elements.btnAttack.addEventListener('click', () => {
+    this.elements.btnAttack.onclick = () => {
       if (!this.activeCharacter) return;
       
       if (!this.selectedEnemyTarget || this.selectedEnemyTarget.isDead) {
@@ -161,11 +170,25 @@ class BattleManager {
       if (!this.selectedEnemyTarget) return;
 
       this.executeAttack(this.activeCharacter, this.selectedEnemyTarget, true);
-    });
+    };
 
-    this.elements.btnResultOk.addEventListener('click', () => {
-      window.location.hash = '/dungeon';
-    });
+    this.elements.btnResultOk.onclick = async () => {
+      const isWin = this.enemies.every(e => e.isDead);
+      
+      if (isWin && !this.isDungeonClear) {
+        // Proceed to next floor
+        await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
+        this.elements.resultOverlay.classList.add('hidden');
+        this.party = [];
+        this.enemies = [];
+        this.activeCharacter = null;
+        this.selectedEnemyTarget = null;
+        this.init();
+      } else {
+        // Return to town
+        window.location.hash = '/dungeon';
+      }
+    };
   }
 
   startAtbLoop() {
@@ -220,6 +243,7 @@ class BattleManager {
       if (defender.currentHp <= 0) {
         defender.currentHp = 0;
         defender.isDead = true;
+        this.processEnemyDeath(defender);
       }
       attacker.atb = 0;
       this.activeCharacter = null;
@@ -272,6 +296,92 @@ class BattleManager {
     }
   }
 
+  async processEnemyDeath(enemy) {
+    let drops = [];
+    
+    // Add Gold
+    const gold = enemy.rewards.gold || 0;
+    if (gold > 0) {
+      const currentGold = await GameDB.getGameState('gold') || 0;
+      await GameDB.setGameState('gold', currentGold + gold);
+      drops.push({ text: `+${gold}`, icon: 'paid', color: 'text-yellow-400' });
+    }
+
+    // Add EXP / JP to party members
+    const exp = enemy.rewards.exp || 0;
+    if (exp > 0) {
+      for (const p of this.party) {
+        if (!p.isDead) {
+          if (!p.exp) p.exp = { current: 0, max: 100 };
+          if (!p.jp) p.jp = { current: 0, max: 100 };
+          p.exp.current += exp;
+          p.jp.current += exp;
+        }
+      }
+      this.savePartyState(); // Save to DB
+      drops.push({ text: `+${exp} EXP`, icon: 'star', color: 'text-blue-300' });
+    }
+
+    // Process Drops
+    if (enemy.drops) {
+      for (const drop of enemy.drops) {
+        if (Math.random() <= drop.rate) {
+          const mat = MATERIALS.find(m => m.id === drop.itemId);
+          if (mat) {
+            const currentItem = await GameDB.getInventoryItem(mat.id) || { id: mat.id, quantity: 0, type: 'material', ...mat };
+            currentItem.quantity += 1;
+            await GameDB.putInventoryItem(currentItem);
+            drops.push({ text: mat.name, image: mat.image, color: 'text-white' });
+          }
+        }
+      }
+    }
+
+    // Create a drop container overlay for this enemy in the main container
+    const el = this.container.querySelector(`#${enemy.elementId}`);
+    if (!el) return;
+    
+    const rect = el.getBoundingClientRect();
+    const containerRect = this.container.getBoundingClientRect();
+    const centerX = rect.left - containerRect.left + rect.width / 2;
+    const centerY = rect.top - containerRect.top + rect.height / 2;
+
+    const dropContainer = document.createElement('div');
+    dropContainer.style.position = 'absolute';
+    dropContainer.style.left = `${centerX}px`;
+    dropContainer.style.top = `${centerY}px`;
+    dropContainer.className = `w-40 -translate-x-1/2 -translate-y-1/2 flex flex-wrap justify-center items-center gap-1.5 z-50 pointer-events-none transition-opacity duration-1000`;
+    this.container.appendChild(dropContainer);
+
+    // Show floating elements inside dropContainer
+    drops.forEach((drop, i) => {
+      setTimeout(() => {
+        const dropEl = document.createElement('div');
+        dropEl.className = `flex flex-row items-center gap-0.5 animate-[drop-bounce_0.3s_ease-out_forwards] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/40 px-1.5 py-0.5 rounded-full`;
+        
+        let innerHtml = '';
+        if (drop.image) {
+          innerHtml += `<img src="${drop.image}" class="w-3.5 h-3.5 object-contain">`;
+        } else if (drop.icon) {
+          innerHtml += `<span class="material-symbols-outlined text-[13px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
+        }
+        
+        if (drop.text) {
+          innerHtml += `<span class="font-bold text-[9px] tracking-wide ${drop.color} drop-shadow-[0_1px_1px_rgba(0,0,0,1)] leading-none mt-0.5">${drop.text}</span>`;
+        }
+        
+        dropEl.innerHTML = innerHtml;
+        dropContainer.appendChild(dropEl);
+      }, 150 + i * 70); 
+    });
+
+    // Fade out and remove the entire container after 2.5 seconds
+    setTimeout(() => {
+      dropContainer.style.opacity = '0';
+      setTimeout(() => dropContainer.remove(), 1000);
+    }, 2500);
+  }
+
   endBattle(isWin, text) {
     clearInterval(this.atbLoop);
     this.activeCharacter = null;
@@ -285,15 +395,29 @@ class BattleManager {
     
     let resultText = text;
     if (isWin) {
-      const exp = this.enemies.reduce((acc, e) => acc + e.rewards.exp, 0);
-      const gold = this.enemies.reduce((acc, e) => acc + e.rewards.gold, 0);
-      resultText = `${exp} EXP と ${gold} Gold を獲得した！`;
-      
-      this.addRewards(gold);
+      this.isDungeonClear = this.currentFloorNum >= this.dungeonDef.floors.length;
+      if (this.isDungeonClear) {
+        this.elements.btnResultOk.textContent = 'ダンジョン踏破！街へ戻る';
+        this.elements.resultText.textContent = 'ダンジョンの最深部に到達しました！';
+        this.elements.resultOverlay.classList.remove('hidden');
+      } else {
+        // Auto-proceed to the next floor after a short delay
+        setTimeout(async () => {
+          await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
+          this.party = [];
+          this.enemies = [];
+          this.activeCharacter = null;
+          this.selectedEnemyTarget = null;
+          this.init();
+        }, 1500); // 1.5秒待機してドロップをしっかり見せる
+        return; // Don't show modal
+      }
+    } else {
+      this.isDungeonClear = false;
+      this.elements.btnResultOk.textContent = '街へ戻る';
+      this.elements.resultText.textContent = resultText;
+      this.elements.resultOverlay.classList.remove('hidden');
     }
-    
-    this.elements.resultText.textContent = resultText;
-    this.elements.resultOverlay.classList.remove('hidden');
   }
 
   async addRewards(gold) {
@@ -307,6 +431,8 @@ class BattleManager {
       if (original) {
         original.hp = p.hp;
         original.mp = p.mp;
+        original.exp = p.exp;
+        original.jp = p.jp;
         await GameDB.putCharacter(original);
       }
     }
@@ -325,13 +451,19 @@ export function renderBattlePage() {
         25% { transform: translateX(-4px); }
         75% { transform: translateX(4px); }
       }
+      @keyframes drop-bounce {
+        0% { transform: translateY(-10px) scale(0.5); opacity: 0; }
+        50% { transform: translateY(0) scale(1.1); opacity: 1; }
+        75% { transform: translateY(-3px) scale(1); }
+        100% { transform: translateY(0) scale(1); opacity: 1; }
+      }
     </style>
 
     <!-- Scrollable Battle Area (Enemies, Party, Tabs) -->
     <div class="flex-1 flex flex-col overflow-y-auto" style="background: radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%);">
       
       <!-- Enemy Area (Moved higher) -->
-      <div id="enemy-area" class="flex justify-center items-start gap-6 min-h-[120px] mt-1 px-2 pt-1">
+      <div id="enemy-area" class="flex justify-center items-start gap-6 mt-1 px-2 pt-1 pb-8">
         <!-- Enemies will be injected here -->
       </div>
 
