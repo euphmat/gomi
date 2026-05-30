@@ -1,0 +1,406 @@
+<mxfile host="65bd71144e">
+    <diagram id="hR4UH58t83Jjj4qPO6dC" name="ページ1">
+        <mxGraphModel dx="1110" dy="797" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="239" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="410" height="880" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" value="" style="edgeStyle=none;html=1;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="590" y="1075" as="sourcePoint"/>
+                        <mxPoint x="590" y="1075" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="57" value="" style="edgeStyle=none;html=1;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="530" y="1075" as="sourcePoint"/>
+                        <mxPoint x="530" y="1075" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="240" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="410" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="241" value="Setting" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="395" y="40" width="55" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="243" value="Gold : xxx" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="270" y="50" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="245" value="はじまりの街" style="whiteSpace=wrap;html=1;strokeColor=none;strokeWidth=6;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="50" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="246" value="Ver : x.xx" style="whiteSpace=wrap;html=1;strokeColor=none;strokeWidth=6;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="50" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="253" value="" style="group;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="1" vertex="1" connectable="0">
+                    <mxGeometry x="50" y="860" width="390" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="254" value="Status" style="rounded=0;whiteSpace=wrap;html=1;" parent="253" vertex="1">
+                    <mxGeometry width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="255" value="Guild" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="253" vertex="1">
+                    <mxGeometry x="80" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="256" value="Dungeon" style="rounded=0;whiteSpace=wrap;html=1;" parent="253" vertex="1">
+                    <mxGeometry x="160" width="70" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="257" value="Shop" style="rounded=0;whiteSpace=wrap;html=1;" parent="253" vertex="1">
+                    <mxGeometry x="230" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="258" value="Library" style="rounded=0;whiteSpace=wrap;html=1;" parent="253" vertex="1">
+                    <mxGeometry x="310" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="259" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="150" width="390" height="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="260" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="256" target="259">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="262" value="雇用" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="263" value="転職" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="180" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="264" value="報酬受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="310" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="265" value="雇用" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="266" value="転職" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="180" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="267" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="470" y="150" width="390" height="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="268" value="報酬受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="730" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="269" value="&lt;span style=&quot;color: rgb(255, 255, 255);&quot;&gt;転職&lt;/span&gt;" style="whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="1">
+                    <mxGeometry x="470" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="270" value="&lt;span style=&quot;color: rgb(18, 18, 18);&quot;&gt;雇用&lt;/span&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="600" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="275" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="870" y="150" width="390" height="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="276" value="報酬受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="1130" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="277" value="転職" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="870" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="278" value="スキル獲得" style="whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="1">
+                    <mxGeometry x="1000" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="279" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="1270" y="150" width="390" height="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="280" value="報酬受け取り" style="whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="1">
+                    <mxGeometry x="1530" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="281" value="&lt;span&gt;&lt;font style=&quot;color: light-dark(rgb(255, 255, 255), rgb(255, 255, 255));&quot;&gt;転職&lt;/font&gt;&lt;/span&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="1270" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="282" value="&lt;span style=&quot;color: rgb(18, 18, 18);&quot;&gt;雇用&lt;/span&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="1400" y="100" width="130" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="292" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="480" y="290" width="370" height="540" as="geometry"/>
+                </mxCell>
+                <mxCell id="299" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="300" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="293" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="299">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="294" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="299">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="295" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="299">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="300" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="370" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="301" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="300">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="302" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="300">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="303" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="300">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="304" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="440" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="305" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="304">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="306" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="304">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="307" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="304">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="308" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="510" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="309" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="308">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="310" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="308">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="311" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="308">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="312" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="580" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="313" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="312">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="314" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="312">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="315" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="312">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="316" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="650" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="317" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="316">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="318" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="316">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="319" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="316">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="320" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="490" y="720" width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="321" value="JobName" style="whiteSpace=wrap;html=1;" vertex="1" parent="320">
+                    <mxGeometry width="350" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="322" value="Job&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="320">
+                    <mxGeometry width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="323" value="転職する" style="whiteSpace=wrap;html=1;" vertex="1" parent="320">
+                    <mxGeometry x="265" y="7.5" width="80" height="45" as="geometry"/>
+                </mxCell>
+                <mxCell id="329" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="670" y="160" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="285" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="329">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="289" value="player&lt;div&gt;icon2&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="329">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="330" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="670" y="220" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="287" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="330">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="291" value="player&lt;div&gt;icon4&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="330">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="331" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="480" y="160" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="284" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="331">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="288" value="player&lt;div&gt;icon1&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="331">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="332" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="480" y="220" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="286" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="332">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="290" value="player&lt;div&gt;icon3&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="332">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="333" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1070" y="160" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="334" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="333">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="335" value="player&lt;div&gt;icon2&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="333">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="336" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1070" y="220" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="337" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="336">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="338" value="player&lt;div&gt;icon4&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="336">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="339" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="880" y="160" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="340" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="339">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="341" value="player&lt;div&gt;icon1&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="339">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="342" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="880" y="220" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="343" value="Player Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="342">
+                    <mxGeometry width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="344" value="player&lt;div&gt;icon3&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="342">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="350" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="160" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="351" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="350">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="352" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="350">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="386" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="350">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="356" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="220" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="357" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="356">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="358" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="356">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="387" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="356">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="359" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="280" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="360" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="359">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="361" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="359">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="388" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="359">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="362" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="340" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="363" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="362">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="364" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="362">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="399" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="362">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="365" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="400" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="366" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="365">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="367" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="365">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="400" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="365">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="368" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="460" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="369" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="368">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="370" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="368">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="401" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="368">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="371" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="520" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="372" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="371">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="373" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="371">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="402" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="371">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="374" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="580" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="375" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="374">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="376" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="374">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="403" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="374">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="377" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="640" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="378" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="377">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="379" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="377">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="404" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="377">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="380" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="700" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="381" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="380">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="382" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="380">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="405" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="380">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="383" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="1280" y="760" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="384" value="item Name" style="whiteSpace=wrap;html=1;" vertex="1" parent="383">
+                    <mxGeometry width="369.99999999999994" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="385" value="item&lt;div&gt;icon&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="383">
+                    <mxGeometry width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="406" value="受け取り" style="whiteSpace=wrap;html=1;" vertex="1" parent="383">
+                    <mxGeometry x="270" y="10" width="90" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

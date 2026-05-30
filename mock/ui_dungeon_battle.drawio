@@ -1,0 +1,385 @@
+<mxfile host="65bd71144e">
+    <diagram id="hR4UH58t83Jjj4qPO6dC" name="ページ1">
+        <mxGraphModel dx="1110" dy="797" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="none" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="239" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="410" height="880" as="geometry"/>
+                </mxCell>
+                <mxCell id="56" value="" style="edgeStyle=none;html=1;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="590" y="940" as="sourcePoint"/>
+                        <mxPoint x="590" y="940" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="57" value="" style="edgeStyle=none;html=1;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="530" y="940" as="sourcePoint"/>
+                        <mxPoint x="530" y="940" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="240" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="40" width="410" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="241" value="Setting" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="395" y="40" width="55" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="243" value="Gold : xxx" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="270" y="50" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="245" value="はじまりの街" style="whiteSpace=wrap;html=1;strokeColor=none;strokeWidth=6;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="50" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="246" value="Ver : x.xx" style="whiteSpace=wrap;html=1;strokeColor=none;strokeWidth=6;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="50" width="110" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="254" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="100" width="390" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="255" value="Monster&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="110" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="262" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="190" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="263" style="edgeStyle=none;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.625;entryY=0.948;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="310" y="190" as="sourcePoint"/>
+                        <mxPoint x="300" y="185.84000000000003" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="264" value="Monster&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="135" y="110" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="265" value="Monster&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="110" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="266" value="Monster&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="285" y="110" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="267" value="Monster&lt;br&gt;icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="110" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="268" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="135" y="190" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="269" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="210" y="190" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="270" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="285" y="190" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="271" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="190" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="277" value="" style="whiteSpace=wrap;html=1;fillColor=#6d8764;fontColor=#ffffff;strokeColor=#3A5431;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="230" width="90" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="281" value="Icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="240" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="282" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="320" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="284" value="MP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="340" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="285" value="Exp Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="360" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="286" value="Jobexp bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="380" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="287" value="ATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="400" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="288" value="DEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="420" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="289" value="MATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="440" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="290" value="MDEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="460" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="291" value="SPD : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="480" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="292" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="150" y="230" width="90" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="293" value="Icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="240" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="294" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="320" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="295" value="MP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="340" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="296" value="Exp Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="360" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="297" value="Jobexp bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="380" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="298" value="ATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="400" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="299" value="DEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="420" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="300" value="MATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="440" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="301" value="MDEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="460" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="302" value="SPD : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="480" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="303" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="230" width="90" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="304" value="Icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="240" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="305" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="320" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="306" value="MP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="340" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="307" value="Exp Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="360" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="308" value="Jobexp bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="380" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="309" value="ATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="400" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="310" value="DEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="420" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="311" value="MATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="440" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="312" value="MDEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="460" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="313" value="SPD : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="260" y="480" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="314" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="350" y="230" width="90" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="315" value="Icon" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="240" width="70" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="316" value="HP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="320" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="317" value="MP Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="340" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="318" value="Exp Bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="360" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="319" value="Jobexp bar" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="380" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="320" value="ATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="400" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="321" value="DEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="420" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="322" value="MATK : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="440" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="323" value="MDEF : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="460" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="324" value="SPD : x" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="360" y="480" width="70" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="325" value="" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="520" width="390" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="332" value="スキル タブ" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="520" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="337" value="バックパック タブ" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="180" y="520" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="338" value="インフォ タブ" style="whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="520" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="353" value="" style="group" parent="1" vertex="1" connectable="0">
+                    <mxGeometry x="50" y="860" width="390" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="354" value="Status" style="rounded=0;whiteSpace=wrap;html=1;" parent="353" vertex="1">
+                    <mxGeometry width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="355" value="Guild" style="rounded=0;whiteSpace=wrap;html=1;" parent="353" vertex="1">
+                    <mxGeometry x="80" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="356" value="Dungeon" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" parent="353" vertex="1">
+                    <mxGeometry x="160" width="70" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="357" value="Shop" style="rounded=0;whiteSpace=wrap;html=1;" parent="353" vertex="1">
+                    <mxGeometry x="230" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="358" value="Library" style="rounded=0;whiteSpace=wrap;html=1;" parent="353" vertex="1">
+                    <mxGeometry x="310" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="394" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="480" y="585" width="390" height="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="395" value="スキル タブ" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="480" y="585" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="396" value="バックパック タブ" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="610" y="585" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="397" value="インフォ タブ" style="whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="1">
+                    <mxGeometry x="740" y="585" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="434" value="自動戦闘" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="790" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="435" value="攻撃" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="185" y="790" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="436" value="逃げる" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="320" y="790" width="120" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="437" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="480" y="310" width="390" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="390" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry width="390" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="391" value="スキル タブ" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="392" value="バックパック タブ" style="whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="437">
+                    <mxGeometry x="130" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="393" value="インフォ タブ" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="260" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="400" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="20" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="401" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="80" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="402" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="140" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="403" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="200" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="404" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="260" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="405" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="320" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="406" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="20" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="407" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="80" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="408" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="140" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="409" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="200" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="410" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="260" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="411" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="320" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="412" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="20" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="413" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="80" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="414" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="140" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="415" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="200" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="416" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="260" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="417" value="item" style="whiteSpace=wrap;html=1;" vertex="1" parent="437">
+                    <mxGeometry x="320" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="438" value="" style="group" vertex="1" connectable="0" parent="1">
+                    <mxGeometry x="480" y="40" width="390" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="386" value="" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry width="390" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="387" value="スキル タブ" style="whiteSpace=wrap;html=1;fillColor=#60a917;fontColor=#ffffff;strokeColor=#2D7600;" vertex="1" parent="438">
+                    <mxGeometry width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="388" value="バックパック タブ" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="130" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="389" value="インフォ タブ" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="260" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="424" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Skill Name&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;Description&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="10" y="50" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="425" value="icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="10" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="426" value="Button" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="330" y="50" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="427" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Skill Name&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;Description&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="10" y="110" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="428" value="icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="10" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="429" value="Button" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="330" y="110" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="430" value="&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Skill Name&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;Description&lt;/div&gt;" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="10" y="170" width="370" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="431" value="icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="10" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="432" value="Button" style="whiteSpace=wrap;html=1;" vertex="1" parent="438">
+                    <mxGeometry x="330" y="170" width="50" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="439" value="&lt;div&gt;Selected&lt;/div&gt;Monster Icon" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="640" width="80" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="440" value="drop item ,, ex" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="580" y="637.5" width="270" height="85" as="geometry"/>
+                </mxCell>
+                <mxCell id="442" value="Monster Name" style="whiteSpace=wrap;html=1;strokeColor=none;strokeWidth=6;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="730" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="443" value="Monster Status" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="490" y="772.5" width="370" height="95" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
