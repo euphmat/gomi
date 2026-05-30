@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは「ショップ（お店）」画面を作って表示するためのファイルです。
+ * 現在は準備中の仮の画面が表示されます。
+ *
  * Shop Page (Placeholder)
  */
 export function renderShopPage() {

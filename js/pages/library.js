@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは「図鑑（ライブラリ）」画面を作って表示するためのファイルです。
+ * 現在は準備中の仮の画面が表示されます。
+ *
  * Library Page (Placeholder)
  */
 export function renderLibraryPage() {

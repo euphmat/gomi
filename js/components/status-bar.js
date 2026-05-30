@@ -1,4 +1,8 @@
 /**
+
+ * このファイルはHPやMP、経験値などの「ゲージ（プログレスバー）」を
+ * 描画するための部品を作るファイルです。
+ * 
  * Status Bar Component
  * 
  * Renders a horizontal progress bar (HP, MP, EXP, etc.)

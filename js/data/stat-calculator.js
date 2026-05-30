@@ -1,4 +1,8 @@
 /**
+
+ * このファイルはキャラクターの最終的な強さ（ステータス）を計算するファイルです。
+ * 基本ステータスに装備の能力を足し合わせる計算などを行います。
+ *
  * Stat Calculator
  *
  * Computes final character stats by combining:
@@ -10,7 +14,7 @@
  *   finalStat = baseStat + Σ(equipment.stats) + Σ(modifier.stats)
  */
 
-import { STAT_KEYS } from './mock-data.js';
+import { STAT_KEYS } from './constants.js';
 
 /**
  * Calculate the final stats for a character.

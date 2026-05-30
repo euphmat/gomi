@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは画面の一番上にある「ヘッダー」を作るファイルです。
+ * 現在の場所や所持金、設定ボタンを表示します。
+ * 
  * Header Component
  * 
  * Displays: Location Name | Version | Gold | Settings Button

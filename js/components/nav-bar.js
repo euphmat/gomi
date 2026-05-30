@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは画面の一番下にある「ナビゲーションバー（メニュー）」を作るファイルです。
+ * ここを押すと別の画面（ギルドやダンジョンなど）に移動できます。
+ * 
  * Bottom Navigation Bar Component
  * 
  * 5-tab navigation: Status | Guild | Dungeon | Shop | Library

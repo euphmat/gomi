@@ -1,14 +1,20 @@
+/**
+
+ * このファイルは装備を変更するためのポップアップ画面（モーダル）を
+ * 表示・操作するためのファイルです。
+ */
 import { GameDB } from '../data/database.js';
-import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/mock-data.js';
+import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 
 const ITEMS_PER_PAGE = 30;
 
 /**
  * Show the equipment modal for a specific character.
  * @param {Object} character - The character object
+ * @param {string} targetSlot - The specific equipment slot clicked (e.g. 'rightHand', 'armor')
  * @param {Function} onEquipmentChanged - Callback when equipment is changed
  */
-export async function showEquipmentModal(character, onEquipmentChanged) {
+export async function showEquipmentModal(character, targetSlot, onEquipmentChanged) {
   // Prevent duplicate modals
   if (document.getElementById('equipment-modal')) return;
 
@@ -21,7 +27,14 @@ export async function showEquipmentModal(character, onEquipmentChanged) {
   const equippedItems = allEquipment.filter(eq => equippedIds.includes(eq.id));
 
   // Combine them: currently equipped items + warehouse items
-  const availableItems = [...equippedItems, ...warehouseItems];
+  let availableItems = [...equippedItems, ...warehouseItems];
+
+  // Filter items matching the target slot
+  availableItems = availableItems.filter(item => {
+    // If target is accessory1/2, it can equip items with slot 'accessory'
+    if (targetSlot.startsWith('accessory') && item.slot === 'accessory') return true;
+    return item.slot === targetSlot;
+  });
 
   let currentPage = 1;
   const totalPages = Math.max(1, Math.ceil(availableItems.length / ITEMS_PER_PAGE));
@@ -207,7 +220,7 @@ export async function showEquipmentModal(character, onEquipmentChanged) {
     if (btnEquip && selectedItem) {
       btnEquip.addEventListener('click', async () => {
         // Equip item
-        character.equipment[selectedItem.slot] = selectedItem.id;
+        character.equipment[targetSlot] = selectedItem.id;
         await GameDB.putCharacter(character);
         overlay.remove();
         if (onEquipmentChanged) onEquipmentChanged();
@@ -218,7 +231,7 @@ export async function showEquipmentModal(character, onEquipmentChanged) {
     if (btnUnequip && selectedItem) {
       btnUnequip.addEventListener('click', async () => {
         // Unequip item
-        character.equipment[selectedItem.slot] = null;
+        character.equipment[targetSlot] = null;
         await GameDB.putCharacter(character);
         overlay.remove();
         if (onEquipmentChanged) onEquipmentChanged();

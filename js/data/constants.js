@@ -1,4 +1,8 @@
 /**
+
+ * このファイルはゲーム全体で共通して使う「設定値（定数）」をまとめたファイルです。
+ * 装備の場所や属性の名前などが定義されています。
+ *
  * Game Constants & Type Definitions
  *
  * Shared constants used across the game UI.

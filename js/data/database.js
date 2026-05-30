@@ -1,4 +1,8 @@
 /**
+
+ * このファイルはゲームのセーブデータを保存・読み込みするためのファイルです。
+ * ブラウザの中にある「IndexedDB」という機能を使ってデータを管理します。
+ *
  * GameDB — IndexedDB Wrapper for RPG Game Data
  *
  * Provides persistent, large-capacity storage using IndexedDB.

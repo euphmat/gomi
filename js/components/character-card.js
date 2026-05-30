@@ -1,4 +1,8 @@
 /**
+
+ * このファイルはキャラクターのステータス（HP、MP、レベル、装備など）を
+ * カード状に表示するための部品（コンポーネント）を作るファイルです。
+ *
  * Character Card Component
  *
  * Displays a single character's full status:
@@ -9,7 +13,7 @@
  * - Equipment (5 slots)
  */
 import { createStatusBar, BAR_COLORS } from './status-bar.js';
-import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/mock-data.js';
+import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 
 /**
  * Render a character card.
@@ -35,16 +39,25 @@ export function createCharacterCard(character, finalStats, equippedItems) {
     const label = slotLabelMap[slotKey] || slotKey;
     if (item) {
       return `
-        <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0">
-          <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded shrink-0
-                       border border-gray-700/40"><span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span></span>
+        <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 
+                    cursor-pointer hover:bg-gray-800/50 transition-colors eq-slot-clickable"
+             data-char-id="${character.id}" data-slot-key="${slotKey}">
+          <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded shrink-0 overflow-hidden
+                       border border-gray-700/40">
+            ${item.image 
+              ? `<img src="${item.image}" class="w-[90%] h-[90%] object-contain drop-shadow-sm" alt="${item.name}" />` 
+              : `<span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span>`
+            }
+          </span>
           <span class="text-[9px] text-gray-500 shrink-0 w-14 text-right">${label}</span>
           <span class="text-[10px] text-gray-300 truncate">${item.name}</span>
         </div>
       `;
     } else {
       return `
-        <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 opacity-40">
+        <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 opacity-60
+                    cursor-pointer hover:bg-gray-800/50 hover:opacity-100 transition-all eq-slot-clickable"
+             data-char-id="${character.id}" data-slot-key="${slotKey}">
           <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded text-[11px] shrink-0
                        border border-gray-700/40">—</span>
           <span class="text-[9px] text-gray-500 shrink-0 w-14 text-right">${label}</span>
@@ -73,9 +86,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
       <div class="flex gap-2">
         <!-- Character Icon -->
         <div class="w-14 h-14 rounded-lg flex items-center justify-center shrink-0
-                    shadow-md border border-white/10 overflow-hidden cursor-pointer
-                    hover:scale-105 hover:shadow-lg hover:border-blue-400/50 hover:shadow-blue-500/30 transition-all char-icon-clickable"
-             data-char-id="${character.id}"
+                    shadow-md border border-white/10 overflow-hidden"
              style="background: linear-gradient(135deg, ${iconGradient[0]}, ${iconGradient[1]});">
           <img src="${iconImage}" alt="${jobName}" class="w-full h-full object-contain" />
         </div>

@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは「ギルド」画面の中身を作って表示するためのファイルです。
+ * 現在は準備中の仮の画面が表示されます。
+ *
  * Guild Page (Placeholder)
  */
 export function renderGuildPage() {

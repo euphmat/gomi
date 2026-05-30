@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは「ステータス」画面の中身を作って表示するためのファイルです。
+ * データベースからキャラクターの情報を読み込み、パーティーの情報を一覧で表示する役割を持っています。
+ *
  * Status Page
  *
  * Displays a 2×2 grid of party member cards.
@@ -70,13 +74,14 @@ async function _loadStatusData(container) {
     `;
 
     // Bind equipment modal click events
-    const iconClickables = container.querySelectorAll('.char-icon-clickable');
-    iconClickables.forEach(el => {
+    const slotClickables = container.querySelectorAll('.eq-slot-clickable');
+    slotClickables.forEach(el => {
       el.addEventListener('click', () => {
         const charId = parseInt(el.getAttribute('data-char-id'), 10);
+        const slotKey = el.getAttribute('data-slot-key');
         const character = characters.find(c => c.id === charId);
-        if (character) {
-          showEquipmentModal(character, () => _loadStatusData(container));
+        if (character && slotKey) {
+          showEquipmentModal(character, slotKey, () => _loadStatusData(container));
         }
       });
     });

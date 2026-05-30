@@ -1,4 +1,8 @@
 /**
+
+ * このファイルは「ダンジョン」画面の中身を作って表示するためのファイルです。
+ * 現在はまだ準備中のため、仮の画面が表示されるようになっています。
+ *
  * Dungeon Page (Placeholder)
  */
 export function renderDungeonPage() {
