@@ -16,7 +16,7 @@ export function renderDungeonPage() {
           <h3 class="text-lg font-bold text-gray-100">スライムの森</h3>
           <p class="text-xs text-gray-400 mt-1">初心者向けの安全な森。スライムが多数生息している。</p>
         </div>
-        <button class="flex flex-col items-center justify-center w-16 h-16 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-bold transition-colors shadow-lg active:scale-95 cursor-pointer flex-shrink-0">
+        <button onclick="window.location.hash='/battle'" class="flex flex-col items-center justify-center w-16 h-16 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-bold transition-colors shadow-lg active:scale-95 cursor-pointer flex-shrink-0">
           <span class="material-symbols-outlined text-2xl mb-1">swords</span>
           <span class="text-[10px]">探索</span>
         </button>

@@ -29,6 +29,7 @@ import { renderGuildPage }   from './pages/guild.js';
 import { renderDungeonPage } from './pages/dungeon.js';
 import { renderShopPage }    from './pages/shop.js';
 import { renderLibraryPage } from './pages/library.js';
+import { renderBattlePage }  from './pages/battle.js';
 
 class App {
   constructor() {
@@ -86,7 +87,8 @@ class App {
       .register('/guild',   renderGuildPage)
       .register('/dungeon', renderDungeonPage)
       .register('/shop',    renderShopPage)
-      .register('/library', renderLibraryPage);
+      .register('/library', renderLibraryPage)
+      .register('/battle',  renderBattlePage);
 
     // ── 5. Navigation ──
     this.renderNav();
