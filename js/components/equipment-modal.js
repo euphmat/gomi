@@ -56,14 +56,20 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     if (!item) return '<div class="text-gray-500 text-xs italic flex h-full items-center justify-center">アイテムが選択されていません</div>';
     
     const statsHtml = STAT_KEYS.map(stat => {
-      const val = item.stats[stat.key] || 0;
-      if (val === 0) return '';
-      const colorClass = val > 0 ? 'text-green-400' : 'text-red-400';
-      const sign = val > 0 ? '+' : '';
+      const val = (item.stats && item.stats[stat.key]) || 0;
+      let colorClass = 'text-gray-500';
+      let sign = '';
+      if (val > 0) {
+        colorClass = 'text-green-400';
+        sign = '+';
+      } else if (val < 0) {
+        colorClass = 'text-red-400';
+      }
+
       return `
         <div class="flex justify-between items-center bg-gray-800/50 rounded px-2 py-1 border border-gray-700/50">
           <span class="text-[10px] text-gray-400">${stat.label}</span>
-          <span class="text-xs font-bold ${colorClass}">${sign}${val}</span>
+          <span class="text-[11px] font-bold ${colorClass}">${sign}${val}</span>
         </div>
       `;
     }).join('');
@@ -72,19 +78,13 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     const isEquipped = equippedIds.includes(item.id);
 
     return `
-      <div class="flex flex-col h-full gap-2">
-        <div class="flex items-center justify-between">
+      <div class="flex flex-col h-full gap-2 relative z-10">
+        <div class="flex items-center justify-between shrink-0">
           <span class="text-xs font-medium px-2 py-0.5 bg-blue-900/50 text-blue-300 rounded border border-blue-700/50">${slotLabel}</span>
           ${isEquipped ? '<span class="text-[10px] font-bold text-yellow-500 bg-yellow-900/40 px-1.5 py-0.5 rounded">装備中</span>' : ''}
         </div>
-        <div class="grid grid-cols-2 gap-1.5 mt-1 overflow-y-auto pr-1 custom-scrollbar">
-          ${statsHtml || '<div class="text-[10px] text-gray-500 col-span-2">ステータス補正なし</div>'}
-        </div>
-        <div class="mt-auto pt-2 flex gap-2">
-          ${isEquipped 
-            ? `<button id="btn-unequip" class="flex-1 py-2 bg-red-900/60 hover:bg-red-800/80 text-red-100 rounded-lg text-sm font-bold border border-red-700/50 transition-all active:scale-95 shadow-lg">外す</button>`
-            : `<button id="btn-equip" class="flex-1 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg text-sm font-bold border border-blue-400/30 transition-all active:scale-95 shadow-lg shadow-blue-900/50">装備する</button>`
-          }
+        <div class="grid grid-cols-2 gap-1 mt-1 overflow-y-auto pr-1 custom-scrollbar shrink-0 pb-1">
+          ${statsHtml}
         </div>
       </div>
     `;
@@ -151,21 +151,29 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
         </div>
 
         <!-- Selected Item Detail (Top Area) -->
-        <div class="p-3 bg-gray-800/30 border-b border-gray-700/50 flex gap-3 h-[140px] shrink-0">
-          <div class="flex flex-col items-center gap-2 w-1/3 shrink-0">
+        <div class="p-3 bg-gray-800/30 border-b border-gray-700/50 flex gap-3 h-[170px] shrink-0">
+          <div class="flex flex-col items-center gap-2 shrink-0" style="width: 76px;">
             <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-gray-600 shadow-inner 
                         flex items-center justify-center relative overflow-hidden group">
               <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               ${selectedItem ? 
                   (selectedItem.image 
-                    ? `<img src="${selectedItem.image}" class="w-12 h-12 object-contain drop-shadow-lg" />` 
+                    ? `<img src="${selectedItem.image}" class="w-14 h-14 object-contain drop-shadow-lg" />` 
                     : `<span class="material-symbols-outlined text-3xl text-gray-200 drop-shadow-lg">${selectedItem.icon}</span>`) 
                   : ''
               }
             </div>
-            <div class="text-[11px] font-bold text-center text-gray-200 leading-tight line-clamp-2 w-full px-1">
+            <div class="text-[11px] font-bold text-center text-gray-200 leading-tight line-clamp-2 w-full px-1 flex-1 flex items-center justify-center">
               ${selectedItem ? selectedItem.name : '---'}
             </div>
+            ${selectedItem ? `
+              <div class="w-full mt-auto">
+                ${(equippedIds.includes(selectedItem.id))
+                  ? `<button id="btn-unequip" class="w-full py-1.5 bg-red-900/60 hover:bg-red-800/80 text-red-100 rounded border border-red-700/50 transition-all active:scale-95 shadow text-[10px] font-bold">外す</button>`
+                  : `<button id="btn-equip" class="w-full py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded border border-blue-400/30 transition-all active:scale-95 shadow text-[10px] font-bold">装備する</button>`
+                }
+              </div>
+            ` : ''}
           </div>
           
           <div class="flex-1 bg-gray-900/60 rounded-xl border border-gray-700/50 p-2 relative overflow-hidden">
