@@ -26,25 +26,6 @@ export const MONSTERS = [
     drops: [
       { itemId: 'slime_jelly', rate: 0.5 }
     ]
-  },
-  {
-    id: 'goblin',
-    name: 'ゴブリン',
-    stats: {
-      hp: 25,
-      atk: 6,
-      def: 3,
-      matk: 0,
-      mdef: 2,
-      spd: 4
-    },
-    rewards: {
-      exp: 5,
-      gold: 12
-    },
-    drops: [
-      { itemId: 'goblin_fang', rate: 0.3 }
-    ]
   }
 ].map(item => ({ ...item, image: `./assets/monster/${item.id}.webp` }));
 
