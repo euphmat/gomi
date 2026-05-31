@@ -18,6 +18,34 @@
  */
 
 import { SEED_GAME_STATE, SEED_CHARACTERS, SEED_EQUIPMENT } from './seed-data.js';
+import { WEAPONS } from '../definitions/weapons.js';
+import { ARMORS } from '../definitions/armors.js';
+import { SHIELDS } from '../definitions/shields.js';
+import { ACCESSORIES } from '../definitions/accessories.js';
+
+const ALL_EQUIPMENT_DEFS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
+
+function _getBaseId(id) {
+  const lastUnderscore = id.lastIndexOf('_');
+  if (lastUnderscore > 0) {
+    const suffix = id.substring(lastUnderscore + 1);
+    // basic heuristic for our random suffixes or '_init1'
+    if (suffix.length >= 4 && /^[a-z0-9]+$/.test(suffix) && suffix !== 'ring') {
+      return id.substring(0, lastUnderscore);
+    }
+  }
+  return id;
+}
+
+function _mergeDef(item) {
+  if (!item) return item;
+  const baseId = item.baseId || _getBaseId(item.id);
+  const def = ALL_EQUIPMENT_DEFS.find(d => d.id === baseId);
+  if (def) {
+    return { ...def, ...item, stats: def.stats, elements: def.elements, ailments: def.ailments };
+  }
+  return item;
+}
 
 const DB_NAME = 'rpg_game_db';
 const DB_VERSION = 1;
@@ -185,16 +213,18 @@ class GameDatabase {
    * @param {string} id
    * @returns {Promise<Object|undefined>}
    */
-  getEquipment(id) {
-    return this._read('equipment', (store) => store.get(id));
+  async getEquipment(id) {
+    const item = await this._read('equipment', (store) => store.get(id));
+    return _mergeDef(item);
   }
 
   /**
    * Get all equipment items.
    * @returns {Promise<Array>}
    */
-  getAllEquipment() {
-    return this._read('equipment', (store) => store.getAll());
+  async getAllEquipment() {
+    const items = await this._read('equipment', (store) => store.getAll());
+    return items.map(_mergeDef);
   }
 
   /**

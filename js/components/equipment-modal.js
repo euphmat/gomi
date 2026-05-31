@@ -5,6 +5,7 @@
  */
 import { GameDB } from '../data/database.js';
 import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
+import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -239,10 +240,12 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
 
     // Determine selected item and equip state
     const selectedItem = selectedGroup ? selectedGroup.representative : null;
-    const isCurrentlyEquipped = selectedGroup ? selectedGroup.equippedCount > 0 : false;
+    const isCurrentlyEquipped = selectedGroup 
+      ? selectedGroup.instances.some(i => i.id === character.equipment[targetSlot]) 
+      : false;
     // Find the actual equipped instance for unequip
     const equippedInstance = selectedGroup 
-      ? selectedGroup.instances.find(i => equippedIds.includes(i.id)) 
+      ? selectedGroup.instances.find(i => i.id === character.equipment[targetSlot]) 
       : null;
     // Find a non-equipped instance for equip
     const freeInstance = selectedGroup 
@@ -348,8 +351,24 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     const btnEquip = document.getElementById('btn-equip');
     if (btnEquip && freeInstance) {
       btnEquip.addEventListener('click', async () => {
+        const equipmentMap = buildEquipmentMap(allEquipment);
+        const statsBefore = calcFinalStats(character, equipmentMap);
+
         // Equip item
         character.equipment[targetSlot] = freeInstance.id;
+
+        const statsAfter = calcFinalStats(character, equipmentMap);
+        const hpDiff = statsAfter.hp - statsBefore.hp;
+        if (hpDiff !== 0) {
+          character.hp.current = Math.max(1, character.hp.current + hpDiff);
+          character.hp.current = Math.min(character.hp.current, statsAfter.hp);
+        }
+        const mpDiff = statsAfter.mp - statsBefore.mp;
+        if (mpDiff !== 0) {
+          character.mp.current = Math.max(0, character.mp.current + mpDiff);
+          character.mp.current = Math.min(character.mp.current, statsAfter.mp);
+        }
+
         await GameDB.putCharacter(character);
         overlay.remove();
         if (onEquipmentChanged) onEquipmentChanged();
@@ -359,8 +378,24 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     const btnUnequip = document.getElementById('btn-unequip');
     if (btnUnequip && equippedInstance) {
       btnUnequip.addEventListener('click', async () => {
+        const equipmentMap = buildEquipmentMap(allEquipment);
+        const statsBefore = calcFinalStats(character, equipmentMap);
+
         // Unequip item
         character.equipment[targetSlot] = null;
+
+        const statsAfter = calcFinalStats(character, equipmentMap);
+        const hpDiff = statsAfter.hp - statsBefore.hp;
+        if (hpDiff !== 0) {
+          character.hp.current = Math.max(1, character.hp.current + hpDiff);
+          character.hp.current = Math.min(character.hp.current, statsAfter.hp);
+        }
+        const mpDiff = statsAfter.mp - statsBefore.mp;
+        if (mpDiff !== 0) {
+          character.mp.current = Math.max(0, character.mp.current + mpDiff);
+          character.mp.current = Math.min(character.mp.current, statsAfter.mp);
+        }
+
         await GameDB.putCharacter(character);
         overlay.remove();
         if (onEquipmentChanged) onEquipmentChanged();

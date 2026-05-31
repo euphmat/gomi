@@ -1,5 +1,6 @@
 import { GameDB } from '../../data/database.js';
 import { createStatusBar, BAR_COLORS } from '../../components/status-bar.js';
+import { calcFinalStats, buildEquipmentMap } from '../../data/stat-calculator.js';
 
 export function renderInnTab() {
   const container = document.createElement('div');
@@ -36,19 +37,26 @@ export function renderInnTab() {
   let currentParty = [];
 
   const renderStatus = async () => {
-    currentParty = await GameDB.getAllCharacters();
+    const rawParty = await GameDB.getAllCharacters();
+    const rawEquip = await GameDB.getAllEquipment();
+    const equipMap = buildEquipmentMap(rawEquip);
+    currentParty = rawParty;
     statusContainer.innerHTML = '';
     currentCost = 0;
     
     currentParty.forEach(char => {
+      const stats = calcFinalStats(char, equipMap);
+      const trueMaxHp = stats.hp || char.hp.max;
+      const trueMaxMp = stats.mp || char.mp.max;
+
       const isDead = char.hp.current <= 0;
-      const needsHeal = char.hp.current < char.hp.max || char.mp.current < char.mp.max || isDead;
+      const needsHeal = char.hp.current < trueMaxHp || char.mp.current < trueMaxMp || isDead;
       
       if (needsHeal) {
         currentCost += (char.level || 1);
       }
 
-      const isLowHp = char.hp.current / char.hp.max < 0.3;
+      const isLowHp = char.hp.current / trueMaxHp < 0.3;
       const statusIcon = isDead 
         ? `<span class="material-symbols-outlined text-gray-500 text-sm" style="font-variation-settings: 'FILL' 1">skull</span>` 
         : (needsHeal ? `<span class="material-symbols-outlined text-yellow-500 text-sm" style="font-variation-settings: 'FILL' 1">local_hospital</span>` : `<span class="material-symbols-outlined text-green-400 text-sm" style="font-variation-settings: 'FILL' 1">check_circle</span>`);
@@ -66,8 +74,8 @@ export function renderInnTab() {
           <div class="flex justify-between items-center mb-1">
             <span class="text-[12px] font-bold text-gray-200 flex items-center gap-1">${char.name} ${statusIcon}</span>
           </div>
-          ${createStatusBar({ label: 'HP', current: Math.floor(char.hp.current), max: char.hp.max, ...BAR_COLORS.hp })}
-          ${createStatusBar({ label: 'MP', current: Math.floor(char.mp.current), max: char.mp.max, ...BAR_COLORS.mp })}
+          ${createStatusBar({ label: 'HP', current: Math.floor(char.hp.current), max: trueMaxHp, ...BAR_COLORS.hp })}
+          ${createStatusBar({ label: 'MP', current: Math.floor(char.mp.current), max: trueMaxMp, ...BAR_COLORS.mp })}
         </div>
       `;
       statusContainer.appendChild(row);
@@ -99,12 +107,19 @@ export function renderInnTab() {
     const goldDisplay = document.getElementById('header-gold-display');
     if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
 
+    const rawEquip = await GameDB.getAllEquipment();
+    const equipMap = buildEquipmentMap(rawEquip);
+
     // Heal party
     for (const char of currentParty) {
+      const stats = calcFinalStats(char, equipMap);
+      const trueMaxHp = stats.hp || char.hp.max;
+      const trueMaxMp = stats.mp || char.mp.max;
+
       const isDead = char.hp.current <= 0;
-      if (char.hp.current < char.hp.max || char.mp.current < char.mp.max || isDead) {
-        char.hp.current = char.hp.max;
-        char.mp.current = char.mp.max;
+      if (char.hp.current < trueMaxHp || char.mp.current < trueMaxMp || isDead) {
+        char.hp.current = trueMaxHp;
+        char.mp.current = trueMaxMp;
         char.isDead = false; 
         await GameDB.putCharacter(char);
       }

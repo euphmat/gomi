@@ -81,7 +81,7 @@ export function showDetailedStatusModal(character, finalStats) {
     `;
   };
 
-  const statsHTML = STAT_KEYS.map(s => `
+  const statsHTML = STAT_KEYS.filter(s => s.key !== 'hp' && s.key !== 'mp').map(s => `
     <div class="flex flex-col items-center justify-center bg-gray-800/60 rounded px-1 py-1
                 border border-gray-700/40 min-w-0 flex-1">
       <span class="text-[8px] text-gray-500 leading-none font-medium mb-0.5">${s.label}</span>
@@ -114,8 +114,8 @@ export function showDetailedStatusModal(character, finalStats) {
         <!-- Bars -->
         <div class="flex flex-col gap-1">
           <div class="grid grid-cols-2 gap-1.5">
-            ${createStatusBar({ label: 'HP', current: character.hp.current, max: character.hp.max, ...BAR_COLORS.hp })}
-            ${createStatusBar({ label: 'MP', current: character.mp.current, max: character.mp.max, ...BAR_COLORS.mp })}
+            ${createStatusBar({ label: 'HP', current: character.hp.current, max: finalStats.hp || character.hp.max, ...BAR_COLORS.hp })}
+            ${createStatusBar({ label: 'MP', current: character.mp.current, max: finalStats.mp || character.mp.max, ...BAR_COLORS.mp })}
           </div>
           <div class="grid grid-cols-2 gap-1.5">
             ${createStatusBar({ label: 'EXP', current: character.exp.current, max: character.exp.max, ...BAR_COLORS.exp })}

@@ -20,6 +20,8 @@ export const EQUIPMENT_SLOTS = [
 
 // ─── Stat Definitions ────────────────────────────────────
 export const STAT_KEYS = [
+  { key: 'hp',   label: 'HP',   fullLabel: '最大HP' },
+  { key: 'mp',   label: 'MP',   fullLabel: '最大MP' },
   { key: 'atk',  label: 'ATK',  fullLabel: '物理攻撃' },
   { key: 'def',  label: 'DEF',  fullLabel: '物理防御' },
   { key: 'matk', label: 'MAT', fullLabel: '魔法攻撃' },

@@ -68,7 +68,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
   }).join('');
 
   // ── Stat Badges ──
-  const statsHTML = STAT_KEYS.map(s => `
+  const statsHTML = STAT_KEYS.filter(s => s.key !== 'hp' && s.key !== 'mp').map(s => `
     <div class="flex flex-col items-center justify-center bg-gray-800/60 rounded px-1 py-0.5
                 border border-gray-700/40 min-w-0 flex-1">
       <span class="text-[7px] text-gray-500 leading-none font-medium">${s.label}</span>
@@ -114,8 +114,8 @@ export function createCharacterCard(character, finalStats, equippedItems) {
 
       <!-- Row 2: HP / MP Bars -->
       <div class="grid grid-cols-2 gap-1">
-        ${createStatusBar({ label: 'HP', current: hp.current, max: hp.max, ...BAR_COLORS.hp })}
-        ${createStatusBar({ label: 'MP', current: mp.current, max: mp.max, ...BAR_COLORS.mp })}
+        ${createStatusBar({ label: 'HP', current: hp.current, max: finalStats.hp || hp.max, ...BAR_COLORS.hp })}
+        ${createStatusBar({ label: 'MP', current: mp.current, max: finalStats.mp || mp.max, ...BAR_COLORS.mp })}
       </div>
 
       <!-- Row 3: EXP / JP Bars -->

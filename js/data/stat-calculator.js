@@ -28,6 +28,8 @@ export function calcFinalStats(character, equipmentMap) {
 
   // Start with base stats
   const result = {
+    hp: (character.hp && character.hp.max) || 0,
+    mp: (character.mp && character.mp.max) || 0,
     attackElements: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
     attackAilments: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
     elementResist: character.elementResist ? { ...character.elementResist } : { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
@@ -35,6 +37,7 @@ export function calcFinalStats(character, equipmentMap) {
   };
   
   for (const key of statKeys) {
+    if (key === 'hp' || key === 'mp') continue;
     result[key] = character.baseStats[key] || 0;
   }
 

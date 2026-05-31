@@ -65,6 +65,13 @@ class BattleManager {
 
     this.party = rawParty.map((char, index) => {
       const stats = calcFinalStats(char, this.equipMap);
+      
+      // Cap current HP/MP to true max in case equipment was changed
+      const trueMaxHp = stats.hp || char.hp.max;
+      const trueMaxMp = stats.mp || char.mp.max;
+      char.hp.current = Math.min(char.hp.current, trueMaxHp);
+      char.mp.current = Math.min(char.mp.current, trueMaxMp);
+
       return {
         ...char,
         stats,
@@ -79,7 +86,7 @@ class BattleManager {
 
     this.enemies = this.floorDef.monsters.map((monsterId, i) => {
       const monsterDef = MONSTERS.find(m => m.id === monsterId);
-      const baseStats = monsterDef.stats || {};
+      const baseStats = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0, ...(monsterDef.stats || {}) };
       const attackElements = monsterDef.attackElements || { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
       const attackAilments = monsterDef.attackAilments || { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 };
       const elementResist = monsterDef.elementResist || { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
@@ -158,8 +165,8 @@ class BattleManager {
             <div class="flex items-center gap-0.5">
               <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
               <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-                <div class="bg-red-600 h-full transition-all duration-300" style="width: ${(p.hp.current / p.hp.max) * 100}%"></div>
-                <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.hp.current)}/${p.hp.max}</div>
+                <div class="bg-red-600 h-full transition-all duration-300" style="width: ${(p.hp.current / (p.stats.hp || p.hp.max)) * 100}%"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.hp.current)}/${p.stats.hp || p.hp.max}</div>
               </div>
             </div>
             <div class="flex items-center gap-0.5">
@@ -293,8 +300,9 @@ class BattleManager {
 
       const hpBar = el.querySelector('.bg-red-600');
       if (hpBar) {
-        hpBar.style.width = `${(p.hp.current / p.hp.max) * 100}%`;
-        hpBar.nextElementSibling.textContent = `${Math.floor(p.hp.current)}/${p.hp.max}`;
+        const trueMaxHp = p.stats.hp || p.hp.max;
+        hpBar.style.width = `${(p.hp.current / trueMaxHp) * 100}%`;
+        hpBar.nextElementSibling.textContent = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
       }
 
       const mpBar = el.querySelector('.bg-blue-600');
@@ -781,7 +789,7 @@ class BattleManager {
       this.showActionName(attacker.elementId, '攻撃', 'text-red-300', 'border-red-500/50');
     }
 
-    let damage = Math.max(1, attacker.stats.atk - Math.floor(defender.stats.def / 2));
+    let damage = Math.max(1, (attacker.stats.atk || 0) - Math.floor((defender.stats.def || 0) / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
     
     // --- 属性ダメージ計算 (比例方式) ---

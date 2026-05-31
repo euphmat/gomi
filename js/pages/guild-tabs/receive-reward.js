@@ -131,8 +131,8 @@ export async function renderReceiveRewardTab() {
             const currentQuantity = existingItem ? existingItem.quantity : 0;
             await GameDB.putInventoryItem({ ...itemDef, quantity: currentQuantity + 1 });
           } else {
-            const uniqueId = `eq_${Date.now()}_${Math.floor(Math.random()*10000)}`;
-            const newItem = { ...itemDef, uniqueId, isEquipped: false };
+            const uniqueId = `${itemDef.id}_${Math.floor(Math.random()*100000000).toString(36)}`;
+            const newItem = { ...itemDef, id: uniqueId, baseId: itemDef.id, isEquipped: false };
             await GameDB.putEquipment(newItem);
           }
         }
