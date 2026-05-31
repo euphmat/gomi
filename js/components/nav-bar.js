@@ -9,12 +9,11 @@
  * Highlights the active tab based on current route.
  */
 
-/** @type {Array<{id: string, label: string, icon: string, path: string}>} */
 const NAV_TABS = [
   { id: 'status',  label: 'Status',  icon: 'person',     path: '/status' },
   { id: 'guild',   label: 'Guild',   icon: 'groups',     path: '/guild' },
   { id: 'dungeon', label: 'Dungeon', icon: 'castle',     path: '/dungeon' },
-  { id: 'shop',    label: 'Shop',    icon: 'storefront', path: '/shop' },
+  { id: 'forge',   label: '鍛冶屋',   icon: 'handyman',   path: '/forge' },
   { id: 'library', label: 'Library', icon: 'menu_book',  path: '/library' },
 ];
 

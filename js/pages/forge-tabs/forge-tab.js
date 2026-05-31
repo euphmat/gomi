@@ -1,9 +1,16 @@
 import { GameDB } from '../../data/database.js';
+import { WEAPONS } from '../../definitions/weapons.js';
+import { ARMORS } from '../../definitions/armors.js';
+import { SHIELDS } from '../../definitions/shields.js';
+import { ACCESSORIES } from '../../definitions/accessories.js';
+import { MATERIALS } from '../../definitions/materials.js';
+
+const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
 /**
- * ショップ（購入）タブ
+ * 鍛冶屋（作成）タブ
  */
-export function renderShopTab() {
+export function renderForgeTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full animate-fade-in overflow-hidden';
 
@@ -77,7 +84,7 @@ export function renderShopTab() {
         });
 
     if (filteredItems.length === 0) {
-      gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">商品がありません</div>`;
+      gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">作成可能なアイテムがありません</div>`;
       return;
     }
 
@@ -91,7 +98,13 @@ export function renderShopTab() {
         slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
       }
       
-      slot.onclick = () => alert(`【${item.name}】\n価格: ${item.price || '非売品'}\n購入画面は準備中です。`);
+      slot.onclick = () => {
+        const costStr = item.recipe.materials.map(m => {
+          const mDef = ALL_DEFINITIONS.find(d => d.id === m.id);
+          return `${mDef ? mDef.name : m.id} x${m.amount}`;
+        }).join('\\n');
+        alert(`【${item.name}】\n必要素材:\n${costStr}\n作成費用: ${item.recipe.price || 0}G\n\n作成機能は準備中です。`);
+      };
       gridContainer.appendChild(slot);
     });
   };
@@ -100,15 +113,17 @@ export function renderShopTab() {
   container.appendChild(gridContainer);
 
   renderFilters();
-  GameDB.getAllEquipment().then(eq => {
-    items = eq;
-    if (items.length > 0 && items.length < 30) {
-        const dummyItems = [];
-        for(let i=0; i<30; i++) {
-            dummyItems.push({...items[i % items.length], id: items[i % items.length].id + '_' + i});
-        }
-        items = dummyItems;
-    }
+  
+  GameDB.getAllInventory().then(inventory => {
+    const invMap = {};
+    inventory.forEach(item => invMap[item.id] = item.quantity || 0);
+
+    const craftableItems = ALL_DEFINITIONS.filter(def => {
+      if (!def.recipe) return false;
+      return def.recipe.materials.every(mat => (invMap[mat.id] || 0) >= mat.amount);
+    });
+
+    items = craftableItems;
     renderGrid();
   });
 
