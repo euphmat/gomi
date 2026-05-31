@@ -49,7 +49,7 @@ const BASE_TEMPLATE = {
   elementResist: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0, },
   ailmentResist: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, },
   iconImage: './assets/job/job_norvice.webp',
-  jobSkills: { norvice: { first_aid: 1 } },
+  jobSkills: { norvice: {} },
 };
 
 export const SEED_CHARACTERS = [

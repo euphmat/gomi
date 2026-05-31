@@ -713,8 +713,16 @@ class BattleManager {
   startAtbLoop() {
     let totalSpd = 0;
     let entityCount = 0;
-    this.party.forEach(p => { totalSpd += p.stats.spd; entityCount++; });
-    this.enemies.forEach(e => { totalSpd += e.stats.spd; entityCount++; });
+    this.party.forEach(p => { 
+      const spd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+      totalSpd += spd; 
+      entityCount++; 
+    });
+    this.enemies.forEach(e => { 
+      const spd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+      totalSpd += spd; 
+      entityCount++; 
+    });
     const avgSpd = entityCount > 0 ? (totalSpd / entityCount) : 1;
     
     const BASE_TICK_RATE = 1000 / 70;
@@ -726,7 +734,8 @@ class BattleManager {
       
       this.party.forEach(p => {
         if (p.isDead) return;
-        const speedRatio = p.stats.spd / avgSpd;
+        const spd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+        const speedRatio = spd / avgSpd;
         p.atb += speedRatio * BASE_TICK_RATE;
         if (p.atb >= 1000) {
           p.atb = 1000;
@@ -739,7 +748,8 @@ class BattleManager {
       
       this.enemies.forEach(e => {
         if (e.isDead) return;
-        const speedRatio = e.stats.spd / avgSpd;
+        const spd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+        const speedRatio = spd / avgSpd;
         e.atb += speedRatio * BASE_TICK_RATE;
         if (e.atb >= 1000) {
           e.atb = 1000;
@@ -993,6 +1003,11 @@ class BattleManager {
   async processEnemyDeath(enemy) {
     let drops = [];
     
+    // Count kill
+    const killCounts = await GameDB.getGameState('killCounts') || {};
+    killCounts[enemy.id] = (killCounts[enemy.id] || 0) + 1;
+    await GameDB.setGameState('killCounts', killCounts);
+
     // Add Gold
     const gold = enemy.rewards.gold || 0;
     if (gold > 0) {
