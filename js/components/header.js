@@ -18,7 +18,7 @@ export function createHeader(gameState) {
     <header id="game-header" class="shrink-0 flex items-center gap-2 px-3 py-2.5 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/40">
       <!-- Location & Version -->
       <div class="flex items-center gap-1.5 flex-1 min-w-0">
-        <span class="text-sm font-bold text-gray-100 truncate">${gameState.location}</span>
+        <span id="header-location" class="text-sm font-bold text-gray-100 truncate">${gameState.location}</span>
         <span class="text-[10px] text-gray-500 whitespace-nowrap">Ver : ${gameState.version}</span>
       </div>
 

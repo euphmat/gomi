@@ -92,7 +92,17 @@ class App {
 
     // ── 5. Navigation ──
     this.renderNav();
-    window.addEventListener('routechange', () => this.renderNav());
+    window.addEventListener('routechange', (e) => {
+      this.renderNav();
+      
+      // Reset location text if we leave battle
+      if (window.location.hash !== '#/battle') {
+        const headerLoc = document.getElementById('header-location');
+        if (headerLoc) {
+          headerLoc.textContent = 'はじまりの街';
+        }
+      }
+    });
 
     // ── 6. Settings Button (Data Reset) ──
     this.initSettingsButton();

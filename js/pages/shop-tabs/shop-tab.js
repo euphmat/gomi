@@ -60,7 +60,7 @@ export function renderShopTab() {
 
   // グリッド領域
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-7 gap-2 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 px-2 flex-1';
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';

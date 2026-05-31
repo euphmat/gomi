@@ -8,18 +8,25 @@ import { JOBS } from '../jobs/index.js';
 class BattleManager {
   constructor(container) {
     this.container = container;
+    this.dungeonDef = null;
+    this.currentFloorNum = 1;
     this.party = [];
     this.enemies = [];
-    
     this.activeCharacter = null;
-    this.atbLoop = null;
-    
+    this.selectedEnemyTarget = null;
+    this.selectedPartyMember = null;
+    this.autoBattleMode = 'none'; // 'none', 'floor', 'dungeon'
+    this.equipMap = {};
+    this.isDungeonClear = false;
+
     this.elements = {
       enemyArea: container.querySelector('#enemy-area'),
       partyArea: container.querySelector('#party-area'),
       commandBlocker: container.querySelector('#command-blocker'),
       btnAttack: container.querySelector('#btn-attack'),
       btnRun: container.querySelector('#btn-run'),
+      btnAutoFloor: container.querySelector('#btn-auto-floor'),
+      btnAutoDungeon: container.querySelector('#btn-auto-dungeon'),
       resultOverlay: container.querySelector('#battle-result'),
       resultTitle: container.querySelector('#result-title'),
       resultText: container.querySelector('#result-text'),
@@ -30,8 +37,11 @@ class BattleManager {
       tabContent: container.querySelector('#tab-content')
     };
     
-    this.currentTab = 'skill';
-    this.selectedEnemyTarget = null;
+    this.elements.btnAttack.disabled = false;
+    this.elements.btnRun.disabled = false;
+    this.elements.btnAutoFloor.disabled = false;
+    this.elements.btnAutoDungeon.disabled = false;
+    this.autoSkillStates = {};
   }
   
   async init() {
@@ -45,6 +55,12 @@ class BattleManager {
     this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId);
     this.floorDef = this.dungeonDef.floors.find(f => f.level === this.currentFloorNum) || this.dungeonDef.floors[this.dungeonDef.floors.length - 1];
 
+    // Update Header Location
+    const headerLoc = document.getElementById('header-location');
+    if (headerLoc && this.dungeonDef) {
+      headerLoc.textContent = `${this.dungeonDef.name} ${this.currentFloorNum}F`;
+    }
+
     this.party = rawParty.map((char, index) => {
       const stats = calcFinalStats(char, this.equipMap);
       return {
@@ -56,6 +72,8 @@ class BattleManager {
         elementId: `party-${index}`
       };
     });
+    
+    this.selectedPartyMember = this.party[0];
 
     this.enemies = this.floorDef.monsters.map((monsterId, i) => {
       const monsterDef = MONSTERS.find(m => m.id === monsterId);
@@ -82,85 +100,107 @@ class BattleManager {
     }
 
     this.elements.enemyArea.innerHTML = this.enemies.map(e => `
-      <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" data-id="${e.uniqueId}">
-        <div class="relative w-16 h-16 bg-gray-800 rounded-lg border-2 ${this.selectedEnemyTarget === e ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
+      <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" data-id="${e.uniqueId}">
+        <div class="relative w-full aspect-square bg-gray-800 rounded-lg border-2 ${this.selectedEnemyTarget === e ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
           <img src="${e.image}" class="w-full h-full object-contain p-1 drop-shadow-md">
         </div>
-        <div class="w-16 bg-gray-900 h-2 rounded overflow-hidden shadow-inner ${e.isDead ? 'opacity-0' : ''}">
+        <div class="w-full bg-gray-900 h-2 rounded overflow-hidden shadow-inner shrink-0 ${e.isDead ? 'opacity-0' : ''}">
           <div class="bg-red-500 h-full transition-all duration-300" style="width: ${(e.currentHp / e.maxHp) * 100}%"></div>
         </div>
-        <div class="w-16 bg-gray-900 h-1 rounded overflow-hidden mt-0.5 shadow-inner ${e.isDead ? 'opacity-0' : ''}">
+        <div class="w-full bg-gray-900 h-1 rounded overflow-hidden mt-0.5 shadow-inner shrink-0 ${e.isDead ? 'opacity-0' : ''}">
           <div id="${e.elementId}-atb" class="bg-orange-500 h-full" style="width: ${e.atb / 10}%"></div>
         </div>
       </div>
     `).join('');
 
-    this.elements.partyArea.innerHTML = this.party.map(p => `
-      <div id="${p.elementId}" class="relative flex flex-col bg-gray-800/80 rounded border ${this.activeCharacter === p ? 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]' : 'border-gray-700'} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all'}">
-        <div class="flex flex-col mb-1.5 w-full">
-          <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
-            <!-- ICON -->
-            <div class="w-10 h-10 rounded border border-gray-600 overflow-hidden shadow-md bg-gray-800 shrink-0">
-              <img src="${p.iconImage}" class="w-full h-full object-cover">
+    if (this.elements.partyArea.children.length === 0) {
+      this.elements.partyArea.innerHTML = this.party.map(p => {
+        let borderClass = 'border-gray-700';
+        if (this.activeCharacter === p) {
+          borderClass = 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]';
+        } else if (this.isAutoBattle && this.selectedPartyMember === p) {
+          borderClass = 'border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]';
+        }
+        return `
+        <div id="${p.elementId}" class="party-card relative flex flex-col bg-gray-800/80 rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all cursor-pointer hover:scale-[1.02]'}">
+          <div class="flex flex-col mb-1.5 w-full">
+            <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
+              <!-- ICON -->
+              <div class="w-10 h-10 rounded border border-gray-600 overflow-hidden shadow-md bg-gray-800 shrink-0">
+                <img src="${p.iconImage}" class="w-full h-full object-cover">
+              </div>
+              <!-- LV / JLV / SP -->
+              <div class="flex flex-col flex-1 text-[9px] text-gray-300 font-bold leading-tight justify-center gap-[2px]">
+                <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">LV:</span> <span class="${p.elementId}-lv text-gray-100">${p.level || 1}</span></div>
+                <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">JLV:</span> <span class="${p.elementId}-jlv text-gray-100">${p.jobLevel || 1}</span></div>
+                <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">SP:</span> <span class="${p.elementId}-sp text-gray-100">${p.sp || 0}</span></div>
+              </div>
             </div>
-            <!-- LV / JLV / SP -->
-            <div class="flex flex-col flex-1 text-[9px] text-gray-300 font-bold leading-tight justify-center gap-[2px]">
-              <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">LV:</span> <span class="${p.elementId}-lv text-gray-100">${p.level || 1}</span></div>
-              <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">JLV:</span> <span class="${p.elementId}-jlv text-gray-100">${p.jobLevel || 1}</span></div>
-              <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">SP:</span> <span class="${p.elementId}-sp text-gray-100">${p.sp || 0}</span></div>
-            </div>
-          </div>
-          <!-- Name & ATB -->
-          <div class="px-0.5">
-            <div class="text-[10px] font-bold text-gray-100 truncate w-full drop-shadow mb-0.5">${p.name}</div>
-            <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="flex flex-col gap-[3px] mb-1.5">
-          <div class="flex items-center gap-0.5">
-            <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
-            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div class="bg-red-600 h-full transition-all duration-300" style="width: ${(p.hp.current / p.hp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.hp.current)}/${p.hp.max}</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-0.5">
-            <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
-            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${(p.mp.current / p.mp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.mp.current)}/${p.mp.max}</div>
+            <!-- Name & ATB -->
+            <div class="px-0.5">
+              <div class="text-[10px] font-bold text-gray-100 truncate w-full drop-shadow mb-0.5">${p.name}</div>
+              <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+                <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%"></div>
+              </div>
             </div>
           </div>
-          <div class="flex items-center gap-0.5">
-            <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
-            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div class="bg-green-600 h-full transition-all duration-300" style="width: ${(p.exp.current / p.exp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.exp.current)}/${p.exp.max}</div>
+          
+          <div class="flex flex-col gap-[3px] mb-1.5">
+            <div class="flex items-center gap-0.5">
+              <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
+              <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+                <div class="bg-red-600 h-full transition-all duration-300" style="width: ${(p.hp.current / p.hp.max) * 100}%"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.hp.current)}/${p.hp.max}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5">
+              <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
+              <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+                <div class="bg-blue-600 h-full transition-all duration-300" style="width: ${(p.mp.current / p.mp.max) * 100}%"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.mp.current)}/${p.mp.max}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5">
+              <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
+              <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+                <div class="bg-green-600 h-full transition-all duration-300" style="width: ${(p.exp.current / p.exp.max) * 100}%"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.exp.current)}/${p.exp.max}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5">
+              <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
+              <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+                <div class="bg-purple-600 h-full transition-all duration-300" style="width: ${(p.jp.current / p.jp.max) * 100}%"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.jp.current)}/${p.jp.max}</div>
+              </div>
             </div>
           </div>
-          <div class="flex items-center gap-0.5">
-            <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
-            <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-              <div class="bg-purple-600 h-full transition-all duration-300" style="width: ${(p.jp.current / p.jp.max) * 100}%"></div>
-              <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.jp.current)}/${p.jp.max}</div>
-            </div>
-          </div>
-        </div>
 
-        <div class="flex flex-col gap-0 text-[11px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5">
-          <div class="flex justify-between items-center"><span>ATK</span><span class="text-gray-200 font-bold">${p.stats.atk}</span></div>
-          <div class="flex justify-between items-center"><span>DEF</span><span class="text-gray-200 font-bold">${p.stats.def}</span></div>
-          <div class="flex justify-between items-center"><span>MAT</span><span class="text-gray-200 font-bold">${p.stats.matk}</span></div>
-          <div class="flex justify-between items-center"><span>MDF</span><span class="text-gray-200 font-bold">${p.stats.mdef}</span></div>
-          <div class="flex justify-between items-center"><span>SPD</span><span class="text-gray-200 font-bold">${p.stats.spd}</span></div>
+          <div class="flex flex-col gap-0 text-[11px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5">
+            <div class="flex justify-between items-center"><span>ATK</span><span class="text-gray-200 font-bold">${p.stats.atk}</span></div>
+            <div class="flex justify-between items-center"><span>DEF</span><span class="text-gray-200 font-bold">${p.stats.def}</span></div>
+            <div class="flex justify-between items-center"><span>MAT</span><span class="text-gray-200 font-bold">${p.stats.matk}</span></div>
+            <div class="flex justify-between items-center"><span>MDF</span><span class="text-gray-200 font-bold">${p.stats.mdef}</span></div>
+            <div class="flex justify-between items-center"><span>SPD</span><span class="text-gray-200 font-bold">${p.stats.spd}</span></div>
+          </div>
         </div>
-      </div>
-    `).join('');
+        `;
+      }).join('');
 
-    if (this.activeCharacter) {
+      this.elements.partyArea.querySelectorAll('.party-card').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (!this.isAutoBattle) return;
+          const elementId = e.currentTarget.id;
+          const p = this.party.find(char => char.elementId === elementId);
+          if (p && !p.isDead) {
+            this.selectedPartyMember = p;
+            this.updateEntities();
+          }
+        });
+      });
+    }
+
+    if (this.activeCharacter || this.isAutoBattle) {
       this.elements.commandBlocker.classList.add('hidden');
     } else {
       this.elements.commandBlocker.classList.remove('hidden');
@@ -178,6 +218,8 @@ class BattleManager {
         }
       });
     });
+
+    this.updateEntities();
   }
 
   updateEntities() {
@@ -214,18 +256,21 @@ class BattleManager {
 
       if (this.activeCharacter === p) {
         el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        el.classList.remove('border-gray-700');
+        el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+      } else if (this.isAutoBattle && this.selectedPartyMember === p) {
+        el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+        el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
       } else {
-        el.classList.remove('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
         el.classList.add('border-gray-700');
       }
 
       if (p.isDead) {
         el.classList.add('opacity-40', 'grayscale');
-        el.classList.remove('transition-all');
+        el.classList.remove('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
       } else {
         el.classList.remove('opacity-40', 'grayscale');
-        el.classList.add('transition-all');
+        el.classList.add('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
       }
 
       const lvEl = el.querySelector(`.${p.elementId}-lv`);
@@ -271,7 +316,7 @@ class BattleManager {
       }
     });
 
-    if (this.activeCharacter) {
+    if (this.activeCharacter || this.isAutoBattle) {
       this.elements.commandBlocker.classList.add('hidden');
     } else {
       this.elements.commandBlocker.classList.remove('hidden');
@@ -281,14 +326,36 @@ class BattleManager {
     this.renderTabContent();
   }
   
+  get isAutoBattle() {
+    return this.autoBattleMode !== 'none';
+  }
+
   setupListeners() {
+    this.elements.btnAutoFloor.onclick = () => {
+      this.autoBattleMode = this.autoBattleMode === 'floor' ? 'none' : 'floor';
+      this.updateCommandUI();
+      
+      if (this.isAutoBattle && this.activeCharacter) {
+        this.processAutoBattle(this.activeCharacter);
+      }
+    };
+
+    this.elements.btnAutoDungeon.onclick = () => {
+      this.autoBattleMode = this.autoBattleMode === 'dungeon' ? 'none' : 'dungeon';
+      this.updateCommandUI();
+      
+      if (this.isAutoBattle && this.activeCharacter) {
+        this.processAutoBattle(this.activeCharacter);
+      }
+    };
+
     this.elements.btnRun.onclick = () => {
-      if (!this.activeCharacter) return;
+      if (!this.activeCharacter || this.isAutoBattle) return;
       this.endBattle(false, '逃げ出した！', false);
     };
 
     this.elements.btnAttack.onclick = () => {
-      if (!this.activeCharacter) return;
+      if (!this.activeCharacter || this.isAutoBattle) return;
       
       if (!this.selectedEnemyTarget || this.selectedEnemyTarget.isDead) {
         this.selectedEnemyTarget = this.enemies.find(e => !e.isDead);
@@ -331,6 +398,112 @@ class BattleManager {
 
     // 初期状態のタブスタイルを適用
     this.updateTabStyles();
+    this.updateCommandUI();
+  }
+
+  updateCommandUI() {
+    this.elements.btnAutoFloor.className = "flex-1 bg-blue-900 hover:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1";
+    this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回`;
+
+    this.elements.btnAutoDungeon.className = "flex-1 bg-purple-900 hover:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1";
+    this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回`;
+
+    if (this.autoBattleMode === 'floor') {
+      this.elements.btnAutoFloor.className = "flex-1 bg-blue-600 rounded-lg font-bold text-[10px] border-2 border-blue-300 flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(59,130,246,0.9)] text-white p-1 scale-105 z-10 animate-pulse";
+      this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">autorenew</span>階層周回中`;
+    } else if (this.autoBattleMode === 'dungeon') {
+      this.elements.btnAutoDungeon.className = "flex-1 bg-purple-600 rounded-lg font-bold text-[10px] border-2 border-purple-300 flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(168,85,247,0.9)] text-white p-1 scale-105 z-10 animate-pulse";
+      this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">all_inclusive</span>踏破周回中`;
+    }
+
+    if (this.isAutoBattle) {
+      this.elements.btnAttack.disabled = true;
+      this.elements.btnRun.disabled = true;
+      
+      this.elements.btnAttack.classList.add('opacity-50', 'grayscale', 'cursor-not-allowed');
+      this.elements.btnRun.classList.add('opacity-50', 'grayscale', 'cursor-not-allowed');
+    } else {
+      this.elements.btnAttack.disabled = false;
+      this.elements.btnRun.disabled = false;
+      this.elements.btnAttack.classList.remove('opacity-50', 'grayscale', 'cursor-not-allowed');
+      this.elements.btnRun.classList.remove('opacity-50', 'grayscale', 'cursor-not-allowed');
+    }
+    
+    if (this.activeCharacter || this.isAutoBattle) {
+      this.elements.commandBlocker.classList.add('hidden');
+    } else {
+      this.elements.commandBlocker.classList.remove('hidden');
+    }
+    
+    if (this.currentTab === 'skill') {
+      this.renderTabContent();
+    }
+  }
+
+  processAutoBattle(character) {
+    if (character.isDead) return;
+    
+    setTimeout(() => {
+      if (!this.isAutoBattle || this.activeCharacter !== character) return;
+      
+      const jobDef = JOBS[character.jobId];
+      if (jobDef && jobDef.autoBattle) {
+        jobDef.autoBattle(character, {
+          getSkillLevel: (skillId) => {
+            for (const [jId, skills] of Object.entries(character.jobSkills)) {
+              if (skills[skillId]) return skills[skillId];
+            }
+            return 0;
+          },
+          isSkillAutoEnabled: (skillId) => {
+            return this.autoSkillStates[character.id]?.[skillId] !== false;
+          },
+          getSkillDef: (skillId) => {
+            for (const jId of Object.keys(character.jobSkills)) {
+               const jDef = JOBS[jId];
+               const sDef = jDef?.skills.find(s => s.id === skillId);
+               if (sDef) return sDef;
+            }
+            return null;
+          },
+          executeSkill: (skillId, target = null) => {
+            let foundSkillDef = null;
+            let level = 0;
+            for (const [jId, skills] of Object.entries(character.jobSkills)) {
+              if (skills[skillId]) {
+                foundSkillDef = JOBS[jId]?.skills.find(s => s.id === skillId);
+                level = skills[skillId];
+                break;
+              }
+            }
+            if (foundSkillDef) {
+               const levelConfig = foundSkillDef.levels.find(l => l.level === level) || foundSkillDef.levels[foundSkillDef.levels.length - 1];
+               this.executeSkill(character, foundSkillDef, levelConfig);
+            } else {
+               this.executeAttack(character, target || this.enemies.find(e => !e.isDead), true);
+            }
+          },
+          executeAttack: (target = null) => {
+            if (!target || target.isDead) {
+              target = this.selectedEnemyTarget;
+              if (!target || target.isDead) {
+                target = this.enemies.find(e => !e.isDead);
+              }
+            }
+            if (target) {
+              this.executeAttack(character, target, true);
+            }
+          },
+          enemies: this.enemies,
+          party: this.party
+        });
+      } else {
+        // Fallback
+        let target = this.selectedEnemyTarget;
+        if (!target || target.isDead) target = this.enemies.find(e => !e.isDead);
+        if (target) this.executeAttack(character, target, true);
+      }
+    }, 500);
   }
 
   updateTabStyles() {
@@ -342,17 +515,17 @@ class BattleManager {
 
     tabs.forEach(({btn, id, icon, label}) => {
       if (this.currentTab === id) {
-        btn.className = 'flex-1 py-2 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t-xl text-[11px] font-black shadow-[0_-4px_10px_rgba(0,0,0,0.2)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-1 transition-all';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[16px] text-green-400">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-1 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t text-[9px] font-black shadow-[0_-1px_3px_rgba(0,0,0,0.3)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-0.5 transition-all';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[12px] text-green-400" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
       } else {
-        btn.className = 'flex-1 py-2 bg-gray-900/80 text-gray-500 rounded-t-xl text-[11px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-1';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[12px]">${icon}</span>${label}`;
       }
     });
   }
 
   renderTabContent() {
-    if (!this.activeCharacter) {
+    if (!this.activeCharacter && !this.isAutoBattle) {
       this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">行動順を待っています...</div>';
       return;
     }
@@ -367,8 +540,8 @@ class BattleManager {
   }
 
   renderSkillTab() {
-    const p = this.activeCharacter;
-    if (!p.jobSkills) {
+    const p = this.isAutoBattle ? (this.selectedPartyMember || this.party.find(char => !char.isDead)) : this.activeCharacter;
+    if (!p || !p.jobSkills) {
       this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
       return;
     }
@@ -396,44 +569,40 @@ class BattleManager {
       return;
     }
 
-    skillListHtml += '<div class="flex flex-col gap-2">';
+    skillListHtml += '<div class="grid grid-cols-2 gap-1.5">';
     learnedSkills.forEach(({ skillDef, level }) => {
       const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
       const canCast = p.mp.current >= levelConfig.mpCost;
       const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
 
-      if (canCast) {
-        skillListHtml += `
-          <button class="skill-btn relative w-full flex items-center gap-3 p-2.5 bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-600 rounded-xl hover:border-green-400 hover:shadow-[0_0_12px_rgba(74,222,128,0.15)] active:scale-[0.98] transition-all group overflow-hidden" data-skill-id="${skillDef.id}" data-level="${level}">
-            <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div class="w-11 h-11 rounded-lg bg-gray-900 flex items-center justify-center border border-gray-700 shrink-0 shadow-inner group-hover:border-green-500/40 transition-colors z-10">
-              <span class="material-symbols-outlined text-green-400 text-[26px] group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
+      const isAutoBattle = this.isAutoBattle;
+      const autoEnabled = this.autoSkillStates[p.id]?.[skillDef.id] !== false; // default true
+      
+      const grayscaleClass = (!canCast && !isAutoBattle) ? 'grayscale opacity-60 cursor-not-allowed' : '';
+      const autoBadgeHtml = isAutoBattle ? (autoEnabled 
+        ? `<div class="absolute top-0 right-0 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-bl-lg shadow border-b border-l border-blue-400 z-20">AUTO ON</div>` 
+        : `<div class="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-bl-lg shadow border-b border-l border-red-400 z-20">AUTO OFF</div>`) : '';
+      
+      const btnClass = isAutoBattle && !autoEnabled 
+        ? "skill-btn relative w-full flex items-center gap-1.5 p-1.5 bg-gray-900 border border-gray-700 rounded-lg hover:border-gray-500 transition-all group overflow-hidden opacity-50"
+        : "skill-btn relative w-full flex items-center gap-1.5 p-1.5 bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-600 rounded-lg hover:border-green-400 hover:shadow-[0_0_8px_rgba(74,222,128,0.15)] active:scale-[0.98] transition-all group overflow-hidden " + grayscaleClass;
+
+      skillListHtml += `
+        <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}">
+          ${autoBadgeHtml}
+          <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div class="w-8 h-8 rounded bg-gray-900 flex items-center justify-center border border-gray-700 shrink-0 shadow-inner group-hover:border-green-500/40 transition-colors z-10">
+            <span class="material-symbols-outlined ${canCast ? 'text-green-400' : 'text-gray-500'} text-[18px] group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
+          </div>
+          <div class="flex flex-col text-left flex-1 min-w-0 z-10">
+            <div class="flex justify-between items-center mb-0.5">
+              <div class="text-[10px] font-bold ${canCast ? 'text-gray-100' : 'text-gray-400'} truncate pr-1">${skillDef.name} <span class="${canCast ? 'text-green-400' : 'text-gray-500'} text-[9px] ml-0.5">Lv${level}</span></div>
+              ${levelConfig.mpCost > 0 ? `<div class="text-[9px] font-bold ${canCast ? 'text-blue-300 bg-blue-900/40 border-blue-700/50' : 'text-red-400 bg-red-900/20 border-red-900/50'} px-1 py-[1px] rounded border shadow-inner shrink-0">${canCast ? `MP ${levelConfig.mpCost}` : 'MP不足'}</div>` : ''}
             </div>
-            <div class="flex flex-col text-left flex-1 min-w-0 z-10">
-              <div class="flex justify-between items-end mb-1">
-                <div class="text-[13px] font-black text-gray-100 tracking-wide truncate pr-2">${skillDef.name} <span class="text-green-400 text-[10px] ml-0.5">Lv${level}</span></div>
-                ${levelConfig.mpCost > 0 ? `<div class="text-[10px] font-bold text-blue-300 bg-blue-900/40 px-1.5 py-0.5 rounded border border-blue-700/50 shadow-inner shrink-0">MP ${levelConfig.mpCost}</div>` : ''}
-              </div>
-              <div class="text-[10px] text-gray-400 leading-snug break-words pr-1 font-medium">${desc}</div>
-            </div>
-          </button>
-        `;
-      } else {
-        skillListHtml += `
-          <button class="relative w-full flex items-center gap-3 p-2.5 bg-gray-900/80 border border-gray-800 rounded-xl opacity-60 cursor-not-allowed overflow-hidden grayscale" disabled>
-            <div class="w-11 h-11 rounded-lg bg-gray-950 flex items-center justify-center border border-gray-800 shrink-0 shadow-inner z-10">
-              <span class="material-symbols-outlined text-gray-500 text-[26px]" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
-            </div>
-            <div class="flex flex-col text-left flex-1 min-w-0 z-10">
-              <div class="flex justify-between items-end mb-1">
-                <div class="text-[13px] font-black text-gray-400 tracking-wide truncate pr-2">${skillDef.name} <span class="text-gray-500 text-[10px] ml-0.5">Lv${level}</span></div>
-                ${levelConfig.mpCost > 0 ? `<div class="text-[10px] font-bold text-red-400 bg-red-900/20 px-1.5 py-0.5 rounded border border-red-900/50 shadow-inner shrink-0">MP不足</div>` : ''}
-              </div>
-              <div class="text-[10px] text-gray-500 leading-snug break-words pr-1 font-medium">${desc}</div>
-            </div>
-          </button>
-        `;
-      }
+            <div class="text-[9px] text-gray-400 leading-none truncate">${desc}</div>
+          </div>
+        </button>
+      `;
     });
     skillListHtml += '</div>';
 
@@ -441,10 +610,25 @@ class BattleManager {
 
     this.elements.tabContent.querySelectorAll('.skill-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        if (btn.disabled || !this.activeCharacter) return;
+        if (!this.activeCharacter && !this.isAutoBattle) return;
+        
         const skillId = btn.dataset.skillId;
         const level = parseInt(btn.dataset.level, 10);
         
+        if (this.isAutoBattle) {
+           const pId = p.id;
+           if (!this.autoSkillStates[pId]) this.autoSkillStates[pId] = {};
+           
+           if (this.autoSkillStates[pId][skillId] === false) {
+             this.autoSkillStates[pId][skillId] = true;
+           } else {
+             this.autoSkillStates[pId][skillId] = false;
+           }
+           
+           this.renderTabContent();
+           return;
+        }
+
         let foundSkillDef = null;
         let foundJobId = null;
         for (const [jobId, skillsMap] of Object.entries(this.activeCharacter.jobSkills)) {
@@ -457,6 +641,7 @@ class BattleManager {
 
         if (foundSkillDef) {
           const levelConfig = foundSkillDef.levels.find(l => l.level === level) || foundSkillDef.levels[foundSkillDef.levels.length - 1];
+          if (this.activeCharacter.mp.current < levelConfig.mpCost) return;
           this.executeSkill(this.activeCharacter, foundSkillDef, levelConfig);
         }
       });
@@ -533,6 +718,9 @@ class BattleManager {
         if (nextActor.type === 'party') {
           this.activeCharacter = nextActor.entity;
           this.renderEntities();
+          if (this.isAutoBattle) {
+            this.processAutoBattle(this.activeCharacter);
+          }
         } else {
           this.executeEnemyTurn(nextActor.entity);
         }
@@ -861,21 +1049,46 @@ class BattleManager {
     let resultText = text;
     if (isWin) {
       this.isDungeonClear = this.currentFloorNum >= this.dungeonDef.floors.length;
-      if (this.isDungeonClear) {
-        this.elements.btnResultOk.textContent = 'ダンジョン踏破！街へ戻る';
-        this.elements.resultText.textContent = 'ダンジョンの最深部に到達しました！';
-        this.elements.resultOverlay.classList.remove('hidden');
-      } else {
-        // Auto-proceed to the next floor after a short delay
+      
+      if (this.autoBattleMode === 'floor') {
         setTimeout(async () => {
-          await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
           this.party = [];
           this.enemies = [];
           this.activeCharacter = null;
           this.selectedEnemyTarget = null;
           this.init();
-        }, 1500); // 1.5秒待機してドロップをしっかり見せる
-        return; // Don't show modal
+        }, 1500);
+        return;
+      } else if (this.autoBattleMode === 'dungeon') {
+        setTimeout(async () => {
+          if (this.isDungeonClear) {
+            await GameDB.setGameState('currentFloor', 1);
+          } else {
+            await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
+          }
+          this.party = [];
+          this.enemies = [];
+          this.activeCharacter = null;
+          this.selectedEnemyTarget = null;
+          this.init();
+        }, 1500);
+        return;
+      } else {
+        if (this.isDungeonClear) {
+          this.elements.btnResultOk.textContent = 'ダンジョン踏破！街へ戻る';
+          this.elements.resultText.textContent = 'ダンジョンの最深部に到達しました！';
+          this.elements.resultOverlay.classList.remove('hidden');
+        } else {
+          setTimeout(async () => {
+            await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
+            this.party = [];
+            this.enemies = [];
+            this.activeCharacter = null;
+            this.selectedEnemyTarget = null;
+            this.init();
+          }, 1500);
+          return;
+        }
       }
     } else {
       this.isDungeonClear = false;
@@ -932,7 +1145,7 @@ export function renderBattlePage() {
     <div class="flex-1 flex flex-col overflow-y-auto" style="background: radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%);">
       
       <!-- Enemy Area (Moved higher) -->
-      <div id="enemy-area" class="flex justify-center items-start gap-6 mt-1 px-2 pt-1 pb-8">
+      <div id="enemy-area" class="flex justify-center items-start gap-1 sm:gap-2 md:gap-4 lg:gap-6 w-full max-w-full mt-1 px-2 pt-1 pb-2">
         <!-- Enemies will be injected here -->
       </div>
 
@@ -944,13 +1157,13 @@ export function renderBattlePage() {
       <!-- Tabs & Tab Content Area -->
       <div class="flex flex-col flex-1 mt-4 px-2 mb-4">
         <!-- Tabs -->
-        <div class="flex px-1 gap-1">
-          <button id="tab-btn-skill" class="flex-1 py-2 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t-xl text-[11px] font-black shadow-[0_-4px_10px_rgba(0,0,0,0.2)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-1 transition-all"><span class="material-symbols-outlined text-[16px] text-green-400">auto_awesome</span>スキル</button>
-          <button id="tab-btn-item" class="flex-1 py-2 bg-gray-900/80 text-gray-500 rounded-t-xl text-[11px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">backpack</span>アイテム</button>
-          <button id="tab-btn-info" class="flex-1 py-2 bg-gray-900/80 text-gray-500 rounded-t-xl text-[11px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">info</span>インフォ</button>
+        <div class="flex px-1 gap-[2px]">
+          <button id="tab-btn-skill" class="flex-1 py-1 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t text-[9px] font-black shadow-[0_-1px_3px_rgba(0,0,0,0.3)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-0.5 transition-all"><span class="material-symbols-outlined text-[12px] text-green-400" style="font-variation-settings: 'FILL' 1">auto_awesome</span>スキル</button>
+          <button id="tab-btn-item" class="flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5"><span class="material-symbols-outlined text-[12px]">backpack</span>アイテム</button>
+          <button id="tab-btn-info" class="flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5"><span class="material-symbols-outlined text-[12px]">info</span>インフォ</button>
         </div>
         <!-- Tab Content -->
-        <div id="tab-content" class="flex-1 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700 rounded-b-xl rounded-tr-xl p-3 min-h-[140px] overflow-y-auto shadow-inner mb-2">
+        <div id="tab-content" class="flex-1 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700 rounded-b-lg rounded-tr-lg p-2 min-h-[120px] overflow-y-auto shadow-inner mb-2">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）
@@ -968,14 +1181,17 @@ export function renderBattlePage() {
       </div>
 
       <!-- Actions -->
-      <button id="btn-auto" class="flex-1 bg-blue-900 hover:bg-blue-800 rounded-lg font-bold text-[11px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100">
-        <span class="material-symbols-outlined text-[20px] mb-0.5 text-blue-400">auto_awesome</span>自動戦闘
+      <button id="btn-run" class="flex-1 bg-gray-800 hover:bg-gray-700 rounded-lg font-bold text-[11px] border border-gray-600 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-gray-300 p-1">
+        <span class="material-symbols-outlined text-[18px] mb-0.5 text-gray-400">directions_run</span>逃げる
       </button>
-      <button id="btn-attack" class="flex-[1.5] bg-red-700 hover:bg-red-600 rounded-lg font-bold text-sm shadow-lg border border-red-500 flex flex-col items-center justify-center transition-all active:scale-95 text-red-50">
-        <span class="material-symbols-outlined text-[24px] mb-0.5 text-red-300">swords</span>攻撃
+      <button id="btn-auto-dungeon" class="flex-1 bg-purple-900 hover:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1">
+        <span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回
       </button>
-      <button id="btn-run" class="flex-1 bg-gray-800 hover:bg-gray-700 rounded-lg font-bold text-[11px] border border-gray-600 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-gray-300">
-        <span class="material-symbols-outlined text-[20px] mb-0.5 text-gray-400">directions_run</span>逃げる
+      <button id="btn-auto-floor" class="flex-1 bg-blue-900 hover:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1">
+        <span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回
+      </button>
+      <button id="btn-attack" class="flex-1 bg-red-700 hover:bg-red-600 rounded-lg font-bold text-[11px] shadow-lg border border-red-500 flex flex-col items-center justify-center transition-all active:scale-95 text-red-50 p-1">
+        <span class="material-symbols-outlined text-[18px] mb-0.5 text-red-300">swords</span>攻撃
       </button>
     </div>
     

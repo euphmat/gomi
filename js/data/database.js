@@ -207,6 +207,15 @@ class GameDatabase {
   }
 
   /**
+   * Delete an equipment item by ID.
+   * @param {string} id
+   * @returns {Promise<void>}
+   */
+  deleteEquipment(id) {
+    return this._write('equipment', (store) => store.delete(id));
+  }
+
+  /**
    * Get all equipment that is NOT currently equipped by any character.
    * @returns {Promise<Array>}
    */
@@ -250,6 +259,15 @@ class GameDatabase {
    */
   putInventoryItem(item) {
     return this._write('inventory', (store) => store.put(item));
+  }
+
+  /**
+   * Delete an inventory item by ID.
+   * @param {string} id
+   * @returns {Promise<void>}
+   */
+  deleteInventoryItem(id) {
+    return this._write('inventory', (store) => store.delete(id));
   }
 }
 
