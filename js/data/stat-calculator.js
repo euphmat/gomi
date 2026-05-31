@@ -27,7 +27,13 @@ export function calcFinalStats(character, equipmentMap) {
   const statKeys = STAT_KEYS.map(s => s.key);
 
   // Start with base stats
-  const result = {};
+  const result = {
+    attackElements: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
+    attackAilments: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
+    elementResist: character.elementResist ? { ...character.elementResist } : { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
+    ailmentResist: character.ailmentResist ? { ...character.ailmentResist } : { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
+  };
+  
   for (const key of statKeys) {
     result[key] = character.baseStats[key] || 0;
   }
@@ -40,10 +46,34 @@ export function calcFinalStats(character, equipmentMap) {
       if (!eqId) continue;
 
       const item = equipmentMap.get(eqId);
-      if (!item || !item.stats) continue;
+      if (!item) continue;
 
-      for (const key of statKeys) {
-        result[key] += item.stats[key] || 0;
+      if (item.stats) {
+        for (const key of statKeys) {
+          result[key] += item.stats[key] || 0;
+        }
+      }
+
+      const isWeapon = item.slot === 'rightHand'; // 武器は rightHand で定義されている
+
+      if (item.elements) {
+        for (const [k, v] of Object.entries(item.elements)) {
+          if (isWeapon) {
+            result.attackElements[k] = (result.attackElements[k] || 0) + v;
+          } else {
+            result.elementResist[k] = (result.elementResist[k] || 0) + v;
+          }
+        }
+      }
+
+      if (item.ailments) {
+        for (const [k, v] of Object.entries(item.ailments)) {
+          if (isWeapon) {
+            result.attackAilments[k] = (result.attackAilments[k] || 0) + v;
+          } else {
+            result.ailmentResist[k] = (result.ailmentResist[k] || 0) + v;
+          }
+        }
       }
     }
   }

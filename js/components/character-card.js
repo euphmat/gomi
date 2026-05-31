@@ -86,8 +86,10 @@ export function createCharacterCard(character, finalStats, equippedItems) {
       <div class="flex gap-2">
         <!-- Character Icon -->
         <div class="w-14 h-14 rounded-lg flex items-center justify-center shrink-0
-                    shadow-md border border-white/10 overflow-hidden bg-gray-800">
-          <img src="${iconImage}" alt="${jobName}" class="w-full h-full object-contain" />
+                    shadow-md border border-white/10 overflow-hidden bg-gray-800
+                    cursor-pointer hover:border-gray-400 transition-colors char-icon-clickable"
+             data-char-id="${character.id}">
+          <img src="${iconImage}" alt="${jobName}" class="w-full h-full object-contain pointer-events-none" />
         </div>
 
         <!-- Name & Level Info -->

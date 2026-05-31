@@ -86,6 +86,22 @@ async function _loadStatusData(container) {
       });
     });
 
+    // Bind character icon click events for detailed status modal
+    const iconClickables = container.querySelectorAll('.char-icon-clickable');
+    iconClickables.forEach(el => {
+      el.addEventListener('click', () => {
+        const charId = parseInt(el.getAttribute('data-char-id'), 10);
+        const character = characters.find(c => c.id === charId);
+        if (character) {
+          const finalStats = calcFinalStats(character, equipmentMap);
+          // Import dynamicly to avoid circular dependency issues if any
+          import('../components/status-modal.js').then(module => {
+            module.showDetailedStatusModal(character, finalStats);
+          });
+        }
+      });
+    });
+
   } catch (error) {
     console.error('[StatusPage] Failed to load data:', error);
     container.innerHTML = `

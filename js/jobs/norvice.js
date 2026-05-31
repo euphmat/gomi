@@ -2,7 +2,7 @@ export const norvice = {
   id: 'norvice',
   name: 'ノービス',
   icon: 'person',
-  statGrowth: { hp: 2, mp: 1, atk: 1, def: 1, matk: 1, mdef: 1, spd: 1 },
+  statGrowth: { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
   skills: [
     {
       id: 'first_aid',

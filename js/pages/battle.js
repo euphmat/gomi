@@ -66,7 +66,7 @@ class BattleManager {
       return {
         ...char,
         stats,
-        atb: 0,
+        atb: Math.floor(Math.random() * 501),
         index,
         isDead: char.hp.current <= 0,
         elementId: `party-${index}`
@@ -77,12 +77,19 @@ class BattleManager {
 
     this.enemies = this.floorDef.monsters.map((monsterId, i) => {
       const monsterDef = MONSTERS.find(m => m.id === monsterId);
+      const baseStats = monsterDef.stats || {};
+      const attackElements = monsterDef.attackElements || { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
+      const attackAilments = monsterDef.attackAilments || { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 };
+      const elementResist = monsterDef.elementResist || { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
+      const ailmentResist = monsterDef.ailmentResist || { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 };
+      
       return {
         ...monsterDef,
+        stats: { ...baseStats, attackElements, attackAilments, elementResist, ailmentResist },
         uniqueId: `enemy-${i}`,
-        currentHp: monsterDef.stats.hp,
-        maxHp: monsterDef.stats.hp,
-        atb: 0,
+        currentHp: baseStats.hp,
+        maxHp: baseStats.hp,
+        atb: Math.floor(Math.random() * 501),
         isDead: false,
         elementId: `enemy-${i}`
       };
@@ -656,8 +663,8 @@ class BattleManager {
     // If a skill needs a target, we would check selectedEnemyTarget or allow party target.
     // However, first_aid's execute logic currently handles its own effect:
     
-    // Show skill name animation
-    this.showSkillName(caster.elementId, skillDef.name);
+    // Show action name animation
+    this.showActionName(caster.elementId, skillDef.name);
 
     if (skillDef.execute) {
       skillDef.execute(caster, levelConfig);
@@ -729,10 +736,75 @@ class BattleManager {
   }
 
   executeAttack(attacker, defender, isParty) {
+    if (isParty) {
+      this.showActionName(attacker.elementId, '攻撃', 'text-gray-100', 'border-gray-500/50');
+    } else {
+      this.showActionName(attacker.elementId, '攻撃', 'text-red-300', 'border-red-500/50');
+    }
+
     let damage = Math.max(1, attacker.stats.atk - Math.floor(defender.stats.def / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
     
+    // --- 属性ダメージ計算 (比例方式) ---
+    const attackElements = attacker.stats.attackElements || {};
+    const defenderElementResist = defender.stats.elementResist || {};
+    
+    let totalElementPercent = 0;
+    for (const val of Object.values(attackElements)) {
+      if (val > 0) totalElementPercent += val;
+    }
+
+    // もし属性合計が100%を超えるなら正規化し、100%未満なら残りは無属性とする
+    let elementPortionScale = 1.0;
+    if (totalElementPercent > 100) {
+      elementPortionScale = 100 / totalElementPercent;
+    }
+    
+    let nonElementalPercent = Math.max(0, 100 - totalElementPercent);
+    if (totalElementPercent > 100) nonElementalPercent = 0;
+
+    let finalDamage = 0;
+
+    // 各属性ごとのダメージ計算
+    for (const [el, val] of Object.entries(attackElements)) {
+      if (val > 0) {
+        const resist = defenderElementResist[el] || 0;
+        const multiplier = Math.max(0, 1 - (resist / 100));
+        const portionDamage = damage * (val * elementPortionScale / 100);
+        finalDamage += portionDamage * multiplier;
+      }
+    }
+
+    // 無属性分のダメージ加算
+    finalDamage += damage * (nonElementalPercent / 100);
+
+    damage = Math.floor(finalDamage);
+    if (damage < 1) damage = 1;
+
     this.showDamage(defender.elementId, damage);
+
+    // --- 状態異常付与判定 ---
+    const attackAilments = attacker.stats.attackAilments || {};
+    const defenderAilmentResist = defender.stats.ailmentResist || {};
+    const inflictedAilments = [];
+    
+    for (const [ailment, chance] of Object.entries(attackAilments)) {
+      if (chance > 0) {
+        const resist = defenderAilmentResist[ailment] || 0;
+        const finalChance = Math.max(0, chance - resist);
+        if (Math.random() * 100 < finalChance) {
+          inflictedAilments.push(ailment);
+        }
+      }
+    }
+
+    if (inflictedAilments.length > 0) {
+      setTimeout(() => {
+        const ailmentName = inflictedAilments[0].toUpperCase();
+        this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
+      }, 500);
+      // 将来的に defender.activeAilments 等へ状態異常を保存する
+    }
 
     if (isParty) {
       defender.currentHp -= damage;
@@ -806,7 +878,7 @@ class BattleManager {
     setTimeout(() => dmgText.remove(), 800);
   }
 
-  showSkillName(elementId, skillName) {
+  showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
@@ -815,8 +887,8 @@ class BattleManager {
     const topY = rect.top - 20;
 
     const textEl = document.createElement('div');
-    textEl.textContent = skillName;
-    textEl.className = 'fixed font-black text-[13px] text-green-300 z-[9999] pointer-events-none tracking-widest whitespace-nowrap bg-black/50 px-2 py-0.5 rounded-full border border-green-500/50';
+    textEl.textContent = actionName;
+    textEl.className = `fixed font-black text-[13px] ${textClass} z-[9999] pointer-events-none tracking-widest whitespace-nowrap bg-black/50 px-2 py-0.5 rounded-full border ${borderClass}`;
     textEl.style.left = `${centerX}px`;
     textEl.style.top = `${topY}px`;
     textEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.8)';
@@ -925,15 +997,19 @@ class BattleManager {
             
             const jobGrowth = JOBS[p.jobId]?.statGrowth;
             if (jobGrowth) {
-              p.hp.max += jobGrowth.hp;
-              p.hp.current += jobGrowth.hp;
-              p.mp.max += jobGrowth.mp;
-              p.mp.current += jobGrowth.mp;
-              p.baseStats.atk += jobGrowth.atk;
-              p.baseStats.def += jobGrowth.def;
-              p.baseStats.matk += jobGrowth.matk;
-              p.baseStats.mdef += jobGrowth.mdef;
-              p.baseStats.spd += jobGrowth.spd;
+              const getGrowth = (val) => Array.isArray(val) ? Math.floor(Math.random() * (val[1] - val[0] + 1)) + val[0] : (val || 0);
+              
+              const hpGrowth = getGrowth(jobGrowth.hp);
+              const mpGrowth = getGrowth(jobGrowth.mp);
+              p.hp.max += hpGrowth;
+              p.hp.current += hpGrowth;
+              p.mp.max += mpGrowth;
+              p.mp.current += mpGrowth;
+              p.baseStats.atk += getGrowth(jobGrowth.atk);
+              p.baseStats.def += getGrowth(jobGrowth.def);
+              p.baseStats.matk += getGrowth(jobGrowth.matk);
+              p.baseStats.mdef += getGrowth(jobGrowth.mdef);
+              p.baseStats.spd += getGrowth(jobGrowth.spd);
             }
             baseLevelUp = true;
           }
