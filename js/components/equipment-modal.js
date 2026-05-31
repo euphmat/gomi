@@ -115,7 +115,10 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   `;
   overlay.style.animation = 'fade-in 0.2s ease-out forwards';
 
-
+  const modalContainer = document.createElement('div');
+  modalContainer.className = "bg-[#111122] border border-gray-600/50 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl shadow-black/80 animate-[slide-up_0.3s_cubic-bezier(0.16,1,0.3,1)] m-4";
+  modalContainer.style.height = "85dvh";
+  overlay.appendChild(modalContainer);
 
   // Helper to render the detail panel
   const renderDetailPanel = (group) => {
@@ -258,11 +261,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       actionBtns = `${equipBtn}${unequipBtn}`;
     }
 
-    overlay.innerHTML = `
-      <div class="bg-[#111122] border border-gray-600/50 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl shadow-black/80
-                  animate-[slide-up_0.3s_cubic-bezier(0.16,1,0.3,1)] m-4"
-           style="height: 85dvh;">
-        
+    modalContainer.innerHTML = `
         <!-- Header -->
         <div class="flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-700/50 relative z-20">
           <div class="flex items-center gap-2">
@@ -323,7 +322,6 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
             ${gridHtml}
           </div>
         </div>
-      </div>
     `;
 
     // Bind events
