@@ -12,14 +12,12 @@
  */
 
 export const ACCESSORIES = [
-  {
-    id: 'power_ring', name: '力の指輪',
+  { id: 'power_ring', name: '力の指輪',
     stats: { atk: 1 },
-    price: 150,
+    price: 15,
   },
-  { id: 'purupuru_ring',
-    name: 'ぷるぷるリング',
-    stats:         { spd: 5, hp: 50 },
-    price: 500,
+  { id: 'purupuru_ring', name: 'ぷるぷるリング',
+    stats: { def: 5, hp: 50 },
+    price: 50,
   }
 ].map(item => ({ ...item, slot: 'accessory', image: `./assets/accessory/${item.id}.webp` }));

@@ -791,7 +791,15 @@ class BattleManager {
 
     let damage = Math.max(1, (attacker.stats.atk || 0) - Math.floor((defender.stats.def || 0) / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
-    
+
+    // --- 武器アビリティの発動 ---
+    if (attacker.equipment && attacker.equipment.rightHand) {
+      const weaponDef = this.equipMap.get(attacker.equipment.rightHand);
+      if (weaponDef && weaponDef.ability && weaponDef.ability.execute) {
+        damage = weaponDef.ability.execute(attacker, defender, damage, this);
+      }
+    }
+
     // --- 属性ダメージ計算 (比例方式) ---
     const attackElements = attacker.stats.attackElements || {};
     const defenderElementResist = defender.stats.elementResist || {};
