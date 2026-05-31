@@ -51,4 +51,25 @@ export const SEED_CHARACTERS = [
 ];
 
 // ─── Initial Equipment ───────────────────────────────────
-export const SEED_EQUIPMENT = [ ...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES ];
+const createInitialEquips = () => {
+  const equips = [];
+  const addEquips = (def, count) => {
+    for (let i = 0; i < count; i++) {
+      equips.push({ ...def, id: `${def.id}_${Math.random().toString(36).substr(2, 9)}` });
+    }
+  };
+  
+  const woodenStick = WEAPONS.find(w => w.id === 'wooden_stick');
+  const clothArmor = ARMORS.find(a => a.id === 'cloth_armor');
+  const woodenShield = SHIELDS.find(s => s.id === 'wooden_shield');
+  const power_ring = ACCESSORIES.find(s => s.id === 'power_ring');
+  
+  if (woodenStick) addEquips(woodenStick, 4);
+  if (clothArmor) addEquips(clothArmor, 4);
+  if (woodenShield) addEquips(woodenShield, 4);
+  if (power_ring) addEquips(power_ring, 4);
+  
+  return equips;
+};
+
+export const SEED_EQUIPMENT = createInitialEquips();

@@ -43,10 +43,9 @@ export function createNavBar(router) {
       <button data-nav-path="${tab.path}"
               id="nav-${tab.id}"
               ${disabledAttr}
-              class="flex-1 flex flex-col items-center justify-center py-2
+              class="flex-1 flex flex-col items-center justify-center py-3
                      ${classes} ${disabledClass} transition-all duration-200 active:scale-95">
-        <span class="material-symbols-outlined text-lg leading-none">${tab.icon}</span>
-        <span class="text-[10px] font-semibold mt-0.5 tracking-wide">${tab.label}</span>
+        <span class="material-symbols-outlined text-[24px] leading-none">${tab.icon}</span>
       </button>
     `;
   }).join('');

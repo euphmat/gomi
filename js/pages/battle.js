@@ -18,6 +18,8 @@ class BattleManager {
     this.autoBattleMode = 'none'; // 'none', 'floor', 'dungeon'
     this.equipMap = {};
     this.isDungeonClear = false;
+    this.currentTab = 'skill';
+    this.obtainedItems = [];
 
     this.elements = {
       enemyArea: container.querySelector('#enemy-area'),
@@ -532,21 +534,45 @@ class BattleManager {
   }
 
   renderTabContent() {
-    if (!this.activeCharacter && !this.isAutoBattle) {
-      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">行動順を待っています...</div>';
-      return;
-    }
-
     if (this.currentTab === 'skill') {
       this.renderSkillTab();
     } else if (this.currentTab === 'item') {
-      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">（バックパック未実装）</div>';
+      this.renderItemTab();
     } else {
       this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">（インフォ未実装）</div>';
     }
   }
 
+  renderItemTab() {
+    if (!this.obtainedItems || this.obtainedItems.length === 0) {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">獲得したアイテムはありません</div>';
+      return;
+    }
+    let html = '<div class="grid grid-cols-5 gap-1.5 p-1 content-start overflow-y-auto h-full">';
+    this.obtainedItems.forEach(item => {
+      html += `
+        <div class="relative w-full aspect-square bg-gray-800 border border-gray-600 rounded flex flex-col group hover:border-blue-400 transition-colors overflow-hidden">
+          <div class="relative flex-1 w-full min-h-0 p-1">
+            <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md">
+            <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${item.quantity}</div>
+          </div>
+          <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center truncate px-0.5 py-[1px] leading-tight shrink-0">
+            ${item.name}
+          </div>
+          <div class="absolute inset-x-0 bottom-full mb-1 hidden group-hover:block bg-black/90 text-white text-[9px] p-1 rounded z-20 text-center whitespace-nowrap border border-gray-700 pointer-events-none z-30">${item.name}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    this.elements.tabContent.innerHTML = html;
+  }
+
   renderSkillTab() {
+    if (!this.activeCharacter && !this.isAutoBattle) {
+      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">行動順を待っています...</div>';
+      return;
+    }
+
     const p = this.isAutoBattle ? (this.selectedPartyMember || this.party.find(char => !char.isDead)) : this.activeCharacter;
     if (!p || !p.jobSkills) {
       this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
@@ -586,17 +612,20 @@ class BattleManager {
       const autoEnabled = this.autoSkillStates[p.id]?.[skillDef.id] !== false; // default true
       
       const grayscaleClass = (!canCast && !isAutoBattle) ? 'grayscale opacity-60 cursor-not-allowed' : '';
-      const autoBadgeHtml = isAutoBattle ? (autoEnabled 
-        ? `<div class="absolute top-0 right-0 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-bl-lg shadow border-b border-l border-blue-400 z-20">AUTO ON</div>` 
-        : `<div class="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-bl-lg shadow border-b border-l border-red-400 z-20">AUTO OFF</div>`) : '';
       
-      const btnClass = isAutoBattle && !autoEnabled 
-        ? "skill-btn relative w-full flex items-center gap-1.5 p-1.5 bg-gray-900 border border-gray-700 rounded-lg hover:border-gray-500 transition-all group overflow-hidden opacity-50"
-        : "skill-btn relative w-full flex items-center gap-1.5 p-1.5 bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-600 rounded-lg hover:border-green-400 hover:shadow-[0_0_8px_rgba(74,222,128,0.15)] active:scale-[0.98] transition-all group overflow-hidden " + grayscaleClass;
+      let btnClass = "skill-btn relative w-full flex items-center gap-1.5 p-1.5 border rounded-lg transition-all group overflow-hidden ";
+      if (isAutoBattle) {
+        if (autoEnabled) {
+          btnClass += "bg-gradient-to-r from-blue-900/30 to-blue-800/10 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.15)] hover:border-blue-400 hover:shadow-[0_0_8px_rgba(59,130,246,0.3)] active:scale-[0.98]";
+        } else {
+          btnClass += "bg-gray-900 border-gray-800 opacity-40 grayscale hover:opacity-60 hover:border-gray-600 cursor-pointer";
+        }
+      } else {
+        btnClass += "bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-600 hover:border-green-400 hover:shadow-[0_0_8px_rgba(74,222,128,0.15)] active:scale-[0.98] " + grayscaleClass;
+      }
 
       skillListHtml += `
         <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}">
-          ${autoBadgeHtml}
           <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div class="w-8 h-8 rounded bg-gray-900 flex items-center justify-center border border-gray-700 shrink-0 shadow-inner group-hover:border-green-500/40 transition-colors z-10">
             <span class="material-symbols-outlined ${canCast ? 'text-green-400' : 'text-gray-500'} text-[18px] group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
@@ -1039,18 +1068,31 @@ class BattleManager {
     }
 
     // Process Drops
+    let hasNewDrops = false;
     if (enemy.drops) {
       for (const drop of enemy.drops) {
-        if (Math.random() <= drop.rate) {
+        if (Math.random() * 100 <= drop.rate) {
           const mat = MATERIALS.find(m => m.id === drop.itemId);
           if (mat) {
             const currentItem = await GameDB.getInventoryItem(mat.id) || { id: mat.id, quantity: 0, type: 'material', ...mat };
             currentItem.quantity += 1;
             await GameDB.putInventoryItem(currentItem);
             drops.push({ text: mat.name, image: mat.image, color: 'text-white' });
+            
+            const existingDrop = this.obtainedItems.find(i => i.id === mat.id);
+            if (existingDrop) {
+              existingDrop.quantity++;
+            } else {
+              this.obtainedItems.push({ id: mat.id, name: mat.name, image: mat.image, quantity: 1 });
+            }
+            hasNewDrops = true;
           }
         }
       }
+    }
+
+    if (hasNewDrops && this.currentTab === 'item') {
+      this.renderItemTab();
     }
 
     // Create a drop container overlay for this enemy in the main container

@@ -8,6 +8,49 @@ import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 
 const ITEMS_PER_PAGE = 30;
 
+const ELEMENT_ICONS = {
+  fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
+  water: { icon: 'water_drop', color: 'text-blue-500', label: 'Water' },
+  grass: { icon: 'eco', color: 'text-green-500', label: 'Grass' },
+  ice: { icon: 'ac_unit', color: 'text-cyan-400', label: 'Ice' },
+  thunder: { icon: 'bolt', color: 'text-yellow-400', label: 'Thunder' },
+  wind: { icon: 'air', color: 'text-teal-400', label: 'Wind' },
+  earth: { icon: 'landscape', color: 'text-amber-600', label: 'Earth' },
+  light: { icon: 'light_mode', color: 'text-yellow-200', label: 'Light' },
+  dark: { icon: 'dark_mode', color: 'text-purple-500', label: 'Dark' },
+};
+
+const AILMENT_ICONS = {
+  poison: { icon: 'coronavirus', color: 'text-purple-500', label: 'Poison' },
+  burn: { icon: 'local_fire_department', color: 'text-red-500', label: 'Burn' },
+  paralysis: { icon: 'electric_bolt', color: 'text-yellow-400', label: 'Paralysis' },
+  sleep: { icon: 'snooze', color: 'text-indigo-400', label: 'Sleep' },
+  confusion: { icon: 'question_mark', color: 'text-pink-400', label: 'Confusion' },
+  curse: { icon: 'sentiment_dissatisfied', color: 'text-gray-400', label: 'Curse' },
+  blind: { icon: 'visibility_off', color: 'text-slate-400', label: 'Blind' },
+  silence: { icon: 'volume_off', color: 'text-blue-300', label: 'Silence' },
+};
+
+/**
+ * Extract the base item ID from a unique instance ID.
+ * e.g. 'wooden_stick_abc123' -> 'wooden_stick'
+ * Falls back to the full id if no suffix pattern found.
+ */
+function getBaseId(item) {
+  // The unique IDs are created as `${def.id}_${random}` where random is 9 chars of base36
+  // So we try to strip the last _XXXXXXXXX suffix
+  const id = item.id;
+  const lastUnderscore = id.lastIndexOf('_');
+  if (lastUnderscore > 0) {
+    const suffix = id.substring(lastUnderscore + 1);
+    // Check if suffix looks like a random string (5+ chars, alphanumeric)
+    if (suffix.length >= 5 && /^[a-z0-9]+$/.test(suffix)) {
+      return id.substring(0, lastUnderscore);
+    }
+  }
+  return id;
+}
+
 /**
  * Show the equipment modal for a specific character.
  * @param {Object} character - The character object
@@ -36,11 +79,32 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     return item.slot === targetSlot;
   });
 
+  // --- Group identical items ---
+  const groupMap = new Map();
+  for (const item of availableItems) {
+    const baseId = getBaseId(item);
+    if (!groupMap.has(baseId)) {
+      groupMap.set(baseId, {
+        baseId,
+        representative: item,
+        instances: [item],
+        count: 1,
+        equippedCount: equippedIds.includes(item.id) ? 1 : 0,
+      });
+    } else {
+      const group = groupMap.get(baseId);
+      group.instances.push(item);
+      group.count++;
+      if (equippedIds.includes(item.id)) group.equippedCount++;
+    }
+  }
+  const groupedItems = Array.from(groupMap.values());
+
   let currentPage = 1;
-  const totalPages = Math.max(1, Math.ceil(availableItems.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(groupedItems.length / ITEMS_PER_PAGE));
   
-  // Initially select the first available item, or null
-  let selectedItem = availableItems.length > 0 ? availableItems[0] : null;
+  // Initially select the first available group, or null
+  let selectedGroup = groupedItems.length > 0 ? groupedItems[0] : null;
 
   const overlay = document.createElement('div');
   overlay.id = 'equipment-modal';
@@ -51,44 +115,79 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   `;
   overlay.style.animation = 'fade-in 0.2s ease-out forwards';
 
-  // Helper to render stats
-  const renderItemStats = (item) => {
-    if (!item) return '<div class="text-gray-500 text-xs italic flex h-full items-center justify-center">アイテムが選択されていません</div>';
-    
-    const statsHtml = STAT_KEYS.map(stat => {
-      const val = (item.stats && item.stats[stat.key]) || 0;
-      let colorClass = 'text-gray-500';
-      let sign = '';
-      if (val > 0) {
-        colorClass = 'text-green-400';
-        sign = '+';
-      } else if (val < 0) {
-        colorClass = 'text-red-400';
-      }
 
+
+  // Helper to render the detail panel
+  const renderDetailPanel = (group) => {
+    if (!group) {
+      return `<div class="text-gray-500 text-xs italic flex items-center justify-center py-4">アイテムが選択されていません</div>`;
+    }
+    
+    const item = group.representative;
+
+    // --- Stats: compact horizontal row ---
+    const statsChips = STAT_KEYS.map(stat => {
+      const val = (item.stats && item.stats[stat.key]) || 0;
+      let valColor = 'text-gray-500';
+      let sign = '';
+      if (val > 0) { valColor = 'text-green-400'; sign = '+'; }
+      else if (val < 0) { valColor = 'text-red-400'; }
       return `
-        <div class="flex justify-between items-center bg-gray-800/50 rounded px-2 py-1 border border-gray-700/50">
-          <span class="text-[10px] text-gray-400">${stat.label}</span>
-          <span class="text-[11px] font-bold ${colorClass}">${sign}${val}</span>
+        <div class="flex flex-col items-center flex-1 min-w-0 bg-gray-800/50 rounded py-0.5 border border-gray-700/40">
+          <span class="text-[8px] text-gray-500 leading-none">${stat.label}</span>
+          <span class="text-[11px] font-bold ${valColor} leading-tight">${sign}${val}</span>
         </div>
       `;
     }).join('');
 
-    const slotLabel = EQUIPMENT_SLOTS.find(s => s.key === item.slot)?.label || item.slot;
-    const isEquipped = equippedIds.includes(item.id);
+    // --- Elements: only non-zero, compact chips ---
+    const elements = item.elements || {};
+    const isWeapon = item.slot === 'rightHand';
+    const elLabel = isWeapon ? '属性攻撃' : '属性防御';
+    const elChips = Object.keys(ELEMENT_ICONS)
+      .filter(k => (elements[k] || 0) !== 0)
+      .map(k => {
+        const val = elements[k];
+        const def = ELEMENT_ICONS[k];
+        const c = val > 0 ? 'text-green-400' : 'text-red-400';
+        const s = val > 0 ? '+' : '';
+        return `<span class="inline-flex items-center gap-0.5 bg-gray-800/60 rounded px-1 py-[1px] border border-gray-700/40"><span class="material-symbols-outlined text-[11px] ${def.color}">${def.icon}</span><span class="text-[9px] font-bold ${c}">${s}${val}%</span></span>`;
+      });
+
+    // --- Ailments: only non-zero, compact chips ---
+    const ailments = item.ailments || {};
+    const ailLabel = isWeapon ? '状態異常付与' : '状態異常耐性';
+    const ailChips = Object.keys(AILMENT_ICONS)
+      .filter(k => (ailments[k] || 0) !== 0)
+      .map(k => {
+        const val = ailments[k];
+        const def = AILMENT_ICONS[k];
+        const c = val > 0 ? 'text-green-400' : 'text-red-400';
+        const s = val > 0 ? '+' : '';
+        return `<span class="inline-flex items-center gap-0.5 bg-gray-800/60 rounded px-1 py-[1px] border border-gray-700/40"><span class="material-symbols-outlined text-[11px] ${def.color}">${def.icon}</span><span class="text-[9px] font-bold ${c}">${s}${val}%</span></span>`;
+      });
+
+    const elSection = elChips.length > 0 ? `
+      <div class="flex items-start gap-1.5">
+        <span class="text-[8px] text-gray-500 font-bold shrink-0 pt-[2px] w-8 leading-tight">${elLabel}</span>
+        <div class="flex flex-wrap gap-0.5">${elChips.join('')}</div>
+      </div>` : '';
+
+    const ailSection = ailChips.length > 0 ? `
+      <div class="flex items-start gap-1.5">
+        <span class="text-[8px] text-gray-500 font-bold shrink-0 pt-[2px] w-8 leading-tight">${ailLabel}</span>
+        <div class="flex flex-wrap gap-0.5">${ailChips.join('')}</div>
+      </div>` : '';
 
     return `
-      <div class="flex flex-col h-full gap-2 relative z-10">
-        <div class="grid grid-cols-2 gap-1 mt-1 overflow-y-auto pr-1 custom-scrollbar shrink-0 pb-1">
-          ${statsHtml}
-        </div>
-      </div>
+      <div class="flex gap-1 shrink-0">${statsChips}</div>
+      ${(elSection || ailSection) ? `<div class="flex flex-col gap-1 mt-1">${elSection}${ailSection}</div>` : ''}
     `;
   };
 
   const renderContent = () => {
     const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-    const pageItems = availableItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+    const pageItems = groupedItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
     
     // Fill empty slots for grid consistency
     const gridItems = [...pageItems];
@@ -96,13 +195,13 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       gridItems.push(null);
     }
 
-    const gridHtml = gridItems.map((item, idx) => {
-      if (!item) {
+    const gridHtml = gridItems.map((group, idx) => {
+      if (!group) {
         return `<div class="aspect-square rounded-lg bg-gray-800/30 border border-dashed border-gray-700/30"></div>`;
       }
       
-      const isSelected = selectedItem && selectedItem.id === item.id;
-      const isEquipped = equippedIds.includes(item.id);
+      const item = group.representative;
+      const isSelected = selectedGroup && selectedGroup.baseId === group.baseId;
       
       let innerContent = '';
       if (item.image) {
@@ -110,6 +209,16 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       } else {
         innerContent = `<span class="material-symbols-outlined text-2xl text-gray-300 drop-shadow-md">${item.icon}</span>`;
       }
+
+      // Count badge
+      const countBadge = group.count > 1 
+        ? `<div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${group.count}</div>` 
+        : '';
+
+      // Equipped indicator
+      const equippedBadge = group.equippedCount > 0 
+        ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-gray-900 shadow-sm z-10"></div>' 
+        : '';
 
       return `
         <div data-idx="${startIdx + idx}" 
@@ -119,10 +228,35 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
                       ? 'bg-blue-900/40 border-2 border-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.4)] scale-105 z-10' 
                       : 'bg-gray-800/60 border border-gray-600/50 hover:bg-gray-700/80 hover:border-gray-400'}">
           ${innerContent}
-          ${isEquipped ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-gray-900 shadow-sm"></div>' : ''}
+          ${countBadge}
+          ${equippedBadge}
         </div>
       `;
     }).join('');
+
+    // Determine selected item and equip state
+    const selectedItem = selectedGroup ? selectedGroup.representative : null;
+    const isCurrentlyEquipped = selectedGroup ? selectedGroup.equippedCount > 0 : false;
+    // Find the actual equipped instance for unequip
+    const equippedInstance = selectedGroup 
+      ? selectedGroup.instances.find(i => equippedIds.includes(i.id)) 
+      : null;
+    // Find a non-equipped instance for equip
+    const freeInstance = selectedGroup 
+      ? selectedGroup.instances.find(i => !equippedIds.includes(i.id)) 
+      : null;
+
+    // Equip/Unequip buttons
+    let actionBtns = '';
+    if (selectedGroup) {
+      const unequipBtn = isCurrentlyEquipped
+        ? `<button id="btn-unequip" class="py-1 px-3 bg-red-900/60 hover:bg-red-800/80 text-red-100 rounded border border-red-700/50 transition-all active:scale-95 shadow text-[10px] font-bold">外す</button>`
+        : '';
+      const equipBtn = freeInstance
+        ? `<button id="btn-equip" class="py-1 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded border border-blue-400/30 transition-all active:scale-95 shadow text-[10px] font-bold">装備する</button>`
+        : '';
+      actionBtns = `${equipBtn}${unequipBtn}`;
+    }
 
     overlay.innerHTML = `
       <div class="bg-[#111122] border border-gray-600/50 rounded-2xl w-full max-w-sm flex flex-col overflow-hidden shadow-2xl shadow-black/80
@@ -145,36 +279,31 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
         </div>
 
         <!-- Selected Item Detail (Top Area) -->
-        <div class="p-3 bg-gray-800/30 border-b border-gray-700/50 flex gap-3 h-[170px] shrink-0">
-          <div class="flex flex-col items-center gap-2 shrink-0" style="width: 76px;">
-            <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 border border-gray-600 shadow-inner 
-                        flex items-center justify-center relative overflow-hidden group">
-              <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div class="px-3 pt-2.5 pb-2 bg-gray-800/30 border-b border-gray-700/50 shrink-0 flex flex-col gap-1.5">
+          <!-- Row 1: icon + name + count + action buttons -->
+          <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 border border-gray-600 shadow-inner 
+                        flex items-center justify-center shrink-0 overflow-hidden">
               ${selectedItem ? 
                   (selectedItem.image 
-                    ? `<img src="${selectedItem.image}" class="w-14 h-14 object-contain drop-shadow-lg" />` 
-                    : `<span class="material-symbols-outlined text-3xl text-gray-200 drop-shadow-lg">${selectedItem.icon}</span>`) 
-                  : ''
+                    ? `<img src="${selectedItem.image}" class="w-8 h-8 object-contain drop-shadow-md" />` 
+                    : `<span class="material-symbols-outlined text-xl text-gray-200 drop-shadow-md">${selectedItem.icon}</span>`) 
+                  : '<span class="material-symbols-outlined text-lg text-gray-600">remove</span>'
               }
             </div>
-            <div class="text-[11px] font-bold text-center text-gray-200 leading-tight line-clamp-2 w-full px-1 flex-1 flex items-center justify-center">
-              ${selectedItem ? selectedItem.name : '---'}
-            </div>
-            ${selectedItem ? `
-              <div class="w-full mt-auto">
-                ${(equippedIds.includes(selectedItem.id))
-                  ? `<button id="btn-unequip" class="w-full py-1.5 bg-red-900/60 hover:bg-red-800/80 text-red-100 rounded border border-red-700/50 transition-all active:scale-95 shadow text-[10px] font-bold">外す</button>`
-                  : `<button id="btn-equip" class="w-full py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded border border-blue-400/30 transition-all active:scale-95 shadow text-[10px] font-bold">装備する</button>`
-                }
+            <div class="flex flex-col min-w-0 flex-1">
+              <div class="text-[12px] font-bold text-gray-100 leading-tight truncate">
+                ${selectedItem ? selectedItem.name : '---'}
+                ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[9px] text-gray-400 ml-0.5 font-normal">x${selectedGroup.count}</span>` : ''}
               </div>
-            ` : ''}
+              ${selectedItem ? `<div class="text-[9px] text-gray-500 leading-tight">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              ${actionBtns}
+            </div>
           </div>
-          
-          <div class="flex-1 bg-gray-900/60 rounded-xl border border-gray-700/50 p-2 relative overflow-hidden">
-             <!-- decorative glow -->
-            <div class="absolute -top-4 -right-4 w-16 h-16 bg-blue-500/10 blur-xl rounded-full"></div>
-            ${renderItemStats(selectedItem)}
-          </div>
+          <!-- Row 2: Stats + element/ailment chips -->
+          ${renderDetailPanel(selectedGroup)}
         </div>
 
         <!-- Pagination (Middle Area) -->
@@ -211,18 +340,18 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     slots.forEach(slot => {
       slot.addEventListener('click', (e) => {
         const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
-        if (!isNaN(idx) && availableItems[idx]) {
-          selectedItem = availableItems[idx];
+        if (!isNaN(idx) && groupedItems[idx]) {
+          selectedGroup = groupedItems[idx];
           renderContent();
         }
       });
     });
 
     const btnEquip = document.getElementById('btn-equip');
-    if (btnEquip && selectedItem) {
+    if (btnEquip && freeInstance) {
       btnEquip.addEventListener('click', async () => {
         // Equip item
-        character.equipment[targetSlot] = selectedItem.id;
+        character.equipment[targetSlot] = freeInstance.id;
         await GameDB.putCharacter(character);
         overlay.remove();
         if (onEquipmentChanged) onEquipmentChanged();
@@ -230,7 +359,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     }
 
     const btnUnequip = document.getElementById('btn-unequip');
-    if (btnUnequip && selectedItem) {
+    if (btnUnequip && equippedInstance) {
       btnUnequip.addEventListener('click', async () => {
         // Unequip item
         character.equipment[targetSlot] = null;
