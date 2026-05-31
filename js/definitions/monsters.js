@@ -20,14 +20,8 @@ export const MONSTERS = [
       { itemId: 'slime_sword', rate: 0.01 },
     ],
     killRewards: [
-      {
-        count: 100,
-        itemId: 'purupuru_ring'
-      },
-      {
-        count: 1000,
-        itemId: 'slime_hammer'
-      }
+      { count: 100, itemId: 'purupuru_ring' },
+      { count: 1000, itemId: 'slime_hammer' }
     ]
   }
 ].map(item => ({ ...item, image: `./assets/monster/${item.id}.webp` }));

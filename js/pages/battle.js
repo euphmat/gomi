@@ -556,7 +556,7 @@ class BattleManager {
             <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md">
             <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${item.quantity}</div>
           </div>
-          <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center truncate px-0.5 py-[1px] leading-tight shrink-0">
+          <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center break-all px-0.5 py-[1px] leading-tight shrink-0">
             ${item.name}
           </div>
           <div class="absolute inset-x-0 bottom-full mb-1 hidden group-hover:block bg-black/90 text-white text-[9px] p-1 rounded z-20 text-center whitespace-nowrap border border-gray-700 pointer-events-none z-30">${item.name}</div>

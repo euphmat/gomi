@@ -52,18 +52,27 @@ export function renderGuildPage() {
     });
   };
 
-  const renderContent = () => {
+  const renderContent = async () => {
     contentArea.innerHTML = ''; // クリア
+    const currentTabId = activeTabId;
     let tabContent;
 
-    switch (activeTabId) {
+    switch (currentTabId) {
       case 'inn': tabContent = renderInnTab(); break;
       case 'skill': tabContent = renderAcquireSkillTab(); break;
       case 'job': tabContent = renderChangeJobTab(); break;
       case 'reward': tabContent = renderReceiveRewardTab(); break;
     }
 
+    if (tabContent instanceof Promise) {
+      tabContent = await tabContent;
+    }
+
+    // タブが切り替わっていた場合は無視
+    if (activeTabId !== currentTabId) return;
+
     if (tabContent) {
+      contentArea.innerHTML = '';
       contentArea.appendChild(tabContent);
     }
   };
