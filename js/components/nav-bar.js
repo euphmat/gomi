@@ -43,7 +43,7 @@ export function createNavBar(router) {
       <button data-nav-path="${tab.path}"
               id="nav-${tab.id}"
               ${disabledAttr}
-              class="flex-1 flex flex-col items-center justify-center py-3
+              class="flex-1 flex flex-col items-center justify-center pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]
                      ${classes} ${disabledClass} transition-all duration-200 active:scale-95">
         <span class="material-symbols-outlined text-[24px] leading-none">${tab.icon}</span>
       </button>
@@ -51,7 +51,7 @@ export function createNavBar(router) {
   }).join('');
 
   return `
-    <nav id="game-nav" class="shrink-0 flex border-t border-gray-700/40 bg-gray-900/95 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]">
+    <nav id="game-nav" class="shrink-0 flex border-t border-gray-700/40 bg-gray-900/95 backdrop-blur-md">
       ${tabsHTML}
     </nav>
   `;
