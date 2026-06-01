@@ -21,7 +21,7 @@ export const WEAPONS = [
     stats:   { atk: 8, matk: 5, spd: 2 },
     elements:{ water: 10 },
     price: 150,
-    recipe: { price: 100, materials: [ { id: 'wooden_stock', amount: 1 }, { id: 'slime_jelly', amount: 10 } ] },
+    recipe: { price: 100, materials: [ { id: 'wooden_stick', amount: 1 }, { id: 'slime_jelly', amount: 10 } ] },
     ability: { name: 'スライムキラー', description: '名前に「スライム」が含まれる敵に対して、常時 1.2 倍のダメージを与えます。', execute: (attacker, defender, damage, battle) => { if (defender.name && defender.name.includes('スライム')) { return Math.floor(damage * 1.2); } return damage; } }
   },
   {
