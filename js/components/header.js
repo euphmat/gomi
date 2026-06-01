@@ -15,7 +15,7 @@
  */
 export function createHeader(gameState) {
   return `
-    <header id="game-header" class="shrink-0 flex items-center gap-2 px-3 py-2.5 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/40">
+    <header id="game-header" class="shrink-0 flex items-center gap-2 px-3 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)] bg-gray-900/95 backdrop-blur-md border-b border-gray-700/40">
       <!-- Location -->
       <div class="flex items-center gap-1.5 flex-1 min-w-0">
         <span id="header-location" class="text-sm font-bold text-gray-100 truncate">${gameState.location}</span>
