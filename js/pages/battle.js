@@ -338,7 +338,7 @@ class BattleManager {
         jpBar.nextElementSibling.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
       }
 
-      const statBlocks = el.querySelectorAll('.text-gray-200.font-bold');
+      const statBlocks = el.querySelectorAll('.text-gray-100.font-black.drop-shadow-md');
       if (statBlocks.length >= 5) {
         statBlocks[0].textContent = p.stats.atk;
         statBlocks[1].textContent = p.stats.def;

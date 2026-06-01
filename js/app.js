@@ -256,3 +256,8 @@ class App {
 document.addEventListener('DOMContentLoaded', () => {
   new App();
 });
+
+// ─── Disable Global Drag & Drop ──────────────────────────
+document.addEventListener('dragstart', (e) => e.preventDefault());
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => e.preventDefault());

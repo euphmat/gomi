@@ -49,7 +49,6 @@ export function createCharacterCard(character, finalStats, equippedItems) {
               : `<span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span>`
             }
           </span>
-          <span class="text-[9px] text-gray-500 shrink-0 w-14 text-right">${label}</span>
           <span class="text-[10px] text-gray-300 truncate">${item.name}</span>
         </div>
       `;
@@ -60,7 +59,6 @@ export function createCharacterCard(character, finalStats, equippedItems) {
              data-char-id="${character.id}" data-slot-key="${slotKey}">
           <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded text-[11px] shrink-0
                        border border-gray-700/40">—</span>
-          <span class="text-[9px] text-gray-500 shrink-0 w-14 text-right">${label}</span>
           <span class="text-[10px] text-gray-600 truncate italic">未装備</span>
         </div>
       `;
