@@ -16,7 +16,6 @@ export const SEED_GAME_STATE = [
   { key: 'version',  value: '0.1.0' },
 ];
 
-import { SEED_INVENTORY } from './initial-inventory.js';
 import { SEED_CHARACTERS, SEED_EQUIPMENT } from './initial-characters.js';
 
-export { SEED_EQUIPMENT, SEED_INVENTORY, SEED_CHARACTERS };
+export { SEED_EQUIPMENT, SEED_CHARACTERS };

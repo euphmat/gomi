@@ -797,15 +797,20 @@ class BattleManager {
     }, 50);
   }
 
-  executeAttack(attacker, defender, isParty) {
+  executeAttack(attacker, defender, isParty, options = {}) {
+    const actionName = options.actionName || '攻撃';
+
     if (isParty) {
-      this.showActionName(attacker.elementId, '攻撃', 'text-gray-100', 'border-gray-500/50');
+      this.showActionName(attacker.elementId, actionName, 'text-gray-100', 'border-gray-500/50');
     } else {
-      this.showActionName(attacker.elementId, '攻撃', 'text-red-300', 'border-red-500/50');
+      this.showActionName(attacker.elementId, actionName, 'text-red-300', 'border-red-500/50');
     }
 
     let damage = Math.max(1, (attacker.stats.atk || 0) - Math.floor((defender.stats.def || 0) / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
+    
+    const damageMultiplier = options.damageMultiplier || 1;
+    damage = Math.floor(damage * damageMultiplier);
 
     // --- 武器アビリティの発動 ---
     if (attacker.equipment && attacker.equipment.rightHand) {
@@ -903,6 +908,21 @@ class BattleManager {
     if (aliveParty.length === 0) return;
     
     const target = aliveParty[Math.floor(Math.random() * aliveParty.length)];
+
+    if (enemy.actions && enemy.actions.length > 0) {
+      const rand = Math.random() * 100;
+      let cumulative = 0;
+      for (const action of enemy.actions) {
+        cumulative += action.chance;
+        if (rand < cumulative) {
+          if (action.execute) {
+            action.execute(enemy, target, this);
+            return;
+          }
+        }
+      }
+    }
+
     this.executeAttack(enemy, target, false);
   }
 

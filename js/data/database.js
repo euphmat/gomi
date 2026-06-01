@@ -107,12 +107,7 @@ class GameDatabase {
     // Seed equipment
     for (const item of SEED_EQUIPMENT) { await this.putEquipment(item); }
 
-    // Seed inventory (drops, etc.)
-    if (typeof SEED_INVENTORY !== 'undefined') {
-      for (const item of SEED_INVENTORY) {
-        await this.putInventoryItem(item);
-      }
-    }
+
 
     // Seed characters
     for (const char of SEED_CHARACTERS) {

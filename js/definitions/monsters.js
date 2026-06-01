@@ -26,7 +26,8 @@ export const MONSTERS = [
     killRewards: [
       { count: 100, itemId: 'purupuru_ring' },
       { count: 1000, itemId: 'slime_hammer' }
-    ]
+    ],
+    actions: [ { name: '体当たり', chance: 10, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 2 }); } } ]
   }
 ].map(item => ({ ...item, image: `./assets/monster/${item.id}.webp` }));
 
