@@ -82,10 +82,12 @@ export function showDetailedStatusModal(character, finalStats) {
   };
 
   const statsHTML = STAT_KEYS.filter(s => s.key !== 'hp' && s.key !== 'mp').map(s => `
-    <div class="flex flex-col items-center justify-center bg-gray-800/60 rounded px-1 py-1
-                border border-gray-700/40 min-w-0 flex-1">
-      <span class="text-[8px] text-gray-500 leading-none font-medium mb-0.5">${s.label}</span>
-      <span class="text-[11px] text-gray-200 font-bold leading-tight">${finalStats[s.key]}</span>
+    <div class="flex flex-col items-center flex-1 min-w-0 bg-gradient-to-b from-gray-800/80 to-gray-900/90 rounded-lg py-1 border border-gray-700/50 shadow-inner">
+      <div class="flex items-center justify-center gap-[2px] w-full">
+        <span class="material-symbols-outlined ${s.color}" style="font-size: 11px; font-variation-settings: 'FILL' 1">${s.icon}</span>
+        <span class="text-[8px] text-gray-300 font-bold tracking-wider leading-none">${s.label}</span>
+      </div>
+      <span class="text-[12px] font-black text-gray-100 leading-tight mt-0.5 drop-shadow-md">${finalStats[s.key]}</span>
     </div>
   `).join('');
 
@@ -131,8 +133,8 @@ export function showDetailedStatusModal(character, finalStats) {
         <div class="w-full h-px bg-gray-700/50 my-0.5"></div>
 
         <!-- Combined Elements & Ailments Grids -->
-        ${renderCombinedGrid('属性 (Elements)', finalStats.attackElements, finalStats.elementResist, ELEMENT_ICONS)}
-        ${renderCombinedGrid('状態異常 (Ailments)', finalStats.attackAilments, finalStats.ailmentResist, AILMENT_ICONS)}
+        ${renderCombinedGrid('属性', finalStats.attackElements, finalStats.elementResist, ELEMENT_ICONS)}
+        ${renderCombinedGrid('状態異常', finalStats.attackAilments, finalStats.ailmentResist, AILMENT_ICONS)}
         
       </div>
     </div>

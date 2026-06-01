@@ -192,12 +192,27 @@ class BattleManager {
             </div>
           </div>
 
-          <div class="flex flex-col gap-0 text-[11px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5">
-            <div class="flex justify-between items-center"><span>ATK</span><span class="text-gray-200 font-bold">${p.stats.atk}</span></div>
-            <div class="flex justify-between items-center"><span>DEF</span><span class="text-gray-200 font-bold">${p.stats.def}</span></div>
-            <div class="flex justify-between items-center"><span>MAT</span><span class="text-gray-200 font-bold">${p.stats.matk}</span></div>
-            <div class="flex justify-between items-center"><span>MDF</span><span class="text-gray-200 font-bold">${p.stats.mdef}</span></div>
-            <div class="flex justify-between items-center"><span>SPD</span><span class="text-gray-200 font-bold">${p.stats.spd}</span></div>
+          <div class="flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5">
+            <div class="flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5">
+              <div class="flex items-center gap-[3px]"><span class="material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="font-bold tracking-wider">ATK</span></div>
+              <span class="text-gray-100 font-black drop-shadow-md">${p.stats.atk}</span>
+            </div>
+            <div class="flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5">
+              <div class="flex items-center gap-[3px]"><span class="material-symbols-outlined text-slate-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="font-bold tracking-wider">DEF</span></div>
+              <span class="text-gray-100 font-black drop-shadow-md">${p.stats.def}</span>
+            </div>
+            <div class="flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5">
+              <div class="flex items-center gap-[3px]"><span class="material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="font-bold tracking-wider">MAT</span></div>
+              <span class="text-gray-100 font-black drop-shadow-md">${p.stats.matk}</span>
+            </div>
+            <div class="flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5">
+              <div class="flex items-center gap-[3px]"><span class="material-symbols-outlined text-indigo-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="font-bold tracking-wider">MDF</span></div>
+              <span class="text-gray-100 font-black drop-shadow-md">${p.stats.mdef}</span>
+            </div>
+            <div class="flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5">
+              <div class="flex items-center gap-[3px]"><span class="material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="font-bold tracking-wider">SPD</span></div>
+              <span class="text-gray-100 font-black drop-shadow-md">${p.stats.spd}</span>
+            </div>
           </div>
         </div>
         `;
@@ -1179,11 +1194,11 @@ class BattleManager {
     }, 2500);
   }
 
-  endBattle(isWin, text, showModal = true) {
+  async endBattle(isWin, text, showModal = true) {
     clearInterval(this.atbLoop);
     this.activeCharacter = null;
     
-    this.savePartyState();
+    await this.savePartyState();
 
     if (!showModal) {
       window.location.hash = '/dungeon';
@@ -1240,9 +1255,27 @@ class BattleManager {
         }
       }
     } else {
+      let innFee = 0;
+      for (const p of this.party) {
+        innFee += (p.level || 1);
+        const stats = calcFinalStats(p, this.equipMap);
+        p.hp.current = stats.hp || p.hp.max;
+        p.mp.current = stats.mp || p.mp.max;
+        p.isDead = false;
+      }
+      
+      const currentGold = await GameDB.getGameState('gold') || 0;
+      const actualFee = Math.min(innFee, currentGold);
+      const newGold = currentGold - actualFee;
+      await GameDB.setGameState('gold', newGold);
+      await this.savePartyState(); // Save healed state
+      
+      const goldDisplay = document.getElementById('header-gold-display');
+      if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
+
       this.isDungeonClear = false;
       this.elements.btnResultOk.textContent = '街へ戻る';
-      this.elements.resultText.textContent = resultText;
+      this.elements.resultText.innerHTML = `${resultText}<br><br><span class="text-[13px] text-gray-300">パーティーは救出され、治療を受けました。<br>（救出・治療費: <span class="text-red-400">-${actualFee} G</span>）</span>`;
       this.elements.resultOverlay.classList.remove('hidden');
     }
   }

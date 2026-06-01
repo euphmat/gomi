@@ -137,9 +137,12 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       if (val > 0) { valColor = 'text-green-400'; sign = '+'; }
       else if (val < 0) { valColor = 'text-red-400'; }
       return `
-        <div class="flex flex-col items-center flex-1 min-w-0 bg-gray-800/50 rounded py-0.5 border border-gray-700/40">
-          <span class="text-[8px] text-gray-500 leading-none">${stat.label}</span>
-          <span class="text-[11px] font-bold ${valColor} leading-tight">${sign}${val}</span>
+        <div class="flex flex-col items-center flex-1 min-w-0 bg-gradient-to-b from-gray-800/80 to-gray-900/90 rounded-lg py-1 border border-gray-700/50 shadow-inner">
+          <div class="flex items-center justify-center gap-[2px] w-full">
+            <span class="material-symbols-outlined ${stat.color}" style="font-size: 11px; font-variation-settings: 'FILL' 1">${stat.icon}</span>
+            <span class="text-[8px] text-gray-300 font-bold tracking-wider leading-none">${stat.label}</span>
+          </div>
+          <span class="text-[12px] font-black ${valColor} leading-tight mt-0.5 drop-shadow-md">${sign}${val}</span>
         </div>
       `;
     }).join('');
@@ -294,11 +297,14 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
               }
             </div>
             <div class="flex flex-col min-w-0 flex-1">
-              <div class="text-[12px] font-bold text-gray-100 leading-tight truncate">
-                ${selectedItem ? selectedItem.name : '---'}
-                ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[9px] text-gray-400 ml-0.5 font-normal">x${selectedGroup.count}</span>` : ''}
+              <div class="flex items-center min-w-0 flex-wrap gap-y-0.5">
+                <div class="text-[12px] font-bold text-gray-100 leading-tight shrink-0 mr-1.5">
+                  ${selectedItem ? selectedItem.name : '---'}
+                  ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[9px] text-gray-400 ml-0.5 font-normal">x${selectedGroup.count}</span>` : ''}
+                </div>
+                ${selectedItem && selectedItem.ability ? `<div class="flex items-center min-w-0 flex-1"><div class="text-[9px] text-yellow-300 font-bold px-1 py-[1px] bg-yellow-900/40 border border-yellow-700/50 rounded shrink-0 leading-none">${selectedItem.ability.name}</div><div class="text-[8px] text-gray-400 ml-1.5 leading-tight line-clamp-2">${selectedItem.ability.description}</div></div>` : ''}
               </div>
-              ${selectedItem ? `<div class="text-[9px] text-gray-500 leading-tight">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}
+              ${selectedItem ? `<div class="text-[9px] text-gray-500 leading-tight mt-0.5">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}
             </div>
             <div class="flex items-center gap-1 shrink-0">
               ${actionBtns}

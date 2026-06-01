@@ -1,4 +1,5 @@
 import { GameDB } from '../../data/database.js';
+import { STAT_KEYS } from '../../data/constants.js';
 
 /**
  * 倉庫（所持品）タブ
@@ -141,12 +142,19 @@ export function renderStorageTab() {
     
     // Top: Icon + Name (left), Stats (right)
     const statsHtml = item.stats 
-      ? `<div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-gray-300">
-           <div>ATK: ${item.stats.atk || 0}</div><div>DEF: ${item.stats.def || 0}</div>
-           <div>MATK: ${item.stats.matk || 0}</div><div>MDEF: ${item.stats.mdef || 0}</div>
-           <div>SPD: ${item.stats.spd || 0}</div>
-         </div>`
-      : `<div class="text-xs text-gray-400">素材アイテム<br>特殊な効果はありません。</div>`;
+      ? `<div class="grid grid-cols-4 gap-1 w-full mt-1">` + STAT_KEYS.map(stat => {
+          const val = item.stats[stat.key] || 0;
+          return `
+            <div class="flex flex-col items-center min-w-0 bg-gradient-to-b from-gray-800/80 to-gray-900/90 rounded py-[3px] border border-gray-700/50 shadow-inner">
+              <div class="flex items-center justify-center gap-[1px] w-full">
+                <span class="material-symbols-outlined ${stat.color}" style="font-size: 10px; font-variation-settings: 'FILL' 1">${stat.icon}</span>
+                <span class="text-[7px] text-gray-300 font-bold tracking-wider leading-none">${stat.label}</span>
+              </div>
+              <span class="text-[11px] font-black text-gray-100 leading-none mt-0.5 drop-shadow-md">${val}</span>
+            </div>
+          `;
+        }).join('') + `</div>`
+      : `<div class="text-xs text-gray-400 mt-1">素材アイテム<br>特殊な効果はありません。</div>`;
 
     const topSection = `
       <div class="flex gap-4">

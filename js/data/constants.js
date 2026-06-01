@@ -20,13 +20,13 @@ export const EQUIPMENT_SLOTS = [
 
 // ─── Stat Definitions ────────────────────────────────────
 export const STAT_KEYS = [
-  { key: 'hp',   label: 'HP',   fullLabel: '最大HP' },
-  { key: 'mp',   label: 'MP',   fullLabel: '最大MP' },
-  { key: 'atk',  label: 'ATK',  fullLabel: '物理攻撃' },
-  { key: 'def',  label: 'DEF',  fullLabel: '物理防御' },
-  { key: 'matk', label: 'MAT', fullLabel: '魔法攻撃' },
-  { key: 'mdef', label: 'MDF', fullLabel: '魔法防御' },
-  { key: 'spd',  label: 'SPD',  fullLabel: '速度' },
+  { key: 'hp',   label: 'HP',   fullLabel: '最大HP',   icon: 'favorite',       color: 'text-green-500' },
+  { key: 'mp',   label: 'MP',   fullLabel: '最大MP',   icon: 'water_drop',     color: 'text-blue-400' },
+  { key: 'atk',  label: 'ATK',  fullLabel: '物理攻撃', icon: 'swords',         color: 'text-red-400' },
+  { key: 'def',  label: 'DEF',  fullLabel: '物理防御', icon: 'shield',         color: 'text-slate-400' },
+  { key: 'matk', label: 'MAT',  fullLabel: '魔法攻撃', icon: 'auto_awesome',   color: 'text-purple-400' },
+  { key: 'mdef', label: 'MDF',  fullLabel: '魔法防御', icon: 'security',       color: 'text-indigo-400' },
+  { key: 'spd',  label: 'SPD',  fullLabel: '速度',     icon: 'directions_run', color: 'text-yellow-400' },
 ];
 
 // ─── Element Resistance Definitions (9 types) ────────────

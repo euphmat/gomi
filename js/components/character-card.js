@@ -69,17 +69,19 @@ export function createCharacterCard(character, finalStats, equippedItems) {
 
   // ── Stat Badges ──
   const statsHTML = STAT_KEYS.filter(s => s.key !== 'hp' && s.key !== 'mp').map(s => `
-    <div class="flex flex-col items-center justify-center bg-gray-800/60 rounded px-1 py-0.5
-                border border-gray-700/40 min-w-0 flex-1">
-      <span class="text-[7px] text-gray-500 leading-none font-medium">${s.label}</span>
-      <span class="text-[10px] text-gray-200 font-bold leading-tight">${finalStats[s.key]}</span>
+    <div class="flex flex-col items-center flex-1 min-w-0 bg-gradient-to-b from-gray-800/80 to-gray-900/90 rounded-lg py-[3px] border border-gray-700/50 shadow-inner">
+      <div class="flex items-center justify-center gap-[1px] w-full">
+        <span class="material-symbols-outlined ${s.color}" style="font-size: 10px; font-variation-settings: 'FILL' 1">${s.icon}</span>
+        <span class="text-[7px] text-gray-300 font-bold tracking-wider leading-none">${s.label}</span>
+      </div>
+      <span class="text-[11px] font-black text-gray-100 leading-none mt-0.5 drop-shadow-md">${finalStats[s.key]}</span>
     </div>
   `).join('');
 
   // ── Card ──
   return `
     <div class="char-card bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-lg p-2
-                flex flex-col gap-1.5 transition-all duration-300 h-[340px]
+                flex flex-col gap-1.5 transition-all duration-300 h-[330px]
                 hover:border-gray-500/50 hover:shadow-lg hover:shadow-black/20">
 
       <!-- Row 1: Icon + Name & Level Info -->
@@ -145,7 +147,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
 export function createEmptySlotCard(slotIndex) {
   return `
     <div class="char-card bg-gray-900/40 backdrop-blur-sm border border-dashed border-gray-700/40 rounded-lg p-2
-                flex flex-col items-center justify-center gap-2 h-[340px]
+                flex flex-col items-center justify-center gap-2 h-[330px]
                 transition-all duration-300 hover:border-gray-600/50">
       <div class="w-14 h-14 rounded-lg flex items-center justify-center
                   bg-gray-800/30 border border-gray-700/30">
