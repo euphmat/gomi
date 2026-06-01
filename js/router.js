@@ -58,9 +58,10 @@ export class Router {
     const renderFn = this.routes.get(path);
 
     if (renderFn) {
-      // Fade-out transition
+      // Smooth Fade-out transition
+      this.contentEl.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out';
       this.contentEl.style.opacity = '0';
-      this.contentEl.style.transform = 'translateY(4px)';
+      this.contentEl.style.transform = 'translateY(4px) scale(0.99)';
 
       setTimeout(() => {
         this.contentEl.innerHTML = '';
@@ -72,12 +73,14 @@ export class Router {
           this.contentEl.appendChild(content);
         }
 
-        // Fade-in transition
+        // Smooth Fade-in transition
         requestAnimationFrame(() => {
-          this.contentEl.style.opacity = '1';
-          this.contentEl.style.transform = 'translateY(0)';
+          requestAnimationFrame(() => {
+            this.contentEl.style.opacity = '1';
+            this.contentEl.style.transform = 'translateY(0) scale(1)';
+          });
         });
-      }, 150);
+      }, 200);
     }
 
     // Dispatch custom event for other components (e.g., nav bar)

@@ -49,11 +49,18 @@ export function renderForgePage() {
     });
   };
 
-  const renderContent = () => {
+  const renderContent = async () => {
+    // Smooth Fade-out transition
+    contentArea.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out';
+    contentArea.style.opacity = '0';
+    contentArea.style.transform = 'translateY(4px) scale(0.99)';
+
+    await new Promise(r => setTimeout(r, 150));
     contentArea.innerHTML = ''; // クリア
+    const currentTabId = activeTabId;
     let tabContent;
 
-    switch (activeTabId) {
+    switch (currentTabId) {
       case 'forge':
         tabContent = renderForgeTab();
         break;
@@ -62,8 +69,22 @@ export function renderForgePage() {
         break;
     }
 
+    if (tabContent instanceof Promise) {
+      tabContent = await tabContent;
+    }
+
+    if (activeTabId !== currentTabId) return;
+
     if (tabContent) {
       contentArea.appendChild(tabContent);
+      
+      // Smooth Fade-in transition
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          contentArea.style.opacity = '1';
+          contentArea.style.transform = 'translateY(0) scale(1)';
+        });
+      });
     }
   };
 

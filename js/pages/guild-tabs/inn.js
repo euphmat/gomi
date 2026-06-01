@@ -6,17 +6,7 @@ export function renderInnTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full p-4 animate-fade-in overflow-y-auto items-center';
 
-  // Title & Description
-  const header = document.createElement('div');
-  header.className = 'text-center mb-6 bg-blue-900/40 p-4 rounded-xl border border-blue-500/30 w-full max-w-sm shadow-lg';
-  header.innerHTML = `
-    <div class="flex justify-center items-center gap-2 mb-2">
-      <span class="material-symbols-outlined text-4xl text-blue-300" style="font-variation-settings: 'FILL' 1">storefront</span>
-      <h2 class="text-2xl font-black text-gray-100 tracking-widest drop-shadow-md">宿屋へようこそ</h2>
-    </div>
-    <p class="text-[11px] text-gray-400 mt-1">HP・MPの全回復と戦闘不能の蘇生を行います。<br>（宿泊費：回復が必要な仲間のレベル合計 × 1 G）</p>
-  `;
-  container.appendChild(header);
+
 
   // Status Container
   const statusContainer = document.createElement('div');
@@ -28,7 +18,7 @@ export function renderInnTab() {
   btnContainer.className = 'w-full max-w-sm flex flex-col items-center gap-2 mt-auto pb-4';
   
   const btnRest = document.createElement('button');
-  btnRest.className = 'px-8 py-3 w-full max-w-[200px] justify-center bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2 relative overflow-hidden';
+  btnRest.className = 'group relative px-8 py-3.5 w-full max-w-[240px] justify-center bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 active:scale-95 disabled:bg-none disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-700 disabled:cursor-not-allowed disabled:shadow-inner disabled:active:scale-100 text-white font-bold rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] border border-blue-400/50 transition-all duration-300 flex items-center gap-2 overflow-hidden';
   
   btnContainer.appendChild(btnRest);
   container.appendChild(btnContainer);
@@ -62,20 +52,26 @@ export function renderInnTab() {
         : (needsHeal ? `<span class="material-symbols-outlined text-yellow-500 text-sm" style="font-variation-settings: 'FILL' 1">local_hospital</span>` : `<span class="material-symbols-outlined text-green-400 text-sm" style="font-variation-settings: 'FILL' 1">check_circle</span>`);
 
       const row = document.createElement('div');
-      row.className = `flex items-center gap-3 p-2 rounded-lg border ${needsHeal ? 'bg-gray-800/80 border-blue-500/30' : 'bg-gray-900/50 border-gray-700/50 opacity-80'}`;
+      row.className = `group flex items-center gap-4 p-3 rounded-2xl border transition-all duration-300 shadow-md ${needsHeal ? 'bg-slate-800/80 border-blue-500/30 hover:border-blue-400/50 hover:bg-slate-800' : 'bg-slate-900/40 border-slate-700/30 opacity-70'}`;
+      
       row.innerHTML = `
-        <div class="w-11 h-11 rounded-lg overflow-hidden border ${isDead ? 'border-gray-600 grayscale' : 'border-gray-500'} bg-gray-900 shrink-0 relative">
-          <img src="${char.iconImage}" class="w-full h-full object-cover ${isDead ? 'opacity-50' : ''}">
-          <div class="absolute bottom-0 right-0 bg-black/60 rounded-tl px-1">
-            <span class="text-[9px] font-bold text-gray-300">Lv${char.level || 1}</span>
+        <div class="w-14 h-14 rounded-xl overflow-hidden border-2 ${isDead ? 'border-red-900/50 grayscale' : (needsHeal ? 'border-blue-500/30' : 'border-slate-600/30')} bg-slate-900 shrink-0 relative shadow-inner">
+          <img src="${char.iconImage}" class="w-full h-full object-cover ${isDead ? 'opacity-40' : ''} group-hover:scale-110 transition-transform duration-300">
+          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-3 pb-0.5 px-1 text-center">
+            <span class="text-[10px] font-bold text-gray-200 drop-shadow">Lv.${char.level || 1}</span>
           </div>
         </div>
-        <div class="flex-1 flex flex-col gap-1.5">
-          <div class="flex justify-between items-center mb-1">
-            <span class="text-[12px] font-bold text-gray-200 flex items-center gap-1">${char.name} ${statusIcon}</span>
+        <div class="flex-1 flex flex-col gap-1.5 w-full">
+          <div class="flex justify-between items-center mb-0.5">
+            <span class="text-sm font-bold text-gray-100 flex items-center gap-1.5 tracking-wide">${char.name} ${statusIcon}</span>
+            <span class="text-[10px] font-bold ${needsHeal ? 'text-blue-400 bg-blue-900/30 border border-blue-500/30' : 'text-gray-500 bg-gray-800 border border-gray-700'} px-1.5 py-0.5 rounded shadow-sm">
+              ${needsHeal ? '回復対象' : '万全'}
+            </span>
           </div>
-          ${createStatusBar({ label: 'HP', current: Math.floor(char.hp.current), max: trueMaxHp, ...BAR_COLORS.hp })}
-          ${createStatusBar({ label: 'MP', current: Math.floor(char.mp.current), max: trueMaxMp, ...BAR_COLORS.mp })}
+          <div class="flex flex-col gap-1">
+            ${createStatusBar({ label: 'HP', current: Math.floor(char.hp.current), max: trueMaxHp, ...BAR_COLORS.hp })}
+            ${createStatusBar({ label: 'MP', current: Math.floor(char.mp.current), max: trueMaxMp, ...BAR_COLORS.mp })}
+          </div>
         </div>
       `;
       statusContainer.appendChild(row);
@@ -83,10 +79,16 @@ export function renderInnTab() {
 
     if (currentCost > 0) {
       btnRest.disabled = false;
-      btnRest.innerHTML = `<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1">hotel</span> 休む (${currentCost} G)`;
+      btnRest.innerHTML = `
+        <span class="material-symbols-outlined text-xl drop-shadow-md" style="font-variation-settings: 'FILL' 1">hotel</span>
+        <span class="relative z-10 tracking-widest text-sm">休む (${currentCost} G)</span>
+      `;
     } else {
       btnRest.disabled = true;
-      btnRest.innerHTML = `<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1">check</span> 回復不要`;
+      btnRest.innerHTML = `
+        <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1">check_circle</span>
+        <span class="relative z-10 tracking-widest text-sm text-gray-400">回復不要</span>
+      `;
     }
   };
 

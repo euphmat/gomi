@@ -18,23 +18,7 @@ export function renderAcquireSkillTab() {
   const render = () => {
     container.innerHTML = '';
     
-    // より洗練されたプロフェッショナルなヘッダー
-    const header = document.createElement('div');
-    header.className = 'relative mb-4 p-4 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 shadow-xl overflow-hidden shrink-0 group';
-    header.innerHTML = `
-      <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-all duration-500"></div>
-      <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
-      <div class="relative flex items-center gap-4">
-        <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)] shrink-0">
-          <span class="material-symbols-outlined text-2xl text-green-400 drop-shadow-md" style="font-variation-settings: 'FILL' 1">auto_stories</span>
-        </div>
-        <div class="flex-1 min-w-0">
-          <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 tracking-wider mb-1">スキル獲得</h2>
-          <p class="text-[11px] text-gray-400 leading-relaxed font-medium">SP（スキルポイント）を消費して新しいスキルを修得・強化します</p>
-        </div>
-      </div>
-    `;
-    container.appendChild(header);
+
 
     // キャラクター選択グリッド (上部)
     if (characters.length > 0) {
