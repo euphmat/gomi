@@ -203,7 +203,8 @@ class GameDatabase {
    * @returns {Promise<void>}
    */
   putCharacter(character) {
-    return this._write('characters', (store) => store.put(character));
+    const clone = JSON.parse(JSON.stringify(character));
+    return this._write('characters', (store) => store.put(clone));
   }
 
   // ─── Equipment ───────────────────────────────────────────
@@ -233,7 +234,8 @@ class GameDatabase {
    * @returns {Promise<void>}
    */
   putEquipment(item) {
-    return this._write('equipment', (store) => store.put(item));
+    const clone = JSON.parse(JSON.stringify(item));
+    return this._write('equipment', (store) => store.put(clone));
   }
 
   /**
@@ -288,7 +290,8 @@ class GameDatabase {
    * @returns {Promise<void>}
    */
   putInventoryItem(item) {
-    return this._write('inventory', (store) => store.put(item));
+    const clone = JSON.parse(JSON.stringify(item));
+    return this._write('inventory', (store) => store.put(clone));
   }
 
   /**
