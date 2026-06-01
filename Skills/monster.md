@@ -23,26 +23,35 @@ Please implement the monsters in js/definitions/monsters.js using the following 
 
 ```js:template example
 {
-id: 'slime', name: 'Slime',
-stats:    { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 },
-elements: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
-ailments: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
-rewards:  { exp: 0, jp: 0,  gold: 0 },
-// Must set 5 items. Implement low-probability to ultra-low-probability drop items. (3 materials, 1 piece of armor, 1 weapon)
-drops: [
-{ itemId: 'slime_jelly', rate: 5 },
-{ itemId: 'slime_core', rate: 1 },
-{ itemId: 'slime_fluid', rate: 0.5 },
-{ itemId: 'slime_sword', rate: 0.01 },
-],
-// List the item IDs for defeat rewards.
-killRewards: [
-{ count: 100, itemId: 'purupuru_ring' },
-{ count: 1000, itemId: 'slime_hammer' }
-],
-// Set the skills the monster is likely to use.
-actions: [ { name: 'Body Slam', chance: 10, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: 'Body Slam', damageMultiplier: 2 }); } } ]
-  }
+  id: 'slime', name: 'Slime',
+  stats:    { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 },
+  // Set the element based on the one associated with the monster's name. If no element comes to mind, leave it blank.
+  elements: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
+  // If the monster appears likely to use status ailment attacks, set a status ailment value as well. If no such association exists, leave it blank.
+  ailments: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
+  rewards:  { exp: 0, jp: 0,  gold: 0 },
+  // Must set 3 items. Implement low-probability to ultra-low-probability drop items. (3 materials)
+  drops: [
+    { itemId: 'slime_jelly', rate: 5 },
+    { itemId: 'slime_core', rate: 1 },
+    { itemId: 'slime_fluid', rate: 0.1 },
+  ],
+  // List the item IDs for defeat rewards.
+  // count: 100 =  accessory
+  // count: 500 = armor
+  // count: 1000 = weapon
+  // The weapon type should be selected at random from the following list, ensuring that there is no bias toward any single type:
+  // - Sword
+  // - Magic staff
+  // - Bow
+  killRewards: [
+    { count: 100, itemId: 'purupuru_ring' },
+    { count: 500, itemId: 'slime_armor' },
+    { count: 1000, itemId: 'slime_hammer' }
+  ],
+  // Set the skills the monster is likely to use.
+  actions: [ { name: 'Body Slam', chance: 10, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: 'Body Slam', damageMultiplier: 2 }); } } ]
+    }
 ```
 
 ## 2. Implementing Drop Items and Defeat Rewards
