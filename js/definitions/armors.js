@@ -16,6 +16,5 @@ export const ARMORS = [
     id: 'cloth_armor',
     name: '布の服',
     stats: { def: 1, mdef: 1 },
-    price: 40,
   }
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));

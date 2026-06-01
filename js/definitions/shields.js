@@ -16,6 +16,5 @@ export const SHIELDS = [
   {
     id: 'wooden_shield', name: '木の盾',
     stats: { def: 2, mdef: 1 },
-    price: 30,
   }
 ].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));

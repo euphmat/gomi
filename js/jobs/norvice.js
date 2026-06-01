@@ -5,9 +5,7 @@ export const norvice = {
   statGrowth: { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
   skills: [
     {
-      id: 'first_aid',
-      name: '応急手当',
-      icon: 'medical_services',
+      id: 'first_aid', name: '応急手当', icon: 'medical_services',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  1, healAmount: 10 },
