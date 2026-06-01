@@ -29,10 +29,11 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-sm font-bold text-gray-200 truncate leading-tight">${char.name}</span>
-          <span class="text-[10px] text-gray-400 truncate mb-1">Lv.${char.level} ${char.jobName}</span>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[9px] font-bold text-yellow-400 bg-yellow-900/40 border border-yellow-700/50 px-1 rounded shadow-sm">SP: ${char.sp || 0}</span>
-            <span class="text-[9px] font-bold text-pink-400 bg-pink-900/40 border border-pink-700/50 px-1 rounded shadow-sm">JP: ${char.jp.current || 0}</span>
+          <span class="text-[10px] text-gray-400 truncate">Lv.${char.level} ${char.jobName}</span>
+          <div class="flex items-center gap-1.5 mt-1">
+            <span class="text-[10px] font-bold text-yellow-300 bg-yellow-900/40 border border-yellow-700/50 px-1.5 py-0.5 rounded shadow-sm flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-[12px]">stars</span>SP: ${char.sp || 0}
+            </span>
           </div>
         </div>
       `;

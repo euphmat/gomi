@@ -114,26 +114,26 @@ export function renderItemLibraryTab() {
 
   const showItemModal = (item, isAcquired, killCounts) => {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in px-4';
+    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in px-4 py-8';
     
     const modal = document.createElement('div');
-    modal.className = 'bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-[slide-up_0.2s_ease-out] max-h-[75vh]';
+    modal.className = 'bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-[slide-up_0.2s_ease-out] max-h-full';
     
     // Header
     const header = document.createElement('div');
-    header.className = 'flex justify-between items-center p-4 border-b border-gray-800 bg-gradient-to-b from-gray-800 to-gray-900';
+    header.className = 'flex justify-between items-center px-4 py-3 border-b border-gray-800 bg-gradient-to-b from-gray-800 to-gray-900 shrink-0';
     header.innerHTML = `
       <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-gray-400 text-lg">info</span>
+        <span class="material-symbols-outlined text-gray-400 text-lg normal-case">info</span>
         <span class="font-bold text-gray-100 text-sm tracking-wider">アイテム詳細</span>
       </div>
-      <button class="text-gray-400 hover:text-white transition-colors bg-gray-800 hover:bg-gray-700 rounded-full p-1" id="close-modal-btn">
-        <span class="material-symbols-outlined text-xl block">close</span>
+      <button class="text-gray-400 hover:text-white transition-colors bg-gray-800 hover:bg-gray-700 rounded-full p-1 flex items-center justify-center" id="close-modal-btn">
+        <span class="material-symbols-outlined text-lg block normal-case">close</span>
       </button>`;
       
     // Body
     const body = document.createElement('div');
-    body.className = 'p-4 flex flex-col gap-5 overflow-y-auto no-scrollbar pb-6';
+    body.className = 'p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar flex-1 min-h-0';
     
     const displayName = isAcquired ? item.name : '？？？';
     let displayImage = '';
@@ -143,36 +143,36 @@ export function renderItemLibraryTab() {
           : `<img src="${item.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]">`;
     } else {
         displayImage = isAcquired
-          ? `<span class="material-symbols-outlined text-4xl text-gray-500">category</span>`
-          : `<span class="material-symbols-outlined text-4xl text-gray-800">category</span>`;
+          ? `<span class="material-symbols-outlined text-3xl text-gray-500 normal-case">category</span>`
+          : `<span class="material-symbols-outlined text-3xl text-gray-800 normal-case">category</span>`;
     }
     
     // Stats
     const statsHtml = item.stats 
-      ? `<div class="grid grid-cols-4 gap-1 w-full mt-2">` + STAT_KEYS.map(stat => {
+      ? `<div class="grid grid-cols-4 gap-1 w-full mt-1.5">` + STAT_KEYS.map(stat => {
           const val = item.stats[stat.key] || 0;
           return `
-            <div class="flex flex-col items-center min-w-0 bg-gray-800 rounded-lg py-1 border border-gray-700 shadow-inner">
+            <div class="flex flex-col items-center min-w-0 bg-gray-800/80 rounded py-1 border border-gray-700 shadow-inner">
               <div class="flex items-center justify-center gap-1 w-full">
-                <span class="material-symbols-outlined ${stat.color}" style="font-size: 12px; font-variation-settings: 'FILL' 1">${stat.icon}</span>
-                <span class="text-[9px] text-gray-400 font-bold tracking-wider leading-none">${stat.label}</span>
+                <span class="material-symbols-outlined ${stat.color} normal-case" style="font-size: 11px; font-variation-settings: 'FILL' 1">${stat.icon}</span>
+                <span class="text-[8px] text-gray-400 font-bold tracking-wider leading-none">${stat.label}</span>
               </div>
               <span class="text-xs font-black text-gray-100 leading-none mt-1">${val}</span>
             </div>
           `;
         }).join('') + `</div>`
-      : `<div class="text-sm text-gray-400 mt-2 bg-gray-800 p-3 rounded-lg border border-gray-700 text-center">特殊な効果を持たない素材アイテムです。</div>`;
+      : `<div class="text-xs text-gray-400 mt-1.5 bg-gray-800/50 py-2 rounded border border-gray-700 text-center">特殊な効果を持たない素材アイテムです。</div>`;
 
     // Ability
     let abilityHtml = '';
     if (isAcquired && item.ability) {
       abilityHtml = `
-        <div class="mt-3 bg-indigo-900/30 border border-indigo-700/50 p-3 rounded-lg shadow-inner">
-          <div class="flex items-center gap-1.5 mb-1">
-            <span class="material-symbols-outlined text-indigo-400 text-[16px]">stars</span>
-            <span class="text-xs font-bold text-indigo-300 tracking-wider">専用アビリティ：${item.ability.name}</span>
+        <div class="mt-2 bg-indigo-900/30 border border-indigo-700/50 p-2 rounded shadow-inner">
+          <div class="flex items-center gap-1 mb-1">
+            <span class="material-symbols-outlined text-indigo-400 text-[14px] normal-case">stars</span>
+            <span class="text-[10px] font-bold text-indigo-300 tracking-wider">専用アビリティ：${item.ability.name}</span>
           </div>
-          <div class="text-xs text-gray-300 leading-relaxed pl-5">
+          <div class="text-[10px] text-gray-300 leading-relaxed pl-4">
             ${item.ability.description}
           </div>
         </div>
@@ -180,19 +180,19 @@ export function renderItemLibraryTab() {
     }
 
     const topSection = `
-      <div class="flex flex-col gap-4">
-        <div class="flex items-center gap-4 bg-gray-800/50 p-3 rounded-xl border border-gray-700">
-          <div class="w-16 h-16 bg-gray-900 rounded-lg border border-gray-600 shadow-inner flex items-center justify-center overflow-hidden shrink-0 relative">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center gap-3 bg-gray-800/40 p-2 rounded-lg border border-gray-700 shadow-sm">
+          <div class="w-14 h-14 bg-gray-900 rounded-md border border-gray-600 shadow-inner flex items-center justify-center overflow-hidden shrink-0 relative">
             ${displayImage}
           </div>
           <div class="flex-1 flex flex-col justify-center">
-            <div class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400 leading-tight break-words mb-1">${displayName}</div>
-            <div class="text-xs text-gray-400">${item.slot ? '装備品' : '素材・消費アイテム'}</div>
+            <div class="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400 leading-tight break-words mb-0.5">${displayName}</div>
+            <div class="text-[10px] text-gray-500 font-bold">${item.slot ? '装備品' : '素材・消費アイテム'}</div>
           </div>
         </div>
         <div>
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">bar_chart</span> 性能・効果
+          <div class="text-[10px] font-bold text-gray-500 tracking-wider mb-0.5 ml-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px] normal-case">bar_chart</span> 性能・効果
           </div>
           ${statsHtml}
           ${abilityHtml}
@@ -200,157 +200,115 @@ export function renderItemLibraryTab() {
       </div>
     `;
 
-    // 1. Required Materials (Crafting Recipe)
-    let recipeSection = '';
-    if (item.recipe && item.recipe.materials) {
-      const recipeHtml = item.recipe.materials.map(matReq => {
-        const matDef = ALL_DEFINITIONS.find(d => d.id === matReq.id);
-        const iconSrc = matDef && matDef.image 
-          ? `<img src="${matDef.image}" class="w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800">` 
-          : `<div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center"><span class="material-symbols-outlined text-[20px] text-gray-500">category</span></div>`;
-        const matName = matDef ? matDef.name : matReq.id;
-        // 未取得状態の場合は素材名も隠すか検討しますが、図鑑の利便性のため表示します
-        return `
-          <div class="flex justify-between items-center bg-gray-800/60 hover:bg-gray-700 transition-colors p-2 rounded-lg border border-gray-700 mb-1.5">
-            <div class="flex items-center gap-3">
-              ${iconSrc}
-              <span class="text-sm text-gray-200 font-bold">${matName}</span>
-            </div>
-            <div class="flex flex-col items-end">
-              <span class="text-[10px] text-gray-400 font-bold">必要数</span>
-              <span class="text-sm font-bold text-orange-400 font-mono">x${matReq.amount}</span>
-            </div>
+    const renderListSection = (title, icon, itemsHtml) => {
+      if (!itemsHtml) return '';
+      return `
+        <div class="mt-1">
+          <div class="text-[10px] font-bold text-gray-500 tracking-wider mb-1.5 ml-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px] normal-case">${icon}</span> ${title}
           </div>
-        `;
-      }).join('');
-      
-      recipeSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">build</span> 作成に必要な素材
-          </div>
-          <div class="flex flex-col">${recipeHtml}</div>
+          <div class="flex flex-col gap-1">${itemsHtml}</div>
         </div>
       `;
+    };
+
+    const createRow = (iconHtml, title, label, value, valueColor) => `
+      <div class="flex justify-between items-center bg-gray-800/40 hover:bg-gray-700/50 transition-colors p-2 rounded-md border border-gray-700/60">
+        <div class="flex items-center gap-2">
+          ${iconHtml}
+          <span class="text-xs text-gray-200 font-bold">${title}</span>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="text-[9px] text-gray-500 font-bold">${label}</span>
+          <span class="text-[11px] font-bold ${valueColor} font-mono">${value}</span>
+        </div>
+      </div>
+    `;
+
+    // 1. Required Materials
+    let recipeHtml = '';
+    if (item.recipe && item.recipe.materials) {
+      recipeHtml = item.recipe.materials.map(matReq => {
+        const matDef = ALL_DEFINITIONS.find(d => d.id === matReq.id);
+        const iconSrc = matDef && matDef.image 
+          ? `<img src="${matDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
+        return createRow(iconSrc, matDef ? matDef.name : matReq.id, '必要数', `x${matReq.amount}`, 'text-orange-400');
+      }).join('');
     }
+    const recipeSection = renderListSection('作成に必要な素材', 'build', recipeHtml);
     
     // 2. Drop Monsters
     const drops = MONSTERS.filter(m => m.drops && m.drops.some(d => d.itemId === item.id));
-    let dropsSection = '';
+    let dropHtml = '';
     if (drops.length > 0) {
-      const dropHtml = drops.map(m => {
+      dropHtml = drops.map(m => {
         const dropInfo = m.drops.find(d => d.itemId === item.id);
         const iconSrc = m.image 
-          ? `<img src="${m.image}" class="w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800">` 
-          : `<div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center"><span class="material-symbols-outlined text-[20px] text-gray-500">skull</span></div>`;
-        return `
-          <div class="flex justify-between items-center bg-gray-800/60 hover:bg-gray-700 transition-colors p-2 rounded-lg border border-gray-700 mb-1.5">
-            <div class="flex items-center gap-3">
-              ${iconSrc}
-              <span class="text-sm text-gray-200 font-bold">${m.name}</span>
-            </div>
-            <div class="flex flex-col items-end">
-              <span class="text-[10px] text-gray-400 font-bold">ドロップ率</span>
-              <span class="text-sm font-bold text-blue-400 font-mono">${dropInfo.rate}%</span>
-            </div>
-          </div>
-        `;
+          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
+        return createRow(iconSrc, m.name, 'ドロップ率', `${dropInfo.rate}%`, 'text-blue-400');
       }).join('');
-      
-      dropsSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">swords</span> ドロップするモンスター
-          </div>
-          <div class="flex flex-col">${dropHtml}</div>
-        </div>
-      `;
     }
+    const dropsSection = renderListSection('ドロップするモンスター', 'swords', dropHtml);
 
-    // 3. Material Usages
-    const usages = ALL_DEFINITIONS.filter(def => def.recipe && def.recipe.materials && def.recipe.materials.some(mat => mat.id === item.id));
-    let usageSection = '';
-    if (usages.length > 0) {
-      const usageHtml = usages.map(def => {
-        const matInfo = def.recipe.materials.find(mat => mat.id === item.id);
-        const iconSrc = def.image 
-          ? `<img src="${def.image}" class="w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800">` 
-          : `<div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center"><span class="material-symbols-outlined text-[20px] text-gray-500">category</span></div>`;
-        return `
-          <div class="flex justify-between items-center bg-gray-800/60 hover:bg-gray-700 transition-colors p-2 rounded-lg border border-gray-700 mb-1.5">
-            <div class="flex items-center gap-3">
-              ${iconSrc}
-              <span class="text-sm text-gray-200 font-bold">${def.name}</span>
-            </div>
-            <div class="flex flex-col items-end">
-              <span class="text-[10px] text-gray-400 font-bold">必要数</span>
-              <span class="text-sm font-bold text-green-400 font-mono">x${matInfo.amount}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-      
-      usageSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">category</span> 素材としての用途
-          </div>
-          <div class="flex flex-col">${usageHtml}</div>
-        </div>
-      `;
-    }
-
-    // 4. Guild Rewards (Kill Rewards)
+    // 3. Guild Rewards
     const killRewardMonsters = MONSTERS.filter(m => m.killRewards && m.killRewards.some(kr => kr.itemId === item.id));
-    let guildSection = '';
+    let guildHtml = '';
     if (killRewardMonsters.length > 0) {
-      const guildHtml = killRewardMonsters.map(m => {
+      guildHtml = killRewardMonsters.map(m => {
         const krInfo = m.killRewards.find(kr => kr.itemId === item.id);
         const currentKills = killCounts[m.id] || 0;
         const progressPercent = Math.min(100, Math.floor((currentKills / krInfo.count) * 100));
 
         const iconSrc = m.image 
-          ? `<img src="${m.image}" class="w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800 shrink-0">` 
-          : `<div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px] text-gray-500">skull</span></div>`;
+          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0">` 
+          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
         return `
-          <div class="flex flex-col bg-gray-800/60 hover:bg-gray-700 transition-colors p-3 rounded-lg border border-gray-700 mb-1.5 gap-2">
+          <div class="flex flex-col bg-gray-800/40 p-2 rounded-md border border-gray-700/60 gap-1.5">
             <div class="flex justify-between items-center">
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
                 ${iconSrc}
-                <span class="text-sm text-gray-200 font-bold">${m.name}</span>
+                <span class="text-xs text-gray-200 font-bold">${m.name}</span>
               </div>
               <div class="flex flex-col items-end">
-                <span class="text-[10px] text-gray-400 font-bold">必要討伐数</span>
-                <span class="text-sm font-bold text-yellow-400 font-mono">${krInfo.count.toLocaleString()}体</span>
+                <span class="text-[9px] text-gray-500 font-bold">必要討伐数</span>
+                <span class="text-[11px] font-bold text-yellow-400 font-mono">${krInfo.count.toLocaleString()}体</span>
               </div>
             </div>
             <div class="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700 shadow-inner overflow-hidden relative">
               <div class="bg-gradient-to-r from-blue-600 to-blue-400 h-1.5 rounded-full" style="width: ${progressPercent}%"></div>
             </div>
-            <div class="flex justify-end -mt-1">
-               <span class="text-[10px] text-gray-400 font-mono">進捗: ${currentKills.toLocaleString()} / ${krInfo.count.toLocaleString()} (${progressPercent}%)</span>
+            <div class="flex justify-end">
+               <span class="text-[9px] text-gray-400 font-mono leading-none">進捗: ${currentKills.toLocaleString()} / ${krInfo.count.toLocaleString()} (${progressPercent}%)</span>
             </div>
           </div>
         `;
       }).join('');
-      
-      guildSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">military_tech</span> ギルド討伐報酬
-          </div>
-          <div class="flex flex-col">${guildHtml}</div>
-        </div>
-      `;
     }
+    const guildSection = renderListSection('ギルド討伐報酬', 'military_tech', guildHtml);
+
+    // 4. Material Usages
+    const usages = ALL_DEFINITIONS.filter(def => def.recipe && def.recipe.materials && def.recipe.materials.some(mat => mat.id === item.id));
+    let usageHtml = '';
+    if (usages.length > 0) {
+      usageHtml = usages.map(def => {
+        const matInfo = def.recipe.materials.find(mat => mat.id === item.id);
+        const iconSrc = def.image 
+          ? `<img src="${def.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
+        return createRow(iconSrc, def.name, '必要数', `x${matInfo.amount}`, 'text-green-400');
+      }).join('');
+    }
+    const usageSection = renderListSection('素材としての用途', 'category', usageHtml);
 
     // Info Sections Container
     let infoSections = recipeSection + dropsSection + guildSection + usageSection;
     if (!infoSections) {
       infoSections = `
-        <div class="flex flex-col items-center justify-center py-6 text-gray-500 bg-gray-800/30 rounded-lg border border-gray-700 border-dashed mt-4">
-          <span class="material-symbols-outlined text-3xl mb-2">inventory_2</span>
-          <span class="text-xs font-bold">関連するレシピやドロップ情報はありません</span>
+        <div class="flex flex-col items-center justify-center py-6 text-gray-500 bg-gray-800/30 rounded-lg border border-gray-700 border-dashed mt-2">
+          <span class="material-symbols-outlined text-2xl mb-1 normal-case">inventory_2</span>
+          <span class="text-[10px] font-bold">関連するレシピやドロップ情報はありません</span>
         </div>
       `;
     }

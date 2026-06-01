@@ -18,15 +18,21 @@ export function renderAcquireSkillTab() {
   const render = () => {
     container.innerHTML = '';
     
-    // ユーザーフレンドリーなヘッダー
+    // より洗練されたプロフェッショナルなヘッダー
     const header = document.createElement('div');
-    header.className = 'text-center mb-3 bg-green-900/40 py-2 px-4 rounded-xl border border-green-500/30 shadow-lg shrink-0';
+    header.className = 'relative mb-4 p-4 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 shadow-xl overflow-hidden shrink-0 group';
     header.innerHTML = `
-      <div class="flex justify-center items-center gap-2 mb-0.5">
-        <span class="material-symbols-outlined text-xl text-green-400" style="font-variation-settings: 'FILL' 1">menu_book</span>
-        <h2 class="text-lg font-black text-gray-100 tracking-widest drop-shadow-md">スキル獲得</h2>
+      <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition-all duration-500"></div>
+      <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+      <div class="relative flex items-center gap-4">
+        <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-blue-500/20 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)] shrink-0">
+          <span class="material-symbols-outlined text-2xl text-green-400 drop-shadow-md" style="font-variation-settings: 'FILL' 1">auto_stories</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 tracking-wider mb-1">スキル獲得</h2>
+          <p class="text-[11px] text-gray-400 leading-relaxed font-medium">SP（スキルポイント）を消費して新しいスキルを修得・強化します</p>
+        </div>
       </div>
-      <p class="text-[11px] text-gray-300">SP（スキルポイント）を消費して新しいスキルを修得・強化します。</p>
     `;
     container.appendChild(header);
 
@@ -66,40 +72,44 @@ export function renderAcquireSkillTab() {
           let isDisabled = isMax || !hasEnoughSP;
 
           if (isMax) {
-            btnClass = 'bg-gray-700 text-gray-500 cursor-not-allowed';
-            btnText = 'MAX';
+            btnClass = 'bg-gray-800 border border-gray-700 text-gray-500 shadow-inner cursor-not-allowed';
+            btnText = '<span class="tracking-widest">MAX</span>';
           } else if (currentLevel === 0) {
-            btnClass = hasEnoughSP ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-green-900/50 border border-green-800 text-gray-400 cursor-not-allowed';
-            btnText = `修得 : SP ${levelConfig.spCost}`;
+            btnClass = hasEnoughSP ? 'bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white border border-green-400/50 shadow-[0_0_10px_rgba(52,211,153,0.3)] hover:shadow-[0_0_15px_rgba(52,211,153,0.5)] transform hover:-translate-y-0.5 transition-all' : 'bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed';
+            btnText = `<div class="flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[14px]">school</span>修得 ${levelConfig.spCost} SP</div>`;
           } else {
-            btnClass = hasEnoughSP ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-orange-900/50 border border-orange-800 text-gray-400 cursor-not-allowed';
-            btnText = `強化 : SP ${levelConfig.spCost}`;
+            btnClass = hasEnoughSP ? 'bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 text-white border border-orange-400/50 shadow-[0_0_10px_rgba(251,146,60,0.3)] hover:shadow-[0_0_15px_rgba(251,146,60,0.5)] transform hover:-translate-y-0.5 transition-all' : 'bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed';
+            btnText = `<div class="flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[14px]">upgrade</span>強化 ${levelConfig.spCost} SP</div>`;
           }
 
           const row = document.createElement('div');
-          row.className = 'flex items-center gap-3 p-3 bg-gray-800/80 rounded-xl border border-gray-700/50';
+          row.className = 'group relative flex items-center gap-4 p-3 bg-gray-800/60 hover:bg-gray-800/90 rounded-2xl border border-gray-700/50 hover:border-green-500/30 shadow-md hover:shadow-lg transition-all duration-300';
           
           row.innerHTML = `
-            <div class="flex items-center justify-center w-12 h-12 bg-gray-900 rounded-lg shrink-0 relative">
-              <span class="material-symbols-outlined text-2xl text-orange-400">${skill.icon}</span>
-              ${currentLevel > 0 ? `<div class="absolute -bottom-1 -right-1 bg-blue-600 text-[9px] font-black px-1 rounded border border-blue-400">Lv${currentLevel}</div>` : ''}
+            <div class="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl shrink-0 relative shadow-inner border border-gray-600/50">
+              <span class="material-symbols-outlined text-3xl text-orange-400 drop-shadow-md group-hover:scale-110 transition-transform duration-300">${skill.icon}</span>
+              ${currentLevel > 0 ? `<div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-r from-blue-600 to-blue-500 text-[10px] font-black text-white px-1.5 py-0.5 rounded-md border border-blue-300/50 shadow-sm z-10">Lv.${currentLevel}</div>` : ''}
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-baseline gap-2">
-                <h3 class="text-sm font-bold text-gray-200 truncate">${skill.name}</h3>
+            <div class="flex-1 min-w-0 py-1">
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="text-base font-bold text-gray-100 tracking-wide truncate group-hover:text-green-400 transition-colors">${skill.name}</h3>
               </div>
-              <div class="flex flex-col gap-0.5 mt-0.5">
+              <div class="flex flex-col gap-1">
                 ${isMax ? `
-                  <span class="text-[10px] text-gray-400 leading-tight">${currentDesc}</span>
+                  <span class="text-xs text-gray-400 leading-snug">${currentDesc}</span>
                 ` : `
-                  <span class="text-xs text-blue-400 font-bold">消費MP: ${levelConfig.mpCost}</span>
-                  <span class="text-[10px] text-gray-400 leading-tight">${nextDesc}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-cyan-300 bg-cyan-900/30 px-1.5 py-0.5 rounded border border-cyan-800/50">消費MP: ${levelConfig.mpCost}</span>
+                  </div>
+                  <span class="text-xs text-gray-400 leading-snug line-clamp-2">${nextDesc}</span>
                 `}
               </div>
             </div>
-            <button class="acquire-btn px-4 py-2 ${btnClass} text-xs font-bold rounded-lg shadow transition-colors shrink-0" ${isDisabled ? 'disabled' : ''}>
-              ${btnText}
-            </button>
+            <div class="shrink-0 flex flex-col items-end justify-center ml-2">
+              <button class="acquire-btn w-[120px] relative overflow-hidden px-3 py-2 ${btnClass} text-xs font-bold rounded-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none disabled:active:scale-100 transition-all duration-200" ${isDisabled ? 'disabled' : ''}>
+                <span class="relative z-10 flex items-center justify-center w-full">${btnText}</span>
+              </button>
+            </div>
           `;
           
           if (!isMax && hasEnoughSP) {

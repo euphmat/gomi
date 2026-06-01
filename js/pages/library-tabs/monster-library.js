@@ -50,26 +50,26 @@ export function renderMonsterLibraryTab() {
 
   const showMonsterModal = (monster, isDefeated, kills) => {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in px-4';
+    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in px-4 py-8';
     
     const modal = document.createElement('div');
-    modal.className = 'bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-[slide-up_0.2s_ease-out] max-h-[75vh]';
+    modal.className = 'bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden animate-[slide-up_0.2s_ease-out] max-h-full';
     
     // Header
     const header = document.createElement('div');
-    header.className = 'flex justify-between items-center p-4 border-b border-gray-800 bg-gradient-to-b from-gray-800 to-gray-900';
+    header.className = 'flex justify-between items-center px-4 py-3 border-b border-gray-800 bg-gradient-to-b from-gray-800 to-gray-900 shrink-0';
     header.innerHTML = `
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-gray-400 text-lg normal-case">info</span>
         <span class="font-bold text-gray-100 text-sm tracking-wider">モンスター詳細</span>
       </div>
-      <button class="text-gray-400 hover:text-white transition-colors bg-gray-800 hover:bg-gray-700 rounded-full p-1" id="close-modal-btn">
-        <span class="material-symbols-outlined text-xl block normal-case">close</span>
+      <button class="text-gray-400 hover:text-white transition-colors bg-gray-800 hover:bg-gray-700 rounded-full p-1 flex items-center justify-center" id="close-modal-btn">
+        <span class="material-symbols-outlined text-lg block normal-case">close</span>
       </button>`;
       
     // Body
     const body = document.createElement('div');
-    body.className = 'p-4 flex flex-col gap-5 overflow-y-auto no-scrollbar pb-6';
+    body.className = 'p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar flex-1 min-h-0';
     
     const displayName = isDefeated ? monster.name : '？？？';
     let displayImage = '';
@@ -79,19 +79,43 @@ export function renderMonsterLibraryTab() {
           : `<img src="${monster.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]">`;
     } else {
         displayImage = isDefeated
-          ? `<span class="material-symbols-outlined text-4xl text-gray-500 normal-case">pets</span>`
-          : `<span class="material-symbols-outlined text-4xl text-gray-800 normal-case">pets</span>`;
+          ? `<span class="material-symbols-outlined text-3xl text-gray-500 normal-case">pets</span>`
+          : `<span class="material-symbols-outlined text-3xl text-gray-800 normal-case">pets</span>`;
     }
     
     const topSection = `
-      <div class="flex flex-col gap-4">
-        <div class="flex items-center gap-4 bg-gray-800/50 p-3 rounded-xl border border-gray-700">
-          <div class="w-16 h-16 bg-gray-900 rounded-lg border border-gray-600 shadow-inner flex items-center justify-center overflow-hidden shrink-0 relative">
-            ${displayImage}
+      <div class="flex items-center gap-3 bg-gray-800/40 p-2 rounded-lg border border-gray-700 shadow-sm">
+        <div class="w-14 h-14 bg-gray-900 rounded-md border border-gray-600 shadow-inner flex items-center justify-center overflow-hidden shrink-0 relative">
+          ${displayImage}
+        </div>
+        <div class="flex-1 flex flex-col justify-center">
+          <div class="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400 leading-tight break-words mb-0.5">${displayName}</div>
+          <div class="text-[10px] text-gray-500 font-bold">モンスター</div>
+        </div>
+      </div>
+    `;
+
+    const renderListSection = (title, icon, itemsHtml) => {
+      if (!itemsHtml) return '';
+      return `
+        <div class="mt-1">
+          <div class="text-[10px] font-bold text-gray-500 tracking-wider mb-1.5 ml-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px] normal-case">${icon}</span> ${title}
           </div>
-          <div class="flex-1 flex flex-col justify-center gap-2">
-            <div class="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400 leading-tight break-words">${displayName}</div>
-          </div>
+          <div class="flex flex-col gap-1">${itemsHtml}</div>
+        </div>
+      `;
+    };
+
+    const createRow = (iconHtml, title, label, value, valueColor) => `
+      <div class="flex justify-between items-center bg-gray-800/40 hover:bg-gray-700/50 transition-colors p-2 rounded-md border border-gray-700/60">
+        <div class="flex items-center gap-2">
+          ${iconHtml}
+          <span class="text-xs text-gray-200 font-bold">${title}</span>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="text-[9px] text-gray-500 font-bold">${label}</span>
+          <span class="text-[11px] font-bold ${valueColor} font-mono">${value}</span>
         </div>
       </div>
     `;
@@ -112,55 +136,43 @@ export function renderMonsterLibraryTab() {
         let iconSrc = '';
         if (itemDef && itemDef.image) {
           const imgClass = isItemAcquired 
-            ? 'w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800 shrink-0' 
-            : 'w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800 shrink-0 brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
+            ? 'w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0' 
+            : 'w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0 brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
           iconSrc = `<img src="${itemDef.image}" class="${imgClass}">`;
         } else {
-          iconSrc = `<div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px] text-gray-500 normal-case">category</span></div>`;
+          iconSrc = `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         }
         
         return `
-          <div class="flex flex-col bg-gray-800/60 hover:bg-gray-700 transition-colors p-3 rounded-lg border border-gray-700 mb-1.5 gap-2">
+          <div class="flex flex-col bg-gray-800/40 p-2 rounded-md border border-gray-700/60 gap-1.5">
             <div class="flex justify-between items-center">
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
                 ${iconSrc}
-                <span class="text-sm text-gray-200 font-bold">${rewardName}</span>
+                <span class="text-xs text-gray-200 font-bold">${rewardName}</span>
               </div>
               <div class="flex flex-col items-end">
-                <span class="text-[10px] text-gray-400 font-bold">目標討伐数</span>
-                <span class="text-sm font-bold text-yellow-400 font-mono">${reward.count.toLocaleString()}体</span>
+                <span class="text-[9px] text-gray-500 font-bold">目標討伐数</span>
+                <span class="text-[11px] font-bold text-yellow-400 font-mono">${reward.count.toLocaleString()}体</span>
               </div>
             </div>
             <div class="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700 shadow-inner overflow-hidden relative">
               <div class="bg-gradient-to-r from-blue-600 to-blue-400 h-1.5 rounded-full" style="width: ${progressPercent}%"></div>
             </div>
-            <div class="flex justify-end -mt-1">
-               <span class="text-[10px] text-gray-400 font-mono">進捗: ${kills.toLocaleString()} / ${reward.count.toLocaleString()} (${progressPercent}%)</span>
+            <div class="flex justify-end">
+               <span class="text-[9px] text-gray-400 font-mono leading-none">進捗: ${kills.toLocaleString()} / ${reward.count.toLocaleString()} (${progressPercent}%)</span>
             </div>
           </div>
         `;
       }).join('');
       
-      rewardsSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">military_tech</span> 討伐報酬と進捗
-          </div>
-          <div class="flex flex-col">${rewardsHtml}</div>
-        </div>
-      `;
+      rewardsSection = renderListSection('討伐報酬と進捗', 'military_tech', rewardsHtml);
     } else {
-      rewardsSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">swords</span> 討伐実績
-          </div>
-          <div class="bg-gray-800/60 p-3 rounded-lg border border-gray-700 flex justify-between items-center">
-            <span class="text-sm text-gray-300 font-bold">現在の討伐数</span>
-            <span class="text-sm font-bold text-yellow-400 font-mono">${kills.toLocaleString()}体</span>
-          </div>
+      rewardsSection = renderListSection('討伐実績', 'swords', `
+        <div class="bg-gray-800/40 p-2 rounded-md border border-gray-700/60 flex justify-between items-center">
+          <span class="text-xs text-gray-300 font-bold">現在の討伐数</span>
+          <span class="text-xs font-bold text-yellow-400 font-mono">${kills.toLocaleString()}体</span>
         </div>
-      `;
+      `);
     }
 
     // Drops Section
@@ -170,54 +182,29 @@ export function renderMonsterLibraryTab() {
         const itemDef = ALL_DEFINITIONS.find(d => d.id === drop.itemId);
         
         if (!isDefeated) {
-          return `
-            <div class="flex justify-between items-center bg-gray-800/60 p-2 rounded-lg border border-gray-700 mb-1.5">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center shrink-0">
-                  <span class="material-symbols-outlined text-[20px] text-gray-600 normal-case">question_mark</span>
-                </div>
-                <span class="text-sm text-gray-500 font-bold">？？？</span>
-              </div>
-              <div class="flex flex-col items-end">
-                <span class="text-[10px] text-gray-500 font-bold">ドロップ率</span>
-                <span class="text-sm font-bold text-gray-600 font-mono">???%</span>
-              </div>
-            </div>
-          `;
+          return createRow(
+            `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-600 normal-case">question_mark</span></div>`,
+            '？？？',
+            'ドロップ率',
+            '???%',
+            'text-gray-600'
+          );
         }
 
         const iconSrc = itemDef && itemDef.image 
-          ? `<img src="${itemDef.image}" class="w-10 h-10 rounded-md object-cover border border-gray-600 shadow-sm bg-gray-800 shrink-0">` 
-          : `<div class="w-10 h-10 bg-gray-800 rounded-md border border-gray-600 shadow-sm flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px] text-gray-500 normal-case">category</span></div>`;
+          ? `<img src="${itemDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         const itemName = itemDef ? itemDef.name : drop.itemId;
         
-        return `
-          <div class="flex justify-between items-center bg-gray-800/60 hover:bg-gray-700 transition-colors p-2 rounded-lg border border-gray-700 mb-1.5">
-            <div class="flex items-center gap-3">
-              ${iconSrc}
-              <span class="text-sm text-gray-200 font-bold">${itemName}</span>
-            </div>
-            <div class="flex flex-col items-end">
-              <span class="text-[10px] text-gray-400 font-bold">ドロップ率</span>
-              <span class="text-sm font-bold text-blue-400 font-mono">${drop.rate}%</span>
-            </div>
-          </div>
-        `;
+        return createRow(iconSrc, itemName, 'ドロップ率', `${drop.rate}%`, 'text-blue-400');
       }).join('');
       
-      dropsSection = `
-        <div class="mt-2">
-          <div class="text-xs font-bold text-gray-500 tracking-wider mb-2 ml-1 flex items-center gap-1">
-            <span class="material-symbols-outlined text-[14px] normal-case">redeem</span> ドロップアイテム
-          </div>
-          <div class="flex flex-col">${dropHtml}</div>
-        </div>
-      `;
+      dropsSection = renderListSection('ドロップアイテム', 'redeem', dropHtml);
     } else {
       dropsSection = `
-        <div class="flex flex-col items-center justify-center py-6 text-gray-500 bg-gray-800/30 rounded-lg border border-gray-700 border-dashed mt-4">
-          <span class="material-symbols-outlined text-3xl mb-2 normal-case">inventory_2</span>
-          <span class="text-xs font-bold">ドロップアイテムはありません</span>
+        <div class="flex flex-col items-center justify-center py-6 text-gray-500 bg-gray-800/30 rounded-lg border border-gray-700 border-dashed mt-2">
+          <span class="material-symbols-outlined text-2xl mb-1 normal-case">inventory_2</span>
+          <span class="text-[10px] font-bold">ドロップアイテムはありません</span>
         </div>
       `;
     }
