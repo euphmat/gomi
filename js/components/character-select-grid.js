@@ -25,7 +25,7 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
 
       slot.innerHTML = `
         <div class="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-black/50 border border-gray-700">
-          <img src="${char.iconImage}" alt="${char.name}" class="w-full h-full object-cover">
+          <img src="${char.iconImage}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
         </div>
         <div class="flex flex-col min-w-0">
           <span class="text-sm font-bold text-gray-200 truncate leading-tight">${char.name}</span>

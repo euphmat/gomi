@@ -94,18 +94,18 @@ export function renderItemLibraryTab() {
       const isAcquired = acquiredBaseIds.has(item.id);
 
       const slot = document.createElement('div');
-      slot.className = `aspect-square bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} flex items-center justify-center overflow-hidden transition-all shadow-sm relative`;
+      slot.className = `relative w-full pt-[100%] bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm`;
       
       let innerHTML = '';
       if (item.image) {
         const imgClass = isAcquired ? 'w-full h-full object-cover' : 'w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
-        innerHTML = `<img src="${item.image}" alt="${item.name}" class="${imgClass}">`;
+        innerHTML = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = isAcquired ? 'material-symbols-outlined text-gray-600 text-lg' : 'material-symbols-outlined text-gray-800 text-lg';
         innerHTML = `<span class="${iconClass}">category</span>`;
       }
 
-      slot.innerHTML = innerHTML;
+      slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">${innerHTML}</div>`;
       
       slot.onclick = () => showItemModal(item, isAcquired, killCountsState);
       gridContainer.appendChild(slot);
@@ -139,8 +139,8 @@ export function renderItemLibraryTab() {
     let displayImage = '';
     if (item.image) {
         displayImage = isAcquired 
-          ? `<img src="${item.image}" class="w-full h-full object-cover">` 
-          : `<img src="${item.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]">`;
+          ? `<img src="${item.image}" class="w-full h-full object-cover" onerror="this.style.display='none'">` 
+          : `<img src="${item.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]" onerror="this.style.display='none'">`;
     } else {
         displayImage = isAcquired
           ? `<span class="material-symbols-outlined text-3xl text-gray-500 normal-case">category</span>`
@@ -231,7 +231,7 @@ export function renderItemLibraryTab() {
       recipeHtml = item.recipe.materials.map(matReq => {
         const matDef = ALL_DEFINITIONS.find(d => d.id === matReq.id);
         const iconSrc = matDef && matDef.image 
-          ? `<img src="${matDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          ? `<img src="${matDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
           : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         return createRow(iconSrc, matDef ? matDef.name : matReq.id, '必要数', `x${matReq.amount}`, 'text-orange-400');
       }).join('');
@@ -245,7 +245,7 @@ export function renderItemLibraryTab() {
       dropHtml = drops.map(m => {
         const dropInfo = m.drops.find(d => d.itemId === item.id);
         const iconSrc = m.image 
-          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
           : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
         return createRow(iconSrc, m.name, 'ドロップ率', `${dropInfo.rate}%`, 'text-blue-400');
       }).join('');
@@ -262,7 +262,7 @@ export function renderItemLibraryTab() {
         const progressPercent = Math.min(100, Math.floor((currentKills / krInfo.count) * 100));
 
         const iconSrc = m.image 
-          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0">` 
+          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0" onerror="this.style.display='none'">` 
           : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
         return `
           <div class="flex flex-col bg-gray-800/40 p-2 rounded-md border border-gray-700/60 gap-1.5">
@@ -295,7 +295,7 @@ export function renderItemLibraryTab() {
       usageHtml = usages.map(def => {
         const matInfo = def.recipe.materials.find(mat => mat.id === item.id);
         const iconSrc = def.image 
-          ? `<img src="${def.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          ? `<img src="${def.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
           : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         return createRow(iconSrc, def.name, '必要数', `x${matInfo.amount}`, 'text-green-400');
       }).join('');

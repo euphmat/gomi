@@ -13,10 +13,10 @@
 
 export const MONSTERS = [
   { id: 'slime_blue',       name: 'ブルースライム',          
-    stats      : { hp: 15, atk: 9, def: 7, matk: 9, mdef: 7, spd: 5 },
+    stats      : { hp: 15, atk: 5, def: 3, matk: 3, mdef: 3, spd: 1 },
     elements   : { water: 50 },
     ailments   : { },
-    rewards    : { exp: 7, jp: 2, gold: 14 },
+    rewards    : { exp: 1, jp: 1, gold: 1 },
     drops      : [
       { itemId: 'slime_blue_jelly', rate: 5 },
       { itemId: 'slime_blue_core', rate: 1 },
@@ -27,7 +27,7 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_blue_armor' },
       { count: 1000, itemId: 'slime_blue_sword' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [ { name: 'ウォーターアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { water: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ウォーターアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } } ],
   },
   { id: 'slime_angel',      name: 'エンジェルスライム',      
     stats      : { hp: 20, atk: 5, def: 5, matk: 5, mdef: 5, spd: 5 },
@@ -44,7 +44,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_angel_armor' },
       { count: 1000, itemId: 'slime_angel_bow' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ホーリーアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { light: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ホーリーアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_angel_king', name: 'エンジェルキングスライム',
     stats      : { hp: 25, atk: 7, def: 6, matk: 7, mdef: 6, spd: 5 },
@@ -61,7 +63,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_angel_king_shield' },
       { count: 1000, itemId: 'slime_angel_king_staff' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ホーリーアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { light: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ホーリーアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_dark',       name: 'ダークスライム',          
     stats      : { hp: 35, atk: 11, def: 8, matk: 11, mdef: 8, spd: 5 },
@@ -78,7 +82,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_dark_shield' },
       { count: 1000, itemId: 'slime_dark_bow' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ダークアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { dark: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ダークアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_earth',      name: 'アーススライム',          
     stats      : { hp: 40, atk: 13, def: 9, matk: 13, mdef: 9, spd: 5 },
@@ -95,7 +101,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_earth_armor' },
       { count: 1000, itemId: 'slime_earth_staff' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'アースアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { earth: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'アースアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_fire',       name: 'ファイヤースライム',      
     stats      : { hp: 45, atk: 15, def: 10, matk: 15, mdef: 10, spd: 5 },
@@ -112,7 +120,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_fire_shield' },
       { count: 1000, itemId: 'slime_fire_sword' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ファイアアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { fire: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ファイアアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_flower',     name: 'フラワースライム',        
     stats      : { hp: 50, atk: 17, def: 11, matk: 17, mdef: 11, spd: 5 },
@@ -129,7 +139,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_flower_armor' },
       { count: 1000, itemId: 'slime_flower_bow' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'グラスアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { grass: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'グラスアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_grass',      name: 'グラススライム',          
     stats      : { hp: 55, atk: 19, def: 12, matk: 19, mdef: 12, spd: 5 },
@@ -146,7 +158,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_grass_shield' },
       { count: 1000, itemId: 'slime_grass_staff' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'グラスアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { grass: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'グラスアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_green',      name: 'グリーンスライム',        
     stats      : { hp: 60, atk: 21, def: 13, matk: 21, mdef: 13, spd: 5 },
@@ -163,7 +177,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_green_armor' },
       { count: 1000, itemId: 'slime_green_sword' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'グラスアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { grass: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'グラスアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_ice',        name: 'アイススライム',          
     stats      : { hp: 65, atk: 23, def: 14, matk: 23, mdef: 14, spd: 5 },
@@ -180,7 +196,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_ice_shield' },
       { count: 1000, itemId: 'slime_ice_bow' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'アイスアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { ice: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'アイスアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_king',       name: 'キングスライム',          
     stats      : { hp: 70, atk: 25, def: 15, matk: 25, mdef: 15, spd: 5 },
@@ -197,7 +215,7 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_king_armor' },
       { count: 1000, itemId: 'slime_king_staff' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [ ],
   },
   { id: 'slime_red',        name: 'レッドスライム',          
     stats      : { hp: 75, atk: 27, def: 16, matk: 27, mdef: 16, spd: 5 },
@@ -214,7 +232,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_red_shield' },
       { count: 1000, itemId: 'slime_red_sword' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ファイアアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { fire: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ファイアアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_thunder',    name: 'サンダースライム',        
     stats      : { hp: 80, atk: 29, def: 17, matk: 29, mdef: 17, spd: 5 },
@@ -231,7 +251,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_thunder_armor' },
       { count: 1000, itemId: 'slime_thunder_bow' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'サンダーアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { thunder: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'サンダーアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_water',      name: 'ウォータースライム',      
     stats      : { hp: 85, atk: 31, def: 18, matk: 31, mdef: 18, spd: 5 },
@@ -248,7 +270,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_water_shield' },
       { count: 1000, itemId: 'slime_water_staff' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ウォーターアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { water: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ウォーターアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
   { id: 'slime_wind',       name: 'ウインドスライム',        
     stats      : { hp: 90, atk: 33, def: 19, matk: 33, mdef: 19, spd: 5 },
@@ -265,7 +289,9 @@ export const MONSTERS = [
       { count: 500, itemId: 'slime_wind_armor' },
       { count: 1000, itemId: 'slime_wind_sword' }
     ],
-    actions    : [ { name: '体当たり', chance: 20, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: '体当たり', damageMultiplier: 1.5 }); } } ],
+    actions    : [
+      { name: 'ウィンドアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { wind: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ウィンドアタック', damageMultiplier: 1.2 }); attacker.stats.attackElements = orig; } }
+    ],
   },
 ].map(item => ({ ...item, image: `./assets/monster/${item.id}.webp` }));
 

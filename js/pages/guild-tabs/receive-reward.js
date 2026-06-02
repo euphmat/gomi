@@ -97,7 +97,7 @@ export async function renderReceiveRewardTab() {
       row.innerHTML = `
         <div class="flex items-center justify-center w-12 h-12 bg-gray-900 rounded-lg shrink-0 overflow-hidden ${!isReceived ? 'border border-yellow-500/50' : ''}">
           ${reward.image 
-            ? `<img src="${reward.image}" class="w-10 h-10 object-contain ${isReceived ? 'opacity-50 grayscale' : ''}" alt="${reward.name}" />` 
+            ? `<img src="${reward.image}" class="w-10 h-10 object-contain ${isReceived ? 'opacity-50 grayscale' : ''}" alt=""  onerror="this.style.display='none'" />` 
             : `<span class="material-symbols-outlined text-2xl ${!isReceived ? 'text-yellow-400' : 'text-gray-500'}">military_tech</span>`
           }
         </div>

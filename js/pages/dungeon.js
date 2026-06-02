@@ -20,7 +20,7 @@ export function renderDungeonPage() {
       <!-- ダンジョン: ${d.name} -->
       <div class="flex items-center bg-gray-800/80 border border-gray-700 rounded-xl p-3 shadow-md gap-4 transition-transform hover:scale-[1.01]">
         <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-900 border border-gray-600 relative">
-          <img src="${d.image}" alt="${d.name}" class="w-full h-full object-cover">
+          <img src="${d.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
         </div>
         <div class="flex-1">
           <h3 class="text-lg font-bold text-gray-100 flex items-center gap-2">

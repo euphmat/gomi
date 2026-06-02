@@ -98,7 +98,7 @@ export function showDetailedStatusModal(character, finalStats) {
       <div class="flex items-center justify-between px-3 py-2.5 bg-gray-900/80 border-b border-gray-700/50 relative z-20">
         <div class="flex items-center gap-2">
           <div class="w-9 h-9 rounded-lg overflow-hidden border border-gray-600 shrink-0 bg-gray-800 shadow-md">
-            <img src="${character.iconImage}" class="w-full h-full object-contain" />
+            <img src="${character.iconImage}" class="w-full h-full object-contain"  onerror="this.style.display='none'" />
           </div>
           <div class="flex flex-col">
             <div class="text-[13px] font-bold text-gray-100 leading-tight">${character.name} <span class="text-[9px] text-gray-400 ml-1">${character.jobName}</span></div>

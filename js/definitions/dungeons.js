@@ -6,7 +6,7 @@ export const DUNGEONS = [
     image      : 'assets/dungeon/slime_forest.webp',
     isUnlocked : true,
     floors     : [
-      { level: 1,  monsters: ['slime', 'slime'] },
+      { level: 1,  monsters: ['slime_blue', 'slime_blue'] },
       { level: 2,  monsters: ['slime', 'slime'] },
       { level: 3,  monsters: ['slime', 'slime'] },
       { level: 4,  monsters: ['slime', 'slime', 'slime'] },

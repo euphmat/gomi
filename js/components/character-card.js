@@ -45,7 +45,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
           <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded shrink-0 overflow-hidden
                        border border-gray-700/40">
             ${item.image 
-              ? `<img src="${item.image}" class="w-[90%] h-[90%] object-contain drop-shadow-sm" alt="${item.name}" />` 
+              ? `<img src="${item.image}" class="w-[90%] h-[90%] object-contain drop-shadow-sm" alt=""  onerror="this.style.display='none'" />` 
               : `<span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span>`
             }
           </span>
@@ -89,7 +89,7 @@ export function createCharacterCard(character, finalStats, equippedItems) {
                     shadow-md border border-white/10 overflow-hidden bg-gray-800
                     cursor-pointer hover:border-gray-400 transition-colors char-icon-clickable"
              data-char-id="${character.id}">
-          <img src="${iconImage}" alt="${jobName}" class="w-full h-full object-contain pointer-events-none" />
+          <img src="${iconImage}" alt="" class="w-full h-full object-contain pointer-events-none"  onerror="this.style.display='none'" />
         </div>
 
         <!-- Name & Level Info -->

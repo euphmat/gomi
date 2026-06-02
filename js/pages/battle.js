@@ -118,7 +118,7 @@ class BattleManager {
     this.elements.enemyArea.innerHTML = this.enemies.map(e => `
       <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" data-id="${e.uniqueId}">
         <div class="relative w-full aspect-square bg-gray-800 rounded-lg border-2 ${this.selectedEnemyTarget === e ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
-          <img src="${e.image}" class="w-full h-full object-contain p-1 drop-shadow-md">
+          <img src="${e.image}" class="w-full h-full object-contain p-1 drop-shadow-md" onerror="this.style.display='none'">
         </div>
         <div class="w-full bg-gray-900 h-2 rounded overflow-hidden shadow-inner shrink-0 ${e.isDead ? 'opacity-0' : ''}">
           <div class="bg-red-500 h-full transition-all duration-300" style="width: ${(e.currentHp / e.maxHp) * 100}%"></div>
@@ -143,7 +143,7 @@ class BattleManager {
             <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
               <!-- ICON -->
               <div class="w-10 h-10 rounded border border-gray-600 overflow-hidden shadow-md bg-gray-800 shrink-0">
-                <img src="${p.iconImage}" class="w-full h-full object-cover">
+                <img src="${p.iconImage}" class="w-full h-full object-cover" onerror="this.style.display='none'">
               </div>
               <!-- LV / JLV / SP -->
               <div class="flex flex-col flex-1 text-[9px] text-gray-300 font-bold leading-tight justify-center gap-[2px]">
@@ -576,7 +576,7 @@ class BattleManager {
       html += `
         <div class="relative w-full aspect-square bg-gray-800 border border-gray-600 rounded flex flex-col group hover:border-blue-400 transition-colors overflow-hidden">
           <div class="relative flex-1 w-full min-h-0 p-1">
-            <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md">
+            <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
             <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${item.quantity}</div>
           </div>
           <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center break-all px-0.5 py-[1px] leading-tight shrink-0">
@@ -1187,7 +1187,7 @@ class BattleManager {
       
       let innerHtml = '';
       if (drop.image) {
-        innerHtml += `<img src="${drop.image}" class="w-3 h-3 object-contain">`;
+        innerHtml += `<img src="${drop.image}" class="w-3 h-3 object-contain" onerror="this.style.display='none'">`;
       } else if (drop.icon) {
         innerHtml += `<span class="material-symbols-outlined text-[11px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
       }

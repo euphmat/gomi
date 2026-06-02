@@ -84,12 +84,12 @@ export function renderStorageTab() {
 
     filteredItems.forEach(item => {
       const slot = document.createElement('div');
-      slot.className = 'aspect-square bg-black/40 rounded-md border border-gray-700/50 flex items-center justify-center overflow-hidden cursor-pointer hover:border-gray-400 hover:bg-gray-800 transition-all shadow-sm relative group';
+      slot.className = 'relative w-full pt-[100%] bg-black/40 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-400 hover:bg-gray-800 transition-all shadow-sm group';
       
       if (item.image) {
-        slot.innerHTML = `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">`;
+        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"></div>`;
       } else {
-        slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
+        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="material-symbols-outlined text-gray-600 text-lg">category</span></div>`;
       }
       
       if (item.quantity && item.quantity > 1) {
@@ -160,7 +160,7 @@ export function renderStorageTab() {
       <div class="flex gap-4">
         <div class="flex flex-col items-center gap-2 w-1/3 shrink-0">
           <div class="w-20 h-20 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden">
-            ${item.image ? `<img src="${item.image}" class="w-full h-full object-cover">` : `<span class="material-symbols-outlined text-3xl text-gray-600">category</span>`}
+            ${item.image ? `<img src="${item.image}" class="w-full h-full object-cover" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-3xl text-gray-600">category</span>`}
           </div>
           <div class="text-sm font-bold text-center leading-tight text-gray-200 w-full break-words">${item.name}</div>
         </div>

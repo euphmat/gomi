@@ -31,18 +31,18 @@ export function renderMonsterLibraryTab() {
       const isDefeated = kills > 0;
 
       const slot = document.createElement('div');
-      slot.className = `aspect-square bg-gray-800/80 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-400 hover:bg-gray-700 cursor-pointer' : 'border-gray-700 cursor-pointer'} flex items-center justify-center overflow-hidden transition-all shadow-sm relative`;
+      slot.className = `relative w-full pt-[100%] bg-gray-800/80 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-400 hover:bg-gray-700 cursor-pointer' : 'border-gray-700 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
       
       let innerHTML = '';
       if (monster.image) {
         const imgClass = isDefeated ? 'w-full h-full object-cover' : 'w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
-        innerHTML = `<img src="${monster.image}" alt="${monster.name}" class="${imgClass}">`;
+        innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-3xl' : 'material-symbols-outlined text-gray-800 text-3xl';
         innerHTML = `<span class="${iconClass}">pets</span>`;
       }
       
-      slot.innerHTML = innerHTML;
+      slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">${innerHTML}</div>`;
       slot.onclick = () => showMonsterModal(monster, isDefeated, kills);
       gridContainer.appendChild(slot);
     });
@@ -75,8 +75,8 @@ export function renderMonsterLibraryTab() {
     let displayImage = '';
     if (monster.image) {
         displayImage = isDefeated 
-          ? `<img src="${monster.image}" class="w-full h-full object-cover">` 
-          : `<img src="${monster.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]">`;
+          ? `<img src="${monster.image}" class="w-full h-full object-cover" onerror="this.style.display='none'">` 
+          : `<img src="${monster.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]" onerror="this.style.display='none'">`;
     } else {
         displayImage = isDefeated
           ? `<span class="material-symbols-outlined text-3xl text-gray-500 normal-case">pets</span>`
@@ -138,7 +138,7 @@ export function renderMonsterLibraryTab() {
           const imgClass = isItemAcquired 
             ? 'w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0' 
             : 'w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0 brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
-          iconSrc = `<img src="${itemDef.image}" class="${imgClass}">`;
+          iconSrc = `<img src="${itemDef.image}" class="${imgClass}" onerror="this.style.display='none'">`;
         } else {
           iconSrc = `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         }
@@ -192,7 +192,7 @@ export function renderMonsterLibraryTab() {
         }
 
         const iconSrc = itemDef && itemDef.image 
-          ? `<img src="${itemDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800">` 
+          ? `<img src="${itemDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
           : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         const itemName = itemDef ? itemDef.name : drop.itemId;
         

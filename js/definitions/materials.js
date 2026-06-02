@@ -8,9 +8,6 @@
  */
 
 export const MATERIALS = [
-  { id: 'slime_jelly',            name: 'スライムのゼリー'                 },
-  { id: 'slime_core',             name: 'スライムのコア'                   },
-  { id: 'slime_fluid',            name: 'スライムの体液'                   },
   { id: 'slime_angel_jelly',      name: 'エンジェルスライムのゼリー'       },
   { id: 'slime_angel_core',       name: 'エンジェルスライムのコア'         },
   { id: 'slime_angel_fluid',      name: 'エンジェルスライムの体液'         },

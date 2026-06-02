@@ -90,12 +90,12 @@ export function renderForgeTab() {
 
     filteredItems.forEach(item => {
       const slot = document.createElement('div');
-      slot.className = 'aspect-square bg-black/40 rounded-md border border-gray-700/50 flex items-center justify-center overflow-hidden cursor-pointer hover:border-gray-400 hover:bg-gray-800 transition-all shadow-sm relative group';
+      slot.className = 'relative w-full pt-[100%] bg-black/40 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-400 hover:bg-gray-800 transition-all shadow-sm group';
       
       if (item.image) {
-        slot.innerHTML = `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">`;
+        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"></div>`;
       } else {
-        slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
+        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="material-symbols-outlined text-gray-600 text-lg">category</span></div>`;
       }
       
       slot.onclick = () => {

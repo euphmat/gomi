@@ -56,7 +56,7 @@ export function renderInnTab() {
       
       row.innerHTML = `
         <div class="w-14 h-14 rounded-xl overflow-hidden border-2 ${isDead ? 'border-red-900/50 grayscale' : (needsHeal ? 'border-blue-500/30' : 'border-slate-600/30')} bg-slate-900 shrink-0 relative shadow-inner">
-          <img src="${char.iconImage}" class="w-full h-full object-cover ${isDead ? 'opacity-40' : ''} group-hover:scale-110 transition-transform duration-300">
+          <img src="${char.iconImage}" class="w-full h-full object-cover ${isDead ? 'opacity-40' : ''} group-hover:scale-110 transition-transform duration-300" onerror="this.style.display='none'">
           <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-3 pb-0.5 px-1 text-center">
             <span class="text-[10px] font-bold text-gray-200 drop-shadow">Lv.${char.level || 1}</span>
           </div>

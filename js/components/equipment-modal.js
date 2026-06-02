@@ -212,7 +212,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       
       let innerContent = '';
       if (item.image) {
-        innerContent = `<img src="${item.image}" class="w-3/4 h-3/4 object-contain drop-shadow-md" alt="${item.name}" />`;
+        innerContent = `<img src="${item.image}" class="w-3/4 h-3/4 object-contain drop-shadow-md" alt=""  onerror="this.style.display='none'" />`;
       } else {
         innerContent = `<span class="material-symbols-outlined text-2xl text-gray-300 drop-shadow-md">${item.icon}</span>`;
       }
@@ -272,7 +272,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
         <div class="flex items-center justify-between px-4 py-3 bg-gray-900/80 border-b border-gray-700/50 relative z-20">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-full overflow-hidden border border-gray-600 shrink-0 bg-gray-800">
-              <img src="${character.iconImage}" class="w-full h-full object-contain" />
+              <img src="${character.iconImage}" class="w-full h-full object-contain"  onerror="this.style.display='none'" />
             </div>
             <div>
               <div class="text-sm font-bold text-gray-100 leading-tight">装備変更</div>
@@ -291,7 +291,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
                         flex items-center justify-center shrink-0 overflow-hidden">
               ${selectedItem ? 
                   (selectedItem.image 
-                    ? `<img src="${selectedItem.image}" class="w-8 h-8 object-contain drop-shadow-md" />` 
+                    ? `<img src="${selectedItem.image}" class="w-8 h-8 object-contain drop-shadow-md"  onerror="this.style.display='none'" />` 
                     : `<span class="material-symbols-outlined text-xl text-gray-200 drop-shadow-md">${selectedItem.icon}</span>`) 
                   : '<span class="material-symbols-outlined text-lg text-gray-600">remove</span>'
               }

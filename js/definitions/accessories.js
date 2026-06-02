@@ -13,7 +13,6 @@
 
 export const ACCESSORIES = [
   { id: 'power_ring',            name: '力の指輪',                       stats: { atk: 1 } },
-  { id: 'purupuru_ring',         name: 'ぷるぷるリング',                 stats: { def: 5, hp: 50 } },
   { id: 'slime_angel_ring',      name: 'エンジェルスライムリング',       stats: { hp: 20, def: 5 } },
   { id: 'slime_angel_king_ring', name: 'エンジェルキングスライムリング', stats: { hp: 25, def: 6 } },
   { id: 'slime_blue_ring',       name: 'ブルースライムリング',           stats: { hp: 30, def: 7 } },
