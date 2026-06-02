@@ -16,5 +16,12 @@ export const SHIELDS = [
   {
     id: 'wooden_shield', name: '木の盾',
     stats: { def: 2, mdef: 1 },
-  }
+  },
+  { id: 'slime_angel_king_shield', name: 'エンジェルキングスライムの盾', stats: { def: 12, mdef: 12 } },
+  { id: 'slime_dark_shield',       name: 'ダークスライムの盾',           stats: { def: 16, mdef: 16 } },
+  { id: 'slime_fire_shield',       name: 'ファイヤースライムの盾',       stats: { def: 20, mdef: 20 } },
+  { id: 'slime_grass_shield',      name: 'グラススライムの盾',           stats: { def: 24, mdef: 24 } },
+  { id: 'slime_ice_shield',        name: 'アイススライムの盾',           stats: { def: 28, mdef: 28 } },
+  { id: 'slime_red_shield',        name: 'レッドスライムの盾',           stats: { def: 32, mdef: 32 } },
+  { id: 'slime_water_shield',      name: 'ウォータースライムの盾',       stats: { def: 36, mdef: 36 } },
 ].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));
