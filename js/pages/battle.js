@@ -86,11 +86,11 @@ class BattleManager {
 
     this.enemies = this.floorDef.monsters.map((monsterId, i) => {
       const monsterDef = MONSTERS.find(m => m.id === monsterId);
-      const baseStats = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0, ...(monsterDef.stats || {}) };
-      const attackElements = monsterDef.attackElements || { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
-      const attackAilments = monsterDef.attackAilments || { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 };
-      const elementResist = monsterDef.elementResist || { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
-      const ailmentResist = monsterDef.ailmentResist || { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 };
+      const baseStats = { hp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0, ...(monsterDef.stats || {}) };
+      const attackElements = { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 };
+      const attackAilments = { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 };
+      const elementResist = { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0, ...(monsterDef.elements || {}) };
+      const ailmentResist = { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, ...(monsterDef.ailments || {}) };
       
       return {
         ...monsterDef,
@@ -708,7 +708,11 @@ class BattleManager {
   }
 
   executeSkill(caster, skillDef, levelConfig) {
-    if (caster.mp.current < levelConfig.mpCost) return;
+    if (caster.mp && caster.mp.current < levelConfig.mpCost) return;
+
+    if (caster.mp) {
+      caster.mp.current -= levelConfig.mpCost;
+    }
 
     // Execution Logic
     // For now, we assume skills like first_aid don't need a specific target besides caster
