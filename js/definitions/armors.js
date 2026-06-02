@@ -12,17 +12,13 @@
  */
 
 export const ARMORS = [
-  {
-    id: 'cloth_armor',
-    name: '布の服',
-    stats: { def: 1, mdef: 1 },
-  },
-  { id: 'slime_angel_armor', name: 'エンジェルスライムアーマー', stats: { def: 10, mdef: 10 } },
-  { id: 'slime_blue_armor', name: 'ブルースライムアーマー', stats: { def: 14, mdef: 14 } },
-  { id: 'slime_earth_armor', name: 'アーススライムアーマー', stats: { def: 18, mdef: 18 } },
-  { id: 'slime_flower_armor', name: 'フラワースライムアーマー', stats: { def: 22, mdef: 22 } },
-  { id: 'slime_green_armor', name: 'グリーンスライムアーマー', stats: { def: 26, mdef: 26 } },
-  { id: 'slime_king_armor', name: 'キングスライムアーマー', stats: { def: 30, mdef: 30 } },
-  { id: 'slime_thunder_armor', name: 'サンダースライムアーマー', stats: { def: 34, mdef: 34 } },
-  { id: 'slime_wind_armor', name: 'ウインドスライムアーマー', stats: { def: 38, mdef: 38 } },
+  { id: 'cloth_armor',         name: '布の服',                     stats: { def: 1, mdef: 1 }   },
+  { id: 'slime_angel_armor',   name: 'エンジェルスライムアーマー', stats: { def: 10, mdef: 10 } },
+  { id: 'slime_blue_armor',    name: 'ブルースライムアーマー',     stats: { def: 14, mdef: 14 } },
+  { id: 'slime_earth_armor',   name: 'アーススライムアーマー',     stats: { def: 18, mdef: 18 } },
+  { id: 'slime_flower_armor',  name: 'フラワースライムアーマー',   stats: { def: 22, mdef: 22 } },
+  { id: 'slime_green_armor',   name: 'グリーンスライムアーマー',   stats: { def: 26, mdef: 26 } },
+  { id: 'slime_king_armor',    name: 'キングスライムアーマー',     stats: { def: 30, mdef: 30 } },
+  { id: 'slime_thunder_armor', name: 'サンダースライムアーマー',   stats: { def: 34, mdef: 34 } },
+  { id: 'slime_wind_armor',    name: 'ウインドスライムアーマー',   stats: { def: 38, mdef: 38 } },
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));

@@ -13,10 +13,7 @@
  */
 
 export const SHIELDS = [
-  {
-    id: 'wooden_shield', name: '木の盾',
-    stats: { def: 2, mdef: 1 },
-  },
+  { id: 'wooden_shield',           name: '木の盾',                       stats: { def: 2, mdef: 1 }   },
   { id: 'slime_angel_king_shield', name: 'エンジェルキングスライムの盾', stats: { def: 12, mdef: 12 } },
   { id: 'slime_dark_shield',       name: 'ダークスライムの盾',           stats: { def: 16, mdef: 16 } },
   { id: 'slime_fire_shield',       name: 'ファイヤースライムの盾',       stats: { def: 20, mdef: 20 } },
