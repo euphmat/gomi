@@ -14,6 +14,9 @@ const ALL_DEFINITIONS = [
   ...MATERIALS
 ];
 
+// Unified silhouette filter for undiscovered/undefeated entries
+const SILHOUETTE_FILTER = 'brightness-[0.07] saturate-0 drop-shadow-[0_0_3px_rgba(160,170,220,0.8)]';
+
 export function renderMonsterLibraryTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full p-2 animate-fade-in overflow-hidden';
@@ -21,21 +24,19 @@ export function renderMonsterLibraryTab() {
   const gridContainer = document.createElement('div');
   gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 pr-1 flex-1 no-scrollbar';
 
-  let killCountsState = {};
   let acquiredBaseIds = new Set();
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
     MONSTERS.forEach(monster => {
-      const kills = killCountsState[monster.id] || 0;
-      const isDefeated = kills > 0;
+      const isDefeated = acquiredBaseIds.has('defeated_' + monster.id);
 
       const slot = document.createElement('div');
       slot.className = `relative w-full pt-[100%] bg-gray-800/80 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-400 hover:bg-gray-700 cursor-pointer' : 'border-gray-700 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
       
       let innerHTML = '';
       if (monster.image) {
-        const imgClass = isDefeated ? 'w-full h-full object-cover' : 'w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
+        const imgClass = isDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
         innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-3xl' : 'material-symbols-outlined text-gray-800 text-3xl';
@@ -43,12 +44,12 @@ export function renderMonsterLibraryTab() {
       }
       
       slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">${innerHTML}</div>`;
-      slot.onclick = () => showMonsterModal(monster, isDefeated, kills);
+      slot.onclick = () => showMonsterModal(monster, isDefeated);
       gridContainer.appendChild(slot);
     });
   };
 
-  const showMonsterModal = (monster, isDefeated, kills) => {
+  const showMonsterModal = (monster, isDefeated) => {
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in px-4 py-8';
     
@@ -71,12 +72,12 @@ export function renderMonsterLibraryTab() {
     const body = document.createElement('div');
     body.className = 'p-4 flex flex-col gap-4 overflow-y-auto no-scrollbar flex-1 min-h-0';
     
-    const displayName = isDefeated ? monster.name : '？？？';
+    const displayName = monster.name;
     let displayImage = '';
     if (monster.image) {
         displayImage = isDefeated 
           ? `<img src="${monster.image}" class="w-full h-full object-cover" onerror="this.style.display='none'">` 
-          : `<img src="${monster.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]" onerror="this.style.display='none'">`;
+          : `<img src="${monster.image}" class="w-full h-full object-cover ${SILHOUETTE_FILTER}" onerror="this.style.display='none'">`;
     } else {
         displayImage = isDefeated
           ? `<span class="material-symbols-outlined text-3xl text-gray-500 normal-case">pets</span>`
@@ -120,83 +121,27 @@ export function renderMonsterLibraryTab() {
       </div>
     `;
 
-    // Kill Rewards Section
-    let rewardsSection = '';
-    if (monster.killRewards && monster.killRewards.length > 0) {
-      const rewardsHtml = monster.killRewards.map(reward => {
-        const itemDef = ALL_DEFINITIONS.find(d => d.id === reward.itemId);
-        const baseId = itemDef ? (itemDef.baseId || itemDef.id) : reward.itemId;
-        const isItemAcquired = acquiredBaseIds.has(baseId);
-        
-        const itemName = itemDef ? itemDef.name : reward.itemId;
-        const rewardName = isItemAcquired ? itemName : '？？？';
-        
-        const progressPercent = Math.min(100, Math.floor((kills / reward.count) * 100));
-
-        let iconSrc = '';
-        if (itemDef && itemDef.image) {
-          const imgClass = isItemAcquired 
-            ? 'w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0' 
-            : 'w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0 brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
-          iconSrc = `<img src="${itemDef.image}" class="${imgClass}" onerror="this.style.display='none'">`;
-        } else {
-          iconSrc = `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
-        }
-        
-        return `
-          <div class="flex flex-col bg-gray-800/40 p-2 rounded-md border border-gray-700/60 gap-1.5">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                ${iconSrc}
-                <span class="text-xs text-gray-200 font-bold">${rewardName}</span>
-              </div>
-              <div class="flex flex-col items-end">
-                <span class="text-[9px] text-gray-500 font-bold">目標討伐数</span>
-                <span class="text-[11px] font-bold text-yellow-400 font-mono">${reward.count.toLocaleString()}体</span>
-              </div>
-            </div>
-            <div class="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700 shadow-inner overflow-hidden relative">
-              <div class="bg-gradient-to-r from-blue-600 to-blue-400 h-1.5 rounded-full" style="width: ${progressPercent}%"></div>
-            </div>
-            <div class="flex justify-end">
-               <span class="text-[9px] text-gray-400 font-mono leading-none">進捗: ${kills.toLocaleString()} / ${reward.count.toLocaleString()} (${progressPercent}%)</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-      
-      rewardsSection = renderListSection('討伐報酬と進捗', 'military_tech', rewardsHtml);
-    } else {
-      rewardsSection = renderListSection('討伐実績', 'swords', `
-        <div class="bg-gray-800/40 p-2 rounded-md border border-gray-700/60 flex justify-between items-center">
-          <span class="text-xs text-gray-300 font-bold">現在の討伐数</span>
-          <span class="text-xs font-bold text-yellow-400 font-mono">${kills.toLocaleString()}体</span>
-        </div>
-      `);
-    }
 
     // Drops Section
     let dropsSection = '';
     if (monster.drops && monster.drops.length > 0) {
       const dropHtml = monster.drops.map(drop => {
         const itemDef = ALL_DEFINITIONS.find(d => d.id === drop.itemId);
-        
-        if (!isDefeated) {
-          return createRow(
-            `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-600 normal-case">question_mark</span></div>`,
-            '？？？',
-            'ドロップ率',
-            '???%',
-            'text-gray-600'
-          );
-        }
-
-        const iconSrc = itemDef && itemDef.image 
-          ? `<img src="${itemDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
-          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         const itemName = itemDef ? itemDef.name : drop.itemId;
+        const baseId = itemDef ? (itemDef.baseId || itemDef.id) : drop.itemId;
+        const isItemAcquired = acquiredBaseIds.has(baseId);
         
-        return createRow(iconSrc, itemName, 'ドロップ率', `${drop.rate}%`, 'text-blue-400');
+        // Show silhouette if item not yet acquired, full image if acquired
+        const imgClass = isItemAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+        const containerClass = 'w-8 h-8 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden shrink-0';
+        const iconSrc = itemDef && itemDef.image 
+          ? `<div class="${containerClass}"><img src="${itemDef.image}" class="${imgClass}" onerror="this.style.display='none'"></div>` 
+          : `<div class="${containerClass}"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
+
+        const rateValue = isDefeated ? `${drop.rate}%` : '???%';
+        const rateColor = isDefeated ? 'text-blue-400' : 'text-gray-600';
+        
+        return createRow(iconSrc, itemName, 'ドロップ率', rateValue, rateColor);
       }).join('');
       
       dropsSection = renderListSection('ドロップアイテム', 'redeem', dropHtml);
@@ -209,7 +154,7 @@ export function renderMonsterLibraryTab() {
       `;
     }
 
-    body.innerHTML = topSection + rewardsSection + dropsSection;
+    body.innerHTML = topSection + dropsSection;
     
     modal.appendChild(header);
     modal.appendChild(body);
@@ -227,9 +172,13 @@ export function renderMonsterLibraryTab() {
   };
 
   const loadData = async () => {
-    killCountsState = await GameDB.getGameState('killCounts') || {};
     const discovered = await GameDB.getGameState('discovered_items') || [];
     discovered.forEach(id => acquiredBaseIds.add(id));
+
+    // Check discovered_monsters to determine if monster was defeated
+    const discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
+    discoveredMonsters.forEach(monsterId => acquiredBaseIds.add('defeated_' + monsterId));
+
     renderGrid();
   };
 

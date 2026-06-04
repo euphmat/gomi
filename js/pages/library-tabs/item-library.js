@@ -9,6 +9,9 @@ import { STAT_KEYS } from '../../data/constants.js';
 
 const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
+// Unified silhouette filter for undiscovered/unacquired entries
+const SILHOUETTE_FILTER = 'brightness-[0.07] saturate-0 drop-shadow-[0_0_3px_rgba(160,170,220,0.8)]';
+
 function getBaseId(id) {
   const lastUnderscore = id.lastIndexOf('_');
   if (lastUnderscore > 0) {
@@ -26,7 +29,7 @@ export function renderItemLibraryTab() {
 
   let activeFilter = 'all';
   let acquiredBaseIds = new Set();
-  let killCountsState = {};
+  let discoveredMonsterIds = new Set();
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -98,7 +101,7 @@ export function renderItemLibraryTab() {
       
       let innerHTML = '';
       if (item.image) {
-        const imgClass = isAcquired ? 'w-full h-full object-cover' : 'w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]';
+        const imgClass = isAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
         innerHTML = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = isAcquired ? 'material-symbols-outlined text-gray-600 text-lg' : 'material-symbols-outlined text-gray-800 text-lg';
@@ -107,12 +110,12 @@ export function renderItemLibraryTab() {
 
       slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">${innerHTML}</div>`;
       
-      slot.onclick = () => showItemModal(item, isAcquired, killCountsState);
+      slot.onclick = () => showItemModal(item, isAcquired);
       gridContainer.appendChild(slot);
     });
   };
 
-  const showItemModal = (item, isAcquired, killCounts) => {
+  const showItemModal = (item, isAcquired) => {
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in px-4 py-8';
     
@@ -140,7 +143,7 @@ export function renderItemLibraryTab() {
     if (item.image) {
         displayImage = isAcquired 
           ? `<img src="${item.image}" class="w-full h-full object-cover" onerror="this.style.display='none'">` 
-          : `<img src="${item.image}" class="w-full h-full object-cover brightness-[0.15] drop-shadow-[0_0_1px_rgba(255,255,255,0.8)]" onerror="this.style.display='none'">`;
+          : `<img src="${item.image}" class="w-full h-full object-cover ${SILHOUETTE_FILTER}" onerror="this.style.display='none'">`;
     } else {
         displayImage = isAcquired
           ? `<span class="material-symbols-outlined text-3xl text-gray-500 normal-case">category</span>`
@@ -230,9 +233,12 @@ export function renderItemLibraryTab() {
     if (item.recipe && item.recipe.materials) {
       recipeHtml = item.recipe.materials.map(matReq => {
         const matDef = ALL_DEFINITIONS.find(d => d.id === matReq.id);
+        const matAcquired = matDef ? acquiredBaseIds.has(matDef.baseId || matDef.id) : false;
+        const imgClass = matAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+        const containerClass = 'w-8 h-8 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden shrink-0';
         const iconSrc = matDef && matDef.image 
-          ? `<img src="${matDef.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
-          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
+          ? `<div class="${containerClass}"><img src="${matDef.image}" class="${imgClass}" onerror="this.style.display='none'"></div>` 
+          : `<div class="${containerClass}"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         return createRow(iconSrc, matDef ? matDef.name : matReq.id, '必要数', `x${matReq.amount}`, 'text-orange-400');
       }).join('');
     }
@@ -244,49 +250,17 @@ export function renderItemLibraryTab() {
     if (drops.length > 0) {
       dropHtml = drops.map(m => {
         const dropInfo = m.drops.find(d => d.itemId === item.id);
+        const monsterDefeated = discoveredMonsterIds.has(m.id);
+        const imgClass = monsterDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+        const containerClass = 'w-8 h-8 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden shrink-0';
         const iconSrc = m.image 
-          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
-          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
+          ? `<div class="${containerClass}"><img src="${m.image}" class="${imgClass}" onerror="this.style.display='none'"></div>` 
+          : `<div class="${containerClass}"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
         return createRow(iconSrc, m.name, 'ドロップ率', `${dropInfo.rate}%`, 'text-blue-400');
       }).join('');
     }
     const dropsSection = renderListSection('ドロップするモンスター', 'swords', dropHtml);
 
-    // 3. Guild Rewards
-    const killRewardMonsters = MONSTERS.filter(m => m.killRewards && m.killRewards.some(kr => kr.itemId === item.id));
-    let guildHtml = '';
-    if (killRewardMonsters.length > 0) {
-      guildHtml = killRewardMonsters.map(m => {
-        const krInfo = m.killRewards.find(kr => kr.itemId === item.id);
-        const currentKills = killCounts[m.id] || 0;
-        const progressPercent = Math.min(100, Math.floor((currentKills / krInfo.count) * 100));
-
-        const iconSrc = m.image 
-          ? `<img src="${m.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800 shrink-0" onerror="this.style.display='none'">` 
-          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">skull</span></div>`;
-        return `
-          <div class="flex flex-col bg-gray-800/40 p-2 rounded-md border border-gray-700/60 gap-1.5">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                ${iconSrc}
-                <span class="text-xs text-gray-200 font-bold">${m.name}</span>
-              </div>
-              <div class="flex flex-col items-end">
-                <span class="text-[9px] text-gray-500 font-bold">必要討伐数</span>
-                <span class="text-[11px] font-bold text-yellow-400 font-mono">${krInfo.count.toLocaleString()}体</span>
-              </div>
-            </div>
-            <div class="w-full bg-gray-900 rounded-full h-1.5 border border-gray-700 shadow-inner overflow-hidden relative">
-              <div class="bg-gradient-to-r from-blue-600 to-blue-400 h-1.5 rounded-full" style="width: ${progressPercent}%"></div>
-            </div>
-            <div class="flex justify-end">
-               <span class="text-[9px] text-gray-400 font-mono leading-none">進捗: ${currentKills.toLocaleString()} / ${krInfo.count.toLocaleString()} (${progressPercent}%)</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-    const guildSection = renderListSection('ギルド討伐報酬', 'military_tech', guildHtml);
 
     // 4. Material Usages
     const usages = ALL_DEFINITIONS.filter(def => def.recipe && def.recipe.materials && def.recipe.materials.some(mat => mat.id === item.id));
@@ -294,16 +268,19 @@ export function renderItemLibraryTab() {
     if (usages.length > 0) {
       usageHtml = usages.map(def => {
         const matInfo = def.recipe.materials.find(mat => mat.id === item.id);
+        const usageAcquired = acquiredBaseIds.has(def.baseId || def.id);
+        const imgClass = usageAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+        const containerClass = 'w-8 h-8 bg-gray-900 rounded border border-gray-600 flex items-center justify-center overflow-hidden shrink-0';
         const iconSrc = def.image 
-          ? `<img src="${def.image}" class="w-8 h-8 rounded object-cover border border-gray-600 bg-gray-800" onerror="this.style.display='none'">` 
-          : `<div class="w-8 h-8 bg-gray-800 rounded border border-gray-600 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
+          ? `<div class="${containerClass}"><img src="${def.image}" class="${imgClass}" onerror="this.style.display='none'"></div>` 
+          : `<div class="${containerClass}"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
         return createRow(iconSrc, def.name, '必要数', `x${matInfo.amount}`, 'text-green-400');
       }).join('');
     }
     const usageSection = renderListSection('素材としての用途', 'category', usageHtml);
 
     // Info Sections Container
-    let infoSections = recipeSection + dropsSection + guildSection + usageSection;
+    let infoSections = recipeSection + dropsSection + usageSection;
     if (!infoSections) {
       infoSections = `
         <div class="flex flex-col items-center justify-center py-6 text-gray-500 bg-gray-800/30 rounded-lg border border-gray-700 border-dashed mt-2">
@@ -345,8 +322,10 @@ export function renderItemLibraryTab() {
     // Try to get discovered_items from gameState if it ever gets implemented
     const discovered = await GameDB.getGameState('discovered_items') || [];
     discovered.forEach(id => acquiredBaseIds.add(id));
-    
-    killCountsState = await GameDB.getGameState('killCounts') || {};
+
+    // Load discovered monsters for silhouette logic
+    const discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
+    discoveredMonsters.forEach(id => discoveredMonsterIds.add(id));
 
     renderGrid();
   };

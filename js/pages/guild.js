@@ -1,6 +1,5 @@
 import { renderInnTab } from './guild-tabs/inn.js';
 import { renderChangeJobTab } from './guild-tabs/change-job.js';
-import { renderReceiveRewardTab } from './guild-tabs/receive-reward.js';
 import { renderAcquireSkillTab } from './guild-tabs/acquire-skill.js';
 
 /**
@@ -15,8 +14,7 @@ export function renderGuildPage() {
   const TABS = [
     { id: 'inn', label: '宿屋' },
     { id: 'skill', label: 'スキル獲得' },
-    { id: 'job', label: '転職' },
-    { id: 'reward', label: '報酬受け取り' }
+    { id: 'job', label: '転職' }
   ];
   let activeTabId = 'inn';
 
@@ -67,7 +65,6 @@ export function renderGuildPage() {
       case 'inn': tabContent = renderInnTab(); break;
       case 'skill': tabContent = renderAcquireSkillTab(); break;
       case 'job': tabContent = renderChangeJobTab(); break;
-      case 'reward': tabContent = renderReceiveRewardTab(); break;
     }
 
     if (tabContent instanceof Promise) {

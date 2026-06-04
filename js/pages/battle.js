@@ -1057,11 +1057,13 @@ class BattleManager {
 
   async processEnemyDeath(enemy) {
     let drops = [];
-    
-    // Count kill
-    const killCounts = await GameDB.getGameState('killCounts') || {};
-    killCounts[enemy.id] = (killCounts[enemy.id] || 0) + 1;
-    await GameDB.setGameState('killCounts', killCounts);
+
+    // Track that this monster has been encountered/defeated (for monster library)
+    const discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
+    if (!discoveredMonsters.includes(enemy.id)) {
+      discoveredMonsters.push(enemy.id);
+      await GameDB.setGameState('discovered_monsters', discoveredMonsters);
+    }
 
     // Add Gold
     const gold = enemy.rewards.gold || 0;
