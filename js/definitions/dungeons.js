@@ -7,7 +7,7 @@ export const DUNGEONS = [
     isUnlocked : true,
     floors     : [
       { level: 1,  monsters: ['slime_blue', 'slime_blue'] },
-      { level: 2,  monsters: ['slime', 'slime'] },
+      { level: 2,  monsters: ['slime_red', 'slime_red'] },
       { level: 3,  monsters: ['slime', 'slime'] },
       { level: 4,  monsters: ['slime', 'slime', 'slime'] },
       { level: 5,  monsters: ['slime', 'slime', 'slime'] },
