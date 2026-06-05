@@ -26,7 +26,7 @@ export const MONSTERS = [
     stats      : { hp: 20, atk: 8, def: 5, matk: 9, mdef: 8, spd: 5 },
     elements   : { fire: 50 },
     ailments   : { burn: 10 },
-    rewards    : { exp: 16, jp: 2, gold: 32 },
+    rewards    : { exp: 2, jp: 2, gold: 3 },
     drops      : [ { itemId: 'slime_red_jelly', rate: 5 }, { itemId: 'slime_red_core', rate: 1 }, { itemId: 'slime_red_fluid', rate: 0.1 } ],
     actions    : [
       { name: 'ファイアアタック', chance: 10, execute: (attacker, defender, battle) => { const orig = attacker.stats.attackElements; attacker.stats.attackElements = { fire: 100 }; battle.executeAttack(attacker, defender, false, { actionName: 'ファイアアタック', damageMultiplier: 1.2, isMagic: true }); attacker.stats.attackElements = orig; } }

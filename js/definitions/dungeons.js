@@ -6,16 +6,52 @@ export const DUNGEONS = [
     image      : 'assets/dungeon/slime_forest.webp',
     isUnlocked : true,
     floors     : [
-      { level: 1,  monsters: ['slime_blue', 'slime_blue'] },
-      { level: 2,  monsters: ['slime_red', 'slime_red'] },
-      { level: 3,  monsters: ['slime', 'slime'] },
-      { level: 4,  monsters: ['slime', 'slime', 'slime'] },
-      { level: 5,  monsters: ['slime', 'slime', 'slime'] },
-      { level: 6,  monsters: ['slime', 'slime', 'slime'] },
-      { level: 7,  monsters: ['slime', 'slime', 'slime'] },
-      { level: 8,  monsters: ['slime', 'slime', 'slime', 'slime'] },
-      { level: 9,  monsters: ['slime', 'slime', 'slime', 'slime'] },
-      { level: 10, monsters: ['slime', 'slime', 'slime', 'slime', 'slime'] }
+      { level: 1,  monsters: [
+        { id: 'slime_blue', count: 1, weight: 50 },
+        { id: 'slime_blue', count: 2, weight: 40 },
+        { id: 'slime_red',  count: 1, weight: 10 }
+      ]},
+      { level: 2,  monsters: [
+        { id: 'slime_red',  count: 2, weight: 70 },
+        { id: 'slime_blue', count: 1, weight: 30 }
+      ]},
+      { level: 3,  monsters: [
+        { id: 'slime',      count: 2, weight: 80 },
+        { id: 'slime_red',  count: 1, weight: 20 }
+      ]},
+      { level: 4,  monsters: [
+        { id: 'slime',      count: 3, weight: 70 },
+        { id: 'slime_red',  count: 2, weight: 30 }
+      ]},
+      { level: 5,  monsters: [
+        { id: 'slime',      count: 3, weight: 60 },
+        { id: 'slime_red',  count: 2, weight: 40 }
+      ]},
+      { level: 6,  monsters: [
+        { id: 'slime',      count: 3, weight: 50 },
+        { id: 'slime_red',  count: 2, weight: 30 },
+        { id: 'slime_blue', count: 1, weight: 20 }
+      ]},
+      { level: 7,  monsters: [
+        { id: 'slime',      count: 3, weight: 50 },
+        { id: 'slime_red',  count: 2, weight: 30 },
+        { id: 'slime_blue', count: 2, weight: 20 }
+      ]},
+      { level: 8,  monsters: [
+        { id: 'slime',      count: 4, weight: 50 },
+        { id: 'slime_red',  count: 3, weight: 30 },
+        { id: 'slime_blue', count: 2, weight: 20 }
+      ]},
+      { level: 9,  monsters: [
+        { id: 'slime',      count: 4, weight: 40 },
+        { id: 'slime_red',  count: 3, weight: 35 },
+        { id: 'slime_blue', count: 2, weight: 25 }
+      ]},
+      { level: 10, monsters: [
+        { id: 'slime',      count: 5, weight: 40 },
+        { id: 'slime_red',  count: 3, weight: 35 },
+        { id: 'slime_blue', count: 2, weight: 25 }
+      ]}
     ]
   },
   {

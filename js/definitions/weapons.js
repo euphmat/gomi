@@ -11,9 +11,10 @@
 
 export const WEAPONS = [
   { id: 'wooden_stick',           name: '木の棒',                           stats: { atk: 1, matk: 1 },                                                                                                                                                  ability: { name: '振り下ろし', description: '通常攻撃時に 10% の確率で 2 倍のダメージを与えます。', execute: (attacker, defender, damage, battle) => { if (Math.random() < 0.10) { setTimeout(() => { battle.showActionName(attacker.elementId, '振り下ろし', 'text-yellow-300', 'border-yellow-500/50'); }, 300); return damage * 2; } return damage; } } },
+  { id: 'slime_blue_sword',       name: 'ブルースライムソード',             stats: { atk: 18, matk: 18 },          recipe: { price: 200,  materials: [{ id: 'slime_blue_jelly', amount: 3 }, { id: 'slime_blue_core', amount: 1 }] } },
+
   { id: 'slime_angel_bow',        name: 'エンジェルスライムボウ',           stats: { atk: 10, matk: 10 },          recipe: { price: 100,  materials: [{ id: 'slime_angel_jelly', amount: 3 }, { id: 'slime_angel_core', amount: 1 }] } },
   { id: 'slime_angel_king_staff', name: 'エンジェルキングスライムスタッフ', stats: { atk: 14, matk: 14 },          recipe: { price: 150,  materials: [{ id: 'slime_angel_king_jelly', amount: 3 }, { id: 'slime_angel_king_core', amount: 1 }] } },
-  { id: 'slime_blue_sword',       name: 'ブルースライムソード',             stats: { atk: 18, matk: 18 },          recipe: { price: 200,  materials: [{ id: 'slime_blue_jelly', amount: 3 }, { id: 'slime_blue_core', amount: 1 }] } },
   { id: 'slime_dark_bow',         name: 'ダークスライムボウ',               stats: { atk: 22, matk: 22 },          recipe: { price: 250,  materials: [{ id: 'slime_dark_jelly', amount: 3 }, { id: 'slime_dark_core', amount: 1 }] } },
   { id: 'slime_earth_staff',      name: 'アーススライムスタッフ',           stats: { atk: 26, matk: 26 },          recipe: { price: 300,  materials: [{ id: 'slime_earth_jelly', amount: 3 }, { id: 'slime_earth_core', amount: 1 }] } },
   { id: 'slime_fire_sword',       name: 'ファイヤースライムソード',         stats: { atk: 30, matk: 30 },          recipe: { price: 350,  materials: [{ id: 'slime_fire_jelly', amount: 3 }, { id: 'slime_fire_core', amount: 1 }] } },
