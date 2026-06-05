@@ -13,8 +13,8 @@ export function renderGuildPage() {
   // タブの定義 (宿屋を一番左に追加)
   const TABS = [
     { id: 'inn', label: '宿屋' },
-    { id: 'skill', label: 'スキル獲得' },
-    { id: 'job', label: '転職' }
+    { id: 'skill', label: '修練場' },
+    { id: 'job', label: '神殿' }
   ];
   let activeTabId = 'inn';
 

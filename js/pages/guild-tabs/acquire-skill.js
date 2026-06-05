@@ -4,7 +4,7 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { JOBS } from '../../jobs/index.js';
 
 /**
- * 「スキル獲得」タブの画面
+ * 「修練場」タブの画面
  */
 export function renderAcquireSkillTab() {
   const container = document.createElement('div');

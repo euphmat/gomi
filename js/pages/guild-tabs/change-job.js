@@ -4,7 +4,7 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { JOBS } from '../../jobs/index.js';
 
 /**
- * 「転職」タブの画面
+ * 「神殿」タブの画面
  */
 export function renderChangeJobTab() {
   const container = document.createElement('div');
@@ -45,7 +45,7 @@ export function renderChangeJobTab() {
           <h3 class="text-sm font-bold text-gray-200 truncate">${job.name}</h3>
         </div>
         <button class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow transition-colors shrink-0">
-          転職する
+          転職
         </button>
       `;
       listContainer.appendChild(row);
