@@ -36,25 +36,12 @@ Please implement the monsters in js/definitions/monsters.js using the following 
     { itemId: 'slime_core', rate: 1 },
     { itemId: 'slime_fluid', rate: 0.1 },
   ],
-  // List the item IDs for defeat rewards.
-  // count: 100 =  accessory
-  // count: 500 = armor
-  // count: 1000 = weapon
-  // The weapon type should be selected at random from the following list, ensuring that there is no bias toward any single type:
-  // - Sword
-  // - Magic staff
-  // - Bow
-  killRewards: [
-    { count: 100, itemId: 'purupuru_ring' },
-    { count: 500, itemId: 'slime_armor' },
-    { count: 1000, itemId: 'slime_hammer' }
-  ],
   // Set the skills the monster is likely to use.
   actions: [ { name: 'Body Slam', chance: 10, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: 'Body Slam', damageMultiplier: 2 }); } } ]
     }
 ```
 
-## 2. Implementing Drop Items and Defeat Rewards
+## 2. Implementing Drop Items
 Important: Do not prepare item images during this phase.
 Referring to the IDs set above, implement the items and their stats in each of the following files:
 - js/definitions/accessories.js

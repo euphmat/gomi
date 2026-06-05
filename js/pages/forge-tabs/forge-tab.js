@@ -4,18 +4,25 @@ import { ARMORS } from '../../definitions/armors.js';
 import { SHIELDS } from '../../definitions/shields.js';
 import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
+import { STAT_KEYS } from '../../data/constants.js';
 
 const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
 /**
- * 鍛冶屋（作成）タブ
+ * ショップ（合成・作成）タブ
+ * 
+ * SHOPとして素材を消費して装備を合成（購入）できる機能です。
+ * レシピを持つすべての装備アイテムが表示され、
+ * 必要素材とゴールドが揃っていれば合成できます。
  */
 export function renderForgeTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full animate-fade-in overflow-hidden';
 
   // 状態管理
-  let items = [];
+  let allRecipeItems = [];
+  let inventoryMap = {};
+  let currentGold = 0;
   let activeFilter = 'all';
 
   const FILTERS = [
@@ -24,7 +31,6 @@ export function renderForgeTab() {
     { id: 'shield', icon: 'shield' },
     { id: 'armor', icon: 'checkroom' },
     { id: 'accessory', icon: 'diamond' },
-    { id: 'material', icon: 'category' }
   ];
 
   // トップバー領域
@@ -34,10 +40,9 @@ export function renderForgeTab() {
   const filterContainer = document.createElement('div');
   filterContainer.className = 'flex items-center gap-2 overflow-x-auto no-scrollbar pb-1';
 
-  const sortBtn = document.createElement('button');
-  sortBtn.className = 'flex items-center justify-center px-3 py-2 bg-gray-800 text-gray-300 rounded-lg shadow border border-gray-700 hover:bg-gray-700 shrink-0 transition-colors';
-  sortBtn.innerHTML = '<span class="text-sm font-bold">Sort</span>';
-  sortBtn.onclick = () => alert('ソート機能は準備中です。');
+  const goldDisplay = document.createElement('div');
+  goldDisplay.className = 'flex items-center gap-1 px-3 py-2 bg-yellow-900/30 border border-yellow-700/50 rounded-lg shrink-0';
+  goldDisplay.innerHTML = `<span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span><span class="text-sm font-bold text-yellow-300" id="forge-gold-display">0</span>`;
 
   const renderFilters = () => {
     filterContainer.innerHTML = '';
@@ -63,9 +68,12 @@ export function renderForgeTab() {
   };
 
   topBar.appendChild(filterContainer);
-  topBar.appendChild(sortBtn);
+  topBar.appendChild(goldDisplay);
 
   // グリッド領域
+  // モンスター図鑑と同じシルエットフィルター
+  const SILHOUETTE_FILTER = 'brightness-[0.07] saturate-0 drop-shadow-[0_0_3px_rgba(160,170,220,0.8)]';
+
   const gridContainer = document.createElement('div');
   gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 px-2 flex-1';
 
@@ -73,40 +81,251 @@ export function renderForgeTab() {
     gridContainer.innerHTML = '';
     
     const filteredItems = activeFilter === 'all' 
-      ? items 
-      : items.filter(item => {
+      ? allRecipeItems 
+      : allRecipeItems.filter(item => {
           if (activeFilter === 'weapon') return item.slot === 'rightHand';
           if (activeFilter === 'shield') return item.slot === 'leftHand';
           if (activeFilter === 'armor') return item.slot === 'armor';
           if (activeFilter === 'accessory') return item.slot === 'accessory';
-          if (activeFilter === 'material') return !item.slot;
           return true;
         });
 
     if (filteredItems.length === 0) {
-      gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">作成可能なアイテムがありません</div>`;
+      gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">合成可能なアイテムがありません</div>`;
       return;
     }
 
     filteredItems.forEach(item => {
+      const canCraft = checkCanCraft(item);
       const slot = document.createElement('div');
-      slot.className = 'relative w-full pt-[100%] bg-black/40 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-400 hover:bg-gray-800 transition-all shadow-sm group';
+      slot.className = `relative w-full pt-[100%] rounded-md border overflow-hidden cursor-pointer transition-all shadow-sm group
+        ${canCraft 
+          ? 'bg-black/40 border-green-700/50 hover:border-green-400 hover:bg-green-900/20 hover:shadow-[0_0_12px_rgba(34,197,94,0.15)]' 
+          : 'bg-gray-800/80 border-gray-700 hover:border-gray-400 cursor-pointer'}`;
       
       if (item.image) {
-        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"></div>`;
+        const imgClass = canCraft ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'"></div>`;
       } else {
-        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="material-symbols-outlined text-gray-600 text-lg">category</span></div>`;
+        const iconClass = canCraft ? 'material-symbols-outlined text-gray-500 text-lg' : 'material-symbols-outlined text-gray-800 text-lg';
+        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="${iconClass}">category</span></div>`;
+      }
+
+      // 合成可能マーク
+      if (canCraft) {
+        slot.innerHTML += `<div class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg"><span class="material-symbols-outlined text-white" style="font-size:10px">check</span></div>`;
       }
       
-      slot.onclick = () => {
-        const costStr = item.recipe.materials.map(m => {
-          const mDef = ALL_DEFINITIONS.find(d => d.id === m.id);
-          return `${mDef ? mDef.name : m.id} x${m.amount}`;
-        }).join('\\n');
-        alert(`【${item.name}】\n必要素材:\n${costStr}\n作成費用: ${item.recipe.price || 0}G\n\n作成機能は準備中です。`);
-      };
+      slot.onclick = () => showCraftModal(item);
       gridContainer.appendChild(slot);
     });
+  };
+
+  /** 合成可能かチェック */
+  const checkCanCraft = (item) => {
+    if (!item.recipe) return false;
+    if (currentGold < (item.recipe.price || 0)) return false;
+    return item.recipe.materials.every(mat => (inventoryMap[mat.id] || 0) >= mat.amount);
+  };
+
+  /** 合成モーダルを表示 */
+  const showCraftModal = async (item) => {
+    const canCraft = checkCanCraft(item);
+    // 取得済みアイテムリストを構築（シルエット判定用 — item-library と同じロジック）
+    const [allEquipment, allInventory] = await Promise.all([
+      GameDB.getAllEquipment(),
+      GameDB.getAllInventory()
+    ]);
+    const acquiredIds = new Set();
+    allEquipment.forEach(eq => acquiredIds.add(eq.baseId || eq.id));
+    allInventory.forEach(inv => acquiredIds.add(inv.id));
+    const discovered = await GameDB.getGameState('discovered_items') || [];
+    discovered.forEach(id => acquiredIds.add(id));
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in px-4';
+    
+    const modal = document.createElement('div');
+    modal.className = 'bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-2xl flex flex-col overflow-hidden animate-[slide-up_0.2s_ease-out]';
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'flex justify-between items-center p-3 border-b border-gray-800 bg-gray-800/50';
+    header.innerHTML = `<span class="font-bold text-gray-200 text-sm">合成 — SHOP</span>
+      <button class="text-gray-400 hover:text-white" id="close-craft-modal">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>`;
+      
+    // Body
+    const body = document.createElement('div');
+    body.className = 'p-4 flex flex-col gap-4 max-h-[70vh] overflow-y-auto';
+    
+    // Top: Icon + Name + Stats
+    const statsHtml = item.stats 
+      ? `<div class="grid grid-cols-4 gap-1 w-full mt-1">` + STAT_KEYS.map(stat => {
+          const val = item.stats[stat.key] || 0;
+          return `
+            <div class="flex flex-col items-center min-w-0 bg-gradient-to-b from-gray-800/80 to-gray-900/90 rounded py-[3px] border border-gray-700/50 shadow-inner">
+              <div class="flex items-center justify-center gap-[1px] w-full">
+                <span class="material-symbols-outlined ${stat.color}" style="font-size: 10px; font-variation-settings: 'FILL' 1">${stat.icon}</span>
+                <span class="text-[7px] text-gray-300 font-bold tracking-wider leading-none">${stat.label}</span>
+              </div>
+              <span class="text-[11px] font-black text-gray-100 leading-none mt-0.5 drop-shadow-md">${val}</span>
+            </div>
+          `;
+        }).join('') + `</div>`
+      : '';
+
+    const itemImgClass = canCraft ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+    const topSection = `
+      <div class="flex gap-4">
+        <div class="flex flex-col items-center gap-2 w-1/3 shrink-0">
+          <div class="w-20 h-20 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden">
+            ${item.image ? `<img src="${item.image}" class="${itemImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-3xl text-gray-600">category</span>`}
+          </div>
+          <div class="text-sm font-bold text-center leading-tight text-gray-200 w-full break-words">${item.name}</div>
+        </div>
+        <div class="flex-1 bg-black/40 border border-gray-700 p-2 rounded flex flex-col">
+          <div class="text-xs font-bold text-gray-400 mb-2 pb-1 border-b border-gray-700/50">性能表示</div>
+          ${statsHtml}
+        </div>
+      </div>
+    `;
+
+    // 必要素材セクション
+    const materialsSection = document.createElement('div');
+    materialsSection.className = 'bg-black/40 border border-gray-700 rounded p-3';
+    
+    let materialsHtml = `<div class="text-xs font-bold text-gray-400 mb-2 pb-1 border-b border-gray-700/50 flex items-center gap-1">
+      <span class="material-symbols-outlined text-sm">inventory_2</span>必要素材
+    </div>`;
+    
+    materialsHtml += `<div class="flex flex-col gap-1.5">`;
+    item.recipe.materials.forEach(mat => {
+      const matDef = ALL_DEFINITIONS.find(d => d.id === mat.id);
+      const owned = inventoryMap[mat.id] || 0;
+      const enough = owned >= mat.amount;
+      const matAcquired = acquiredIds.has(mat.id);
+      const showMatSilhouette = !matAcquired;
+      const matImgClass = showMatSilhouette ? `w-full h-full object-cover ${SILHOUETTE_FILTER}` : 'w-full h-full object-cover';
+      materialsHtml += `
+        <div class="flex items-center gap-2 py-1">
+          <div class="w-8 h-8 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
+            ${matDef && matDef.image ? `<img src="${matDef.image}" class="${matImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-gray-600 text-sm">category</span>`}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-bold text-gray-300 truncate">${matDef ? matDef.name : mat.id}</div>
+          </div>
+          <div class="text-xs font-mono font-bold shrink-0 ${enough ? 'text-green-400' : 'text-red-400'}">
+            ${owned} / ${mat.amount}
+          </div>
+        </div>
+      `;
+    });
+    materialsHtml += `</div>`;
+
+    // 合成費用
+    const price = item.recipe.price || 0;
+    const hasEnoughGold = currentGold >= price;
+    materialsHtml += `
+      <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-700/50">
+        <div class="flex items-center gap-1">
+          <span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span>
+          <span class="text-xs font-bold text-gray-400">合成費用</span>
+        </div>
+        <span class="text-sm font-bold font-mono ${hasEnoughGold ? 'text-yellow-300' : 'text-red-400'}">${price.toLocaleString()} G</span>
+      </div>
+    `;
+    materialsSection.innerHTML = materialsHtml;
+
+    // 合成ボタン
+    const craftBtn = document.createElement('button');
+    
+    if (canCraft) {
+      craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-green-900/40 border border-green-700/50 text-green-200 hover:bg-green-800/50 hover:text-white transition-all active:scale-95 flex justify-center items-center gap-2 shadow-lg';
+      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">construction</span>合成する`;
+    } else {
+      craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
+      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>素材またはゴールドが不足しています`;
+    }
+    
+    body.innerHTML = topSection;
+    body.appendChild(materialsSection);
+    body.appendChild(craftBtn);
+    
+    modal.appendChild(header);
+    modal.appendChild(body);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Event Listeners
+    const closeModal = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+    modal.querySelector('#close-craft-modal').onclick = closeModal;
+
+    // 合成実行
+    craftBtn.onclick = async () => {
+      if (!canCraft) return;
+
+      // ゴールドを減らす
+      currentGold -= price;
+      await GameDB.setGameState('gold', currentGold);
+
+      // ヘッダーのゴールド表示を更新
+      const headerGoldEl = document.getElementById('header-gold-display');
+      if (headerGoldEl) {
+        headerGoldEl.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+      }
+
+      // 素材を消費
+      for (const mat of item.recipe.materials) {
+        const invItem = await GameDB.getInventoryItem(mat.id);
+        if (invItem) {
+          const newQty = (invItem.quantity || 0) - mat.amount;
+          if (newQty <= 0) {
+            await GameDB.deleteInventoryItem(mat.id);
+          } else {
+            await GameDB.putInventoryItem({ ...invItem, quantity: newQty });
+          }
+          inventoryMap[mat.id] = Math.max(0, (inventoryMap[mat.id] || 0) - mat.amount);
+        }
+      }
+
+      // 装備アイテムを作成（ユニークID付与）
+      const uniqueId = `${item.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      const newEquipment = {
+        id: uniqueId,
+        baseId: item.id,
+      };
+      await GameDB.putEquipment(newEquipment);
+
+      // 合成成功エフェクト
+      closeModal();
+      showCraftSuccessEffect(item);
+
+      // ゴールド表示更新
+      const forgeGoldDisp = document.getElementById('forge-gold-display');
+      if (forgeGoldDisp) forgeGoldDisp.textContent = currentGold.toLocaleString();
+
+      // グリッド再描画
+      renderGrid();
+    };
+  };
+
+  /** 合成成功時のエフェクト */
+  const showCraftSuccessEffect = (item) => {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-green-900/90 border border-green-500/50 rounded-xl shadow-2xl text-sm font-bold text-green-200 animate-[slide-up_0.3s_ease-out] backdrop-blur-sm';
+    toast.innerHTML = `
+      <span class="material-symbols-outlined text-green-400" style="font-variation-settings: 'FILL' 1">check_circle</span>
+      <span>${item.name} を合成しました！</span>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, -20px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
   };
 
   container.appendChild(topBar);
@@ -114,16 +333,22 @@ export function renderForgeTab() {
 
   renderFilters();
   
-  GameDB.getAllInventory().then(inventory => {
-    const invMap = {};
-    inventory.forEach(item => invMap[item.id] = item.quantity || 0);
+  // データ読み込み
+  Promise.all([
+    GameDB.getAllInventory(),
+    GameDB.getGameState('gold')
+  ]).then(([inventory, gold]) => {
+    inventoryMap = {};
+    inventory.forEach(item => inventoryMap[item.id] = item.quantity || 0);
+    currentGold = gold || 0;
 
-    const craftableItems = ALL_DEFINITIONS.filter(def => {
-      if (!def.recipe) return false;
-      return def.recipe.materials.every(mat => (invMap[mat.id] || 0) >= mat.amount);
-    });
+    // ゴールド表示を更新
+    const forgeGoldDisp = document.getElementById('forge-gold-display');
+    if (forgeGoldDisp) forgeGoldDisp.textContent = currentGold.toLocaleString();
 
-    items = craftableItems;
+    // レシピを持つすべての装備アイテムをリストに追加
+    allRecipeItems = ALL_DEFINITIONS.filter(def => def.recipe);
+
     renderGrid();
   });
 

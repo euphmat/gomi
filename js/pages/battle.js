@@ -810,7 +810,10 @@ class BattleManager {
       this.showActionName(attacker.elementId, actionName, 'text-red-300', 'border-red-500/50');
     }
 
-    let damage = Math.max(1, (attacker.stats.atk || 0) - Math.floor((defender.stats.def || 0) / 2));
+    const isMagic = options.isMagic || false;
+    const atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
+    const defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
+    let damage = Math.max(1, atkStat - Math.floor(defStat / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
     
     const damageMultiplier = options.damageMultiplier || 1;

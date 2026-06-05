@@ -2,8 +2,8 @@ import { renderForgeTab } from './forge-tabs/forge-tab.js';
 import { renderStorageTab } from './forge-tabs/storage-tab.js';
 
 /**
- * このファイルは「鍛冶屋」画面のメインコンテナです。
- * 内部で「鍛冶屋」タブと「倉庫」タブを切り替えて表示します。
+ * このファイルは「ショップ」画面のメインコンテナです。
+ * 内部で「ショップ」タブと「倉庫」タブを切り替えて表示します。
  */
 export function renderForgePage() {
   const container = document.createElement('div');
@@ -11,7 +11,7 @@ export function renderForgePage() {
 
   // タブの定義
   const TABS = [
-    { id: 'forge', label: '鍛冶屋' },
+    { id: 'forge', label: 'ショップ' },
     { id: 'storage', label: '倉庫' }
   ];
   
