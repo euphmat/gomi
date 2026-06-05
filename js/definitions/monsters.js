@@ -14,7 +14,7 @@
 export const MONSTERS = [
   {
     id: 'slime_blue',       name: 'ブルースライム',
-    stats      : { hp: 10, atk: 5, def: 1, matk: 3, mdef: 3, spd: 1 },
+    stats      : { hp: 10, atk: 5, def: 1, matk: 5, mdef: 5, spd: 1 },
     elements   : { water: 50 },
     ailments   : { },
     rewards    : { exp: 1, jp: 1, gold: 1 },
@@ -23,7 +23,7 @@ export const MONSTERS = [
   },
   {
     id: 'slime_red',        name: 'レッドスライム',
-    stats      : { hp: 75, atk: 27, def: 16, matk: 27, mdef: 16, spd: 5 },
+    stats      : { hp: 20, atk: 8, def: 5, matk: 9, mdef: 8, spd: 5 },
     elements   : { fire: 50 },
     ailments   : { burn: 10 },
     rewards    : { exp: 16, jp: 2, gold: 32 },

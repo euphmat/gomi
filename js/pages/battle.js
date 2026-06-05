@@ -13,6 +13,7 @@ class BattleManager {
     this.party = [];
     this.enemies = [];
     this.activeCharacter = null;
+    this.activeEnemy = null;
     this.selectedEnemyTarget = null;
     this.selectedPartyMember = null;
     this.autoBattleMode = 'none'; // 'none', 'floor', 'dungeon'
@@ -270,11 +271,14 @@ class BattleManager {
         atbContainer.classList.add('opacity-0');
       }
 
-      if (this.selectedEnemyTarget === e) {
+      if (this.activeEnemy === e) {
+        iconContainer.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        iconContainer.classList.remove('border-gray-700', 'border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+      } else if (this.selectedEnemyTarget === e) {
         iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-        iconContainer.classList.remove('border-gray-700');
+        iconContainer.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
       } else {
-        iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+        iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
         iconContainer.classList.add('border-gray-700');
       }
 
@@ -755,7 +759,7 @@ class BattleManager {
     const BASE_TICK_RATE = 1000 / 70;
 
     this.atbLoop = setInterval(() => {
-      if (this.activeCharacter) return;
+      if (this.activeCharacter || this.activeEnemy) return;
       
       let nextActor = null;
       
@@ -795,7 +799,12 @@ class BattleManager {
             this.processAutoBattle(this.activeCharacter);
           }
         } else {
-          this.executeEnemyTurn(nextActor.entity);
+          this.activeEnemy = nextActor.entity;
+          this.updateEntities();
+          setTimeout(() => {
+            if (this.activeEnemy !== nextActor.entity) return;
+            this.executeEnemyTurn(nextActor.entity);
+          }, 500);
         }
       }
     }, 50);
@@ -912,7 +921,10 @@ class BattleManager {
 
   executeEnemyTurn(enemy) {
     const aliveParty = this.party.filter(p => !p.isDead);
-    if (aliveParty.length === 0) return;
+    if (aliveParty.length === 0) {
+      this.activeEnemy = null;
+      return;
+    }
     
     const target = aliveParty[Math.floor(Math.random() * aliveParty.length)];
 
@@ -924,6 +936,8 @@ class BattleManager {
         if (rand < cumulative) {
           if (action.execute) {
             action.execute(enemy, target, this);
+            this.activeEnemy = null;
+            this.updateEntities();
             return;
           }
         }
@@ -931,6 +945,8 @@ class BattleManager {
     }
 
     this.executeAttack(enemy, target, false);
+    this.activeEnemy = null;
+    this.updateEntities();
   }
 
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
