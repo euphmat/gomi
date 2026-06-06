@@ -200,6 +200,10 @@ class BattleManager {
       return;
     }
 
+    const N = this.enemies.length;
+    const cols = N;
+    this.elements.enemyArea.style.setProperty('--enemy-cols', cols);
+
     this.elements.enemyArea.innerHTML = this.enemies.map(e => renderEnemyCardHtml(e, this.selectedEnemyTarget)).join('');
 
     if (this.elements.partyArea.children.length === 0) {
@@ -1472,13 +1476,29 @@ export function renderBattlePage() {
       .enemy-card {
         transition: min-width 0.5s ease, max-width 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
       }
+      #enemy-area .enemy-card {
+        min-width: 0px;
+        max-width: min(4rem, calc(100% / var(--enemy-cols, 4) - 0.25rem));
+      }
+      #enemy-area {
+        height: 90px;
+        min-height: 90px;
+        max-height: 90px;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        gap: 0.25rem;
+      }
     </style>
 
     <!-- Scrollable Battle Area (Enemies, Party, Tabs) -->
     <div class="flex-1 flex flex-col overflow-y-auto" style="background: radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%);">
       
       <!-- Enemy Area (Moved higher) -->
-      <div id="enemy-area" class="flex justify-center items-start gap-1 sm:gap-2 md:gap-4 lg:gap-6 w-full max-w-full mt-1 px-2 pt-1 pb-2">
+      <div id="enemy-area" class="shrink-0 px-2 py-1">
         <!-- Enemies will be injected here -->
       </div>
 
