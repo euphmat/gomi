@@ -12,16 +12,16 @@ export function renderLibraryPage() {
 
   // タブの定義
   const TABS = [
-    { id: 'item', label: 'アイテム図鑑' },
-    { id: 'monster', label: 'モンスター図鑑' },
-    { id: 'book', label: '書物' }
+    { id: 'item', label: 'アイテム図鑑', icon: 'auto_stories' },
+    { id: 'monster', label: 'モンスター図鑑', icon: 'pets' },
+    { id: 'book', label: '書物', icon: 'menu_book' }
   ];
   
   let activeTabId = 'item';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');
-  tabHeader.className = 'flex items-center gap-1 p-2 bg-gray-900/50 border-b border-gray-800 shrink-0 overflow-x-auto no-scrollbar';
+  tabHeader.className = 'flex items-center gap-2 p-3 bg-slate-950/70 border-b border-slate-900 shrink-0 overflow-x-auto no-scrollbar backdrop-blur-md z-10';
   
   // コンテンツ領域
   const contentArea = document.createElement('div');
@@ -34,12 +34,15 @@ export function renderLibraryPage() {
       const isActive = tab.id === activeTabId;
       
       btn.className = `
-        px-3 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-colors
+        flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer active:scale-95
         ${isActive 
-          ? 'bg-green-600 text-white shadow-md' 
-          : 'bg-transparent text-gray-400 hover:bg-gray-800 hover:text-gray-200'}
+          ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_12px_rgba(16,185,129,0.25)]' 
+          : 'bg-slate-900/40 text-slate-400 border border-slate-800/50 hover:bg-slate-800/30 hover:text-slate-200 hover:border-slate-700/60'}
       `;
-      btn.textContent = tab.label;
+      btn.innerHTML = `
+        <span class="material-symbols-outlined text-[15px] leading-none ${isActive ? 'text-emerald-400' : 'text-slate-400'}">${tab.icon}</span>
+        <span class="leading-none">${tab.label}</span>
+      `;
       btn.onclick = () => {
         if (activeTabId !== tab.id) {
           activeTabId = tab.id;

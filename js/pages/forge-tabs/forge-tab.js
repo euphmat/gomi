@@ -24,6 +24,7 @@ export function renderForgeTab() {
   let inventoryMap = {};
   let currentGold = 0;
   let currentEquipmentCount = 0;
+  let equipmentCountMap = {};
   let activeFilter = 'all';
 
   const FILTERS = [
@@ -41,19 +42,7 @@ export function renderForgeTab() {
   const filterContainer = document.createElement('div');
   filterContainer.className = 'flex items-center gap-2 overflow-x-auto no-scrollbar pb-1';
 
-  const infoContainer = document.createElement('div');
-  infoContainer.className = 'flex items-center gap-2 shrink-0';
 
-  const equipDisplay = document.createElement('div');
-  equipDisplay.className = 'flex items-center gap-1 px-2.5 py-1.5 bg-blue-900/30 border border-blue-700/50 rounded-lg text-xs font-bold text-blue-300';
-  equipDisplay.innerHTML = `<span class="material-symbols-outlined text-sm leading-none align-middle mr-0.5">inventory_2</span><span class="leading-none">装備 : </span><span id="forge-equip-display" class="font-mono leading-none">0 / 9999</span>`;
-
-  const goldDisplay = document.createElement('div');
-  goldDisplay.className = 'flex items-center gap-1 px-3 py-2 bg-yellow-900/30 border border-yellow-700/50 rounded-lg shrink-0';
-  goldDisplay.innerHTML = `<span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span><span class="text-sm font-bold text-yellow-300 font-mono" id="forge-gold-display">0</span>`;
-
-  infoContainer.appendChild(equipDisplay);
-  infoContainer.appendChild(goldDisplay);
 
   const renderFilters = () => {
     filterContainer.innerHTML = '';
@@ -79,7 +68,6 @@ export function renderForgeTab() {
   };
 
   topBar.appendChild(filterContainer);
-  topBar.appendChild(infoContainer);
 
   // グリッド領域
   // モンスター図鑑と同じシルエットフィルター
@@ -134,13 +122,15 @@ export function renderForgeTab() {
   const checkCanCraft = (item) => {
     if (!item.recipe) return false;
     if (currentGold < (item.recipe.price || 0)) return false;
-    if (currentEquipmentCount >= 9999) return false;
+    const ownedCount = equipmentCountMap[item.id] || 0;
+    if (ownedCount >= 9999) return false;
     return item.recipe.materials.every(mat => (inventoryMap[mat.id] || 0) >= mat.amount);
   };
 
   /** 合成モーダルを表示 */
   const showCraftModal = async (item) => {
     const canCraft = checkCanCraft(item);
+    const ownedCount = equipmentCountMap[item.id] || 0;
     // 取得済みアイテムリストを構築（シルエット判定用 — item-library と同じロジック）
     const [allEquipment, allInventory] = await Promise.all([
       GameDB.getAllEquipment(),
@@ -193,6 +183,7 @@ export function renderForgeTab() {
             ${item.image ? `<img src="${item.image}" class="${itemImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-3xl text-gray-600">category</span>`}
           </div>
           <div class="text-sm font-bold text-center leading-tight text-gray-200 w-full break-words">${item.name}</div>
+          <div class="text-[10px] text-gray-400 font-bold mt-1">所持数: <span class="font-mono text-blue-400">${ownedCount}</span> / 9999</div>
         </div>
         <div class="flex-1 bg-black/40 border border-gray-700 p-2 rounded flex flex-col">
           <div class="text-xs font-bold text-gray-400 mb-2 pb-1 border-b border-gray-700/50">性能表示</div>
@@ -250,9 +241,9 @@ export function renderForgeTab() {
     // 合成ボタン
     const craftBtn = document.createElement('button');
     
-    if (currentEquipmentCount >= 9999) {
+    if (ownedCount >= 9999) {
       craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
-      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>装備の所持上限（9999個）に達しています`;
+      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>所持上限（9999個）に達しています`;
     } else if (canCraft) {
       craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-green-900/40 border border-green-700/50 text-green-200 hover:bg-green-800/50 hover:text-white transition-all active:scale-95 flex justify-center items-center gap-2 shadow-lg';
       craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">construction</span>合成する`;
@@ -311,17 +302,11 @@ export function renderForgeTab() {
       };
       await GameDB.putEquipment(newEquipment);
 
-      currentEquipmentCount++;
-      const forgeEquipDisp = document.getElementById('forge-equip-display');
-      if (forgeEquipDisp) forgeEquipDisp.textContent = `${currentEquipmentCount} / 9999`;
+      equipmentCountMap[item.id] = (equipmentCountMap[item.id] || 0) + 1;
 
       // 合成成功エフェクト
       closeModal();
       showCraftSuccessEffect(item);
-
-      // ゴールド表示更新
-      const forgeGoldDisp = document.getElementById('forge-gold-display');
-      if (forgeGoldDisp) forgeGoldDisp.textContent = currentGold.toLocaleString();
 
       // グリッド再描画
       renderGrid();
@@ -359,15 +344,12 @@ export function renderForgeTab() {
     inventoryMap = {};
     inventory.forEach(item => inventoryMap[item.id] = item.quantity || 0);
     currentGold = gold || 0;
-    currentEquipmentCount = equipment.length;
-
-    // ゴールド表示を更新
-    const forgeGoldDisp = document.getElementById('forge-gold-display');
-    if (forgeGoldDisp) forgeGoldDisp.textContent = currentGold.toLocaleString();
-
-    // 装備所持数表示を更新
-    const forgeEquipDisp = document.getElementById('forge-equip-display');
-    if (forgeEquipDisp) forgeEquipDisp.textContent = `${currentEquipmentCount} / 9999`;
+    // 各装備(baseId)ごとの所持数をカウント
+    equipmentCountMap = {};
+    equipment.forEach(eq => {
+      const bId = eq.baseId || eq.id;
+      equipmentCountMap[bId] = (equipmentCountMap[bId] || 0) + 1;
+    });
 
     // レシピを持つすべての装備アイテムをリストに追加
     allRecipeItems = ALL_DEFINITIONS.filter(def => def.recipe);

@@ -573,11 +573,11 @@ class BattleManager {
 
     tabs.forEach(({btn, id, icon, label}) => {
       if (this.currentTab === id) {
-        btn.className = 'flex-1 py-1 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t text-[9px] font-black shadow-[0_-1px_3px_rgba(0,0,0,0.3)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-0.5 transition-all';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[12px] text-green-400" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-2 bg-slate-800/90 text-emerald-300 border-t-2 border-emerald-500 rounded-t-lg text-[10px] font-black shadow-[0_-2px_10px_rgba(16,185,129,0.15)] relative z-10 flex items-center justify-center gap-1 transition-all duration-200 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[13px] text-emerald-400" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
       } else {
-        btn.className = 'flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[12px]">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-2 bg-slate-950/80 text-slate-500 rounded-t-lg text-[10px] font-bold hover:bg-slate-900/60 hover:text-slate-300 border-b border-slate-900/60 flex items-center justify-center gap-1 transition-colors duration-200 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[13px] text-slate-500">${icon}</span>${label}`;
       }
     });
   }

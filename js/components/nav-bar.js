@@ -30,11 +30,11 @@ export function createNavBar(router) {
   const tabsHTML = NAV_TABS.map(tab => {
     const isActive = currentPath === tab.path;
 
-    // Active: green background matching mockup (#60a917)
-    // Inactive: dark with hover state
+    // Active: glowing emerald and dark slate
+    // Inactive: dark translucent slate with hover state
     const classes = isActive
-      ? 'bg-green-700 text-white border-t-2 border-green-400 shadow-[0_-2px_10px_rgba(96,169,23,0.3)]'
-      : 'bg-gray-900/80 text-gray-500 border-t-2 border-transparent hover:text-gray-300 hover:bg-gray-800/80';
+      ? 'bg-slate-900/95 text-emerald-400 border-t-2 border-emerald-400 shadow-[inset_0_4px_12px_rgba(16,185,129,0.05),_0_-4px_12px_rgba(16,185,129,0.15)] relative z-10'
+      : 'bg-slate-950/95 text-slate-500 border-t-2 border-transparent hover:text-slate-300 hover:bg-slate-900/50';
 
     const disabledAttr = isBattle ? 'disabled' : '';
     const disabledClass = isBattle ? 'opacity-30 pointer-events-none grayscale' : 'cursor-pointer';
@@ -51,7 +51,7 @@ export function createNavBar(router) {
   }).join('');
 
   return `
-    <nav id="game-nav" class="shrink-0 flex border-t border-gray-700/40 bg-gray-900/95 backdrop-blur-md">
+    <nav id="game-nav" class="shrink-0 flex border-t border-slate-900 bg-slate-950/95 backdrop-blur-md">
       ${tabsHTML}
     </nav>
   `;
