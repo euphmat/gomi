@@ -58,6 +58,7 @@ export function createSummonAction(actionName, summonPoolIds, getMonsters) {
       } else {
         battle.enemies.push(createEnemy(leftDef, 'L'), createEnemy(rightDef, 'R'));
       }
+      attacker.atb = 0;
       battle.elements.enemyArea.innerHTML = '';
       battle.renderEntities();
     }
