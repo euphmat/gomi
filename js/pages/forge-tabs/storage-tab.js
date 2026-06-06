@@ -33,6 +33,16 @@ export function renderStorageTab() {
   sortBtn.innerHTML = '<span class="text-sm font-bold">Sort</span>';
   sortBtn.onclick = () => alert('ソート機能は準備中です。');
 
+  const rightContainer = document.createElement('div');
+  rightContainer.className = 'flex items-center gap-2 shrink-0';
+
+  const equipDisplay = document.createElement('div');
+  equipDisplay.className = 'flex items-center gap-1 px-2.5 py-1.5 bg-blue-900/30 border border-blue-700/50 rounded-lg text-xs font-bold text-blue-300';
+  equipDisplay.innerHTML = `<span class="material-symbols-outlined text-sm leading-none align-middle mr-0.5">inventory_2</span><span class="leading-none">装備 : </span><span id="storage-equip-display" class="font-mono leading-none">0 / 9999</span>`;
+
+  rightContainer.appendChild(equipDisplay);
+  rightContainer.appendChild(sortBtn);
+
   const renderFilters = () => {
     filterContainer.innerHTML = '';
     FILTERS.forEach(f => {
@@ -57,7 +67,7 @@ export function renderStorageTab() {
   };
 
   topBar.appendChild(filterContainer);
-  topBar.appendChild(sortBtn);
+  topBar.appendChild(rightContainer);
 
   // グリッド領域
   const scrollContainer = document.createElement('div');
@@ -109,8 +119,9 @@ export function renderStorageTab() {
   const loadData = () => {
     Promise.all([
       GameDB.getWarehouseEquipment(),
-      GameDB.getAllInventory()
-    ]).then(([eq, inv]) => {
+      GameDB.getAllInventory(),
+      GameDB.getAllEquipment()
+    ]).then(([eq, inv, allEq]) => {
       const groupedEquipment = {};
       eq.forEach(item => {
         if (!groupedEquipment[item.name]) {
@@ -122,6 +133,13 @@ export function renderStorageTab() {
       });
       
       items = [...Object.values(groupedEquipment), ...inv];
+
+      // Update equipment count display
+      const storageEquipDisp = document.getElementById('storage-equip-display');
+      if (storageEquipDisp) {
+        storageEquipDisp.textContent = `${allEq.length} / 9999`;
+      }
+
       renderGrid();
     });
   };

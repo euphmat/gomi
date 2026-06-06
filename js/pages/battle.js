@@ -1287,7 +1287,7 @@ class BattleManager {
           const mat = MATERIALS.find(m => m.id === drop.itemId);
           if (mat) {
             const currentItem = await GameDB.getInventoryItem(mat.id) || { id: mat.id, quantity: 0, type: 'material', ...mat };
-            currentItem.quantity += 1;
+            currentItem.quantity = Math.min(9999, currentItem.quantity + 1);
             await GameDB.putInventoryItem(currentItem);
             drops.push({ text: mat.name, image: mat.image, color: 'text-white' });
             
