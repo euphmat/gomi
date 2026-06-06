@@ -104,7 +104,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   `;
 }
 
-export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials) {
+export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills) {
   if (!targetEntity) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full" style="font-family: system-ui, -apple-system, sans-serif;">対象が選択されていません</div>';
   }
@@ -212,6 +212,9 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       </div>
     `;
   } else {
+    const kills = (monsterKills && targetEntity.id) ? (monsterKills[targetEntity.id] || 0) : 0;
+    const bonus = Math.floor(kills / 100) * 0.1;
+
     let dropsHtml = '';
     if (targetEntity.drops && targetEntity.drops.length > 0) {
       dropsHtml = targetEntity.drops.map(d => {
@@ -222,7 +225,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
         
         let badgeClass = '';
-        const rate = parseFloat(d.rate);
+        const rate = Math.min(100, parseFloat(d.rate) + bonus);
         if (rate <= 0.1) {
           badgeClass = 'bg-amber-950/80 text-amber-400 border border-amber-500/40 shadow-[0_0_6px_rgba(245,158,11,0.2)]';
         } else if (rate <= 2.0) {
@@ -230,6 +233,8 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         } else {
           badgeClass = 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40';
         }
+
+        const rateStr = rate.toFixed(2).replace(/\.?0+$/, '');
 
         return `
           <div class="flex justify-between items-center bg-slate-950/40 p-1.5 rounded border border-slate-850/50 hover:bg-slate-850/20 hover:border-slate-800 transition-all gap-1">
@@ -239,7 +244,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
               </div>
               <span class="text-slate-200 text-[9.5px] font-black leading-tight break-words">${itemName}</span>
             </div>
-            <span class="${badgeClass} px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${rate}%</span>
+            <span class="${badgeClass} px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${rateStr}%</span>
           </div>`;
       }).join('');
     } else {
@@ -258,9 +263,12 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
           </div>
           <div class="flex flex-col flex-1 justify-center min-w-0">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center mb-1">
               <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
               <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${currentFloorNum || 1}</span>
+            </div>
+            <div class="flex justify-end items-center">
+              <span class="text-slate-400 text-[9px] font-black bg-slate-950/80 border border-slate-800/85 px-1.5 py-0.5 rounded shrink-0">討伐数: <span class="text-red-400 font-extrabold">${kills}</span>体</span>
             </div>
           </div>
         </div>

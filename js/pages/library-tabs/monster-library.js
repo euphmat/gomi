@@ -30,6 +30,7 @@ export function renderMonsterLibraryTab() {
   scrollContainer.appendChild(gridContainer);
 
   let acquiredBaseIds = new Set();
+  let monsterKills = {};
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
@@ -86,6 +87,9 @@ export function renderMonsterLibraryTab() {
           : `<span class="material-symbols-outlined text-3xl text-gray-800 normal-case">pets</span>`;
     }
     
+    const kills = monsterKills[monster.id] || 0;
+    const bonus = Math.floor(kills / 100) * 0.1;
+
     const topSection = `
       <div class="flex items-center gap-3 bg-gray-800/40 p-2 rounded-lg border border-gray-700 shadow-sm">
         <div class="w-14 h-14 bg-gray-900 rounded-md border border-gray-600 shadow-inner flex items-center justify-center overflow-hidden shrink-0 relative">
@@ -93,7 +97,10 @@ export function renderMonsterLibraryTab() {
         </div>
         <div class="flex-1 flex flex-col justify-center">
           <div class="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-400 leading-tight break-words mb-0.5">${displayName}</div>
-          <div class="text-[10px] text-gray-500 font-bold">モンスター</div>
+          <div class="flex items-center justify-between">
+            <div class="text-[10px] text-gray-500 font-bold">モンスター</div>
+            <div class="text-[10px] text-red-400 font-bold">討伐数: ${kills}体</div>
+          </div>
         </div>
       </div>
     `;
@@ -140,7 +147,9 @@ export function renderMonsterLibraryTab() {
           ? `<div class="${containerClass}"><img src="${itemDef.image}" class="${imgClass}" onerror="this.style.display='none'"></div>` 
           : `<div class="${containerClass}"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
 
-        const rateValue = isDefeated ? `${drop.rate}%` : '???%';
+        const rate = Math.min(100, parseFloat(drop.rate) + bonus);
+        const rateStr = rate.toFixed(2).replace(/\.?0+$/, '');
+        const rateValue = isDefeated ? `${rateStr}%` : '???%';
         const rateColor = isDefeated ? 'text-blue-400' : 'text-gray-600';
         
         return createRow(iconSrc, itemName, 'ドロップ率', rateValue, rateColor);
@@ -180,6 +189,8 @@ export function renderMonsterLibraryTab() {
     // Check discovered_monsters to determine if monster was defeated
     const discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
     discoveredMonsters.forEach(monsterId => acquiredBaseIds.add('defeated_' + monsterId));
+
+    monsterKills = await GameDB.getGameState('monster_kills') || {};
 
     renderGrid();
   };

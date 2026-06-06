@@ -51,6 +51,7 @@ class BattleManager {
     this.elements.btnAutoFloor.disabled = false;
     this.elements.btnAutoDungeon.disabled = false;
     this.autoSkillStates = {};
+    this.monsterKills = {};
   }
   
   async init() {
@@ -58,6 +59,7 @@ class BattleManager {
     this.stopAtbLoop();
 
     this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
+    this.monsterKills = await GameDB.getGameState('monster_kills') || {};
 
 
     const isReinit = this.elements.enemyArea.children.length > 0;
@@ -211,6 +213,9 @@ class BattleManager {
             if (this.isAutoBattle) this.selectedPartyMember = p;
             this.infoTarget = { type: 'party', entity: p };
             this.updateEntities();
+            if (this.currentTab === 'info') {
+              this.renderTabContent();
+            }
           }
         });
       });
@@ -228,6 +233,9 @@ class BattleManager {
           this.selectedEnemyTarget = enemy;
           this.infoTarget = { type: 'enemy', entity: enemy };
           this.renderEntities();
+          if (this.currentTab === 'info') {
+            this.renderTabContent();
+          }
         }
       });
     });
@@ -591,7 +599,7 @@ class BattleManager {
       isParty = true;
     }
 
-    const html = renderInfoTabHtml(targetEntity, isParty, this.equipMap, this.currentFloorNum, MATERIALS);
+    const html = renderInfoTabHtml(targetEntity, isParty, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills);
     this.elements.tabContent.innerHTML = html;
   }
 
@@ -1179,6 +1187,12 @@ class BattleManager {
       await GameDB.setGameState('discovered_monsters', discoveredMonsters);
     }
 
+    // Increment and save monster kill counts
+    const monsterKills = await GameDB.getGameState('monster_kills') || {};
+    monsterKills[enemy.id] = (monsterKills[enemy.id] || 0) + 1;
+    await GameDB.setGameState('monster_kills', monsterKills);
+    this.monsterKills = monsterKills;
+
     // Add Gold
     const gold = enemy.rewards.gold || 0;
     if (gold > 0) {
@@ -1254,8 +1268,11 @@ class BattleManager {
     // Process Drops
     let hasNewDrops = false;
     if (enemy.drops) {
+      const kills = this.monsterKills[enemy.id] || 0;
+      const bonus = Math.floor(kills / 100) * 0.1;
       for (const drop of enemy.drops) {
-        if (Math.random() * 100 <= drop.rate) {
+        const adjustedRate = Math.min(100, drop.rate + bonus);
+        if (Math.random() * 100 <= adjustedRate) {
           const mat = MATERIALS.find(m => m.id === drop.itemId);
           if (mat) {
             const currentItem = await GameDB.getInventoryItem(mat.id) || { id: mat.id, quantity: 0, type: 'material', ...mat };
