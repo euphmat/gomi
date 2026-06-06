@@ -106,7 +106,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
 
 export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials) {
   if (!targetEntity) {
-    return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">対象が選択されていません</div>';
+    return '<div class="text-xs text-gray-500 flex items-center justify-center h-full" style="font-family: system-ui, -apple-system, sans-serif;">対象が選択されていません</div>';
   }
 
   let html = '';
@@ -119,67 +119,93 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     const maxMp = targetEntity.mp?.max || 0;
     const mpPct = maxMp > 0 ? (currentMp / maxMp) * 100 : 0;
 
-    const getEquipHtml = (id, label) => {
+    const getEquipHtml = (id, label, defaultIcon) => {
       const item = id ? equipMap.get(id) : null;
-      if (item && item.image) {
-        return `<div class="flex items-center gap-1 bg-gray-900/60 p-0.5 rounded border border-gray-700">
-            <img src="${item.image}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
-            <div class="flex flex-col min-w-0">
-              <span class="text-[7px] text-gray-500 leading-none">${label}</span>
-              <span class="text-[8px] text-gray-200 truncate leading-tight">${item.name}</span>
+      if (item) {
+        const itemImg = item.image 
+          ? `<img src="${item.image}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">`
+          : `<span class="material-symbols-outlined text-slate-400 text-[14px] shrink-0">${defaultIcon}</span>`;
+        return `
+          <div class="flex items-center gap-2 bg-slate-950/40 hover:bg-slate-850/40 p-1.5 rounded border border-slate-800/85 transition-colors">
+            <div class="w-7 h-7 rounded bg-slate-950/80 border border-slate-700/50 flex items-center justify-center shadow-inner shrink-0">
+              ${itemImg}
+            </div>
+            <div class="flex flex-col min-w-0 flex-1 leading-tight">
+              <span class="text-[8px] text-slate-500 font-bold uppercase tracking-wider">${label}</span>
+              <span class="text-[10px] text-slate-200 font-black truncate">${item.name}</span>
             </div>
           </div>`;
       } else {
-        const itemName = item ? item.name : (id || 'なし');
-        return `<div class="flex items-center gap-1 bg-gray-900/60 p-0.5 rounded border border-gray-700">
-            <span class="material-symbols-outlined text-gray-600" style="font-size: 12px;">category</span>
-            <div class="flex flex-col min-w-0">
-              <span class="text-[7px] text-gray-500 leading-none">${label}</span>
-              <span class="text-[8px] text-gray-400 truncate leading-tight">${itemName}</span>
+        return `
+          <div class="flex items-center gap-2 bg-slate-950/20 p-1.5 rounded border border-slate-900/60 opacity-60">
+            <div class="w-7 h-7 rounded bg-slate-950/40 border border-slate-900/40 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-slate-600 text-[14px]">${defaultIcon}</span>
+            </div>
+            <div class="flex flex-col min-w-0 flex-1 leading-tight">
+              <span class="text-[8px] text-slate-600 font-bold uppercase tracking-wider">${label}</span>
+              <span class="text-[10px] text-slate-500 font-bold italic">未装備</span>
             </div>
           </div>`;
       }
     };
 
     html = `
-      <div class="h-full overflow-y-auto p-1.5 text-gray-300 text-[9px] flex flex-col gap-1.5 custom-scrollbar">
-        <div class="flex items-center gap-2 pb-1 border-b border-gray-700 shrink-0">
-          <div class="w-8 h-8 rounded-full border-2 border-gray-600 overflow-hidden bg-gray-800 shrink-0">
-            <img src="${targetEntity.iconImage}" class="w-full h-full object-cover" onerror="this.src='./assets/job/job_norvice.webp'">
+      <div class="h-full overflow-y-auto p-2 text-slate-300 flex flex-col gap-2.5 custom-scrollbar relative" style="font-family: system-ui, -apple-system, sans-serif;">
+        <!-- Background Glow Effect -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-cyan-500/15 rounded-full blur-xl pointer-events-none z-0"></div>
+
+        <div class="flex items-center gap-3 pb-2 border-b border-slate-700/80 shrink-0 relative z-10">
+          <div class="w-12 h-12 rounded-lg bg-slate-950 border-2 border-cyan-500/50 overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+            <img src="${targetEntity.iconImage}" class="w-full h-full object-cover rounded" onerror="this.src='./assets/job/job_norvice.webp'">
           </div>
-          <div class="flex flex-col flex-1">
-            <div class="flex justify-between items-baseline">
-              <span class="font-bold text-gray-100 text-[11px] drop-shadow-md">${targetEntity.name}</span>
-              <span class="text-gray-400 text-[8px]">Lv.${targetEntity.level || 1} / JLV.${targetEntity.jobLevel || 1}</span>
-            </div>
-            <div class="flex flex-col gap-[2px] mt-0.5">
-              <div class="relative h-1.5 bg-gray-900 rounded-full overflow-hidden border border-gray-700/50">
-                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-red-600 to-red-400" style="width: ${hpPct}%"></div>
-              </div>
-              <div class="relative h-1.5 bg-gray-900 rounded-full overflow-hidden border border-gray-700/50">
-                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-blue-400" style="width: ${mpPct}%"></div>
-              </div>
+          <div class="flex flex-col flex-1 justify-center min-w-0">
+            <div class="flex justify-between items-center">
+              <span class="font-black text-cyan-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
+              <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${targetEntity.level || 1} / JLV.${targetEntity.jobLevel || 1}</span>
             </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-1.5 shrink-0">
-          <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-1 rounded border border-gray-700/50 flex flex-col gap-[2px] shadow-inner">
-            <div class="text-gray-500 text-[8px] mb-0.5 border-b border-gray-700 pb-0.5">ステータス</div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="text-gray-400">ATK</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.atk || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-slate-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="text-gray-400">DEF</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.def || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="text-gray-400">MATK</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.matk || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-indigo-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="text-gray-400">MDEF</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.mdef || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="text-gray-400">SPD</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.spd || 0}</span></div>
+        <div class="grid grid-cols-2 gap-2 min-h-0 flex-1 relative z-10">
+          <!-- Status Grid -->
+          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
+            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-[12px] text-cyan-400">analytics</span>ステータス
+            </div>
+            <div class="grid grid-cols-2 gap-1">
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-red-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">swords</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.atk || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-slate-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">shield</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.def || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-purple-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.matk || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-indigo-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">security</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.mdef || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors col-span-2">
+                <span class="material-symbols-outlined text-amber-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">directions_run</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.spd || 0}</span>
+              </div>
+            </div>
           </div>
-          <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-1 rounded border border-gray-700/50 flex flex-col gap-[2px] shadow-inner">
-            <div class="text-gray-500 text-[8px] mb-0.5 border-b border-gray-700 pb-0.5">装備</div>
-            <div class="flex flex-col gap-[2px] mt-0.5">
-              ${getEquipHtml(targetEntity.equipment?.rightHand, '右手')}
-              ${getEquipHtml(targetEntity.equipment?.leftHand, '左手')}
-              ${getEquipHtml(targetEntity.equipment?.armor, '鎧')}
-              ${getEquipHtml(targetEntity.equipment?.accessory1, 'アクセサリ1')}
-              ${getEquipHtml(targetEntity.equipment?.accessory2, 'アクセサリ2')}
+          <!-- Equipment Grid -->
+          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
+            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-[12px] text-cyan-400">shield</span>装備
+            </div>
+            <div class="flex flex-col gap-1 pr-0.5">
+              ${getEquipHtml(targetEntity.equipment?.rightHand, '右手', 'swords')}
+              ${getEquipHtml(targetEntity.equipment?.leftHand, '左手', 'shield')}
+              ${getEquipHtml(targetEntity.equipment?.armor, '鎧', 'shield')}
+              ${getEquipHtml(targetEntity.equipment?.accessory1, 'アクセサリ1', 'diamond')}
+              ${getEquipHtml(targetEntity.equipment?.accessory2, 'アクセサリ2', 'diamond')}
             </div>
           </div>
         </div>
@@ -191,61 +217,101 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       dropsHtml = targetEntity.drops.map(d => {
         const mat = materials.find(m => m.id === d.itemId);
         const itemName = mat ? mat.name : d.itemId;
-        const itemImg = mat && mat.image ? `<img src="${mat.image}" class="w-4 h-4 object-contain">` : `<span class="material-symbols-outlined text-gray-500" style="font-size: 12px;">category</span>`;
-        return `<div class="flex justify-between items-center bg-gray-900/60 p-0.5 rounded border border-gray-700/50 hover:bg-gray-800 transition-colors">
-            <div class="flex items-center gap-1 overflow-hidden">
-              ${itemImg}
-              <span class="truncate text-gray-200 text-[8px]">${itemName}</span>
+        const itemImg = mat && mat.image 
+          ? `<img src="${mat.image}" class="w-5 h-5 object-contain shrink-0 drop-shadow-sm">` 
+          : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
+        
+        let badgeClass = '';
+        const rate = parseFloat(d.rate);
+        if (rate <= 0.1) {
+          badgeClass = 'bg-amber-950/80 text-amber-400 border border-amber-500/40 shadow-[0_0_6px_rgba(245,158,11,0.2)]';
+        } else if (rate <= 2.0) {
+          badgeClass = 'bg-purple-950/80 text-purple-400 border border-purple-500/45 shadow-[0_0_6px_rgba(168,85,247,0.2)]';
+        } else {
+          badgeClass = 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40';
+        }
+
+        return `
+          <div class="flex justify-between items-center bg-slate-950/40 p-1.5 rounded border border-slate-850/50 hover:bg-slate-850/20 hover:border-slate-800 transition-all gap-1">
+            <div class="flex items-center gap-1.5 min-w-0 flex-1">
+              <div class="w-6 h-6 rounded bg-slate-950 flex items-center justify-center border border-slate-800 shrink-0">
+                ${itemImg}
+              </div>
+              <span class="text-slate-200 text-[9.5px] font-black leading-tight break-words">${itemName}</span>
             </div>
-            <span class="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1 rounded-sm shrink-0 text-[7px] font-bold">${d.rate}%</span>
+            <span class="${badgeClass} px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${rate}%</span>
           </div>`;
       }).join('');
     } else {
-      dropsHtml = '<div class="text-gray-500 text-center py-1 text-[8px]">なし</div>';
+      dropsHtml = '<div class="text-slate-500 text-center py-4 text-[10px] italic">ドロップ情報なし</div>';
     }
 
     const hpPct = targetEntity.maxHp > 0 ? (targetEntity.currentHp / targetEntity.maxHp) * 100 : 0;
 
     html = `
-      <div class="h-full overflow-y-auto p-1.5 text-gray-300 text-[9px] flex flex-col gap-1.5 custom-scrollbar relative">
+      <div class="h-full overflow-y-auto p-2 text-slate-300 flex flex-col gap-2.5 custom-scrollbar relative" style="font-family: system-ui, -apple-system, sans-serif;">
         <!-- Background Glow Effect -->
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-red-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-red-500/15 rounded-full blur-xl pointer-events-none z-0"></div>
         
-        <div class="flex items-center gap-2 pb-1 border-b border-gray-700 shrink-0 relative z-10">
-          <div class="w-10 h-10 rounded bg-gray-900/80 border border-gray-600 overflow-hidden shrink-0 flex items-center justify-center p-0.5 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+        <div class="flex items-center gap-3 pb-2 border-b border-slate-700/80 shrink-0 relative z-10">
+          <div class="w-12 h-12 rounded-lg bg-slate-950 border-2 border-red-500/50 overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-[0_0_12px_rgba(239,68,68,0.2)]">
             <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
           </div>
-          <div class="flex flex-col flex-1 justify-center">
-            <div class="flex justify-between items-baseline">
-              <span class="font-bold text-red-300 text-[11px] drop-shadow-md">${targetEntity.name}</span>
-              <span class="text-gray-400 text-[8px] bg-gray-800 px-1 rounded">Lv.${currentFloorNum || 1}</span>
-            </div>
-            <div class="flex flex-col gap-0.5 mt-1">
-              <div class="flex justify-between items-end mb-[1px]">
-                <span class="text-[7px] text-gray-500 font-bold leading-none">HP</span>
-                <span class="text-[8px] text-red-200 font-bold leading-none">${Math.floor(targetEntity.currentHp || 0)} / ${targetEntity.maxHp || 0}</span>
-              </div>
-              <div class="relative h-1.5 bg-gray-900 rounded-full overflow-hidden border border-gray-700/50">
-                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-red-700 to-red-500" style="width: ${hpPct}%"></div>
-              </div>
+          <div class="flex flex-col flex-1 justify-center min-w-0">
+            <div class="flex justify-between items-center">
+              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
+              <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${currentFloorNum || 1}</span>
             </div>
           </div>
         </div>
         
-        <div class="grid grid-cols-2 gap-1.5 min-h-0 flex-1 relative z-10">
-          <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-1 rounded border border-gray-700/50 flex flex-col gap-[2px] overflow-y-auto custom-scrollbar shadow-inner">
-            <div class="text-gray-500 text-[8px] mb-0.5 border-b border-gray-700 pb-0.5 shrink-0">ステータス</div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="text-gray-400">ATK</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.atk || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-slate-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="text-gray-400">DEF</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.def || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="text-gray-400">MATK</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.matk || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-indigo-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="text-gray-400">MDEF</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.mdef || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="text-gray-400">SPD</span></div><span class="font-bold text-gray-200">${targetEntity.stats?.spd || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm mt-0.5"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-green-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">star</span><span class="text-gray-400">EXP</span></div><span class="font-bold text-green-400">${targetEntity.rewards?.exp || 0}</span></div>
-            <div class="flex justify-between items-center bg-gray-800/50 px-1 rounded-sm"><div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">monetization_on</span><span class="text-gray-400">GOLD</span></div><span class="font-bold text-yellow-400">${targetEntity.rewards?.gold || 0}</span></div>
+        <div class="grid grid-cols-2 gap-2 min-h-0 flex-1 relative z-10">
+          <!-- Status Grid -->
+          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
+            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-[12px] text-red-400">analytics</span>ステータス
+            </div>
+            <div class="grid grid-cols-2 gap-1">
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-red-450 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">swords</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.atk || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-slate-455 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">shield</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.def || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-purple-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.matk || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-indigo-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">security</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.mdef || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-amber-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">directions_run</span>
+                <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.spd || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-emerald-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">star</span>
+                <span class="font-extrabold text-emerald-400 text-[10.5px] shrink-0">${targetEntity.rewards?.exp || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-purple-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">school</span>
+                <span class="font-extrabold text-purple-400 text-[10.5px] shrink-0">${targetEntity.rewards?.jp || 0}</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
+                <span class="material-symbols-outlined text-amber-500 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">monetization_on</span>
+                <span class="font-extrabold text-amber-450 text-[10.5px] shrink-0">${targetEntity.rewards?.gold || 0}</span>
+              </div>
+            </div>
           </div>
-          <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-1 rounded border border-gray-700/50 flex flex-col min-h-0 shadow-inner">
-            <div class="text-gray-500 text-[8px] mb-1 border-b border-gray-700 pb-0.5 shrink-0 flex items-center gap-0.5"><span class="material-symbols-outlined" style="font-size: 10px;">shopping_bag</span>ドロップ</div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-0.5 flex flex-col gap-[2px]">
+          <!-- Drop Info -->
+          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col min-h-0 shadow-inner">
+            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-[12px] text-red-400">shopping_bag</span>ドロップ
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-0.5 flex flex-col gap-1.5">
               ${dropsHtml}
             </div>
           </div>
