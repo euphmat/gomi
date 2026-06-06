@@ -818,12 +818,13 @@ class BattleManager {
     damage = Math.floor(damage * damageMultiplier);
 
     // --- 武器アビリティの発動 ---
-    if (attacker.equipment && attacker.equipment.rightHand) {
+    // 通常攻撃時（options.damageType が指定されていない場合）のみ発動
+    if (!options.damageType && attacker.equipment && attacker.equipment.rightHand) {
       const weaponDef = this.equipMap.get(attacker.equipment.rightHand);
       if (weaponDef && weaponDef.ability && weaponDef.ability.execute) {
         const origDamage = damage;
         damage = weaponDef.ability.execute(attacker, defender, damage, this);
-        if (damage !== origDamage && !options.damageType) {
+        if (damage !== origDamage) {
           options.damageType = 'ability';
         }
       }
