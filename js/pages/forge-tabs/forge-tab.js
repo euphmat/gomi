@@ -122,15 +122,32 @@ export function renderForgeTab() {
   const checkCanCraft = (item) => {
     if (!item.recipe) return false;
     if (currentGold < (item.recipe.price || 0)) return false;
-    const ownedCount = equipmentCountMap[item.id] || 0;
+    const isMaterial = !item.slot;
+    const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
     if (ownedCount >= 9999) return false;
     return item.recipe.materials.every(mat => (inventoryMap[mat.id] || 0) >= mat.amount);
   };
 
   /** 合成モーダルを表示 */
   const showCraftModal = async (item) => {
-    const canCraft = checkCanCraft(item);
-    const ownedCount = equipmentCountMap[item.id] || 0;
+    const isMaterial = !item.slot;
+    const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
+    
+    // 計算: 最大合成可能数
+    const price = item.recipe.price || 0;
+    let maxCraft = 9999 - ownedCount;
+    if (price > 0) {
+      maxCraft = Math.min(maxCraft, Math.floor(currentGold / price));
+    }
+    item.recipe.materials.forEach(mat => {
+      const owned = inventoryMap[mat.id] || 0;
+      if (mat.amount > 0) {
+        maxCraft = Math.min(maxCraft, Math.floor(owned / mat.amount));
+      }
+    });
+    maxCraft = Math.max(0, maxCraft);
+    let craftCount = maxCraft > 0 ? 1 : 0;
+
     // 取得済みアイテムリストを構築（シルエット判定用 — item-library と同じロジック）
     const [allEquipment, allInventory] = await Promise.all([
       GameDB.getAllEquipment(),
@@ -157,7 +174,7 @@ export function renderForgeTab() {
       
     // Body
     const body = document.createElement('div');
-    body.className = 'p-4 flex flex-col gap-4 max-h-[70vh] overflow-y-auto';
+    body.className = 'p-4 flex flex-col gap-4 max-h-[80vh] overflow-y-auto';
     
     // Top: Icon + Name + Stats
     const statsHtml = item.stats 
@@ -175,7 +192,8 @@ export function renderForgeTab() {
         }).join('') + `</div>`
       : '';
 
-    const itemImgClass = canCraft ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+    const canCraftAny = maxCraft > 0;
+    const itemImgClass = canCraftAny ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
     const topSection = `
       <div class="flex gap-4">
         <div class="flex flex-col items-center gap-2 w-1/3 shrink-0">
@@ -192,67 +210,89 @@ export function renderForgeTab() {
       </div>
     `;
 
+    // Middle section: Quantity Selector
+    const middleSection = document.createElement('div');
+    middleSection.className = 'bg-black/40 border border-gray-700 rounded p-3';
+    middleSection.innerHTML = `
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-bold text-gray-300">合成数</span>
+        <span class="text-xs text-gray-500 font-mono">最大: ${maxCraft} / 9999</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btn-minus" class="w-10 h-10 flex items-center justify-center bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 active:scale-95 text-lg font-bold transition-all">-</button>
+        <div class="flex-1 text-center font-mono text-xl font-bold text-white bg-gray-900 border border-gray-700 rounded-lg py-1.5" id="craft-count-disp">${craftCount}</div>
+        <button id="btn-plus" class="w-10 h-10 flex items-center justify-center bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 active:scale-95 text-lg font-bold transition-all">+</button>
+        <button id="btn-max" class="px-4 h-10 flex items-center justify-center bg-blue-900/40 border border-blue-700/50 rounded-lg text-sm font-bold text-blue-300 hover:bg-blue-800/50 active:scale-95 transition-all">MAX</button>
+      </div>
+    `;
+
     // 必要素材セクション
     const materialsSection = document.createElement('div');
     materialsSection.className = 'bg-black/40 border border-gray-700 rounded p-3';
     
-    let materialsHtml = `<div class="text-xs font-bold text-gray-400 mb-2 pb-1 border-b border-gray-700/50 flex items-center gap-1">
-      <span class="material-symbols-outlined text-sm">inventory_2</span>必要素材
-    </div>`;
-    
-    materialsHtml += `<div class="flex flex-col gap-1.5">`;
-    item.recipe.materials.forEach(mat => {
-      const matDef = ALL_DEFINITIONS.find(d => d.id === mat.id);
-      const owned = inventoryMap[mat.id] || 0;
-      const enough = owned >= mat.amount;
-      const matAcquired = acquiredIds.has(mat.id);
-      const showMatSilhouette = !matAcquired;
-      const matImgClass = showMatSilhouette ? `w-full h-full object-cover ${SILHOUETTE_FILTER}` : 'w-full h-full object-cover';
-      materialsHtml += `
-        <div class="flex items-center gap-2 py-1">
-          <div class="w-8 h-8 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
-            ${matDef && matDef.image ? `<img src="${matDef.image}" class="${matImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-gray-600 text-sm">category</span>`}
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="text-xs font-bold text-gray-300 truncate">${matDef ? matDef.name : mat.id}</div>
-          </div>
-          <div class="text-xs font-mono font-bold shrink-0 ${enough ? 'text-green-400' : 'text-red-400'}">
-            ${owned} / ${mat.amount}
-          </div>
-        </div>
-      `;
-    });
-    materialsHtml += `</div>`;
-
-    // 合成費用
-    const price = item.recipe.price || 0;
-    const hasEnoughGold = currentGold >= price;
-    materialsHtml += `
-      <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-700/50">
-        <div class="flex items-center gap-1">
-          <span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span>
-          <span class="text-xs font-bold text-gray-400">合成費用</span>
-        </div>
-        <span class="text-sm font-bold font-mono ${hasEnoughGold ? 'text-yellow-300' : 'text-red-400'}">${price.toLocaleString()} G</span>
-      </div>
-    `;
-    materialsSection.innerHTML = materialsHtml;
-
     // 合成ボタン
     const craftBtn = document.createElement('button');
+
+    const updateCraftInfo = () => {
+      const currentCraft = Math.max(1, craftCount);
+      let materialsHtml = `<div class="text-xs font-bold text-gray-400 mb-2 pb-1 border-b border-gray-700/50 flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm">inventory_2</span>必要素材
+      </div>`;
+      
+      materialsHtml += `<div class="flex flex-col gap-1.5">`;
+      item.recipe.materials.forEach(mat => {
+        const matDef = ALL_DEFINITIONS.find(d => d.id === mat.id);
+        const owned = inventoryMap[mat.id] || 0;
+        const requiredAmount = mat.amount * currentCraft;
+        const enough = owned >= requiredAmount;
+        const matAcquired = acquiredIds.has(mat.id);
+        const showMatSilhouette = !matAcquired;
+        const matImgClass = showMatSilhouette ? \`w-full h-full object-cover \${SILHOUETTE_FILTER}\` : 'w-full h-full object-cover';
+        materialsHtml += \`
+          <div class="flex items-center gap-2 py-1">
+            <div class="w-8 h-8 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
+              \${matDef && matDef.image ? \`<img src="\${matDef.image}" class="\${matImgClass}" onerror="this.style.display='none'">\` : \`<span class="material-symbols-outlined text-gray-600 text-sm">category</span>\`}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-bold text-gray-300 truncate">\${matDef ? matDef.name : mat.id}</div>
+            </div>
+            <div class="text-xs font-mono font-bold shrink-0 \${enough ? 'text-green-400' : 'text-red-400'}">
+              \${owned} / \${requiredAmount}
+            </div>
+          </div>
+        \`;
+      });
+      materialsHtml += \`</div>\`;
+
+      const totalCost = price * currentCraft;
+      const hasEnoughGold = currentGold >= totalCost;
+      materialsHtml += \`
+        <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-700/50">
+          <div class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span>
+            <span class="text-xs font-bold text-gray-400">合成費用</span>
+          </div>
+          <span class="text-sm font-bold font-mono \${hasEnoughGold ? 'text-yellow-300' : 'text-red-400'}">\${totalCost.toLocaleString()} G</span>
+        </div>
+      \`;
+      materialsSection.innerHTML = materialsHtml;
+
+      if (ownedCount >= 9999) {
+        craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
+        craftBtn.innerHTML = \`<span class="material-symbols-outlined text-[20px]">block</span>所持上限（9999個）に達しています\`;
+      } else if (craftCount > 0) {
+        craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-green-900/40 border border-green-700/50 text-green-200 hover:bg-green-800/50 hover:text-white transition-all active:scale-95 flex justify-center items-center gap-2 shadow-lg';
+        craftBtn.innerHTML = \`<span class="material-symbols-outlined text-[20px]">construction</span>合成する（\${craftCount}個）\`;
+      } else {
+        craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
+        craftBtn.innerHTML = \`<span class="material-symbols-outlined text-[20px]">block</span>素材またはゴールドが不足しています\`;
+      }
+    };
     
-    if (ownedCount >= 9999) {
-      craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
-      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>所持上限（9999個）に達しています`;
-    } else if (canCraft) {
-      craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-green-900/40 border border-green-700/50 text-green-200 hover:bg-green-800/50 hover:text-white transition-all active:scale-95 flex justify-center items-center gap-2 shadow-lg';
-      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">construction</span>合成する`;
-    } else {
-      craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
-      craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>素材またはゴールドが不足しています`;
-    }
+    updateCraftInfo();
     
     body.innerHTML = topSection;
+    body.appendChild(middleSection);
     body.appendChild(materialsSection);
     body.appendChild(craftBtn);
     
@@ -266,47 +306,74 @@ export function renderForgeTab() {
     overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
     modal.querySelector('#close-craft-modal').onclick = closeModal;
 
+    const updateCountDisp = () => {
+      modal.querySelector('#craft-count-disp').textContent = craftCount;
+      updateCraftInfo();
+    };
+    
+    modal.querySelector('#btn-minus').onclick = () => {
+      if (craftCount > 1) { craftCount--; updateCountDisp(); }
+    };
+    modal.querySelector('#btn-plus').onclick = () => {
+      if (craftCount < maxCraft) { craftCount++; updateCountDisp(); }
+    };
+    modal.querySelector('#btn-max').onclick = () => {
+      if (maxCraft > 0) { craftCount = maxCraft; updateCountDisp(); }
+    };
+
     // 合成実行
     craftBtn.onclick = async () => {
-      if (!canCraft) return;
+      if (craftCount <= 0) return;
+
+      const totalCost = price * craftCount;
 
       // ゴールドを減らす
-      currentGold -= price;
+      currentGold -= totalCost;
       await GameDB.setGameState('gold', currentGold);
 
       // ヘッダーのゴールド表示を更新
       const headerGoldEl = document.getElementById('header-gold-display');
       if (headerGoldEl) {
-        headerGoldEl.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+        headerGoldEl.textContent = ` Gold : \${currentGold.toLocaleString()} `;
       }
 
       // 素材を消費
       for (const mat of item.recipe.materials) {
         const invItem = await GameDB.getInventoryItem(mat.id);
         if (invItem) {
-          const newQty = (invItem.quantity || 0) - mat.amount;
+          const totalMatCost = mat.amount * craftCount;
+          const newQty = (invItem.quantity || 0) - totalMatCost;
           if (newQty <= 0) {
             await GameDB.deleteInventoryItem(mat.id);
           } else {
             await GameDB.putInventoryItem({ ...invItem, quantity: newQty });
           }
-          inventoryMap[mat.id] = Math.max(0, (inventoryMap[mat.id] || 0) - mat.amount);
+          inventoryMap[mat.id] = Math.max(0, (inventoryMap[mat.id] || 0) - totalMatCost);
         }
       }
 
-      // 装備アイテムを作成（ユニークID付与）
-      const uniqueId = `${item.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-      const newEquipment = {
-        id: uniqueId,
-        baseId: item.id,
-      };
-      await GameDB.putEquipment(newEquipment);
-
-      equipmentCountMap[item.id] = (equipmentCountMap[item.id] || 0) + 1;
+      if (isMaterial) {
+        const currentQty = inventoryMap[item.id] || 0;
+        const newQty = currentQty + craftCount;
+        const matItem = ALL_DEFINITIONS.find(d => d.id === item.id) || item;
+        await GameDB.putInventoryItem({ ...matItem, quantity: newQty });
+        inventoryMap[item.id] = newQty;
+      } else {
+        // 装備アイテムを作成（ユニークID付与）
+        for (let i = 0; i < craftCount; i++) {
+          const uniqueId = \`\${item.id}_\${Date.now().toString(36)}\${Math.random().toString(36).slice(2, 6)}\`;
+          const newEquipment = {
+            id: uniqueId,
+            baseId: item.id,
+          };
+          await GameDB.putEquipment(newEquipment);
+        }
+        equipmentCountMap[item.id] = (equipmentCountMap[item.id] || 0) + craftCount;
+      }
 
       // 合成成功エフェクト
       closeModal();
-      showCraftSuccessEffect(item);
+      showCraftSuccessEffect(item, craftCount);
 
       // グリッド再描画
       renderGrid();
@@ -314,13 +381,13 @@ export function renderForgeTab() {
   };
 
   /** 合成成功時のエフェクト */
-  const showCraftSuccessEffect = (item) => {
+  const showCraftSuccessEffect = (item, count) => {
     const toast = document.createElement('div');
     toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-green-900/90 border border-green-500/50 rounded-xl shadow-2xl text-sm font-bold text-green-200 animate-[slide-up_0.3s_ease-out] backdrop-blur-sm';
-    toast.innerHTML = `
+    toast.innerHTML = \`
       <span class="material-symbols-outlined text-green-400" style="font-variation-settings: 'FILL' 1">check_circle</span>
-      <span>${item.name} を合成しました！</span>
-    `;
+      <span>\${item.name} を \${count} 個合成しました！</span>
+    \`;
     document.body.appendChild(toast);
     setTimeout(() => {
       toast.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
