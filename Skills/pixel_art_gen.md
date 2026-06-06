@@ -1,6 +1,5 @@
-
 # JRPG Pixel Art Generator
-Please generate the images listed below in a **5x5 grid** format.
+Please generate the images listed below in a **4x4 grid** format.
 
 ## Image Requirements
 - Image Size : Square
@@ -14,25 +13,22 @@ Please generate the images listed below in a **5x5 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate (equipment)
-- { id: 'slime_green_jelly',      name: 'グリーンスライムのゼリー'         },
-- { id: 'slime_green_core',       name: 'グリーンスライムのコア'           },
-- { id: 'slime_green_fluid',      name: 'グリーンスライムの体液'           },
-- { id: 'slime_ice_jelly',        name: 'アイススライムのゼリー'           },
-- { id: 'slime_ice_core',         name: 'アイススライムのコア'             },
-- { id: 'slime_ice_fluid',        name: 'アイススライムの体液'             },
-- { id: 'slime_king_jelly',       name: 'キングスライムのゼリー'           },
-- { id: 'slime_king_core',        name: 'キングスライムのコア'             },
-- { id: 'slime_king_fluid',       name: 'キングスライムの体液'             },
-- { id: 'slime_red_jelly',        name: 'レッドスライムのゼリー'           },
-- { id: 'slime_red_core',         name: 'レッドスライムのコア'             },
-- { id: 'slime_red_fluid',        name: 'レッドスライムの体液'             },
-- { id: 'slime_thunder_jelly',    name: 'サンダースライムのゼリー'         },
-- { id: 'slime_thunder_core',     name: 'サンダースライムのコア'           },
-- { id: 'slime_thunder_fluid',    name: 'サンダースライムの体液'           },
-- { id: 'slime_water_jelly',      name: 'ウォータースライムのゼリー'       },
-- { id: 'slime_water_core',       name: 'ウォータースライムのコア'         },
-- { id: 'slime_water_fluid',      name: 'ウォータースライムの体液'         },
-- { id: 'slime_wind_jelly',       name: 'ウインドスライムのゼリー'         },
-- { id: 'slime_wind_core',        name: 'ウインドスライムのコア'           },
-- { id: 'slime_wind_fluid',       name: 'ウインドスライムの体液'           },
 
+- `slime_red_armor` : レッドスライムアーマー
+- `slime_water_armor` : ウォータースライムアーマー
+- `slime_fire_armor` : ファイヤースライムアーマー
+- `slime_ice_armor` : アイススライムアーマー
+
+- `slime_grass_armor` : グラススライムアーマー
+- `slime_dark_armor` : ダークスライムアーマー
+- `slime_angel_king_armor` : エンジェルキングスライムアーマー
+- `slime_blue_shield` : ブルースライムの盾
+
+- `slime_green_shield` : グリーンスライムの盾
+- `slime_wind_shield` : ウインドスライムの盾
+- `slime_thunder_shield` : サンダースライムの盾
+- `slime_flower_shield` : フラワースライムの盾
+
+- `slime_earth_shield` : アーススライムの盾
+- `slime_angel_shield` : エンジェルスライムの盾
+- `slime_king_shield` : キングスライムの盾
