@@ -177,6 +177,25 @@ class App {
             </p>
           </div>
 
+          <!-- Auto Battle Speed Section -->
+          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-yellow-400">speed</span>
+                <span class="text-xs font-bold text-gray-200">自動戦闘速度</span>
+              </div>
+              <span id="setting-speed-value" class="text-xs font-bold text-yellow-400">${localStorage.getItem('autoBattleSpeed') || 1}x</span>
+            </div>
+            <input type="range" id="setting-speed-slider" min="1" max="5" step="1" value="${localStorage.getItem('autoBattleSpeed') || 1}" class="w-full h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer">
+            <div class="flex justify-between text-[9px] text-gray-500 mt-1 px-1">
+              <span>等倍</span>
+              <span>2x</span>
+              <span>3x</span>
+              <span>4x</span>
+              <span>5x</span>
+            </div>
+          </div>
+
           <!-- Data Reset Section -->
           <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
             <div class="flex items-center gap-2 mb-1">
@@ -217,6 +236,17 @@ class App {
     if (toggleBattleStats) {
       toggleBattleStats.addEventListener('change', (e) => {
         localStorage.setItem('hideBattleStats', !e.target.checked);
+        window.dispatchEvent(new Event('settingsChanged'));
+      });
+    }
+
+    const speedSlider = document.getElementById('setting-speed-slider');
+    const speedValue = document.getElementById('setting-speed-value');
+    if (speedSlider) {
+      speedSlider.addEventListener('input', (e) => {
+        const val = e.target.value;
+        speedValue.textContent = val + 'x';
+        localStorage.setItem('autoBattleSpeed', val);
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }

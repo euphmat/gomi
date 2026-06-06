@@ -341,6 +341,10 @@ class BattleManager {
     this.renderTabContent();
   }
   
+  get speedMult() {
+    return parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
+  }
+
   get isAutoBattle() {
     return this.autoBattleMode !== 'none';
   }
@@ -525,7 +529,7 @@ class BattleManager {
         if (!target || target.isDead) target = this.enemies.find(e => !e.isDead);
         if (target) this.executeAttack(character, target, true);
       }
-    }, 500);
+    }, 500 / this.speedMult);
   }
 
   updateTabStyles() {
@@ -715,7 +719,7 @@ class BattleManager {
         if (p.isDead) return;
         const spd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
         const speedRatio = spd / avgSpd;
-        p.atb += speedRatio * BASE_TICK_RATE;
+        p.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
         if (p.atb >= 1000) {
           p.atb = 1000;
           if (!nextActor) nextActor = { type: 'party', entity: p };
@@ -731,7 +735,7 @@ class BattleManager {
         if (e.isDead) return;
         const spd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
         const speedRatio = spd / avgSpd;
-        e.atb += speedRatio * BASE_TICK_RATE;
+        e.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
         if (e.atb >= 1000) {
           e.atb = 1000;
           if (!nextActor) nextActor = { type: 'enemy', entity: e };
@@ -756,7 +760,7 @@ class BattleManager {
           setTimeout(() => {
             if (this.activeEnemy !== nextActor.entity) return;
             this.executeEnemyTurn(nextActor.entity);
-          }, 500);
+          }, 500 / this.speedMult);
         }
       }
     };
@@ -849,7 +853,7 @@ class BattleManager {
       setTimeout(() => {
         const ailmentName = inflictedAilments[0].toUpperCase();
         this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
-      }, 500);
+      }, 500 / this.speedMult);
       // 将来的に defender.activeAilments 等へ状態異常を保存する
     }
 
@@ -918,15 +922,6 @@ class BattleManager {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
-    // Apply shake to the element on the next tick so it survives renderEntities()
-    setTimeout(() => {
-      const newEl = this.container.querySelector(`#${elementId}`);
-      if (newEl) {
-        newEl.classList.add('animate-[shake_0.4s_ease-in-out]');
-        setTimeout(() => newEl.classList.remove('animate-[shake_0.4s_ease-in-out]'), 400);
-      }
-    }, 0);
-
     const rect = el.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const topY = rect.top + 10;
@@ -940,6 +935,7 @@ class BattleManager {
     dmgText.style.textShadow = '0 2px 4px rgba(0,0,0,0.8)';
     
     const spreadX = (Math.random() - 0.5) * 40;
+    const dur = 800; // ダメージの重なりを楽しむために固定
 
     dmgText.animate([
       { transform: `translate(-50%, 0) scale(0.5)`, opacity: 0 },
@@ -947,13 +943,13 @@ class BattleManager {
       { transform: `translate(calc(-50% + ${spreadX * 1.5}px), -50px) scale(1)`, opacity: 1, offset: 0.8 },
       { transform: `translate(calc(-50% + ${spreadX * 1.8}px), -30px) scale(0.5)`, opacity: 0 }
     ], {
-      duration: 800,
+      duration: dur,
       easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
       fill: 'forwards'
     });
 
     document.body.appendChild(dmgText);
-    setTimeout(() => dmgText.remove(), 800);
+    setTimeout(() => dmgText.remove(), dur);
   }
 
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
@@ -961,6 +957,7 @@ class BattleManager {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
+    const speed = this.speedMult;
     const rect = el.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const topY = rect.top - 20;
@@ -972,19 +969,21 @@ class BattleManager {
     textEl.style.top = `${topY}px`;
     textEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.8)';
     
+    const dur = 1200 / speed;
+
     textEl.animate([
       { transform: `translate(-50%, 10px)`, opacity: 0 },
       { transform: `translate(-50%, -10px)`, opacity: 1, offset: 0.2 },
       { transform: `translate(-50%, -15px)`, opacity: 1, offset: 0.8 },
       { transform: `translate(-50%, -25px)`, opacity: 0 }
     ], {
-      duration: 1200,
+      duration: dur,
       easing: 'ease-out',
       fill: 'forwards'
     });
 
     document.body.appendChild(textEl);
-    setTimeout(() => textEl.remove(), 1200);
+    setTimeout(() => textEl.remove(), dur);
   }
 
   showLevelUp(elementId, type = 'base') {
@@ -992,6 +991,7 @@ class BattleManager {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
+    const speed = this.speedMult;
     const rect = el.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const topY = rect.top - 5;
@@ -1016,15 +1016,17 @@ class BattleManager {
       <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
     `;
     
+    const dur = 1600 / speed;
+
     lvlText.animate([
       { opacity: 0, transform: `translate(-50%, 10px) scale(0.5)` },
       { opacity: 1, transform: `translate(-50%, -15px) scale(1.2)`, offset: 0.2 },
       { opacity: 1, transform: `translate(-50%, -20px) scale(1)`, offset: 0.7 },
       { opacity: 0, transform: `translate(-50%, -30px) scale(0.8)` }
-    ], { duration: 1600, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
+    ], { duration: dur, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
 
     document.body.appendChild(lvlText);
-    setTimeout(() => lvlText.remove(), 1600);
+    setTimeout(() => lvlText.remove(), dur);
   }
 
   checkBattleEnd() {
@@ -1114,7 +1116,7 @@ class BattleManager {
             p.stats = calcFinalStats(p, this.equipMap);
             if (baseLevelUp) this.showLevelUp(p.elementId, 'base');
             if (jobLevelUp) {
-              setTimeout(() => this.showLevelUp(p.elementId, 'job'), baseLevelUp ? 400 : 0);
+              setTimeout(() => this.showLevelUp(p.elementId, 'job'), baseLevelUp ? (400 / this.speedMult) : 0);
             }
             this.renderEntities(); // re-render to update max HP/MP and stats display
           }
@@ -1189,6 +1191,8 @@ class BattleManager {
       const destY = 10 + Math.random() * 20;    // Fall down slightly (10 to 30)
 
       const randomRot = (Math.random() - 0.5) * 180; // Gentle rotation
+      const dur = 1000 + Math.random() * 300; // ドロップもたくさん重ねるために固定
+      const del = Math.random() * 100;
 
       dropEl.animate([
         { opacity: 0, transform: `translate(0px, 0px) scale(0.5) rotate(0deg)` },
@@ -1198,8 +1202,8 @@ class BattleManager {
         { opacity: 1, transform: `translate(${destX}px, ${destY}px) scale(1) rotate(${randomRot}deg)`, offset: 0.8 }, // Hit ground again
         { opacity: 0, transform: `translate(${destX}px, ${destY}px) scale(0.8) rotate(${randomRot}deg)` } // Fade out
       ], { 
-        duration: 1000 + Math.random() * 300, 
-        delay: Math.random() * 100, 
+        duration: dur, 
+        delay: del, 
         easing: 'ease-out', 
         fill: 'both' 
       });
@@ -1207,7 +1211,7 @@ class BattleManager {
 
     setTimeout(() => {
       dropContainer.remove();
-    }, 2000);
+    }, 2000); // 削除も固定
   }
 
   async endBattle(isWin, text, showModal = true) {
@@ -1253,7 +1257,7 @@ class BattleManager {
           this.activeEnemy = null;
           this.selectedEnemyTarget = null;
           this.init();
-        }, 1500);
+        }, 1500 / this.speedMult);
         return;
       } else if (this.autoBattleMode === 'dungeon') {
         setTimeout(async () => {
@@ -1265,7 +1269,7 @@ class BattleManager {
           this.activeEnemy = null;
           this.selectedEnemyTarget = null;
           this.init();
-        }, 1500);
+        }, 1500 / this.speedMult);
         return;
       } else {
         setTimeout(async () => {
@@ -1276,7 +1280,7 @@ class BattleManager {
           this.activeEnemy = null;
           this.selectedEnemyTarget = null;
           this.init();
-        }, 1500);
+        }, 1500 / this.speedMult);
         return;
       }
     } else {
