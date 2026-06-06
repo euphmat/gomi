@@ -1010,9 +1010,11 @@ class BattleManager {
       if (elapsed >= dur) { popup.remove(); return; }
       const t = elapsed / dur; // 0→1
 
-      // 上昇: ease-out で最初速く、後半ゆっくり (最大25px上昇に抑える)
+      // プレイヤー側は下降、モンスター側は上昇させる
+      const isParty = elementId.startsWith('party-');
       const easeOut = 1 - Math.pow(1 - t, 3);
       const floatY = easeOut * 25;
+      const yOffset = isParty ? floatY : -floatY;
 
       // opacity: 最初10%でフェードイン、後半30%でフェードアウト
       let opacity = 1;
@@ -1024,7 +1026,7 @@ class BattleManager {
       // scale: ポンっと登場 → 1.0
       const scale = t < fadeInRatio ? 0.5 + 0.7 * (t / fadeInRatio) : 1.2 - 0.2 * Math.min(1, (t - fadeInRatio) / 0.15);
 
-      popup.style.transform = `translate(calc(-50% + ${spreadX * easeOut}px), -${floatY}px) scale(${scale})`;
+      popup.style.transform = `translate(calc(-50% + ${spreadX * easeOut}px), ${yOffset}px) scale(${scale})`;
       popup.style.opacity = opacity;
       requestAnimationFrame(tick);
     };
@@ -1296,15 +1298,15 @@ class BattleManager {
     drops.forEach((drop) => {
       const dropEl = document.createElement('div');
       dropEl.style.position = 'absolute';
-      dropEl.style.left = '-10px';
-      dropEl.style.top = '-10px';
-      dropEl.className = `flex items-center justify-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0`;
+      dropEl.style.left = '-20px';
+      dropEl.style.top = '-20px';
+      dropEl.className = `w-10 h-10 flex items-center justify-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0`;
       
       let innerHtml = '';
       if (drop.image) {
-        innerHtml += `<img src="${drop.image}" class="w-8 h-8 object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]" onerror="this.style.display='none'">`;
+        innerHtml += `<img src="${drop.image}" class="w-full h-full object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]" onerror="this.style.display='none'">`;
       } else if (drop.icon) {
-        innerHtml += `<span class="material-symbols-outlined text-[16px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
+        innerHtml += `<span class="material-symbols-outlined text-[20px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
       }
       
       dropEl.innerHTML = innerHtml;

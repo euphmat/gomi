@@ -69,7 +69,7 @@ export const norvice = {
       execute: (caster, levelConfig, battle) => {
         caster.mp.current = Math.min(caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
         if (battle) {
-           battle.showDamage(caster.elementId, `+${levelConfig.recoverAmount} MP`, 'text-blue-400');
+           battle.showDamage(caster.elementId, `+${levelConfig.recoverAmount}`, 'text-blue-400');
         }
       }
     },
