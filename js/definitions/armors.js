@@ -12,13 +12,18 @@
  */
 
 export const ARMORS = [
-  { id: 'cloth_armor',         name: '布の服',                     stats: { def: 1, mdef: 1 }   },
-  { id: 'slime_angel_armor',   name: 'エンジェルスライムアーマー', stats: { def: 10, mdef: 10 }, recipe: { price: 100,  materials: [{ id: 'slime_angel_core', amount: 3 }, { id: 'slime_angel_fluid', amount: 1 }] } },
-  { id: 'slime_blue_armor',    name: 'ブルースライムアーマー',     stats: { def: 14, mdef: 14 }, recipe: { price: 200,  materials: [{ id: 'slime_blue_core', amount: 3 }, { id: 'slime_blue_fluid', amount: 1 }] } },
-  { id: 'slime_earth_armor',   name: 'アーススライムアーマー',     stats: { def: 18, mdef: 18 }, recipe: { price: 300,  materials: [{ id: 'slime_earth_core', amount: 3 }, { id: 'slime_earth_fluid', amount: 1 }] } },
-  { id: 'slime_flower_armor',  name: 'フラワースライムアーマー',   stats: { def: 22, mdef: 22 }, recipe: { price: 400,  materials: [{ id: 'slime_flower_core', amount: 3 }, { id: 'slime_flower_fluid', amount: 1 }] } },
-  { id: 'slime_green_armor',   name: 'グリーンスライムアーマー',   stats: { def: 26, mdef: 26 }, recipe: { price: 500,  materials: [{ id: 'slime_green_core', amount: 3 }, { id: 'slime_green_fluid', amount: 1 }] } },
-  { id: 'slime_king_armor',    name: 'キングスライムアーマー',     stats: { def: 30, mdef: 30 }, recipe: { price: 600,  materials: [{ id: 'slime_king_core', amount: 3 }, { id: 'slime_king_fluid', amount: 1 }] } },
-  { id: 'slime_thunder_armor', name: 'サンダースライムアーマー',   stats: { def: 34, mdef: 34 }, recipe: { price: 700,  materials: [{ id: 'slime_thunder_core', amount: 3 }, { id: 'slime_thunder_fluid', amount: 1 }] } },
-  { id: 'slime_wind_armor',    name: 'ウインドスライムアーマー',   stats: { def: 38, mdef: 38 }, recipe: { price: 800,  materials: [{ id: 'slime_wind_core', amount: 3 }, { id: 'slime_wind_fluid', amount: 1 }] } },
-].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));
+  { id: 'cloth_armor',       name: '布の服',                   stats: { def: 1, mdef: 1 } },
+  { id: 'slime_blue_armor',  name: 'ブルースライムアーマー',   stats: { def: 3, mdef: 3, spd: -1 }, recipe: { price: 200, materials: [{ id: 'slime_blue_core', amount: 3 }, { id: 'slime_blue_fluid', amount: 1 }] } },
+  { id: 'slime_green_armor', name: 'グリーンスライムアーマー', stats: { def: 26, mdef: 26 }, recipe: { price: 500, materials: [{ id: 'slime_green_core', amount: 3 }, { id: 'slime_green_fluid', amount: 1 }] } },
+
+  { id: 'slime_angel_armor', name: 'エンジェルスライムアーマー', stats: { def: 10, mdef: 10 }, recipe: { price: 100, materials: [{ id: 'slime_angel_core', amount: 3 }, { id: 'slime_angel_fluid', amount: 1 }] } },
+  { id: 'slime_earth_armor', name: 'アーススライムアーマー', stats: { def: 18, mdef: 18 }, recipe: { price: 300, materials: [{ id: 'slime_earth_core', amount: 3 }, { id: 'slime_earth_fluid', amount: 1 }] } },
+  { id: 'slime_flower_armor', name: 'フラワースライムアーマー', stats: { def: 22, mdef: 22 }, recipe: { price: 400, materials: [{ id: 'slime_flower_core', amount: 3 }, { id: 'slime_flower_fluid', amount: 1 }] } },
+  { id: 'slime_king_armor', name: 'キングスライムアーマー', stats: { def: 30, mdef: 30 }, recipe: { price: 600, materials: [{ id: 'slime_king_core', amount: 3 }, { id: 'slime_king_fluid', amount: 1 }] } },
+  { id: 'slime_thunder_armor', name: 'サンダースライムアーマー', stats: { def: 34, mdef: 34 }, recipe: { price: 700, materials: [{ id: 'slime_thunder_core', amount: 3 }, { id: 'slime_thunder_fluid', amount: 1 }] } },
+  { id: 'slime_wind_armor', name: 'ウインドスライムアーマー', stats: { def: 38, mdef: 38 }, recipe: { price: 800, materials: [{ id: 'slime_wind_core', amount: 3 }, { id: 'slime_wind_fluid', amount: 1 }] } },
+].map(item => ({
+  ...item,
+  slot: 'armor',
+  image: `./assets/armor/${item.id}.webp`
+}));

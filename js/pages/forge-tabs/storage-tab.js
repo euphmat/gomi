@@ -61,7 +61,7 @@ export function renderStorageTab() {
 
   // グリッド領域
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 px-2 flex-1';
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
@@ -84,7 +84,7 @@ export function renderStorageTab() {
 
     filteredItems.forEach(item => {
       const slot = document.createElement('div');
-      slot.className = 'relative w-full pt-[100%] bg-black/40 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-400 hover:bg-gray-800 transition-all shadow-sm group';
+      slot.className = 'relative w-full pt-[100%] bg-gray-900/60 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm';
       
       if (item.image) {
         slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"></div>`;
@@ -171,10 +171,11 @@ export function renderStorageTab() {
       </div>
     `;
     
-    // Sell logic
+    // Sell logic – 素材アイテムのみ売却可能
     let sellCount = 1;
     const maxSell = item.quantity || 1;
-    const price = item.price || 0; 
+    const isMaterial = !item.slot;
+    const price = isMaterial ? (item.sellPrice || 0) : 0; 
     
     // Middle: Sell quantity
     const middleSection = document.createElement('div');

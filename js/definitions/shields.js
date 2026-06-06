@@ -12,13 +12,142 @@
  *    ailments:      { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
  */
 
-export const SHIELDS = [
-  { id: 'wooden_shield',           name: '木の盾',                       stats: { def: 2, mdef: 1 }   },
-  { id: 'slime_angel_king_shield', name: 'エンジェルキングスライムの盾', stats: { def: 12, mdef: 12 }, recipe: { price: 150,  materials: [{ id: 'slime_angel_king_fluid', amount: 3 }, { id: 'slime_angel_king_jelly', amount: 1 }] } },
-  { id: 'slime_dark_shield',       name: 'ダークスライムの盾',           stats: { def: 16, mdef: 16 }, recipe: { price: 250,  materials: [{ id: 'slime_dark_fluid', amount: 3 }, { id: 'slime_dark_jelly', amount: 1 }] } },
-  { id: 'slime_fire_shield',       name: 'ファイヤースライムの盾',       stats: { def: 20, mdef: 20 }, recipe: { price: 350,  materials: [{ id: 'slime_fire_fluid', amount: 3 }, { id: 'slime_fire_jelly', amount: 1 }] } },
-  { id: 'slime_grass_shield',      name: 'グラススライムの盾',           stats: { def: 24, mdef: 24 }, recipe: { price: 450,  materials: [{ id: 'slime_grass_fluid', amount: 3 }, { id: 'slime_grass_jelly', amount: 1 }] } },
-  { id: 'slime_ice_shield',        name: 'アイススライムの盾',           stats: { def: 28, mdef: 28 }, recipe: { price: 550,  materials: [{ id: 'slime_ice_fluid', amount: 3 }, { id: 'slime_ice_jelly', amount: 1 }] } },
-  { id: 'slime_red_shield',        name: 'レッドスライムの盾',           stats: { def: 32, mdef: 32 }, recipe: { price: 650,  materials: [{ id: 'slime_red_fluid', amount: 3 }, { id: 'slime_red_jelly', amount: 1 }] } },
-  { id: 'slime_water_shield',      name: 'ウォータースライムの盾',       stats: { def: 36, mdef: 36 }, recipe: { price: 750,  materials: [{ id: 'slime_water_fluid', amount: 3 }, { id: 'slime_water_jelly', amount: 1 }] } },
-].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));
+export const SHIELDS = [{
+    id: 'wooden_shield',
+    name: '木の盾',
+    stats: {
+      def: 2,
+      mdef: 1
+    }
+  },
+  {
+    id: 'slime_angel_king_shield',
+    name: 'エンジェルキングスライムの盾',
+    stats: {
+      def: 12,
+      mdef: 12
+    },
+    recipe: {
+      price: 150,
+      materials: [{
+        id: 'slime_angel_king_fluid',
+        amount: 3
+      }, {
+        id: 'slime_angel_king_jelly',
+        amount: 1
+      }]
+    }
+  },
+  {
+    id: 'slime_dark_shield',
+    name: 'ダークスライムの盾',
+    stats: {
+      def: 16,
+      mdef: 16
+    },
+    recipe: {
+      price: 250,
+      materials: [{
+        id: 'slime_dark_fluid',
+        amount: 3
+      }, {
+        id: 'slime_dark_jelly',
+        amount: 1
+      }]
+    }
+  },
+  {
+    id: 'slime_fire_shield',
+    name: 'ファイヤースライムの盾',
+    stats: {
+      def: 20,
+      mdef: 20
+    },
+    recipe: {
+      price: 350,
+      materials: [{
+        id: 'slime_fire_fluid',
+        amount: 3
+      }, {
+        id: 'slime_fire_jelly',
+        amount: 1
+      }]
+    }
+  },
+  {
+    id: 'slime_grass_shield',
+    name: 'グラススライムの盾',
+    stats: {
+      def: 24,
+      mdef: 24
+    },
+    recipe: {
+      price: 450,
+      materials: [{
+        id: 'slime_grass_fluid',
+        amount: 3
+      }, {
+        id: 'slime_grass_jelly',
+        amount: 1
+      }]
+    }
+  },
+  {
+    id: 'slime_ice_shield',
+    name: 'アイススライムの盾',
+    stats: {
+      def: 28,
+      mdef: 28
+    },
+    recipe: {
+      price: 550,
+      materials: [{
+        id: 'slime_ice_fluid',
+        amount: 3
+      }, {
+        id: 'slime_ice_jelly',
+        amount: 1
+      }]
+    }
+  },
+  {
+    id: 'slime_red_shield',
+    name: 'レッドスライムの盾',
+    stats: {
+      def: 32,
+      mdef: 32
+    },
+    recipe: {
+      price: 650,
+      materials: [{
+        id: 'slime_red_fluid',
+        amount: 3
+      }, {
+        id: 'slime_red_jelly',
+        amount: 1
+      }]
+    }
+  },
+  {
+    id: 'slime_water_shield',
+    name: 'ウォータースライムの盾',
+    stats: {
+      def: 36,
+      mdef: 36
+    },
+    recipe: {
+      price: 750,
+      materials: [{
+        id: 'slime_water_fluid',
+        amount: 3
+      }, {
+        id: 'slime_water_jelly',
+        amount: 1
+      }]
+    }
+  },
+].map(item => ({
+  ...item,
+  slot: 'leftHand',
+  image: `./assets/shield/${item.id}.webp`
+}));

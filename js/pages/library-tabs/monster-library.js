@@ -22,7 +22,7 @@ export function renderMonsterLibraryTab() {
   container.className = 'flex flex-col h-full p-2 animate-fade-in overflow-hidden';
 
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 pr-1 flex-1 no-scrollbar';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 pr-1 flex-1 no-scrollbar';
 
   let acquiredBaseIds = new Set();
 
@@ -32,7 +32,7 @@ export function renderMonsterLibraryTab() {
       const isDefeated = acquiredBaseIds.has('defeated_' + monster.id);
 
       const slot = document.createElement('div');
-      slot.className = `relative w-full pt-[100%] bg-gray-800/80 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-400 hover:bg-gray-700 cursor-pointer' : 'border-gray-700 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
+      slot.className = `relative w-full pt-[100%] bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
       
       let innerHTML = '';
       if (monster.image) {

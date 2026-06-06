@@ -75,7 +75,7 @@ export function renderForgeTab() {
   const SILHOUETTE_FILTER = 'brightness-[0.07] saturate-0 drop-shadow-[0_0_3px_rgba(160,170,220,0.8)]';
 
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 px-2 flex-1';
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
@@ -98,10 +98,7 @@ export function renderForgeTab() {
     filteredItems.forEach(item => {
       const canCraft = checkCanCraft(item);
       const slot = document.createElement('div');
-      slot.className = `relative w-full pt-[100%] rounded-md border overflow-hidden cursor-pointer transition-all shadow-sm group
-        ${canCraft 
-          ? 'bg-black/40 border-green-700/50 hover:border-green-400 hover:bg-green-900/20 hover:shadow-[0_0_12px_rgba(34,197,94,0.15)]' 
-          : 'bg-gray-800/80 border-gray-700 hover:border-gray-400 cursor-pointer'}`;
+      slot.className = `relative w-full pt-[100%] bg-gray-900/60 rounded-md border ${canCraft ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm cursor-pointer`;
       
       if (item.image) {
         const imgClass = canCraft ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
@@ -111,10 +108,6 @@ export function renderForgeTab() {
         slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="${iconClass}">category</span></div>`;
       }
 
-      // 合成可能マーク
-      if (canCraft) {
-        slot.innerHTML += `<div class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg"><span class="material-symbols-outlined text-white" style="font-size:10px">check</span></div>`;
-      }
       
       slot.onclick = () => showCraftModal(item);
       gridContainer.appendChild(slot);

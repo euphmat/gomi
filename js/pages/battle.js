@@ -16,7 +16,7 @@ class BattleManager {
     this.activeEnemy = null;
     this.selectedEnemyTarget = null;
     this.selectedPartyMember = null;
-    this.autoBattleMode = 'none'; // 'none', 'floor', 'dungeon'
+    this.autoBattleMode = sessionStorage.getItem('autoBattleMode') || 'none'; // 'none', 'floor', 'dungeon'
     this.equipMap = {};
     this.isDungeonClear = false;
     this.currentTab = 'skill';
@@ -48,7 +48,14 @@ class BattleManager {
   }
   
   async init() {
-    this.elements.enemyArea.innerHTML = '';
+    // Stop existing ATB loop before re-initializing
+    if (this.atbLoop) {
+      clearInterval(this.atbLoop);
+      this.atbLoop = null;
+    }
+
+    const isReinit = this.elements.enemyArea.children.length > 0;
+
     const rawParty = await GameDB.getAllCharacters();
     const rawEquip = await GameDB.getAllEquipment();
     this.equipMap = buildEquipmentMap(rawEquip);
@@ -107,15 +114,29 @@ class BattleManager {
       };
     });
 
+    // Force full rebuild of enemy area on re-init
+    if (isReinit) {
+      this.elements.enemyArea.innerHTML = '';
+    }
     this.renderEntities();
-    this.setupListeners();
+    // Only setup button listeners once (on first init)
+    if (!this._listenersSetup) {
+      this.setupListeners();
+      this._listenersSetup = true;
+    } else {
+      // Re-init: just update command UI and tab styles
+      this.updateCommandUI();
+      this.updateTabStyles();
+    }
     this.startAtbLoop();
   }
 
   /**
    * モンスター出現テーブルを解決する
-   * 新形式: [{ id, count, weight }, ...] — weight(%)に基づいてランダムに1グループを選出
-   * 旧形式: ['monster_id', ...] — そのまま返す（後方互換）
+   * 簡略形式: { 'slime': 2, 'slime_red': 1, weight: 30 }
+   * 複合形式: { members: [{id, count}, ...], weight }
+   * 単一形式: { id, count, weight }
+   * 旧形式: ['monster_id', ...]
    */
   resolveMonsters(monsterDefs) {
     if (!monsterDefs || monsterDefs.length === 0) return [];
@@ -125,22 +146,38 @@ class BattleManager {
       return [...monsterDefs];
     }
 
-    // 新形式: weightに基づいてランダムに1グループを選出
+    // weightに基づいてランダムに1グループを選出
     const totalWeight = monsterDefs.reduce((sum, m) => sum + (m.weight || 0), 0);
     const roll = Math.random() * totalWeight;
 
     let cumulative = 0;
+    let selectedEntry = monsterDefs[monsterDefs.length - 1]; // fallback
+
     for (const entry of monsterDefs) {
       cumulative += (entry.weight || 0);
       if (roll < cumulative) {
-        // 選出されたグループのモンスターをcount分展開
-        return Array(entry.count || 1).fill(entry.id);
+        selectedEntry = entry;
+        break;
       }
     }
 
-    // フォールバック: 最後のエントリを使用
-    const last = monsterDefs[monsterDefs.length - 1];
-    return Array(last.count || 1).fill(last.id);
+    const result = [];
+    
+    if (selectedEntry.members) {
+      for (const e of selectedEntry.members) {
+        result.push(...Array(e.count || 1).fill(e.id));
+      }
+    } else if (selectedEntry.id) {
+      result.push(...Array(selectedEntry.count || 1).fill(selectedEntry.id));
+    } else {
+      for (const [key, value] of Object.entries(selectedEntry)) {
+        if (key !== 'weight') {
+          result.push(...Array(value).fill(key));
+        }
+      }
+    }
+
+    return result;
   }
 
   renderEntities() {
@@ -403,6 +440,7 @@ class BattleManager {
   setupListeners() {
     this.elements.btnAutoFloor.onclick = () => {
       this.autoBattleMode = this.autoBattleMode === 'floor' ? 'none' : 'floor';
+      sessionStorage.setItem('autoBattleMode', this.autoBattleMode);
       this.updateCommandUI();
       
       if (this.isAutoBattle && this.activeCharacter) {
@@ -412,6 +450,7 @@ class BattleManager {
 
     this.elements.btnAutoDungeon.onclick = () => {
       this.autoBattleMode = this.autoBattleMode === 'dungeon' ? 'none' : 'dungeon';
+      sessionStorage.setItem('autoBattleMode', this.autoBattleMode);
       this.updateCommandUI();
       
       if (this.isAutoBattle && this.activeCharacter) {
@@ -421,6 +460,7 @@ class BattleManager {
 
     this.elements.btnRun.onclick = () => {
       if (!this.activeCharacter || this.isAutoBattle) return;
+      sessionStorage.removeItem('autoBattleMode');
       this.endBattle(false, '逃げ出した！', false);
     };
 
@@ -450,6 +490,7 @@ class BattleManager {
         this.init();
       } else {
         // Return to town
+        sessionStorage.removeItem('autoBattleMode');
         window.location.hash = '/dungeon';
       }
     };
@@ -1451,6 +1492,7 @@ class BattleManager {
     await this.savePartyState();
 
     if (!showModal) {
+      sessionStorage.removeItem('autoBattleMode');
       window.location.hash = '/dungeon';
       return;
     }
@@ -1469,6 +1511,7 @@ class BattleManager {
           this.party = [];
           this.enemies = [];
           this.activeCharacter = null;
+          this.activeEnemy = null;
           this.selectedEnemyTarget = null;
           this.init();
         }, 1500);
@@ -1483,6 +1526,7 @@ class BattleManager {
           this.party = [];
           this.enemies = [];
           this.activeCharacter = null;
+          this.activeEnemy = null;
           this.selectedEnemyTarget = null;
           this.init();
         }, 1500);
@@ -1498,6 +1542,7 @@ class BattleManager {
             this.party = [];
             this.enemies = [];
             this.activeCharacter = null;
+            this.activeEnemy = null;
             this.selectedEnemyTarget = null;
             this.init();
           }, 1500);

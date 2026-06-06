@@ -72,7 +72,7 @@ export function renderItemLibraryTab() {
   topBar.appendChild(filterContainer);
 
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-6 gap-2 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 px-2 flex-1';
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
