@@ -132,7 +132,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             </div>
             <div class="flex flex-col min-w-0 flex-1 leading-tight">
               <span class="text-[8px] text-slate-500 font-bold uppercase tracking-wider">${label}</span>
-              <span class="text-[10px] text-slate-200 font-black truncate">${item.name}</span>
+              <span class="text-[10px] text-slate-200 font-black break-all">${item.name}</span>
             </div>
           </div>`;
       } else {
@@ -166,13 +166,13 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 min-h-0 flex-1 relative z-10">
+        <div class="grid grid-cols-3 gap-2 min-h-0 flex-1 relative z-10">
           <!-- Status Grid -->
-          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
+          <div class="col-span-1 bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
             <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
               <span class="material-symbols-outlined text-[12px] text-cyan-400">analytics</span>ステータス
             </div>
-            <div class="grid grid-cols-2 gap-1">
+            <div class="grid grid-cols-1 gap-1">
               <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
                 <span class="material-symbols-outlined text-red-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">swords</span>
                 <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.atk || 0}</span>
@@ -189,18 +189,18 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
                 <span class="material-symbols-outlined text-indigo-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">security</span>
                 <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.mdef || 0}</span>
               </div>
-              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors col-span-2">
+              <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
                 <span class="material-symbols-outlined text-amber-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">directions_run</span>
                 <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.spd || 0}</span>
               </div>
             </div>
           </div>
           <!-- Equipment Grid -->
-          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
+          <div class="col-span-2 bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
             <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
               <span class="material-symbols-outlined text-[12px] text-cyan-400">shield</span>装備
             </div>
-            <div class="flex flex-col gap-1 pr-0.5">
+            <div class="grid grid-cols-2 gap-1 pr-0.5">
               ${getEquipHtml(targetEntity.equipment?.rightHand, '右手', 'swords')}
               ${getEquipHtml(targetEntity.equipment?.leftHand, '左手', 'shield')}
               ${getEquipHtml(targetEntity.equipment?.armor, '鎧', 'shield')}
