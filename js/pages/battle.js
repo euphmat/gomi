@@ -259,6 +259,13 @@ class BattleManager {
         iconContainer.classList.add('opacity-0');
         hpContainer.classList.add('opacity-0');
         atbContainer.classList.add('opacity-0');
+        if (el.style.minWidth !== '0px') {
+          el.style.minWidth = '0px';
+          el.style.maxWidth = '0px';
+          el.style.opacity = '0';
+          el.style.margin = '0';
+          el.style.pointerEvents = 'none';
+        }
       }
 
       if (this.activeEnemy === e) {
@@ -1461,6 +1468,9 @@ export function renderBattlePage() {
         50% { transform: translateY(0) scale(1.1); opacity: 1; }
         75% { transform: translateY(-3px) scale(1); }
         100% { transform: translateY(0) scale(1); opacity: 1; }
+      }
+      .enemy-card {
+        transition: min-width 0.5s ease, max-width 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
       }
     </style>
 

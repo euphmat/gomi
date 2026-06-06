@@ -9,7 +9,7 @@ export const DUNGEONS = [{
         monsters: [
           { slime_blue:  1,                 weight: 49.98 },
           { slime_blue:  2,                 weight: 35 },
-          { slime_blue:  50,                 weight: 100 },
+          { slime_blue:  20,                 weight: 100 },
           { slime_blue:  1, slime_green: 1, weight: 5 },
           { slime_dark:  1,                 weight: 0.01 },
           { slime_angel: 1,                 weight: 0.01 }
