@@ -492,7 +492,10 @@ class BattleManager {
             }
             if (foundSkillDef) {
                const levelConfig = foundSkillDef.levels.find(l => l.level === level) || foundSkillDef.levels[foundSkillDef.levels.length - 1];
+               const prevTarget = this.selectedEnemyTarget;
+               if (target) this.selectedEnemyTarget = target;
                this.executeSkill(character, foundSkillDef, levelConfig);
+               if (target) this.selectedEnemyTarget = prevTarget;
             } else {
                this.executeAttack(character, target || this.enemies.find(e => !e.isDead), true);
             }
@@ -642,7 +645,7 @@ class BattleManager {
     this.showActionName(caster.elementId, skillDef.name);
 
     if (skillDef.execute) {
-      skillDef.execute(caster, levelConfig);
+      skillDef.execute(caster, levelConfig, this);
     }
     
     // Some visual effect (e.g. heal popup)
@@ -728,10 +731,12 @@ class BattleManager {
   executeAttack(attacker, defender, isParty, options = {}) {
     const actionName = options.actionName || '攻撃';
 
-    if (isParty) {
-      this.showActionName(attacker.elementId, actionName, 'text-gray-100', 'border-gray-500/50');
-    } else {
-      this.showActionName(attacker.elementId, actionName, 'text-red-300', 'border-red-500/50');
+    if (!options.hideActionName) {
+      if (isParty) {
+        this.showActionName(attacker.elementId, actionName, 'text-gray-100', 'border-gray-500/50');
+      } else {
+        this.showActionName(attacker.elementId, actionName, 'text-red-300', 'border-red-500/50');
+      }
     }
 
     const isMagic = options.isMagic || false;
@@ -835,6 +840,14 @@ class BattleManager {
   }
 
   executeEnemyTurn(enemy) {
+    if (enemy.atkDebuffTurns > 0) {
+      enemy.atkDebuffTurns--;
+      if (enemy.atkDebuffTurns <= 0) {
+        enemy.stats.atk = enemy.originalAtk;
+        this.showDamage(enemy.elementId, 'ATK NORMAL', 'text-green-500');
+      }
+    }
+
     const aliveParty = this.party.filter(p => !p.isDead);
     if (aliveParty.length === 0) {
       this.activeEnemy = null;

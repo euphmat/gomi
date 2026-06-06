@@ -96,7 +96,7 @@ async function _loadStatusData(container) {
           const finalStats = calcFinalStats(character, equipmentMap);
           // Import dynamicly to avoid circular dependency issues if any
           import('../components/status-modal.js').then(module => {
-            module.showDetailedStatusModal(character, finalStats);
+            module.showDetailedStatusModal(character, finalStats, () => _loadStatusData(container));
           });
         }
       });

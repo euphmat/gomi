@@ -24,7 +24,7 @@ const AILMENT_ICONS = {
   silence: { icon: 'volume_off', color: 'text-blue-300' },
 };
 
-export function showDetailedStatusModal(character, finalStats) {
+export function showDetailedStatusModal(character, finalStats, onNameChanged) {
   if (document.getElementById('detailed-status-modal')) return;
 
   const overlay = document.createElement('div');
@@ -101,7 +101,13 @@ export function showDetailedStatusModal(character, finalStats) {
             <img src="${character.iconImage}" class="w-full h-full object-contain"  onerror="this.style.display='none'" />
           </div>
           <div class="flex flex-col">
-            <div class="text-[13px] font-bold text-gray-100 leading-tight">${character.name} <span class="text-[9px] text-gray-400 ml-1">${character.jobName}</span></div>
+            <div class="flex items-center gap-1">
+              <div id="status-modal-char-name" class="text-[13px] font-bold text-gray-100 leading-tight">${character.name}</div>
+              <button id="status-modal-edit-name" class="text-gray-400 hover:text-white transition-colors flex items-center justify-center" title="名前を変更">
+                <span class="material-symbols-outlined text-[14px]">edit</span>
+              </button>
+              <span class="text-[9px] text-gray-400 ml-1">${character.jobName}</span>
+            </div>
             <div class="text-[9px] text-gray-300 mt-0.5">Lv ${character.level} / JLv ${character.jobLevel}</div>
           </div>
         </div>
@@ -143,6 +149,21 @@ export function showDetailedStatusModal(character, finalStats) {
   const closeBtn = overlay.querySelector('#status-modal-close');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => overlay.remove());
+  }
+
+  const editNameBtn = overlay.querySelector('#status-modal-edit-name');
+  if (editNameBtn) {
+    editNameBtn.addEventListener('click', async () => {
+      const newName = window.prompt('新しい名前を入力してください', character.name);
+      if (newName && newName.trim().length > 0 && newName.trim() !== character.name) {
+        character.name = newName.trim();
+        const { GameDB } = await import('../data/database.js');
+        await GameDB.putCharacter(character);
+        const nameEl = overlay.querySelector('#status-modal-char-name');
+        if (nameEl) nameEl.textContent = character.name;
+        if (onNameChanged) onNameChanged();
+      }
+    });
   }
   
   overlay.addEventListener('click', (e) => {
