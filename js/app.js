@@ -168,7 +168,7 @@ class App {
                 <span class="text-xs font-bold text-gray-200">バトル画面のステータス表示</span>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="setting-toggle-battle-stats" class="sr-only peer" ${localStorage.getItem('hideBattleStats') === 'true' ? '' : 'checked'}>
+                <input type="checkbox" id="setting-toggle-battle-stats" class="sr-only peer" ${localStorage.getItem('hideBattleStats') === 'false' ? 'checked' : ''}>
                 <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
               </label>
             </div>
@@ -252,7 +252,7 @@ class App {
     }
 
     window.addEventListener('settingsChanged', () => {
-      const hideStats = localStorage.getItem('hideBattleStats') === 'true';
+      const hideStats = localStorage.getItem('hideBattleStats') !== 'false';
       document.querySelectorAll('.battle-stats-container').forEach(el => {
         if (hideStats) {
           el.classList.add('hidden');
