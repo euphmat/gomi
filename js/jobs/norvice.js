@@ -22,7 +22,7 @@ export const norvice = {
       getDescription: (levelConfig) => `自身の HP を ${levelConfig.healAmount} 回復 (固定値)`,
       execute: (caster, levelConfig) => {
         caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.hp.max);
-        caster.mp.current = Math.max(0, caster.mp.current - levelConfig.mpCost);
+        // mp is already deducted in battle.js executeSkill
       }
     },
     {
@@ -46,7 +46,7 @@ export const norvice = {
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
-            battle.executeAttack(caster, target, true, { actionName: '強撃', damageMultiplier: levelConfig.multiplier });
+            battle.executeAttack(caster, target, true, { actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
         }
       }
     },
@@ -121,10 +121,8 @@ export const norvice = {
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
-        let isFirst = true;
         targets.forEach(target => {
-            battle.executeAttack(caster, target, true, { actionName: 'なぎ払い', damageMultiplier: levelConfig.multiplier, hideActionName: !isFirst });
-            isFirst = false;
+            battle.executeAttack(caster, target, true, { actionName: 'なぎ払い', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
         });
       }
     }

@@ -57,6 +57,8 @@ class BattleManager {
     // Stop existing ATB loop before re-initializing
     this.stopAtbLoop();
 
+    this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
+
 
     const isReinit = this.elements.enemyArea.children.length > 0;
 
@@ -94,7 +96,13 @@ class BattleManager {
       };
     });
     
-    this.selectedPartyMember = this.party[0];
+    const prevSelectedId = this.selectedPartyMember ? this.selectedPartyMember.id : null;
+    
+    if (prevSelectedId) {
+      this.selectedPartyMember = this.party.find(p => p.id === prevSelectedId) || this.party[0];
+    } else {
+      this.selectedPartyMember = this.party[0];
+    }
 
     const monsterIds = this.resolveMonsters(this.floorDef.monsters);
 
@@ -208,11 +216,7 @@ class BattleManager {
       });
     }
 
-    if (this.activeCharacter || this.isAutoBattle) {
-      this.elements.commandBlocker.classList.add('hidden');
-    } else {
-      this.elements.commandBlocker.classList.remove('hidden');
-    }
+    this.updateCommandBlocker();
 
     this.renderTabContent();
 
@@ -330,11 +334,7 @@ class BattleManager {
       }
     });
 
-    if (this.activeCharacter || this.isAutoBattle) {
-      this.elements.commandBlocker.classList.add('hidden');
-    } else {
-      this.elements.commandBlocker.classList.remove('hidden');
-    }
+    this.updateCommandBlocker();
 
     // Refresh tab content only when active character changes or auto-battle toggles
     if (this._lastRenderedActiveChar !== this.activeCharacter || this._lastRenderedAutoBattle !== this.isAutoBattle) {
@@ -362,6 +362,31 @@ class BattleManager {
 
   get isAutoBattle() {
     return this.autoBattleMode !== 'none';
+  }
+
+  resetBattleState() {
+    this.party = [];
+    this.enemies = [];
+    this.activeCharacter = null;
+    this.activeEnemy = null;
+    this.selectedEnemyTarget = null;
+  }
+
+  _findSkill(character, skillId) {
+    for (const [jobId, skills] of Object.entries(character.jobSkills)) {
+      if (skills[skillId]) {
+        return {
+          level: skills[skillId],
+          def: JOBS[jobId]?.skills.find(s => s.id === skillId) || null,
+          jobId
+        };
+      }
+    }
+    return { level: 0, def: null, jobId: null };
+  }
+
+  updateCommandBlocker() {
+    this.elements.commandBlocker.classList.toggle('hidden', !!(this.activeCharacter || this.isAutoBattle));
   }
 
   setupListeners() {
@@ -410,10 +435,7 @@ class BattleManager {
         // Proceed to next floor
         await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
         this.elements.resultOverlay.classList.add('hidden');
-        this.party = [];
-        this.enemies = [];
-        this.activeCharacter = null;
-        this.selectedEnemyTarget = null;
+        this.resetBattleState();
         this.init();
       } else {
         // Return to town
@@ -467,11 +489,7 @@ class BattleManager {
       this.elements.btnRun.classList.remove('opacity-50', 'grayscale', 'cursor-not-allowed');
     }
     
-    if (this.activeCharacter || this.isAutoBattle) {
-      this.elements.commandBlocker.classList.add('hidden');
-    } else {
-      this.elements.commandBlocker.classList.remove('hidden');
-    }
+    this.updateCommandBlocker();
     
     if (this.currentTab === 'skill') {
       this.renderTabContent();
@@ -487,38 +505,18 @@ class BattleManager {
       const jobDef = JOBS[character.jobId];
       if (jobDef && jobDef.autoBattle) {
         jobDef.autoBattle(character, {
-          getSkillLevel: (skillId) => {
-            for (const [jId, skills] of Object.entries(character.jobSkills)) {
-              if (skills[skillId]) return skills[skillId];
-            }
-            return 0;
-          },
+          getSkillLevel: (skillId) => this._findSkill(character, skillId).level,
           isSkillAutoEnabled: (skillId) => {
             return this.autoSkillStates[character.id]?.[skillId] !== false;
           },
-          getSkillDef: (skillId) => {
-            for (const jId of Object.keys(character.jobSkills)) {
-               const jDef = JOBS[jId];
-               const sDef = jDef?.skills.find(s => s.id === skillId);
-               if (sDef) return sDef;
-            }
-            return null;
-          },
+          getSkillDef: (skillId) => this._findSkill(character, skillId).def,
           executeSkill: (skillId, target = null) => {
-            let foundSkillDef = null;
-            let level = 0;
-            for (const [jId, skills] of Object.entries(character.jobSkills)) {
-              if (skills[skillId]) {
-                foundSkillDef = JOBS[jId]?.skills.find(s => s.id === skillId);
-                level = skills[skillId];
-                break;
-              }
-            }
-            if (foundSkillDef) {
-               const levelConfig = foundSkillDef.levels.find(l => l.level === level) || foundSkillDef.levels[foundSkillDef.levels.length - 1];
+            const found = this._findSkill(character, skillId);
+            if (found.def) {
+               const levelConfig = found.def.levels.find(l => l.level === found.level) || found.def.levels[found.def.levels.length - 1];
                const prevTarget = this.selectedEnemyTarget;
                if (target) this.selectedEnemyTarget = target;
-               this.executeSkill(character, foundSkillDef, levelConfig);
+               this.executeSkill(character, found.def, levelConfig);
                if (target) this.selectedEnemyTarget = prevTarget;
             } else {
                this.executeAttack(character, target || this.enemies.find(e => !e.isDead), true);
@@ -630,24 +628,17 @@ class BattleManager {
              this.autoSkillStates[pId][skillId] = false;
            }
            
+           GameDB.setGameState('autoSkillStates', this.autoSkillStates);
            this.renderTabContent();
            return;
         }
 
-        let foundSkillDef = null;
-        let foundJobId = null;
-        for (const [jobId, skillsMap] of Object.entries(this.activeCharacter.jobSkills)) {
-          if (skillsMap[skillId]) {
-            foundSkillDef = JOBS[jobId]?.skills.find(s => s.id === skillId);
-            foundJobId = jobId;
-            break;
-          }
-        }
+        const found = this._findSkill(this.activeCharacter, skillId);
 
-        if (foundSkillDef) {
-          const levelConfig = foundSkillDef.levels.find(l => l.level === level) || foundSkillDef.levels[foundSkillDef.levels.length - 1];
+        if (found.def) {
+          const levelConfig = found.def.levels.find(l => l.level === level) || found.def.levels[found.def.levels.length - 1];
           if (this.activeCharacter.mp.current < levelConfig.mpCost) return;
-          this.executeSkill(this.activeCharacter, foundSkillDef, levelConfig);
+          this.executeSkill(this.activeCharacter, found.def, levelConfig);
         }
       });
     });
@@ -815,14 +806,7 @@ class BattleManager {
 
   executeAttack(attacker, defender, isParty, options = {}) {
     const actionName = options.actionName || '攻撃';
-
-    if (!options.hideActionName) {
-      if (isParty) {
-        this.showActionName(attacker.elementId, actionName, 'text-gray-100', 'border-gray-500/50');
-      } else {
-        this.showActionName(attacker.elementId, actionName, 'text-red-300', 'border-red-500/50');
-      }
-    }
+    this._abilityTriggered = false;
 
     const isMagic = options.isMagic || false;
     const atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
@@ -837,7 +821,20 @@ class BattleManager {
     if (attacker.equipment && attacker.equipment.rightHand) {
       const weaponDef = this.equipMap.get(attacker.equipment.rightHand);
       if (weaponDef && weaponDef.ability && weaponDef.ability.execute) {
+        const origDamage = damage;
         damage = weaponDef.ability.execute(attacker, defender, damage, this);
+        if (damage !== origDamage && !options.damageType) {
+          options.damageType = 'ability';
+        }
+      }
+    }
+
+    // --- ポップアップの表示 (アビリティが発動しなかった場合のみ基本アクション名を表示) ---
+    if (!options.hideActionName && !this._abilityTriggered) {
+      if (isParty) {
+        this.showActionName(attacker.elementId, actionName, 'text-gray-100', 'border-gray-500/50');
+      } else {
+        this.showActionName(attacker.elementId, actionName, 'text-red-300', 'border-red-500/50');
       }
     }
 
@@ -877,7 +874,23 @@ class BattleManager {
     damage = Math.floor(finalDamage);
     if (damage < 1) damage = 1;
 
-    this.showDamage(defender.elementId, damage);
+    let dmgColor = 'text-white';
+
+    if (isParty) {
+      if (options.damageType === 'skill') {
+        dmgColor = 'text-blue-400';
+      } else if (options.damageType === 'ability') {
+        dmgColor = 'text-yellow-400';
+      } else if (options.isMagic) {
+        dmgColor = 'text-purple-400';
+      } else {
+        dmgColor = 'text-gray-100';
+      }
+    } else {
+      dmgColor = 'text-red-500';
+    }
+
+    this.showDamage(defender.elementId, damage, dmgColor);
 
     // --- 状態異常付与判定 ---
     const attackAilments = attacker.stats.attackAilments || {};
@@ -962,116 +975,181 @@ class BattleManager {
     this.updateEntities();
   }
 
+  // =============================================
+  // 統一ポップアップシステム
+  // ポップアップはエンティティごとにスタック（積み上げ）される
+  // =============================================
+
+  /**
+   * ダメージ用ポップアップ — 上方向に素早く浮遊して消える
+   */
+  _showFloatingPopup(elementId, config) {
+    if (document.hidden) return;
+    const el = this.container.querySelector(`#${elementId}`);
+    if (!el) return;
+
+    const speed = this.speedMult || 1;
+    const dur = (config.duration || 1200) / speed;
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const baseY = rect.top;
+    const spreadX = (Math.random() - 0.5) * 30;
+
+    const popup = document.createElement('div');
+    popup.className = `fixed z-[9999] pointer-events-none ${config.className || ''}`;
+    popup.style.left = `${centerX}px`;
+    popup.style.top = `${baseY}px`;
+    popup.style.willChange = 'transform, opacity';
+    popup.innerHTML = config.html;
+    document.body.appendChild(popup);
+
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      if (elapsed >= dur) { popup.remove(); return; }
+      const t = elapsed / dur; // 0→1
+
+      // 上昇: ease-out で最初速く、後半ゆっくり (最大25px上昇に抑える)
+      const easeOut = 1 - Math.pow(1 - t, 3);
+      const floatY = easeOut * 25;
+
+      // opacity: 最初10%でフェードイン、後半30%でフェードアウト
+      let opacity = 1;
+      const fadeInRatio = 0.1;
+      const fadeOutRatio = 0.3;
+      if (t < fadeInRatio) opacity = t / fadeInRatio;
+      else if (t > 1 - fadeOutRatio) opacity = 1 - (t - (1 - fadeOutRatio)) / fadeOutRatio;
+
+      // scale: ポンっと登場 → 1.0
+      const scale = t < fadeInRatio ? 0.5 + 0.7 * (t / fadeInRatio) : 1.2 - 0.2 * Math.min(1, (t - fadeInRatio) / 0.15);
+
+      popup.style.transform = `translate(calc(-50% + ${spreadX * easeOut}px), -${floatY}px) scale(${scale})`;
+      popup.style.opacity = opacity;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /**
+   * アクション名用ポップアップ — その場に留まってからフェードアウト
+   */
+  _showLabelPopup(elementId, config) {
+    if (document.hidden) return;
+    const el = this.container.querySelector(`#${elementId}`);
+    if (!el) return;
+
+    // スタック管理
+    if (!this._labelStacks) this._labelStacks = {};
+    if (!this._labelStacks[elementId]) this._labelStacks[elementId] = [];
+
+    const stack = this._labelStacks[elementId];
+    const speed = this.speedMult || 1;
+    const dur = (config.duration || 1000) / speed;
+    const itemHeight = config.height || 28;
+    const stackGap = 4;
+
+    // 既存のラベルを上に押し上げる
+    const bump = itemHeight + stackGap;
+    stack.forEach(entry => { entry.baseOffset += bump; });
+
+    const rect = el.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const baseY = rect.top - 8;
+
+    const popup = document.createElement('div');
+    popup.className = `fixed z-[10000] pointer-events-none flex flex-col items-center ${config.className || ''}`;
+    popup.style.left = `${centerX}px`;
+    popup.style.top = `${baseY}px`;
+    popup.style.willChange = 'transform, opacity';
+    popup.innerHTML = config.html;
+    document.body.appendChild(popup);
+
+    const entry = { el: popup, baseOffset: 0 };
+    stack.push(entry);
+
+    const startTime = performance.now();
+    const fadeOutStart = dur * 0.7; // 残り30%でフェードアウト
+    const fadeInEnd = dur * 0.15; // 最初15%でフェードイン
+
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      if (elapsed >= dur) {
+        popup.remove();
+        const idx = stack.indexOf(entry);
+        if (idx !== -1) stack.splice(idx, 1);
+        return;
+      }
+
+      // 上方向にスッと動く (基本押し上げ + 軽快な浮遊)
+      // easeOutExpo のような動きで素早く定位置へ
+      const t = elapsed / dur;
+      const floatEase = 1 - Math.pow(1 - t, 4);
+      const floatY = entry.baseOffset + floatEase * 10;
+
+      let opacity = 1;
+      if (elapsed < fadeInEnd) opacity = elapsed / fadeInEnd;
+      else if (elapsed > fadeOutStart) opacity = 1 - (elapsed - fadeOutStart) / (dur - fadeOutStart);
+
+      // 軽快なバウンス (0.5 -> 1.15 -> 1.0)
+      let scale = 1;
+      if (elapsed < fadeInEnd) {
+        const st = elapsed / fadeInEnd;
+        if (st < 0.7) scale = 0.5 + (1.15 - 0.5) * (st / 0.7);
+        else scale = 1.15 - (1.15 - 1.0) * ((st - 0.7) / 0.3);
+      }
+
+      popup.style.transform = `translate(-50%, -${floatY}px) scale(${scale})`;
+      popup.style.opacity = opacity;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
-    if (document.hidden) return;
-    const el = this.container.querySelector(`#${elementId}`);
-    if (!el) return;
+    const html = `<span class="text-2xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" style="-webkit-text-stroke: 1px rgba(255,255,255,0.5);">${damage}</span>`;
 
-    const rect = el.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const topY = rect.top + 10;
-
-    const dmgText = document.createElement('div');
-    dmgText.textContent = damage;
-    dmgText.className = `fixed font-black text-3xl z-[9999] pointer-events-none ${customColorClass}`;
-    dmgText.style.left = `${centerX}px`;
-    dmgText.style.top = `${topY}px`;
-    dmgText.style.webkitTextStroke = '1px white';
-    dmgText.style.textShadow = '0 2px 4px rgba(0,0,0,0.8)';
-    
-    const spreadX = (Math.random() - 0.5) * 40;
-    const dur = 800; // ダメージの重なりを楽しむために固定
-
-    dmgText.animate([
-      { transform: `translate(-50%, 0) scale(0.5)`, opacity: 0 },
-      { transform: `translate(calc(-50% + ${spreadX}px), -40px) scale(1.5)`, opacity: 1, offset: 0.2 },
-      { transform: `translate(calc(-50% + ${spreadX * 1.5}px), -50px) scale(1)`, opacity: 1, offset: 0.8 },
-      { transform: `translate(calc(-50% + ${spreadX * 1.8}px), -30px) scale(0.5)`, opacity: 0 }
-    ], {
-      duration: dur,
-      easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-      fill: 'forwards'
+    this._showFloatingPopup(elementId, {
+      html,
+      className: `font-black ${customColorClass}`,
+      duration: 1400
     });
-
-    document.body.appendChild(dmgText);
-    setTimeout(() => dmgText.remove(), dur);
   }
 
+  // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
-    if (document.hidden) return;
-    const el = this.container.querySelector(`#${elementId}`);
-    if (!el) return;
+    const html = `<span class="font-black text-[13px] ${textClass} tracking-widest whitespace-nowrap bg-black/60 px-3 py-1 rounded-full border ${borderClass}" style="box-shadow: 0 2px 6px rgba(0,0,0,0.7);">${actionName}</span>`;
 
-    const speed = this.speedMult;
-    const rect = el.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const topY = rect.top - 20;
-
-    const textEl = document.createElement('div');
-    textEl.textContent = actionName;
-    textEl.className = `fixed font-black text-[13px] ${textClass} z-[9999] pointer-events-none tracking-widest whitespace-nowrap bg-black/50 px-2 py-0.5 rounded-full border ${borderClass}`;
-    textEl.style.left = `${centerX}px`;
-    textEl.style.top = `${topY}px`;
-    textEl.style.boxShadow = '0 2px 4px rgba(0,0,0,0.8)';
-    
-    const dur = 1200 / speed;
-
-    textEl.animate([
-      { transform: `translate(-50%, 10px)`, opacity: 0 },
-      { transform: `translate(-50%, -10px)`, opacity: 1, offset: 0.2 },
-      { transform: `translate(-50%, -15px)`, opacity: 1, offset: 0.8 },
-      { transform: `translate(-50%, -25px)`, opacity: 0 }
-    ], {
-      duration: dur,
-      easing: 'ease-out',
-      fill: 'forwards'
+    this._showLabelPopup(elementId, {
+      html,
+      duration: 1000,
+      height: 28
     });
-
-    document.body.appendChild(textEl);
-    setTimeout(() => textEl.remove(), dur);
   }
 
+  // --- showLevelUp: レベルアップポップアップ (その場に留まる) ---
   showLevelUp(elementId, type = 'base') {
-    if (document.hidden) return;
-    const el = this.container.querySelector(`#${elementId}`);
-    if (!el) return;
-
-    const speed = this.speedMult;
-    const rect = el.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const topY = rect.top - 5;
-
     const isJob = type === 'job';
     const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
-    const shadowColor = isJob ? 'rgba(239,68,68,0.6)' : 'rgba(249,115,22,0.6)'; // red vs orange
+    const shadowColor = isJob ? 'rgba(239,68,68,0.6)' : 'rgba(249,115,22,0.6)';
     const iconColor = isJob ? 'text-red-300' : 'text-orange-300';
-    const gradient = isJob 
+    const gradient = isJob
       ? 'from-white via-red-400 to-red-600'
       : 'from-white via-orange-400 to-orange-600';
 
-    const lvlText = document.createElement('div');
-    lvlText.className = 'fixed flex items-center justify-center gap-0.5 z-[9999] pointer-events-none whitespace-nowrap';
-    lvlText.style.left = `${centerX}px`;
-    lvlText.style.top = `${topY}px`;
-    lvlText.style.filter = `drop-shadow(0 2px 3px rgba(0,0,0,0.8)) drop-shadow(0 0 8px ${shadowColor})`;
+    const html = `
+      <div class="flex items-center justify-center gap-0.5 whitespace-nowrap" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8)) drop-shadow(0 0 8px ${shadowColor});">
+        <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+        <span class="font-black text-[13px] italic tracking-widest text-transparent bg-clip-text bg-gradient-to-b ${gradient}">${textStr}</span>
+        <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+      </div>`;
 
-    lvlText.innerHTML = `
-      <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
-      <span class="font-black text-[13px] italic tracking-widest text-transparent bg-clip-text bg-gradient-to-b ${gradient}">${textStr}</span>
-      <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
-    `;
-    
-    const dur = 1600 / speed;
-
-    lvlText.animate([
-      { opacity: 0, transform: `translate(-50%, 10px) scale(0.5)` },
-      { opacity: 1, transform: `translate(-50%, -15px) scale(1.2)`, offset: 0.2 },
-      { opacity: 1, transform: `translate(-50%, -20px) scale(1)`, offset: 0.7 },
-      { opacity: 0, transform: `translate(-50%, -30px) scale(0.8)` }
-    ], { duration: dur, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'forwards' });
-
-    document.body.appendChild(lvlText);
-    setTimeout(() => lvlText.remove(), dur);
+    this._showLabelPopup(elementId, {
+      html,
+      duration: 1500,
+      height: 28
+    });
   }
 
   checkBattleEnd() {
@@ -1289,38 +1367,19 @@ class BattleManager {
 
       if (this.autoBattleMode === 'floor') {
         setTimeout(async () => {
-          this.party = [];
-          this.enemies = [];
-          this.activeCharacter = null;
-          this.activeEnemy = null;
-          this.selectedEnemyTarget = null;
-          this.init();
-        }, 1500 / this.speedMult);
-        return;
-      } else if (this.autoBattleMode === 'dungeon') {
-        setTimeout(async () => {
-          // isDungeonClear is false here, so we just increment
-          await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
-          this.party = [];
-          this.enemies = [];
-          this.activeCharacter = null;
-          this.activeEnemy = null;
-          this.selectedEnemyTarget = null;
-          this.init();
-        }, 1500 / this.speedMult);
-        return;
-      } else {
-        setTimeout(async () => {
-          await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
-          this.party = [];
-          this.enemies = [];
-          this.activeCharacter = null;
-          this.activeEnemy = null;
-          this.selectedEnemyTarget = null;
+          this.resetBattleState();
           this.init();
         }, 1500 / this.speedMult);
         return;
       }
+
+      // dungeon mode or manual: advance to next floor
+      setTimeout(async () => {
+        await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
+        this.resetBattleState();
+        this.init();
+      }, 1500 / this.speedMult);
+      return;
     } else {
       let innFee = 0;
       for (const p of this.party) {
@@ -1345,11 +1404,6 @@ class BattleManager {
       this.elements.resultText.innerHTML = `${resultText}<br><br><span class="text-[13px] text-gray-300">パーティーは救出され、治療を受けました。<br>（救出・治療費: <span class="text-red-400">-${actualFee} G</span>）</span>`;
       this.elements.resultOverlay.classList.remove('hidden');
     }
-  }
-
-  async addRewards(gold) {
-    const currentGold = await GameDB.getGameState('gold') || 0;
-    await GameDB.setGameState('gold', currentGold + gold);
   }
 
   async savePartyState() {

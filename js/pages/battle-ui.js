@@ -177,9 +177,9 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             <div class="flex flex-col gap-[2px] mt-0.5">
               ${getEquipHtml(targetEntity.equipment?.rightHand, '右手')}
               ${getEquipHtml(targetEntity.equipment?.leftHand, '左手')}
-              ${getEquipHtml(targetEntity.equipment?.head, '頭')}
-              ${getEquipHtml(targetEntity.equipment?.body, '体')}
-              ${getEquipHtml(targetEntity.equipment?.accessory, '装飾品')}
+              ${getEquipHtml(targetEntity.equipment?.armor, '鎧')}
+              ${getEquipHtml(targetEntity.equipment?.accessory1, 'アクセサリ1')}
+              ${getEquipHtml(targetEntity.equipment?.accessory2, 'アクセサリ2')}
             </div>
           </div>
         </div>
@@ -296,11 +296,17 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
       if (level > 0) {
         const skillDef = jobDef.skills.find(s => s.id === skillId);
         if (skillDef) {
-          learnedSkills.push({ skillDef, level });
+          learnedSkills.push({ skillDef, level, jobId });
         }
       }
     }
   }
+
+  // ジョブID、スキルIDの順でソートし、並び順を統一する
+  learnedSkills.sort((a, b) => {
+    if (a.jobId !== b.jobId) return a.jobId.localeCompare(b.jobId);
+    return a.skillDef.id.localeCompare(b.skillDef.id);
+  });
 
   if (learnedSkills.length === 0) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';

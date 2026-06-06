@@ -298,18 +298,24 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
             </div>
             <div class="flex flex-col min-w-0 flex-1">
               <div class="flex items-center min-w-0 flex-wrap gap-y-0.5">
-                <div class="text-[12px] font-bold text-gray-100 leading-tight shrink-0 mr-1.5">
+                <div class="text-[13px] font-bold text-gray-100 leading-tight shrink-0 mr-1.5 truncate max-w-full">
                   ${selectedItem ? selectedItem.name : '---'}
-                  ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[9px] text-gray-400 ml-0.5 font-normal">x${selectedGroup.count}</span>` : ''}
+                  ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[10px] text-gray-400 ml-1 font-normal">x${selectedGroup.count}</span>` : ''}
                 </div>
-                ${selectedItem && selectedItem.ability ? `<div class="flex items-center min-w-0 flex-1"><div class="text-[9px] text-yellow-300 font-bold px-1 py-[1px] bg-yellow-900/40 border border-yellow-700/50 rounded shrink-0 leading-none">${selectedItem.ability.name}</div><div class="text-[8px] text-gray-400 ml-1.5 leading-tight line-clamp-2">${selectedItem.ability.description}</div></div>` : ''}
               </div>
-              ${selectedItem ? `<div class="text-[9px] text-gray-500 leading-tight mt-0.5">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}
+              ${selectedItem ? `<div class="text-[10px] text-gray-500 leading-tight mt-0.5">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}
             </div>
             <div class="flex items-center gap-1 shrink-0">
               ${actionBtns}
             </div>
           </div>
+          <!-- Ability Info -->
+          ${selectedItem && selectedItem.ability ? `
+            <div class="flex items-start gap-1.5 mt-0.5 p-1.5 bg-yellow-900/10 border border-yellow-700/20 rounded-md">
+              <div class="text-[9px] text-yellow-300 font-bold px-1.5 py-[2px] bg-yellow-900/60 border border-yellow-700/50 rounded shrink-0 leading-none mt-[1px] shadow-sm">${selectedItem.ability.name}</div>
+              <div class="text-[10px] text-gray-300 leading-snug break-words">${selectedItem.ability.description}</div>
+            </div>
+          ` : ''}
           <!-- Row 2: Stats + element/ailment chips -->
           ${renderDetailPanel(selectedGroup)}
         </div>
