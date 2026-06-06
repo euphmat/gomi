@@ -22,6 +22,7 @@ class BattleManager {
     this.isDungeonClear = false;
     this.currentTab = 'skill';
     this.obtainedItems = [];
+    this.wasVisible = !document.hidden;
 
     this.elements = {
       enemyArea: container.querySelector('#enemy-area'),
@@ -50,6 +51,10 @@ class BattleManager {
   
   async init() {
     // Stop existing ATB loop before re-initializing
+    if (this.atbWorker) {
+      this.atbWorker.terminate();
+      this.atbWorker = null;
+    }
     if (this.atbLoop) {
       clearInterval(this.atbLoop);
       this.atbLoop = null;
@@ -676,7 +681,32 @@ class BattleManager {
     
     const BASE_TICK_RATE = 1000 / 70;
 
-    this.atbLoop = setInterval(() => {
+    if (this.atbWorker) {
+      this.atbWorker.terminate();
+    }
+
+    const workerCode = `
+      let timer = null;
+      self.onmessage = function(e) {
+        if (e.data === 'start') {
+          timer = setInterval(() => self.postMessage('tick'), 50);
+        } else if (e.data === 'stop') {
+          clearInterval(timer);
+        }
+      };
+    `;
+    const blob = new Blob([workerCode], { type: 'application/javascript' });
+    this.atbWorker = new Worker(URL.createObjectURL(blob));
+
+    this.atbWorker.onmessage = () => {
+      if (!document.hidden && !this.wasVisible) {
+        this.renderEntities();
+        if (this.currentTab === 'skill' || this.currentTab === 'item' || this.currentTab === 'info') {
+          this.renderTabContent();
+        }
+      }
+      this.wasVisible = !document.hidden;
+
       if (this.activeCharacter || this.activeEnemy) return;
       
       let nextActor = null;
@@ -691,8 +721,10 @@ class BattleManager {
           if (!nextActor) nextActor = { type: 'party', entity: p };
         }
         
-        const atbEl = this.container.querySelector(`#${p.elementId}-atb`);
-        if(atbEl) atbEl.style.width = `${p.atb / 10}%`;
+        if (!document.hidden) {
+          const atbEl = this.container.querySelector(`#${p.elementId}-atb`);
+          if(atbEl) atbEl.style.width = `${p.atb / 10}%`;
+        }
       });
       
       this.enemies.forEach(e => {
@@ -705,27 +737,31 @@ class BattleManager {
           if (!nextActor) nextActor = { type: 'enemy', entity: e };
         }
 
-        const atbEl = this.container.querySelector(`#${e.elementId}-atb`);
-        if(atbEl) atbEl.style.width = `${e.atb / 10}%`;
+        if (!document.hidden) {
+          const atbEl = this.container.querySelector(`#${e.elementId}-atb`);
+          if(atbEl) atbEl.style.width = `${e.atb / 10}%`;
+        }
       });
 
       if (nextActor) {
         if (nextActor.type === 'party') {
           this.activeCharacter = nextActor.entity;
-          this.renderEntities();
+          if (!document.hidden) this.renderEntities();
           if (this.isAutoBattle) {
             this.processAutoBattle(this.activeCharacter);
           }
         } else {
           this.activeEnemy = nextActor.entity;
-          this.updateEntities();
+          if (!document.hidden) this.updateEntities();
           setTimeout(() => {
             if (this.activeEnemy !== nextActor.entity) return;
             this.executeEnemyTurn(nextActor.entity);
           }, 500);
         }
       }
-    }, 50);
+    };
+
+    this.atbWorker.postMessage('start');
   }
 
   executeAttack(attacker, defender, isParty, options = {}) {
@@ -878,6 +914,7 @@ class BattleManager {
   }
 
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
+    if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
@@ -920,6 +957,7 @@ class BattleManager {
   }
 
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
+    if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
@@ -950,6 +988,7 @@ class BattleManager {
   }
 
   showLevelUp(elementId, type = 'base') {
+    if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
@@ -1108,10 +1147,11 @@ class BattleManager {
       }
     }
 
-    if (hasNewDrops && this.currentTab === 'item') {
+    if (hasNewDrops && this.currentTab === 'item' && !document.hidden) {
       this.renderItemTab();
     }
 
+    if (document.hidden) return;
     // Create a drop container overlay for this enemy in the main container
     const el = this.container.querySelector(`#${enemy.elementId}`);
     if (!el) return;
@@ -1171,7 +1211,14 @@ class BattleManager {
   }
 
   async endBattle(isWin, text, showModal = true) {
-    clearInterval(this.atbLoop);
+    if (this.atbWorker) {
+      this.atbWorker.terminate();
+      this.atbWorker = null;
+    }
+    if (this.atbLoop) {
+      clearInterval(this.atbLoop);
+      this.atbLoop = null;
+    }
     this.activeCharacter = null;
     
     await this.savePartyState();
