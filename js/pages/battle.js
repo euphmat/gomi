@@ -23,6 +23,10 @@ class BattleManager {
     this.currentTab = 'skill';
     this.obtainedItems = [];
     this.wasVisible = !document.hidden;
+    this.atbElements = {};
+    this._lastRenderedActiveChar = null;
+    this._lastRenderedAutoBattle = false;
+    this._visibilityHandler = null;
 
     this.elements = {
       enemyArea: container.querySelector('#enemy-area'),
@@ -51,14 +55,8 @@ class BattleManager {
   
   async init() {
     // Stop existing ATB loop before re-initializing
-    if (this.atbWorker) {
-      this.atbWorker.terminate();
-      this.atbWorker = null;
-    }
-    if (this.atbLoop) {
-      clearInterval(this.atbLoop);
-      this.atbLoop = null;
-    }
+    this.stopAtbLoop();
+
 
     const isReinit = this.elements.enemyArea.children.length > 0;
 
@@ -231,6 +229,7 @@ class BattleManager {
     });
 
     this.updateEntities();
+    this.cacheAtbElements();
   }
 
   updateEntities() {
@@ -337,8 +336,24 @@ class BattleManager {
       this.elements.commandBlocker.classList.remove('hidden');
     }
 
-    // Refresh tab content in case MP/SP changed or active character changed
-    this.renderTabContent();
+    // Refresh tab content only when active character changes or auto-battle toggles
+    if (this._lastRenderedActiveChar !== this.activeCharacter || this._lastRenderedAutoBattle !== this.isAutoBattle) {
+      this._lastRenderedActiveChar = this.activeCharacter;
+      this._lastRenderedAutoBattle = this.isAutoBattle;
+      this.renderTabContent();
+    }
+  }
+
+  cacheAtbElements() {
+    this.atbElements = {};
+    this.party.forEach(p => {
+      const el = this.container.querySelector(`#${p.elementId}-atb`);
+      if (el) this.atbElements[p.elementId] = el;
+    });
+    this.enemies.forEach(e => {
+      const el = this.container.querySelector(`#${e.elementId}-atb`);
+      if (el) this.atbElements[e.elementId] = el;
+    });
   }
   
   get speedMult() {
@@ -668,6 +683,21 @@ class BattleManager {
     this.checkBattleEnd();
   }
 
+  stopAtbLoop() {
+    if (this.atbWorker) {
+      this.atbWorker.terminate();
+      this.atbWorker = null;
+    }
+    if (this.atbLoop) {
+      clearInterval(this.atbLoop);
+      this.atbLoop = null;
+    }
+    if (this._visibilityHandler) {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+      this._visibilityHandler = null;
+    }
+  }
+
   startAtbLoop() {
     let totalSpd = 0;
     let entityCount = 0;
@@ -683,7 +713,8 @@ class BattleManager {
     });
     const avgSpd = entityCount > 0 ? (totalSpd / entityCount) : 1;
     
-    const BASE_TICK_RATE = 1000 / 70;
+    // Doubled from 1000/70 to compensate for 100ms tick interval (was 50ms)
+    const BASE_TICK_RATE = 1000 / 35;
 
     if (this.atbWorker) {
       this.atbWorker.terminate();
@@ -693,9 +724,11 @@ class BattleManager {
       let timer = null;
       self.onmessage = function(e) {
         if (e.data === 'start') {
-          timer = setInterval(() => self.postMessage('tick'), 50);
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => self.postMessage('tick'), 100);
         } else if (e.data === 'stop') {
           clearInterval(timer);
+          timer = null;
         }
       };
     `;
@@ -726,8 +759,8 @@ class BattleManager {
         }
         
         if (!document.hidden) {
-          const atbEl = this.container.querySelector(`#${p.elementId}-atb`);
-          if(atbEl) atbEl.style.width = `${p.atb / 10}%`;
+          const atbEl = this.atbElements[p.elementId];
+          if(atbEl) atbEl.style.transform = `scaleX(${p.atb / 1000})`;
         }
       });
       
@@ -742,8 +775,8 @@ class BattleManager {
         }
 
         if (!document.hidden) {
-          const atbEl = this.container.querySelector(`#${e.elementId}-atb`);
-          if(atbEl) atbEl.style.width = `${e.atb / 10}%`;
+          const atbEl = this.atbElements[e.elementId];
+          if(atbEl) atbEl.style.transform = `scaleX(${e.atb / 1000})`;
         }
       });
 
@@ -766,6 +799,18 @@ class BattleManager {
     };
 
     this.atbWorker.postMessage('start');
+
+    // Stop/start worker when page visibility changes to save CPU in background
+    this._visibilityHandler = () => {
+      if (document.hidden) {
+        this.atbWorker?.postMessage('stop');
+      } else {
+        this.atbWorker?.postMessage('start');
+        this.cacheAtbElements();
+        this.renderEntities();
+      }
+    };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
   }
 
   executeAttack(attacker, defender, isParty, options = {}) {
@@ -1215,14 +1260,7 @@ class BattleManager {
   }
 
   async endBattle(isWin, text, showModal = true) {
-    if (this.atbWorker) {
-      this.atbWorker.terminate();
-      this.atbWorker = null;
-    }
-    if (this.atbLoop) {
-      clearInterval(this.atbLoop);
-      this.atbLoop = null;
-    }
+    this.stopAtbLoop();
     this.activeCharacter = null;
     
     await this.savePartyState();

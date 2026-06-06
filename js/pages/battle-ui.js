@@ -9,7 +9,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
         <div class="bg-red-500 h-full transition-all duration-300" style="width: ${(e.currentHp / e.maxHp) * 100}%"></div>
       </div>
       <div class="w-full bg-gray-900 h-1 rounded overflow-hidden mt-0.5 shadow-inner shrink-0 ${e.isDead ? 'opacity-0' : ''}">
-        <div id="${e.elementId}-atb" class="bg-orange-500 h-full" style="width: ${e.atb / 10}%; transition: width 50ms linear;"></div>
+        <div id="${e.elementId}-atb" class="bg-orange-500 h-full" style="transform-origin: left; transform: scaleX(${e.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
       </div>
     </div>
   `;
@@ -42,7 +42,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         <div class="px-0.5">
           <div class="text-[10px] font-bold text-gray-100 truncate w-full drop-shadow mb-0.5">${p.name}</div>
           <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="width: ${p.atb / 10}%; transition: width 50ms linear;"></div>
+            <div id="${p.elementId}-atb" class="bg-yellow-400 h-full" style="transform-origin: left; transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
           </div>
         </div>
       </div>
