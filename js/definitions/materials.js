@@ -1,5 +1,4 @@
 /**
-
  * このファイルは素材やドロップアイテムなど、装備できないアイテムのデータをまとめたファイルです。
  * 
  * 素材・消費アイテムなどのデータ定義ファイル
@@ -7,232 +6,50 @@
  * 装備できないアイテム（モンスターのドロップ品など）を定義します。
  */
 
-export const MATERIALS = [{
-    id: 'slime_angel_jelly',
-    name: 'エンジェルスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_angel_core',
-    name: 'エンジェルスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_angel_fluid',
-    name: 'エンジェルスライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_angel_king_jelly',
-    name: 'エンジェルキングスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_angel_king_core',
-    name: 'エンジェルキングスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_angel_king_fluid',
-    name: 'エンジェルキングスライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_blue_jelly',
-    name: 'ブルースライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_blue_core',
-    name: 'ブルースライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_blue_fluid',
-    name: 'ブルースライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_dark_jelly',
-    name: 'ダークスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_dark_core',
-    name: 'ダークスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_dark_fluid',
-    name: 'ダークスライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_earth_jelly',
-    name: 'アーススライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_earth_core',
-    name: 'アーススライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_earth_fluid',
-    name: 'アーススライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_fire_jelly',
-    name: 'ファイヤースライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_fire_core',
-    name: 'ファイヤースライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_fire_fluid',
-    name: 'ファイヤースライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_flower_jelly',
-    name: 'フラワースライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_flower_core',
-    name: 'フラワースライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_flower_fluid',
-    name: 'フラワースライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_grass_jelly',
-    name: 'グラススライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_grass_core',
-    name: 'グラススライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_grass_fluid',
-    name: 'グラススライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_green_jelly',
-    name: 'グリーンスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_green_core',
-    name: 'グリーンスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_green_fluid',
-    name: 'グリーンスライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_ice_jelly',
-    name: 'アイススライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_ice_core',
-    name: 'アイススライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_ice_fluid',
-    name: 'アイススライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_king_jelly',
-    name: 'キングスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_king_core',
-    name: 'キングスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_king_fluid',
-    name: 'キングスライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_red_jelly',
-    name: 'レッドスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_red_core',
-    name: 'レッドスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_red_fluid',
-    name: 'レッドスライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_thunder_jelly',
-    name: 'サンダースライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_thunder_core',
-    name: 'サンダースライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_thunder_fluid',
-    name: 'サンダースライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_water_jelly',
-    name: 'ウォータースライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_water_core',
-    name: 'ウォータースライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_water_fluid',
-    name: 'ウォータースライムの体液',
-    sellPrice: 3
-  },
-  {
-    id: 'slime_wind_jelly',
-    name: 'ウインドスライムのゼリー',
-    sellPrice: 1
-  },
-  {
-    id: 'slime_wind_core',
-    name: 'ウインドスライムのコア',
-    sellPrice: 2
-  },
-  {
-    id: 'slime_wind_fluid',
-    name: 'ウインドスライムの体液',
-    sellPrice: 3
-  },
-].map(item => ({
-  ...item,
-  image: `./assets/material/${item.id}.webp`
-}));
+export const MATERIALS = [
+  { id: 'slime_blue_jelly',       name: 'ブルースライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_blue_core',        name: 'ブルースライムのコア',             sellPrice: 2 },
+  { id: 'slime_blue_fluid',       name: 'ブルースライムの体液',             sellPrice: 3 },
+  { id: 'slime_green_jelly',      name: 'グリーンスライムのゼリー',         sellPrice: 1 },
+  { id: 'slime_green_core',       name: 'グリーンスライムのコア',           sellPrice: 2 },
+  { id: 'slime_green_fluid',      name: 'グリーンスライムの体液',           sellPrice: 3 },
+  { id: 'slime_red_jelly',        name: 'レッドスライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_red_core',         name: 'レッドスライムのコア',             sellPrice: 2 },
+  { id: 'slime_red_fluid',        name: 'レッドスライムの体液',             sellPrice: 3 },
+  { id: 'slime_water_jelly',      name: 'ウォータースライムのゼリー',       sellPrice: 1 },
+  { id: 'slime_water_core',       name: 'ウォータースライムのコア',         sellPrice: 2 },
+  { id: 'slime_water_fluid',      name: 'ウォータースライムの体液',         sellPrice: 3 },
+  { id: 'slime_fire_jelly',       name: 'ファイヤースライムのゼリー',       sellPrice: 1 },
+  { id: 'slime_fire_core',        name: 'ファイヤースライムのコア',         sellPrice: 2 },
+  { id: 'slime_fire_fluid',       name: 'ファイヤースライムの体液',         sellPrice: 3 },
+  { id: 'slime_ice_jelly',        name: 'アイススライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_ice_core',         name: 'アイススライムのコア',             sellPrice: 2 },
+  { id: 'slime_ice_fluid',        name: 'アイススライムの体液',             sellPrice: 3 },
+  { id: 'slime_wind_jelly',       name: 'ウインドスライムのゼリー',         sellPrice: 1 },
+  { id: 'slime_wind_core',        name: 'ウインドスライムのコア',           sellPrice: 2 },
+  { id: 'slime_wind_fluid',       name: 'ウインドスライムの体液',           sellPrice: 3 },
+  { id: 'slime_thunder_jelly',    name: 'サンダースライムのゼリー',         sellPrice: 1 },
+  { id: 'slime_thunder_core',     name: 'サンダースライムのコア',           sellPrice: 2 },
+  { id: 'slime_thunder_fluid',    name: 'サンダースライムの体液',           sellPrice: 3 },
+  { id: 'slime_flower_jelly',     name: 'フラワースライムのゼリー',         sellPrice: 1 },
+  { id: 'slime_flower_core',      name: 'フラワースライムのコア',           sellPrice: 2 },
+  { id: 'slime_flower_fluid',     name: 'フラワースライムの体液',           sellPrice: 3 },
+  { id: 'slime_grass_jelly',      name: 'グラススライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_grass_core',       name: 'グラススライムのコア',             sellPrice: 2 },
+  { id: 'slime_grass_fluid',      name: 'グラススライムの体液',             sellPrice: 3 },
+  { id: 'slime_dark_jelly',       name: 'ダークスライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_dark_core',        name: 'ダークスライムのコア',             sellPrice: 2 },
+  { id: 'slime_dark_fluid',       name: 'ダークスライムの体液',             sellPrice: 3 },
+  { id: 'slime_earth_jelly',      name: 'アーススライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_earth_core',       name: 'アーススライムのコア',             sellPrice: 2 },
+  { id: 'slime_earth_fluid',      name: 'アーススライムの体液',             sellPrice: 3 },
+  { id: 'slime_angel_jelly',      name: 'エンジェルスライムのゼリー',       sellPrice: 1 },
+  { id: 'slime_angel_core',       name: 'エンジェルスライムのコア',         sellPrice: 2 },
+  { id: 'slime_angel_fluid',      name: 'エンジェルスライムの体液',         sellPrice: 3 },
+  { id: 'slime_king_jelly',       name: 'キングスライムのゼリー',           sellPrice: 1 },
+  { id: 'slime_king_core',        name: 'キングスライムのコア',             sellPrice: 2 },
+  { id: 'slime_king_fluid',       name: 'キングスライムの体液',             sellPrice: 3 },
+  { id: 'slime_angel_king_jelly', name: 'エンジェルキングスライムのゼリー', sellPrice: 1 },
+  { id: 'slime_angel_king_core',  name: 'エンジェルキングスライムのコア',   sellPrice: 2 },
+  { id: 'slime_angel_king_fluid', name: 'エンジェルキングスライムの体液',   sellPrice: 3 },
+].map(item => ({ ...item, image: `./assets/material/${item.id}.webp` }));
