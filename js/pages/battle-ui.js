@@ -78,7 +78,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         </div>
       </div>
 
-      <div class="flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') === 'true' ? 'hidden' : ''}">
+      <div class="battle-stats-container flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') === 'true' ? 'hidden' : ''}">
         <div class="flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5">
           <div class="flex items-center gap-[3px]"><span class="material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="font-bold tracking-wider">ATK</span></div>
           <span class="text-gray-100 font-black drop-shadow-md">${p.stats.atk}</span>

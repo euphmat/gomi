@@ -221,6 +221,17 @@ class App {
       });
     }
 
+    window.addEventListener('settingsChanged', () => {
+      const hideStats = localStorage.getItem('hideBattleStats') === 'true';
+      document.querySelectorAll('.battle-stats-container').forEach(el => {
+        if (hideStats) {
+          el.classList.add('hidden');
+        } else {
+          el.classList.remove('hidden');
+        }
+      });
+    });
+
     // ── Reset button ──
     document.getElementById('settings-reset').addEventListener('click', () => {
       if (!window.confirm('本当にリセットしますか？')) return;
