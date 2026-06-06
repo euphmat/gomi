@@ -160,6 +160,23 @@ class App {
         <!-- Modal Body -->
         <div class="px-4 py-4 flex flex-col gap-3">
 
+          <!-- Battle Stats Toggle Section -->
+          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-blue-400">visibility</span>
+                <span class="text-xs font-bold text-gray-200">バトル画面のステータス表示</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setting-toggle-battle-stats" class="sr-only peer" ${localStorage.getItem('hideBattleStats') === 'true' ? '' : 'checked'}>
+                <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+              </label>
+            </div>
+            <p class="text-[10px] text-gray-500 leading-relaxed">
+              バトル画面でプレイヤーのステータス（ATK, DEF, MAT, MDF, SPD）を表示するかどうかを切り替えます。
+            </p>
+          </div>
+
           <!-- Data Reset Section -->
           <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
             <div class="flex items-center gap-2 mb-1">
@@ -194,6 +211,15 @@ class App {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) overlay.remove();
     });
+
+    // ── Toggle Settings ──
+    const toggleBattleStats = document.getElementById('setting-toggle-battle-stats');
+    if (toggleBattleStats) {
+      toggleBattleStats.addEventListener('change', (e) => {
+        localStorage.setItem('hideBattleStats', !e.target.checked);
+        window.dispatchEvent(new Event('settingsChanged'));
+      });
+    }
 
     // ── Reset button ──
     document.getElementById('settings-reset').addEventListener('click', () => {
