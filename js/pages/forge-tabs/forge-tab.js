@@ -247,45 +247,45 @@ export function renderForgeTab() {
         const enough = owned >= requiredAmount;
         const matAcquired = acquiredIds.has(mat.id);
         const showMatSilhouette = !matAcquired;
-        const matImgClass = showMatSilhouette ? \`w-full h-full object-cover \${SILHOUETTE_FILTER}\` : 'w-full h-full object-cover';
-        materialsHtml += \`
+        const matImgClass = showMatSilhouette ? `w-full h-full object-cover ${SILHOUETTE_FILTER}` : 'w-full h-full object-cover';
+        materialsHtml += `
           <div class="flex items-center gap-2 py-1">
             <div class="w-8 h-8 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden shrink-0">
-              \${matDef && matDef.image ? \`<img src="\${matDef.image}" class="\${matImgClass}" onerror="this.style.display='none'">\` : \`<span class="material-symbols-outlined text-gray-600 text-sm">category</span>\`}
+              ${matDef && matDef.image ? `<img src="${matDef.image}" class="${matImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-gray-600 text-sm">category</span>`}
             </div>
             <div class="flex-1 min-w-0">
-              <div class="text-xs font-bold text-gray-300 truncate">\${matDef ? matDef.name : mat.id}</div>
+              <div class="text-xs font-bold text-gray-300 truncate">${matDef ? matDef.name : mat.id}</div>
             </div>
-            <div class="text-xs font-mono font-bold shrink-0 \${enough ? 'text-green-400' : 'text-red-400'}">
-              \${owned} / \${requiredAmount}
+            <div class="text-xs font-mono font-bold shrink-0 ${enough ? 'text-green-400' : 'text-red-400'}">
+              ${owned} / ${requiredAmount}
             </div>
           </div>
-        \`;
+        `;
       });
-      materialsHtml += \`</div>\`;
+      materialsHtml += `</div>`;
 
       const totalCost = price * currentCraft;
       const hasEnoughGold = currentGold >= totalCost;
-      materialsHtml += \`
+      materialsHtml += `
         <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-700/50">
           <div class="flex items-center gap-1">
             <span class="material-symbols-outlined text-yellow-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span>
             <span class="text-xs font-bold text-gray-400">合成費用</span>
           </div>
-          <span class="text-sm font-bold font-mono \${hasEnoughGold ? 'text-yellow-300' : 'text-red-400'}">\${totalCost.toLocaleString()} G</span>
+          <span class="text-sm font-bold font-mono ${hasEnoughGold ? 'text-yellow-300' : 'text-red-400'}">${totalCost.toLocaleString()} G</span>
         </div>
-      \`;
+      `;
       materialsSection.innerHTML = materialsHtml;
 
       if (ownedCount >= 9999) {
         craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
-        craftBtn.innerHTML = \`<span class="material-symbols-outlined text-[20px]">block</span>所持上限（9999個）に達しています\`;
+        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>所持上限（9999個）に達しています`;
       } else if (craftCount > 0) {
         craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-green-900/40 border border-green-700/50 text-green-200 hover:bg-green-800/50 hover:text-white transition-all active:scale-95 flex justify-center items-center gap-2 shadow-lg';
-        craftBtn.innerHTML = \`<span class="material-symbols-outlined text-[20px]">construction</span>合成する（\${craftCount}個）\`;
+        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">construction</span>合成する（${craftCount}個）`;
       } else {
         craftBtn.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
-        craftBtn.innerHTML = \`<span class="material-symbols-outlined text-[20px]">block</span>素材またはゴールドが不足しています\`;
+        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>素材またはゴールドが不足しています`;
       }
     };
     
@@ -334,7 +334,7 @@ export function renderForgeTab() {
       // ヘッダーのゴールド表示を更新
       const headerGoldEl = document.getElementById('header-gold-display');
       if (headerGoldEl) {
-        headerGoldEl.textContent = ` Gold : \${currentGold.toLocaleString()} `;
+        headerGoldEl.textContent = ` Gold : ${currentGold.toLocaleString()} `;
       }
 
       // 素材を消費
@@ -361,7 +361,7 @@ export function renderForgeTab() {
       } else {
         // 装備アイテムを作成（ユニークID付与）
         for (let i = 0; i < craftCount; i++) {
-          const uniqueId = \`\${item.id}_\${Date.now().toString(36)}\${Math.random().toString(36).slice(2, 6)}\`;
+          const uniqueId = `${item.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
           const newEquipment = {
             id: uniqueId,
             baseId: item.id,
@@ -384,10 +384,10 @@ export function renderForgeTab() {
   const showCraftSuccessEffect = (item, count) => {
     const toast = document.createElement('div');
     toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-green-900/90 border border-green-500/50 rounded-xl shadow-2xl text-sm font-bold text-green-200 animate-[slide-up_0.3s_ease-out] backdrop-blur-sm';
-    toast.innerHTML = \`
+    toast.innerHTML = `
       <span class="material-symbols-outlined text-green-400" style="font-variation-settings: 'FILL' 1">check_circle</span>
-      <span>\${item.name} を \${count} 個合成しました！</span>
-    \`;
+      <span>${item.name} を ${count} 個合成しました！</span>
+    `;
     document.body.appendChild(toast);
     setTimeout(() => {
       toast.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
