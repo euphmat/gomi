@@ -74,8 +74,13 @@ export function renderForgeTab() {
   // モンスター図鑑と同じシルエットフィルター
   const SILHOUETTE_FILTER = 'brightness-[0.07] saturate-0 drop-shadow-[0_0_3px_rgba(160,170,220,0.8)]';
 
+  const scrollContainer = document.createElement('div');
+  scrollContainer.className = 'overflow-y-auto flex-1 pb-6 px-2';
+
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
+  
+  scrollContainer.appendChild(gridContainer);
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
@@ -98,14 +103,14 @@ export function renderForgeTab() {
     filteredItems.forEach(item => {
       const canCraft = checkCanCraft(item);
       const slot = document.createElement('div');
-      slot.className = `relative w-full pt-[100%] bg-gray-900/60 rounded-md border ${canCraft ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm cursor-pointer`;
+      slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${canCraft ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm cursor-pointer`;
       
       if (item.image) {
         const imgClass = canCraft ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
-        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'"></div>`;
+        slot.innerHTML = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = canCraft ? 'material-symbols-outlined text-gray-500 text-lg' : 'material-symbols-outlined text-gray-800 text-lg';
-        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="${iconClass}">category</span></div>`;
+        slot.innerHTML = `<span class="${iconClass}">category</span>`;
       }
 
       
@@ -322,7 +327,7 @@ export function renderForgeTab() {
   };
 
   container.appendChild(topBar);
-  container.appendChild(gridContainer);
+  container.appendChild(scrollContainer);
 
   renderFilters();
   

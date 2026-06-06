@@ -60,8 +60,13 @@ export function renderStorageTab() {
   topBar.appendChild(sortBtn);
 
   // グリッド領域
+  const scrollContainer = document.createElement('div');
+  scrollContainer.className = 'overflow-y-auto flex-1 pb-6 px-2';
+
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
+  
+  scrollContainer.appendChild(gridContainer);
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
@@ -84,12 +89,12 @@ export function renderStorageTab() {
 
     filteredItems.forEach(item => {
       const slot = document.createElement('div');
-      slot.className = 'relative w-full pt-[100%] bg-gray-900/60 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm';
+      slot.className = 'relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm';
       
       if (item.image) {
-        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'"></div>`;
+        slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
       } else {
-        slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center"><span class="material-symbols-outlined text-gray-600 text-lg">category</span></div>`;
+        slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
       }
       
       if (item.quantity && item.quantity > 1) {
@@ -270,7 +275,7 @@ export function renderStorageTab() {
   };
 
   container.appendChild(topBar);
-  container.appendChild(gridContainer);
+  container.appendChild(scrollContainer);
 
   renderFilters();
   loadData();

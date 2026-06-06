@@ -71,8 +71,13 @@ export function renderItemLibraryTab() {
 
   topBar.appendChild(filterContainer);
 
+  const scrollContainer = document.createElement('div');
+  scrollContainer.className = 'overflow-y-auto flex-1 pb-6 px-2';
+
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 px-2 flex-1';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
+  
+  scrollContainer.appendChild(gridContainer);
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
@@ -97,18 +102,15 @@ export function renderItemLibraryTab() {
       const isAcquired = acquiredBaseIds.has(item.id);
 
       const slot = document.createElement('div');
-      slot.className = `relative w-full pt-[100%] bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm`;
+      slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm`;
       
-      let innerHTML = '';
       if (item.image) {
         const imgClass = isAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
-        innerHTML = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
+        slot.innerHTML = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = isAcquired ? 'material-symbols-outlined text-gray-600 text-lg' : 'material-symbols-outlined text-gray-800 text-lg';
-        innerHTML = `<span class="${iconClass}">category</span>`;
+        slot.innerHTML = `<span class="${iconClass}">category</span>`;
       }
-
-      slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">${innerHTML}</div>`;
       
       slot.onclick = () => showItemModal(item, isAcquired);
       gridContainer.appendChild(slot);
@@ -331,7 +333,7 @@ export function renderItemLibraryTab() {
   };
 
   container.appendChild(topBar);
-  container.appendChild(gridContainer);
+  container.appendChild(scrollContainer);
   
   renderFilters();
   loadData();

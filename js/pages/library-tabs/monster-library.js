@@ -21,8 +21,13 @@ export function renderMonsterLibraryTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full p-2 animate-fade-in overflow-hidden';
 
+  const scrollContainer = document.createElement('div');
+  scrollContainer.className = 'overflow-y-auto flex-1 pb-6 pr-1 no-scrollbar';
+
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-5 gap-1.5 overflow-y-auto content-start pb-6 pr-1 flex-1 no-scrollbar';
+  gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
+  
+  scrollContainer.appendChild(gridContainer);
 
   let acquiredBaseIds = new Set();
 
@@ -32,18 +37,15 @@ export function renderMonsterLibraryTab() {
       const isDefeated = acquiredBaseIds.has('defeated_' + monster.id);
 
       const slot = document.createElement('div');
-      slot.className = `relative w-full pt-[100%] bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
+      slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
       
-      let innerHTML = '';
       if (monster.image) {
         const imgClass = isDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
-        innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
+        slot.innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
       } else {
         const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-3xl' : 'material-symbols-outlined text-gray-800 text-3xl';
-        innerHTML = `<span class="${iconClass}">pets</span>`;
+        slot.innerHTML = `<span class="${iconClass}">pets</span>`;
       }
-      
-      slot.innerHTML = `<div class="absolute inset-0 flex items-center justify-center">${innerHTML}</div>`;
       slot.onclick = () => showMonsterModal(monster, isDefeated);
       gridContainer.appendChild(slot);
     });
@@ -184,6 +186,6 @@ export function renderMonsterLibraryTab() {
 
   setTimeout(loadData, 0);
 
-  container.appendChild(gridContainer);
+  container.appendChild(scrollContainer);
   return container;
 }
