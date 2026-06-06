@@ -1069,8 +1069,6 @@ class BattleManager {
         }
       }
       this.savePartyState(); // Save to DB
-      if (exp > 0) drops.push({ text: `+${exp} EXP`, icon: 'star', color: 'text-blue-300' });
-      if (jp > 0) drops.push({ text: `+${jp} JP`, icon: 'star', color: 'text-purple-300' });
     }
 
     // Process Drops
@@ -1112,46 +1110,51 @@ class BattleManager {
     const dropContainer = document.createElement('div');
     dropContainer.style.position = 'fixed';
     dropContainer.style.left = `${centerX}px`;
-    dropContainer.style.top = `${centerY}px`;
-    dropContainer.className = `w-40 -translate-x-1/2 -translate-y-1/2 flex flex-wrap justify-center items-center gap-1.5 z-[9999] pointer-events-none transition-opacity duration-1000`;
+    dropContainer.style.top = `${centerY + rect.height * 0.2}px`; // Start slightly lower (near feet)
+    dropContainer.className = `w-0 h-0 z-[9999] pointer-events-none`;
     document.body.appendChild(dropContainer);
 
     // Show floating elements inside dropContainer
-    drops.forEach((drop, i) => {
+    drops.forEach((drop) => {
       const dropEl = document.createElement('div');
-      dropEl.className = `flex flex-row items-center gap-[2px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/60 px-1.5 py-[2px] rounded-full border border-gray-700/50 opacity-0`;
+      dropEl.style.position = 'absolute';
+      dropEl.style.left = '-10px';
+      dropEl.style.top = '-10px';
+      dropEl.className = `flex items-center justify-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0`;
       
       let innerHtml = '';
       if (drop.image) {
-        innerHtml += `<img src="${drop.image}" class="w-3 h-3 object-contain" onerror="this.style.display='none'">`;
+        innerHtml += `<img src="${drop.image}" class="w-8 h-8 object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]" onerror="this.style.display='none'">`;
       } else if (drop.icon) {
-        innerHtml += `<span class="material-symbols-outlined text-[11px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
-      }
-      
-      if (drop.text) {
-        innerHtml += `<span class="font-bold text-[8px] tracking-wide ${drop.color} drop-shadow-[0_1px_1px_rgba(0,0,0,1)] leading-none mt-0.5">${drop.text}</span>`;
+        innerHtml += `<span class="material-symbols-outlined text-[16px] ${drop.color} drop-shadow-md" style="font-variation-settings: 'FILL' 1">${drop.icon}</span>`;
       }
       
       dropEl.innerHTML = innerHtml;
       dropContainer.appendChild(dropEl);
 
+      const destX = (Math.random() - 0.5) * 40; // Narrow horizontal scatter (-20 to +20)
+      const destY = 10 + Math.random() * 20;    // Fall down slightly (10 to 30)
+
+      const randomRot = (Math.random() - 0.5) * 180; // Gentle rotation
+
       dropEl.animate([
-        { opacity: 0, transform: `translateY(15px) scale(0.5)` },
-        { opacity: 1, transform: `translateY(-5px) scale(1.1)`, offset: 0.5 },
-        { opacity: 1, transform: `translateY(0) scale(1)` }
+        { opacity: 0, transform: `translate(0px, 0px) scale(0.5) rotate(0deg)` },
+        { opacity: 1, transform: `translate(${destX * 0.4}px, -20px) scale(1.2) rotate(${randomRot * 0.3}deg)`, offset: 0.2 },
+        { opacity: 1, transform: `translate(${destX * 0.7}px, ${destY}px) scale(1) rotate(${randomRot * 0.6}deg)`, offset: 0.4 }, // Hit ground
+        { opacity: 1, transform: `translate(${destX * 0.85}px, ${destY - 8}px) scale(1) rotate(${randomRot * 0.8}deg)`, offset: 0.6 }, // Small bounce up
+        { opacity: 1, transform: `translate(${destX}px, ${destY}px) scale(1) rotate(${randomRot}deg)`, offset: 0.8 }, // Hit ground again
+        { opacity: 0, transform: `translate(${destX}px, ${destY}px) scale(0.8) rotate(${randomRot}deg)` } // Fade out
       ], { 
-        duration: 600, 
-        delay: i * 100, 
-        easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)', 
+        duration: 1000 + Math.random() * 300, 
+        delay: Math.random() * 100, 
+        easing: 'ease-out', 
         fill: 'both' 
       });
     });
 
-    // Fade out and remove the entire container after 2.5 seconds
     setTimeout(() => {
-      dropContainer.style.opacity = '0';
-      setTimeout(() => dropContainer.remove(), 1000);
-    }, 2500);
+      dropContainer.remove();
+    }, 2000);
   }
 
   async endBattle(isWin, text, showModal = true) {
