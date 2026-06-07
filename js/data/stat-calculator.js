@@ -15,6 +15,7 @@
  */
 
 import { STAT_KEYS } from './constants.js';
+import { JOBS } from '../jobs/index.js';
 
 /**
  * Calculate the final stats for a character.
@@ -87,6 +88,23 @@ export function calcFinalStats(character, equipmentMap) {
       if (!mod.stats) continue;
       for (const key of statKeys) {
         result[key] += mod.stats[key] || 0;
+      }
+    }
+  }
+
+  // Add passive skill bonuses
+  if (character.jobSkills) {
+    for (const [jobId, skillsMap] of Object.entries(character.jobSkills)) {
+      const jobDef = JOBS[jobId];
+      if (!jobDef) continue;
+      for (const [skillId, level] of Object.entries(skillsMap)) {
+        if (level <= 0) continue;
+        const skillDef = jobDef.skills.find(s => s.id === skillId);
+        if (!skillDef || skillDef.type !== 'passive') continue;
+        const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
+        if (levelConfig.bonusHp) {
+          result.hp += levelConfig.bonusHp;
+        }
       }
     }
   }

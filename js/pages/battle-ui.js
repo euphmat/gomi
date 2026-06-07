@@ -370,7 +370,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     for (const [skillId, level] of Object.entries(skillsMap)) {
       if (level > 0) {
         const skillDef = jobDef.skills.find(s => s.id === skillId);
-        if (skillDef) {
+        if (skillDef && skillDef.type !== 'passive') {
           learnedSkills.push({ skillDef, level, jobId });
         }
       }

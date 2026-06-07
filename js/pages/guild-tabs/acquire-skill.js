@@ -15,10 +15,37 @@ export function renderAcquireSkillTab() {
   let selectedCharId = null;
 
   const gridContainer = document.createElement('div');
+
+  let currentTab = 'active';
+  const tabContainer = document.createElement('div');
+  tabContainer.className = 'flex gap-2 px-1 mb-2 shrink-0';
+  const renderTabs = () => {
+    tabContainer.innerHTML = `
+      <button id="btn-tab-active" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'active' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">アクティブスキル</button>
+      <button id="btn-tab-passive" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'passive' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">パッシブスキル</button>
+    `;
+    tabContainer.querySelector('#btn-tab-active').onclick = () => {
+      if (currentTab !== 'active') {
+        currentTab = 'active';
+        renderTabs();
+        render(true);
+      }
+    };
+    tabContainer.querySelector('#btn-tab-passive').onclick = () => {
+      if (currentTab !== 'passive') {
+        currentTab = 'passive';
+        renderTabs();
+        render(true);
+      }
+    };
+  };
+  renderTabs();
+
   const listContainer = document.createElement('div');
   listContainer.className = 'flex-1 overflow-y-auto space-y-3 pb-4 pr-1 scroll-smooth';
 
   container.appendChild(gridContainer);
+  container.appendChild(tabContainer);
   container.appendChild(listContainer);
 
   const updateSkillRow = (row, skill, selectedChar, index, isInitial) => {
@@ -59,7 +86,10 @@ export function renderAcquireSkillTab() {
       <div class="flex-1 min-w-0 py-0.5 pr-1">
         <div class="flex items-center mb-0.5 gap-x-2 flex-wrap">
           <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate group-hover:text-white transition-colors drop-shadow-sm">${skill.name}</h3>
-          <span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig.mpCost}</span>
+          ${skill.type === 'passive' 
+            ? `<span class="text-[9px] font-bold text-emerald-300 bg-emerald-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">psychology</span>パッシブ</span>`
+            : `<span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig.mpCost}</span>`
+          }
         </div>
         <div class="flex flex-col gap-0.5">
           ${isMax ? `
@@ -201,8 +231,14 @@ export function renderAcquireSkillTab() {
     const selectedChar = characters.find(c => c.id === selectedCharId);
     if (selectedChar) {
       const job = JOBS[selectedChar.jobId || 'norvice'];
-      const skills = job ? job.skills : [];
+      let skills = job ? job.skills : [];
       
+      // 選択中のタブに合わせてスキルをフィルタリング
+      skills = skills.filter(skill => {
+        const isPassive = skill.type === 'passive';
+        return currentTab === 'passive' ? isPassive : !isPassive;
+      });
+
       if (skills.length === 0) {
         listContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-32 opacity-60"><span class="material-symbols-outlined text-4xl text-gray-500 mb-2">auto_awesome</span><span class="text-sm font-bold text-gray-400 tracking-wider">習得可能なスキルがありません</span></div>';
       } else {

@@ -397,6 +397,7 @@ class BattleManager {
     this.activeCharacter = null;
     this.activeEnemy = null;
     this.selectedEnemyTarget = null;
+    this.lastKilledBy = null;
   }
 
   _findSkill(character, skillId) {
@@ -915,6 +916,20 @@ class BattleManager {
     damage = Math.floor(finalDamage);
     if (damage < 1) damage = 1;
 
+    // --- Passive: Guard ---
+    if (!isParty && defender.jobSkills) {
+      const guardSkill = this._findSkill(defender, 'guard');
+      if (guardSkill && guardSkill.level > 0 && guardSkill.def) {
+        const levelConfig = guardSkill.def.levels.find(l => l.level === guardSkill.level) || guardSkill.def.levels[guardSkill.def.levels.length - 1];
+        if (Math.random() * 100 < levelConfig.chance) {
+          const reduction = levelConfig.reduction;
+          damage = Math.floor(damage * (1 - reduction / 100));
+          if (damage < 1) damage = 1;
+          this.showActionName(defender.elementId, 'ガード', 'text-blue-300', 'border-blue-500/50');
+        }
+      }
+    }
+
     let dmgColor = 'text-white';
     if (totalElementPercent > 0) {
       let sumMultiplier = 0;
@@ -974,6 +989,26 @@ class BattleManager {
       if (defender.hp.current <= 0) {
         defender.hp.current = 0;
         defender.isDead = true;
+        this.lastKilledBy = {
+          monsterId: attacker.id,
+          monsterName: attacker.name,
+          monsterImage: attacker.image,
+          actionName: actionName
+        };
+      } else if (defender.jobSkills) {
+        // --- Passive: Counter ---
+        const counterSkill = this._findSkill(defender, 'counter');
+        if (counterSkill && counterSkill.level > 0 && counterSkill.def) {
+          const levelConfig = counterSkill.def.levels.find(l => l.level === counterSkill.level) || counterSkill.def.levels[counterSkill.def.levels.length - 1];
+          if (Math.random() * 100 < levelConfig.chance) {
+            setTimeout(() => {
+              if (!defender.isDead && !attacker.isDead) {
+                this.showActionName(defender.elementId, 'カウンター', 'text-orange-400', 'border-orange-500/50');
+                this.executeAttack(defender, attacker, true, { actionName: 'カウンター', hideActionName: true });
+              }
+            }, 500 / this.speedMult);
+          }
+        }
       }
       attacker.atb = 0;
     }
@@ -1441,18 +1476,28 @@ class BattleManager {
       return;
     }
 
-    this.elements.resultTitle.textContent = isWin ? 'VICTORY' : 'DEFEAT';
-    this.elements.resultTitle.className = isWin 
-      ? 'text-5xl font-black mb-4 tracking-widest text-yellow-400 drop-shadow-lg' 
-      : 'text-5xl font-black mb-4 tracking-widest text-red-500 drop-shadow-lg';
-    
-    let resultText = text;
     if (isWin) {
       this.isDungeonClear = this.currentFloorNum >= this.dungeonDef.floors.length;
       
       if (this.isDungeonClear && this.autoBattleMode !== 'floor') {
-        this.elements.btnResultOk.textContent = 'ダンジョン踏破！街へ戻る';
-        this.elements.resultText.textContent = 'ダンジョンの最深部に到達しました！';
+        this.elements.resultOverlay.innerHTML = `
+          <div class="flex flex-col items-center w-full max-w-[340px] px-4 py-6 overflow-y-auto max-h-full scrollbar-none text-center">
+            <h2 class="text-4xl font-black tracking-widest text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] animate-bounce mb-6">VICTORY</h2>
+            <p class="text-gray-255 font-bold mb-8 text-sm">ダンジョンの最深部に到達しました！</p>
+            <button id="btn-result-ok" class="w-full py-3.5 bg-yellow-600 hover:bg-yellow-500 active:scale-95 text-white rounded-xl font-bold text-sm transition-all shadow-[0_4px_15px_rgba(250,204,21,0.3)] cursor-pointer">
+              ダンジョン踏破！街へ戻る
+            </button>
+          </div>
+        `;
+        const okBtn = this.elements.resultOverlay.querySelector('#btn-result-ok');
+        if (okBtn) {
+          okBtn.onclick = () => {
+            this.elements.resultOverlay.classList.add('hidden');
+            sessionStorage.removeItem('autoBattleMode');
+            this.autoBattleMode = 'none';
+            window.location.hash = '/dungeon';
+          };
+        }
         this.elements.resultOverlay.classList.remove('hidden');
         return;
       }
@@ -1492,8 +1537,77 @@ class BattleManager {
       if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
 
       this.isDungeonClear = false;
-      this.elements.btnResultOk.textContent = '街へ戻る';
-      this.elements.resultText.innerHTML = `${resultText}<br><br><span class="text-[13px] text-gray-300">パーティーは救出され、治療を受けました。<br>（救出・治療費: <span class="text-red-400">-${actualFee} G</span>）</span>`;
+
+      // 敗北時のUIをカスタム構築
+      const lastKilledBy = this.lastKilledBy || {
+        monsterName: '未知のモンスター',
+        actionName: '不明な攻撃',
+        monsterImage: './assets/job/job_norvice.webp'
+      };
+
+      let itemsHtml = '';
+      if (this.obtainedItems && this.obtainedItems.length > 0) {
+        itemsHtml = renderItemTabHtml(this.obtainedItems);
+      } else {
+        itemsHtml = '<div class="text-[10px] text-gray-500 flex items-center justify-center h-20">獲得したアイテムはありません</div>';
+      }
+
+      this.elements.resultOverlay.innerHTML = `
+        <div class="flex flex-col items-center w-full max-w-[340px] px-4 py-6 overflow-y-auto max-h-full scrollbar-none">
+          <h2 class="text-4xl font-black tracking-widest text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.7)] animate-pulse mb-5">DEFEAT</h2>
+          
+          <!-- 死因セクション -->
+          <div class="w-full bg-red-950/20 border border-red-900/40 rounded-xl p-3 mb-5 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+            <div class="w-12 h-12 bg-gray-900 rounded-lg border border-red-500/30 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+              <img src="${lastKilledBy.monsterImage}" class="w-full h-full object-contain" onerror="this.src='./assets/job/job_norvice.webp'">
+            </div>
+            <div class="flex-1 flex flex-col justify-center min-w-0 text-left">
+              <span class="text-[8px] text-red-400/80 font-bold uppercase tracking-wider">戦闘不能原因</span>
+              <p class="text-[11px] text-gray-250 font-bold leading-tight mt-0.5 break-words">
+                <span class="text-red-400 font-extrabold">${lastKilledBy.monsterName}</span> の<br>
+                <span class="text-amber-400 font-extrabold">${lastKilledBy.actionName}</span> によって全滅した...
+              </p>
+            </div>
+          </div>
+
+          <!-- 獲得アイテムセクション -->
+          <div class="w-full flex flex-col mb-5">
+            <div class="flex items-center gap-1 text-[11px] font-black text-gray-300 tracking-wider mb-2 border-b border-gray-850 pb-1">
+              <span class="material-symbols-outlined text-[14px] text-cyan-400">backpack</span>
+              <span>獲得したアイテム</span>
+            </div>
+            <div class="max-h-[160px] overflow-y-auto w-full bg-gray-900/60 p-2 border border-gray-850 rounded-lg shadow-inner custom-scrollbar">
+              ${itemsHtml}
+            </div>
+          </div>
+
+          <!-- 救出・治療費の表示 -->
+          <div class="text-center mb-5 px-2">
+            <p class="text-[10px] text-gray-400 leading-relaxed">
+              パーティーは救出され、治療を受けました。<br>
+              <span class="text-gray-300 font-bold bg-slate-950/60 border border-slate-850 px-2 py-0.5 rounded inline-block mt-1">
+                救出・治療費: <span class="text-red-400 font-black">-${actualFee} G</span>
+              </span>
+            </p>
+          </div>
+
+          <!-- 戻るボタン -->
+          <button id="btn-result-ok" class="w-full py-3 bg-red-950/80 hover:bg-red-900 active:scale-95 text-red-100 border border-red-800/40 rounded-xl font-bold text-xs transition-all shadow-[0_4px_12px_rgba(239,68,68,0.15)] cursor-pointer">
+            街へ戻る
+          </button>
+        </div>
+      `;
+
+      const okBtn = this.elements.resultOverlay.querySelector('#btn-result-ok');
+      if (okBtn) {
+        okBtn.onclick = () => {
+          this.elements.resultOverlay.classList.add('hidden');
+          sessionStorage.removeItem('autoBattleMode');
+          this.autoBattleMode = 'none';
+          window.location.hash = '/dungeon';
+        };
+      }
+
       this.elements.resultOverlay.classList.remove('hidden');
     }
   }

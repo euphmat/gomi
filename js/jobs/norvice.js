@@ -19,7 +19,7 @@ export const norvice = {
         { level:  9, spCost: 3, mpCost: 11, healAmount: 100 },
         { level: 10, spCost: 5, mpCost: 13, healAmount: 120 }
       ],
-      getDescription: (levelConfig) => `自身の HP を ${levelConfig.healAmount} 回復 (固定値)`,
+      getDescription: (levelConfig) => `自身の HP を ${levelConfig.healAmount} 回復する`,
       execute: (caster, levelConfig) => {
         caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.hp.max);
         // mp is already deducted in battle.js executeSkill
@@ -65,7 +65,7 @@ export const norvice = {
         { level:  9, spCost: 3, mpCost: 0, recoverAmount: 10 },
         { level: 10, spCost: 5, mpCost: 0, recoverAmount: 15 }
       ],
-      getDescription: (levelConfig) => `MP をごくわずか ${levelConfig.recoverAmount} 回復する`,
+      getDescription: (levelConfig) => `MP を ${levelConfig.recoverAmount} 回復する`,
       execute: (caster, levelConfig, battle) => {
         caster.mp.current = Math.min(caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
         if (battle) {
@@ -125,6 +125,57 @@ export const norvice = {
             battle.executeAttack(caster, target, true, { actionName: 'なぎ払い', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
         });
       }
+    },
+    {
+      id: 'hp_boost', name: '基本 HP 上昇', icon: 'favorite', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level: 1, spCost: 1, mpCost: 0, bonusHp: 10 },
+        { level: 2, spCost: 1, mpCost: 0, bonusHp: 20 },
+        { level: 3, spCost: 1, mpCost: 0, bonusHp: 30 },
+        { level: 4, spCost: 2, mpCost: 0, bonusHp: 40 },
+        { level: 5, spCost: 2, mpCost: 0, bonusHp: 50 },
+        { level: 6, spCost: 2, mpCost: 0, bonusHp: 65 },
+        { level: 7, spCost: 3, mpCost: 0, bonusHp: 80 },
+        { level: 8, spCost: 3, mpCost: 0, bonusHp: 100 },
+        { level: 9, spCost: 3, mpCost: 0, bonusHp: 120 },
+        { level: 10, spCost: 5, mpCost: 0, bonusHp: 150 }
+      ],
+      getDescription: (levelConfig) => `最大 HP が ${levelConfig.bonusHp} 上昇する`
+    },
+    {
+      id: 'counter', name: 'カウンター', icon: 'replay', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level: 1, spCost: 1, mpCost: 0, chance: 5 },
+        { level: 2, spCost: 1, mpCost: 0, chance: 6 },
+        { level: 3, spCost: 1, mpCost: 0, chance: 7 },
+        { level: 4, spCost: 2, mpCost: 0, chance: 8 },
+        { level: 5, spCost: 2, mpCost: 0, chance: 9 },
+        { level: 6, spCost: 2, mpCost: 0, chance: 10 },
+        { level: 7, spCost: 3, mpCost: 0, chance: 12 },
+        { level: 8, spCost: 3, mpCost: 0, chance: 14 },
+        { level: 9, spCost: 3, mpCost: 0, chance: 16 },
+        { level: 10, spCost: 5, mpCost: 0, chance: 20 }
+      ],
+      getDescription: (levelConfig) => `攻撃を受けた時、${levelConfig.chance}％ の確率で通常攻撃で反撃する`
+    },
+    {
+      id: 'guard', name: 'ガード', icon: 'shield', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level: 1, spCost: 1, mpCost: 0, chance: 10, reduction: 10 },
+        { level: 2, spCost: 1, mpCost: 0, chance: 11, reduction: 12 },
+        { level: 3, spCost: 1, mpCost: 0, chance: 12, reduction: 14 },
+        { level: 4, spCost: 2, mpCost: 0, chance: 13, reduction: 16 },
+        { level: 5, spCost: 2, mpCost: 0, chance: 14, reduction: 18 },
+        { level: 6, spCost: 2, mpCost: 0, chance: 15, reduction: 20 },
+        { level: 7, spCost: 3, mpCost: 0, chance: 16, reduction: 25 },
+        { level: 8, spCost: 3, mpCost: 0, chance: 18, reduction: 30 },
+        { level: 9, spCost: 3, mpCost: 0, chance: 20, reduction: 35 },
+        { level: 10, spCost: 5, mpCost: 0, chance: 25, reduction: 40 }
+      ],
+      getDescription: (levelConfig) => `攻撃を受けた時、${levelConfig.chance}％ の確率で受けるダメージを ${levelConfig.reduction}％ 軽減する`
     }
   ],
   autoBattle: (caster, context) => {
