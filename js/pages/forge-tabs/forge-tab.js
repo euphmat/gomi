@@ -232,6 +232,13 @@ export function renderForgeTab() {
         }).join('') + `</div>`
       : '';
 
+    const abilityHtml = item.ability ? `
+      <div class="flex items-start gap-1.5 mt-2.5 p-1.5 bg-yellow-900/10 border border-yellow-700/20 rounded-md">
+        <div class="text-[9px] text-yellow-300 font-bold px-1.5 py-[2px] bg-yellow-900/60 border border-yellow-700/50 rounded shrink-0 leading-none mt-[1px] shadow-sm">${item.ability.name}</div>
+        <div class="text-[10px] text-gray-300 leading-snug break-words">${item.ability.description}</div>
+      </div>
+    ` : '';
+
     const canCraftAny = maxCraft > 0;
     const itemImgClass = canCraftAny ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
     const topSection = `
@@ -248,6 +255,7 @@ export function renderForgeTab() {
           ${statsHtml}
         </div>
       </div>
+      ${abilityHtml}
     `;
 
     // Middle section: Quantity Selector
