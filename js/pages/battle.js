@@ -197,6 +197,7 @@ class BattleManager {
   }
 
   renderEntities() {
+    if (document.hidden) return;
     if (this.elements.enemyArea.children.length > 0) {
       this.updateEntities();
       return;
@@ -255,18 +256,19 @@ class BattleManager {
     });
 
     this.updateEntities();
-    this.cacheAtbElements();
+    this.cacheDOMElements();
   }
 
   updateEntities() {
+    if (document.hidden) return;
+    const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+    if (!this.domCache) return;
+
     this.enemies.forEach(e => {
-      const el = this.container.querySelector(`#${e.elementId}`);
-      if (!el) return;
+      const cache = this.domCache.enemies[e.elementId];
+      if (!cache) return;
       
-      const iconContainer = el.children[0];
-      const hpContainer = el.children[1];
-      const hpBar = hpContainer.children[0];
-      const atbContainer = el.children[2];
+      const { root: el, iconContainer, hpContainer, hpBar, atbContainer } = cache;
 
       if (e.isDead) {
         el.classList.remove('cursor-pointer', 'hover:scale-105', 'transition-transform');
@@ -282,79 +284,74 @@ class BattleManager {
         }
       }
 
-      if (this.activeEnemy === e) {
-        iconContainer.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        iconContainer.classList.remove('border-gray-700', 'border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-      } else if (this.selectedEnemyTarget === e) {
-        iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-        iconContainer.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-      } else {
-        iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        iconContainer.classList.add('border-gray-700');
+      if (!disableAnim) {
+        if (this.activeEnemy === e) {
+          iconContainer.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+          iconContainer.classList.remove('border-gray-700', 'border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+        } else if (this.selectedEnemyTarget === e) {
+          iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+          iconContainer.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        } else {
+          iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+          iconContainer.classList.add('border-gray-700');
+        }
       }
 
       hpBar.style.width = `${(e.currentHp / e.maxHp) * 100}%`;
     });
 
     this.party.forEach(p => {
-      const el = this.container.querySelector(`#${p.elementId}`);
-      if (!el) return;
+      const cache = this.domCache.party[p.elementId];
+      if (!cache) return;
+      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, statBlocks } = cache;
 
-      if (this.activeCharacter === p) {
-        el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-      } else if (this.isAutoBattle && this.selectedPartyMember === p) {
-        el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-        el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-      } else {
-        el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-        el.classList.add('border-gray-700');
+      if (!disableAnim) {
+        if (this.activeCharacter === p) {
+          el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+          el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+        } else if (this.isAutoBattle && this.selectedPartyMember === p) {
+          el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+          el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        } else {
+          el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+          el.classList.add('border-gray-700');
+        }
+
+        if (p.isDead) {
+          el.classList.add('opacity-40', 'grayscale');
+          el.classList.remove('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
+        } else {
+          el.classList.remove('opacity-40', 'grayscale');
+          el.classList.add('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
+        }
       }
 
-      if (p.isDead) {
-        el.classList.add('opacity-40', 'grayscale');
-        el.classList.remove('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
-      } else {
-        el.classList.remove('opacity-40', 'grayscale');
-        el.classList.add('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
-      }
-
-      const lvEl = el.querySelector(`.${p.elementId}-lv`);
       if (lvEl) lvEl.textContent = p.level || 1;
-
-      const jlvEl = el.querySelector(`.${p.elementId}-jlv`);
       if (jlvEl) jlvEl.textContent = p.jobLevel || 1;
-
-      const spEl = el.querySelector(`.${p.elementId}-sp`);
       if (spEl) spEl.textContent = p.sp || 0;
 
-      const hpBar = el.querySelector('.bg-red-600');
       if (hpBar) {
         const trueMaxHp = p.stats.hp || p.hp.max;
         hpBar.style.width = `${(p.hp.current / trueMaxHp) * 100}%`;
-        hpBar.nextElementSibling.textContent = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
+        if (hpText) hpText.textContent = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
       }
 
-      const mpBar = el.querySelector('.bg-blue-600');
       if (mpBar) {
         mpBar.style.width = `${(p.mp.current / p.mp.max) * 100}%`;
-        mpBar.nextElementSibling.textContent = `${Math.floor(p.mp.current)}/${p.mp.max}`;
+        if (mpText) mpText.textContent = `${Math.floor(p.mp.current)}/${p.mp.max}`;
       }
 
-      const expBar = el.querySelector('.bg-green-600');
       if (expBar) {
         expBar.style.width = `${(p.exp.current / p.exp.max) * 100}%`;
-        expBar.nextElementSibling.textContent = `${Math.floor(p.exp.current)}/${p.exp.max}`;
+        if (expText) expText.textContent = `${Math.floor(p.exp.current)}/${p.exp.max}`;
       }
 
-      const jpBar = el.querySelector('.bg-purple-600');
       if (jpBar) {
         jpBar.style.width = `${(p.jp.current / p.jp.max) * 100}%`;
-        jpBar.nextElementSibling.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
+        if (jpText) jpText.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
       }
 
-      const statBlocks = el.querySelectorAll('.text-gray-100.font-black.drop-shadow-md');
-      if (statBlocks.length >= 5) {
+      if (statBlocks) {
         statBlocks[0].textContent = p.stats.atk;
         statBlocks[1].textContent = p.stats.def;
         statBlocks[2].textContent = p.stats.matk;
@@ -373,15 +370,51 @@ class BattleManager {
     }
   }
 
-  cacheAtbElements() {
+  cacheDOMElements() {
     this.atbElements = {};
-    this.party.forEach(p => {
-      const el = this.container.querySelector(`#${p.elementId}-atb`);
-      if (el) this.atbElements[p.elementId] = el;
-    });
+    this.domCache = { party: {}, enemies: {} };
+
     this.enemies.forEach(e => {
-      const el = this.container.querySelector(`#${e.elementId}-atb`);
-      if (el) this.atbElements[e.elementId] = el;
+      const el = this.container.querySelector(`#${e.elementId}`);
+      if (el) {
+        this.atbElements[e.elementId] = el.querySelector(`#${e.elementId}-atb`);
+        this.domCache.enemies[e.elementId] = {
+          root: el,
+          iconContainer: el.children[0],
+          hpContainer: el.children[1],
+          hpBar: el.children[1].children[0],
+          atbContainer: el.children[2]
+        };
+      }
+    });
+
+    this.party.forEach(p => {
+      const el = this.container.querySelector(`#${p.elementId}`);
+      if (el) {
+        this.atbElements[p.elementId] = el.querySelector(`#${p.elementId}-atb`);
+        
+        const statBlocks = el.querySelectorAll('.text-gray-100.font-black.drop-shadow-md');
+        const hpBarEl = el.querySelector('.bg-red-600');
+        const mpBarEl = el.querySelector('.bg-blue-600');
+        const expBarEl = el.querySelector('.bg-green-600');
+        const jpBarEl = el.querySelector('.bg-purple-600');
+
+        this.domCache.party[p.elementId] = {
+          root: el,
+          lvEl: el.querySelector(`.${p.elementId}-lv`),
+          jlvEl: el.querySelector(`.${p.elementId}-jlv`),
+          spEl: el.querySelector(`.${p.elementId}-sp`),
+          hpBar: hpBarEl,
+          hpText: hpBarEl ? hpBarEl.nextElementSibling : null,
+          mpBar: mpBarEl,
+          mpText: mpBarEl ? mpBarEl.nextElementSibling : null,
+          expBar: expBarEl,
+          expText: expBarEl ? expBarEl.nextElementSibling : null,
+          jpBar: jpBarEl,
+          jpText: jpBarEl ? jpBarEl.nextElementSibling : null,
+          statBlocks: statBlocks.length >= 5 ? statBlocks : null
+        };
+      }
     });
   }
   
@@ -848,7 +881,7 @@ class BattleManager {
         this.atbWorker?.postMessage('stop');
       } else {
         this.atbWorker?.postMessage('start');
-        this.cacheAtbElements();
+        this.cacheDOMElements();
         this.renderEntities();
       }
     };
