@@ -214,7 +214,11 @@ class BattleManager {
           const elementId = e.currentTarget.id;
           const p = this.party.find(char => char.elementId === elementId);
           if (p && !p.isDead) {
-            if (this.isAutoBattle) this.selectedPartyMember = p;
+            if (this.isAutoBattle) {
+              this.selectedPartyMember = p;
+              this.currentTab = 'info';
+              this.updateTabStyles();
+            }
             this.infoTarget = { type: 'party', entity: p };
             this.updateEntities();
             if (this.currentTab === 'info') {
@@ -234,6 +238,10 @@ class BattleManager {
         const uniqueId = e.currentTarget.dataset.id;
         const enemy = this.enemies.find(en => en.uniqueId === uniqueId);
         if (enemy && !enemy.isDead) {
+          if (this.isAutoBattle) {
+            this.currentTab = 'info';
+            this.updateTabStyles();
+          }
           this.selectedEnemyTarget = enemy;
           this.infoTarget = { type: 'enemy', entity: enemy };
           this.renderEntities();
