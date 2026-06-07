@@ -406,23 +406,27 @@ export function renderForgeTab() {
         const showMatSilhouette = !matAcquired;
         const matImgClass = showMatSilhouette ? `w-full h-full object-cover ${SILHOUETTE_FILTER}` : 'w-full h-full object-cover';
         
-        const pct = Math.min(100, requiredAmount > 0 ? (owned / requiredAmount) * 100 : 100);
-        const barColor = enough ? 'bg-emerald-500' : 'bg-rose-500';
 
         materialsHtml += `
-          <div class="flex items-center gap-2 py-0.5">
-            <div class="w-8 h-8 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
-              ${matDef && matDef.image ? `<img src="${matDef.image}" class="${matImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-slate-400 text-sm">category</span>`}
-            </div>
-            <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-              <div class="text-xs font-bold text-slate-300 truncate leading-none mb-0.5">${matDef ? matDef.name : mat.id}</div>
-              <div class="w-full h-1 bg-slate-900 rounded-full overflow-hidden mt-0.5">
-                <div class="h-full ${barColor} transition-all duration-300" style="width: ${pct}%"></div>
+          <div class="flex items-center justify-between py-1.5 bg-slate-900/20 hover:bg-slate-900/30 rounded-xl px-2.5 border border-slate-800/30 transition-all duration-200">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+                ${matDef && matDef.image ? `<img src="${matDef.image}" class="${matImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-slate-400 text-sm">category</span>`}
+              </div>
+              <div class="flex flex-col min-w-0">
+                <div class="text-xs font-bold text-slate-200 truncate leading-tight mb-0.5">${matDef ? matDef.name : mat.id}</div>
+                <div class="text-[10px] text-slate-500 font-bold leading-none">所持: <span class="font-mono font-black ${enough ? 'text-emerald-400' : 'text-rose-400'}">${owned}</span></div>
               </div>
             </div>
-            <div class="text-right shrink-0">
-              <div class="text-xs font-mono font-bold ${enough ? 'text-emerald-400' : 'text-rose-400'} leading-none">
-                ${owned} / ${requiredAmount}
+            <div class="flex items-center gap-3 shrink-0">
+              <div class="text-right flex flex-col justify-center">
+                <div class="text-[9px] text-slate-400 font-bold leading-none mb-0.5">必要数</div>
+                <div class="text-xs font-mono font-black ${enough ? 'text-emerald-400' : 'text-rose-400'} leading-none">
+                  ${requiredAmount}
+                </div>
+              </div>
+              <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${enough ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.1)]'}">
+                <span class="material-symbols-outlined text-[13px] font-black">${enough ? 'check' : 'close'}</span>
               </div>
             </div>
           </div>

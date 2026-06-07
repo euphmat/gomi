@@ -908,19 +908,23 @@ class BattleManager {
     if (damage < 1) damage = 1;
 
     let dmgColor = 'text-white';
-
-    if (isParty) {
-      if (options.damageType === 'skill') {
-        dmgColor = 'text-blue-400';
-      } else if (options.damageType === 'ability') {
-        dmgColor = 'text-yellow-400';
-      } else if (options.isMagic) {
-        dmgColor = 'text-purple-400';
-      } else {
-        dmgColor = 'text-gray-100';
+    if (totalElementPercent > 0) {
+      let sumMultiplier = 0;
+      for (const [el, val] of Object.entries(attackElements)) {
+        if (val > 0) {
+          const resist = defenderElementResist[el] || 0;
+          const multiplier = Math.max(0, 1 - (resist / 100));
+          const portion = val * elementPortionScale;
+          sumMultiplier += multiplier * (portion / 100);
+        }
       }
-    } else {
-      dmgColor = 'text-red-500';
+      sumMultiplier += 1.0 * (nonElementalPercent / 100);
+      
+      if (sumMultiplier < 0.999) {
+        dmgColor = 'text-purple-400';
+      } else if (sumMultiplier > 1.001) {
+        dmgColor = 'text-red-500';
+      }
     }
 
     this.showDamage(defender.elementId, damage, dmgColor);
