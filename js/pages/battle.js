@@ -1148,12 +1148,46 @@ class BattleManager {
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
-    const html = `<span class="text-2xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" style="-webkit-text-stroke: 1px rgba(255,255,255,0.5);">${damage}</span>`;
+    let html = '';
+    let duration = 1200;
+
+    if (customColorClass.includes('text-red-500')) {
+      // 弱点 (Weakness)
+      html = `
+        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.85)) drop-shadow(0 0 8px rgba(239,68,68,0.75)); transform: scale(1.25);">
+          <span class="text-[34px] font-black italic select-none animate-pulse" style="color: #ef4444; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff, 0 0 10px rgba(239,68,68,0.9); line-height: 1; letter-spacing: -0.03em;">${damage}</span>
+        </div>`;
+      duration = 1500;
+    } else if (customColorClass.includes('text-purple-400')) {
+      // 耐性軽減 (Resist)
+      html = `
+        <div class="flex items-center justify-center" style="filter: drop-shadow(0 1px 3px rgba(0,0,0,0.85)) drop-shadow(0 0 6px rgba(168,85,247,0.6)); transform: scale(0.85);">
+          <span class="text-[22px] font-black select-none" style="color: #a855f7; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 6px rgba(168,85,247,0.8); line-height: 1;">${damage}</span>
+        </div>`;
+    } else if (customColorClass.includes('text-green-400') || customColorClass.includes('text-green-500')) {
+      // HP回復
+      html = `
+        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.7)) drop-shadow(0 0 6px rgba(74,222,128,0.5));">
+          <span class="text-[26px] font-black select-none" style="color: #4ade80; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 0 8px rgba(74,222,128,0.8); line-height: 1;">${damage}</span>
+        </div>`;
+    } else if (customColorClass.includes('text-blue-400')) {
+      // MP回復
+      html = `
+        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.7)) drop-shadow(0 0 6px rgba(96,165,250,0.5));">
+          <span class="text-[26px] font-black select-none" style="color: #60a5fa; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 0 8px rgba(96,165,250,0.8); line-height: 1;">${damage}</span>
+        </div>`;
+    } else {
+      // 通常ダメージ
+      html = `
+        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.85));">
+          <span class="text-[26px] font-black select-none" style="color: #ffffff; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000; line-height: 1;">${damage}</span>
+        </div>`;
+    }
 
     this._showFloatingPopup(elementId, {
       html,
-      className: `font-black ${customColorClass}`,
-      duration: 1400
+      className: '',
+      duration: duration
     });
   }
 
