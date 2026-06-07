@@ -430,9 +430,10 @@ class BattleManager {
     };
 
     this.elements.btnRun.onclick = () => {
-      if (!this.activeCharacter || this.isAutoBattle) return;
+      if (!this.isAutoBattle && !this.activeCharacter) return;
       sessionStorage.removeItem('autoBattleMode');
-      this.endBattle(false, '逃げ出した！', false);
+      this.autoBattleMode = 'none';
+      this.endBattle(false, '撤退した！', false);
     };
 
     this.elements.btnAttack.onclick = () => {
@@ -459,6 +460,7 @@ class BattleManager {
       } else {
         // Return to town
         sessionStorage.removeItem('autoBattleMode');
+        this.autoBattleMode = 'none';
         window.location.hash = '/dungeon';
       }
     };
@@ -495,17 +497,17 @@ class BattleManager {
       this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">all_inclusive</span>踏破周回中`;
     }
 
+    this.elements.btnRun.className = "flex-1 bg-teal-900 hover:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer";
+    this.elements.btnRun.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-teal-400">home</span>街に戻る`;
+
     if (this.isAutoBattle) {
       this.elements.btnAttack.disabled = true;
-      this.elements.btnRun.disabled = true;
-      
       this.elements.btnAttack.classList.add('opacity-50', 'grayscale', 'cursor-not-allowed');
-      this.elements.btnRun.classList.add('opacity-50', 'grayscale', 'cursor-not-allowed');
+      this.elements.btnRun.disabled = false;
     } else {
       this.elements.btnAttack.disabled = false;
       this.elements.btnRun.disabled = false;
       this.elements.btnAttack.classList.remove('opacity-50', 'grayscale', 'cursor-not-allowed');
-      this.elements.btnRun.classList.remove('opacity-50', 'grayscale', 'cursor-not-allowed');
     }
     
     this.updateCommandBlocker();
@@ -706,6 +708,10 @@ class BattleManager {
       document.removeEventListener('visibilitychange', this._visibilityHandler);
       this._visibilityHandler = null;
     }
+    if (this._routeChangeHandler) {
+      window.removeEventListener('hashchange', this._routeChangeHandler);
+      this._routeChangeHandler = null;
+    }
   }
 
   startAtbLoop() {
@@ -821,6 +827,13 @@ class BattleManager {
       }
     };
     document.addEventListener('visibilitychange', this._visibilityHandler);
+
+    this._routeChangeHandler = () => {
+      if (window.location.hash !== '#/battle') {
+        this.stopAtbLoop();
+      }
+    };
+    window.addEventListener('hashchange', this._routeChangeHandler);
   }
 
   executeAttack(attacker, defender, isParty, options = {}) {
@@ -958,6 +971,7 @@ class BattleManager {
   }
 
   executeEnemyTurn(enemy) {
+    if (!this.atbWorker) return;
     if (enemy.atkDebuffTurns > 0) {
       enemy.atkDebuffTurns--;
       if (enemy.atkDebuffTurns <= 0) {
@@ -1376,6 +1390,7 @@ class BattleManager {
 
     if (!showModal) {
       sessionStorage.removeItem('autoBattleMode');
+      this.autoBattleMode = 'none';
       window.location.hash = '/dungeon';
       return;
     }
@@ -1534,8 +1549,8 @@ export function renderBattlePage() {
       </div>
 
       <!-- Actions -->
-      <button id="btn-run" class="flex-1 bg-gray-800 hover:bg-gray-700 rounded-lg font-bold text-[11px] border border-gray-600 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-gray-300 p-1">
-        <span class="material-symbols-outlined text-[18px] mb-0.5 text-gray-400">directions_run</span>逃げる
+      <button id="btn-run" class="flex-1 bg-teal-900 hover:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer">
+        <span class="material-symbols-outlined text-[18px] mb-0.5 text-teal-400">home</span>街に戻る
       </button>
       <button id="btn-auto-dungeon" class="flex-1 bg-purple-900 hover:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1">
         <span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回
