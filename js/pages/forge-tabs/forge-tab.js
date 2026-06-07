@@ -26,6 +26,7 @@ export function renderForgeTab() {
   let currentEquipmentCount = 0;
   let equipmentCountMap = {};
   let activeFilter = 'all';
+  let showOnlyCraftable = true;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -42,7 +43,41 @@ export function renderForgeTab() {
   const filterContainer = document.createElement('div');
   filterContainer.className = 'flex items-center gap-2 overflow-x-auto no-scrollbar pb-1';
 
+  // 合成可能トグルスイッチ
+  const toggleContainer = document.createElement('label');
+  toggleContainer.className = 'flex items-center gap-2 shrink-0 cursor-pointer select-none bg-gray-800/40 border border-gray-700/60 rounded-lg px-2.5 h-10 hover:bg-gray-800/80 transition-colors';
 
+  const toggleSwitch = document.createElement('div');
+  
+  const toggleThumb = document.createElement('div');
+  
+  toggleSwitch.appendChild(toggleThumb);
+
+  const toggleLabel = document.createElement('span');
+  toggleLabel.className = 'text-[11px] font-bold text-gray-300 tracking-wider whitespace-nowrap';
+  toggleLabel.textContent = '合成可能';
+
+  toggleContainer.appendChild(toggleSwitch);
+  toggleContainer.appendChild(toggleLabel);
+
+  const updateToggleUI = () => {
+    if (showOnlyCraftable) {
+      toggleSwitch.className = 'relative w-9 h-5 bg-green-600 rounded-full transition-colors duration-200';
+      toggleThumb.className = 'absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform duration-200 transform translate-x-4';
+    } else {
+      toggleSwitch.className = 'relative w-9 h-5 bg-gray-700 rounded-full transition-colors duration-200';
+      toggleThumb.className = 'absolute top-[2px] left-[2px] w-4 h-4 bg-gray-400 rounded-full transition-transform duration-200 transform translate-x-0';
+    }
+  };
+
+  updateToggleUI();
+
+  toggleContainer.onclick = (e) => {
+    e.preventDefault();
+    showOnlyCraftable = !showOnlyCraftable;
+    updateToggleUI();
+    renderGrid();
+  };
 
   const renderFilters = () => {
     filterContainer.innerHTML = '';
@@ -68,6 +103,7 @@ export function renderForgeTab() {
   };
 
   topBar.appendChild(filterContainer);
+  topBar.appendChild(toggleContainer);
 
   // グリッド領域
   // モンスター図鑑と同じシルエットフィルター
@@ -84,7 +120,7 @@ export function renderForgeTab() {
   const renderGrid = () => {
     gridContainer.innerHTML = '';
     
-    const filteredItems = activeFilter === 'all' 
+    let filteredItems = activeFilter === 'all' 
       ? allRecipeItems 
       : allRecipeItems.filter(item => {
           if (activeFilter === 'weapon') return item.slot === 'rightHand';
@@ -93,6 +129,10 @@ export function renderForgeTab() {
           if (activeFilter === 'accessory') return item.slot === 'accessory';
           return true;
         });
+
+    if (showOnlyCraftable) {
+      filteredItems = filteredItems.filter(item => checkCanCraft(item));
+    }
 
     if (filteredItems.length === 0) {
       gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">合成可能なアイテムがありません</div>`;
