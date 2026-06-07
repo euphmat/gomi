@@ -336,7 +336,7 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
   if (!obtainedItems || obtainedItems.length === 0) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">獲得したアイテムはありません</div>';
   }
-  let html = `<div class="grid ${gridClass} gap-1.5 p-1 content-start overflow-y-auto h-full">`;
+  let html = `<div class="grid ${gridClass} gap-1.5 p-1 content-start w-full">`;
   obtainedItems.forEach(item => {
     html += `
       <div class="relative w-full h-full bg-gray-800 border border-gray-600 rounded flex flex-col group hover:border-blue-400 transition-colors overflow-hidden">

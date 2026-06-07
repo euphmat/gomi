@@ -36,7 +36,7 @@ export const DUNGEONS = [{
         level: 4,
         monsters: [
           { slime_red:  1, slime_water: 1,   weight: 49.70 },
-          { slime_water: 2,                  weight: 30 },
+          { slime_water: 5,                  weight: 30 },
           { slime_water: 1, slime_fire: 1,   weight: 20 },
           { slime_dark:  1,                  weight: 0.15 },
           { slime_angel: 1,                  weight: 0.15 }
