@@ -6,6 +6,8 @@ import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
 import { JOBS } from '../jobs/index.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml } from './battle-ui.js';
 
+const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
+
 class BattleManager {
   constructor(container) {
     this.container = container;
@@ -24,11 +26,13 @@ class BattleManager {
     this.obtainedItems = [];
     this.obtainedGold = 0;
     this.obtainedExp = 0;
+    this.obtainedItemsMap = new Map();
     this.wasVisible = !document.hidden;
     this.atbElements = {};
     this._lastRenderedActiveChar = null;
     this._lastRenderedAutoBattle = false;
     this._visibilityHandler = null;
+    this._skillCache = new Map();
 
     this.elements = {
       enemyArea: container.querySelector('#enemy-area'),
@@ -436,16 +440,22 @@ class BattleManager {
   }
 
   _findSkill(character, skillId) {
-    for (const [jobId, skills] of Object.entries(character.jobSkills)) {
-      if (skills[skillId]) {
-        return {
-          level: skills[skillId],
-          def: JOBS[jobId]?.skills.find(s => s.id === skillId) || null,
-          jobId
-        };
+    if (!character._skillCache) {
+      character._skillCache = new Map();
+      for (const [jobId, skills] of Object.entries(character.jobSkills || {})) {
+        for (const [sId, level] of Object.entries(skills)) {
+          if (level > 0) {
+            const jobDef = JOBS[jobId];
+            const skillDef = jobDef ? jobDef.skills.find(s => s.id === sId) : null;
+            const levelConfig = skillDef ? (skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1]) : null;
+            character._skillCache.set(sId, { level, def: skillDef || null, levelConfig, jobId });
+          }
+        }
       }
     }
-    return { level: 0, def: null, jobId: null };
+    const cached = character._skillCache.get(skillId);
+    if (cached) return cached;
+    return { level: 0, def: null, levelConfig: null, jobId: null };
   }
 
   updateCommandBlocker() {
@@ -577,8 +587,8 @@ class BattleManager {
           getSkillDef: (skillId) => this._findSkill(character, skillId).def,
           executeSkill: (skillId, target = null) => {
             const found = this._findSkill(character, skillId);
-            if (found.def) {
-               const levelConfig = found.def.levels.find(l => l.level === found.level) || found.def.levels[found.def.levels.length - 1];
+            if (found.def && found.levelConfig) {
+               const levelConfig = found.levelConfig;
                const prevTarget = this.selectedEnemyTarget;
                if (target) this.selectedEnemyTarget = target;
                this.executeSkill(character, found.def, levelConfig);
@@ -700,8 +710,8 @@ class BattleManager {
 
         const found = this._findSkill(this.activeCharacter, skillId);
 
-        if (found.def) {
-          const levelConfig = found.def.levels.find(l => l.level === level) || found.def.levels[found.def.levels.length - 1];
+        if (found.def && found.levelConfig) {
+          const levelConfig = found.levelConfig;
           if (this.activeCharacter.mp.current < levelConfig.mpCost) return;
           this.executeSkill(this.activeCharacter, found.def, levelConfig);
         }
@@ -969,8 +979,8 @@ class BattleManager {
     // --- Passive: Guard ---
     if (!isParty && defender.jobSkills) {
       const guardSkill = this._findSkill(defender, 'guard');
-      if (guardSkill && guardSkill.level > 0 && guardSkill.def) {
-        const levelConfig = guardSkill.def.levels.find(l => l.level === guardSkill.level) || guardSkill.def.levels[guardSkill.def.levels.length - 1];
+      if (guardSkill && guardSkill.level > 0 && guardSkill.def && guardSkill.levelConfig) {
+        const levelConfig = guardSkill.levelConfig;
         if (Math.random() * 100 < levelConfig.chance) {
           const reduction = levelConfig.reduction;
           damage = Math.floor(damage * (1 - reduction / 100));
@@ -1048,8 +1058,8 @@ class BattleManager {
       } else if (defender.jobSkills) {
         // --- Passive: Counter ---
         const counterSkill = this._findSkill(defender, 'counter');
-        if (counterSkill && counterSkill.level > 0 && counterSkill.def) {
-          const levelConfig = counterSkill.def.levels.find(l => l.level === counterSkill.level) || counterSkill.def.levels[counterSkill.def.levels.length - 1];
+        if (counterSkill && counterSkill.level > 0 && counterSkill.def && counterSkill.levelConfig) {
+          const levelConfig = counterSkill.levelConfig;
           if (Math.random() * 100 < levelConfig.chance) {
             setTimeout(() => {
               if (!defender.isDead && !attacker.isDead) {
@@ -1420,9 +1430,10 @@ class BattleManager {
             p.stats = calcFinalStats(p, this.equipMap);
             if (baseLevelUp) this.showLevelUp(p.elementId, 'base');
             if (jobLevelUp) {
+              p._skillCache = null; // Invalidate cache on job level up
               setTimeout(() => this.showLevelUp(p.elementId, 'job'), baseLevelUp ? (400 / this.speedMult) : 0);
             }
-            this.renderEntities(); // re-render to update max HP/MP and stats display
+            if (!document.hidden) this.renderEntities(); // re-render to update max HP/MP and stats display
           }
         }
       }
@@ -1437,18 +1448,20 @@ class BattleManager {
       for (const drop of enemy.drops) {
         const adjustedRate = Math.min(100, drop.rate + bonus);
         if (Math.random() * 100 <= adjustedRate) {
-          const mat = MATERIALS.find(m => m.id === drop.itemId);
+          const mat = MATERIALS_MAP.get(drop.itemId);
           if (mat) {
             const currentItem = await GameDB.getInventoryItem(mat.id) || { id: mat.id, quantity: 0, type: 'material', ...mat };
             currentItem.quantity = Math.min(9999, currentItem.quantity + 1);
             await GameDB.putInventoryItem(currentItem);
             drops.push({ text: mat.name, image: mat.image, color: 'text-white' });
             
-            const existingDrop = this.obtainedItems.find(i => i.id === mat.id);
+            const existingDrop = this.obtainedItemsMap.get(mat.id);
             if (existingDrop) {
               existingDrop.quantity++;
             } else {
-              this.obtainedItems.push({ id: mat.id, name: mat.name, image: mat.image, quantity: 1 });
+              const newDrop = { id: mat.id, name: mat.name, image: mat.image, quantity: 1 };
+              this.obtainedItems.push(newDrop);
+              this.obtainedItemsMap.set(mat.id, newDrop);
             }
             hasNewDrops = true;
           }
