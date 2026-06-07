@@ -763,6 +763,7 @@ class BattleManager {
     this.atbWorker = new Worker(URL.createObjectURL(blob));
 
     this.atbWorker.onmessage = () => {
+      const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();
         if (this.currentTab === 'skill' || this.currentTab === 'item' || this.currentTab === 'info') {
@@ -787,7 +788,14 @@ class BattleManager {
         
         if (!document.hidden) {
           const atbEl = this.atbElements[p.elementId];
-          if(atbEl) atbEl.style.transform = `scaleX(${p.atb / 1000})`;
+          if(atbEl) {
+             if (disableAnim) {
+               atbEl.style.opacity = '0';
+             } else {
+               atbEl.style.opacity = '1';
+               atbEl.style.transform = `scaleX(${p.atb / 1000})`;
+             }
+          }
         }
       });
       
@@ -803,7 +811,14 @@ class BattleManager {
 
         if (!document.hidden) {
           const atbEl = this.atbElements[e.elementId];
-          if(atbEl) atbEl.style.transform = `scaleX(${e.atb / 1000})`;
+          if(atbEl) {
+             if (disableAnim) {
+               atbEl.style.opacity = '0';
+             } else {
+               atbEl.style.opacity = '1';
+               atbEl.style.transform = `scaleX(${e.atb / 1000})`;
+             }
+          }
         }
       });
 
@@ -1067,6 +1082,7 @@ class BattleManager {
    * ダメージ用ポップアップ — 上方向に素早く浮遊して消える
    */
   _showFloatingPopup(elementId, config) {
+    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
@@ -1120,6 +1136,7 @@ class BattleManager {
    * アクション名用ポップアップ — その場に留まってからフェードアウト
    */
   _showLabelPopup(elementId, config) {
+    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
@@ -1193,6 +1210,7 @@ class BattleManager {
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
+    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     let html = '';
     let duration = 1200;
 
@@ -1238,6 +1256,7 @@ class BattleManager {
 
   // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
+    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     const html = `<span class="font-black text-[13px] ${textClass} tracking-widest whitespace-nowrap bg-black/60 px-3 py-1 rounded-full border ${borderClass}" style="box-shadow: 0 2px 6px rgba(0,0,0,0.7);">${actionName}</span>`;
 
     this._showLabelPopup(elementId, {
@@ -1249,6 +1268,7 @@ class BattleManager {
 
   // --- showLevelUp: レベルアップポップアップ (その場に留まる) ---
   showLevelUp(elementId, type = 'base') {
+    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     const isJob = type === 'job';
     const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
     const shadowColor = isJob ? 'rgba(239,68,68,0.6)' : 'rgba(249,115,22,0.6)';
@@ -1407,7 +1427,7 @@ class BattleManager {
       this.renderItemTab();
     }
 
-    if (document.hidden) return;
+    if (document.hidden || localStorage.getItem('disableBattleAnimations') === 'true') return;
     // Create a drop container overlay for this enemy in the main container
     const el = this.container.querySelector(`#${enemy.elementId}`);
     if (!el) return;

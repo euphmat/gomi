@@ -177,6 +177,23 @@ class App {
             </p>
           </div>
 
+          <!-- Battle Animation Toggle Section -->
+          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-purple-400">animation</span>
+                <span class="text-xs font-bold text-gray-200">バトルアニメーション非表示</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="setting-toggle-battle-anim" class="sr-only peer" ${localStorage.getItem('disableBattleAnimations') === 'true' ? 'checked' : ''}>
+                <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+              </label>
+            </div>
+            <p class="text-[10px] text-gray-500 leading-relaxed">
+              ダメージ表記、スキル表示、ATBゲージ、ドロップ演出などのアニメーションを非表示にして処理負荷を軽減します。
+            </p>
+          </div>
+
           <!-- Auto Battle Speed Section -->
           <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
             <div class="flex items-center justify-between mb-2">
@@ -236,6 +253,14 @@ class App {
     if (toggleBattleStats) {
       toggleBattleStats.addEventListener('change', (e) => {
         localStorage.setItem('hideBattleStats', !e.target.checked);
+        window.dispatchEvent(new Event('settingsChanged'));
+      });
+    }
+
+    const toggleBattleAnim = document.getElementById('setting-toggle-battle-anim');
+    if (toggleBattleAnim) {
+      toggleBattleAnim.addEventListener('change', (e) => {
+        localStorage.setItem('disableBattleAnimations', e.target.checked);
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }
