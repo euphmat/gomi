@@ -22,6 +22,8 @@ class BattleManager {
     this.isDungeonClear = false;
     this.currentTab = 'skill';
     this.obtainedItems = [];
+    this.obtainedGold = 0;
+    this.obtainedExp = 0;
     this.wasVisible = !document.hidden;
     this.atbElements = {};
     this._lastRenderedActiveChar = null;
@@ -1305,6 +1307,7 @@ class BattleManager {
       const currentGold = await GameDB.getGameState('gold') || 0;
       const newGold = currentGold + gold;
       await GameDB.setGameState('gold', newGold);
+      this.obtainedGold += gold;
       const goldDisplay = document.getElementById('header-gold-display');
       if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
       drops.push({ text: `+${gold}`, icon: 'paid', color: 'text-yellow-400' });
@@ -1313,6 +1316,8 @@ class BattleManager {
     // Add EXP / JP to party members
     const exp = enemy.rewards.exp || 0;
     const jp = enemy.rewards.jp || 0;
+    if (exp > 0) this.obtainedExp += exp;
+    
     if (exp > 0 || jp > 0) {
       for (const p of this.party) {
         if (!p.isDead) {
@@ -1557,7 +1562,7 @@ class BattleManager {
           <h2 class="text-4xl font-black tracking-widest text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.7)] animate-pulse mb-5">DEFEAT</h2>
           
           <!-- 死因セクション -->
-          <div class="w-full bg-red-950/20 border border-red-900/40 rounded-xl p-3 mb-5 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+          <div class="w-full bg-red-950/20 border border-red-900/40 rounded-xl p-3 mb-4 flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
             <div class="w-12 h-12 bg-gray-900 rounded-lg border border-red-500/30 overflow-hidden flex items-center justify-center shrink-0 p-1 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
               <img src="${lastKilledBy.monsterImage}" class="w-full h-full object-contain" onerror="this.src='./assets/job/job_norvice.webp'">
             </div>
@@ -1567,6 +1572,18 @@ class BattleManager {
                 <span class="text-red-400 font-extrabold">${lastKilledBy.monsterName}</span> の<br>
                 <span class="text-amber-400 font-extrabold">${lastKilledBy.actionName}</span> によって全滅した...
               </p>
+            </div>
+          </div>
+
+          <!-- 今回の探索結果 (Gold / EXP) -->
+          <div class="w-full bg-gray-800/80 p-2 rounded-lg border border-gray-700 shadow-sm mb-4 flex justify-around">
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] text-gray-400 font-bold mb-1">獲得 Gold</span>
+              <span class="text-xs text-yellow-400 font-bold">+ ${this.obtainedGold || 0} G</span>
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] text-gray-400 font-bold mb-1">獲得 EXP</span>
+              <span class="text-xs text-blue-400 font-bold">+ ${this.obtainedExp || 0} EXP</span>
             </div>
           </div>
 
