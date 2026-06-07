@@ -1,6 +1,29 @@
 import { GameDB } from '../../data/database.js';
 import { STAT_KEYS } from '../../data/constants.js';
 
+const ELEMENT_ICONS = {
+  fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
+  water: { icon: 'water_drop', color: 'text-blue-500', label: 'Water' },
+  grass: { icon: 'eco', color: 'text-green-500', label: 'Grass' },
+  ice: { icon: 'ac_unit', color: 'text-cyan-400', label: 'Ice' },
+  thunder: { icon: 'bolt', color: 'text-yellow-400', label: 'Thunder' },
+  wind: { icon: 'air', color: 'text-teal-400', label: 'Wind' },
+  earth: { icon: 'landscape', color: 'text-amber-600', label: 'Earth' },
+  light: { icon: 'light_mode', color: 'text-yellow-200', label: 'Light' },
+  dark: { icon: 'dark_mode', color: 'text-purple-500', label: 'Dark' },
+};
+
+const AILMENT_ICONS = {
+  poison: { icon: 'coronavirus', color: 'text-purple-500', label: 'Poison' },
+  burn: { icon: 'local_fire_department', color: 'text-red-500', label: 'Burn' },
+  paralysis: { icon: 'electric_bolt', color: 'text-yellow-400', label: 'Paralysis' },
+  sleep: { icon: 'snooze', color: 'text-indigo-400', label: 'Sleep' },
+  confusion: { icon: 'question_mark', color: 'text-pink-400', label: 'Confusion' },
+  curse: { icon: 'sentiment_dissatisfied', color: 'text-gray-400', label: 'Curse' },
+  blind: { icon: 'visibility_off', color: 'text-slate-400', label: 'Blind' },
+  silence: { icon: 'volume_off', color: 'text-blue-300', label: 'Silence' },
+};
+
 /**
  * 倉庫（所持品）タブ
  */
@@ -130,52 +153,140 @@ export function renderStorageTab() {
 
   const showItemModal = (item) => {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in px-4';
+    overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in px-4';
     
     const modal = document.createElement('div');
-    modal.className = 'bg-gray-900 border border-gray-700 rounded-xl w-full max-w-sm shadow-2xl flex flex-col overflow-hidden animate-[slide-up_0.2s_ease-out]';
+    modal.className = 'bg-[#0c0d19] border border-slate-800 rounded-2xl w-full max-w-[390px] shadow-[0_0_50px_-12px_rgba(0,0,0,0.8)] shadow-rose-500/10 flex flex-col overflow-hidden animate-[slide-up_0.25s_cubic-bezier(0.16,1,0.3,1)]';
     
     // Header
     const header = document.createElement('div');
-    header.className = 'flex justify-between items-center p-3 border-b border-gray-800 bg-gray-800/50';
-    header.innerHTML = `<span class="font-bold text-gray-200 text-sm">アイテム詳細</span>
-      <button class="text-gray-400 hover:text-white" id="close-modal-btn">
-        <span class="material-symbols-outlined text-xl">close</span>
-      </button>`;
+    header.className = 'flex justify-between items-center px-4 py-3 border-b border-slate-800/80 bg-slate-900/40 shrink-0';
+    header.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-rose-400 text-lg">info</span>
+        <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">アイテム詳細</span>
+      </div>
+      <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-modal-btn">
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    `;
       
     // Body
     const body = document.createElement('div');
-    body.className = 'p-4 flex flex-col gap-4';
+    body.className = 'p-4 flex flex-col gap-3.5 max-h-[82vh] overflow-y-auto';
     
-    // Top: Icon + Name (left), Stats (right)
-    const statsHtml = item.stats 
-      ? `<div class="grid grid-cols-4 gap-1 w-full mt-1">` + STAT_KEYS.map(stat => {
-          const val = item.stats[stat.key] || 0;
+    // --- Elements: only non-zero, compact chips ---
+    const elements = item.elements || {};
+    const isWeapon = item.slot === 'rightHand';
+    const elLabel = isWeapon ? '属性攻撃' : '属性防御';
+    const elChips = Object.keys(ELEMENT_ICONS)
+      .filter(k => (elements[k] || 0) !== 0)
+      .map(k => {
+        const val = elements[k];
+        const def = ELEMENT_ICONS[k];
+        const c = val > 0 ? 'text-emerald-400' : 'text-rose-400';
+        const s = val > 0 ? '+' : '';
+        return `
+          <span class="inline-flex items-center gap-0.5 bg-slate-900/60 rounded px-1.5 py-[2px] border border-slate-800/50">
+            <span class="material-symbols-outlined text-[10px] ${def.color} leading-none">${def.icon}</span>
+            <span class="text-[9px] font-bold ${c} leading-none font-mono">${s}${val}%</span>
+          </span>
+        `;
+      });
+
+    // --- Ailments: only non-zero, compact chips ---
+    const ailments = item.ailments || {};
+    const ailLabel = isWeapon ? '状態異常付与' : '状態異常耐性';
+    const ailChips = Object.keys(AILMENT_ICONS)
+      .filter(k => (ailments[k] || 0) !== 0)
+      .map(k => {
+        const val = ailments[k];
+        const def = AILMENT_ICONS[k];
+        const c = val > 0 ? 'text-emerald-400' : 'text-rose-400';
+        const s = val > 0 ? '+' : '';
+        return `
+          <span class="inline-flex items-center gap-0.5 bg-slate-900/60 rounded px-1.5 py-[2px] border border-slate-800/50">
+            <span class="material-symbols-outlined text-[10px] ${def.color} leading-none">${def.icon}</span>
+            <span class="text-[9px] font-bold ${c} leading-none font-mono">${s}${val}%</span>
+          </span>
+        `;
+      });
+
+    const elSection = elChips.length > 0 ? `
+      <div class="flex flex-col gap-1 mt-1">
+        <span class="text-[8px] text-slate-500 font-bold leading-none uppercase tracking-wider">${elLabel}</span>
+        <div class="flex flex-wrap gap-1">${elChips.join('')}</div>
+      </div>` : '';
+
+    const ailSection = ailChips.length > 0 ? `
+      <div class="flex flex-col gap-1 mt-1">
+        <span class="text-[8px] text-slate-500 font-bold leading-none uppercase tracking-wider">${ailLabel}</span>
+        <div class="flex flex-wrap gap-1">${ailChips.join('')}</div>
+      </div>` : '';
+
+    // Filter out status display with value 0
+    const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
+    const statsHtml = activeStats.length > 0
+      ? `<div class="grid grid-cols-2 gap-1.5 w-full">` + activeStats.map(stat => {
+          const val = item.stats[stat.key];
           return `
-            <div class="flex flex-col items-center min-w-0 bg-gradient-to-b from-gray-800/80 to-gray-900/90 rounded py-[3px] border border-gray-700/50 shadow-inner">
-              <div class="flex items-center justify-center gap-[1px] w-full">
-                <span class="material-symbols-outlined ${stat.color}" style="font-size: 10px; font-variation-settings: 'FILL' 1">${stat.icon}</span>
-                <span class="text-[7px] text-gray-300 font-bold tracking-wider leading-none">${stat.label}</span>
+            <div class="flex items-center justify-between min-w-0 bg-slate-900/60 rounded px-2 py-1 border border-slate-800/40">
+              <div class="flex items-center gap-1 min-w-0">
+                <span class="material-symbols-outlined ${stat.color} text-[11px] leading-none" style="font-variation-settings: 'FILL' 1">${stat.icon}</span>
+                <span class="text-[9px] text-slate-400 font-bold leading-none truncate">${stat.label}</span>
               </div>
-              <span class="text-[11px] font-black text-gray-100 leading-none mt-0.5 drop-shadow-md">${val}</span>
+              <span class="text-[11px] font-black text-slate-100 leading-none pl-1">${val}</span>
             </div>
           `;
         }).join('') + `</div>`
-      : `<div class="text-xs text-gray-400 mt-1">素材アイテム<br>特殊な効果はありません。</div>`;
+      : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : '素材アイテム<br>特殊な効果はありません。'}</div>`;
+
+    const abilityHtml = item.ability ? `
+      <div class="flex flex-col gap-1 p-3 bg-gradient-to-r from-amber-950/20 to-amber-900/10 border border-amber-700/20 rounded-xl relative overflow-hidden shadow-inner mt-1 shrink-0">
+        <div class="flex items-center gap-1.5 mb-1 shrink-0">
+          <div class="text-[9px] text-amber-300 font-black tracking-wide uppercase px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/25 rounded leading-none shadow-sm">${item.ability.name}</div>
+          <span class="text-[8px] text-amber-500/80 font-bold uppercase tracking-wider">アビリティ</span>
+        </div>
+        <div class="text-[10px] text-slate-300 leading-normal break-words pl-0.5">${item.ability.description}</div>
+      </div>
+    ` : '';
+
+    const itemImgClass = 'w-full h-full object-cover';
+
+    let slotLabel = '素材';
+    let slotColor = 'bg-slate-800/80 text-slate-400 border-slate-700/50';
+    if (item.slot === 'rightHand') {
+      slotLabel = '武器';
+      slotColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+    } else if (item.slot === 'leftHand') {
+      slotLabel = '盾';
+      slotColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+    } else if (item.slot === 'armor') {
+      slotLabel = '防具';
+      slotColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+    } else if (item.slot === 'accessory') {
+      slotLabel = '装飾品';
+      slotColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    }
 
     const topSection = `
-      <div class="flex gap-4">
+      <div class="flex gap-3 shrink-0">
         <div class="flex flex-col items-center gap-2 w-1/3 shrink-0">
-          <div class="w-20 h-20 bg-black/50 rounded border border-gray-700 flex items-center justify-center overflow-hidden">
-            ${item.image ? `<img src="${item.image}" class="w-full h-full object-cover" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-3xl text-gray-600">category</span>`}
+          <div class="relative w-20 h-20 bg-gradient-to-b from-slate-950 to-slate-900 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden shadow-inner group">
+            ${item.image ? `<img src="${item.image}" class="${itemImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-3xl text-slate-650">category</span>`}
           </div>
-          <div class="text-sm font-bold text-center leading-tight text-gray-200 w-full break-words">${item.name}</div>
+          <div class="flex flex-col items-center gap-1 w-full">
+            <span class="px-2 py-0.5 rounded text-[9px] font-black border ${slotColor}">${slotLabel}</span>
+            <div class="text-xs font-black text-center text-slate-100 tracking-wide w-full break-words leading-tight">${item.name}</div>
+          </div>
         </div>
-        <div class="flex-1 bg-black/40 border border-gray-700 p-2 rounded flex flex-col">
-          <div class="text-xs font-bold text-gray-400 mb-2 pb-1 border-b border-gray-700/50">性能表示</div>
+        <div class="flex-1 bg-slate-950/40 border border-slate-800/80 p-3 rounded-xl flex flex-col min-w-0">
+          <div class="text-[9px] font-bold text-slate-500 tracking-wider uppercase mb-1.5 pb-1 border-b border-slate-800/40">性能表示</div>
           ${statsHtml}
+          ${(elSection || ailSection) ? `<div class="flex flex-col gap-1.5 mt-1.5">${elSection}${ailSection}</div>` : ''}
         </div>
       </div>
+      ${abilityHtml}
     `;
     
     // Sell logic – 素材アイテムのみ売却可能
@@ -186,17 +297,17 @@ export function renderStorageTab() {
     
     // Middle: Sell quantity
     const middleSection = document.createElement('div');
-    middleSection.className = 'bg-black/40 border border-gray-700 rounded p-3';
+    middleSection.className = 'bg-slate-950/40 border border-slate-800/80 rounded-xl p-3 shrink-0';
     middleSection.innerHTML = `
       <div class="flex justify-between items-center mb-2">
-        <span class="text-sm font-bold text-gray-300">売却数</span>
-        <span class="text-xs text-gray-500 font-mono">所持: ${maxSell} / 9999</span>
+        <span class="text-xs font-bold text-slate-400">売却数</span>
+        <span class="text-[10px] text-slate-500 font-mono tracking-wider">所持: ${maxSell} / 9999</span>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btn-minus" class="w-10 h-10 flex items-center justify-center bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 active:scale-95 text-lg font-bold transition-all">-</button>
-        <div class="flex-1 text-center font-mono text-xl font-bold text-white bg-gray-900 border border-gray-700 rounded-lg py-1.5" id="sell-count-disp">${sellCount}</div>
-        <button id="btn-plus" class="w-10 h-10 flex items-center justify-center bg-gray-800 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 active:scale-95 text-lg font-bold transition-all">+</button>
-        <button id="btn-max" class="px-4 h-10 flex items-center justify-center bg-blue-900/40 border border-blue-700/50 rounded-lg text-sm font-bold text-blue-300 hover:bg-blue-800/50 active:scale-95 transition-all">MAX</button>
+        <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
+        <div class="flex-1 text-center font-mono text-base font-black text-rose-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="sell-count-disp">${sellCount}</div>
+        <button id="btn-plus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">+</button>
+        <button id="btn-max" class="px-3 h-8 flex items-center justify-center bg-rose-950/60 border border-rose-800/80 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-900/60 active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(244,63,94,0.05)]">MAX</button>
       </div>
     `;
     
@@ -205,17 +316,19 @@ export function renderStorageTab() {
     
     const updateBottomText = () => {
       if (price === 0) {
-        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[20px]">block</span>売却不可`;
-        bottomSection.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed flex justify-center items-center gap-2';
+        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>売却不可`;
+        bottomSection.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800 text-slate-550 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';
       } else {
-        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[20px]">payments</span>売却する（${(price * sellCount).toLocaleString()} G）`;
-        bottomSection.className = 'w-full py-3.5 rounded-lg font-bold text-sm bg-red-900/40 border border-red-700/50 text-red-200 hover:bg-red-800/50 hover:text-white transition-all active:scale-95 flex justify-center items-center gap-2 shadow-lg';
+        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">payments</span>売却する（${(price * sellCount).toLocaleString()} G）`;
+        bottomSection.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(239,68,68,0.25)] hover:shadow-[0_4px_25px_rgba(239,68,68,0.4)] border border-rose-400/20 cursor-pointer shrink-0';
       }
     };
     updateBottomText();
     
     body.innerHTML = topSection;
-    body.appendChild(middleSection);
+    if (price > 0) {
+      body.appendChild(middleSection);
+    }
     body.appendChild(bottomSection);
     
     modal.appendChild(header);
