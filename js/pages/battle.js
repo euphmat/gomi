@@ -1552,7 +1552,7 @@ class BattleManager {
 
       let itemsHtml = '';
       if (this.obtainedItems && this.obtainedItems.length > 0) {
-        itemsHtml = renderItemTabHtml(this.obtainedItems);
+        itemsHtml = renderItemTabHtml(this.obtainedItems, 'grid-cols-4');
       } else {
         itemsHtml = '<div class="text-[10px] text-gray-500 flex items-center justify-center h-20">獲得したアイテムはありません</div>';
       }

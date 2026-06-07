@@ -332,19 +332,19 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   return html;
 }
 
-export function renderItemTabHtml(obtainedItems) {
+export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
   if (!obtainedItems || obtainedItems.length === 0) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">獲得したアイテムはありません</div>';
   }
-  let html = '<div class="grid grid-cols-5 gap-1.5 p-1 content-start overflow-y-auto h-full">';
+  let html = `<div class="grid ${gridClass} gap-1.5 p-1 content-start overflow-y-auto h-full">`;
   obtainedItems.forEach(item => {
     html += `
-      <div class="relative w-full aspect-square bg-gray-800 border border-gray-600 rounded flex flex-col group hover:border-blue-400 transition-colors overflow-hidden">
-        <div class="relative flex-1 w-full min-h-0 p-1">
+      <div class="relative w-full h-full bg-gray-800 border border-gray-600 rounded flex flex-col group hover:border-blue-400 transition-colors overflow-hidden">
+        <div class="relative w-full aspect-square p-1 shrink-0">
           <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
           <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${item.quantity}</div>
         </div>
-        <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center break-all px-0.5 py-[1px] leading-tight shrink-0">
+        <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center break-all px-0.5 py-1 leading-tight flex-1 flex items-center justify-center">
           ${item.name}
         </div>
         <div class="absolute inset-x-0 bottom-full mb-1 hidden group-hover:block bg-black/90 text-white text-[9px] p-1 rounded z-20 text-center whitespace-nowrap border border-gray-700 pointer-events-none z-30">${item.name}</div>
