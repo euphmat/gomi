@@ -1,5 +1,6 @@
 # JRPG Pixel Art Generator
-Please generate the images listed below in a **4x4 grid** format.
+Please generate the images listed below in a **5x5 grid** format.
+**!DO NOT DISPLAY TEXT!**
 
 ## Image Requirements
 - Text : **None**
@@ -15,21 +16,56 @@ Please generate the images listed below in a **4x4 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate
-- id: 'spider_cave_sword',           name: 'ケイブスパイダーソード',   
-- id: 'spider_poison_bow',           name: 'ポイズンスパイダーボウ',   
-- id: 'spider_trapdoor_staff',       name: 'トラップドアスパイダースタッフ'
-- id: 'weaver_web_sword',            name: 'ウェブウィーバーソード',   
+- spider_cave_silk
+- spider_cave_fang
+- spider_cave_venom
+- spider_poison_silk
+- spider_poison_fang
 
-- id: 'spitter_acid_bow',            name: 'アシッドスピッターボウ',   
-- id: 'arachnid_shadow_staff',       name: 'シャドウアラクニドスタッフ', 
-- id: 'tick_blood_sword',            name: 'ブラッドティックソード',   
-- id: 'crawler_bone_bow',            name: 'ボーンクロウラーボウ',    
+- spider_poison_venom
+- spider_trapdoor_silk
+- spider_trapdoor_fang
+- spider_trapdoor_venom
+- weaver_web_silk
 
-- id: 'swarm_spider_staff',          name: 'スパイダースウォームスタッフ',
-- id: 'spider_dark_sword',           name: 'ダークウィドウソード',    
-- id: 'weaver_golden_bow',           name: 'ゴールデンウィーバーボウ',  
-- id: 'arachnid_crystal_staff',      name: 'クリスタルスタッフ',     
+- weaver_web_fang
+- weaver_web_venom
+- spitter_acid_silk
+- spitter_acid_fang
+- spitter_acid_venom
 
-- id: 'boss_broodmother_sword',      name: 'マザーズファング',      
-- id: 'boss_arachne_bow',            name: 'クイーンズウェブ',      
-- id: 'boss_deathweaver_staff',      name: 'デスサイズ',         
+- arachnid_shadow_silk
+- arachnid_shadow_fang
+- arachnid_shadow_venom
+- tick_blood_silk
+- tick_blood_fang
+
+- tick_blood_venom
+- crawler_bone_silk
+- crawler_bone_fang
+- crawler_bone_venom
+
+
+
+
+- swarm_spider_silk
+- swarm_spider_fang
+- swarm_spider_venom
+- spider_dark_silk
+- spider_dark_fang
+- spider_dark_venom
+- weaver_golden_silk
+- weaver_golden_fang
+- weaver_golden_venom
+- arachnid_crystal_silk
+- arachnid_crystal_fang
+- arachnid_crystal_venom
+- boss_broodmother_silk
+- boss_broodmother_fang
+- boss_broodmother_venom
+- boss_arachne_silk
+- boss_arachne_fang
+- boss_arachne_venom
+- boss_deathweaver_silk
+- boss_deathweaver_fang
+- boss_deathweaver_venom
