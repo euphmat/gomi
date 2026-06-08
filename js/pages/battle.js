@@ -66,7 +66,9 @@ class BattleManager {
 
     this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
     this.monsterKills = await GameDB.getGameState('monster_kills') || {};
-
+    this.discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
+    this.currentGold = await GameDB.getGameState('gold') || 0;
+    this._needsSave = false;
 
     const isReinit = this.elements.enemyArea.children.length > 0;
 
@@ -1352,27 +1354,25 @@ class BattleManager {
     let drops = [];
 
     // Track that this monster has been encountered/defeated (for monster library)
-    const discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
-    if (!discoveredMonsters.includes(enemy.id)) {
-      discoveredMonsters.push(enemy.id);
-      await GameDB.setGameState('discovered_monsters', discoveredMonsters);
+    if (this.discoveredMonsters && !this.discoveredMonsters.includes(enemy.id)) {
+      this.discoveredMonsters.push(enemy.id);
+      this._needsSave = true;
     }
 
     // Increment and save monster kill counts
-    const monsterKills = await GameDB.getGameState('monster_kills') || {};
-    monsterKills[enemy.id] = (monsterKills[enemy.id] || 0) + 1;
-    await GameDB.setGameState('monster_kills', monsterKills);
-    this.monsterKills = monsterKills;
+    if (this.monsterKills) {
+      this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + 1;
+      this._needsSave = true;
+    }
 
     // Add Gold
     const gold = enemy.rewards.gold || 0;
     if (gold > 0) {
-      const currentGold = await GameDB.getGameState('gold') || 0;
-      const newGold = currentGold + gold;
-      await GameDB.setGameState('gold', newGold);
+      this.currentGold += gold;
       this.obtainedGold += gold;
+      this._needsSave = true;
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
+      if (goldDisplay) goldDisplay.textContent = ` Gold : ${this.currentGold.toLocaleString()} `;
       drops.push({ text: `+${gold}`, icon: 'paid', color: 'text-yellow-400' });
     }
 
@@ -1437,7 +1437,7 @@ class BattleManager {
           }
         }
       }
-      this.savePartyState(); // Save to DB
+      // savePartyState() is deferred to endBattle()
     }
 
     // Process Drops
@@ -1450,9 +1450,10 @@ class BattleManager {
         if (Math.random() * 100 <= adjustedRate) {
           const mat = MATERIALS_MAP.get(drop.itemId);
           if (mat) {
-            const currentItem = await GameDB.getInventoryItem(mat.id) || { id: mat.id, quantity: 0, type: 'material', ...mat };
-            currentItem.quantity = Math.min(9999, currentItem.quantity + 1);
-            await GameDB.putInventoryItem(currentItem);
+            if (!this._pendingItemDrops) this._pendingItemDrops = {};
+            this._pendingItemDrops[mat.id] = (this._pendingItemDrops[mat.id] || 0) + 1;
+            this._needsSave = true;
+
             drops.push({ text: mat.name, image: mat.image, color: 'text-white' });
             
             const existingDrop = this.obtainedItemsMap.get(mat.id);
@@ -1534,10 +1535,30 @@ class BattleManager {
     }, 2000); // 削除も固定
   }
 
+  async saveDeferredData() {
+    if (!this._needsSave) return;
+    if (this.discoveredMonsters) await GameDB.setGameState('discovered_monsters', this.discoveredMonsters);
+    if (this.monsterKills) await GameDB.setGameState('monster_kills', this.monsterKills);
+    if (this.currentGold !== undefined) await GameDB.setGameState('gold', this.currentGold);
+    if (this._pendingItemDrops) {
+      for (const [itemId, qty] of Object.entries(this._pendingItemDrops)) {
+        const mat = MATERIALS_MAP.get(itemId);
+        if (mat) {
+          const currentItem = await GameDB.getInventoryItem(itemId) || { id: itemId, quantity: 0, type: 'material', ...mat };
+          currentItem.quantity = Math.min(9999, currentItem.quantity + qty);
+          await GameDB.putInventoryItem(currentItem);
+        }
+      }
+      this._pendingItemDrops = {};
+    }
+    this._needsSave = false;
+  }
+
   async endBattle(isWin, text, showModal = true) {
     this.stopAtbLoop();
     this.activeCharacter = null;
     
+    await this.saveDeferredData();
     await this.savePartyState();
 
     if (!showModal) {
