@@ -204,7 +204,10 @@ export const norvice = {
 
     // 1. First Aid priority (Healing)
     if (firstAid) {
-      if (caster.hp.current <= (caster.hp.max - firstAid.config.healAmount)) {
+      const hpPercent = caster.hp.current / caster.hp.max;
+      const missingHp = caster.hp.max - caster.hp.current;
+      // 致命傷を避けるためHP60%未満、または回復量が無駄にならないHP80%未満の時に使用
+      if (hpPercent < 0.6 || (hpPercent < 0.8 && missingHp >= firstAid.config.healAmount * 0.8)) {
         context.executeSkill('first_aid');
         return;
       }
@@ -212,6 +215,7 @@ export const norvice = {
 
     // 2. Focus priority (MP is very low)
     if (focus) {
+      // MPが30%未満の場合に使用
       if (caster.mp.current < caster.mp.max * 0.3) {
         context.executeSkill('focus');
         return;
@@ -220,7 +224,8 @@ export const norvice = {
 
     // 3. Cleave priority (Multiple enemies)
     if (cleave && aliveEnemies.length >= 2) {
-      if (Math.random() < 0.7 || caster.mp.current > caster.mp.max * 0.6) {
+      // 敵が複数いる場合は高確率で使用、MPが十分にあれば確実に見舞う
+      if (Math.random() < 0.8 || caster.mp.current > caster.mp.max * 0.5) {
         context.executeSkill('cleave');
         return;
       }
@@ -229,7 +234,7 @@ export const norvice = {
     // 4. Intimidate priority (Tough enemy without debuff)
     if (intimidate) {
       const toughEnemy = aliveEnemies.find(e => (!e.atkDebuffTurns || e.atkDebuffTurns <= 0) && (e.maxHp >= 50 || e.stats.atk >= 20));
-      if (toughEnemy && Math.random() < 0.5) {
+      if (toughEnemy && Math.random() < 0.8) {
         context.executeSkill('intimidate', toughEnemy);
         return;
       }
@@ -237,7 +242,8 @@ export const norvice = {
 
     // 5. Heavy Strike priority
     if (heavyStrike) {
-      if (caster.mp.current > heavyStrike.config.mpCost * 2 && Math.random() < 0.6) {
+      // MPがコスト以上あれば高確率で使用
+      if (caster.mp.current >= heavyStrike.config.mpCost && Math.random() < 0.7) {
         let target = context.selectedEnemyTarget;
         if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
         context.executeSkill('heavy_strike', target);
