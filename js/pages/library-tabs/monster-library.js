@@ -17,6 +17,17 @@ const ALL_DEFINITIONS = [
 // Unified silhouette filter for undiscovered/undefeated entries
 const SILHOUETTE_FILTER = 'brightness-[0.07] saturate-0 drop-shadow-[0_0_3px_rgba(160,170,220,0.8)]';
 
+function getBaseId(id) {
+  const lastUnderscore = id.lastIndexOf('_');
+  if (lastUnderscore > 0) {
+    const suffix = id.substring(lastUnderscore + 1);
+    if (suffix.length >= 4 && /^[a-z0-9]+$/.test(suffix) && suffix !== 'ring') {
+      return id.substring(0, lastUnderscore);
+    }
+  }
+  return id;
+}
+
 export function renderMonsterLibraryTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full p-2 animate-fade-in overflow-hidden';
@@ -183,14 +194,24 @@ export function renderMonsterLibraryTab() {
   };
 
   const loadData = async () => {
-    const discovered = await GameDB.getGameState('discovered_items') || [];
-    discovered.forEach(id => acquiredBaseIds.add(id));
+    const [eq, inv, discovered, discoveredMonsters, kills] = await Promise.all([
+      GameDB.getAllEquipment(),
+      GameDB.getAllInventory(),
+      GameDB.getGameState('discovered_items'),
+      GameDB.getGameState('discovered_monsters'),
+      GameDB.getGameState('monster_kills')
+    ]);
 
-    // Check discovered_monsters to determine if monster was defeated
-    const discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
-    discoveredMonsters.forEach(monsterId => acquiredBaseIds.add('defeated_' + monsterId));
+    const discoveredItems = discovered || [];
+    discoveredItems.forEach(id => acquiredBaseIds.add(id));
 
-    monsterKills = await GameDB.getGameState('monster_kills') || {};
+    eq.forEach(item => acquiredBaseIds.add(item.baseId || getBaseId(item.id)));
+    inv.forEach(item => acquiredBaseIds.add(item.id));
+
+    const discoveredM = discoveredMonsters || [];
+    discoveredM.forEach(monsterId => acquiredBaseIds.add('defeated_' + monsterId));
+
+    monsterKills = kills || {};
 
     renderGrid();
   };
