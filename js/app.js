@@ -116,9 +116,26 @@ class App {
    */
   initSettingsButton() {
     const btn = document.getElementById('btn-setting');
-    if (!btn) return;
+    if (btn) {
+      btn.addEventListener('click', () => this.showSettingsModal());
+    }
 
-    btn.addEventListener('click', () => this.showSettingsModal());
+    const refreshBtn = document.getElementById('btn-hard-refresh');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(key => caches.delete(key)));
+        }
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (let reg of regs) {
+            await reg.unregister();
+          }
+        }
+        window.location.reload();
+      });
+    }
   }
 
   /**
@@ -148,6 +165,7 @@ class App {
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-lg text-gray-400">settings</span>
             <span class="text-sm font-bold text-gray-100">設定</span>
+            <span class="text-xs text-gray-500 ml-2 font-mono">v0001</span>
           </div>
           <button id="settings-close"
                   class="w-8 h-8 flex items-center justify-center rounded-lg

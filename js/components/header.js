@@ -24,8 +24,11 @@ export function createHeader(gameState) {
       <!-- Gold -->
       <div class="flex items-center gap-1 bg-gray-800/80 border border-gray-700/50 rounded-md px-2.5 py-1 shrink-0"> <span class="material-symbols-outlined text-amber-400 text-sm leading-none">paid</span> <span id="header-gold-display" class="text-xs text-gray-200 font-mono font-medium tracking-tight"> Gold : ${gameState.gold.toLocaleString()} </span> </div>
 
+      <!-- Refresh -->
+      <button id="btn-hard-refresh" class="shrink-0 bg-gray-800/80 border border-gray-700/50 rounded-md px-2.5 py-1 text-xs text-gray-300 font-medium hover:bg-gray-700 active:bg-gray-600 transition-colors duration-150" title="最新版に更新"> <span class="material-symbols-outlined text-base leading-none align-middle">refresh</span> </button>
+
       <!-- Settings -->
-      <button id="btn-setting" class="shrink-0 bg-gray-800/80 border border-gray-700/50 rounded-md px-2.5 py-1 text-xs text-gray-300 font-medium hover:bg-gray-700 active:bg-gray-600 transition-colors duration-150"> <span class="material-symbols-outlined text-base leading-none align-middle">settings</span> </button>
+      <button id="btn-setting" class="shrink-0 bg-gray-800/80 border border-gray-700/50 rounded-md px-2.5 py-1 text-xs text-gray-300 font-medium hover:bg-gray-700 active:bg-gray-600 transition-colors duration-150" title="設定"> <span class="material-symbols-outlined text-base leading-none align-middle">settings</span> </button>
     </header>
   `;
 }

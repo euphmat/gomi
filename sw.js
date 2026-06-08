@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rpg-game-cache-v3';
+const CACHE_NAME = 'rpg-game-cache-v4';
 const urlsToCache = [
   "./",
   "./index.html",
