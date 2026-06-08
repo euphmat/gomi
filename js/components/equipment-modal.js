@@ -38,14 +38,11 @@ const AILMENT_ICONS = {
  * Falls back to the full id if no suffix pattern found.
  */
 function getBaseId(item) {
-  // The unique IDs are created as `${def.id}_${random}` where random is 9 chars of base36
-  // So we try to strip the last _XXXXXXXXX suffix
   const id = item.id;
   const lastUnderscore = id.lastIndexOf('_');
   if (lastUnderscore > 0) {
     const suffix = id.substring(lastUnderscore + 1);
-    // Check if suffix looks like a random string (5+ chars, alphanumeric)
-    if (suffix.length >= 5 && /^[a-z0-9]+$/.test(suffix)) {
+    if (suffix.length >= 4 && /^[a-z0-9]+$/.test(suffix) && suffix !== 'ring') {
       return id.substring(0, lastUnderscore);
     }
   }
