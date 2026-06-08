@@ -1571,6 +1571,19 @@ class BattleManager {
     if (isWin) {
       this.isDungeonClear = this.currentFloorNum >= this.dungeonDef.floors.length;
       
+      if (this.isDungeonClear) {
+        // 解放済みのダンジョンIDのリストを取得
+        let unlocked = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
+        const dungeonIndex = DUNGEONS.findIndex(d => d.id === this.currentDungeonId);
+        if (dungeonIndex !== -1 && dungeonIndex + 1 < DUNGEONS.length) {
+          const nextDungeon = DUNGEONS[dungeonIndex + 1];
+          if (!unlocked.includes(nextDungeon.id)) {
+            unlocked.push(nextDungeon.id);
+            await GameDB.setGameState('unlockedDungeons', unlocked);
+          }
+        }
+      }
+      
       if (this.isDungeonClear && this.autoBattleMode !== 'floor') {
         this.elements.resultOverlay.innerHTML = `
           <div class="flex flex-col items-center w-full max-w-[340px] px-4 py-6 overflow-y-auto max-h-full scrollbar-none text-center">

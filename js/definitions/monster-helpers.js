@@ -64,3 +64,20 @@ export function createSummonAction(actionName, summonPoolIds, getMonsters) {
     }
   };
 }
+
+/**
+ * 状態異常攻撃アクションの execute 関数を生成するファクトリ
+ * @param {string} ailment - 状態異常名 (例: 'poison')
+ * @param {number} chance - 付与確率 (例: 50)
+ * @param {string} actionName - アクション表示名
+ * @param {number} [multiplier=1.2] - ダメージ倍率
+ * @returns {Function} execute 関数
+ */
+export function createAilmentAttack(ailment, chance, actionName, multiplier = 1.2) {
+  return (attacker, defender, battle) => {
+    const origAilments = attacker.stats.attackAilments;
+    attacker.stats.attackAilments = { ...(origAilments || {}), [ailment]: chance };
+    battle.executeAttack(attacker, defender, false, { actionName, damageMultiplier: multiplier, isMagic: false, damageType: 'skill' });
+    attacker.stats.attackAilments = origAilments;
+  };
+}

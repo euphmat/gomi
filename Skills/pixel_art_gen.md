@@ -14,24 +14,22 @@ Please generate the images listed below in a **4x4 grid** format.
     - Highly dense pixels (comparable to or 64-bit era)
     - Intricate textures within each icon
 
-## List of Images to Generate (Monster)
-### 雑魚敵（10体）
-- `spider_cave` : ケイブスパイダー
-- `spider_poison` : ポイズンスパイダー
-- `spider_trapdoor` : トラップドアスパイダー
-- `weaver_web` : ウェブウィーバー
-- `spitter_acid` : アシッドスピッター
-- `arachnid_shadow` : シャドウアラクニド
-- `tick_blood` : ブラッドティック
-- `crawler_bone` : ボーンクロウラー
-- `swarm_spider` : スパイダースウォーム
-- `spider_dark` : ダークウィドウ
+## List of Images to Generate
+- id: 'spider_cave_sword',           name: 'ケイブスパイダーソード',   
+- id: 'spider_poison_bow',           name: 'ポイズンスパイダーボウ',   
+- id: 'spider_trapdoor_staff',       name: 'トラップドアスパイダースタッフ'
+- id: 'weaver_web_sword',            name: 'ウェブウィーバーソード',   
 
-### レア敵（2体）
-- `weaver_golden` : ゴールデンウィーバー
-- `arachnid_crystal` : クリスタルアラクニド
+- id: 'spitter_acid_bow',            name: 'アシッドスピッターボウ',   
+- id: 'arachnid_shadow_staff',       name: 'シャドウアラクニドスタッフ', 
+- id: 'tick_blood_sword',            name: 'ブラッドティックソード',   
+- id: 'crawler_bone_bow',            name: 'ボーンクロウラーボウ',    
 
-### ボス敵（3体）
-- `boss_broodmother` : ブルードマザー
-- `boss_arachne` : アラクネ・クイーン
-- `boss_deathweaver` : デスウィーバー
+- id: 'swarm_spider_staff',          name: 'スパイダースウォームスタッフ',
+- id: 'spider_dark_sword',           name: 'ダークウィドウソード',    
+- id: 'weaver_golden_bow',           name: 'ゴールデンウィーバーボウ',  
+- id: 'arachnid_crystal_staff',      name: 'クリスタルスタッフ',     
+
+- id: 'boss_broodmother_sword',      name: 'マザーズファング',      
+- id: 'boss_arachne_bow',            name: 'クイーンズウェブ',      
+- id: 'boss_deathweaver_staff',      name: 'デスサイズ',         

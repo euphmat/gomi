@@ -12,9 +12,10 @@ window.enterDungeon = async (dungeonId) => {
  *
  * Dungeon Page
  */
-export function renderDungeonPage() {
+export async function renderDungeonPage() {
+  const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
   const cardsHtml = DUNGEONS.map(d => {
-    if (d.isUnlocked) {
+    if (d.isUnlocked || unlockedDungeons.includes(d.id)) {
       const totalFloors = d.floors ? d.floors.length : 0;
       return `
       <!-- ダンジョン: ${d.name} -->

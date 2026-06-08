@@ -106,12 +106,86 @@ export const DUNGEONS = [{
     ]
   },
   {
-    id: 'goblin_cave',
-    name: 'ゴブリンの洞窟',
-    description: '薄暗く危険な洞窟。',
-    image: '',
+    id: 'spider_cave',
+    name: '蜘蛛の洞窟',
+    description: '蜘蛛が巣食う不気味な洞窟。',
+    image: 'assets/dungeon/spider_cave.webp',
     isUnlocked: false,
-    floors: []
+    floors: [
+      {
+        level: 1,
+        monsters: [
+          { spider_cave: 2, weight: 60 },
+          { spider_cave: 1, spider_poison: 4, weight: 30 },
+          { swarm_spider: 5, weight: 10 }
+        ]
+      },
+      {
+        level: 2,
+        monsters: [
+          { spider_cave: 1, spider_poison: 1, weight: 50 },
+          { spider_poison: 2, weight: 30 },
+          { weaver_web: 1, weight: 20 }
+        ]
+      },
+      {
+        level: 3,
+        monsters: [
+          { spider_poison: 2, weight: 40 },
+          { weaver_web: 1, spitter_acid: 1, weight: 30 },
+          { spider_trapdoor: 1, weight: 30 }
+        ]
+      },
+      {
+        level: 4,
+        monsters: [
+          { weaver_web: 1, spitter_acid: 1, weight: 40 },
+          { spitter_acid: 2, weight: 30 },
+          { arachnid_shadow: 1, weight: 30 }
+        ]
+      },
+      {
+        level: 5,
+        monsters: [
+          { arachnid_shadow: 1, tick_blood: 1, weight: 40 },
+          { spider_trapdoor: 1, crawler_bone: 1, weight: 40 },
+          { weaver_golden: 1, weight: 20 } // レア
+        ]
+      },
+      {
+        level: 6,
+        monsters: [
+          { tick_blood: 2, weight: 40 },
+          { crawler_bone: 2, weight: 40 },
+          { arachnid_crystal: 1, weight: 20 } // レア
+        ]
+      },
+      {
+        level: 7,
+        monsters: [
+          { swarm_spider: 2, weight: 50 },
+          { spider_dark: 1, tick_blood: 1, weight: 50 }
+        ]
+      },
+      {
+        level: 8,
+        monsters: [
+          { boss_broodmother: 1, weight: 100 }
+        ]
+      },
+      {
+        level: 9,
+        monsters: [
+          { boss_arachne: 1, weight: 100 }
+        ]
+      },
+      {
+        level: 10,
+        monsters: [
+          { boss_deathweaver: 1, weight: 100 }
+        ]
+      }
+    ]
   },
   {
     id: 'unknown_ruins',

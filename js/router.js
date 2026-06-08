@@ -65,21 +65,46 @@ export class Router {
 
       setTimeout(() => {
         this.contentEl.innerHTML = '';
-        const content = renderFn();
+        let content = renderFn();
 
-        if (typeof content === 'string') {
-          this.contentEl.innerHTML = content;
-        } else if (content instanceof HTMLElement) {
-          this.contentEl.appendChild(content);
-        }
-
-        // Smooth Fade-in transition
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
+        // Handle async render functions (Promise)
+        if (content instanceof Promise) {
+          content.then(resolvedContent => {
+            if (typeof resolvedContent === 'string') {
+              this.contentEl.innerHTML = resolvedContent;
+            } else if (resolvedContent instanceof HTMLElement) {
+              this.contentEl.appendChild(resolvedContent);
+            }
+            
+            // Smooth Fade-in transition
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                this.contentEl.style.opacity = '1';
+                this.contentEl.style.transform = 'translateY(0) scale(1)';
+              });
+            });
+          }).catch(err => {
+            console.error('[Router] Error rendering async route:', err);
+            this.contentEl.innerHTML = '<div class="p-4 text-red-500">Error loading page</div>';
             this.contentEl.style.opacity = '1';
             this.contentEl.style.transform = 'translateY(0) scale(1)';
           });
-        });
+        } else {
+          // Synchronous handling
+          if (typeof content === 'string') {
+            this.contentEl.innerHTML = content;
+          } else if (content instanceof HTMLElement) {
+            this.contentEl.appendChild(content);
+          }
+
+          // Smooth Fade-in transition
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              this.contentEl.style.opacity = '1';
+              this.contentEl.style.transform = 'translateY(0) scale(1)';
+            });
+          });
+        }
       }, 200);
     }
 
