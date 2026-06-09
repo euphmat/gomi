@@ -12,7 +12,7 @@
  */
 
 export const ARMORS = [
-  { id: 'cloth_armor'           , name: '布の服'                          , stats: { def:  2, mdef:  1 }  , elements: {                        } }
+  { id: 'cloth_armor'           , name: '布の服'                          , stats: { def:  2, mdef:  1 }  , elements: {                        } },
   { id: 'slime_blue_armor'      , name: 'ブルースライムアーマー'          , stats: { def:  4, mdef:  2 }  , elements: { water:    5            }, recipe: { price:  500, materials: [{ id: 'slime_blue_core',       amount: 25 }, { id: 'slime_blue_fluid',       amount: 5 }] } },
   { id: 'slime_green_armor'     , name: 'グリーンスライムアーマー'        , stats: { def:  5, mdef:  7 }  , elements: { grass:   20            }, recipe: { price: 1000, materials: [{ id: 'slime_green_core',      amount: 25 }, { id: 'slime_green_fluid',      amount: 5 }] } },
   { id: 'slime_red_armor'       , name: 'レッドスライムアーマー'          , stats: { def: 10, mdef:  8 }  , elements: { fire:    20            }, recipe: { price: 1500, materials: [{ id: 'slime_red_core',        amount: 25 }, { id: 'slime_red_fluid',        amount: 5 }] } },
