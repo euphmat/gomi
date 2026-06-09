@@ -225,6 +225,9 @@ class BattleManager {
           if (p && !p.isDead) {
             if (this.isAutoBattle) {
               this.selectedPartyMember = p;
+              this.currentTab = 'skill';
+              this.updateTabStyles();
+              this.renderTabContent();
             }
             this.updateEntities();
           }
@@ -281,17 +284,15 @@ class BattleManager {
         }
       }
 
-      if (!disableAnim) {
-        if (this.activeEnemy === e) {
-          iconContainer.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-          iconContainer.classList.remove('border-gray-700', 'border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-        } else if (this.selectedEnemyTarget === e) {
-          iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-          iconContainer.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        } else {
-          iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-          iconContainer.classList.add('border-gray-700');
-        }
+      if (this.activeEnemy === e) {
+        iconContainer.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        iconContainer.classList.remove('border-gray-700', 'border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+      } else if (this.selectedEnemyTarget === e) {
+        iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+        iconContainer.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+      } else {
+        iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        iconContainer.classList.add('border-gray-700');
       }
 
       hpBar.style.transform = `scaleX(${e.currentHp / e.maxHp})`;
@@ -302,25 +303,25 @@ class BattleManager {
       if (!cache) return;
       const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, statBlocks } = cache;
 
-      if (!disableAnim) {
-        if (this.activeCharacter === p) {
-          el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-          el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-        } else if (this.isAutoBattle && this.selectedPartyMember === p) {
-          el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-          el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        } else {
-          el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-          el.classList.add('border-gray-700');
-        }
+      if (this.activeCharacter === p) {
+        el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+      } else if (this.isAutoBattle && this.selectedPartyMember === p) {
+        el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+        el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+      } else {
+        el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+        el.classList.add('border-gray-700');
+      }
 
-        if (p.isDead) {
-          el.classList.add('opacity-40', 'grayscale');
-          el.classList.remove('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
-        } else {
-          el.classList.remove('opacity-40', 'grayscale');
-          el.classList.add('transition-all', 'cursor-pointer', 'hover:scale-[1.02]');
-        }
+      if (p.isDead) {
+        el.classList.add('opacity-40', 'grayscale');
+        el.classList.remove('cursor-pointer');
+        if (!disableAnim) el.classList.remove('transition-all', 'hover:scale-[1.02]');
+      } else {
+        el.classList.remove('opacity-40', 'grayscale');
+        el.classList.add('cursor-pointer');
+        if (!disableAnim) el.classList.add('transition-all', 'hover:scale-[1.02]');
       }
 
       if (lvEl) lvEl.textContent = p.level || 1;
