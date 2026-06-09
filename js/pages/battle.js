@@ -1118,6 +1118,24 @@ class BattleManager {
   // ポップアップはエンティティごとにスタック（積み上げ）される
   // =============================================
 
+  _getPoolElement() {
+    if (!this._domPool) this._domPool = [];
+    if (this._domPool.length > 0) {
+      const el = this._domPool.pop();
+      el.innerHTML = '';
+      el.className = '';
+      el.style.cssText = '';
+      return el;
+    }
+    return document.createElement('div');
+  }
+
+  _releasePoolElement(el) {
+    if (el.parentNode) el.parentNode.removeChild(el);
+    if (!this._domPool) this._domPool = [];
+    if (this._domPool.length < 100) this._domPool.push(el);
+  }
+
   /**
    * ダメージ用ポップアップ — 上方向に素早く浮遊して消える
    */
@@ -1134,7 +1152,7 @@ class BattleManager {
     const baseY = rect.top;
     const spreadX = (Math.random() - 0.5) * 30;
 
-    const popup = document.createElement('div');
+    const popup = this._getPoolElement();
     popup.className = `fixed z-[9999] pointer-events-none animate-float-popup ${config.className || ''}`;
     popup.style.left = `${centerX}px`;
     popup.style.top = `${baseY}px`;
@@ -1149,7 +1167,7 @@ class BattleManager {
     document.body.appendChild(popup);
 
     setTimeout(() => {
-      popup.remove();
+      this._releasePoolElement(popup);
     }, dur);
   }
 
@@ -1166,6 +1184,15 @@ class BattleManager {
     if (!this._labelStacks[elementId]) this._labelStacks[elementId] = [];
 
     const stack = this._labelStacks[elementId];
+    
+    // limit stack size to prevent infinite growth and severe layout thrashing
+    if (stack.length > 5) {
+      const oldest = stack.shift();
+      this._releasePoolElement(oldest.popup);
+      this._releasePoolElement(oldest.el);
+      clearTimeout(oldest.timeoutId);
+    }
+
     const speed = this.speedMult || 1;
     const dur = (config.duration || 1000) / speed;
     const itemHeight = config.height || 28;
@@ -1177,14 +1204,14 @@ class BattleManager {
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top - 8;
 
-    const wrapper = document.createElement('div');
+    const wrapper = this._getPoolElement();
     wrapper.className = `fixed z-[10000] pointer-events-none flex flex-col items-center`;
     wrapper.style.left = `${centerX}px`;
     wrapper.style.top = `${baseY}px`;
     wrapper.style.transform = `translate(-50%, -10px)`;
     wrapper.style.transition = `transform 0.2s ease-out`;
 
-    const popup = document.createElement('div');
+    const popup = this._getPoolElement();
     popup.className = `animate-label-popup ${config.className || ''}`;
     popup.style.setProperty('--popup-dur', `${dur}ms`);
     popup.innerHTML = config.html;
@@ -1192,7 +1219,7 @@ class BattleManager {
     wrapper.appendChild(popup);
     document.body.appendChild(wrapper);
 
-    const entry = { el: wrapper, baseOffset: 10 };
+    const entry = { el: wrapper, popup: popup, baseOffset: 10, timeoutId: null };
     stack.push(entry);
 
     stack.forEach(e => {
@@ -1202,8 +1229,9 @@ class BattleManager {
       }
     });
 
-    setTimeout(() => {
-      wrapper.remove();
+    entry.timeoutId = setTimeout(() => {
+      this._releasePoolElement(popup);
+      this._releasePoolElement(wrapper);
       const idx = stack.indexOf(entry);
       if (idx !== -1) stack.splice(idx, 1);
     }, dur);
@@ -1218,33 +1246,33 @@ class BattleManager {
     if (customColorClass.includes('text-red-500')) {
       // 弱点 (Weakness)
       html = `
-        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.85)) drop-shadow(0 0 8px rgba(239,68,68,0.75)); transform: scale(1.25);">
-          <span class="text-[34px] font-black italic select-none animate-pulse" style="color: #ef4444; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff, 0 0 10px rgba(239,68,68,0.9); line-height: 1; letter-spacing: -0.03em;">${damage}</span>
+        <div class="flex items-center justify-center" style="transform: scale(1.25);">
+          <span class="text-[34px] font-black italic select-none animate-pulse" style="color: #ef4444; text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 4px 6px rgba(0,0,0,0.8); line-height: 1; letter-spacing: -0.03em;">${damage}</span>
         </div>`;
       duration = 1500;
     } else if (customColorClass.includes('text-purple-400')) {
       // 耐性軽減 (Resist)
       html = `
-        <div class="flex items-center justify-center" style="filter: drop-shadow(0 1px 3px rgba(0,0,0,0.85)) drop-shadow(0 0 6px rgba(168,85,247,0.6)); transform: scale(0.85);">
-          <span class="text-[22px] font-black select-none" style="color: #a855f7; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 6px rgba(168,85,247,0.8); line-height: 1;">${damage}</span>
+        <div class="flex items-center justify-center" style="transform: scale(0.85);">
+          <span class="text-[22px] font-black select-none" style="color: #a855f7; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
         </div>`;
     } else if (customColorClass.includes('text-green-400') || customColorClass.includes('text-green-500')) {
       // HP回復
       html = `
-        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.7)) drop-shadow(0 0 6px rgba(74,222,128,0.5));">
-          <span class="text-[26px] font-black select-none" style="color: #4ade80; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 0 8px rgba(74,222,128,0.8); line-height: 1;">${damage}</span>
+        <div class="flex items-center justify-center">
+          <span class="text-[26px] font-black select-none" style="color: #4ade80; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
         </div>`;
     } else if (customColorClass.includes('text-blue-400')) {
       // MP回復
       html = `
-        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.7)) drop-shadow(0 0 6px rgba(96,165,250,0.5));">
-          <span class="text-[26px] font-black select-none" style="color: #60a5fa; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 0 8px rgba(96,165,250,0.8); line-height: 1;">${damage}</span>
+        <div class="flex items-center justify-center">
+          <span class="text-[26px] font-black select-none" style="color: #60a5fa; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
         </div>`;
     } else {
       // 通常ダメージ
       html = `
-        <div class="flex items-center justify-center" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.85));">
-          <span class="text-[26px] font-black select-none" style="color: #ffffff; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000; line-height: 1;">${damage}</span>
+        <div class="flex items-center justify-center">
+          <span class="text-[26px] font-black select-none" style="color: #ffffff; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
         </div>`;
     }
 
@@ -1272,14 +1300,13 @@ class BattleManager {
     if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     const isJob = type === 'job';
     const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
-    const shadowColor = isJob ? 'rgba(239,68,68,0.6)' : 'rgba(249,115,22,0.6)';
     const iconColor = isJob ? 'text-red-300' : 'text-orange-300';
     const gradient = isJob
       ? 'from-white via-red-400 to-red-600'
       : 'from-white via-orange-400 to-orange-600';
 
     const html = `
-      <div class="flex items-center justify-center gap-0.5 whitespace-nowrap" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8)) drop-shadow(0 0 8px ${shadowColor});">
+      <div class="flex items-center justify-center gap-0.5 whitespace-nowrap" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
         <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
         <span class="font-black text-[13px] italic tracking-widest text-transparent bg-clip-text bg-gradient-to-b ${gradient}">${textStr}</span>
         <span class="material-symbols-outlined text-[15px] ${iconColor}" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
