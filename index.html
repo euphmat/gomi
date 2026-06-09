@@ -126,6 +126,56 @@
       100% { transform: translateX(100%); }
     }
 
+    /* ─── Battle Popups ────────────────────────────── */
+    @keyframes float-popup {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, 0) scale(0.5);
+      }
+      10% {
+        opacity: 1;
+        transform: translate(calc(-50% + var(--spread-x, 0px) * 0.5), calc(var(--float-y, -25px) * 0.5)) scale(1.2);
+      }
+      25% {
+        transform: translate(calc(-50% + var(--spread-x, 0px) * 0.8), calc(var(--float-y, -25px) * 0.8)) scale(1.0);
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--spread-x, 0px)), var(--float-y, -25px)) scale(1.0);
+      }
+    }
+    .animate-float-popup {
+      animation: float-popup var(--popup-dur, 1.2s) cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes label-popup-inner {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      15% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+      25% {
+        transform: scale(1.0);
+      }
+      70% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+    .animate-label-popup {
+      animation: label-popup-inner var(--popup-dur, 1s) ease-out forwards;
+      will-change: transform, opacity;
+    }
+
     /* ─── Inn Rest Animations ────────────────────────── */
     @keyframes inn-float {
       0%, 100% { transform: translateY(0); }

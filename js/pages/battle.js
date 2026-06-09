@@ -225,14 +225,8 @@ class BattleManager {
           if (p && !p.isDead) {
             if (this.isAutoBattle) {
               this.selectedPartyMember = p;
-              this.currentTab = 'info';
-              this.updateTabStyles();
             }
-            this.infoTarget = { type: 'party', entity: p };
             this.updateEntities();
-            if (this.currentTab === 'info') {
-              this.renderTabContent();
-            }
           }
         });
       });
@@ -241,16 +235,13 @@ class BattleManager {
     this.updateCommandBlocker();
 
     this.renderTabContent();
-
     this.elements.enemyArea.querySelectorAll('.enemy-card').forEach(el => {
       el.addEventListener('click', (e) => {
         const uniqueId = e.currentTarget.dataset.id;
         const enemy = this.enemies.find(en => en.uniqueId === uniqueId);
         if (enemy && !enemy.isDead) {
-          if (this.isAutoBattle) {
-            this.currentTab = 'info';
-            this.updateTabStyles();
-          }
+          this.currentTab = 'info';
+          this.updateTabStyles();
           this.selectedEnemyTarget = enemy;
           this.infoTarget = { type: 'enemy', entity: enemy };
           this.renderEntities();
@@ -303,7 +294,7 @@ class BattleManager {
         }
       }
 
-      hpBar.style.width = `${(e.currentHp / e.maxHp) * 100}%`;
+      hpBar.style.transform = `scaleX(${e.currentHp / e.maxHp})`;
     });
 
     this.party.forEach(p => {
@@ -338,22 +329,22 @@ class BattleManager {
 
       if (hpBar) {
         const trueMaxHp = p.stats.hp || p.hp.max;
-        hpBar.style.width = `${(p.hp.current / trueMaxHp) * 100}%`;
+        hpBar.style.transform = `scaleX(${p.hp.current / trueMaxHp})`;
         if (hpText) hpText.textContent = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
       }
 
       if (mpBar) {
-        mpBar.style.width = `${(p.mp.current / p.mp.max) * 100}%`;
+        mpBar.style.transform = `scaleX(${p.mp.current / p.mp.max})`;
         if (mpText) mpText.textContent = `${Math.floor(p.mp.current)}/${p.mp.max}`;
       }
 
       if (expBar) {
-        expBar.style.width = `${(p.exp.current / p.exp.max) * 100}%`;
+        expBar.style.transform = `scaleX(${p.exp.current / p.exp.max})`;
         if (expText) expText.textContent = `${Math.floor(p.exp.current)}/${p.exp.max}`;
       }
 
       if (jpBar) {
-        jpBar.style.width = `${(p.jp.current / p.jp.max) * 100}%`;
+        jpBar.style.transform = `scaleX(${p.jp.current / p.jp.max})`;
         if (jpText) jpText.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
       }
 
@@ -368,9 +359,10 @@ class BattleManager {
 
     this.updateCommandBlocker();
 
-    // Refresh tab content only when active character changes or auto-battle toggles
-    if (this._lastRenderedActiveChar !== this.activeCharacter || this._lastRenderedAutoBattle !== this.isAutoBattle) {
-      this._lastRenderedActiveChar = this.activeCharacter;
+    // Refresh tab content only when the target character changes or auto-battle toggles
+    const targetCharForTab = this.isAutoBattle ? this.selectedPartyMember : this.activeCharacter;
+    if (this._lastRenderedTabChar !== targetCharForTab || this._lastRenderedAutoBattle !== this.isAutoBattle) {
+      this._lastRenderedTabChar = targetCharForTab;
       this._lastRenderedAutoBattle = this.isAutoBattle;
       this.renderTabContent();
     }
@@ -652,23 +644,16 @@ class BattleManager {
 
   renderInfoTab() {
     let targetEntity = null;
-    let isParty = false;
     
-    if (this.infoTarget) {
+    if (this.infoTarget && this.infoTarget.type === 'enemy') {
       targetEntity = this.infoTarget.entity;
-      isParty = this.infoTarget.type === 'party';
     } else if (this.selectedEnemyTarget) {
       targetEntity = this.selectedEnemyTarget;
-      isParty = false;
-    } else if (this.selectedPartyMember) {
-      targetEntity = this.selectedPartyMember;
-      isParty = true;
     } else {
-      targetEntity = this.party.find(p => !p.isDead) || this.party[0];
-      isParty = true;
+      targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
     }
 
-    const html = renderInfoTabHtml(targetEntity, isParty, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills);
+    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills);
     this.elements.tabContent.innerHTML = html;
   }
 
@@ -756,6 +741,10 @@ class BattleManager {
       this.atbWorker.terminate();
       this.atbWorker = null;
     }
+    if (this.atbWorkerUrl) {
+      URL.revokeObjectURL(this.atbWorkerUrl);
+      this.atbWorkerUrl = null;
+    }
     if (this.atbLoop) {
       clearInterval(this.atbLoop);
       this.atbLoop = null;
@@ -791,6 +780,10 @@ class BattleManager {
     if (this.atbWorker) {
       this.atbWorker.terminate();
     }
+    if (this.atbWorkerUrl) {
+      URL.revokeObjectURL(this.atbWorkerUrl);
+      this.atbWorkerUrl = null;
+    }
 
     const workerCode = `
       let timer = null;
@@ -805,7 +798,8 @@ class BattleManager {
       };
     `;
     const blob = new Blob([workerCode], { type: 'application/javascript' });
-    this.atbWorker = new Worker(URL.createObjectURL(blob));
+    this.atbWorkerUrl = URL.createObjectURL(blob);
+    this.atbWorker = new Worker(this.atbWorkerUrl);
 
     this.atbWorker.onmessage = () => {
       const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
@@ -1140,41 +1134,22 @@ class BattleManager {
     const spreadX = (Math.random() - 0.5) * 30;
 
     const popup = document.createElement('div');
-    popup.className = `fixed z-[9999] pointer-events-none ${config.className || ''}`;
+    popup.className = `fixed z-[9999] pointer-events-none animate-float-popup ${config.className || ''}`;
     popup.style.left = `${centerX}px`;
     popup.style.top = `${baseY}px`;
-    popup.style.willChange = 'transform, opacity';
+    
+    const isParty = elementId.startsWith('party-');
+    const floatY = isParty ? 25 : -25;
+    
+    popup.style.setProperty('--spread-x', `${spreadX}px`);
+    popup.style.setProperty('--float-y', `${floatY}px`);
+    popup.style.setProperty('--popup-dur', `${dur}ms`);
     popup.innerHTML = config.html;
     document.body.appendChild(popup);
 
-    const startTime = performance.now();
-
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      if (elapsed >= dur) { popup.remove(); return; }
-      const t = elapsed / dur; // 0→1
-
-      // プレイヤー側は下降、モンスター側は上昇させる
-      const isParty = elementId.startsWith('party-');
-      const easeOut = 1 - Math.pow(1 - t, 3);
-      const floatY = easeOut * 25;
-      const yOffset = isParty ? floatY : -floatY;
-
-      // opacity: 最初10%でフェードイン、後半30%でフェードアウト
-      let opacity = 1;
-      const fadeInRatio = 0.1;
-      const fadeOutRatio = 0.3;
-      if (t < fadeInRatio) opacity = t / fadeInRatio;
-      else if (t > 1 - fadeOutRatio) opacity = 1 - (t - (1 - fadeOutRatio)) / fadeOutRatio;
-
-      // scale: ポンっと登場 → 1.0
-      const scale = t < fadeInRatio ? 0.5 + 0.7 * (t / fadeInRatio) : 1.2 - 0.2 * Math.min(1, (t - fadeInRatio) / 0.15);
-
-      popup.style.transform = `translate(calc(-50% + ${spreadX * easeOut}px), ${yOffset}px) scale(${scale})`;
-      popup.style.opacity = opacity;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    setTimeout(() => {
+      popup.remove();
+    }, dur);
   }
 
   /**
@@ -1186,7 +1161,6 @@ class BattleManager {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
-    // スタック管理
     if (!this._labelStacks) this._labelStacks = {};
     if (!this._labelStacks[elementId]) this._labelStacks[elementId] = [];
 
@@ -1196,61 +1170,42 @@ class BattleManager {
     const itemHeight = config.height || 28;
     const stackGap = 4;
 
-    // 既存のラベルを上に押し上げる
     const bump = itemHeight + stackGap;
-    stack.forEach(entry => { entry.baseOffset += bump; });
 
     const rect = el.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top - 8;
 
-    const popup = document.createElement('div');
-    popup.className = `fixed z-[10000] pointer-events-none flex flex-col items-center ${config.className || ''}`;
-    popup.style.left = `${centerX}px`;
-    popup.style.top = `${baseY}px`;
-    popup.style.willChange = 'transform, opacity';
-    popup.innerHTML = config.html;
-    document.body.appendChild(popup);
+    const wrapper = document.createElement('div');
+    wrapper.className = `fixed z-[10000] pointer-events-none flex flex-col items-center`;
+    wrapper.style.left = `${centerX}px`;
+    wrapper.style.top = `${baseY}px`;
+    wrapper.style.transform = `translate(-50%, -10px)`;
+    wrapper.style.transition = `transform 0.2s ease-out`;
 
-    const entry = { el: popup, baseOffset: 0 };
+    const popup = document.createElement('div');
+    popup.className = `animate-label-popup ${config.className || ''}`;
+    popup.style.setProperty('--popup-dur', `${dur}ms`);
+    popup.innerHTML = config.html;
+    
+    wrapper.appendChild(popup);
+    document.body.appendChild(wrapper);
+
+    const entry = { el: wrapper, baseOffset: 10 };
     stack.push(entry);
 
-    const startTime = performance.now();
-    const fadeOutStart = dur * 0.7; // 残り30%でフェードアウト
-    const fadeInEnd = dur * 0.15; // 最初15%でフェードイン
-
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      if (elapsed >= dur) {
-        popup.remove();
-        const idx = stack.indexOf(entry);
-        if (idx !== -1) stack.splice(idx, 1);
-        return;
+    stack.forEach(e => {
+      if (e !== entry) {
+        e.baseOffset += bump;
+        e.el.style.transform = `translate(-50%, -${e.baseOffset}px)`;
       }
+    });
 
-      // 上方向にスッと動く (基本押し上げ + 軽快な浮遊)
-      // easeOutExpo のような動きで素早く定位置へ
-      const t = elapsed / dur;
-      const floatEase = 1 - Math.pow(1 - t, 4);
-      const floatY = entry.baseOffset + floatEase * 10;
-
-      let opacity = 1;
-      if (elapsed < fadeInEnd) opacity = elapsed / fadeInEnd;
-      else if (elapsed > fadeOutStart) opacity = 1 - (elapsed - fadeOutStart) / (dur - fadeOutStart);
-
-      // 軽快なバウンス (0.5 -> 1.15 -> 1.0)
-      let scale = 1;
-      if (elapsed < fadeInEnd) {
-        const st = elapsed / fadeInEnd;
-        if (st < 0.7) scale = 0.5 + (1.15 - 0.5) * (st / 0.7);
-        else scale = 1.15 - (1.15 - 1.0) * ((st - 0.7) / 0.3);
-      }
-
-      popup.style.transform = `translate(-50%, -${floatY}px) scale(${scale})`;
-      popup.style.opacity = opacity;
-      requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
+    setTimeout(() => {
+      wrapper.remove();
+      const idx = stack.indexOf(entry);
+      if (idx !== -1) stack.splice(idx, 1);
+    }, dur);
   }
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
