@@ -66,7 +66,7 @@ class App {
         const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
         const correctSP = earnedSP - spentSP;
         if (char.sp !== correctSP) {
-          console.log(\`[App] SP Correction for \${char.name}: \${char.sp} -> \${correctSP}\`);
+          console.log(`[App] SP Correction for ${char.name}: ${char.sp} -> ${correctSP}`);
           char.sp = correctSP;
           await GameDB.putCharacter(char);
         }
