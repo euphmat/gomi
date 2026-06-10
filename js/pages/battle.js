@@ -709,6 +709,13 @@ class BattleManager {
 
   executeSkill(caster, skillDef, levelConfig) {
     if (caster.mp && caster.mp.current < levelConfig.mpCost) return;
+    if (levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
+      this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
+      caster.atb = 0;
+      this.activeCharacter = null;
+      this.renderEntities();
+      return;
+    }
 
     if (caster.mp) {
       caster.mp.current -= levelConfig.mpCost;
@@ -863,13 +870,28 @@ class BattleManager {
       });
 
       if (nextActor) {
+        if (this.processPreActionAilment(nextActor.entity)) {
+          nextActor.entity.atb = 0;
+          if (!document.hidden) this.renderEntities();
+          this.checkBattleEnd();
+          return;
+        }
+
         if (nextActor.type === 'party') {
+          if (nextActor.entity.activeAilment && nextActor.entity.activeAilment.type === 'confusion') {
+            this.executeConfusionTurn(nextActor.entity, true);
+            return;
+          }
           this.activeCharacter = nextActor.entity;
           if (!document.hidden) this.renderEntities();
           if (this.isAutoBattle) {
             this.processAutoBattle(this.activeCharacter);
           }
         } else {
+          if (nextActor.entity.activeAilment && nextActor.entity.activeAilment.type === 'confusion') {
+            this.executeConfusionTurn(nextActor.entity, false);
+            return;
+          }
           this.activeEnemy = nextActor.entity;
           if (!document.hidden) this.updateEntities();
           setTimeout(() => {
@@ -906,7 +928,19 @@ class BattleManager {
     const actionName = options.actionName || '攻撃';
     this._abilityTriggered = false;
 
+    // --- 暗闇 (Blind) の判定 ---
     const isMagic = options.isMagic || false;
+    if (!isMagic && attacker.activeAilment && attacker.activeAilment.type === 'blind' && !options.hideActionName) {
+      if (Math.random() < 0.5) {
+        this.showActionName(attacker.elementId, 'MISS', 'text-gray-400', 'border-gray-500/50');
+        attacker.atb = 0;
+        if (attacker.hp !== undefined) this.activeCharacter = null;
+        else this.activeEnemy = null;
+        this.renderEntities();
+        return;
+      }
+    }
+
     const atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
     const defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
     let damage = Math.max(1, atkStat - Math.floor(defStat / 2));
@@ -1024,23 +1058,25 @@ class BattleManager {
       }
     }
 
-    if (inflictedAilments.length > 0) {
+    if (inflictedAilments.length > 0 && !defender.activeAilment) {
+      const ailment = inflictedAilments[0];
+      defender.activeAilment = { type: ailment, duration: 3 };
       setTimeout(() => {
-        const ailmentName = inflictedAilments[0].toUpperCase();
+        const ailmentName = ailment.toUpperCase();
         this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
       }, 500 / this.speedMult);
-      // 将来的に defender.activeAilments 等へ状態異常を保存する
     }
 
-    if (isParty) {
+    const isDefenderParty = defender.hp !== undefined;
+    const prevHp = isDefenderParty ? defender.hp.current : defender.currentHp;
+    
+    if (!isDefenderParty) {
       defender.currentHp -= damage;
       if (defender.currentHp <= 0) {
         defender.currentHp = 0;
         defender.isDead = true;
         this.processEnemyDeath(defender);
       }
-      attacker.atb = 0;
-      this.activeCharacter = null;
     } else {
       defender.hp.current -= damage;
       if (defender.hp.current <= 0) {
@@ -1067,7 +1103,29 @@ class BattleManager {
           }
         }
       }
-      attacker.atb = 0;
+    }
+    
+    const newHp = isDefenderParty ? defender.hp.current : defender.currentHp;
+    if (newHp < prevHp && defender.activeAilment && defender.activeAilment.type === 'sleep') {
+      defender.activeAilment = null;
+      setTimeout(() => {
+        if (!defender.isDead) this.showActionName(defender.elementId, 'WAKE UP', 'text-blue-300', 'border-blue-500/50');
+      }, 500 / this.speedMult);
+    }
+
+    attacker.atb = 0;
+    if (attacker.hp !== undefined) {
+      this.activeCharacter = null;
+    } else {
+      this.activeEnemy = null;
+    }
+
+    // --- 呪い (Curse) の反動ダメージ ---
+    if (attacker.activeAilment && attacker.activeAilment.type === 'curse' && !attacker.isDead) {
+      const recoil = Math.max(1, Math.floor(damage * 0.2));
+      setTimeout(() => {
+        this.takeAilmentDamage(attacker, recoil, 'CURSE');
+      }, 500 / this.speedMult);
     }
 
     this.renderEntities();
@@ -1111,6 +1169,91 @@ class BattleManager {
     this.executeAttack(enemy, target, false);
     this.activeEnemy = null;
     this.updateEntities();
+  }
+
+  processPreActionAilment(entity) {
+    if (!entity.activeAilment) return false;
+    
+    const ailment = entity.activeAilment.type;
+    let skipTurn = false;
+    
+    entity.activeAilment.duration--;
+    
+    if (ailment === 'poison') {
+      const maxHp = entity.hp ? (entity.stats?.hp || entity.hp.max) : entity.maxHp;
+      const dmg = Math.max(1, Math.floor(maxHp * 0.1));
+      this.takeAilmentDamage(entity, dmg, 'POISON');
+    } else if (ailment === 'burn') {
+      const maxHp = entity.hp ? (entity.stats?.hp || entity.hp.max) : entity.maxHp;
+      const dmg = Math.max(1, Math.floor(maxHp * 0.05));
+      this.takeAilmentDamage(entity, dmg, 'BURN');
+      // Burn attack reduction is handled in executeAttack/executeSkill by modifying stats or damage?
+      // Actually, we'll just apply it dynamically there if needed.
+    } else if (ailment === 'paralysis') {
+      if (Math.random() < 0.5) {
+        this.showActionName(entity.elementId, '麻痺', 'text-yellow-400', 'border-yellow-500/50');
+        skipTurn = true;
+      }
+    } else if (ailment === 'sleep') {
+      this.showActionName(entity.elementId, '睡眠中', 'text-blue-300', 'border-blue-500/50');
+      skipTurn = true;
+    }
+    
+    if (entity.activeAilment && entity.activeAilment.duration <= 0 && !skipTurn) {
+      setTimeout(() => {
+        if (!entity.isDead) this.showActionName(entity.elementId, `${ailment.toUpperCase()}回復`, 'text-green-300', 'border-green-500/50');
+      }, 500 / this.speedMult);
+      entity.activeAilment = null;
+    } else if (entity.activeAilment && entity.activeAilment.duration <= 0 && skipTurn) {
+      setTimeout(() => {
+        if (!entity.isDead) this.showActionName(entity.elementId, `${ailment.toUpperCase()}回復`, 'text-green-300', 'border-green-500/50');
+        entity.activeAilment = null;
+        if (!document.hidden) this.renderEntities();
+      }, 1000 / this.speedMult);
+    }
+    
+    return skipTurn || entity.isDead;
+  }
+
+  takeAilmentDamage(entity, damage, ailmentName) {
+    if (entity.isDead) return;
+    damage = Math.max(1, damage);
+    if (entity.hp) {
+      entity.hp.current -= damage;
+      if (entity.hp.current <= 0) {
+         entity.hp.current = 0;
+         entity.isDead = true;
+         this.lastKilledBy = {
+           monsterId: 'ailment', monsterName: ailmentName, monsterImage: '', actionName: ailmentName
+         };
+      }
+    } else {
+      entity.currentHp -= damage;
+      if (entity.currentHp <= 0) {
+         entity.currentHp = 0;
+         entity.isDead = true;
+         this.processEnemyDeath(entity);
+      }
+    }
+    this.showDamage(entity.elementId, damage, 'text-purple-400');
+  }
+
+  executeConfusionTurn(entity, isParty) {
+    this.showActionName(entity.elementId, '混乱', 'text-pink-300', 'border-pink-500/50');
+    entity.atb = 0;
+    if (isParty) this.activeCharacter = null;
+    else this.activeEnemy = null;
+    
+    const aliveParty = this.party.filter(p => !p.isDead);
+    const aliveEnemies = this.enemies.filter(e => !e.isDead);
+    const allAlive = [...aliveParty, ...aliveEnemies];
+    if (allAlive.length === 0) return;
+    
+    const target = allAlive[Math.floor(Math.random() * allAlive.length)];
+    
+    setTimeout(() => {
+      this.executeAttack(entity, target, isParty);
+    }, 500 / this.speedMult);
   }
 
   // =============================================

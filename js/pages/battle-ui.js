@@ -1,9 +1,27 @@
+export function getAilmentIconHTML(ailment) {
+  if (!ailment) return '';
+  const map = {
+    poison: { icon: 'water_drop', color: 'text-purple-500' },
+    burn: { icon: 'local_fire_department', color: 'text-red-500' },
+    paralysis: { icon: 'bolt', color: 'text-yellow-400' },
+    sleep: { icon: 'snooze', color: 'text-blue-300' },
+    blind: { icon: 'visibility_off', color: 'text-gray-400' },
+    silence: { icon: 'volume_off', color: 'text-indigo-400' },
+    curse: { icon: 'sentiment_very_dissatisfied', color: 'text-fuchsia-500' },
+    confusion: { icon: 'question_mark', color: 'text-pink-400' }
+  };
+  const data = map[ailment.type];
+  if (!data) return '';
+  return `<span class="material-symbols-outlined ${data.color} text-[14px] absolute -top-1.5 -right-1.5 z-20 bg-gray-900 rounded-full border border-gray-700 drop-shadow-md" style="font-variation-settings: 'FILL' 1" title="${ailment.type}">${data.icon}</span>`;
+}
+
 export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   const isSelected = selectedEnemyTarget === e;
   const deadStyle = e.isDead ? 'min-width: 0px; max-width: 0px; opacity: 0; margin: 0; pointer-events: none;' : '';
   return `
     <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 flex-1 min-w-[2.5rem] max-w-[4rem] overflow-hidden ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" style="${deadStyle}" data-id="${e.uniqueId}">
       <div class="relative w-full aspect-square bg-gray-800 rounded-lg border-2 ${isSelected ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
+        ${!e.isDead ? getAilmentIconHTML(e.activeAilment) : ''}
         <img src="${e.image}" class="w-full h-full object-contain p-1 drop-shadow-md" onerror="this.style.display='none'">
       </div>
       <div class="w-full bg-gray-900 h-2 rounded overflow-hidden shadow-inner shrink-0 ${e.isDead ? 'opacity-0' : ''}">
@@ -41,7 +59,14 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         </div>
         <!-- Name & ATB -->
         <div class="px-0.5">
-          <div class="text-[10px] font-bold text-gray-100 truncate w-full drop-shadow mb-0.5">${p.name}</div>
+          <div class="flex items-center gap-1 mb-0.5 relative">
+            <div class="text-[10px] font-bold text-gray-100 truncate flex-1 drop-shadow">${p.name}</div>
+            ${!p.isDead && p.activeAilment ? `
+              <div class="relative w-4 h-4 shrink-0">
+                ${getAilmentIconHTML(p.activeAilment)}
+              </div>
+            ` : ''}
+          </div>
           <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div id="${p.elementId}-atb" class="bg-yellow-400 h-full w-full origin-left" style="transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
           </div>
@@ -309,7 +334,8 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
   skillListHtml += '<div class="grid grid-cols-2 gap-1.5">';
   learnedSkills.forEach(({ skillDef, level }) => {
     const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
-    const canCast = p.mp.current >= levelConfig.mpCost;
+    const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
+    const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced;
     const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
 
     const autoEnabled = autoSkillStates[p.id]?.[skillDef.id] !== false;
