@@ -1,13 +1,63 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <!-- PWA Error Recovery / Self Healing -->
+  <!-- Error Handling / Modal -->
   <script>
     (function() {
-      const handleError = async function(e) {
-        if (!localStorage.getItem('app_reloaded_due_to_error')) {
-          localStorage.setItem('app_reloaded_due_to_error', 'true');
-          console.warn('App error detected, attempting recovery...');
+      const displayModal = function(msg) {
+        if (document.getElementById('error-report-modal')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'error-report-modal';
+        // Inline styles to ensure it works even if CSS/Tailwind is broken
+        overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.8); backdrop-filter:blur(4px); padding:20px; font-family:sans-serif;';
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:#1f2937; border:1px solid #374151; border-radius:12px; padding:20px; width:100%; max-width:500px; color:#f3f4f6; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display:flex; flex-direction:column; gap:16px;';
+
+        modal.innerHTML = `
+          <h2 style="margin:0; color:#ef4444; font-size:1.25rem; font-weight:bold; display:flex; align-items:center; gap:8px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            エラーが発生しました
+          </h2>
+          <p style="margin:0; font-size:0.875rem; color:#9ca3af; line-height:1.5;">
+            予期せぬエラーにより、ゲームが停止した可能性があります。お手数ですが、以下のエラー内容をコピーして開発者にご報告ください。
+          </p>
+          <div style="background:#111827; border:1px solid #374151; border-radius:6px; padding:12px; max-height:150px; overflow-y:auto;">
+            <pre id="error-content" style="margin:0; font-size:0.75rem; color:#d1d5db; white-space:pre-wrap; word-break:break-all; font-family:monospace;"></pre>
+          </div>
+          <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+            <button id="btn-error-reload" style="padding:8px 16px; border-radius:6px; border:1px solid #4b5563; background:transparent; color:#d1d5db; cursor:pointer; font-size:0.875rem; font-weight:bold;">リロード</button>
+            <button id="btn-error-copy" style="padding:8px 16px; border-radius:6px; border:none; background:#3b82f6; color:#ffffff; cursor:pointer; font-size:0.875rem; font-weight:bold;">コピー</button>
+          </div>
+        `;
+
+        overlay.appendChild(modal);
+        if (document.body) {
+          document.body.appendChild(overlay);
+        } else {
+          document.addEventListener('DOMContentLoaded', () => document.body.appendChild(overlay));
+        }
+
+        document.getElementById('error-content').textContent = msg;
+
+        const copyBtn = document.getElementById('btn-error-copy');
+        copyBtn.addEventListener('click', async function() {
+          try {
+            await navigator.clipboard.writeText(msg);
+            const originalBg = this.style.background;
+            this.textContent = 'コピー完了！';
+            this.style.background = '#10b981';
+            setTimeout(() => {
+              this.textContent = 'コピー';
+              this.style.background = originalBg;
+            }, 2000);
+          } catch(err) {
+            alert('クリップボードへのコピーに失敗しました。');
+          }
+        });
+
+        document.getElementById('btn-error-reload').addEventListener('click', async function() {
           try {
             if ('serviceWorker' in navigator) {
               const regs = await navigator.serviceWorker.getRegistrations();
@@ -19,11 +69,27 @@
             }
           } catch(err) { console.error('Recovery clear failed', err); }
           window.location.reload(true);
-        }
+        });
       };
+
+      const handleError = function(e) {
+        let errorMsg = 'Unknown Error';
+        if (e.error) {
+          errorMsg = e.error.stack || e.error.message;
+        } else if (e.reason) {
+          errorMsg = e.reason.stack || e.reason.message || String(e.reason);
+        } else {
+          errorMsg = e.message || String(e);
+        }
+        
+        // Skip benign errors
+        if (typeof errorMsg === 'string' && errorMsg.includes('ResizeObserver loop')) return;
+
+        displayModal(errorMsg);
+      };
+
       window.addEventListener('error', handleError);
       window.addEventListener('unhandledrejection', handleError);
-      setTimeout(() => localStorage.removeItem('app_reloaded_due_to_error'), 5000);
     })();
   </script>
   <meta charset="UTF-8">
