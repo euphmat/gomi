@@ -152,65 +152,87 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
 
   const hpPct = targetEntity.maxHp > 0 ? (targetEntity.currentHp / targetEntity.maxHp) * 100 : 0;
 
+  let actionsHtml = '';
+  if (targetEntity.actions && targetEntity.actions.length > 0) {
+    actionsHtml = targetEntity.actions.map(a => {
+      const desc = a.description || '特殊な行動を行います。';
+      return `
+        <div class="flex flex-col bg-slate-950/40 border border-slate-850/50 px-1.5 py-1 rounded gap-0.5">
+          <div class="flex justify-between items-center">
+            <span class="text-[9.5px] font-bold text-slate-200 truncate flex-1">${a.name}</span>
+            <span class="text-[8px] font-bold text-blue-400 bg-blue-900/30 px-1 rounded border border-blue-800/50 shrink-0 ml-1">${a.chance}%</span>
+          </div>
+          <div class="text-[8.5px] text-slate-400 leading-tight">
+            ${desc}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    actionsHtml = '<div class="text-slate-500 text-center py-2 text-[9px] italic">通常攻撃のみ</div>';
+  }
+
   html = `
     <div class="h-full overflow-y-auto p-2 text-slate-300 flex flex-col gap-2.5 custom-scrollbar relative" style="font-family: system-ui, -apple-system, sans-serif;">
       <!-- Background Glow Effect -->
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-red-500/15 rounded-full blur-xl pointer-events-none z-0"></div>
       
-      <div class="flex items-center gap-3 pb-2 border-b border-slate-700/80 shrink-0 relative z-10">
-        <div class="w-12 h-12 rounded-lg bg-slate-950 border-2 border-red-500/50 overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-[0_0_12px_rgba(239,68,68,0.2)]">
-          <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
-        </div>
-        <div class="flex flex-col flex-1 justify-center min-w-0">
-          <div class="flex justify-between items-center mb-1">
-            <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
-            <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${currentFloorNum || 1}</span>
+      <div class="flex flex-col gap-2 pb-2 border-b border-slate-700/80 shrink-0 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-slate-950 border-2 border-red-500/50 overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-[0_0_12px_rgba(239,68,68,0.2)]">
+            <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
           </div>
-          <div class="flex justify-end items-center">
-            <span class="text-slate-400 text-[9px] font-black bg-slate-950/80 border border-slate-800/85 px-1.5 py-0.5 rounded shrink-0">討伐数: <span class="text-red-400 font-extrabold">${kills}</span>体</span>
+          <div class="flex flex-col flex-1 justify-center min-w-0">
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
+              <div class="flex gap-1 items-center">
+                <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${currentFloorNum || 1}</span>
+                <span class="text-slate-400 text-[9px] font-black bg-slate-950/80 border border-slate-800/85 px-1.5 py-0.5 rounded shrink-0">討伐: <span class="text-red-400 font-extrabold">${kills}</span></span>
+              </div>
+            </div>
+            <!-- Status Badges -->
+            <div class="flex flex-wrap gap-1 mt-0.5">
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="HP">
+                 <span class="text-red-400 font-bold">HP</span><span class="text-slate-200">${targetEntity.stats?.hp || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="ATK">
+                 <span class="text-red-450 font-bold">ATK</span><span class="text-slate-200">${targetEntity.stats?.atk || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="DEF">
+                 <span class="text-slate-450 font-bold">DEF</span><span class="text-slate-200">${targetEntity.stats?.def || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="MATK">
+                 <span class="text-purple-400 font-bold">MAT</span><span class="text-slate-200">${targetEntity.stats?.matk || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="MDEF">
+                 <span class="text-indigo-400 font-bold">MDF</span><span class="text-slate-200">${targetEntity.stats?.mdef || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="SPD">
+                 <span class="text-amber-400 font-bold">SPD</span><span class="text-slate-200">${targetEntity.stats?.spd || 0}</span>
+              </div>
+              <!-- Rewards -->
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-emerald-900/50 px-1 rounded text-[8px]" title="EXP">
+                 <span class="text-emerald-400 font-bold">EXP</span><span class="text-slate-200">${targetEntity.rewards?.exp || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-purple-900/50 px-1 rounded text-[8px]" title="JP">
+                 <span class="text-purple-400 font-bold">JP</span><span class="text-slate-200">${targetEntity.rewards?.jp || 0}</span>
+              </div>
+              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-amber-900/50 px-1 rounded text-[8px]" title="GOLD">
+                 <span class="text-amber-500 font-bold">G</span><span class="text-slate-200">${targetEntity.rewards?.gold || 0}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
       
       <div class="grid grid-cols-2 gap-2 min-h-0 flex-1 relative z-10">
-        <!-- Status Grid -->
+        <!-- Actions -->
         <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
-          <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
-            <span class="material-symbols-outlined text-[12px] text-red-400">analytics</span>ステータス
+          <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center gap-1 shrink-0">
+            <span class="material-symbols-outlined text-[12px] text-blue-400">psychology</span>行動パターン
           </div>
-          <div class="grid grid-cols-2 gap-1">
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-red-450 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">swords</span>
-              <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.atk || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-slate-455 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">shield</span>
-              <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.def || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-purple-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
-              <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.matk || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-indigo-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">security</span>
-              <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.mdef || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-amber-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">directions_run</span>
-              <span class="font-extrabold text-slate-150 text-[10.5px] shrink-0">${targetEntity.stats?.spd || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-emerald-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">star</span>
-              <span class="font-extrabold text-emerald-400 text-[10.5px] shrink-0">${targetEntity.rewards?.exp || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-purple-400 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">school</span>
-              <span class="font-extrabold text-purple-400 text-[10.5px] shrink-0">${targetEntity.rewards?.jp || 0}</span>
-            </div>
-            <div class="flex justify-between items-center bg-slate-950/40 border border-slate-850/50 px-2 py-0.5 rounded hover:bg-slate-850/30 transition-colors">
-              <span class="material-symbols-outlined text-amber-500 text-[11px] shrink-0" style="font-variation-settings: 'FILL' 1">monetization_on</span>
-              <span class="font-extrabold text-amber-450 text-[10.5px] shrink-0">${targetEntity.rewards?.gold || 0}</span>
-            </div>
+          <div class="flex flex-col gap-1 pb-1">
+            ${actionsHtml}
           </div>
         </div>
         <!-- Drop Info -->
