@@ -36,31 +36,171 @@ export function renderMonsterLibraryTab() {
   scrollContainer.className = 'overflow-y-auto flex-1 pb-6 pr-1 no-scrollbar';
 
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
   
   scrollContainer.appendChild(gridContainer);
 
   let acquiredBaseIds = new Set();
   let monsterKills = {};
+  let viewMode = 'grid'; // 'grid' | 'list'
+  let currentPage = 1;
+
+  const topBar = document.createElement('div');
+  topBar.className = 'flex items-center justify-end mb-4 shrink-0 pt-2 px-2';
+
+  const rightControls = document.createElement('div');
+  rightControls.className = 'flex items-center gap-2 shrink-0';
+
+  const viewModeContainer = document.createElement('div');
+  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-10';
+
+  const updateViewModeUI = () => {
+    viewModeContainer.innerHTML = '';
+    
+    const gridBtn = document.createElement('button');
+    gridBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
+    gridBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">grid_view</span>';
+    gridBtn.onclick = () => {
+      if (viewMode !== 'grid') {
+        viewMode = 'grid';
+        currentPage = 1;
+        updateViewModeUI();
+        renderGrid();
+      }
+    };
+
+    const listBtn = document.createElement('button');
+    listBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
+    listBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_list</span>';
+    listBtn.onclick = () => {
+      if (viewMode !== 'list') {
+        viewMode = 'list';
+        currentPage = 1;
+        updateViewModeUI();
+        renderGrid();
+      }
+    };
+
+    viewModeContainer.appendChild(gridBtn);
+    viewModeContainer.appendChild(listBtn);
+  };
+  updateViewModeUI();
+
+  rightControls.appendChild(viewModeContainer);
+  topBar.appendChild(rightControls);
+
+  const paginationContainer = document.createElement('div');
+  paginationContainer.className = 'flex items-center justify-center gap-4 py-2 shrink-0 bg-gray-900/80 border-t border-gray-800 pb-4';
+
+  const renderPagination = (totalPages) => {
+    paginationContainer.innerHTML = '';
+    if (totalPages <= 1) return;
+    
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-gray-800 text-gray-200 hover:bg-gray-700 cursor-pointer' : 'bg-gray-900 text-gray-600 cursor-not-allowed'}`;
+    prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderGrid();
+        scrollContainer.scrollTop = 0;
+      }
+    };
+
+    const info = document.createElement('div');
+    info.className = 'text-xs font-bold text-gray-400 font-mono tracking-widest';
+    info.textContent = `${currentPage} / ${totalPages}`;
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-gray-800 text-gray-200 hover:bg-gray-700 cursor-pointer' : 'bg-gray-900 text-gray-600 cursor-not-allowed'}`;
+    nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderGrid();
+        scrollContainer.scrollTop = 0;
+      }
+    };
+    
+    paginationContainer.appendChild(prevBtn);
+    paginationContainer.appendChild(info);
+    paginationContainer.appendChild(nextBtn);
+  };
 
   const renderGrid = () => {
     gridContainer.innerHTML = '';
-    MONSTERS.forEach(monster => {
+    if (viewMode === 'grid') {
+      gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
+    } else {
+      gridContainer.className = 'flex flex-col gap-2 content-start';
+    }
+
+    const ITEMS_PER_PAGE = viewMode === 'grid' ? 25 : 5;
+    const totalPages = Math.ceil(MONSTERS.length / ITEMS_PER_PAGE) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const pageItems = MONSTERS.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+    if (MONSTERS.length === 0) {
+      gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">モンスターデータがありません</div>`;
+      renderPagination(1);
+      return;
+    }
+
+    pageItems.forEach(monster => {
       const isDefeated = acquiredBaseIds.has('defeated_' + monster.id);
 
       const slot = document.createElement('div');
-      slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
       
-      if (monster.image) {
-        const imgClass = isDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
-        slot.innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
+      if (viewMode === 'grid') {
+        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
+        
+        if (monster.image) {
+          const imgClass = isDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+          slot.innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
+        } else {
+          const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-3xl' : 'material-symbols-outlined text-gray-800 text-3xl';
+          slot.innerHTML = `<span class="${iconClass}">pets</span>`;
+        }
       } else {
-        const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-3xl' : 'material-symbols-outlined text-gray-800 text-3xl';
-        slot.innerHTML = `<span class="${iconClass}">pets</span>`;
+        // list view
+        const displayName = isDefeated ? monster.name : '？？？';
+        
+        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} transition-all shadow-sm`;
+
+        let imgHtml = '';
+        if (monster.image) {
+          const imgClass = isDefeated ? 'w-11 h-11 rounded-md object-cover border border-gray-700/50 bg-gray-900 shadow-inner' : `w-11 h-11 rounded-md object-cover border border-gray-700/50 bg-gray-900 shadow-inner ${SILHOUETTE_FILTER}`;
+          imgHtml = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
+        } else {
+          const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-2xl' : 'material-symbols-outlined text-gray-800 text-2xl';
+          imgHtml = `<div class="w-11 h-11 rounded-md border border-gray-700/50 flex items-center justify-center bg-gray-800/50 shrink-0 shadow-inner"><span class="${iconClass}">pets</span></div>`;
+        }
+
+        const kills = monsterKills[monster.id] || 0;
+
+        slot.innerHTML = `
+          <div class="shrink-0 relative">
+            ${imgHtml}
+          </div>
+          <div class="flex flex-col min-w-0 flex-1 justify-center gap-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] font-black border px-1.5 py-0.5 rounded text-gray-400 bg-gray-800/80 border-gray-700/50 leading-none shadow-sm">モンスター</span>
+              <span class="text-[13px] font-bold ${isDefeated ? 'text-gray-100' : 'text-gray-500'} truncate leading-tight">${displayName}</span>
+            </div>
+            <div class="flex items-center flex-wrap gap-y-1.5 mt-1">
+              <span class="text-[10px] text-gray-500 italic">討伐数: <span class="font-bold text-red-400 font-mono text-[11px]">${isDefeated ? kills : '?'}</span> 体</span>
+            </div>
+          </div>
+        `;
       }
+
       slot.onclick = () => showMonsterModal(monster, isDefeated);
       gridContainer.appendChild(slot);
     });
+
+    renderPagination(totalPages);
   };
 
   const showMonsterModal = (monster, isDefeated) => {
@@ -218,6 +358,9 @@ export function renderMonsterLibraryTab() {
 
   setTimeout(loadData, 0);
 
+  container.appendChild(topBar);
   container.appendChild(scrollContainer);
+  container.appendChild(paginationContainer);
+
   return container;
 }

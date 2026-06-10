@@ -34,6 +34,8 @@ export function renderStorageTab() {
   // 状態管理
   let items = [];
   let activeFilter = 'all';
+  let viewMode = 'grid'; // 'grid' | 'list'
+  let currentPage = 1;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -73,6 +75,7 @@ export function renderStorageTab() {
       btn.onclick = () => {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
+          currentPage = 1;
           renderFilters();
           renderGrid();
         }
@@ -81,20 +84,107 @@ export function renderStorageTab() {
     });
   };
 
+  const rightControls = document.createElement('div');
+  rightControls.className = 'flex items-center gap-2 shrink-0';
+
+  const viewModeContainer = document.createElement('div');
+  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-10';
+
+  const updateViewModeUI = () => {
+    viewModeContainer.innerHTML = '';
+    
+    const gridBtn = document.createElement('button');
+    gridBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
+    gridBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">grid_view</span>';
+    gridBtn.onclick = () => {
+      if (viewMode !== 'grid') {
+        viewMode = 'grid';
+        currentPage = 1;
+        updateViewModeUI();
+        renderGrid();
+      }
+    };
+
+    const listBtn = document.createElement('button');
+    listBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
+    listBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_list</span>';
+    listBtn.onclick = () => {
+      if (viewMode !== 'list') {
+        viewMode = 'list';
+        currentPage = 1;
+        updateViewModeUI();
+        renderGrid();
+      }
+    };
+
+    viewModeContainer.appendChild(gridBtn);
+    viewModeContainer.appendChild(listBtn);
+  };
+  updateViewModeUI();
+
+  // sortBtnのクラスも高さを10に合わせるため少し調整
+  sortBtn.className = 'flex items-center justify-center px-3 py-2 bg-gray-800 text-gray-300 rounded-lg shadow border border-gray-700 hover:bg-gray-700 shrink-0 transition-colors h-10 cursor-pointer';
+
+  rightControls.appendChild(sortBtn);
+  rightControls.appendChild(viewModeContainer);
+
   topBar.appendChild(filterContainer);
-  topBar.appendChild(sortBtn);
+  topBar.appendChild(rightControls);
 
   // グリッド領域
   const scrollContainer = document.createElement('div');
   scrollContainer.className = 'overflow-y-auto flex-1 pb-6 px-2';
 
   const gridContainer = document.createElement('div');
-  gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
   
   scrollContainer.appendChild(gridContainer);
 
+  const paginationContainer = document.createElement('div');
+  paginationContainer.className = 'flex items-center justify-center gap-4 py-2 shrink-0 bg-slate-950/80 border-t border-slate-800 pb-4';
+
+  const renderPagination = (totalPages) => {
+    paginationContainer.innerHTML = '';
+    if (totalPages <= 1) return;
+    
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderGrid();
+        scrollContainer.scrollTop = 0;
+      }
+    };
+
+    const info = document.createElement('div');
+    info.className = 'text-xs font-bold text-slate-400 font-mono tracking-widest';
+    info.textContent = `${currentPage} / ${totalPages}`;
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderGrid();
+        scrollContainer.scrollTop = 0;
+      }
+    };
+    
+    paginationContainer.appendChild(prevBtn);
+    paginationContainer.appendChild(info);
+    paginationContainer.appendChild(nextBtn);
+  };
+
   const renderGrid = () => {
     gridContainer.innerHTML = '';
+    
+    if (viewMode === 'grid') {
+      gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
+    } else {
+      gridContainer.className = 'flex flex-col gap-2 content-start';
+    }
     
     const filteredItems = activeFilter === 'all' 
       ? items 
@@ -107,28 +197,112 @@ export function renderStorageTab() {
           return true;
         });
 
+    const ITEMS_PER_PAGE = viewMode === 'grid' ? 25 : 5;
+    const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const pageItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
     if (filteredItems.length === 0) {
       gridContainer.innerHTML = `<div class="col-span-full text-center text-gray-500 text-sm mt-8">所持しているアイテムがありません</div>`;
+      renderPagination(1);
       return;
     }
 
-    filteredItems.forEach(item => {
+    pageItems.forEach(item => {
       const slot = document.createElement('div');
-      slot.className = 'relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm';
       
-      if (item.image) {
-        slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
+      if (viewMode === 'grid') {
+        slot.className = 'relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm';
+        
+        if (item.image) {
+          slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
+        } else {
+          slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
+        }
+        
+        if (item.quantity && item.quantity > 1) {
+          slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600 shadow-sm leading-tight">x${item.quantity}</div>`;
+        }
       } else {
-        slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
-      }
-      
-      if (item.quantity && item.quantity > 1) {
-        slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600">x${item.quantity}</div>`;
+        // list view
+        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm cursor-pointer`;
+        
+        const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
+        const statsHtml = activeStats.map(stat => {
+          return `<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined ${stat.color} text-[11px]" style="font-variation-settings: 'FILL' 1">${stat.icon}</span><span class="text-[11px] text-gray-300 font-bold">${item.stats[stat.key]}</span></span>`;
+        }).join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">|</span>');
+        
+        const elements = item.elements || {};
+        const elHtml = Object.keys(ELEMENT_ICONS)
+          .filter(k => (elements[k] || 0) !== 0)
+          .map(k => {
+            const val = elements[k];
+            const def = ELEMENT_ICONS[k];
+            const colorClass = val > 0 ? 'text-emerald-400' : 'text-rose-400';
+            return `<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px] ${def.color}">${def.icon}</span><span class="text-[11px] ${colorClass} font-bold">${val > 0 ? '+' : ''}${val}%</span></span>`;
+          }).join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">|</span>');
+
+        const ailments = item.ailments || {};
+        const ailHtml = Object.keys(AILMENT_ICONS)
+          .filter(k => (ailments[k] || 0) !== 0)
+          .map(k => {
+            const val = ailments[k];
+            const def = AILMENT_ICONS[k];
+            const colorClass = val > 0 ? 'text-emerald-400' : 'text-rose-400';
+            return `<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px] ${def.color}">${def.icon}</span><span class="text-[11px] ${colorClass} font-bold">${val > 0 ? '+' : ''}${val}%</span></span>`;
+          }).join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">|</span>');
+          
+        const performanceParts = [statsHtml, elHtml, ailHtml].filter(Boolean);
+        let performanceHtml = performanceParts.join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">||</span>');
+
+        if (item.ability) {
+           performanceHtml += `${performanceParts.length > 0 ? '<span class="text-gray-600/60 mx-1.5 leading-none font-light">||</span>' : ''}<span class="inline-flex items-center gap-1 text-[10px] text-amber-400 font-bold"><span class="material-symbols-outlined text-[12px]">star</span>${item.ability.name}</span>`;
+        }
+
+        let slotLabel = '素材';
+        let slotColor = 'text-slate-400 bg-slate-800/80 border-slate-700/50';
+        if (item.slot === 'rightHand') { slotLabel = '武器'; slotColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20'; }
+        else if (item.slot === 'leftHand') { slotLabel = '盾'; slotColor = 'text-blue-400 bg-blue-500/10 border-blue-500/20'; }
+        else if (item.slot === 'armor') { slotLabel = '防具'; slotColor = 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'; }
+        else if (item.slot === 'accessory') { slotLabel = '装飾品'; slotColor = 'text-amber-400 bg-amber-500/10 border-amber-500/20'; }
+
+        let imgHtml = '';
+        if (item.image) {
+          imgHtml = `<img src="${item.image}" alt="" class="w-11 h-11 rounded-md object-cover border border-gray-700/50 bg-gray-900 shadow-inner" onerror="this.style.display='none'">`;
+        } else {
+          imgHtml = `<div class="w-11 h-11 rounded-md border border-gray-700/50 flex items-center justify-center bg-gray-800/50 shrink-0 shadow-inner"><span class="material-symbols-outlined text-gray-500 text-2xl">category</span></div>`;
+        }
+
+        const quantityText = (item.quantity && item.quantity > 1) ? `x${item.quantity}` : (item.quantity === 1 ? 'x1' : '');
+
+        slot.innerHTML = `
+          <div class="shrink-0 relative">
+            ${imgHtml}
+          </div>
+          <div class="flex flex-col min-w-0 flex-1 justify-center gap-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] font-black border px-1.5 py-0.5 rounded ${slotColor} leading-none shadow-sm">${slotLabel}</span>
+              <span class="text-[13px] font-bold text-gray-100 truncate leading-tight">${item.name}</span>
+            </div>
+            <div class="flex items-center flex-wrap gap-y-1.5 mt-1">
+              ${performanceHtml || '<span class="text-[10px] text-gray-500 italic">性能変化なし</span>'}
+            </div>
+          </div>
+          <div class="flex flex-col items-end shrink-0 pl-3 border-l border-gray-800/60 ml-1 py-1 min-w-[3rem]">
+            <span class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-wider">所持数</span>
+            <span class="text-[13px] text-cyan-400 font-mono font-black tracking-wide">${quantityText || '-'}</span>
+          </div>
+        `;
       }
       
       slot.onclick = () => showItemModal(item);
       gridContainer.appendChild(slot);
     });
+    
+    renderPagination(totalPages);
   };
 
   const loadData = () => {
@@ -394,6 +568,7 @@ export function renderStorageTab() {
 
   container.appendChild(topBar);
   container.appendChild(scrollContainer);
+  container.appendChild(paginationContainer);
 
   renderFilters();
   loadData();
