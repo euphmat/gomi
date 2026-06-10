@@ -87,6 +87,17 @@ class BattleManager {
       headerLoc.textContent = `${this.dungeonDef.name} ${this.currentFloorNum}F`;
     }
 
+    // Update Background Image
+    const sceneBg = document.getElementById('battle-scene-bg');
+    if (sceneBg && this.dungeonDef && this.dungeonDef.bgImage) {
+      // 視認性を確保しつつ、もう少し背景が見えるようにグラデーションの暗さを微調整
+      sceneBg.style.backgroundImage = `linear-gradient(rgba(11, 11, 25, 0.5), rgba(11, 11, 25, 0.7)), url('${this.dungeonDef.bgImage}')`;
+      sceneBg.style.backgroundSize = 'cover';
+      sceneBg.style.backgroundPosition = 'center top';
+    } else if (sceneBg) {
+      sceneBg.style.backgroundImage = 'radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%)';
+    }
+
     this.party = rawParty.map((char, index) => {
       const stats = calcFinalStats(char, this.equipMap);
       
@@ -1913,20 +1924,20 @@ export function renderBattlePage() {
     </style>
 
     <!-- Scrollable Battle Area (Enemies, Party, Tabs) -->
-    <div class="flex-1 flex flex-col overflow-y-auto" style="background: radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%);">
+    <div id="battle-scene-bg" class="flex-1 flex flex-col overflow-y-auto" style="background: #0b0b19;">
       
       <!-- Enemy Area (Moved higher) -->
-      <div id="enemy-area" class="shrink-0 px-2 py-1">
+      <div id="enemy-area" class="shrink-0 px-2 py-1 relative z-10">
         <!-- Enemies will be injected here -->
       </div>
 
       <!-- Party Area -->
-      <div id="party-area" class="grid grid-cols-4 gap-1 px-1 mt-1">
+      <div id="party-area" class="grid grid-cols-4 gap-1 px-1 mt-1 relative z-10">
         <!-- Party will be injected here -->
       </div>
       
       <!-- Tabs & Tab Content Area -->
-      <div class="flex flex-col flex-1 mt-4 px-2 mb-4">
+      <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10">
         <!-- Tabs -->
         <div class="flex px-1 gap-[2px]">
           <button id="tab-btn-skill" class="flex-1 py-1 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t text-[9px] font-black shadow-[0_-1px_3px_rgba(0,0,0,0.3)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-0.5 transition-all"><span class="material-symbols-outlined text-[12px] text-green-400" style="font-variation-settings: 'FILL' 1">auto_awesome</span>スキル</button>

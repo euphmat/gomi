@@ -3,6 +3,7 @@ export const DUNGEONS = [{
     name: 'スライムの森',
     description: '初心者向けの安全な森。スライムが多数生息している。',
     image: 'assets/dungeon/slime_forest.webp',
+    bgImage: 'assets/dungeon/bg_slime_forest.webp',
     isUnlocked: true,
     floors: [ {
         level: 1,
@@ -110,6 +111,7 @@ export const DUNGEONS = [{
     name: '蜘蛛の洞窟',
     description: '蜘蛛が巣食う不気味な洞窟。',
     image: 'assets/dungeon/spider_cave.webp',
+    bgImage: 'assets/dungeon/bg_spider_cave.webp',
     isUnlocked: false,
     floors: [
       {
@@ -207,6 +209,7 @@ export const DUNGEONS = [{
     name: 'クリスタルの洞窟',
     description: '美しいクリスタルが輝く洞窟。',
     image: 'assets/dungeon/crystal_cave.webp',
+    bgImage: 'assets/dungeon/bg_crystal_cave.webp',
     isUnlocked: false,
     floors: []
   },
@@ -215,6 +218,7 @@ export const DUNGEONS = [{
     name: '亡霊の廃城',
     description: '亡霊が彷徨う廃城。',
     image: 'assets/dungeon/ghost_castle.webp',
+    bgImage: 'assets/dungeon/bg_ghost_castle.webp',
     isUnlocked: false,
     floors: []
   },
@@ -223,6 +227,7 @@ export const DUNGEONS = [{
     name: '精霊の唄う谷',
     description: '精霊たちの声が響く神秘的な谷。',
     image: 'assets/dungeon/spirit_valley.webp',
+    bgImage: 'assets/dungeon/bg_spirit_valley.webp',
     isUnlocked: false,
     floors: []
   },
@@ -231,6 +236,7 @@ export const DUNGEONS = [{
     name: '神秘の神殿',
     description: '古の魔法が眠る神殿。',
     image: 'assets/dungeon/mystic_temple.webp',
+    bgImage: 'assets/dungeon/bg_mystic_temple.webp',
     isUnlocked: false,
     floors: []
   },
@@ -239,6 +245,7 @@ export const DUNGEONS = [{
     name: '星詠みの塔',
     description: '星空に最も近い高塔。',
     image: 'assets/dungeon/stargazer_tower.webp',
+    bgImage: 'assets/dungeon/bg_stargazer_tower.webp',
     isUnlocked: false,
     floors: []
   },
@@ -247,6 +254,7 @@ export const DUNGEONS = [{
     name: '地獄の魔洞',
     description: '恐ろしい魔物が潜む洞窟。',
     image: 'assets/dungeon/hell_cave.webp',
+    bgImage: 'assets/dungeon/bg_hell_cave.webp',
     isUnlocked: false,
     floors: []
   },
@@ -255,6 +263,7 @@ export const DUNGEONS = [{
     name: '竜の巣窟',
     description: '強大な竜たちが棲む巣窟。',
     image: 'assets/dungeon/dragon_lair.webp',
+    bgImage: 'assets/dungeon/bg_dragon_lair.webp',
     isUnlocked: false,
     floors: []
   },
@@ -263,6 +272,7 @@ export const DUNGEONS = [{
     name: '天空魔城',
     description: '天空に浮かぶ恐ろしい魔城。',
     image: 'assets/dungeon/sky_demon_castle.webp',
+    bgImage: 'assets/dungeon/bg_sky_demon_castle.webp',
     isUnlocked: false,
     floors: []
   },
@@ -271,6 +281,7 @@ export const DUNGEONS = [{
     name: '月夜の礼堂',
     description: '月光に照らされた静寂の礼堂。',
     image: 'assets/dungeon/moonlit_hall.webp',
+    bgImage: 'assets/dungeon/bg_moonlit_hall.webp',
     isUnlocked: false,
     floors: []
   },
@@ -279,6 +290,7 @@ export const DUNGEONS = [{
     name: '雲海に浮かぶ祭壇',
     description: '雲海の上に建設された神聖な祭壇。',
     image: 'assets/dungeon/cloud_altar.webp',
+    bgImage: 'assets/dungeon/bg_cloud_altar.webp',
     isUnlocked: false,
     floors: []
   },
@@ -287,6 +299,7 @@ export const DUNGEONS = [{
     name: '宵闇の迷宮',
     description: '決して夜が明けない迷宮。',
     image: 'assets/dungeon/dusk_labyrinth.webp',
+    bgImage: 'assets/dungeon/bg_dusk_labyrinth.webp',
     isUnlocked: false,
     floors: []
   },
@@ -295,6 +308,7 @@ export const DUNGEONS = [{
     name: '悠久の神殿跡',
     description: '途方もない時を経た神殿の跡地。',
     image: 'assets/dungeon/eternal_ruins.webp',
+    bgImage: 'assets/dungeon/bg_eternal_ruins.webp',
     isUnlocked: false,
     floors: []
   },
@@ -303,6 +317,7 @@ export const DUNGEONS = [{
     name: '亜空間',
     description: '世界の理から外れた異次元空間。',
     image: 'assets/dungeon/subspace.webp',
+    bgImage: 'assets/dungeon/bg_subspace.webp',
     isUnlocked: false,
     floors: []
   }
