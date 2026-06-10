@@ -122,6 +122,17 @@ export function renderAcquireSkillTab() {
           const isAcquire = currentLevel === 0;
           btn.disabled = true;
 
+          // -------------------------------------------------------------
+          // FIX: Deduct SP and save immediately to prevent spam click issues
+          // -------------------------------------------------------------
+          selectedChar.sp -= levelConfig.spCost;
+          if (!selectedChar.jobSkills) selectedChar.jobSkills = {};
+          if (!selectedChar.jobSkills[selectedChar.jobId]) selectedChar.jobSkills[selectedChar.jobId] = {};
+          selectedChar.jobSkills[selectedChar.jobId][skill.id] = targetLevel;
+          
+          await GameDB.putCharacter(selectedChar);
+          // -------------------------------------------------------------
+
           // 1. Flash effect on the row background
           const flashOverlay = document.createElement('div');
           flashOverlay.className = `absolute inset-0 z-20 pointer-events-none mix-blend-screen`;
@@ -201,13 +212,6 @@ export function renderAcquireSkillTab() {
           // Wait for effects
           await new Promise(resolve => setTimeout(resolve, 800));
 
-          selectedChar.sp -= levelConfig.spCost;
-          
-          if (!selectedChar.jobSkills) selectedChar.jobSkills = {};
-          if (!selectedChar.jobSkills[selectedChar.jobId]) selectedChar.jobSkills[selectedChar.jobId] = {};
-          selectedChar.jobSkills[selectedChar.jobId][skill.id] = targetLevel;
-          
-          await GameDB.putCharacter(selectedChar);
           render(false); // false means soft render
         } else {
           alert('SPが足りません！');
@@ -265,7 +269,39 @@ export function renderAcquireSkillTab() {
   };
 
   // 初期データロード
-  GameDB.getAllCharacters().then(chars => {
+  GameDB.getAllCharacters().then(async chars => {
+    // -------------------------------------------------------------
+    // FIX: Check and correct SP based on Job Lv and acquired skills
+    // -------------------------------------------------------------
+    for (const char of chars) {
+      let spentSP = 0;
+      if (char.jobSkills) {
+        for (const [jobId, skills] of Object.entries(char.jobSkills)) {
+          const job = JOBS[jobId];
+          if (!job) continue;
+          for (const [skillId, level] of Object.entries(skills)) {
+            const skill = job.skills.find(s => s.id === skillId);
+            if (!skill) continue;
+            for (let i = 1; i <= level; i++) {
+              const lConf = skill.levels.find(l => l.level === i);
+              if (lConf && lConf.spCost) {
+                spentSP += lConf.spCost;
+              }
+            }
+          }
+        }
+      }
+      const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
+      const correctSP = earnedSP - spentSP;
+
+      if (char.sp !== correctSP) {
+        console.log(`[SP Correction] ${char.name}: ${char.sp} -> ${correctSP}`);
+        char.sp = correctSP;
+        await GameDB.putCharacter(char);
+      }
+    }
+    // -------------------------------------------------------------
+
     characters = chars;
     if (characters.length > 0) {
       selectedCharId = characters[0].id;
