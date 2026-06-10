@@ -22,6 +22,7 @@ import { Router } from './router.js';
 import { createHeader } from './components/header.js';
 import { createNavBar, initNavBar } from './components/nav-bar.js';
 import { GameDB } from './data/database.js';
+import { JOBS } from './jobs/index.js';
 
 // ─── Page Imports ────────────────────────────────────────
 import { renderStatusPage }  from './pages/status.js';
@@ -43,6 +44,34 @@ class App {
     try {
       await GameDB.open();
       console.log('[App] Database initialized.');
+
+      // ── SP Correction Logic (Global) ──
+      const chars = await GameDB.getAllCharacters();
+      for (const char of chars) {
+        let spentSP = 0;
+        if (char.jobSkills) {
+          for (const [jobId, skills] of Object.entries(char.jobSkills)) {
+            const job = JOBS[jobId];
+            if (!job) continue;
+            for (const [skillId, level] of Object.entries(skills)) {
+              const skill = job.skills.find(s => s.id === skillId);
+              if (!skill) continue;
+              for (let i = 1; i <= level; i++) {
+                const lConf = skill.levels.find(l => l.level === i);
+                if (lConf && lConf.spCost) spentSP += lConf.spCost;
+              }
+            }
+          }
+        }
+        const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
+        const correctSP = earnedSP - spentSP;
+        if (char.sp !== correctSP) {
+          console.log(\`[App] SP Correction for \${char.name}: \${char.sp} -> \${correctSP}\`);
+          char.sp = correctSP;
+          await GameDB.putCharacter(char);
+        }
+      }
+
     } catch (error) {
       console.error('[App] Failed to open database:', error);
     }
