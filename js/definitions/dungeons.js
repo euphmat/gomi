@@ -115,74 +115,89 @@ export const DUNGEONS = [{
       {
         level: 1,
         monsters: [
-          { spider_cave: 2, weight: 60 },
-          { spider_cave: 1, spider_poison: 4, weight: 30 },
-          { swarm_spider: 5, weight: 10 }
+          { spider_cave: 4, weight: 49.98 },
+          { spider_cave: 3, swarm_spider: 3, weight: 30 },
+          { swarm_spider: 8, weight: 20 },
+          { weaver_golden: 1, weight: 0.01 },
+          { arachnid_crystal: 1, weight: 0.01 }
         ]
       },
       {
         level: 2,
         monsters: [
-          { spider_cave: 1, spider_poison: 1, weight: 50 },
-          { spider_poison: 2, weight: 30 },
-          { weaver_web: 1, weight: 20 }
+          { spider_cave: 4, spider_poison: 2, weight: 49.96 },
+          { swarm_spider: 10, weight: 30 },
+          { spider_poison: 5, weight: 20 },
+          { weaver_golden: 1, weight: 0.02 },
+          { arachnid_crystal: 1, weight: 0.02 }
         ]
       },
       {
         level: 3,
         monsters: [
-          { spider_poison: 2, weight: 40 },
-          { weaver_web: 1, spitter_acid: 1, weight: 30 },
-          { spider_trapdoor: 1, weight: 30 }
+          { spider_poison: 6, weight: 49.94 },
+          { spider_poison: 3, weaver_web: 3, weight: 30 },
+          { spider_trapdoor: 2, swarm_spider: 6, weight: 20 },
+          { weaver_golden: 1, weight: 0.03 },
+          { arachnid_crystal: 1, weight: 0.03 }
         ]
       },
       {
         level: 4,
         monsters: [
-          { weaver_web: 1, spitter_acid: 1, weight: 40 },
-          { spitter_acid: 2, weight: 30 },
-          { arachnid_shadow: 1, weight: 30 }
+          { weaver_web: 4, spitter_acid: 2, weight: 49.90 },
+          { spitter_acid: 5, spider_poison: 3, weight: 30 },
+          { arachnid_shadow: 2, swarm_spider: 8, weight: 20 },
+          { weaver_golden: 1, weight: 0.05 },
+          { arachnid_crystal: 1, weight: 0.05 }
         ]
       },
       {
         level: 5,
         monsters: [
-          { arachnid_shadow: 1, tick_blood: 1, weight: 40 },
-          { spider_trapdoor: 1, crawler_bone: 1, weight: 40 },
-          { weaver_golden: 1, weight: 20 } // レア
+          { arachnid_shadow: 3, tick_blood: 3, weight: 49.8 },
+          { spider_trapdoor: 4, crawler_bone: 3, weight: 30 },
+          { tick_blood: 6, swarm_spider: 6, weight: 20 },
+          { weaver_golden: 1, weight: 0.1 },
+          { arachnid_crystal: 1, weight: 0.1 }
         ]
       },
       {
         level: 6,
         monsters: [
-          { tick_blood: 2, weight: 40 },
-          { crawler_bone: 2, weight: 40 },
-          { arachnid_crystal: 1, weight: 20 } // レア
+          { tick_blood: 5, crawler_bone: 3, weight: 49.6 },
+          { crawler_bone: 6, weight: 30 },
+          { arachnid_shadow: 4, spitter_acid: 4, weight: 20 },
+          { weaver_golden: 1, weight: 0.2 },
+          { arachnid_crystal: 1, weight: 0.2 }
         ]
       },
       {
         level: 7,
         monsters: [
-          { swarm_spider: 2, weight: 50 },
-          { spider_dark: 1, tick_blood: 1, weight: 50 }
+          { swarm_spider: 15, weight: 49 },
+          { spider_dark: 3, tick_blood: 4, weight: 30 },
+          { spider_dark: 3, crawler_bone: 5, weight: 20 },
+          { weaver_golden: 1, weight: 0.5 },
+          { arachnid_crystal: 1, weight: 0.5 }
         ]
       },
       {
         level: 8,
         monsters: [
-          { boss_broodmother: 1, weight: 100 }
+          { boss_broodmother: 1, swarm_spider: 8, weight: 100 }
         ]
       },
       {
         level: 9,
         monsters: [
-          { boss_arachne: 1, weight: 100 }
+          { boss_arachne: 1, spider_poison: 5, weaver_web: 5, weight: 100 }
         ]
       },
       {
         level: 10,
         monsters: [
-          { boss_deathweaver: 1, weight: 100 }
+          { boss_deathweaver: 1, arachnid_shadow: 6, tick_blood: 6, weight: 100 }
         ]
       }
     ]
