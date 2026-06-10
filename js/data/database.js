@@ -49,6 +49,27 @@ function _mergeDef(item) {
 
 const DB_NAME = 'rpg_game_db';
 const DB_VERSION = 1;
+const SAVE_SECRET_KEY = 'gomi_rpg_salt';
+
+function encodeSaveData(dataObj) {
+  const jsonStr = JSON.stringify(dataObj);
+  const encodedStr = encodeURIComponent(jsonStr);
+  let result = '';
+  for (let i = 0; i < encodedStr.length; i++) {
+    result += String.fromCharCode(encodedStr.charCodeAt(i) ^ SAVE_SECRET_KEY.charCodeAt(i % SAVE_SECRET_KEY.length));
+  }
+  return btoa(result);
+}
+
+function decodeSaveData(base64Str) {
+  const decodedB64 = atob(base64Str);
+  let result = '';
+  for (let i = 0; i < decodedB64.length; i++) {
+    result += String.fromCharCode(decodedB64.charCodeAt(i) ^ SAVE_SECRET_KEY.charCodeAt(i % SAVE_SECRET_KEY.length));
+  }
+  const jsonStr = decodeURIComponent(result);
+  return JSON.parse(jsonStr);
+}
 
 class GameDatabase {
   constructor() {
@@ -296,6 +317,63 @@ class GameDatabase {
    */
   deleteInventoryItem(id) {
     return this._write('inventory', (store) => store.delete(id));
+  }
+  /**
+   * Export all save data as an encrypted base64 string.
+   */
+  async exportData() {
+    const gameState = await this._read('gameState', store => store.getAll());
+    const characters = await this.getAllCharacters();
+    const equipment = await this._read('equipment', store => store.getAll()); // raw equipment without mergeDef
+    const inventory = await this.getAllInventory();
+
+    const data = {
+      gameState,
+      characters,
+      equipment,
+      inventory
+    };
+
+    return encodeSaveData(data);
+  }
+
+  /**
+   * Import save data from an encrypted base64 string.
+   */
+  async importData(base64Str) {
+    try {
+      const data = decodeSaveData(base64Str);
+
+      // Validate data structure loosely
+      if (!data.gameState || !data.characters || !data.equipment || !data.inventory) {
+        throw new Error('Invalid save data format');
+      }
+
+      // Clear existing stores and write new data
+      await this._write('gameState', store => store.clear());
+      await this._write('characters', store => store.clear());
+      await this._write('equipment', store => store.clear());
+      await this._write('inventory', store => store.clear());
+
+      if (data.gameState.length > 0) {
+        await Promise.all(data.gameState.map(entry => this.setGameState(entry.key, entry.value)));
+      }
+      if (data.characters.length > 0) {
+        await Promise.all(data.characters.map(char => this.putCharacter(char)));
+      }
+      if (data.equipment.length > 0) {
+        await Promise.all(data.equipment.map(eq => this._write('equipment', store => store.put(eq))));
+      }
+      if (data.inventory.length > 0) {
+        await Promise.all(data.inventory.map(item => this.putInventoryItem(item)));
+      }
+
+      console.log('[GameDB] Data imported successfully.');
+      return true;
+    } catch (e) {
+      console.error('[GameDB] Import failed:', e);
+      return false;
+    }
   }
 }
 

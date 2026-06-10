@@ -260,6 +260,33 @@ class App {
             </div>
           </div>
 
+          <!-- Data Management Section (Export / Import) -->
+          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3 mb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="material-symbols-outlined text-base text-green-400">save</span>
+              <span class="text-xs font-bold text-gray-200">セーブデータ管理</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mb-3 leading-relaxed">
+              現在のセーブデータを暗号化されたテキストとして出力したり、テキストからデータを復元できます。
+            </p>
+            <div class="flex gap-2">
+              <button id="settings-export"
+                      class="flex-1 py-2 rounded-lg text-xs font-bold
+                             bg-gray-700 border border-gray-600 text-gray-200
+                             hover:bg-gray-600 hover:text-white transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-sm align-middle mr-1">file_upload</span>
+                エクスポート
+              </button>
+              <button id="settings-import"
+                      class="flex-1 py-2 rounded-lg text-xs font-bold
+                             bg-gray-700 border border-gray-600 text-gray-200
+                             hover:bg-gray-600 hover:text-white transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-sm align-middle mr-1">file_download</span>
+                インポート
+              </button>
+            </div>
+          </div>
+
           <!-- Data Reset Section -->
           <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
             <div class="flex items-center gap-2 mb-1">
@@ -334,11 +361,109 @@ class App {
       });
     });
 
+    // ── Export / Import buttons ──
+    const btnExport = document.getElementById('settings-export');
+    if (btnExport) {
+      btnExport.addEventListener('click', async () => {
+        try {
+          const exportStr = await GameDB.exportData();
+          this.showDataModal('エクスポート', '以下のテキストをコピーして保存してください。', exportStr, true);
+        } catch (e) {
+          console.error(e);
+          alert('エクスポートに失敗しました。');
+        }
+      });
+    }
+
+    const btnImport = document.getElementById('settings-import');
+    if (btnImport) {
+      btnImport.addEventListener('click', () => {
+        this.showDataModal('インポート', 'セーブデータのテキストを貼り付けて、「復元」を押してください。', '', false, async (inputStr) => {
+          if (!inputStr) return;
+          const success = await GameDB.importData(inputStr.trim());
+          if (success) {
+            alert('セーブデータの復元が完了しました。ページをリロードします。');
+            window.location.reload();
+          } else {
+            alert('セーブデータの復元に失敗しました。テキストが正しくない可能性があります。');
+          }
+        });
+      });
+    }
+
     // ── Reset button ──
     document.getElementById('settings-reset').addEventListener('click', () => {
       if (!window.confirm('本当にリセットしますか？')) return;
       this.performDataReset();
     });
+  }
+
+  /**
+   * Show a sub-modal for viewing/copying exported data or pasting import data.
+   */
+  showDataModal(title, desc, initialValue, isExport, onConfirm = null) {
+    const overlay = document.createElement('div');
+    overlay.className = `
+      fixed inset-0 z-[60] flex items-center justify-center
+      bg-black/80 backdrop-blur-sm
+      animate-[fade-in_0.15s_ease-out]
+    `;
+    
+    overlay.innerHTML = `
+      <div class="bg-gray-900 border border-gray-700 rounded-xl mx-3 w-full max-w-sm flex flex-col overflow-hidden shadow-2xl">
+        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
+          <span class="text-sm font-bold text-gray-200">${title}</span>
+          <button id="data-close" class="text-gray-400 hover:text-white cursor-pointer"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="p-4 flex flex-col gap-3">
+          <p class="text-[10px] text-gray-400 leading-relaxed">${desc}</p>
+          <textarea id="data-textarea"
+                    class="w-full h-32 bg-gray-950 border border-gray-700 rounded p-2 text-[10px] text-gray-300 font-mono outline-none focus:border-blue-500 resize-none"
+                    ${isExport ? 'readonly' : ''}
+                    placeholder="${isExport ? '' : 'ここにテキストを貼り付け'}">${initialValue}</textarea>
+          
+          <div class="flex gap-2 mt-2">
+            ${isExport ? `
+              <button id="data-copy" class="flex-1 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">コピー</button>
+            ` : `
+              <button id="data-confirm" class="flex-1 py-2 bg-green-600/80 hover:bg-green-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">復元</button>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('data-close').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    if (isExport) {
+      document.getElementById('data-copy').addEventListener('click', async () => {
+        const textarea = document.getElementById('data-textarea');
+        textarea.select();
+        try {
+          await navigator.clipboard.writeText(textarea.value);
+          const btn = document.getElementById('data-copy');
+          btn.textContent = 'コピーしました！';
+          btn.classList.replace('bg-blue-600/80', 'bg-green-600/80');
+          setTimeout(() => {
+            btn.textContent = 'コピー';
+            btn.classList.replace('bg-green-600/80', 'bg-blue-600/80');
+          }, 2000);
+        } catch (err) {
+          document.execCommand('copy');
+          alert('コピーしました。');
+        }
+      });
+    } else {
+      document.getElementById('data-confirm').addEventListener('click', () => {
+        const val = document.getElementById('data-textarea').value;
+        if (onConfirm) onConfirm(val);
+      });
+    }
   }
 
   /**

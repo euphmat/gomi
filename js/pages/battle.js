@@ -635,10 +635,10 @@ class BattleManager {
 
     tabs.forEach(({btn, id, icon, label}) => {
       if (this.currentTab === id) {
-        btn.className = 'flex-1 py-2 bg-slate-800/90 text-emerald-300 border-t-2 border-emerald-500 rounded-t-lg text-[10px] font-black shadow-[0_-2px_10px_rgba(16,185,129,0.15)] relative z-10 flex items-center justify-center gap-1 transition-all duration-200 cursor-pointer';
+        btn.className = 'flex-1 py-2 bg-slate-800/85 backdrop-blur-[2px] text-emerald-300 border-t-2 border-emerald-500 rounded-t-lg text-[10px] font-black shadow-[0_-2px_10px_rgba(16,185,129,0.15)] relative z-10 flex items-center justify-center gap-1 transition-all duration-200 cursor-pointer';
         btn.innerHTML = `<span class="material-symbols-outlined text-[13px] text-emerald-400" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
       } else {
-        btn.className = 'flex-1 py-2 bg-slate-950/80 text-slate-500 rounded-t-lg text-[10px] font-bold hover:bg-slate-900/60 hover:text-slate-300 border-b border-slate-900/60 flex items-center justify-center gap-1 transition-colors duration-200 cursor-pointer';
+        btn.className = 'flex-1 py-2 bg-slate-950/60 backdrop-blur-[2px] text-slate-500 rounded-t-lg text-[10px] font-bold hover:bg-slate-900/60 hover:text-slate-300 border-b border-slate-900/60 flex items-center justify-center gap-1 transition-colors duration-200 cursor-pointer';
         btn.innerHTML = `<span class="material-symbols-outlined text-[13px] text-slate-500">${icon}</span>${label}`;
       }
     });
@@ -1945,7 +1945,7 @@ export function renderBattlePage() {
           <button id="tab-btn-info" class="flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5"><span class="material-symbols-outlined text-[12px]">info</span>インフォ</button>
         </div>
         <!-- Tab Content -->
-        <div id="tab-content" class="flex-1 bg-gradient-to-b from-gray-800 to-gray-900 border border-gray-700 rounded-b-lg rounded-tr-lg p-2 min-h-[120px] overflow-y-auto shadow-inner mb-2">
+        <div id="tab-content" class="flex-1 bg-gradient-to-b from-slate-800/85 to-slate-900/85 backdrop-blur-[2px] border border-slate-700/80 rounded-b-lg rounded-tr-lg p-2 min-h-[120px] overflow-y-auto shadow-inner mb-2">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）
@@ -1956,7 +1956,7 @@ export function renderBattlePage() {
     </div>
 
     <!-- Command Area (Fixed at bottom of main, above footer) -->
-    <div id="command-area" class="bg-gray-900 border-t border-gray-700 p-2 flex gap-2 shrink-0 h-[72px] relative shadow-[0_-4px_10px_rgba(0,0,0,0.5)]">
+    <div id="command-area" class="bg-slate-900/85 backdrop-blur-[2px] border-t border-slate-700/80 p-2 flex gap-2 shrink-0 h-[72px] relative shadow-[0_-4px_10px_rgba(0,0,0,0.5)]">
       <!-- Overlay block when no active character -->
       <div id="command-blocker" class="absolute inset-0 bg-gray-900/70 z-10 flex items-center justify-center backdrop-blur-[2px]">
         <span class="text-sm font-bold text-gray-300 animate-pulse tracking-wide">行動順を待っています...</span>
