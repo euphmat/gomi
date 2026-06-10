@@ -53,13 +53,6 @@ export function renderStorageTab() {
   const filterContainer = document.createElement('div');
   filterContainer.className = 'flex items-center gap-2 overflow-x-auto no-scrollbar pb-1';
 
-  const sortBtn = document.createElement('button');
-  sortBtn.className = 'flex items-center justify-center px-3 py-2 bg-gray-800 text-gray-300 rounded-lg shadow border border-gray-700 hover:bg-gray-700 shrink-0 transition-colors';
-  sortBtn.innerHTML = '<span class="text-sm font-bold">Sort</span>';
-  sortBtn.onclick = () => alert('ソート機能は準備中です。');
-
-
-
   const renderFilters = () => {
     filterContainer.innerHTML = '';
     FILTERS.forEach(f => {
@@ -122,10 +115,6 @@ export function renderStorageTab() {
   };
   updateViewModeUI();
 
-  // sortBtnのクラスも高さを10に合わせるため少し調整
-  sortBtn.className = 'flex items-center justify-center px-3 py-2 bg-gray-800 text-gray-300 rounded-lg shadow border border-gray-700 hover:bg-gray-700 shrink-0 transition-colors h-10 cursor-pointer';
-
-  rightControls.appendChild(sortBtn);
   rightControls.appendChild(viewModeContainer);
 
   topBar.appendChild(filterContainer);
