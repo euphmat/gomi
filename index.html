@@ -1,6 +1,31 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- PWA Error Recovery / Self Healing -->
+  <script>
+    (function() {
+      const handleError = async function(e) {
+        if (!localStorage.getItem('app_reloaded_due_to_error')) {
+          localStorage.setItem('app_reloaded_due_to_error', 'true');
+          console.warn('App error detected, attempting recovery...');
+          try {
+            if ('serviceWorker' in navigator) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              for (let reg of regs) { await reg.unregister(); }
+            }
+            if ('caches' in window) {
+              const keys = await caches.keys();
+              for (let key of keys) { await caches.delete(key); }
+            }
+          } catch(err) { console.error('Recovery clear failed', err); }
+          window.location.reload(true);
+        }
+      };
+      window.addEventListener('error', handleError);
+      window.addEventListener('unhandledrejection', handleError);
+      setTimeout(() => localStorage.removeItem('app_reloaded_due_to_error'), 5000);
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="RPG Game - Status Screen">
@@ -241,6 +266,12 @@
         }).catch(registrationError => {
           console.log('SW registration failed: ', registrationError);
         });
+      });
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'RELOAD_CLIENTS') {
+          console.log('New SW activated, reloading page...');
+          window.location.reload();
+        }
       });
     }
   </script>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rpg-game-cache-v4';
+const CACHE_NAME = 'rpg-game-cache-v5';
 const urlsToCache = [
   "./",
   "./index.html",
@@ -17,8 +17,7 @@ self.addEventListener('install', event => {
         console.log('Opened cache: ', CACHE_NAME);
         return Promise.allSettled(
           urlsToCache.map(url => {
-            const request = url.startsWith('http') ? new Request(url, { mode: 'no-cors' }) : url;
-            return cache.add(request).catch(err => console.error('Failed to cache:', url, err));
+            return cache.add(url).catch(err => console.error('Failed to cache:', url, err));
           })
         );
       })
@@ -38,7 +37,14 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    })
+    .then(() => self.clients.claim())
+    .then(() => self.clients.matchAll({ type: 'window' }))
+    .then(windowClients => {
+      windowClients.forEach(client => {
+        client.postMessage({ type: 'RELOAD_CLIENTS' });
+      });
+    })
   );
 });
 

@@ -13,7 +13,7 @@
  */
 
 export const SHIELDS = [
-{ id: 'wooden_shield'          , name: '木の盾'                      , stats: { def:   2, mdef:   1 }, elements: {                        } }
+{ id: 'wooden_shield'          , name: '木の盾'                      , stats: { def:   2, mdef:   1 }, elements: {                        } },
 { id: 'slime_blue_shield'      , name: 'ブルースライムの盾'          , stats: { def:   3, mdef:   1 }, elements: { water:    5            }, recipe: { price:   500, materials: [{ id: 'slime_blue_fluid',       amount: 25 }, { id: 'slime_blue_jelly',       amount: 5 }] } },
 { id: 'slime_green_shield'     , name: 'グリーンスライムの盾'        , stats: { def:   3, mdef:   5 }, elements: { grass:   20            }, recipe: { price:  2000, materials: [{ id: 'slime_green_fluid',      amount: 25 }, { id: 'slime_green_jelly',      amount: 5 }] } },
 { id: 'slime_red_shield'       , name: 'レッドスライムの盾'          , stats: { def:   7, mdef:   5 }, elements: { fire:    20            }, recipe: { price:  2500, materials: [{ id: 'slime_red_fluid',        amount: 25 }, { id: 'slime_red_jelly',        amount: 5 }] } },
