@@ -203,10 +203,106 @@ export const DUNGEONS = [{
     ]
   },
   {
-    id: 'unknown_ruins',
-    name: '???',
-    description: '未解放のエリア',
-    image: '',
+    id: 'crystal_cave',
+    name: 'クリスタルの洞窟',
+    description: '美しいクリスタルが輝く洞窟。',
+    image: 'assets/dungeon/crystal_cave.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'ghost_castle',
+    name: '亡霊の廃城',
+    description: '亡霊が彷徨う廃城。',
+    image: 'assets/dungeon/ghost_castle.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'spirit_valley',
+    name: '精霊の唄う谷',
+    description: '精霊たちの声が響く神秘的な谷。',
+    image: 'assets/dungeon/spirit_valley.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'mystic_temple',
+    name: '神秘の神殿',
+    description: '古の魔法が眠る神殿。',
+    image: 'assets/dungeon/mystic_temple.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'stargazer_tower',
+    name: '星詠みの塔',
+    description: '星空に最も近い高塔。',
+    image: 'assets/dungeon/stargazer_tower.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'hell_cave',
+    name: '地獄の魔洞',
+    description: '恐ろしい魔物が潜む洞窟。',
+    image: 'assets/dungeon/hell_cave.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'dragon_lair',
+    name: '竜の巣窟',
+    description: '強大な竜たちが棲む巣窟。',
+    image: 'assets/dungeon/dragon_lair.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'sky_demon_castle',
+    name: '天空魔城',
+    description: '天空に浮かぶ恐ろしい魔城。',
+    image: 'assets/dungeon/sky_demon_castle.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'moonlit_hall',
+    name: '月夜の礼堂',
+    description: '月光に照らされた静寂の礼堂。',
+    image: 'assets/dungeon/moonlit_hall.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'cloud_altar',
+    name: '雲海に浮かぶ祭壇',
+    description: '雲海の上に建設された神聖な祭壇。',
+    image: 'assets/dungeon/cloud_altar.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'dusk_labyrinth',
+    name: '宵闇の迷宮',
+    description: '決して夜が明けない迷宮。',
+    image: 'assets/dungeon/dusk_labyrinth.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'eternal_ruins',
+    name: '悠久の神殿跡',
+    description: '途方もない時を経た神殿の跡地。',
+    image: 'assets/dungeon/eternal_ruins.webp',
+    isUnlocked: false,
+    floors: []
+  },
+  {
+    id: 'subspace',
+    name: '亜空間',
+    description: '世界の理から外れた異次元空間。',
+    image: 'assets/dungeon/subspace.webp',
     isUnlocked: false,
     floors: []
   }
