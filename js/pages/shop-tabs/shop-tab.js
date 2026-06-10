@@ -38,7 +38,7 @@ const AILMENT_ICONS = {
  * レシピを持つすべての装備アイテムが表示され、
  * 必要素材とゴールドが揃っていれば合成できます。
  */
-export function renderForgeTab() {
+export function renderShopTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full animate-fade-in overflow-hidden';
 

@@ -27,7 +27,7 @@ import { GameDB } from './data/database.js';
 import { renderStatusPage }  from './pages/status.js';
 import { renderGuildPage }   from './pages/guild.js';
 import { renderDungeonPage } from './pages/dungeon.js';
-import { renderForgePage }    from './pages/forge.js';
+import { renderShopPage }    from './pages/shop.js';
 import { renderLibraryPage } from './pages/library.js';
 import { renderBattlePage }  from './pages/battle.js';
 
@@ -86,7 +86,7 @@ class App {
       .register('/status',  renderStatusPage)
       .register('/guild',   renderGuildPage)
       .register('/dungeon', renderDungeonPage)
-      .register('/forge',    renderForgePage)
+      .register('/shop',    renderShopPage)
       .register('/library', renderLibraryPage)
       .register('/battle',  renderBattlePage);
 

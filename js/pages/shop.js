@@ -1,21 +1,21 @@
-import { renderForgeTab } from './forge-tabs/forge-tab.js';
-import { renderStorageTab } from './forge-tabs/storage-tab.js';
+import { renderShopTab } from './shop-tabs/shop-tab.js';
+import { renderStorageTab } from './shop-tabs/storage-tab.js';
 
 /**
  * このファイルは「ショップ」画面のメインコンテナです。
  * 内部で「ショップ」タブと「倉庫」タブを切り替えて表示します。
  */
-export function renderForgePage() {
+export function renderShopPage() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full bg-[#0b0b19]';
 
   // タブの定義
   const TABS = [
-    { id: 'forge', label: 'ショップ', icon: 'storefront' },
+    { id: 'shop', label: 'ショップ', icon: 'storefront' },
     { id: 'storage', label: '倉庫', icon: 'inventory_2' }
   ];
   
-  let activeTabId = 'forge';
+  let activeTabId = 'shop';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');
@@ -64,8 +64,8 @@ export function renderForgePage() {
     let tabContent;
 
     switch (currentTabId) {
-      case 'forge':
-        tabContent = renderForgeTab();
+      case 'shop':
+        tabContent = renderShopTab();
         break;
       case 'storage':
         tabContent = renderStorageTab();

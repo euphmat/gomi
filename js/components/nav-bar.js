@@ -13,7 +13,7 @@ const NAV_TABS = [
   { id: 'status',  label: 'Status',  icon: 'person',     path: '/status' },
   { id: 'guild',   label: 'Guild',   icon: 'groups',     path: '/guild' },
   { id: 'dungeon', label: 'Dungeon', icon: 'castle',     path: '/dungeon' },
-  { id: 'forge',   label: 'ショップ',   icon: 'handyman',   path: '/forge' },
+  { id: 'shop',   label: 'ショップ',   icon: 'storefront',   path: '/shop' },
   { id: 'library', label: 'Library', icon: 'menu_book',  path: '/library' },
 ];
 
