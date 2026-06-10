@@ -342,19 +342,22 @@ export function renderStorageTab() {
     modal.querySelector('#close-modal-btn').onclick = closeModal;
     
     const updateCountDisp = () => {
-      modal.querySelector('#sell-count-disp').textContent = sellCount;
+      const disp = modal.querySelector('#sell-count-disp');
+      if (disp) disp.textContent = sellCount;
       updateBottomText();
     };
     
-    modal.querySelector('#btn-minus').onclick = () => {
-      if (sellCount > 1) { sellCount--; updateCountDisp(); }
-    };
-    modal.querySelector('#btn-plus').onclick = () => {
-      if (sellCount < maxSell) { sellCount++; updateCountDisp(); }
-    };
-    modal.querySelector('#btn-max').onclick = () => {
-      sellCount = maxSell; updateCountDisp();
-    };
+    if (price > 0) {
+      modal.querySelector('#btn-minus').onclick = () => {
+        if (sellCount > 1) { sellCount--; updateCountDisp(); }
+      };
+      modal.querySelector('#btn-plus').onclick = () => {
+        if (sellCount < maxSell) { sellCount++; updateCountDisp(); }
+      };
+      modal.querySelector('#btn-max').onclick = () => {
+        sellCount = maxSell; updateCountDisp();
+      };
+    }
     
     bottomSection.onclick = async () => {
       if (price === 0) return;
