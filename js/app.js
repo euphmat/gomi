@@ -49,10 +49,10 @@ class App {
       const chars = await GameDB.getAllCharacters();
       for (const char of chars) {
         let spentSP = 0;
-        if (char.jobSkills) {
-          for (const [jobId, skills] of Object.entries(char.jobSkills)) {
-            const job = JOBS[jobId];
-            if (!job) continue;
+        if (char.jobSkills && char.jobId) {
+          const skills = char.jobSkills[char.jobId];
+          const job = JOBS[char.jobId];
+          if (skills && job) {
             for (const [skillId, level] of Object.entries(skills)) {
               const skill = job.skills.find(s => s.id === skillId);
               if (!skill) continue;

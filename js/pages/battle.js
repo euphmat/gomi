@@ -448,13 +448,17 @@ class BattleManager {
   _findSkill(character, skillId) {
     if (!character._skillCache) {
       character._skillCache = new Map();
-      for (const [jobId, skills] of Object.entries(character.jobSkills || {})) {
-        for (const [sId, level] of Object.entries(skills)) {
-          if (level > 0) {
-            const jobDef = JOBS[jobId];
-            const skillDef = jobDef ? jobDef.skills.find(s => s.id === sId) : null;
-            const levelConfig = skillDef ? (skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1]) : null;
-            character._skillCache.set(sId, { level, def: skillDef || null, levelConfig, jobId });
+      if (character.jobId && character.jobSkills && character.jobSkills[character.jobId]) {
+        const jobId = character.jobId;
+        const skills = character.jobSkills[jobId];
+        const jobDef = JOBS[jobId];
+        if (jobDef) {
+          for (const [sId, level] of Object.entries(skills)) {
+            if (level > 0) {
+              const skillDef = jobDef.skills.find(s => s.id === sId);
+              const levelConfig = skillDef ? (skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1]) : null;
+              character._skillCache.set(sId, { level, def: skillDef || null, levelConfig, jobId });
+            }
           }
         }
       }

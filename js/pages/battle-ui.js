@@ -307,15 +307,18 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
   let skillListHtml = '';
   const learnedSkills = [];
 
-  for (const [jobId, skillsMap] of Object.entries(p.jobSkills)) {
+  if (p.jobId && p.jobSkills[p.jobId]) {
+    const jobId = p.jobId;
+    const skillsMap = p.jobSkills[jobId];
     const jobDef = jobs[jobId];
-    if (!jobDef) continue;
     
-    for (const [skillId, level] of Object.entries(skillsMap)) {
-      if (level > 0) {
-        const skillDef = jobDef.skills.find(s => s.id === skillId);
-        if (skillDef && skillDef.type !== 'passive') {
-          learnedSkills.push({ skillDef, level, jobId });
+    if (jobDef) {
+      for (const [skillId, level] of Object.entries(skillsMap)) {
+        if (level > 0) {
+          const skillDef = jobDef.skills.find(s => s.id === skillId);
+          if (skillDef && skillDef.type !== 'passive') {
+            learnedSkills.push({ skillDef, level, jobId });
+          }
         }
       }
     }

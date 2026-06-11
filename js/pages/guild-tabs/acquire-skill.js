@@ -270,16 +270,14 @@ export function renderAcquireSkillTab() {
 
   // 初期データロード
   GameDB.getAllCharacters().then(async chars => {
-    // -------------------------------------------------------------
-    // FIX: Check and correct SP based on Job Lv and acquired skills
+    // FIX: Check and correct SP based ONLY on current Job Lv and current acquired skills
     // -------------------------------------------------------------
     for (const char of chars) {
       let spentSP = 0;
-      if (char.jobSkills) {
-        for (const [jobId, skills] of Object.entries(char.jobSkills)) {
-          const job = JOBS[jobId];
-          if (!job) continue;
-          for (const [skillId, level] of Object.entries(skills)) {
+      if (char.jobSkills && char.jobSkills[char.jobId]) {
+        const job = JOBS[char.jobId];
+        if (job) {
+          for (const [skillId, level] of Object.entries(char.jobSkills[char.jobId])) {
             const skill = job.skills.find(s => s.id === skillId);
             if (!skill) continue;
             for (let i = 1; i <= level; i++) {
@@ -291,11 +289,12 @@ export function renderAcquireSkillTab() {
           }
         }
       }
+
       const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
       const correctSP = earnedSP - spentSP;
 
       if (char.sp !== correctSP) {
-        console.log(`[SP Correction] ${char.name}: ${char.sp} -> ${correctSP}`);
+        console.log(`[SP Correction] ${char.name}: ${char.sp} -> ${correctSP} (Job: ${char.jobName})`);
         char.sp = correctSP;
         await GameDB.putCharacter(char);
       }
