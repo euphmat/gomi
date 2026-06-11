@@ -1,18 +1,35 @@
-export function getAilmentIconHTML(ailment) {
-  if (!ailment) return '';
-  const map = {
-    poison: { icon: 'water_drop', color: 'text-purple-500' },
-    burn: { icon: 'local_fire_department', color: 'text-red-500' },
-    paralysis: { icon: 'bolt', color: 'text-yellow-400' },
-    sleep: { icon: 'snooze', color: 'text-blue-300' },
-    blind: { icon: 'visibility_off', color: 'text-gray-400' },
-    silence: { icon: 'volume_off', color: 'text-indigo-400' },
-    curse: { icon: 'sentiment_very_dissatisfied', color: 'text-fuchsia-500' },
-    confusion: { icon: 'question_mark', color: 'text-pink-400' }
-  };
-  const data = map[ailment.type];
-  if (!data) return '';
-  return `<span class="material-symbols-outlined ${data.color} text-[14px] absolute -top-1.5 -right-1.5 z-20 bg-gray-900 rounded-full border border-gray-700 drop-shadow-md" style="font-variation-settings: 'FILL' 1" title="${ailment.type}">${data.icon}</span>`;
+export function getActiveStateIconsHTML(entity) {
+  if (!entity) return '';
+  const icons = [];
+  
+  if (entity.activeAilment) {
+    const map = {
+      poison: { icon: 'water_drop', color: 'text-purple-500', name: '毒' },
+      burn: { icon: 'local_fire_department', color: 'text-red-500', name: '火傷' },
+      paralysis: { icon: 'bolt', color: 'text-yellow-400', name: '麻痺' },
+      sleep: { icon: 'snooze', color: 'text-blue-300', name: '睡眠' },
+      blind: { icon: 'visibility_off', color: 'text-gray-400', name: '暗闇' },
+      silence: { icon: 'volume_off', color: 'text-indigo-400', name: '沈黙' },
+      curse: { icon: 'sentiment_very_dissatisfied', color: 'text-fuchsia-500', name: '呪い' },
+      confusion: { icon: 'question_mark', color: 'text-pink-400', name: '混乱' }
+    };
+    const data = map[entity.activeAilment.type];
+    if (data) icons.push(data);
+  }
+
+  if (entity._provokeTurns > 0) {
+    icons.push({ icon: 'shield', color: 'text-amber-500', name: '挑発' });
+  }
+
+  if (entity.atkDebuffTurns > 0) {
+    icons.push({ icon: 'trending_down', color: 'text-blue-400', name: '攻撃力ダウン' });
+  }
+
+  if (icons.length === 0) return '';
+
+  return icons.map(data => 
+    `<span class="material-symbols-outlined ${data.color} drop-shadow-md flex-shrink-0" style="font-size: 11px; font-variation-settings: 'FILL' 1" title="${data.name}">${data.icon}</span>`
+  ).join('');
 }
 
 export function renderEnemyCardHtml(e, selectedEnemyTarget) {
@@ -21,7 +38,9 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   return `
     <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-1 flex-1 min-w-[2.5rem] max-w-[4rem] overflow-hidden ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" style="${deadStyle}" data-id="${e.uniqueId}">
       <div class="relative w-full aspect-square bg-gray-800 rounded-lg border-2 ${isSelected ? 'border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'border-gray-700'} overflow-hidden ${e.isDead ? 'opacity-0' : ''} transition-opacity duration-500">
-        ${!e.isDead ? getAilmentIconHTML(e.activeAilment) : ''}
+        <div class="state-icons-container absolute -top-1.5 -right-1.5 z-20 flex gap-0.5 pointer-events-auto">
+          ${!e.isDead ? getActiveStateIconsHTML(e) : ''}
+        </div>
         <img src="${e.image}" class="w-full h-full object-contain p-1 drop-shadow-md" onerror="this.style.display='none'">
       </div>
       <div class="w-full bg-gray-900 h-2 rounded overflow-hidden shadow-inner shrink-0 ${e.isDead ? 'opacity-0' : ''}">
@@ -59,13 +78,11 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         </div>
         <!-- Name & ATB -->
         <div class="px-0.5">
-          <div class="flex items-center gap-1 mb-0.5 relative">
-            <div class="text-[10px] font-bold text-gray-100 truncate flex-1 drop-shadow">${p.name}</div>
-            ${!p.isDead && p.activeAilment ? `
-              <div class="relative w-4 h-4 shrink-0">
-                ${getAilmentIconHTML(p.activeAilment)}
-              </div>
-            ` : ''}
+          <div class="flex items-center mb-0.5 relative min-w-0 justify-start">
+            <div class="text-[10px] font-bold text-gray-100 truncate drop-shadow shrink">${p.name}</div>
+            <div class="state-icons-container flex items-center gap-[2px] shrink-0 z-20 pointer-events-auto ml-1">
+              ${!p.isDead ? getActiveStateIconsHTML(p) : ''}
+            </div>
           </div>
           <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div id="${p.elementId}-atb" class="bg-yellow-400 h-full w-full origin-left" style="transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>

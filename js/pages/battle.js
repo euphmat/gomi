@@ -4,7 +4,7 @@ import { DUNGEONS } from '../definitions/dungeons.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
 import { JOBS } from '../jobs/index.js';
-import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml } from './battle-ui.js';
+import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -279,7 +279,11 @@ class BattleManager {
       const cache = this.domCache.enemies[e.elementId];
       if (!cache) return;
       
-      const { root: el, iconContainer, hpContainer, hpBar, atbContainer } = cache;
+      const { root: el, iconContainer, hpContainer, hpBar, atbContainer, stateIconsContainer } = cache;
+
+      if (stateIconsContainer && !e.isDead) {
+        stateIconsContainer.innerHTML = getActiveStateIconsHTML(e);
+      }
 
       if (e.isDead) {
         el.classList.remove('cursor-pointer', 'hover:scale-105', 'transition-transform');
@@ -312,7 +316,11 @@ class BattleManager {
     this.party.forEach(p => {
       const cache = this.domCache.party[p.elementId];
       if (!cache) return;
-      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, statBlocks } = cache;
+      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, statBlocks, stateIconsContainer } = cache;
+
+      if (stateIconsContainer && !p.isDead) {
+        stateIconsContainer.innerHTML = getActiveStateIconsHTML(p);
+      }
 
       if (this.activeCharacter === p) {
         el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
@@ -415,6 +423,7 @@ class BattleManager {
         this.domCache.enemies[e.elementId] = {
           root: el,
           iconContainer: el.children[0],
+          stateIconsContainer: el.querySelector('.state-icons-container'),
           hpContainer: el.children[1],
           hpBar: el.children[1].children[0],
           atbContainer: el.children[2]
@@ -435,6 +444,7 @@ class BattleManager {
 
         this.domCache.party[p.elementId] = {
           root: el,
+          stateIconsContainer: el.querySelector('.state-icons-container'),
           lvEl: el.querySelector(`.${p.elementId}-lv`),
           jlvEl: el.querySelector(`.${p.elementId}-jlv`),
           spEl: el.querySelector(`.${p.elementId}-sp`),
