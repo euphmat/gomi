@@ -105,6 +105,12 @@ export function calcFinalStats(character, equipmentMap) {
         if (levelConfig.bonusHp) {
           result.hp += levelConfig.bonusHp;
         }
+        if (levelConfig.bonusDef) {
+          result.def += levelConfig.bonusDef;
+        }
+        if (levelConfig.bonusMdef) {
+          result.mdef += levelConfig.bonusMdef;
+        }
       }
     }
   }

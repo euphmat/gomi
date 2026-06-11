@@ -953,7 +953,13 @@ class BattleManager {
     }
 
     const atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
-    const defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
+    let defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
+
+    // --- 防御バフ適用 (物理防御陣形) ---
+    if (!isMagic && defender._defBuffPercent && defender._defBuffTurns > 0) {
+      defStat = Math.floor(defStat * (1 + defender._defBuffPercent / 100));
+    }
+
     let damage = Math.max(1, atkStat - Math.floor(defStat / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
     
@@ -1028,6 +1034,17 @@ class BattleManager {
           damage = Math.floor(damage * (1 - reduction / 100));
           if (damage < 1) damage = 1;
           this.showActionName(defender.elementId, 'ガード', 'text-blue-300', 'border-blue-500/50');
+        }
+      }
+    }
+
+    // --- Passive: Parry (物理攻撃を無効化) ---
+    if (!isParty && !isMagic && defender.jobSkills) {
+      const parrySkill = this._findSkill(defender, 'parry');
+      if (parrySkill && parrySkill.level > 0 && parrySkill.levelConfig) {
+        if (Math.random() * 100 < parrySkill.levelConfig.chance) {
+          damage = 0;
+          this.showActionName(defender.elementId, 'パリィ', 'text-cyan-300', 'border-cyan-500/50');
         }
       }
     }
@@ -1153,13 +1170,42 @@ class BattleManager {
       }
     }
 
+    // --- 挑発/防御バフのターンデクリメント ---
+    this.party.forEach(p => {
+      if (p._provokeTurns > 0) {
+        p._provokeTurns--;
+        if (p._provokeTurns <= 0) {
+          p._provokeChance = 0;
+          this.showDamage(p.elementId, '挑発解除', 'text-gray-400');
+        }
+      }
+      if (p._defBuffTurns > 0) {
+        p._defBuffTurns--;
+        if (p._defBuffTurns <= 0) {
+          p._defBuffPercent = 0;
+          this.showDamage(p.elementId, 'DEF NORMAL', 'text-gray-400');
+        }
+      }
+    });
+
     const aliveParty = this.party.filter(p => !p.isDead);
     if (aliveParty.length === 0) {
       this.activeEnemy = null;
       return;
     }
     
-    const target = aliveParty[Math.floor(Math.random() * aliveParty.length)];
+    let target = aliveParty[Math.floor(Math.random() * aliveParty.length)];
+
+    // --- 挑発 (カバー): 挑発中のナイトがターゲットを庇う ---
+    const provoker = aliveParty.find(p =>
+      p._provokeTurns > 0 && p._provokeChance > 0 && p !== target && !p.isDead
+    );
+    if (provoker) {
+      if (Math.random() * 100 < provoker._provokeChance) {
+        target = provoker;
+        this.showActionName(provoker.elementId, '挑発', 'text-amber-400', 'border-amber-500/50');
+      }
+    }
 
     if (enemy.actions && enemy.actions.length > 0) {
       const rand = Math.random() * 100;
