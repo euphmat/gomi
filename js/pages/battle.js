@@ -360,12 +360,36 @@ class BattleManager {
         if (jpText) jpText.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
       }
 
-      if (statBlocks) {
-        statBlocks[0].textContent = p.stats.atk;
-        statBlocks[1].textContent = p.stats.def;
-        statBlocks[2].textContent = p.stats.matk;
-        statBlocks[3].textContent = p.stats.mdef;
-        statBlocks[4].textContent = p.stats.spd;
+      const statVals = cache.statVals;
+      const statRows = cache.statRows;
+      const statIcons = cache.statIcons;
+      const statLabels = cache.statLabels;
+
+      if (statVals && statVals.atk) {
+        statVals.atk.textContent = p.stats.atk;
+        statVals.mat.textContent = p.stats.matk;
+        statVals.mdf.textContent = p.stats.mdef;
+        statVals.spd.textContent = p.stats.spd;
+
+        if (p._defBuffTurns > 0) {
+          statVals.def.textContent = Math.floor(p.stats.def * (1 + p._defBuffPercent / 100));
+          statVals.def.classList.remove('text-gray-100');
+          statVals.def.classList.add('text-green-400');
+          statRows.def.classList.remove('bg-gray-900/40');
+          statRows.def.classList.add('bg-green-900/40', 'border', 'border-green-500/50');
+          statIcons.def.classList.remove('text-slate-400');
+          statIcons.def.classList.add('text-green-400');
+          statLabels.def.classList.add('text-green-400');
+        } else {
+          statVals.def.textContent = p.stats.def;
+          statVals.def.classList.remove('text-green-400');
+          statVals.def.classList.add('text-gray-100');
+          statRows.def.classList.remove('bg-green-900/40', 'border', 'border-green-500/50');
+          statRows.def.classList.add('bg-gray-900/40');
+          statIcons.def.classList.remove('text-green-400');
+          statIcons.def.classList.add('text-slate-400');
+          statLabels.def.classList.remove('text-green-400');
+        }
       }
     });
 
@@ -422,7 +446,26 @@ class BattleManager {
           expText: expBarEl ? expBarEl.nextElementSibling : null,
           jpBar: jpBarEl,
           jpText: jpBarEl ? jpBarEl.nextElementSibling : null,
-          statBlocks: statBlocks.length >= 5 ? statBlocks : null
+          statRows: {
+            atk: el.querySelector('.stat-row-atk'),
+            def: el.querySelector('.stat-row-def'),
+            mat: el.querySelector('.stat-row-mat'),
+            mdf: el.querySelector('.stat-row-mdf'),
+            spd: el.querySelector('.stat-row-spd')
+          },
+          statVals: {
+            atk: el.querySelector('.stat-val-atk'),
+            def: el.querySelector('.stat-val-def'),
+            mat: el.querySelector('.stat-val-mat'),
+            mdf: el.querySelector('.stat-val-mdf'),
+            spd: el.querySelector('.stat-val-spd')
+          },
+          statIcons: {
+            def: el.querySelector('.stat-icon-def')
+          },
+          statLabels: {
+            def: el.querySelector('.stat-label-def')
+          }
         };
       }
     });
@@ -1170,7 +1213,6 @@ class BattleManager {
       enemy.atkDebuffTurns--;
       if (enemy.atkDebuffTurns <= 0) {
         enemy.stats.atk = enemy.originalAtk;
-        this.showDamage(enemy.elementId, 'ATK NORMAL', 'text-green-500');
       }
     }
 
@@ -1180,14 +1222,12 @@ class BattleManager {
         p._provokeTurns--;
         if (p._provokeTurns <= 0) {
           p._provokeChance = 0;
-          this.showDamage(p.elementId, '挑発解除', 'text-gray-400');
         }
       }
       if (p._defBuffTurns > 0) {
         p._defBuffTurns--;
         if (p._defBuffTurns <= 0) {
           p._defBuffPercent = 0;
-          this.showDamage(p.elementId, 'DEF NORMAL', 'text-gray-400');
         }
       }
     });
