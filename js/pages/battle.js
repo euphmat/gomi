@@ -682,11 +682,11 @@ class BattleManager {
 
     tabs.forEach(({btn, id, icon, label}) => {
       if (this.currentTab === id) {
-        btn.className = 'flex-1 py-2 bg-slate-800/85 backdrop-blur-[2px] text-emerald-300 border-t-2 border-emerald-500 rounded-t-lg text-[10px] font-black shadow-[0_-2px_10px_rgba(16,185,129,0.15)] relative z-10 flex items-center justify-center gap-1 transition-all duration-200 cursor-pointer';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[13px] text-emerald-400" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-2 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-xl text-[11px] font-bold shadow-[0_-5px_20px_rgba(34,211,238,0.25)] relative z-10 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[15px] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
       } else {
-        btn.className = 'flex-1 py-2 bg-slate-950/60 backdrop-blur-[2px] text-slate-500 rounded-t-lg text-[10px] font-bold hover:bg-slate-900/60 hover:text-slate-300 border-b border-slate-900/60 flex items-center justify-center gap-1 transition-colors duration-200 cursor-pointer';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[13px] text-slate-500">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100';
+        btn.innerHTML = `<span class="material-symbols-outlined text-[15px] text-slate-500">${icon}</span>${label}`;
       }
     });
   }
@@ -2029,13 +2029,13 @@ export function renderBattlePage() {
       <!-- Tabs & Tab Content Area -->
       <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10">
         <!-- Tabs -->
-        <div class="flex px-1 gap-[2px]">
-          <button id="tab-btn-skill" class="flex-1 py-1 bg-gradient-to-t from-gray-800 to-gray-700 text-white rounded-t text-[9px] font-black shadow-[0_-1px_3px_rgba(0,0,0,0.3)] border-t-2 border-green-400 relative z-10 flex items-center justify-center gap-0.5 transition-all"><span class="material-symbols-outlined text-[12px] text-green-400" style="font-variation-settings: 'FILL' 1">auto_awesome</span>スキル</button>
-          <button id="tab-btn-item" class="flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5"><span class="material-symbols-outlined text-[12px]">backpack</span>アイテム</button>
-          <button id="tab-btn-info" class="flex-1 py-1 bg-gray-900/80 text-gray-500 rounded-t text-[9px] font-bold hover:bg-gray-800 hover:text-gray-300 transition-colors border-b border-gray-700 flex items-center justify-center gap-0.5"><span class="material-symbols-outlined text-[12px]">info</span>インフォ</button>
+        <div class="flex px-1 gap-1 items-end">
+          <button id="tab-btn-skill" class="flex-1 py-2 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-xl text-[11px] font-bold shadow-[0_-5px_20px_rgba(34,211,238,0.25)] relative z-10 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer"><span class="material-symbols-outlined text-[15px] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" style="font-variation-settings: 'FILL' 1">auto_awesome</span>スキル</button>
+          <button id="tab-btn-item" class="flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-[15px] text-slate-500">backpack</span>アイテム</button>
+          <button id="tab-btn-info" class="flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-[15px] text-slate-500">info</span>インフォ</button>
         </div>
         <!-- Tab Content -->
-        <div id="tab-content" class="flex-1 bg-gradient-to-b from-slate-800/85 to-slate-900/85 backdrop-blur-[2px] border border-slate-700/80 rounded-b-lg rounded-tr-lg p-2 min-h-[120px] overflow-y-auto shadow-inner mb-2">
+        <div id="tab-content" class="flex-1 bg-slate-800 border border-slate-600/50 rounded-b-xl rounded-tr-xl p-2.5 min-h-[120px] overflow-y-auto shadow-xl mb-2 relative z-0">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）
