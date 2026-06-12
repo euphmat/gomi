@@ -824,6 +824,16 @@ class BattleManager {
       this.showDamage(caster.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
     }
 
+    // --- Passive: Mana Regen ---
+    const regenSkill = this._findSkill(caster, 'mana_regen');
+    if (regenSkill && regenSkill.level > 0 && regenSkill.levelConfig) {
+      const amount = regenSkill.levelConfig.recoverMp;
+      caster.mp.current = Math.min(caster.mp.max, caster.mp.current + amount);
+      setTimeout(() => {
+        this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
+      }, 300 / this.speedMult);
+    }
+
     caster.atb = 0;
     this.activeCharacter = null;
     this.renderEntities();
@@ -1034,6 +1044,10 @@ class BattleManager {
     if (!isMagic && defender._defBuffPercent && defender._defBuffTurns > 0) {
       defStat = Math.floor(defStat * (1 + defender._defBuffPercent / 100));
     }
+    // --- 魔法防御バフ適用 (マジックバリア) ---
+    if (isMagic && defender._mdefBuffAmount && defender._mdefBuffTurns > 0) {
+      defStat += defender._mdefBuffAmount;
+    }
 
     let damage = Math.max(1, atkStat - Math.floor(defStat / 2));
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
@@ -1064,7 +1078,9 @@ class BattleManager {
     }
 
     // --- 属性ダメージ計算 (比例方式) ---
-    const attackElements = attacker.stats.attackElements || {};
+    const attackElements = options.element 
+      ? { [options.element]: 100 }
+      : (attacker.stats.attackElements || {});
     const defenderElementResist = defender.stats.elementResist || {};
     
     let totalElementPercent = 0;
@@ -1219,6 +1235,37 @@ class BattleManager {
     attacker.atb = 0;
     if (attacker.hp !== undefined) {
       this.activeCharacter = null;
+      
+      // --- Passive: Magic Missile ---
+      if (!options.damageType && !isMagic && !defender.isDead) {
+        const missileSkill = this._findSkill(attacker, 'magic_missile');
+        if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
+          setTimeout(() => {
+            if (!defender.isDead && !attacker.isDead) {
+              this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
+              this.executeAttack(attacker, defender, true, { 
+                actionName: 'マジックミサイル', 
+                damageMultiplier: missileSkill.levelConfig.multiplier, 
+                damageType: 'skill', 
+                isMagic: true, 
+                hideActionName: true 
+              });
+            }
+          }, 300 / this.speedMult);
+        }
+      }
+      
+      // --- Passive: Mana Regen ---
+      if (!options.damageType && !options.hideActionName) {
+        const regenSkill = this._findSkill(attacker, 'mana_regen');
+        if (regenSkill && regenSkill.level > 0 && regenSkill.levelConfig) {
+          const amount = regenSkill.levelConfig.recoverMp;
+          attacker.mp.current = Math.min(attacker.mp.max, attacker.mp.current + amount);
+          setTimeout(() => {
+            this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
+          }, 600 / this.speedMult);
+        }
+      }
     } else {
       this.activeEnemy = null;
     }
@@ -1256,6 +1303,12 @@ class BattleManager {
         p._defBuffTurns--;
         if (p._defBuffTurns <= 0) {
           p._defBuffPercent = 0;
+        }
+      }
+      if (p._mdefBuffTurns > 0) {
+        p._mdefBuffTurns--;
+        if (p._mdefBuffTurns <= 0) {
+          p._mdefBuffAmount = 0;
         }
       }
     });

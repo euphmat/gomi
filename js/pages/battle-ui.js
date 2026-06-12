@@ -135,9 +135,9 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider">MAT</span></div>
           <span class="stat-val-mat text-gray-100 font-black drop-shadow-md">${p.stats.matk}</span>
         </div>
-        <div class="stat-row-mdf flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
-          <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined text-indigo-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider">MDF</span></div>
-          <span class="stat-val-mdf text-gray-100 font-black drop-shadow-md">${p.stats.mdef}</span>
+        <div class="stat-row-mdf flex justify-between items-center ${p._mdefBuffTurns > 0 ? 'bg-indigo-900/40 border border-indigo-500/50' : 'bg-gray-900/40'} rounded px-1 py-0.5 transition-colors">
+          <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-indigo-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : ''}">MDF</span></div>
+          <span class="stat-val-mdf ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-gray-100'} font-black drop-shadow-md">${p._mdefBuffTurns > 0 ? p.stats.mdef + p._mdefBuffAmount : p.stats.mdef}</span>
         </div>
         <div class="stat-row-spd flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider">SPD</span></div>
