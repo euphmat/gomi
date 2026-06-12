@@ -1880,6 +1880,22 @@ class BattleManager {
 
       this.isDungeonClear = false;
 
+      // ── 周回中の死亡時の探索継続 ──
+      const continueOnDeath = localStorage.getItem('continueOnDeath') === 'true';
+      let willAutoRetry = false;
+      if (continueOnDeath && this.autoBattleMode !== 'none') {
+        if (actualFee >= innFee) {
+          // Gold was sufficient — will auto-retry after showing defeat screen
+          willAutoRetry = true;
+          if (this.autoBattleMode === 'dungeon') {
+            await GameDB.setGameState('currentFloor', 1);
+          }
+        } else {
+          // Gold insufficient — disable the setting
+          localStorage.setItem('continueOnDeath', 'false');
+        }
+      }
+
       // 敗北時のUIをカスタム構築
       const lastKilledBy = this.lastKilledBy || {
         monsterName: '未知のモンスター',
@@ -1953,8 +1969,28 @@ class BattleManager {
       `;
 
       const okBtn = this.elements.resultOverlay.querySelector('#btn-result-ok');
+      let autoRetryTimer = null;
+
+      if (willAutoRetry) {
+        // Show countdown on the button
+        let remaining = 5;
+        okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
+        autoRetryTimer = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) {
+            clearInterval(autoRetryTimer);
+            this.elements.resultOverlay.classList.add('hidden');
+            this.resetBattleState();
+            this.init();
+          } else {
+            okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
+          }
+        }, 1000);
+      }
+
       if (okBtn) {
         okBtn.onclick = () => {
+          if (autoRetryTimer) clearInterval(autoRetryTimer);
           this.elements.resultOverlay.classList.add('hidden');
           sessionStorage.removeItem('autoBattleMode');
           this.autoBattleMode = 'none';

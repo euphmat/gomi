@@ -264,6 +264,26 @@ class App {
             </div>
           </div>
 
+          <!-- Continue on Death Toggle -->
+          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/20
+                            flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base text-rose-400">heart_broken</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-gray-200 leading-tight">周回中の死亡時の探索継続</div>
+                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">全滅時に宿屋費用を払い自動で再突入</div>
+                </div>
+              </div>
+              <div id="toggle-continue-on-death"
+                   class="setting-toggle ${localStorage.getItem('continueOnDeath') === 'true' ? 'active' : ''}"
+                   style="--toggle-color: #f43f5e; --toggle-glow: rgba(244,63,94,0.4)"></div>
+            </div>
+          </div>
+
           <!-- Auto Battle Speed -->
           <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
                       hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
@@ -396,6 +416,14 @@ class App {
         const isActive = toggleBattleAnim.classList.toggle('active');
         localStorage.setItem('disableBattleAnimations', isActive);
         window.dispatchEvent(new Event('settingsChanged'));
+      });
+    }
+
+    const toggleContinueOnDeath = document.getElementById('toggle-continue-on-death');
+    if (toggleContinueOnDeath) {
+      toggleContinueOnDeath.addEventListener('click', () => {
+        const isActive = toggleContinueOnDeath.classList.toggle('active');
+        localStorage.setItem('continueOnDeath', isActive);
       });
     }
 
