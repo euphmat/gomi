@@ -517,6 +517,22 @@ class BattleManager {
           }
         }
       }
+      
+      // Inherited skill
+      if (character.inheritedSkill && character.jobSkills) {
+        const { jobId, skillId } = character.inheritedSkill;
+        if (jobId !== character.jobId) {
+          const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
+          if (level > 0) {
+            const jobDef = JOBS[jobId];
+            if (jobDef) {
+              const skillDef = jobDef.skills.find(s => s.id === skillId);
+              const levelConfig = skillDef ? (skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1]) : null;
+              character._skillCache.set(skillId, { level, def: skillDef || null, levelConfig, jobId, isInherited: true });
+            }
+          }
+        }
+      }
     }
     const cached = character._skillCache.get(skillId);
     if (cached) return cached;

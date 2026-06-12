@@ -23,6 +23,7 @@ export function renderAcquireSkillTab() {
     tabContainer.innerHTML = `
       <button id="btn-tab-active" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'active' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">アクティブスキル</button>
       <button id="btn-tab-passive" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'passive' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">パッシブスキル</button>
+      <button id="btn-tab-inheritance" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'inheritance' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">継承</button>
     `;
     tabContainer.querySelector('#btn-tab-active').onclick = () => {
       if (currentTab !== 'active') {
@@ -34,6 +35,13 @@ export function renderAcquireSkillTab() {
     tabContainer.querySelector('#btn-tab-passive').onclick = () => {
       if (currentTab !== 'passive') {
         currentTab = 'passive';
+        renderTabs();
+        render(true);
+      }
+    };
+    tabContainer.querySelector('#btn-tab-inheritance').onclick = () => {
+      if (currentTab !== 'inheritance') {
+        currentTab = 'inheritance';
         renderTabs();
         render(true);
       }
@@ -220,6 +228,51 @@ export function renderAcquireSkillTab() {
     }
   };
 
+  const updateInheritedSkillRow = (row, inheritedData, selectedChar, index) => {
+    const { skill, level, jobId } = inheritedData;
+    const levelConfig = skill.levels.find(l => l.level === level) || skill.levels[skill.levels.length - 1];
+    const jobDef = JOBS[jobId];
+    const isSelected = selectedChar.inheritedSkill && selectedChar.inheritedSkill.skillId === skill.id && selectedChar.inheritedSkill.jobId === jobId;
+
+    let btnClass = isSelected 
+        ? 'bg-indigo-600 border border-indigo-400 text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]' 
+        : 'bg-gray-800/80 border border-white/5 text-gray-300 hover:bg-gray-700 hover:text-white';
+    let btnText = isSelected ? '選択中' : '選択';
+
+    row.innerHTML = `
+      <div class="flex items-center justify-center w-11 h-11 bg-black/40 rounded-lg shrink-0 relative shadow-inner border border-white/5 overflow-hidden">
+        <span class="material-symbols-outlined text-2xl text-indigo-400 drop-shadow-md">${skill.icon}</span>
+        <div class="absolute -bottom-0 -right-0 bg-gradient-to-tl from-indigo-600 to-purple-500 text-[9px] font-black text-white px-1 py-0.5 rounded-tl shadow-sm z-20">Lv.${level}</div>
+      </div>
+      <div class="flex-1 min-w-0 py-0.5 pr-1">
+        <div class="flex items-center mb-0.5 gap-x-2 flex-wrap">
+          <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate">${skill.name}</h3>
+          <span class="text-[9px] font-bold text-purple-300 bg-purple-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">badge</span>${jobDef ? jobDef.name : ''}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[10px] text-gray-400 leading-snug font-medium break-words whitespace-pre-wrap">${skill.getDescription(levelConfig)}</span>
+        </div>
+      </div>
+      <div class="shrink-0 flex flex-col items-end justify-center ml-1">
+        <button class="inheritance-btn min-w-[70px] px-2 py-1.5 ${btnClass} text-[11px] font-bold rounded-lg transition-all duration-200">
+          ${btnText}
+        </button>
+      </div>
+    `;
+
+    const btn = row.querySelector('.inheritance-btn');
+    btn.onclick = async () => {
+      // Allow only 1 inherited skill.
+      if (isSelected) {
+        selectedChar.inheritedSkill = null; // deselect
+      } else {
+        selectedChar.inheritedSkill = { jobId, skillId: skill.id }; // select
+      }
+      await GameDB.putCharacter(selectedChar);
+      render(false);
+    };
+  };
+
   // 全体レンダリング関数
   const render = (isInitial = false) => {
     // キャラクター選択グリッド (上部)
@@ -234,35 +287,76 @@ export function renderAcquireSkillTab() {
 
     const selectedChar = characters.find(c => c.id === selectedCharId);
     if (selectedChar) {
-      const job = JOBS[selectedChar.jobId || 'norvice'];
-      let skills = job ? job.skills : [];
-      
-      // 選択中のタブに合わせてスキルをフィルタリング
-      skills = skills.filter(skill => {
-        const isPassive = skill.type === 'passive';
-        return currentTab === 'passive' ? isPassive : !isPassive;
-      });
-
-      if (skills.length === 0) {
-        listContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-32 opacity-60"><span class="material-symbols-outlined text-4xl text-gray-500 mb-2">auto_awesome</span><span class="text-sm font-bold text-gray-400 tracking-wider">習得可能なスキルがありません</span></div>';
-      } else {
-        if (isInitial || listContainer.children.length !== skills.length) {
-          // Full render
-          listContainer.innerHTML = '';
-          skills.forEach((skill, index) => {
-            const row = document.createElement('div');
-            // Add cascade animation only on initial render
-            row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
-            row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden';
-            updateSkillRow(row, skill, selectedChar, index, true);
-            listContainer.appendChild(row);
-          });
+      if (currentTab === 'inheritance') {
+        let inheritedSkillsList = [];
+        if (selectedChar.jobSkills) {
+            for (const [jId, skillsMap] of Object.entries(selectedChar.jobSkills)) {
+                if (jId !== selectedChar.jobId) {
+                    const jobDef = JOBS[jId];
+                    if (jobDef) {
+                        for (const [sId, level] of Object.entries(skillsMap)) {
+                            if (level > 0) {
+                                const skillDef = jobDef.skills.find(s => s.id === sId);
+                                if (skillDef) {
+                                    inheritedSkillsList.push({ skill: skillDef, level, jobId: jId });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (inheritedSkillsList.length === 0) {
+            listContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-32 opacity-60"><span class="material-symbols-outlined text-4xl text-gray-500 mb-2">auto_awesome</span><span class="text-sm font-bold text-gray-400 tracking-wider">継承可能なスキルがありません</span></div>';
         } else {
-          // Soft update (DOMを再構築せず中身だけ更新)
-          skills.forEach((skill, index) => {
-            const row = listContainer.children[index];
-            updateSkillRow(row, skill, selectedChar, index, false);
-          });
+            if (isInitial || listContainer.children.length !== inheritedSkillsList.length) {
+                listContainer.innerHTML = '';
+                inheritedSkillsList.forEach((data, index) => {
+                    const row = document.createElement('div');
+                    row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
+                    row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 shadow-md overflow-hidden';
+                    updateInheritedSkillRow(row, data, selectedChar, index);
+                    listContainer.appendChild(row);
+                });
+            } else {
+                inheritedSkillsList.forEach((data, index) => {
+                    const row = listContainer.children[index];
+                    updateInheritedSkillRow(row, data, selectedChar, index);
+                });
+            }
+        }
+      } else {
+        const job = JOBS[selectedChar.jobId || 'norvice'];
+        let skills = job ? job.skills : [];
+        
+        // 選択中のタブに合わせてスキルをフィルタリング
+        skills = skills.filter(skill => {
+          const isPassive = skill.type === 'passive';
+          return currentTab === 'passive' ? isPassive : !isPassive;
+        });
+
+        if (skills.length === 0) {
+          listContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-32 opacity-60"><span class="material-symbols-outlined text-4xl text-gray-500 mb-2">auto_awesome</span><span class="text-sm font-bold text-gray-400 tracking-wider">習得可能なスキルがありません</span></div>';
+        } else {
+          if (isInitial || listContainer.children.length !== skills.length) {
+            // Full render
+            listContainer.innerHTML = '';
+            skills.forEach((skill, index) => {
+              const row = document.createElement('div');
+              // Add cascade animation only on initial render
+              row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
+              row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden';
+              updateSkillRow(row, skill, selectedChar, index, true);
+              listContainer.appendChild(row);
+            });
+          } else {
+            // Soft update (DOMを再構築せず中身だけ更新)
+            skills.forEach((skill, index) => {
+              const row = listContainer.children[index];
+              updateSkillRow(row, skill, selectedChar, index, false);
+            });
+          }
         }
       }
     }

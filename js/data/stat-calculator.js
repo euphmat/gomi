@@ -92,25 +92,35 @@ export function calcFinalStats(character, equipmentMap) {
     }
   }
 
-  // Add passive skill bonuses
-  if (character.jobSkills && character.jobId) {
-    const skillsMap = character.jobSkills[character.jobId];
-    const jobDef = JOBS[character.jobId];
-    if (skillsMap && jobDef) {
-      for (const [skillId, level] of Object.entries(skillsMap)) {
+  // Helper to apply passive skill bonuses
+  const applyPassiveBonus = (skillMap, jobId) => {
+    const jobDef = JOBS[jobId];
+    if (skillMap && jobDef) {
+      for (const [skillId, level] of Object.entries(skillMap)) {
         if (level <= 0) continue;
         const skillDef = jobDef.skills.find(s => s.id === skillId);
         if (!skillDef || skillDef.type !== 'passive') continue;
         const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
-        if (levelConfig.bonusHp) {
-          result.hp += levelConfig.bonusHp;
-        }
-        if (levelConfig.bonusDef) {
-          result.def += levelConfig.bonusDef;
-        }
-        if (levelConfig.bonusMdef) {
-          result.mdef += levelConfig.bonusMdef;
-        }
+        if (levelConfig.bonusHp) result.hp += levelConfig.bonusHp;
+        if (levelConfig.bonusDef) result.def += levelConfig.bonusDef;
+        if (levelConfig.bonusMdef) result.mdef += levelConfig.bonusMdef;
+      }
+    }
+  };
+
+  // Add passive skill bonuses (current job)
+  if (character.jobSkills && character.jobId) {
+    applyPassiveBonus(character.jobSkills[character.jobId], character.jobId);
+  }
+
+  // Add inherited skill passive bonuses
+  if (character.inheritedSkill && character.jobSkills) {
+    const { jobId, skillId } = character.inheritedSkill;
+    if (jobId !== character.jobId) {
+      const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
+      if (level > 0) {
+        // Create a single-entry map to reuse applyPassiveBonus
+        applyPassiveBonus({ [skillId]: level }, jobId);
       }
     }
   }

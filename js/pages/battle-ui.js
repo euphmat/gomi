@@ -342,6 +342,23 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     }
   }
 
+  // Add inherited active skill
+  if (p.inheritedSkill && p.jobSkills) {
+    const { jobId, skillId } = p.inheritedSkill;
+    if (jobId !== p.jobId) {
+      const level = p.jobSkills[jobId] && p.jobSkills[jobId][skillId];
+      if (level > 0) {
+        const jobDef = jobs[jobId];
+        if (jobDef) {
+          const skillDef = jobDef.skills.find(s => s.id === skillId);
+          if (skillDef && skillDef.type !== 'passive') {
+            learnedSkills.push({ skillDef, level, jobId, isInherited: true });
+          }
+        }
+      }
+    }
+  }
+
   // ジョブID、スキルIDの順でソートし、並び順を統一する
   learnedSkills.sort((a, b) => {
     if (a.jobId !== b.jobId) return a.jobId.localeCompare(b.jobId);
@@ -353,7 +370,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
   }
 
   skillListHtml += '<div class="grid grid-cols-2 gap-1.5">';
-  learnedSkills.forEach(({ skillDef, level }) => {
+  learnedSkills.forEach(({ skillDef, level, isInherited }) => {
     const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
     const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
     const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced;
@@ -382,7 +399,11 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         </div>
         <div class="flex flex-col text-left flex-1 min-w-0 z-10">
           <div class="flex justify-between items-center mb-0.5">
-            <div class="text-[10px] font-bold ${canCast ? 'text-gray-100' : 'text-gray-400'} truncate pr-1">${skillDef.name} <span class="${canCast ? 'text-green-400' : 'text-gray-500'} text-[9px] ml-0.5">Lv${level}</span></div>
+            <div class="text-[10px] font-bold ${canCast ? 'text-gray-100' : 'text-gray-400'} truncate pr-1">
+              ${skillDef.name} 
+              <span class="${canCast ? 'text-green-400' : 'text-gray-500'} text-[9px] ml-0.5">Lv${level}</span>
+              ${isInherited ? `<span class="text-[8px] font-black text-indigo-300 bg-indigo-900/40 border border-indigo-700/50 px-1 py-[1px] rounded ml-1">継承</span>` : ''}
+            </div>
             ${levelConfig.mpCost > 0 ? `<div class="text-[9px] font-bold ${canCast ? 'text-blue-300 bg-blue-900/40 border-blue-700/50' : 'text-red-400 bg-red-900/20 border-red-900/50'} px-1 py-[1px] rounded border shadow-inner shrink-0">${canCast ? `MP ${levelConfig.mpCost}` : 'MP不足'}</div>` : ''}
           </div>
           <div class="text-[9px] text-gray-400 leading-none truncate">${desc}</div>
