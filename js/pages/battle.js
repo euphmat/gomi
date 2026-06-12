@@ -279,7 +279,7 @@ class BattleManager {
       const cache = this.domCache.enemies[e.elementId];
       if (!cache) return;
       
-      const { root: el, iconContainer, hpContainer, hpBar, atbContainer, stateIconsContainer } = cache;
+      const { root: el, iconContainer, hpContainer, hpBar, hpText, atbContainer, stateIconsContainer } = cache;
 
       if (stateIconsContainer && !e.isDead) {
         stateIconsContainer.innerHTML = getActiveStateIconsHTML(e);
@@ -300,17 +300,18 @@ class BattleManager {
       }
 
       if (this.activeEnemy === e) {
-        iconContainer.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        iconContainer.classList.remove('border-gray-700', 'border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
+        iconContainer.classList.add('drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
+        iconContainer.classList.remove('drop-shadow-md', 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]');
       } else if (this.selectedEnemyTarget === e) {
-        iconContainer.classList.add('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]');
-        iconContainer.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        iconContainer.classList.add('drop-shadow-[0_0_8px_rgba(239,68,68,1)]');
+        iconContainer.classList.remove('drop-shadow-md', 'drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
       } else {
-        iconContainer.classList.remove('border-red-500', 'shadow-[0_0_8px_rgba(239,68,68,0.8)]', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        iconContainer.classList.add('border-gray-700');
+        iconContainer.classList.remove('drop-shadow-[0_0_8px_rgba(239,68,68,1)]', 'drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
+        iconContainer.classList.add('drop-shadow-md');
       }
 
       hpBar.style.transform = `scaleX(${e.currentHp / e.maxHp})`;
+      if (hpText) hpText.textContent = `${Math.floor(e.currentHp)}/${e.maxHp}`;
     });
 
     this.party.forEach(p => {
@@ -426,6 +427,7 @@ class BattleManager {
           stateIconsContainer: el.querySelector('.state-icons-container'),
           hpContainer: el.children[1],
           hpBar: el.children[1].children[0],
+          hpText: el.children[1].children[1],
           atbContainer: el.children[2]
         };
       }
@@ -2046,9 +2048,9 @@ export function renderBattlePage() {
         max-width: min(4rem, calc(100% / var(--enemy-cols, 4) - 0.25rem));
       }
       #enemy-area {
-        height: 90px;
-        min-height: 90px;
-        max-height: 90px;
+        height: 105px;
+        min-height: 105px;
+        max-height: 105px;
         overflow-x: hidden;
         overflow-y: hidden;
         display: flex;
