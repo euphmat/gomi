@@ -184,124 +184,182 @@ class App {
     overlay.style.animation = 'fade-in 0.15s ease-out';
 
     overlay.innerHTML = `
-      <div class="bg-gray-900 border border-gray-700/60 rounded-xl mx-3 w-full max-w-[calc(100vw-24px)]
-                  shadow-2xl shadow-black/50 flex flex-col overflow-hidden
-                  animate-[slide-up_0.2s_ease-out]"
-           style="animation: slide-up 0.2s ease-out">
+      <div class="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl mx-3 w-full max-w-[calc(100vw-24px)]
+                  shadow-2xl shadow-black/60 flex flex-col overflow-hidden
+                  animate-[slide-up_0.25s_ease-out]"
+           style="animation: slide-up 0.25s ease-out">
 
         <!-- Modal Header -->
-        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700/40">
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-lg text-gray-400">settings</span>
-            <span class="text-sm font-bold text-gray-100">設定</span>
-            <span class="text-xs text-gray-498 ml-2 font-mono">v0017</span>
+        <div class="relative px-5 py-4 border-b border-gray-700/30 overflow-hidden">
+          <!-- Header gradient accent -->
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/8 to-cyan-600/10"></div>
+          <div class="relative flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-700/80 to-gray-800/80 border border-gray-600/40
+                          flex items-center justify-center shadow-lg">
+                <span class="material-symbols-outlined text-lg text-gray-300" style="font-variation-settings: 'FILL' 1">settings</span>
+              </div>
+              <div>
+                <span class="text-sm font-bold text-gray-100 tracking-wide">設定</span>
+                <span class="text-[9px] text-gray-500 ml-2 font-mono bg-gray-800/60 px-1.5 py-0.5 rounded">v0017</span>
+              </div>
+            </div>
+            <button id="settings-close"
+                    class="w-9 h-9 flex items-center justify-center rounded-xl
+                           text-gray-500 hover:text-gray-200 bg-gray-800/40 hover:bg-gray-700/60
+                           border border-transparent hover:border-gray-600/40
+                           transition-all duration-200 cursor-pointer">
+              <span class="material-symbols-outlined text-lg">close</span>
+            </button>
           </div>
-          <button id="settings-close"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg
-                         text-gray-400 hover:text-gray-200 hover:bg-gray-800
-                         transition-colors duration-150 cursor-pointer">
-            <span class="material-symbols-outlined text-xl">close</span>
-          </button>
         </div>
 
         <!-- Modal Body -->
-        <div class="px-4 py-4 flex flex-col gap-3">
+        <div class="px-4 py-4 flex flex-col gap-2.5 max-h-[75vh] overflow-y-auto">
 
-          <!-- Battle Stats Toggle Section -->
-          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-1">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-base text-blue-400">visibility</span>
-                <span class="text-xs font-bold text-gray-200">バトル画面のステータス表示</span>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="setting-toggle-battle-stats" class="sr-only peer" ${localStorage.getItem('hideBattleStats') === 'false' ? 'checked' : ''}>
-                <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
-              </label>
-            </div>
-            <p class="text-[10px] text-gray-500 leading-relaxed">
-              バトル画面でプレイヤーのステータス（ATK, DEF, MAT, MDF, SPD）を表示するかどうかを切り替えます。
-            </p>
+          <!-- ═══ GAMEPLAY SETTINGS GROUP ═══ -->
+          <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 flex items-center gap-2">
+            <span class="material-symbols-outlined text-xs text-gray-600">tune</span>
+            ゲームプレイ
+            <div class="flex-1 h-px bg-gradient-to-r from-gray-700/40 to-transparent"></div>
           </div>
 
-          <!-- Battle Animation Toggle Section -->
-          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-1">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-base text-purple-400">animation</span>
-                <span class="text-xs font-bold text-gray-200">バトルアニメーション非表示</span>
+          <!-- Battle Stats Toggle -->
+          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/20
+                            flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base text-blue-400">visibility</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-gray-200 leading-tight">ステータス表示</div>
+                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">バトル中のATK, DEF等のステータスを表示</div>
+                </div>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="setting-toggle-battle-anim" class="sr-only peer" ${localStorage.getItem('disableBattleAnimations') === 'true' ? 'checked' : ''}>
-                <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
-              </label>
+              <div id="toggle-battle-stats"
+                   class="setting-toggle ${localStorage.getItem('hideBattleStats') === 'false' ? 'active' : ''}"
+                   style="--toggle-color: #3b82f6; --toggle-glow: rgba(59,130,246,0.4)"></div>
             </div>
-            <p class="text-[10px] text-gray-500 leading-relaxed">
-              ダメージ表記、スキル表示、ATBゲージ、ドロップ演出などのアニメーションを非表示にして処理負荷を軽減します。
-            </p>
           </div>
 
-          <!-- Auto Battle Speed Section -->
-          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
+          <!-- Battle Animation Toggle -->
+          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/20
+                            flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base text-purple-400">animation</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-gray-200 leading-tight">アニメーション非表示</div>
+                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">演出を省略して処理を軽量化</div>
+                </div>
+              </div>
+              <div id="toggle-battle-anim"
+                   class="setting-toggle ${localStorage.getItem('disableBattleAnimations') === 'true' ? 'active' : ''}"
+                   style="--toggle-color: #a855f7; --toggle-glow: rgba(168,85,247,0.4)"></div>
+            </div>
+          </div>
+
+          <!-- Auto Battle Speed -->
+          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/20
+                          flex items-center justify-center shrink-0">
                 <span class="material-symbols-outlined text-base text-yellow-400">speed</span>
-                <span class="text-xs font-bold text-gray-200">自動戦闘速度</span>
               </div>
-              <span id="setting-speed-value" class="text-xs font-bold text-yellow-400">${localStorage.getItem('autoBattleSpeed') || 1}x</span>
+              <div class="flex-1">
+                <div class="text-xs font-bold text-gray-200 leading-tight">自動戦闘速度</div>
+                <div class="text-[9px] text-gray-500 mt-0.5">戦闘のテンポを調整</div>
+              </div>
+              <div class="bg-yellow-500/15 border border-yellow-500/25 rounded-lg px-2.5 py-1
+                          flex items-center gap-0.5">
+                <span id="setting-speed-value" class="text-sm font-bold text-yellow-400">${localStorage.getItem('autoBattleSpeed') || 1}</span>
+                <span class="text-[9px] text-yellow-500/70 font-bold">×</span>
+              </div>
             </div>
-            <input type="range" id="setting-speed-slider" min="1" max="5" step="1" value="${localStorage.getItem('autoBattleSpeed') || 1}" class="w-full h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer">
-            <div class="flex justify-between text-[9px] text-gray-500 mt-1 px-1">
-              <span>等倍</span>
-              <span>2x</span>
-              <span>3x</span>
-              <span>4x</span>
-              <span>5x</span>
+            <div class="px-1">
+              <input type="range" id="setting-speed-slider"
+                     min="1" max="5" step="1"
+                     value="${localStorage.getItem('autoBattleSpeed') || 1}"
+                     class="setting-slider">
+              <div class="flex justify-between mt-2.5 px-0.5">
+                ${[1,2,3,4,5].map(v => `
+                  <div class="speed-step ${parseInt(localStorage.getItem('autoBattleSpeed') || 1) >= v ? 'active' : ''}"
+                       data-speed="${v}">
+                    <span class="text-[9px] ${parseInt(localStorage.getItem('autoBattleSpeed') || 1) >= v ? 'text-yellow-400 font-bold' : 'text-gray-600'} transition-colors">${v === 1 ? '等倍' : v + 'x'}</span>
+                  </div>
+                `).join('')}
+              </div>
             </div>
           </div>
 
-          <!-- Data Management Section (Export / Import) -->
-          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3 mb-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="material-symbols-outlined text-base text-green-400">save</span>
-              <span class="text-xs font-bold text-gray-200">セーブデータ管理</span>
+          <!-- ═══ DATA MANAGEMENT GROUP ═══ -->
+          <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 mt-2 flex items-center gap-2">
+            <span class="material-symbols-outlined text-xs text-gray-600">database</span>
+            データ管理
+            <div class="flex-1 h-px bg-gradient-to-r from-gray-700/40 to-transparent"></div>
+          </div>
+
+          <!-- Save Data Management -->
+          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20
+                          flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-base text-emerald-400">save</span>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-gray-200 leading-tight">セーブデータ管理</div>
+                <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">データのエクスポート・インポート</div>
+              </div>
             </div>
-            <p class="text-[10px] text-gray-500 mb-3 leading-relaxed">
-              現在のセーブデータを暗号化されたテキストとして出力したり、テキストからデータを復元できます。
-            </p>
             <div class="flex gap-2">
               <button id="settings-export"
-                      class="flex-1 py-2 rounded-lg text-xs font-bold
-                             bg-gray-700 border border-gray-600 text-gray-200
-                             hover:bg-gray-600 hover:text-white transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-sm align-middle mr-1">file_upload</span>
+                      class="settings-action-btn flex-1 py-2.5 rounded-xl text-xs font-bold
+                             bg-gradient-to-b from-gray-700/80 to-gray-800/80
+                             border border-gray-600/40 text-gray-300
+                             hover:text-white hover:border-gray-500/50
+                             cursor-pointer flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">file_upload</span>
                 エクスポート
               </button>
               <button id="settings-import"
-                      class="flex-1 py-2 rounded-lg text-xs font-bold
-                             bg-gray-700 border border-gray-600 text-gray-200
-                             hover:bg-gray-600 hover:text-white transition-all cursor-pointer">
-                <span class="material-symbols-outlined text-sm align-middle mr-1">file_download</span>
+                      class="settings-action-btn flex-1 py-2.5 rounded-xl text-xs font-bold
+                             bg-gradient-to-b from-gray-700/80 to-gray-800/80
+                             border border-gray-600/40 text-gray-300
+                             hover:text-white hover:border-gray-500/50
+                             cursor-pointer flex items-center justify-center gap-1.5">
+                <span class="material-symbols-outlined text-sm">file_download</span>
                 インポート
               </button>
             </div>
           </div>
 
-          <!-- Data Reset Section -->
-          <div class="bg-gray-800/60 border border-gray-700/40 rounded-lg p-3">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="material-symbols-outlined text-base text-red-400">delete_forever</span>
-              <span class="text-xs font-bold text-gray-200">セーブデータリセット</span>
+          <!-- Data Reset -->
+          <div class="settings-section bg-red-950/20 border border-red-900/25 rounded-xl p-3.5
+                      hover:bg-red-950/30 hover:border-red-800/30 transition-all duration-200">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/20
+                          flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-base text-red-400">delete_forever</span>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-red-300/90 leading-tight">データリセット</div>
+                <div class="text-[9px] text-red-400/50 mt-0.5 leading-relaxed">全データを削除して初期状態に戻す（取り消し不可）</div>
+              </div>
             </div>
-            <p class="text-[10px] text-gray-500 mb-3 leading-relaxed">
-              すべてのセーブデータ・キャッシュを削除し、初期状態に戻します。この操作は取り消せません。
-            </p>
             <button id="settings-reset"
-                    class="w-full py-2.5 rounded-lg text-xs font-bold
-                           bg-red-900/40 border border-red-700/50 text-red-300
-                           hover:bg-red-800/50 hover:border-red-600/60 hover:text-red-200
-                           active:scale-[0.98] transition-all duration-150 cursor-pointer">
-              <span class="material-symbols-outlined text-sm align-middle mr-1">warning</span>
+                    class="settings-action-btn w-full py-2.5 rounded-xl text-xs font-bold
+                           bg-gradient-to-b from-red-900/50 to-red-950/60
+                           border border-red-700/40 text-red-300/90
+                           hover:border-red-600/50 hover:text-red-200
+                           cursor-pointer flex items-center justify-center gap-1.5">
+              <span class="material-symbols-outlined text-sm">warning</span>
               セーブデータを削除してリセット
             </button>
           </div>
@@ -322,33 +380,66 @@ class App {
       if (e.target === overlay) overlay.remove();
     });
 
-    // ── Toggle Settings ──
-    const toggleBattleStats = document.getElementById('setting-toggle-battle-stats');
+    // ── Toggle Settings (Custom Div Toggles) ──
+    const toggleBattleStats = document.getElementById('toggle-battle-stats');
     if (toggleBattleStats) {
-      toggleBattleStats.addEventListener('change', (e) => {
-        localStorage.setItem('hideBattleStats', !e.target.checked);
+      toggleBattleStats.addEventListener('click', () => {
+        const isActive = toggleBattleStats.classList.toggle('active');
+        localStorage.setItem('hideBattleStats', !isActive);
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }
 
-    const toggleBattleAnim = document.getElementById('setting-toggle-battle-anim');
+    const toggleBattleAnim = document.getElementById('toggle-battle-anim');
     if (toggleBattleAnim) {
-      toggleBattleAnim.addEventListener('change', (e) => {
-        localStorage.setItem('disableBattleAnimations', e.target.checked);
+      toggleBattleAnim.addEventListener('click', () => {
+        const isActive = toggleBattleAnim.classList.toggle('active');
+        localStorage.setItem('disableBattleAnimations', isActive);
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }
 
+    // ── Speed Slider & Step Dots ──
     const speedSlider = document.getElementById('setting-speed-slider');
     const speedValue = document.getElementById('setting-speed-value');
+    const speedSteps = overlay.querySelectorAll('.speed-step');
+
+    const updateSpeedUI = (val) => {
+      speedValue.textContent = val;
+      speedSteps.forEach(step => {
+        const stepVal = parseInt(step.dataset.speed);
+        const label = step.querySelector('span');
+        if (stepVal <= val) {
+          step.classList.add('active');
+          label.classList.remove('text-gray-600');
+          label.classList.add('text-yellow-400', 'font-bold');
+        } else {
+          step.classList.remove('active');
+          label.classList.remove('text-yellow-400', 'font-bold');
+          label.classList.add('text-gray-600');
+        }
+      });
+    };
+
     if (speedSlider) {
       speedSlider.addEventListener('input', (e) => {
-        const val = e.target.value;
-        speedValue.textContent = val + 'x';
+        const val = parseInt(e.target.value);
+        updateSpeedUI(val);
         localStorage.setItem('autoBattleSpeed', val);
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }
+
+    // Allow clicking on speed step dots to set speed
+    speedSteps.forEach(step => {
+      step.addEventListener('click', () => {
+        const val = parseInt(step.dataset.speed);
+        speedSlider.value = val;
+        updateSpeedUI(val);
+        localStorage.setItem('autoBattleSpeed', val);
+        window.dispatchEvent(new Event('settingsChanged'));
+      });
+    });
 
     window.addEventListener('settingsChanged', () => {
       const hideStats = localStorage.getItem('hideBattleStats') !== 'false';

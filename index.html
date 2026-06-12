@@ -319,6 +319,142 @@
       animation: wakeup-flash 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
     }
 
+    /* ─── Settings Modal ──────────────────────────── */
+    @keyframes settings-section-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .settings-section {
+      animation: settings-section-in 0.35s ease-out both;
+    }
+    .settings-section:nth-child(1) { animation-delay: 0.06s; }
+    .settings-section:nth-child(2) { animation-delay: 0.12s; }
+    .settings-section:nth-child(3) { animation-delay: 0.18s; }
+    .settings-section:nth-child(4) { animation-delay: 0.24s; }
+    .settings-section:nth-child(5) { animation-delay: 0.30s; }
+
+    /* Custom Toggle Switch */
+    .setting-toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: #374151;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      flex-shrink: 0;
+    }
+    .setting-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: #9ca3af;
+      border-radius: 50%;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .setting-toggle.active {
+      background: var(--toggle-color, #3b82f6);
+      box-shadow: 0 0 12px var(--toggle-glow, rgba(59, 130, 246, 0.4));
+    }
+    .setting-toggle.active::after {
+      transform: translateX(20px);
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Custom Range Slider */
+    .setting-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #1f2937;
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .setting-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.4), 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .setting-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.6), 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .setting-slider::-webkit-slider-thumb:active {
+      transform: scale(1.05);
+    }
+    .setting-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.4), 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    /* Speed step dots */
+    .speed-step {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .speed-step::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #374151;
+      transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .speed-step.active::before {
+      background: #fbbf24;
+      box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+      transform: scale(1.2);
+    }
+
+    /* Settings action button */
+    .settings-action-btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .settings-action-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .settings-action-btn:hover::before {
+      opacity: 1;
+    }
+    .settings-action-btn:active {
+      transform: scale(0.97);
+    }
+
     /* ─── Reduced Motion Preference ────────────────── */
     @media (prefers-reduced-motion: reduce) {
       .animate-pulse { animation: none !important; }
@@ -326,6 +462,7 @@
       .animate-inn-pulse-glow { animation: none !important; }
       .animate-zzz { animation: none !important; }
       .animate-wakeup-flash { animation: none !important; }
+      .settings-section { animation: none !important; }
     }
   </style>
 
