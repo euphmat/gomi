@@ -216,8 +216,8 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   }
 
   let companionBadge = '';
+  let isCompanion = false;
   if (!isParty && targetEntity && targetEntity.id) {
-    let isCompanion = false;
     for (const dId of Object.keys(ranchData)) {
       if (ranchData[dId] && ranchData[dId][targetEntity.id]) {
         isCompanion = true; break;
@@ -226,6 +226,26 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     if (isCompanion) {
       companionBadge = '<div class="absolute top-2 right-2 bg-pink-900/90 border border-pink-500/50 text-pink-300 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md backdrop-blur-sm z-20"><span class="material-symbols-outlined text-[10px]">pets</span>牧場</div>';
     }
+  }
+
+  let capturePanelHtml = '';
+  if (!isParty && targetEntity && targetEntity.id) {
+    let badgeHtml = '';
+    if (isCompanion) {
+      badgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
+    } else {
+      const captureRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
+      const pctStr = (captureRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
+      badgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${pctStr}</span>`;
+    }
+    capturePanelHtml = `
+      <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col shadow-inner shrink-0">
+        <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>捕獲率</div>
+          ${badgeHtml}
+        </div>
+      </div>
+    `;
   }
 
   html = `
@@ -292,14 +312,18 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             ${actionsHtml}
           </div>
         </div>
-        <!-- Drop Info -->
-        <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col min-h-0 shadow-inner">
-          <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
-            <span class="material-symbols-outlined text-[12px] text-red-400">shopping_bag</span>ドロップ
+        <!-- Right Column: Drops + Capture -->
+        <div class="flex flex-col gap-2 min-h-0 flex-1">
+          <!-- Drop Info -->
+          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col min-h-0 shadow-inner flex-1">
+            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-[12px] text-red-400">shopping_bag</span>ドロップ
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-0.5 flex flex-col gap-1.5">
+              ${dropsHtml}
+            </div>
           </div>
-          <div class="flex-1 overflow-y-auto custom-scrollbar pr-0.5 flex flex-col gap-1.5">
-            ${dropsHtml}
-          </div>
+          ${capturePanelHtml}
         </div>
       </div>
     </div>

@@ -1872,8 +1872,8 @@ class BattleManager {
 
     // --- 牧場 (Ranch) コンパニオン化抽選 ---
     const enemyKills = this.monsterKills[enemy.id] || 0;
-    // 基本確率は0.1%。討伐数に応じて上昇し、10万体で100%になるようにする
-    const captureRate = Math.min(1.0, 0.001 + (enemyKills / 100000));
+    // 基本確率は0.01%。100体討伐ごとに0.01%上昇する
+    const captureRate = Math.min(1.0, 0.0001 + Math.floor(enemyKills / 100) * 0.0001);
     
     if (Math.random() < captureRate) {
       const dungeonId = this.currentDungeonId;

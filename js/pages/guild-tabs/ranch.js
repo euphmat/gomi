@@ -2,7 +2,7 @@ import { GameDB } from '../../data/database.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
-import { getRanchLevelInfo } from '../../data/stat-calculator.js';
+import { getRanchLevelInfo, calculateTotalRanchBonus } from '../../data/stat-calculator.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
@@ -26,7 +26,7 @@ export async function renderRanchTab() {
       </h2>
       <p class="text-xs text-slate-400 mb-4 leading-relaxed">
         ダンジョンで仲間にしたモンスターがここで過ごしています。<br>
-        好物（ドロップ素材）を1000個与えるごとに成長し、パーティ全員に恩恵をもたらします！
+        好物（ドロップ素材）を与えるごとに成長し、パーティ全員に恩恵をもたらします！
       </p>
     `;
 
@@ -154,22 +154,7 @@ export async function renderRanchTab() {
     statsGrid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
     
     // Calculate total bonus
-    const totalBonus = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
-    for (const dId of Object.keys(ranchData)) {
-      for (const [mId, mData] of Object.entries(ranchData[dId])) {
-        const def = MONSTERS_MAP.get(mId);
-        if (def && def.stats) {
-          const { level } = getRanchLevelInfo(mData.fedMaterials || 0);
-          const levelMultiplier = 1 + (level * 0.01);
-          for (const key of Object.keys(totalBonus)) {
-            const baseVal = def.stats[key] || 0;
-            if (baseVal > 0) {
-              totalBonus[key] += Math.max(1, Math.floor((baseVal * levelMultiplier) * 0.10));
-            }
-          }
-        }
-      }
-    }
+    const totalBonus = await calculateTotalRanchBonus();
     
     const labels = { hp: 'HP', mp: 'MP', atk: '物理攻撃', def: '物理防御', matk: '魔法攻撃', mdef: '魔法防御', spd: '素早さ' };
     const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
@@ -242,18 +227,23 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const topSection = document.createElement('div');
   topSection.className = 'mb-4 flex flex-col items-center';
   
-  // Base stats calculation helper
-  const getBonusStats = (level) => {
+  // Base stats calculation helpers
+  const getMonsterStats = (level) => {
     const stats = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
     if (!monsterDef.stats) return stats;
-    const levelMultiplier = 1 + (level * 0.01);
     for (const key of Object.keys(stats)) {
       const baseVal = monsterDef.stats[key] || 0;
-      if (baseVal > 0) {
-        stats[key] = Math.max(1, Math.floor((baseVal * levelMultiplier) * 0.10));
-      }
+      const growth = Math.max(level, Math.floor(baseVal * level * 0.01));
+      stats[key] = baseVal + growth;
     }
     return stats;
+  };
+  const getBonusFromStats = (monsterStats) => {
+    const bonus = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
+    for (const key of Object.keys(bonus)) {
+      bonus[key] = Math.max(1, Math.floor((monsterStats[key] || 0) / 10));
+    }
+    return bonus;
   };
 
   const initialInfo = getRanchLevelInfo(monsterData.fedMaterials || 0);
@@ -268,10 +258,14 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
       </div>
       
       <!-- Current Stats Box -->
-      <div class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-2 mb-3 shadow-inner">
-        <div class="text-[9px] text-slate-400 font-bold text-center mb-1">現在のパーティ恩恵ボーナス</div>
-        <div id="feed-modal-stats" class="flex flex-wrap justify-center gap-1">
-          <!-- Stats injected here -->
+      <div class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-2 mb-3 shadow-inner flex flex-col gap-2">
+        <div>
+          <div class="text-[9px] text-slate-400 font-bold text-center mb-1">モンスターのステータス</div>
+          <div id="feed-modal-monster-stats" class="flex flex-wrap justify-center gap-1"></div>
+        </div>
+        <div class="border-t border-slate-700/50 pt-1">
+          <div class="text-[9px] text-pink-400 font-bold text-center mb-1">パーティ恩恵ボーナス (10%)</div>
+          <div id="feed-modal-bonus-stats" class="flex flex-wrap justify-center gap-1"></div>
         </div>
       </div>
       
@@ -296,7 +290,8 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const elLevel = topSection.querySelector('#feed-modal-level');
   const elBar = topSection.querySelector('#feed-modal-bar');
   const elProgress = topSection.querySelector('#feed-modal-progress');
-  const elStats = topSection.querySelector('#feed-modal-stats');
+  const elMonsterStats = topSection.querySelector('#feed-modal-monster-stats');
+  const elBonusStats = topSection.querySelector('#feed-modal-bonus-stats');
 
   const updateTopSection = () => {
     const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(monsterData.fedMaterials || 0);
@@ -307,14 +302,23 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     elBar.style.width = `${pct}%`;
     elProgress.textContent = `${currentLevelFed} / ${nextLevelRequired}`;
     
-    const stats = getBonusStats(level);
+    const mStats = getMonsterStats(level);
+    const bStats = getBonusFromStats(mStats);
+    
     const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
     const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
     
-    elStats.innerHTML = Object.keys(stats).filter(k => stats[k] > 0).map(k => `
+    elMonsterStats.innerHTML = Object.keys(mStats).map(k => `
       <div class="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 px-1.5 py-0.5 rounded text-[9px] shadow-sm">
         <span class="${colors[k]} font-bold">${labels[k]}</span>
-        <span class="text-slate-200 font-black">+${stats[k]}</span>
+        <span class="text-slate-200 font-black">${mStats[k]}</span>
+      </div>
+    `).join('');
+
+    elBonusStats.innerHTML = Object.keys(bStats).map(k => `
+      <div class="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 px-1.5 py-0.5 rounded text-[9px] shadow-sm">
+        <span class="${colors[k]} font-bold">${labels[k]}</span>
+        <span class="text-slate-200 font-black">+${bStats[k]}</span>
       </div>
     `).join('');
   };
@@ -389,7 +393,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             }
             
             const oldLevel = currentLevel;
-            const oldStats = getBonusStats(oldLevel);
+            const oldMStats = getMonsterStats(oldLevel);
             
             // Add to fed materials
             monsterData.fedMaterials = (monsterData.fedMaterials || 0) + amount;
@@ -409,15 +413,15 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             // Check level up & show notification
             const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials);
             if (newLevelInfo.level > oldLevel) {
-               const newStats = getBonusStats(newLevelInfo.level);
+               const newMStats = getMonsterStats(newLevelInfo.level);
                let diffTexts = [];
                const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
-               for (const key of Object.keys(newStats)) {
-                 if (newStats[key] > (oldStats[key] || 0)) {
-                    diffTexts.push(`${labels[key]} +${newStats[key] - (oldStats[key] || 0)}`);
+               for (const key of Object.keys(newMStats)) {
+                 if (newMStats[key] > (oldMStats[key] || 0)) {
+                    diffTexts.push(`${labels[key]} +${newMStats[key] - (oldMStats[key] || 0)}`);
                  }
                }
-               const diffStr = diffTexts.length > 0 ? `<br><span class="text-[11px] font-bold text-yellow-300 bg-yellow-900/50 px-1 py-0.5 rounded border border-yellow-700/50">恩恵アップ: ${diffTexts.join(', ')}</span>` : '';
+               const diffStr = diffTexts.length > 0 ? `<br><span class="text-[11px] font-bold text-yellow-300 bg-yellow-900/50 px-1 py-0.5 rounded border border-yellow-700/50">ステータス成長: ${diffTexts.join(', ')}</span>` : '';
                
                // Optional: Show floating stat text directly above monster
                const floater = document.createElement('div');

@@ -198,15 +198,12 @@ export async function calculateTotalRanchBonus() {
       const monsterDef = MONSTERS.find(m => m.id === monsterId);
       if (monsterDef && monsterDef.stats) {
         const { level } = getRanchLevelInfo(data.fedMaterials || 0);
-        const levelMultiplier = 1 + (level * 0.01);
-        
         for (const key of Object.keys(totalBonus)) {
           const baseVal = monsterDef.stats[key] || 0;
-          if (baseVal > 0) {
-            const grownVal = baseVal * levelMultiplier;
-            const bonus = Math.max(1, Math.floor(grownVal * 0.10));
-            totalBonus[key] += bonus;
-          }
+          const growth = Math.max(level, Math.floor(baseVal * level * 0.01));
+          const monsterCurrentStat = baseVal + growth;
+          const bonus = Math.max(1, Math.floor(monsterCurrentStat / 10));
+          totalBonus[key] += bonus;
         }
       }
     }
