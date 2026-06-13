@@ -464,7 +464,7 @@ export function renderStorageTab() {
     middleSection.innerHTML = `
       <div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold text-slate-400">売却数</span>
-        <span class="text-[10px] text-slate-500 font-mono tracking-wider">所持: ${maxSell} / 9999</span>
+        <span class="text-[10px] text-slate-500 font-mono tracking-wider">所持: ${maxSell} / 99999</span>
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>

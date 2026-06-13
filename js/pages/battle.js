@@ -2009,7 +2009,7 @@ class BattleManager {
         const mat = MATERIALS_MAP.get(itemId);
         if (mat) {
           const currentItem = await GameDB.getInventoryItem(itemId) || { id: itemId, quantity: 0, type: 'material', ...mat };
-          currentItem.quantity = Math.min(9999, currentItem.quantity + qty);
+          currentItem.quantity = Math.min(99999, currentItem.quantity + qty);
           await GameDB.putInventoryItem(currentItem);
         }
       }

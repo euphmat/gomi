@@ -318,7 +318,7 @@ export function renderShopTab() {
     if (currentGold < (item.recipe.price || 0)) return false;
     const isMaterial = !item.slot;
     const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
-    if (ownedCount >= 9999) return false;
+    if (ownedCount >= 99999) return false;
     return item.recipe.materials.every(mat => (inventoryMap[mat.id] || 0) >= mat.amount);
   };
 
@@ -329,7 +329,7 @@ export function renderShopTab() {
     
     // 計算: 最大合成可能数
     const price = item.recipe.price || 0;
-    let maxCraft = 9999 - ownedCount;
+    let maxCraft = 99999 - ownedCount;
     if (price > 0) {
       maxCraft = Math.min(maxCraft, Math.floor(currentGold / price));
     }
@@ -502,7 +502,7 @@ export function renderShopTab() {
     middleSection.innerHTML = `
       <div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold text-slate-400">合成数</span>
-        <span class="text-[10px] text-slate-500 font-mono tracking-wider">最大: ${maxCraft} / 9999</span>
+        <span class="text-[10px] text-slate-500 font-mono tracking-wider">最大: ${maxCraft} / 99999</span>
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
@@ -578,9 +578,10 @@ export function renderShopTab() {
       `;
       materialsSection.innerHTML = materialsHtml;
 
-      if (ownedCount >= 9999) {
+      if (ownedCount >= 99999) {
+        craftBtn.disabled = true;
         craftBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';
-        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>所持上限（9999個）に達しています`;
+        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>所持上限（99999個）に達しています`;
       } else if (craftCount > 0) {
         craftBtn.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.25)] hover:shadow-[0_4px_25px_rgba(16,185,129,0.4)] border border-emerald-400/20 cursor-pointer shrink-0';
         craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">construction</span>合成する（${craftCount}個）`;
