@@ -21,7 +21,7 @@ export function createStatusBar({ label, current, max, colorFrom, colorTo }) {
 
   return `
     <div class="status-bar relative h-5 rounded-sm overflow-hidden bg-gray-800/90 border border-gray-700/50">
-      <div class="status-bar-fill absolute inset-y-0 left-0 rounded-sm transition-[width] duration-1000 ease-out"
+      <div class="status-bar-fill absolute inset-y-0 left-0 rounded-sm"
            style="width: ${percentage}%; background: linear-gradient(90deg, ${colorFrom}, ${colorTo});">
       </div>
       <div class="absolute inset-0 flex items-center justify-between px-2 pointer-events-none">
