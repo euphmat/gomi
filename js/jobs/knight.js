@@ -218,7 +218,7 @@ export const knight = {
     if (provoke && (!caster._provokeTurns || caster._provokeTurns <= 0)) {
       // Use provoke if any ally is at low HP
       const aliveParty = context.party.filter(p => !p.isDead);
-      const anyAllyLowHp = aliveParty.some(p => p !== caster && p.hp.current / p.hp.max < 0.5);
+      const anyAllyLowHp = aliveParty.some(p => p !== caster && p.hp.current / (p.stats?.hp || p.hp.max) < 0.5);
       if (anyAllyLowHp || Math.random() < 0.4) {
         context.executeSkill('provoke');
         return;

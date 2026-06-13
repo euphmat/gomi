@@ -22,7 +22,7 @@ export const norvice = {
       ],
       getDescription: (levelConfig) => `自身の HP を ${levelConfig.healAmount} 回復する`,
       execute: (caster, levelConfig) => {
-        caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.hp.max);
+        caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
         // mp is already deducted in battle.js executeSkill
       }
     },
@@ -68,7 +68,7 @@ export const norvice = {
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.recoverAmount} 回復する`,
       execute: (caster, levelConfig, battle) => {
-        caster.mp.current = Math.min(caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
+        caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
         if (battle) {
            battle.showDamage(caster.elementId, `+${levelConfig.recoverAmount}`, 'text-blue-400');
         }
@@ -205,8 +205,9 @@ export const norvice = {
 
     // 1. First Aid priority (Healing)
     if (firstAid) {
-      const hpPercent = caster.hp.current / caster.hp.max;
-      const missingHp = caster.hp.max - caster.hp.current;
+      const trueMaxHp = caster.stats?.hp || caster.hp.max;
+      const hpPercent = caster.hp.current / trueMaxHp;
+      const missingHp = trueMaxHp - caster.hp.current;
       // 致命傷を避けるためHP60%未満、または回復量が無駄にならないHP80%未満の時に使用
       if (hpPercent < 0.6 || (hpPercent < 0.8 && missingHp >= firstAid.config.healAmount * 0.8)) {
         context.executeSkill('first_aid');
@@ -217,7 +218,7 @@ export const norvice = {
     // 2. Focus priority (MP is very low)
     if (focus) {
       // MPが30%未満の場合に使用
-      if (caster.mp.current < caster.mp.max * 0.3) {
+      if (caster.mp.current < (caster.stats?.mp || caster.mp.max) * 0.3) {
         context.executeSkill('focus');
         return;
       }
@@ -226,7 +227,7 @@ export const norvice = {
     // 3. Cleave priority (Multiple enemies)
     if (cleave && aliveEnemies.length >= 2) {
       // 敵が複数いる場合は高確率で使用、MPが十分にあれば確実に見舞う
-      if (Math.random() < 0.8 || caster.mp.current > caster.mp.max * 0.5) {
+      if (Math.random() < 0.8 || caster.mp.current > (caster.stats?.mp || caster.mp.max) * 0.5) {
         context.executeSkill('cleave');
         return;
       }

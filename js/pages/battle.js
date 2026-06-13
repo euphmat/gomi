@@ -356,8 +356,9 @@ class BattleManager {
       }
 
       if (mpBar) {
-        mpBar.style.transform = `scaleX(${p.mp.current / p.mp.max})`;
-        if (mpText) mpText.textContent = `${Math.floor(p.mp.current)}/${p.mp.max}`;
+        const trueMaxMp = p.stats.mp || p.mp.max;
+        mpBar.style.transform = `scaleX(${p.mp.current / trueMaxMp})`;
+        if (mpText) mpText.textContent = `${Math.floor(p.mp.current)}/${trueMaxMp}`;
       }
 
       if (expBar) {
@@ -919,7 +920,7 @@ class BattleManager {
     const regenSkill = this._findSkill(caster, 'mana_regen');
     if (regenSkill && regenSkill.level > 0 && regenSkill.levelConfig) {
       const amount = regenSkill.levelConfig.recoverMp;
-      caster.mp.current = Math.min(caster.mp.max, caster.mp.current + amount);
+      caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + amount);
       setTimeout(() => {
         this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
       }, 300 / this.speedMult);
@@ -929,7 +930,7 @@ class BattleManager {
     const hpRegenSkill = this._findSkill(caster, 'regen');
     if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
       const amount = hpRegenSkill.levelConfig.recoverHp;
-      caster.hp.current = Math.min(caster.hp.max, caster.hp.current + amount);
+      caster.hp.current = Math.min(caster.stats?.hp || caster.hp.max, caster.hp.current + amount);
       setTimeout(() => {
         this.showDamage(caster.elementId, `+${amount}`, 'text-green-400');
       }, 300 / this.speedMult);
@@ -1378,7 +1379,7 @@ class BattleManager {
           const manaRegenSkill = this._findSkill(attacker, 'mana_regen');
           if (manaRegenSkill && manaRegenSkill.level > 0 && manaRegenSkill.levelConfig) {
             const amount = manaRegenSkill.levelConfig.recoverMp;
-            attacker.mp.current = Math.min(attacker.mp.max, attacker.mp.current + amount);
+            attacker.mp.current = Math.min(attacker.stats?.mp || attacker.mp.max, attacker.mp.current + amount);
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
             }, 600 / this.speedMult);
@@ -1387,7 +1388,7 @@ class BattleManager {
           const hpRegenSkill = this._findSkill(attacker, 'regen');
           if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
             const amount = hpRegenSkill.levelConfig.recoverHp;
-            attacker.hp.current = Math.min(attacker.hp.max, attacker.hp.current + amount);
+            attacker.hp.current = Math.min(attacker.stats?.hp || attacker.hp.max, attacker.hp.current + amount);
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
             }, 600 / this.speedMult);

@@ -104,8 +104,8 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="bg-blue-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.mp.current / p.mp.max})"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.mp.current)}/${p.mp.max}</div>
+            <div class="bg-blue-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.mp.current / (p.stats.mp || p.mp.max)})"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.mp.current)}/${p.stats.mp || p.mp.max}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">

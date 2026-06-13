@@ -29,16 +29,16 @@ export const priest = {
         
         // Find ally with lowest HP percentage
         let target = aliveParty[0];
-        let lowestHpPercent = target.hp.current / target.hp.max;
+        let lowestHpPercent = target.hp.current / (target.stats?.hp || target.hp.max);
         for (const p of aliveParty) {
-          const hpPercent = p.hp.current / p.hp.max;
+          const hpPercent = p.hp.current / (p.stats?.hp || p.hp.max);
           if (hpPercent < lowestHpPercent) {
             lowestHpPercent = hpPercent;
             target = p;
           }
         }
 
-        target.hp.current = Math.min(target.hp.max, target.hp.current + levelConfig.healAmount);
+        target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
         battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
         battle.renderEntities();
       }
@@ -69,7 +69,7 @@ export const priest = {
         
         const target = deadParty[Math.floor(Math.random() * deadParty.length)];
         target.isDead = false;
-        target.hp.current = Math.min(target.hp.max, levelConfig.reviveHp);
+        target.hp.current = Math.min(target.stats?.hp || target.hp.max, levelConfig.reviveHp);
         target.atb = 0; // Reset ATB on revive just in case
         battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
         battle.renderEntities(); // This handles reviving UI
@@ -212,12 +212,12 @@ export const priest = {
     // 3. Heal low HP allies
     if (heal) {
       const aliveParty = context.party.filter(p => !p.isDead);
-      const criticallyInjured = aliveParty.find(p => p.hp.current / p.hp.max < 0.4);
+      const criticallyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.4);
       if (criticallyInjured) {
         context.executeSkill('heal');
         return;
       }
-      const lightlyInjured = aliveParty.find(p => p.hp.current / p.hp.max < 0.7);
+      const lightlyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.7);
       if (lightlyInjured && Math.random() < 0.6) {
         context.executeSkill('heal');
         return;
