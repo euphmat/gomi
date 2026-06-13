@@ -22,7 +22,7 @@ import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
  * @param {Array<{ slotKey: string, item: Object|null }>} equippedItems - Resolved equipment
  * @returns {string} HTML string
  */
-export function createCharacterCard(character, finalStats, equippedItems) {
+export function createCharacterCard(character, finalStats, equippedItems, isAlreadyBest = false) {
   const {
     name, jobName, level, jobLevel, sp = 0,
     hp, mp, exp, jp,
@@ -105,9 +105,14 @@ export function createCharacterCard(character, finalStats, equippedItems) {
               JLv ${jobLevel}
             </div>
           </div>
-          <div class="flex justify-between items-center text-[10px] text-yellow-400 bg-gray-800/70 rounded px-1.5 py-[2px] border border-gray-700/30 font-mono tracking-tight shadow-[inset_0_0_8px_rgba(234,179,8,0.1)]">
-            <span>SP</span>
-            <span class="font-bold text-[11px] drop-shadow-md">${sp}</span>
+          <div class="flex gap-1">
+            <div class="flex-1 flex justify-between items-center text-[10px] text-yellow-400 bg-gray-800/70 rounded px-1.5 py-[2px] border border-gray-700/30 font-mono tracking-tight shadow-[inset_0_0_8px_rgba(234,179,8,0.1)]">
+              <span>SP</span>
+              <span class="font-bold text-[11px] drop-shadow-md">${sp}</span>
+            </div>
+            <button class="px-2 py-[2px] ${isAlreadyBest ? 'bg-gray-700/50 text-gray-500 border-gray-600/30 cursor-not-allowed' : 'bg-indigo-600/80 hover:bg-indigo-500 text-white border-indigo-500/50 cursor-pointer shadow'} rounded text-[9px] font-bold transition-colors border shrink-0 equip-best-btn" data-char-id="${character.id}" ${isAlreadyBest ? 'disabled' : ''}>
+              最強装備
+            </button>
           </div>
         </div>
       </div>
