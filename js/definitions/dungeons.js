@@ -211,7 +211,89 @@ export const DUNGEONS = [{
     image: 'assets/dungeon/crystal_cave.webp',
     bgImage: 'assets/dungeon/bg_crystal_cave.webp',
     isUnlocked: false,
-    floors: []
+    floors: [
+      {
+        level: 1,
+        monsters: [
+          { crisp: 5, weight: 60 },
+          { crisp: 3, snow_flare: 2, weight: 30 },
+          { luminous_digitalis: 1, weight: 5 },
+          { noble_opal: 1, weight: 5 }
+        ]
+      },
+      {
+        level: 2,
+        monsters: [
+          { crisp: 4, geode_turtle: 2, weight: 50 },
+          { geode_turtle: 3, snow_flare: 2, weight: 40 },
+          { luminous_digitalis: 1, weight: 5 },
+          { noble_opal: 1, weight: 5 }
+        ]
+      },
+      {
+        level: 3,
+        monsters: [
+          { geode_turtle: 4, crystalinos: 1, weight: 50 },
+          { crystalinos: 2, crisp: 3, weight: 40 },
+          { luminous_digitalis: 1, weight: 5 },
+          { noble_opal: 1, weight: 5 }
+        ]
+      },
+      {
+        level: 4,
+        monsters: [
+          { crystalinos: 3, garnet_wolf: 2, weight: 50 },
+          { garnet_wolf: 4, snow_flare: 2, weight: 40 },
+          { luminous_digitalis: 1, weight: 5 },
+          { noble_opal: 1, weight: 5 }
+        ]
+      },
+      {
+        level: 5,
+        monsters: [
+          { garnet_wolf: 3, amber_rex: 2, weight: 50 },
+          { amber_rex: 3, crystalinos: 2, weight: 40 },
+          { luminous_digitalis: 1, weight: 5 },
+          { noble_opal: 1, weight: 5 }
+        ]
+      },
+      {
+        level: 6,
+        monsters: [
+          { amber_rex: 2, beryl_golem: 2, jewel_mantis: 1, weight: 50 },
+          { beryl_golem: 3, jewel_mantis: 2, weight: 40 },
+          { luminous_digitalis: 1, weight: 5 },
+          { noble_opal: 1, weight: 5 }
+        ]
+      },
+      {
+        level: 7,
+        monsters: [
+          { fluorite_papillon: 3, pyrite_serpent: 2, weight: 50 },
+          { pyrite_serpent: 3, jewel_mantis: 3, weight: 40 },
+          { luminous_digitalis: 2, weight: 5 },
+          { noble_opal: 2, weight: 5 }
+        ]
+      },
+      {
+        level: 8,
+        monsters: [
+          { diamond_disaster: 1, crisp: 4, weight: 100 }
+        ]
+      },
+      {
+        level: 9,
+        monsters: [
+          { harmonia_regalia: 1, beryl_golem: 2, weight: 100 }
+        ]
+      },
+      {
+        level: 10,
+        monsters: [
+          { genesis_prism: 1, luminous_digitalis: 2, noble_opal: 2, weight: 100 }
+        ]
+      }
+    ]
   },
   {
     id: 'ghost_castle',

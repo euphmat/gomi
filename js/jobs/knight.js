@@ -222,7 +222,5 @@ export const knight = {
       ],
       getDescription: (lc) => `${lc.chance}％ の確率で、物理攻撃を無効化する`
     }
-  ],
-
   ]
 };
