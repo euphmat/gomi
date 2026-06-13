@@ -187,6 +187,18 @@ export function renderChangeJobTab() {
   const executeRebirth = async (char) => {
     if (char.level < 40) return;
 
+    const cost = 10000;
+    const gold = await GameDB.getGameState('gold') || 0;
+    if (gold < cost) {
+      showNotification(container, 'ゴールドが足りません！', 'error');
+      return;
+    }
+
+    currentGold = gold - cost;
+    await GameDB.setGameState('gold', currentGold);
+    const goldDisplay = document.getElementById('header-gold-display');
+    if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+
     const oldBase = char.baseStats;
     const oldHp = char.hp.max;
     const oldMp = char.mp.max;
@@ -353,7 +365,11 @@ export function renderChangeJobTab() {
     const container = document.createElement('div');
     container.className = 'flex-1 overflow-y-auto space-y-4 pb-6 px-1';
 
-    const canRebirth = char.level >= 40;
+    const cost = 10000;
+    const canRebirthLevel = char.level >= 40;
+    const canRebirthGold = currentGold >= cost;
+    const canRebirth = canRebirthLevel && canRebirthGold;
+
     const bonusHp = Math.floor(char.hp.max * 0.1);
     const bonusMp = Math.floor(char.mp.max * 0.1);
     const bonusAtk = Math.floor((char.baseStats.atk || 0) * 0.1);
@@ -382,9 +398,11 @@ export function renderChangeJobTab() {
       </div>
 
       <div class="text-center mt-6">
-        ${canRebirth 
-          ? `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all">転生を実行する</button>`
-          : `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed">レベル40が必要です (現在Lv.${char.level})</button>`
+        ${!canRebirthLevel
+          ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60" disabled>レベル40が必要です (現在Lv.${char.level})</button>`
+          : !canRebirthGold
+            ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60 flex items-center justify-center gap-2 mx-auto" disabled><span class="material-symbols-outlined text-[20px]">paid</span>${cost.toLocaleString()} G が必要です</button>`
+            : `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all flex items-center justify-center gap-2 mx-auto"><span class="material-symbols-outlined text-[20px]">paid</span>${cost.toLocaleString()} G で転生する</button>`
         }
       </div>
     `;
