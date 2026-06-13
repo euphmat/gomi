@@ -100,11 +100,10 @@ export const DUNGEONS = [{
       }, {
         level: 11,
         monsters: [
-          { slime_grass: 1, slime_earth: 1,   weight: 45 },
-          { slime_earth:  2,                  weight: 30 },
-          { slime_earth:  4, slime_grass: 1, slime_flower: 1, weight: 20 },
-          { slime_dark:   1,                  weight: 2.5 },
-          { slime_angel:  1,                  weight: 2.5 }
+          { slime_earth:  2,                  weight: 35 },
+          { slime_earth:  3, slime_grass: 1, slime_flower: 1, weight: 20 },
+          { slime_dark:   3,                  weight: 22.5 },
+          { slime_angel:  3,                  weight: 22.5 }
         ]
       }, {
         level: 12,
