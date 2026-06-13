@@ -16,11 +16,11 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
     if (char) {
       const isSelected = char.id === selectedCharId;
       slot.className = `
-        relative p-2.5 rounded-2xl cursor-pointer transition-all duration-300
+        relative p-1.5 rounded-xl cursor-pointer transition-all duration-300
         ${isSelected 
-          ? 'bg-gradient-to-br from-gray-800 to-gray-900 backdrop-blur-xl border border-cyan-400/80 shadow-[0_4px_20px_rgba(34,211,238,0.25)] ring-1 ring-cyan-400/50 scale-[1.02] z-10' 
+          ? 'bg-gradient-to-br from-gray-800 to-gray-900 backdrop-blur-xl border border-cyan-400/80 shadow-[0_4px_15px_rgba(34,211,238,0.25)] ring-1 ring-cyan-400/50 z-10' 
           : 'bg-gradient-to-br from-gray-900/80 to-black/60 backdrop-blur-md border border-white/10 hover:border-white/20 hover:bg-gray-800 hover:shadow-lg'}
-        flex items-start gap-2.5 overflow-hidden group
+        flex items-start gap-2 overflow-hidden group
       `;
       slot.onclick = () => onSelect(char.id);
 
@@ -28,7 +28,7 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
       
       const renderSkill = (inheritedSkillData, typeLabel, iconName, classes) => {
         let skillName = '未継承';
-        let opacityClass = 'opacity-40 grayscale-[50%]';
+        let opacityClass = 'opacity-50 grayscale-[30%]';
         
         if (inheritedSkillData) {
           const { jobId, skillId } = inheritedSkillData;
@@ -43,13 +43,13 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
         }
 
         return `
-          <div class="flex items-center bg-black/40 rounded-lg border ${classes.borderBox} p-1 shadow-inner w-full mb-1 group/skill hover:bg-gray-800 transition-colors ${opacityClass}">
-            <div class="flex items-center justify-center w-[22px] h-[22px] rounded ${classes.bgIcon} shrink-0 border ${classes.borderIcon} mr-1.5 shadow-sm">
-              <span class="material-symbols-outlined !text-[12px] ${classes.text}">${iconName}</span>
+          <div class="flex items-center bg-black/40 rounded border ${classes.borderBox} py-0.5 px-1 shadow-inner w-full mb-[2px] group/skill hover:bg-gray-800 transition-colors ${opacityClass}">
+            <div class="flex items-center justify-center w-[18px] h-[18px] rounded ${classes.bgIcon} shrink-0 border ${classes.borderIcon} mr-1.5 shadow-sm">
+              <span class="material-symbols-outlined !text-[11px] ${classes.text}">${iconName}</span>
             </div>
-            <div class="flex flex-col min-w-0">
-              <span class="text-[7.5px] font-black ${classes.textLabel} tracking-wide leading-none mb-0.5">${typeLabel}</span>
-              <span class="text-[10px] font-bold text-gray-200 truncate leading-none group-hover/skill:text-white transition-colors">${skillName}</span>
+            <div class="flex flex-col min-w-0 justify-center">
+              <span class="text-[6px] font-black ${classes.textLabel} tracking-wide leading-none mb-px">${typeLabel}</span>
+              <span class="text-[9px] font-bold text-gray-200 truncate leading-none group-hover/skill:text-white transition-colors">${skillName}</span>
             </div>
           </div>
         `;
@@ -57,7 +57,7 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
 
       inheritedSkillHtml += renderSkill(
         char.inheritedActiveSkill, 
-        '継承アクティブスキル', 
+        '継承アクティブ', 
         'swords', 
         {
           text: 'text-cyan-400',
@@ -69,7 +69,7 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
       );
       inheritedSkillHtml += renderSkill(
         char.inheritedPassiveSkill, 
-        '継承パッシブスキル', 
+        '継承パッシブ', 
         'psychology', 
         {
           text: 'text-emerald-400',
@@ -81,20 +81,20 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
       );
 
       slot.innerHTML = `
-        ${isSelected ? '<div class="absolute inset-0 bg-cyan-400/5 rounded-2xl animate-pulse pointer-events-none"></div>' : ''}
+        ${isSelected ? '<div class="absolute inset-0 bg-cyan-400/5 rounded-xl animate-pulse pointer-events-none"></div>' : ''}
         
-        <div class="relative w-11 h-11 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-gray-800 to-black border ${isSelected ? 'border-cyan-400/80' : 'border-gray-600'} shadow-md mt-0.5">
+        <div class="relative w-9 h-9 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-gray-800 to-black border ${isSelected ? 'border-cyan-400/80' : 'border-gray-600'} shadow-md mt-0.5">
           <img src="${char.iconImage}" alt="" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="this.style.display='none'">
-          ${isSelected ? '<div class="absolute inset-0 ring-inset ring-2 ring-cyan-400/20 rounded-xl"></div>' : ''}
+          ${isSelected ? '<div class="absolute inset-0 ring-inset ring-2 ring-cyan-400/20 rounded-lg"></div>' : ''}
         </div>
         
         <div class="flex flex-col min-w-0 z-10 w-full pr-0.5">
-          <div class="flex flex-col gap-1 mb-2">
-            <span class="text-[13px] font-black text-gray-100 truncate drop-shadow-md group-hover:text-white transition-colors leading-tight">${char.name}</span>
-            <div class="flex gap-1.5 flex-wrap">
-              <span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/40 px-1.5 py-px rounded border border-cyan-500/30 shadow-inner">Lv.${char.jobLevel || 1}</span>
-              <span class="text-[9px] font-bold text-yellow-300 bg-yellow-900/40 px-1.5 py-px rounded border border-yellow-500/30 flex items-center gap-0.5 shadow-inner">
-                <span class="material-symbols-outlined !text-[10px]">stars</span>${char.sp || 0}
+          <div class="flex items-center justify-between mb-1 gap-1">
+            <span class="text-[11px] font-black text-gray-100 truncate drop-shadow-md group-hover:text-white transition-colors leading-tight">${char.name}</span>
+            <div class="flex gap-1 shrink-0">
+              <span class="text-[8px] font-bold text-cyan-300 bg-cyan-900/40 px-1 py-px rounded border border-cyan-500/30 shadow-inner">Lv.${char.jobLevel || 1}</span>
+              <span class="text-[8px] font-bold text-yellow-300 bg-yellow-900/40 px-1 py-px rounded border border-yellow-500/30 flex items-center gap-0.5 shadow-inner">
+                <span class="material-symbols-outlined !text-[8px]">stars</span>${char.sp || 0}
               </span>
             </div>
           </div>
