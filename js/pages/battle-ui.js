@@ -243,7 +243,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     if (isLegendaryCaptured) {
       legCapBadgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
     } else {
-      const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.001);
+      const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
       const legCapPctStr = (legCapRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
       legCapBadgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${legCapPctStr}</span>`;
     }
