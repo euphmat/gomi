@@ -29,8 +29,27 @@ export function calcItemsPerPage({
 } = {}) {
   // scrollContainer が DOM にマウント済みなら実測値を使う
   let availableHeight;
-  if (scrollContainer && scrollContainer.offsetHeight > 0) {
-    availableHeight = scrollContainer.offsetHeight;
+  let currentGridItemHeight = gridItemHeight;
+
+  if (scrollContainer && scrollContainer.clientHeight > 0) {
+    // clientHeight から上下の padding を引いた「正味の高さ」を算出
+    const style = window.getComputedStyle(scrollContainer);
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    const paddingBottom = parseFloat(style.paddingBottom) || 0;
+    availableHeight = scrollContainer.clientHeight - paddingTop - paddingBottom;
+    
+    // グリッド表示の場合、コンテナ幅からアイテムの実高さを正確に計算する (aspect-square想定)
+    if (viewMode === 'grid') {
+      const paddingLeft = parseFloat(style.paddingLeft) || 0;
+      const paddingRight = parseFloat(style.paddingRight) || 0;
+      const availableWidth = scrollContainer.clientWidth - paddingLeft - paddingRight;
+      
+      // Tailwind gap-1.5 は 6px
+      const gap = 6; 
+      const itemWidth = (availableWidth - (gap * (gridCols - 1))) / gridCols;
+      // セルは正方形 + 下のgap
+      currentGridItemHeight = itemWidth + gap;
+    }
   } else {
     // フォールバック: window 高さからヘッダー+ナビ+タブ+フィルター+ページネーションを概算で引く
     availableHeight = window.innerHeight - 280;
@@ -39,7 +58,7 @@ export function calcItemsPerPage({
   if (availableHeight <= 0) availableHeight = 300; // 安全策
 
   if (viewMode === 'grid') {
-    const rows = Math.max(1, Math.floor(availableHeight / gridItemHeight));
+    const rows = Math.max(1, Math.floor(availableHeight / currentGridItemHeight));
     const count = rows * gridCols;
     return Math.max(minItems, Math.min(maxItems, count));
   } else {
