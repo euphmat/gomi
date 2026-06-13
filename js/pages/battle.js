@@ -1620,29 +1620,77 @@ class BattleManager {
   }
 
   // =============================================
-  // 統一ポップアップシステム
-  // ポップアップはエンティティごとにスタック（積み上げ）される
+  // 統一ポップアップシステム (Pre-allocated DOM Pool)
+  // DOMの生成・破棄を完全になくし、表示・非表示のみ切り替える
   // =============================================
 
-  _getPoolElement() {
-    if (!this._domPool) this._domPool = [];
-    if (this._domPool.length > 0) {
-      const el = this._domPool.pop();
-      el.innerHTML = '';
-      el.className = '';
-      el.style.cssText = '';
-      if (el.getAnimations) {
-        el.getAnimations().forEach(a => a.cancel());
-      }
-      return el;
+  _initPopupPool() {
+    if (this._popupLayer) return;
+    this._popupLayer = document.createElement('div');
+    this._popupLayer.id = 'battle-popup-layer';
+    this._popupLayer.className = 'fixed inset-0 pointer-events-none z-[9999]';
+    document.body.appendChild(this._popupLayer);
+
+    this._domPool = [];
+    // Pre-allocate 150 generic floating popups
+    for (let i = 0; i < 150; i++) {
+      const el = document.createElement('div');
+      el.className = 'hidden';
+      el.style.cssText = 'display: none !important;';
+      this._popupLayer.appendChild(el);
+      this._domPool.push({ el, active: false, type: 'float' });
     }
-    return document.createElement('div');
+
+    // Pre-allocate 50 wrapper-based popups for labels
+    for (let i = 0; i < 50; i++) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'hidden';
+      wrapper.style.cssText = 'display: none !important;';
+      const inner = document.createElement('div');
+      wrapper.appendChild(inner);
+      this._popupLayer.appendChild(wrapper);
+      this._domPool.push({ el: wrapper, inner, active: false, type: 'label' });
+    }
   }
 
-  _releasePoolElement(el) {
-    if (el.parentNode) el.parentNode.removeChild(el);
-    if (!this._domPool) this._domPool = [];
-    if (this._domPool.length < 100) this._domPool.push(el);
+  _getPoolElement(type = 'float') {
+    if (!this._popupLayer) this._initPopupPool();
+    
+    const poolItem = this._domPool.find(item => !item.active && item.type === type);
+    if (!poolItem) return null; // If pool exhausted, ignore to prevent DOM growth
+    
+    poolItem.active = true;
+    const el = poolItem.el;
+    
+    // Reset element visually but KEEP it in the DOM tree
+    el.innerHTML = '';
+    el.className = 'pointer-events-none absolute';
+    el.style.cssText = 'display: block; position: absolute;';
+    if (el.getAnimations) {
+      el.getAnimations().forEach(a => a.cancel());
+    }
+    
+    if (type === 'label') {
+      poolItem.inner.innerHTML = '';
+      poolItem.inner.className = '';
+      poolItem.inner.style.cssText = '';
+      if (poolItem.inner.getAnimations) {
+        poolItem.inner.getAnimations().forEach(a => a.cancel());
+      }
+      return { wrapper: el, popup: poolItem.inner };
+    }
+    
+    return el;
+  }
+
+  _releasePoolElement(elOrWrapper) {
+    if (!this._domPool) return;
+    const poolItem = this._domPool.find(item => item.el === elOrWrapper);
+    if (poolItem) {
+      poolItem.active = false;
+      poolItem.el.className = 'hidden';
+      poolItem.el.style.cssText = 'display: none !important;';
+    }
   }
 
   /**
@@ -1673,8 +1721,11 @@ class BattleManager {
     const baseY = rect.top;
     const spreadX = (Math.random() - 0.5) * 60; // Spread horizontally
 
-    const popup = this._getPoolElement();
+    const popup = this._getPoolElement('float');
+    if (!popup) return;
+    
     popup.className = config.className || '';
+    popup.style.display = 'block';
     popup.style.left = `${centerX}px`;
     popup.style.top = `${baseY}px`;
     popup.style.transform = ''; // clear
@@ -1692,8 +1743,6 @@ class BattleManager {
     const isParty = elementId.startsWith('party-');
     const floatY = isParty ? 45 : -45; // Move further for smooth drift
     
-    document.body.appendChild(popup);
-
     const scale = config.scale || 1.0;
 
     // Ultra-lightweight 3-step animation: Pop -> Drift -> Fade Out
@@ -1731,8 +1780,7 @@ class BattleManager {
     if (stack.length > 5) {
       const oldest = stack.shift();
       if (oldest.anim) oldest.anim.cancel();
-      this._releasePoolElement(oldest.popup);
-      this._releasePoolElement(oldest.el);
+      this._releasePoolElement(oldest.el); // wrapper contains popup
       clearTimeout(oldest.timeoutId);
     }
 
@@ -1747,20 +1795,20 @@ class BattleManager {
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top - 8;
 
-    const wrapper = this._getPoolElement();
+    const poolElements = this._getPoolElement('label');
+    if (!poolElements) return;
+    const { wrapper, popup } = poolElements;
+
     wrapper.className = `fixed z-[10000] pointer-events-none flex flex-col items-center`;
+    wrapper.style.display = 'block';
     wrapper.style.left = `${centerX}px`;
     wrapper.style.top = `${baseY}px`;
     wrapper.style.transform = `translate(-50%, -10px)`;
     wrapper.style.transition = `transform 0.2s ease-out`;
 
-    const popup = this._getPoolElement();
     popup.className = `${config.className || ''}`;
     popup.style.transform = ''; // Clear previous transform
     popup.innerHTML = config.html;
-    
-    wrapper.appendChild(popup);
-    document.body.appendChild(wrapper);
 
     const anim = popup.animate([
       { opacity: 0, transform: 'scale(0.5) translateY(5px)' },
@@ -1786,8 +1834,7 @@ class BattleManager {
 
     anim.onfinish = () => {
       anim.cancel();
-      this._releasePoolElement(popup);
-      this._releasePoolElement(wrapper);
+      this._releasePoolElement(wrapper); // wrapper contains popup
       const idx = stack.indexOf(entry);
       if (idx !== -1) stack.splice(idx, 1);
     };
@@ -2047,7 +2094,6 @@ class BattleManager {
     }
 
     if (document.hidden || localStorage.getItem('disableBattleAnimations') === 'true') return;
-    // Create a drop container overlay for this enemy in the main container
     const el = this.container.querySelector(`#${enemy.elementId}`);
     if (!el) return;
     
@@ -2055,20 +2101,18 @@ class BattleManager {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    const dropContainer = document.createElement('div');
-    dropContainer.style.position = 'fixed';
-    dropContainer.style.left = `${centerX}px`;
-    dropContainer.style.top = `${centerY + rect.height * 0.2}px`; // Start slightly lower (near feet)
-    dropContainer.className = `w-0 h-0 z-[9999] pointer-events-none`;
-    document.body.appendChild(dropContainer);
+    const startX = centerX - 20;
+    const startY = centerY + rect.height * 0.2 - 20;
 
-    // Show floating elements inside dropContainer
+    // Show floating elements using global pool
     drops.forEach((drop) => {
-      const dropEl = document.createElement('div');
-      dropEl.style.position = 'absolute';
-      dropEl.style.left = '-20px';
-      dropEl.style.top = '-20px';
+      const dropEl = this._getPoolElement('float');
+      if (!dropEl) return;
+      
       dropEl.className = `w-10 h-10 flex items-center justify-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0`;
+      dropEl.style.display = 'block';
+      dropEl.style.left = `${startX}px`;
+      dropEl.style.top = `${startY}px`;
       
       let innerHtml = '';
       if (drop.image) {
@@ -2078,7 +2122,6 @@ class BattleManager {
       }
       
       dropEl.innerHTML = innerHtml;
-      dropContainer.appendChild(dropEl);
 
       const destX = (Math.random() - 0.5) * 40; // Narrow horizontal scatter (-20 to +20)
       const destY = 10 + Math.random() * 20;    // Fall down slightly (10 to 30)
@@ -2087,7 +2130,7 @@ class BattleManager {
       const dur = 1000 + Math.random() * 300; // ドロップもたくさん重ねるために固定
       const del = Math.random() * 100;
 
-      dropEl.animate([
+      const anim = dropEl.animate([
         { opacity: 0, transform: `translate(0px, 0px) scale(0.5) rotate(0deg)` },
         { opacity: 1, transform: `translate(${destX * 0.4}px, -20px) scale(1.2) rotate(${randomRot * 0.3}deg)`, offset: 0.2 },
         { opacity: 1, transform: `translate(${destX * 0.7}px, ${destY}px) scale(1) rotate(${randomRot * 0.6}deg)`, offset: 0.4 }, // Hit ground
@@ -2100,11 +2143,12 @@ class BattleManager {
         easing: 'ease-out', 
         fill: 'both' 
       });
-    });
 
-    setTimeout(() => {
-      dropContainer.remove();
-    }, 2000); // 削除も固定
+      anim.onfinish = () => {
+        anim.cancel();
+        this._releasePoolElement(dropEl);
+      };
+    });
   }
 
   async saveDeferredData() {
