@@ -43,7 +43,8 @@ export function createNavBar(router) {
       <button data-nav-path="${tab.path}"
               id="nav-${tab.id}"
               ${disabledAttr}
-              class="flex-1 flex flex-col items-center justify-center pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]
+              style="padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);"
+              class="flex-1 flex flex-col items-center justify-center pt-3
                      ${classes} ${disabledClass} transition-all duration-200 active:scale-95">
         <span class="material-symbols-outlined text-[24px] leading-none">${tab.icon}</span>
       </button>
