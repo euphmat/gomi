@@ -21,10 +21,68 @@ export async function renderRanchTab() {
     const header = document.createElement('div');
     header.className = 'p-4 border-b border-slate-800 shrink-0';
     header.innerHTML = `
-      <h2 class="text-xl font-black text-pink-400 flex items-center gap-2 mb-2">
-        <span class="material-symbols-outlined">pets</span>モンスター牧場
-      </h2>
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xl font-black text-pink-400 flex items-center gap-2">
+          <span class="material-symbols-outlined">pets</span>モンスター牧場
+        </h2>
+        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-ranch-help">
+          <span class="material-symbols-outlined text-[18px]">help</span>
+        </button>
+      </div>
     `;
+
+    header.querySelector('#btn-ranch-help').onclick = () => {
+      const helpOverlay = document.createElement('div');
+      helpOverlay.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-[100] animate-fade-in p-4 backdrop-blur-sm';
+      
+      const helpModal = document.createElement('div');
+      helpModal.className = 'bg-slate-900 border border-pink-500/30 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden';
+      
+      helpModal.innerHTML = `
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+          <h3 class="text-md font-black text-pink-400 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">help</span>
+            牧場・テイムについて
+          </h3>
+          <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors btn-close-help">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="p-4 space-y-4 text-sm text-slate-300">
+          <div>
+            <h4 class="font-bold text-pink-300 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">favorite</span> 仲間（テイム）について
+            </h4>
+            <p class="text-xs leading-relaxed text-slate-400">
+              ダンジョンでモンスターを討伐した際、一定確率でモンスターが仲間になり牧場へ送られます。<br>
+              牧場では仲間になったモンスターにエサをあげて育成することができます。
+            </p>
+          </div>
+          <div>
+            <h4 class="font-bold text-pink-300 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">psychology</span> 仲間になる確率
+            </h4>
+            <p class="text-xs leading-relaxed text-slate-400">
+              モンスターが仲間になる初期確率は一律で <span class="text-white font-bold">0.01%</span> に設定されています。<br>
+              ただし、<span class="text-pink-300 font-bold">同じモンスターを100体討伐するごとに仲間になる確率が上昇</span>していきます！根気よく討伐を繰り返しましょう。
+            </p>
+          </div>
+        </div>
+      `;
+      
+      helpOverlay.appendChild(helpModal);
+      document.body.appendChild(helpOverlay);
+      
+      const closeHelp = () => {
+        helpOverlay.classList.replace('animate-fade-in', 'animate-fade-out');
+        setTimeout(() => helpOverlay.remove(), 200);
+      };
+      
+      helpModal.querySelector('.btn-close-help').onclick = closeHelp;
+      helpOverlay.onclick = (e) => {
+        if (e.target === helpOverlay) closeHelp();
+      };
+    };
 
     // Dungeon Selector
     if (Object.keys(ranchData).length > 0) {
@@ -229,9 +287,14 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
       <img src="${monsterDef.image}" class="w-8 h-8 object-contain">
       ${monsterDef.name} にエサをあげる
     </h3>
-    <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-modal">
-      <span class="material-symbols-outlined">close</span>
-    </button>
+    <div class="flex items-center gap-2">
+      <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">
+        <span class="material-symbols-outlined text-[18px]">help</span>
+      </button>
+      <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-modal">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
   `;
   
   const content = document.createElement('div');
@@ -527,6 +590,57 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   };
 
   header.querySelector('#btn-close-modal').onclick = closeModal;
+  
+  header.querySelector('#btn-help-modal').onclick = () => {
+    const helpOverlay = document.createElement('div');
+    helpOverlay.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-[100] animate-fade-in p-4 backdrop-blur-sm';
+    
+    const helpModal = document.createElement('div');
+    helpModal.className = 'bg-slate-900 border border-pink-500/30 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden';
+    
+    helpModal.innerHTML = `
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+        <h3 class="text-md font-black text-pink-400 flex items-center gap-2">
+          <span class="material-symbols-outlined text-[20px]">help</span>
+          育成のヒント
+        </h3>
+        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors btn-close-help">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="p-4 space-y-4 text-sm text-slate-300">
+        <div>
+          <h4 class="font-bold text-pink-300 mb-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">trending_up</span> 成長について
+          </h4>
+          <p class="text-xs leading-relaxed text-slate-400">
+            モンスターに「好物」である素材を与えると成長度が上がります。成長度が最大になるとレベルアップし、ステータスが上昇します。
+          </p>
+        </div>
+        <div>
+          <h4 class="font-bold text-pink-300 mb-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">group_add</span> ボーナスについて
+          </h4>
+          <p class="text-xs leading-relaxed text-slate-400">
+            パーティ編成時、牧場で育てた全モンスターのステータスの <span class="text-white font-bold">10%</span> がパーティ全体のボーナスとして加算されます。<br>色々なモンスターを育てて冒険を有利に進めましょう！
+          </p>
+        </div>
+      </div>
+    `;
+    
+    helpOverlay.appendChild(helpModal);
+    document.body.appendChild(helpOverlay);
+    
+    const closeHelp = () => {
+      helpOverlay.classList.replace('animate-fade-in', 'animate-fade-out');
+      setTimeout(() => helpOverlay.remove(), 200);
+    };
+    
+    helpModal.querySelector('.btn-close-help').onclick = closeHelp;
+    helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay) closeHelp();
+    };
+  };
   
   overlay.onclick = (e) => {
     if (e.target === overlay) {

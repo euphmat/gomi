@@ -348,22 +348,91 @@ export function renderChangeJobTab() {
     const bonusMdef = Math.floor((char.baseStats.mdef || 0) * 0.1);
     const bonusSpd = Math.floor((char.baseStats.spd || 0) * 0.1);
 
+    const cumHp = (char.rebirthBonus?.hp || 0) + bonusHp;
+    const cumMp = (char.rebirthBonus?.mp || 0) + bonusMp;
+    const cumAtk = (char.rebirthBonus?.atk || 0) + bonusAtk;
+    const cumDef = (char.rebirthBonus?.def || 0) + bonusDef;
+    const cumMatk = (char.rebirthBonus?.matk || 0) + bonusMatk;
+    const cumMdef = (char.rebirthBonus?.mdef || 0) + bonusMdef;
+    const cumSpd = (char.rebirthBonus?.spd || 0) + bonusSpd;
+
     container.innerHTML = `
       <div class="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-4">
         <h3 class="text-indigo-300 font-bold mb-2 flex items-center gap-2"><span class="material-symbols-outlined">auto_awesome</span>転生とは</h3>
         <p class="text-sm text-gray-300 leading-relaxed">ベースレベル40以上で実行可能な儀式です。現在の装備を除いた基礎能力の10%を永続ボーナスとして引き継ぎ、レベル1から再度育成することができます。ジョブレベルや習得スキルは失われません。</p>
       </div>
 
-      <div class="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-        <h4 class="text-gray-200 font-bold mb-3 text-center">転生で得られるボーナス</h4>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">HP</span><span class="text-emerald-400 font-bold">+${bonusHp}</span></div>
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">MP</span><span class="text-emerald-400 font-bold">+${bonusMp}</span></div>
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">ATK</span><span class="text-emerald-400 font-bold">+${bonusAtk}</span></div>
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">DEF</span><span class="text-emerald-400 font-bold">+${bonusDef}</span></div>
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">MATK</span><span class="text-emerald-400 font-bold">+${bonusMatk}</span></div>
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">MDEF</span><span class="text-emerald-400 font-bold">+${bonusMdef}</span></div>
-          <div class="flex justify-between bg-gray-900/50 p-2 rounded border border-gray-700"><span class="text-gray-400">SPD</span><span class="text-emerald-400 font-bold">+${bonusSpd}</span></div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-red-500/10 border-red-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-red-400">favorite</span>
+              <span class="text-[12px] font-bold text-slate-300">HP</span>
+              <span class="text-[14px] font-black text-red-400 drop-shadow-md">+${bonusHp}</span>
+            </div>
+            <div class="text-[10px] font-bold text-red-300/80 bg-red-900/40 px-2 py-0.5 rounded border border-red-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-red-400 drop-shadow-[0_0_3px_rgba(248,113,113,0.8)]">+${cumHp}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-blue-500/10 border-blue-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-blue-400">water_drop</span>
+              <span class="text-[12px] font-bold text-slate-300">MP</span>
+              <span class="text-[14px] font-black text-blue-400 drop-shadow-md">+${bonusMp}</span>
+            </div>
+            <div class="text-[10px] font-bold text-blue-300/80 bg-blue-900/40 px-2 py-0.5 rounded border border-blue-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-blue-400 drop-shadow-[0_0_3px_rgba(96,165,250,0.8)]">+${cumMp}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-orange-500/10 border-orange-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-orange-400">swords</span>
+              <span class="text-[12px] font-bold text-slate-300">ATK</span>
+              <span class="text-[14px] font-black text-orange-400 drop-shadow-md">+${bonusAtk}</span>
+            </div>
+            <div class="text-[10px] font-bold text-orange-300/80 bg-orange-900/40 px-2 py-0.5 rounded border border-orange-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-orange-400 drop-shadow-[0_0_3px_rgba(251,146,60,0.8)]">+${cumAtk}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-green-500/10 border-green-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-green-400">shield</span>
+              <span class="text-[12px] font-bold text-slate-300">DEF</span>
+              <span class="text-[14px] font-black text-green-400 drop-shadow-md">+${bonusDef}</span>
+            </div>
+            <div class="text-[10px] font-bold text-green-300/80 bg-green-900/40 px-2 py-0.5 rounded border border-green-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-green-400 drop-shadow-[0_0_3px_rgba(74,222,128,0.8)]">+${cumDef}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-fuchsia-500/10 border-fuchsia-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-fuchsia-400">auto_fix_high</span>
+              <span class="text-[12px] font-bold text-slate-300">MAT</span>
+              <span class="text-[14px] font-black text-fuchsia-400 drop-shadow-md">+${bonusMatk}</span>
+            </div>
+            <div class="text-[10px] font-bold text-fuchsia-300/80 bg-fuchsia-900/40 px-2 py-0.5 rounded border border-fuchsia-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-fuchsia-400 drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]">+${cumMatk}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-indigo-500/10 border-indigo-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-indigo-400">gpp_good</span>
+              <span class="text-[12px] font-bold text-slate-300">MDF</span>
+              <span class="text-[14px] font-black text-indigo-400 drop-shadow-md">+${bonusMdef}</span>
+            </div>
+            <div class="text-[10px] font-bold text-indigo-300/80 bg-indigo-900/40 px-2 py-0.5 rounded border border-indigo-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-indigo-400 drop-shadow-[0_0_3px_rgba(129,140,248,0.8)]">+${cumMdef}</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-yellow-500/10 border-yellow-500/20 shadow-sm">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-yellow-400">speed</span>
+              <span class="text-[12px] font-bold text-slate-300">SPD</span>
+              <span class="text-[14px] font-black text-yellow-400 drop-shadow-md">+${bonusSpd}</span>
+            </div>
+            <div class="text-[10px] font-bold text-yellow-300/80 bg-yellow-900/40 px-2 py-0.5 rounded border border-yellow-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
+              <span>累計:</span><span class="text-[12px] font-black text-yellow-400 drop-shadow-[0_0_3px_rgba(250,204,21,0.8)]">+${cumSpd}</span>
+            </div>
+          </div>
         </div>
       </div>
 
