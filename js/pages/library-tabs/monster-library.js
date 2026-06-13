@@ -155,15 +155,23 @@ export function renderMonsterLibraryTab() {
 
       const slot = document.createElement('div');
       
-      let isCompanion = false;
+      let hasNormal = false;
+      let hasLegendary = false;
       for (const dId of Object.keys(ranchData)) {
-        if (ranchData[dId] && ranchData[dId][monster.id]) {
-          isCompanion = true; break;
+        if (ranchData[dId]) {
+          if (ranchData[dId][monster.id]) hasNormal = true;
+          if (ranchData[dId][monster.id + '_legendary']) hasLegendary = true;
         }
       }
+      const isCompanion = hasNormal || hasLegendary;
+      const isGold = hasNormal && hasLegendary;
       
+      const badgeStyle = isGold 
+        ? 'bg-yellow-900/90 border-yellow-400/60 text-yellow-300 drop-shadow-[0_0_3px_rgba(250,204,21,0.5)]' 
+        : 'bg-pink-900/90 border-pink-500/50 text-pink-300';
+        
       const companionBadge = isCompanion 
-        ? '<div class="absolute top-1 right-1 bg-pink-900/90 border border-pink-500/50 text-pink-300 text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center shadow-md backdrop-blur-sm z-10"><span class="material-symbols-outlined text-[10px]">pets</span></div>'
+        ? `<div class="absolute top-1 right-1 ${badgeStyle} border p-[3px] rounded-full flex items-center shadow-md backdrop-blur-sm z-10"><span class="material-symbols-outlined text-[9px]">pets</span></div>`
         : '';
 
       if (viewMode === 'grid') {

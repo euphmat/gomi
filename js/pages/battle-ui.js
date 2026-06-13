@@ -41,7 +41,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
         <div class="state-icons-container absolute -top-1.5 -right-1.5 z-20 flex gap-0.5 pointer-events-auto">
           ${!e.isDead ? getActiveStateIconsHTML(e) : ''}
         </div>
-        <img src="${e.image}" class="w-full h-full object-contain p-1" onerror="this.style.display='none'">
+        <img src="${e.image}" class="w-full h-full object-contain p-1 ${e.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
       <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div class="bg-red-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${e.currentHp / e.maxHp})"></div>
@@ -169,7 +169,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
       
       let badgeClass = '';
-      const rate = Math.min(100, parseFloat(d.rate) + bonus);
+      const rate = targetEntity.isLegendary ? 100 : Math.min(100, parseFloat(d.rate) + bonus);
       if (rate <= 0.1) {
         badgeClass = 'bg-amber-950/80 text-amber-400 border border-amber-500/40 shadow-[0_0_6px_rgba(245,158,11,0.2)]';
       } else if (rate <= 2.0) {
@@ -219,8 +219,9 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
 
   let isCompanion = false;
   if (!isParty && targetEntity && targetEntity.id) {
+    const checkId = targetEntity.isLegendary ? `${targetEntity.id}_legendary` : targetEntity.id;
     for (const dId of Object.keys(ranchData)) {
-      if (ranchData[dId] && ranchData[dId][targetEntity.id]) {
+      if (ranchData[dId] && ranchData[dId][checkId]) {
         isCompanion = true; break;
       }
     }

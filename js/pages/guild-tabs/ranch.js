@@ -164,9 +164,12 @@ export async function renderRanchTab() {
     container.appendChild(styleEl);
 
     Object.keys(monstersInDungeon).forEach((mId, index) => {
-      const mDef = MONSTERS_MAP.get(mId);
-      if (!mDef) return;
+      const isLegendary = mId.endsWith('_legendary');
+      const baseId = isLegendary ? mId.replace('_legendary', '') : mId;
+      const baseDef = MONSTERS_MAP.get(baseId);
+      if (!baseDef) return;
 
+      const mDef = isLegendary ? { ...baseDef, name: `伝説の${baseDef.name}` } : baseDef;
       const mData = monstersInDungeon[mId];
       
       const mEl = document.createElement('div');
@@ -182,10 +185,15 @@ export async function renderRanchTab() {
       const animDelay = Math.random() * -8;
       
       mEl.innerHTML = `
-        <div class="ranch-monster relative" style="animation-delay: ${animDelay}s;">
-           <img src="${mDef.image}" class="ranch-monster-img w-16 h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style="animation-delay: ${animDelay}s;" onerror="this.src='assets/monsters/slime.png'">
+        <div class="ranch-monster relative flex flex-col items-center" style="animation-delay: ${animDelay}s;">
+           <div class="${isLegendary ? 'animate-rainbow' : ''}">
+             <img src="${mDef.image}" class="ranch-monster-img w-16 h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style="animation-delay: ${animDelay}s;" onerror="this.src='assets/monsters/slime.png'">
+           </div>
            <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap pointer-events-none shadow-md z-10">
-             Lv.${getRanchLevelInfo(mData.fedMaterials || 0).level}
+             Lv.${getRanchLevelInfo(mData.fedMaterials || 0, isLegendary).level}
+           </div>
+           <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[9px] font-bold ${isLegendary ? 'text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)]' : 'text-slate-200'} whitespace-nowrap pointer-events-none shadow-md z-10 text-center w-max">
+             ${mDef.name}
            </div>
         </div>
       `;
@@ -272,6 +280,7 @@ function showNotification(container, text, type = 'info') {
 }
 
 async function showFeedModal(container, dungeonId, monsterId, monsterDef, monsterData, onUpdate) {
+  const isLegendary = monsterId.endsWith('_legendary');
   const validDrops = monsterDef.drops || [];
   
   const overlay = document.createElement('div');
@@ -308,8 +317,19 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     const stats = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
     if (!monsterDef.stats) return stats;
     for (const key of Object.keys(stats)) {
-      const baseVal = monsterDef.stats[key] || 0;
-      const growth = Math.max(level, Math.floor(baseVal * level * 0.01));
+      const originalBaseVal = monsterDef.stats[key] || 0;
+      let baseVal = originalBaseVal;
+      let growth = Math.max(level, Math.floor(originalBaseVal * level * 0.01));
+      
+      if (isLegendary) {
+        if (key === 'hp') {
+          baseVal *= 10;
+          growth *= 10;
+        } else if (key !== 'mp') {
+          baseVal *= 3;
+          growth *= 3;
+        }
+      }
       stats[key] = baseVal + growth;
     }
     return stats;
@@ -322,7 +342,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     return bonus;
   };
 
-  const initialInfo = getRanchLevelInfo(monsterData.fedMaterials || 0);
+  const initialInfo = getRanchLevelInfo(monsterData.fedMaterials || 0, isLegendary);
   let currentLevel = initialInfo.level;
   
   topSection.innerHTML = `
@@ -381,7 +401,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const elBonusStats = topSection.querySelector('#feed-modal-bonus-stats');
 
   const updateTopSection = () => {
-    const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(monsterData.fedMaterials || 0);
+    const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(monsterData.fedMaterials || 0, isLegendary);
     currentLevel = level;
     
     elLevel.textContent = `Lv.${level}`;
@@ -510,8 +530,8 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             updateTopSection();
             await renderItems();
             
-            // Check level up & show animation
-            const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials);
+            const originalLevel = getRanchLevelInfo(monsterData.fedMaterials - amount, isLegendary).level;
+            const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials, isLegendary);
             if (newLevelInfo.level > oldLevel) {
                const newMStats = getMonsterStats(newLevelInfo.level);
                

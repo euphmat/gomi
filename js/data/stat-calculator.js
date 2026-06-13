@@ -177,15 +177,17 @@ export function buildEquipmentMap(equipmentArray) {
  * Calculate ranch level from total fed materials.
  * Cost for next level grows exponentially: 10, 15, 22, 33, 50, ...
  */
-export function getRanchLevelInfo(totalFed) {
+export function getRanchLevelInfo(totalFed, isLegendary = false) {
   let level = 0;
   let totalRequiredForCurrent = 0;
-  let totalRequiredForNext = 10;
+  let baseCost = isLegendary ? 50 : 10;
+  let multiplier = isLegendary ? 2.0 : 1.5;
+  let totalRequiredForNext = baseCost;
   
   while (totalFed >= totalRequiredForNext) {
     level++;
     totalRequiredForCurrent = totalRequiredForNext;
-    const nextCost = Math.floor(10 * Math.pow(1.5, level));
+    const nextCost = Math.floor(baseCost * Math.pow(multiplier, level));
     totalRequiredForNext += nextCost;
   }
   
@@ -206,12 +208,25 @@ export async function calculateTotalRanchBonus() {
   
   for (const dungeonId of Object.keys(ranchData)) {
     for (const [monsterId, data] of Object.entries(ranchData[dungeonId])) {
-      const monsterDef = MONSTERS.find(m => m.id === monsterId);
+      const isLegendary = monsterId.endsWith('_legendary');
+      const baseId = isLegendary ? monsterId.replace('_legendary', '') : monsterId;
+      const monsterDef = MONSTERS.find(m => m.id === baseId);
       if (monsterDef && monsterDef.stats) {
-        const { level } = getRanchLevelInfo(data.fedMaterials || 0);
+        const { level } = getRanchLevelInfo(data.fedMaterials || 0, isLegendary);
         for (const key of Object.keys(totalBonus)) {
-          const baseVal = monsterDef.stats[key] || 0;
-          const growth = Math.max(level, Math.floor(baseVal * level * 0.01));
+          const originalBaseVal = monsterDef.stats[key] || 0;
+          let baseVal = originalBaseVal;
+          let growth = Math.max(level, Math.floor(originalBaseVal * level * 0.01));
+          
+          if (isLegendary) {
+            if (key === 'hp') {
+              baseVal *= 10;
+              growth *= 10;
+            } else if (key !== 'mp') {
+              baseVal *= 3;
+              growth *= 3;
+            }
+          }
           const monsterCurrentStat = baseVal + growth;
           const bonus = Math.max(1, Math.floor(monsterCurrentStat / 10));
           totalBonus[key] += bonus;

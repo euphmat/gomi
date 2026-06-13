@@ -136,8 +136,20 @@ class BattleManager {
       const elementResist = { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0, ...(monsterDef.elements || {}) };
       const ailmentResist = { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, ...(monsterDef.ailments || {}) };
       
+      const isLegendary = Math.random() < 0.001;
+      if (isLegendary) {
+        baseStats.hp *= 10;
+        baseStats.atk *= 3;
+        baseStats.def *= 3;
+        baseStats.matk *= 3;
+        baseStats.mdef *= 3;
+        baseStats.spd *= 3;
+      }
+      
       return {
         ...monsterDef,
+        name: isLegendary ? `伝説の${monsterDef.name}` : monsterDef.name,
+        isLegendary,
         stats: { ...baseStats, attackElements, attackAilments, elementResist, ailmentResist },
         uniqueId: `enemy-${i}`,
         currentHp: baseStats.hp,
@@ -2039,9 +2051,11 @@ class BattleManager {
         this.ranchData[dungeonId] = {};
       }
       
+      const saveId = enemy.isLegendary ? `${enemy.id}_legendary` : enemy.id;
+      
       // まだ仲間になっていない場合のみ
-      if (!this.ranchData[dungeonId][enemy.id]) {
-        this.ranchData[dungeonId][enemy.id] = { fedMaterials: 0, level: 0 };
+      if (!this.ranchData[dungeonId][saveId]) {
+        this.ranchData[dungeonId][saveId] = { fedMaterials: 0, level: 0 };
         this._pendingRanchSave = this.ranchData; // Deferred saving like other properties
         this._needsSave = true;
 
@@ -2068,20 +2082,21 @@ class BattleManager {
       const bonus = Math.floor(kills / 100) * 0.1;
       for (const drop of enemy.drops) {
         const adjustedRate = Math.min(100, drop.rate + bonus);
-        if (Math.random() * 100 <= adjustedRate) {
+        if (enemy.isLegendary || Math.random() * 100 <= adjustedRate) {
           const mat = MATERIALS_MAP.get(drop.itemId);
           if (mat) {
+            const dropCount = enemy.isLegendary ? 100 : 1;
             if (!this._pendingItemDrops) this._pendingItemDrops = {};
-            this._pendingItemDrops[mat.id] = (this._pendingItemDrops[mat.id] || 0) + 1;
+            this._pendingItemDrops[mat.id] = (this._pendingItemDrops[mat.id] || 0) + dropCount;
             this._needsSave = true;
 
-            drops.push({ text: mat.name, image: mat.image, color: 'text-white' });
+            drops.push({ text: mat.name + (dropCount > 1 ? ` x${dropCount}` : ''), image: mat.image, color: 'text-white' });
             
             const existingDrop = this.obtainedItemsMap.get(mat.id);
             if (existingDrop) {
-              existingDrop.quantity++;
+              existingDrop.quantity += dropCount;
             } else {
-              const newDrop = { id: mat.id, name: mat.name, image: mat.image, quantity: 1 };
+              const newDrop = { id: mat.id, name: mat.name, image: mat.image, quantity: dropCount };
               this.obtainedItems.push(newDrop);
               this.obtainedItemsMap.set(mat.id, newDrop);
             }
