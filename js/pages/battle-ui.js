@@ -235,7 +235,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       normalBadgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${pctStr}</span>`;
     }
 
-    const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.0001);
+    const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.00001);
     const legAppPctStr = (legAppRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
     const legAppBadgeHtml = `<span class="bg-yellow-950/80 text-yellow-400 border border-yellow-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${legAppPctStr}</span>`;
 

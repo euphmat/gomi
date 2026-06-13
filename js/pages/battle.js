@@ -137,7 +137,7 @@ class BattleManager {
       const ailmentResist = { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, ...(monsterDef.ailments || {}) };
       
       const kills = this.monsterKills[monsterDef.id] || 0;
-      const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.0001);
+      const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.00001);
       const isLegendary = Math.random() < legAppRate;
       if (isLegendary) {
         baseStats.hp *= 10;
