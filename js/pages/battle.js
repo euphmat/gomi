@@ -1663,7 +1663,9 @@ class BattleManager {
     const el = poolItem.el;
     
     // Reset element visually but KEEP it in the DOM tree
-    el.innerHTML = '';
+    if (type === 'float') {
+      el.innerHTML = '';
+    }
     el.className = 'pointer-events-none absolute';
     el.style.cssText = 'display: block; position: absolute;';
     if (el.getAnimations) {
