@@ -222,7 +222,7 @@ async function _loadStatusData(container) {
           <div class="flex items-center py-1.5 border-b border-gray-700/50 last:border-0 bg-gray-800/30 px-1 rounded-sm my-0.5">
             <span class="text-[10px] text-gray-400 w-12 shrink-0 text-center">${eqNames[c.slot]}</span>
             <div class="flex-1 flex items-center gap-1">
-              <div class="flex items-center gap-1.5 flex-1 w-0 opacity-50 line-through">
+              <div class="flex items-center gap-1.5 flex-1 w-0 opacity-50">
                 <span class="w-7 h-7 flex items-center justify-center bg-gray-800 rounded border border-gray-600/50 shrink-0">
                   ${renderItemIcon(c.oldItem)}
                 </span>

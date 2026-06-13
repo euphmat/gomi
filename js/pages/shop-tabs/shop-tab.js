@@ -221,6 +221,8 @@ export function renderShopTab() {
 
     pageItems.forEach(item => {
       const canCraft = checkCanCraft(item);
+      const isMaterial = !item.slot;
+      const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
       const slot = document.createElement('div');
       
       if (viewMode === 'grid') {
@@ -233,14 +235,18 @@ export function renderShopTab() {
           const iconClass = canCraft ? 'material-symbols-outlined text-gray-500 text-lg' : 'material-symbols-outlined text-gray-800 text-lg';
           slot.innerHTML = `<span class="${iconClass}">category</span>`;
         }
+
+        if (ownedCount > 0) {
+          slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600 shadow-sm leading-tight">x${ownedCount}</div>`;
+        }
       } else {
         // list view
-        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border ${canCraft ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800' : 'border-gray-700/80'} transition-all shadow-sm cursor-pointer`;
+        slot.className = `group relative w-full flex items-center gap-2.5 p-2 ${canCraft ? 'bg-gradient-to-r from-slate-900/90 to-slate-800/50 border-slate-700/80 hover:border-emerald-500/50 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'bg-slate-950/60 border-slate-800/80 opacity-80'} rounded-lg border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm`;
         
         const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
         const statsHtml = activeStats.map(stat => {
-          return `<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined ${stat.color} text-[11px]" style="font-variation-settings: 'FILL' 1">${stat.icon}</span><span class="text-[11px] text-gray-300 font-bold">${item.stats[stat.key]}</span></span>`;
-        }).join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">|</span>');
+          return `<div class="flex items-center shrink-0"><span class="material-symbols-outlined ${stat.color} mr-0.5" style="font-size: 11px; font-variation-settings: 'FILL' 1">${stat.icon}</span><span class="text-slate-200 font-mono font-bold drop-shadow-sm" style="font-size: 10px;">${item.stats[stat.key]}</span></div>`;
+        }).join('');
         
         const elements = item.elements || {};
         const elHtml = Object.keys(ELEMENT_ICONS)
@@ -249,8 +255,8 @@ export function renderShopTab() {
             const val = elements[k];
             const def = ELEMENT_ICONS[k];
             const colorClass = val > 0 ? 'text-emerald-400' : 'text-rose-400';
-            return `<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px] ${def.color}">${def.icon}</span><span class="text-[11px] ${colorClass} font-bold">${val > 0 ? '+' : ''}${val}%</span></span>`;
-          }).join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">|</span>');
+            return `<div class="flex items-center shrink-0"><span class="material-symbols-outlined ${def.color} mr-0.5" style="font-size: 11px;">${def.icon}</span><span class="${colorClass} font-mono font-bold drop-shadow-sm" style="font-size: 10px;">${val > 0 ? '+' : ''}${val}%</span></div>`;
+          }).join('');
 
         const ailments = item.ailments || {};
         const ailHtml = Object.keys(AILMENT_ICONS)
@@ -259,48 +265,64 @@ export function renderShopTab() {
             const val = ailments[k];
             const def = AILMENT_ICONS[k];
             const colorClass = val > 0 ? 'text-emerald-400' : 'text-rose-400';
-            return `<span class="inline-flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px] ${def.color}">${def.icon}</span><span class="text-[11px] ${colorClass} font-bold">${val > 0 ? '+' : ''}${val}%</span></span>`;
-          }).join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">|</span>');
+            return `<div class="flex items-center shrink-0"><span class="material-symbols-outlined ${def.color} mr-0.5" style="font-size: 11px;">${def.icon}</span><span class="${colorClass} font-mono font-bold drop-shadow-sm" style="font-size: 10px;">${val > 0 ? '+' : ''}${val}%</span></div>`;
+          }).join('');
           
-        const performanceParts = [statsHtml, elHtml, ailHtml].filter(Boolean);
-        let performanceHtml = performanceParts.join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">||</span>');
-
+        let abilityHtml = '';
         if (item.ability) {
-           performanceHtml += `${performanceParts.length > 0 ? '<span class="text-gray-600/60 mx-1.5 leading-none font-light">||</span>' : ''}<span class="inline-flex items-center gap-1 text-[10px] text-amber-400 font-bold"><span class="material-symbols-outlined text-[12px]">star</span>${item.ability.name}</span>`;
+           abilityHtml = `<div class="flex items-center shrink-0 text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1 rounded" style="padding-top: 1px; padding-bottom: 1px;"><span class="material-symbols-outlined mr-0.5" style="font-size: 10px;">star</span><span class="font-bold" style="font-size: 9px;">${item.ability.name}</span></div>`;
         }
 
+        const performanceParts = [statsHtml, elHtml, ailHtml, abilityHtml].filter(Boolean);
+        const performanceHtml = performanceParts.join('<div class="w-px h-2 bg-slate-700/60 mx-1 shrink-0"></div>');
+
         let slotLabel = '素材';
-        let slotColor = 'text-slate-400 bg-slate-800/80 border-slate-700/50';
-        if (item.slot === 'rightHand') { slotLabel = '武器'; slotColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20'; }
-        else if (item.slot === 'leftHand') { slotLabel = '盾'; slotColor = 'text-blue-400 bg-blue-500/10 border-blue-500/20'; }
-        else if (item.slot === 'armor') { slotLabel = '防具'; slotColor = 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'; }
-        else if (item.slot === 'accessory') { slotLabel = '装飾品'; slotColor = 'text-amber-400 bg-amber-500/10 border-amber-500/20'; }
+        let slotColor = 'text-slate-400';
+        if (item.slot === 'rightHand') { slotLabel = '武器'; slotColor = 'text-rose-400'; }
+        else if (item.slot === 'leftHand') { slotLabel = '盾'; slotColor = 'text-blue-400'; }
+        else if (item.slot === 'armor') { slotLabel = '防具'; slotColor = 'text-indigo-400'; }
+        else if (item.slot === 'accessory') { slotLabel = '装飾品'; slotColor = 'text-amber-400'; }
 
         let imgHtml = '';
         if (item.image) {
-          const imgClass = canCraft ? 'w-11 h-11 rounded-md object-cover border border-gray-700/50 bg-gray-900 shadow-inner' : `w-11 h-11 rounded-md object-cover border border-gray-700/50 bg-gray-900 shadow-inner ${SILHOUETTE_FILTER}`;
+          const imgClass = canCraft ? 'w-full h-full object-cover transition-transform duration-300 group-hover:scale-110' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
           imgHtml = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
         } else {
-          const iconClass = canCraft ? 'material-symbols-outlined text-gray-500 text-2xl' : 'material-symbols-outlined text-gray-800 text-2xl';
-          imgHtml = `<div class="w-11 h-11 rounded-md border border-gray-700/50 flex items-center justify-center bg-gray-800/50 shrink-0 shadow-inner"><span class="${iconClass}">category</span></div>`;
+          const iconClass = canCraft ? 'material-symbols-outlined text-slate-500 text-2xl' : 'material-symbols-outlined text-slate-700 text-2xl';
+          imgHtml = `<span class="${iconClass}">category</span>`;
         }
 
+        const craftHoverBg = canCraft ? '<div class="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>' : '';
+
         slot.innerHTML = `
-          <div class="shrink-0 relative">
+          ${craftHoverBg}
+          <div class="w-9 h-9 shrink-0 relative flex items-center justify-center rounded-md bg-slate-950 border border-slate-700/80 shadow-inner overflow-hidden z-10">
             ${imgHtml}
           </div>
-          <div class="flex flex-col min-w-0 flex-1 justify-center gap-1">
-            <div class="flex items-center gap-2">
-              <span class="text-[9px] font-black border px-1.5 py-0.5 rounded ${slotColor} leading-none shadow-sm">${slotLabel}</span>
-              <span class="text-[13px] font-bold text-gray-100 truncate leading-tight">${item.name}</span>
+          
+          <div class="flex-1 min-w-0 flex flex-col justify-center py-0.5 z-10">
+            <div class="flex items-baseline gap-1.5 mb-1">
+              <span class="${slotColor} font-bold tracking-widest shrink-0" style="font-size: 9px;">${slotLabel}</span>
+              <span class="text-slate-100 font-black truncate group-hover:text-white drop-shadow-md transition-colors leading-none" style="font-size: 12px;">${item.name}</span>
             </div>
-            <div class="flex items-center flex-wrap gap-y-1.5 mt-1">
-              ${performanceHtml || '<span class="text-[10px] text-gray-500 italic">性能変化なし</span>'}
+            
+            <div class="flex items-center gap-1 overflow-hidden whitespace-nowrap" style="-webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%); mask-image: linear-gradient(to right, black 90%, transparent 100%);">
+              ${performanceHtml || '<span class="text-slate-500 italic" style="font-size: 10px;">性能変化なし</span>'}
             </div>
           </div>
-          <div class="flex flex-col items-end shrink-0 pl-3 border-l border-gray-800/60 ml-1 py-1">
-            <span class="text-[9px] text-gray-500 font-bold mb-1 uppercase tracking-wider">合成費</span>
-            <span class="text-[13px] text-amber-400 font-mono font-black tracking-wide">${item.recipe?.price ? item.recipe.price.toLocaleString() : 0} <span class="text-[10px] text-amber-500/80">G</span></span>
+          
+          <div class="shrink-0 flex flex-col items-end justify-center gap-1 pl-2 border-l border-slate-700/50 z-10 min-w-[3.5rem]">
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-500 font-bold uppercase tracking-widest" style="font-size: 8px;">所持</span>
+              <span class="${ownedCount > 0 ? 'text-cyan-400' : 'text-slate-600'} font-mono font-bold leading-none drop-shadow-sm" style="font-size: 11px;">${ownedCount > 0 ? 'x' + ownedCount : '-'}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-500 font-bold uppercase tracking-widest" style="font-size: 8px;">合成</span>
+              <div class="flex items-baseline gap-0.5 leading-none">
+                 <span class="text-amber-400 font-mono font-bold drop-shadow-sm" style="font-size: 11px;">${item.recipe?.price ? item.recipe.price.toLocaleString() : 0}</span>
+                 <span class="text-amber-500/80 font-bold" style="font-size: 8px;">G</span>
+              </div>
+            </div>
           </div>
         `;
       }

@@ -216,7 +216,7 @@ export const DUNGEONS = [{
         level: 1,
         monsters: [
           { crisp: 5, weight: 60 },
-          { crisp: 3, snow_flare: 2, weight: 30 },
+          { crisp: 3, snow_flog: 2, weight: 30 },
           { luminous_digitalis: 1, weight: 5 },
           { noble_opal: 1, weight: 5 }
         ]
@@ -225,7 +225,7 @@ export const DUNGEONS = [{
         level: 2,
         monsters: [
           { crisp: 4, geode_turtle: 2, weight: 50 },
-          { geode_turtle: 3, snow_flare: 2, weight: 40 },
+          { geode_turtle: 3, snow_flog: 2, weight: 40 },
           { luminous_digitalis: 1, weight: 5 },
           { noble_opal: 1, weight: 5 }
         ]
@@ -243,7 +243,7 @@ export const DUNGEONS = [{
         level: 4,
         monsters: [
           { crystalinos: 3, garnet_wolf: 2, weight: 50 },
-          { garnet_wolf: 4, snow_flare: 2, weight: 40 },
+          { garnet_wolf: 4, snow_flog: 2, weight: 40 },
           { luminous_digitalis: 1, weight: 5 },
           { noble_opal: 1, weight: 5 }
         ]

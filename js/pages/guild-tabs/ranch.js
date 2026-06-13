@@ -323,8 +323,9 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     `).join('');
   };
   
+  let needsUpdate = false;
+
   const renderItems = async () => {
-    itemsContainer.innerHTML = '<h4 class="text-sm font-bold text-slate-300 mb-2 border-b border-slate-800 pb-1 mt-2">好物（ドロップ素材）</h4>';
     const list = document.createElement('div');
     list.className = 'space-y-2';
     
@@ -404,7 +405,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             await GameDB.setGameState('ranch_data', ranchData);
             
             // Refresh underlying field
-            if (onUpdate) await onUpdate();
+            needsUpdate = true;
             
             // Update modal UI smoothly
             updateTopSection();
@@ -440,22 +441,26 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         list.appendChild(itemRow);
       }
     }
-    itemsContainer.innerHTML = '';
+    itemsContainer.innerHTML = '<h4 class="text-sm font-bold text-slate-300 mb-2 border-b border-slate-800 pb-1 mt-2">好物（ドロップ素材）</h4>';
     itemsContainer.appendChild(list);
   };
   
   updateTopSection();
   await renderItems();
   
-  header.querySelector('#btn-close-modal').onclick = () => {
+  const closeModal = () => {
     overlay.classList.replace('animate-fade-in', 'animate-fade-out');
-    setTimeout(() => overlay.remove(), 200);
+    setTimeout(() => {
+      overlay.remove();
+      if (needsUpdate && onUpdate) onUpdate();
+    }, 200);
   };
+
+  header.querySelector('#btn-close-modal').onclick = closeModal;
   
   overlay.onclick = (e) => {
     if (e.target === overlay) {
-      overlay.classList.replace('animate-fade-in', 'animate-fade-out');
-      setTimeout(() => overlay.remove(), 200);
+      closeModal();
     }
   };
 }
