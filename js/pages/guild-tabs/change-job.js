@@ -108,45 +108,7 @@ export function renderChangeJobTab() {
     render();
   };
 
-  const showConfirmModal = (char, jobDef) => {
-    const isUnlocked = char.unlockedJobs && char.unlockedJobs.includes(jobDef.id);
-    const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in';
-    const cost = jobDef.changeCost !== undefined ? jobDef.changeCost : 30000;
 
-    overlay.innerHTML = `
-      <div class="bg-gray-900 border border-gray-700/80 rounded-2xl w-full max-w-[280px] shadow-2xl overflow-hidden animate-fade-in relative">
-        <div class="p-5 text-center">
-          <div class="w-12 h-12 mx-auto bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center mb-3 shadow-inner">
-            <img src="./assets/job/job_${jobDef.id}.webp" class="w-8 h-8 object-contain drop-shadow-md" alt="${jobDef.name}" onerror="this.src='./assets/job/job_norvice.webp'">
-          </div>
-          <h3 class="text-base font-bold text-gray-100 mb-1">${jobDef.name} に転職しますか？</h3>
-          ${!isUnlocked 
-            ? `<p class="text-xs text-amber-400 font-bold mb-5 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">paid</span>${cost.toLocaleString()} G</p>` 
-            : `<p class="text-xs text-emerald-400 font-bold mb-5">費用: 無料 (解放済)</p>`}
-          <div class="flex gap-2 mt-2">
-            <button id="btn-cancel-job" class="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-bold rounded-xl border border-gray-700 transition-colors">しない</button>
-            <button id="btn-confirm-job" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-indigo-900/50">する</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    overlay.querySelector('#btn-cancel-job').addEventListener('click', () => {
-      overlay.style.opacity = '0';
-      setTimeout(() => overlay.remove(), 200);
-    });
-
-    overlay.querySelector('#btn-confirm-job').addEventListener('click', async () => {
-      overlay.querySelector('#btn-confirm-job').disabled = true;
-      overlay.querySelector('#btn-confirm-job').textContent = '転職中...';
-      await changeJob(char, jobDef);
-      overlay.style.opacity = '0';
-      setTimeout(() => overlay.remove(), 200);
-    });
-  };
 
   const showActionModal = (title, message, costHtml, onConfirm, confirmText = '実行する', confirmColor = 'indigo') => {
     const overlay = document.createElement('div');
@@ -344,7 +306,7 @@ export function renderChangeJobTab() {
       listContainer.appendChild(row);
     });
 
-    listContainer.addEventListener('click', (e) => {
+    listContainer.addEventListener('click', async (e) => {
       const btn = e.target.closest('.btn-change-job');
       const row = e.target.closest('.btn-change-job-container');
       let jobId = null;
@@ -354,7 +316,15 @@ export function renderChangeJobTab() {
 
       const jobDef = JOBS[jobId];
       if (!jobDef || char.jobId === jobId) return;
-      showConfirmModal(char, jobDef);
+
+      const targetBtn = btn || row.querySelector('.btn-change-job');
+      if (targetBtn) {
+        targetBtn.disabled = true;
+        const span = targetBtn.querySelector('span.tracking-wider') || targetBtn.querySelector('span.tracking-wide');
+        if (span) span.textContent = '転職中...';
+      }
+
+      await changeJob(char, jobDef);
     });
 
     return listContainer;
