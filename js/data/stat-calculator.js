@@ -116,13 +116,24 @@ export function calcFinalStats(character, equipmentMap) {
   }
 
   // Add inherited skill passive bonuses
-  if (character.inheritedSkill && character.jobSkills) {
-    const { jobId, skillId } = character.inheritedSkill;
-    if (jobId !== character.jobId) {
-      const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
-      if (level > 0) {
-        // Create a single-entry map to reuse applyPassiveBonus
-        applyPassiveBonus({ [skillId]: level }, jobId);
+  if (character.jobSkills) {
+    if (character.inheritedPassiveSkill) {
+      const { jobId, skillId } = character.inheritedPassiveSkill;
+      if (jobId !== character.jobId) {
+        const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
+        if (level > 0) {
+          applyPassiveBonus({ [skillId]: level }, jobId);
+        }
+      }
+    }
+    // Just in case an active skill has passive bonuses
+    if (character.inheritedActiveSkill) {
+      const { jobId, skillId } = character.inheritedActiveSkill;
+      if (jobId !== character.jobId) {
+        const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
+        if (level > 0) {
+          applyPassiveBonus({ [skillId]: level }, jobId);
+        }
       }
     }
   }
@@ -220,6 +231,28 @@ export async function calculateTotalRanchBonus() {
 export async function getCharactersWithRanchBonus() {
   const characters = await GameDB.getAllCharacters();
   const ranchBonus = await calculateTotalRanchBonus();
-  characters.forEach(c => c.ranchBonus = ranchBonus);
+  
+  for (const c of characters) {
+    c.ranchBonus = ranchBonus;
+    
+    // Migrate old inheritedSkill format
+    if (c.inheritedSkill) {
+      const { jobId, skillId } = c.inheritedSkill;
+      const jobDef = JOBS[jobId];
+      if (jobDef) {
+        const skillDef = jobDef.skills.find(s => s.id === skillId);
+        if (skillDef) {
+          if (skillDef.type === 'passive') {
+            c.inheritedPassiveSkill = { jobId, skillId };
+          } else {
+            c.inheritedActiveSkill = { jobId, skillId };
+          }
+        }
+      }
+      delete c.inheritedSkill;
+      await GameDB.putCharacter(c);
+    }
+  }
+  
   return characters;
 }

@@ -18,6 +18,8 @@ export function renderAcquireSkillTab() {
   const gridContainer = document.createElement('div');
 
   let currentTab = 'active';
+  let inheritJobFilter = 'all';
+  
   const tabContainer = document.createElement('div');
   tabContainer.className = 'flex gap-2 px-1 mb-2 shrink-0';
   const renderTabs = () => {
@@ -43,6 +45,7 @@ export function renderAcquireSkillTab() {
     tabContainer.querySelector('#btn-tab-inheritance').onclick = () => {
       if (currentTab !== 'inheritance') {
         currentTab = 'inheritance';
+        inheritJobFilter = 'all'; // Reset filter when entering inheritance tab
         renderTabs();
         render(true);
       }
@@ -50,11 +53,16 @@ export function renderAcquireSkillTab() {
   };
   renderTabs();
 
+  const filterContainer = document.createElement('div');
+  filterContainer.style.display = 'none';
+  filterContainer.className = 'px-1 mb-2 shrink-0';
+
   const listContainer = document.createElement('div');
   listContainer.className = 'flex-1 overflow-y-auto space-y-3 pb-4 pr-1 scroll-smooth';
 
   container.appendChild(gridContainer);
   container.appendChild(tabContainer);
+  container.appendChild(filterContainer);
   container.appendChild(listContainer);
 
   const updateSkillRow = (row, skill, selectedChar, index, isInitial) => {
@@ -233,7 +241,10 @@ export function renderAcquireSkillTab() {
     const { skill, level, jobId } = inheritedData;
     const levelConfig = skill.levels.find(l => l.level === level) || skill.levels[skill.levels.length - 1];
     const jobDef = JOBS[jobId];
-    const isSelected = selectedChar.inheritedSkill && selectedChar.inheritedSkill.skillId === skill.id && selectedChar.inheritedSkill.jobId === jobId;
+    
+    const isSelected = skill.type === 'passive'
+      ? selectedChar.inheritedPassiveSkill && selectedChar.inheritedPassiveSkill.skillId === skill.id && selectedChar.inheritedPassiveSkill.jobId === jobId
+      : selectedChar.inheritedActiveSkill && selectedChar.inheritedActiveSkill.skillId === skill.id && selectedChar.inheritedActiveSkill.jobId === jobId;
 
     let btnClass = isSelected 
         ? 'bg-indigo-600 border border-indigo-400 text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]' 
@@ -263,11 +274,12 @@ export function renderAcquireSkillTab() {
 
     const btn = row.querySelector('.inheritance-btn');
     btn.onclick = async () => {
-      // Allow only 1 inherited skill.
       if (isSelected) {
-        selectedChar.inheritedSkill = null; // deselect
+        if (skill.type === 'passive') selectedChar.inheritedPassiveSkill = null;
+        else selectedChar.inheritedActiveSkill = null;
       } else {
-        selectedChar.inheritedSkill = { jobId, skillId: skill.id }; // select
+        if (skill.type === 'passive') selectedChar.inheritedPassiveSkill = { jobId, skillId: skill.id };
+        else selectedChar.inheritedActiveSkill = { jobId, skillId: skill.id };
       }
       await GameDB.putCharacter(selectedChar);
       render(false);
@@ -289,45 +301,104 @@ export function renderAcquireSkillTab() {
     const selectedChar = characters.find(c => c.id === selectedCharId);
     if (selectedChar) {
       if (currentTab === 'inheritance') {
+        filterContainer.style.display = 'block';
+        
         let inheritedSkillsList = [];
+        let availableJobs = new Set();
         if (selectedChar.jobSkills) {
             for (const [jId, skillsMap] of Object.entries(selectedChar.jobSkills)) {
                 if (jId !== selectedChar.jobId) {
                     const jobDef = JOBS[jId];
                     if (jobDef) {
+                        let hasSkills = false;
                         for (const [sId, level] of Object.entries(skillsMap)) {
                             if (level > 0) {
                                 const skillDef = jobDef.skills.find(s => s.id === sId);
                                 if (skillDef) {
                                     inheritedSkillsList.push({ skill: skillDef, level, jobId: jId });
+                                    hasSkills = true;
                                 }
                             }
                         }
+                        if (hasSkills) availableJobs.add(jId);
                     }
                 }
             }
         }
         
+        if (isInitial || !filterContainer.querySelector('button')) {
+          filterContainer.innerHTML = `
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === 'all' ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="all">すべて</button>
+              ${Array.from(availableJobs).map(jId => {
+                const jobDef = JOBS[jId];
+                return `<button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === jId ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="${jId}">${jobDef.name}</button>`;
+              }).join('')}
+            </div>
+          `;
+          filterContainer.querySelectorAll('button').forEach(btn => {
+            btn.onclick = () => {
+              inheritJobFilter = btn.getAttribute('data-job-id');
+              render(true);
+            };
+          });
+        }
+        
+        if (inheritJobFilter !== 'all') {
+          inheritedSkillsList = inheritedSkillsList.filter(d => d.jobId === inheritJobFilter);
+        }
+
         if (inheritedSkillsList.length === 0) {
             listContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-32 opacity-60"><span class="material-symbols-outlined text-4xl text-gray-500 mb-2">auto_awesome</span><span class="text-sm font-bold text-gray-400 tracking-wider">継承可能なスキルがありません</span></div>';
         } else {
-            if (isInitial || listContainer.children.length !== inheritedSkillsList.length) {
+            const activeSkills = inheritedSkillsList.filter(d => d.skill.type !== 'passive');
+            const passiveSkills = inheritedSkillsList.filter(d => d.skill.type === 'passive');
+
+            if (isInitial || !listContainer.querySelector('.group')) {
                 listContainer.innerHTML = '';
-                inheritedSkillsList.forEach((data, index) => {
-                    const row = document.createElement('div');
-                    row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
-                    row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 shadow-md overflow-hidden';
-                    updateInheritedSkillRow(row, data, selectedChar, index);
-                    listContainer.appendChild(row);
-                });
+                
+                if (activeSkills.length > 0) {
+                  const header = document.createElement('div');
+                  header.className = 'text-[11px] font-black text-cyan-300 border-b border-cyan-500/30 pb-1 mb-1 flex items-center gap-1 opacity-90 tracking-widest';
+                  header.innerHTML = '<span class="material-symbols-outlined !text-[14px]">swords</span>アクティブスキル';
+                  listContainer.appendChild(header);
+                  
+                  activeSkills.forEach((data, index) => {
+                      const row = document.createElement('div');
+                      row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
+                      row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 shadow-md overflow-hidden';
+                      updateInheritedSkillRow(row, data, selectedChar, index);
+                      listContainer.appendChild(row);
+                  });
+                }
+                
+                if (passiveSkills.length > 0) {
+                  const header = document.createElement('div');
+                  header.className = 'text-[11px] font-black text-emerald-300 border-b border-emerald-500/30 pb-1 mb-1 mt-3 flex items-center gap-1 opacity-90 tracking-widest';
+                  header.innerHTML = '<span class="material-symbols-outlined !text-[14px]">psychology</span>パッシブスキル';
+                  listContainer.appendChild(header);
+                  
+                  passiveSkills.forEach((data, index) => {
+                      const row = document.createElement('div');
+                      row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
+                      row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 shadow-md overflow-hidden';
+                      updateInheritedSkillRow(row, data, selectedChar, index);
+                      listContainer.appendChild(row);
+                  });
+                }
             } else {
-                inheritedSkillsList.forEach((data, index) => {
-                    const row = listContainer.children[index];
-                    updateInheritedSkillRow(row, data, selectedChar, index);
+                let rowIndex = 0;
+                const rows = listContainer.querySelectorAll('.group');
+                activeSkills.forEach((data, index) => {
+                    if (rows[rowIndex]) updateInheritedSkillRow(rows[rowIndex++], data, selectedChar, index);
+                });
+                passiveSkills.forEach((data, index) => {
+                    if (rows[rowIndex]) updateInheritedSkillRow(rows[rowIndex++], data, selectedChar, index);
                 });
             }
         }
       } else {
+        filterContainer.style.display = 'none';
         const job = JOBS[selectedChar.jobId || 'norvice'];
         let skills = job ? job.skills : [];
         

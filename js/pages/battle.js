@@ -541,11 +541,12 @@ class BattleManager {
         }
       }
       
-      // Inherited skill
-      if (character.inheritedSkill && character.jobSkills) {
-        const { jobId, skillId } = character.inheritedSkill;
-        if (jobId !== character.jobId) {
-          const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
+      // Inherited skills
+      const processInherited = (inheritedData) => {
+        if (!inheritedData) return;
+        const { jobId, skillId } = inheritedData;
+        if (jobId !== character.jobId && character.jobSkills[jobId]) {
+          const level = character.jobSkills[jobId][skillId];
           if (level > 0) {
             const jobDef = JOBS[jobId];
             if (jobDef) {
@@ -555,6 +556,11 @@ class BattleManager {
             }
           }
         }
+      };
+
+      if (character.jobSkills) {
+        processInherited(character.inheritedActiveSkill);
+        processInherited(character.inheritedPassiveSkill);
       }
     }
     const cached = character._skillCache.get(skillId);

@@ -381,8 +381,8 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
   }
 
   // Add inherited active skill
-  if (p.inheritedSkill && p.jobSkills) {
-    const { jobId, skillId } = p.inheritedSkill;
+  if (p.inheritedActiveSkill && p.jobSkills) {
+    const { jobId, skillId } = p.inheritedActiveSkill;
     if (jobId !== p.jobId) {
       const level = p.jobSkills[jobId] && p.jobSkills[jobId][skillId];
       if (level > 0) {

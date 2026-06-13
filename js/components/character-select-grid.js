@@ -25,21 +25,27 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
       slot.onclick = () => onSelect(char.id);
 
       let inheritedSkillHtml = '';
-      if (char.inheritedSkill) {
-        const { jobId, skillId } = char.inheritedSkill;
+      
+      const renderSkill = (inheritedSkillData, typeLabel, colorClass) => {
+        if (!inheritedSkillData) return '';
+        const { jobId, skillId } = inheritedSkillData;
         const jobDef = JOBS[jobId];
         if (jobDef) {
           const skillDef = jobDef.skills.find(s => s.id === skillId);
           if (skillDef) {
-            inheritedSkillHtml = `
-              <div class="flex items-center gap-1 mt-1">
-                <span class="text-[8px] font-bold text-purple-300 bg-purple-900/40 px-1 py-px rounded border border-purple-500/30 shrink-0">継承</span>
+            return `
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="text-[8px] font-bold ${colorClass} px-1 py-px rounded border shrink-0">${typeLabel}:</span>
                 <span class="text-[10px] text-gray-300 truncate" title="${skillDef.name}">${skillDef.name}</span>
               </div>
             `;
           }
         }
-      }
+        return '';
+      };
+
+      inheritedSkillHtml += renderSkill(char.inheritedActiveSkill, '継承アクティブスキル', 'text-cyan-300 bg-cyan-900/40 border-cyan-500/30');
+      inheritedSkillHtml += renderSkill(char.inheritedPassiveSkill, '継承パッシブスキル', 'text-emerald-300 bg-emerald-900/40 border-emerald-500/30');
 
       slot.innerHTML = `
         ${isSelected ? '<div class="absolute inset-0 bg-cyan-400/5 rounded-xl animate-pulse pointer-events-none"></div>' : ''}
