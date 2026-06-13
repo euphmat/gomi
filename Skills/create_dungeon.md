@@ -1,5 +1,5 @@
-# Implementing Monsters and Drop Items
-Please implement the monsters listed below, along with the items they drop when defeated.
+# モンスターとドロップアイテムの実装
+以下のモンスターと、倒した際にドロップするアイテムを実装してください。
 
 ## List of Monster IDs
 ### 雑魚敵（10体）
@@ -23,12 +23,12 @@ Please implement the monsters listed below, along with the items they drop when 
 - `boss_arachne` : アラクネ・クイーン
 - `boss_deathweaver` : デスウィーバー
 
-## Step 0. Creating Dungeons and Managing Flags
-- Dungeon theme to be implemented: Spider Cave
-- To unlock the dungeon to be implemented, retrieve the latest dungeon name and implement the logic so that it is unlocked upon clearing that dungeon.
+## ステップ 0. ダンジョンの作成とフラグの管理
+- 実装するダンジョンのテーマ：スパイダー・ケイブ
+- 実装するダンジョンのロックを解除するには、最新のダンジョン名を取得し、そのダンジョンをクリアした際にロックが解除されるようロジックを実装してください。
 
-## Step 1. Implementing Monster Stats
-Please implement the monsters in js/definitions/monsters.js using the following template.
+## ステップ 1. モンスターのステータス実装
+以下のテンプレートを使用して、js/definitions/monsters.js 内にモンスターを実装してください。
 
 ```js:template example
 {
@@ -41,18 +41,18 @@ Please implement the monsters in js/definitions/monsters.js using the following 
   rewards:  { exp: 0, jp: 0,  gold: 0 },
   // Must set 3 items. Implement low-probability to ultra-low-probability drop items. (3 materials)
   drops: [
-    { itemId: 'slime_jelly', rate: 5 },
-    { itemId: 'slime_core', rate: 1 },
-    { itemId: 'slime_fluid', rate: 0.1 },
+    { itemId: 'item_name', rate: 5 },
+    { itemId: 'rare_item_name', rate: 1 },
+    { itemId: 'super_rare_item_name', rate: 0.1 },
   ],
   // Set the skills the monster is likely to use.
   actions: [ { name: 'Body Slam', chance: 10, execute: (attacker, defender, battle) => { battle.executeAttack(attacker, defender, false, { actionName: 'Body Slam', damageMultiplier: 2 }); } } ]
     }
 ```
 
-## 2. Implementing Drop Items
-Important: Do not prepare item images during this phase.
-Referring to the IDs set above, implement the items and their stats in each of the following files:
+## 2. ドロップアイテムの実装
+重要：この段階では、アイテムの画像を準備しないでください。
+上記で設定したIDを参照し、以下の各ファイルにアイテムとそのステータスを実装してください：
 - js/definitions/accessories.js
 - js/definitions/armors.js
 - js/definitions/materials.js
