@@ -13,18 +13,18 @@ Please generate the images listed below in a **4x4 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate (JRPG EQUIP ICON)
- - crisp_ring
- - geode_amulet
- - snow_frog_amulet
- - crystalinos_charm
- - garnet_ring
- - amber_bracelet
- - beryl_ring
- - jewel_ring
- - fluorite_charm
- - pyrite_ring
- - luminous_ring
- - opal_pendant
- - diamond_ring
- - regalia_ring
- - genesis_ring
+- crisp_armor
+- geode_armor
+- snow_frog_robe
+- crystalinos_mail
+- garnet_mail
+- amber_plate
+- beryl_plate
+- fluorite_cloak
+- pyrite_armor
+- jewel_armor
+- luminous_robe
+- opal_robe
+- diamond_armor
+- regalia_armor
+- genesis_mantle
