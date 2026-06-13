@@ -399,6 +399,26 @@ class BattleManager {
           statIcons.def.classList.add('text-slate-400');
           statLabels.def.classList.remove('text-green-400');
         }
+
+        if (p._mdefBuffTurns > 0) {
+          statVals.mdf.textContent = p.stats.mdef + p._mdefBuffAmount;
+          statVals.mdf.classList.remove('text-gray-100');
+          statVals.mdf.classList.add('text-indigo-300');
+          statRows.mdf.classList.remove('bg-gray-900/40');
+          statRows.mdf.classList.add('bg-indigo-900/40', 'border', 'border-indigo-500/50');
+          statIcons.mdf.classList.remove('text-indigo-400');
+          statIcons.mdf.classList.add('text-indigo-300');
+          statLabels.mdf.classList.add('text-indigo-300');
+        } else {
+          statVals.mdf.textContent = p.stats.mdef;
+          statVals.mdf.classList.remove('text-indigo-300');
+          statVals.mdf.classList.add('text-gray-100');
+          statRows.mdf.classList.remove('bg-indigo-900/40', 'border', 'border-indigo-500/50');
+          statRows.mdf.classList.add('bg-gray-900/40');
+          statIcons.mdf.classList.remove('text-indigo-300');
+          statIcons.mdf.classList.add('text-indigo-400');
+          statLabels.mdf.classList.remove('text-indigo-300');
+        }
       }
     });
 
@@ -473,10 +493,12 @@ class BattleManager {
             spd: el.querySelector('.stat-val-spd')
           },
           statIcons: {
-            def: el.querySelector('.stat-icon-def')
+            def: el.querySelector('.stat-icon-def'),
+            mdf: el.querySelector('.stat-icon-mdf')
           },
           statLabels: {
-            def: el.querySelector('.stat-label-def')
+            def: el.querySelector('.stat-label-def'),
+            mdf: el.querySelector('.stat-label-mdf')
           }
         };
       }
@@ -833,6 +855,16 @@ class BattleManager {
         this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
       }, 300 / this.speedMult);
     }
+    
+    // --- Passive: Regen (HP) ---
+    const hpRegenSkill = this._findSkill(caster, 'regen');
+    if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
+      const amount = hpRegenSkill.levelConfig.recoverHp;
+      caster.hp.current = Math.min(caster.hp.max, caster.hp.current + amount);
+      setTimeout(() => {
+        this.showDamage(caster.elementId, `+${amount}`, 'text-green-400');
+      }, 300 / this.speedMult);
+    }
 
     caster.atb = 0;
     this.activeCharacter = null;
@@ -1023,6 +1055,22 @@ class BattleManager {
   executeAttack(attacker, defender, isParty, options = {}) {
     const actionName = options.actionName || '攻撃';
     this._abilityTriggered = false;
+
+    // --- Passive: Divine Protection (神の加護) ---
+    if (isParty && options.isMagic && !options.skipAtbReset && !options.isAoEProcessed) {
+      const divineSkill = this._findSkill(attacker, 'divine_protection');
+      if (divineSkill && divineSkill.level > 0 && Math.random() * 100 < divineSkill.levelConfig.chance) {
+        options.isAoEProcessed = true;
+        this.showActionName(attacker.elementId, '神の加護', 'text-yellow-400', 'border-yellow-500/50');
+        
+        const aliveEnemies = this.enemies.filter(e => !e.isDead);
+        aliveEnemies.forEach(e => {
+            if (e !== defender) {
+                this.executeAttack(attacker, e, isParty, { ...options, skipAtbReset: true, hideActionName: true });
+            }
+        });
+      }
+    }
 
     // --- 暗闇 (Blind) の判定 ---
     const isMagic = options.isMagic || false;
@@ -1232,42 +1280,53 @@ class BattleManager {
       }, 500 / this.speedMult);
     }
 
-    attacker.atb = 0;
-    if (attacker.hp !== undefined) {
-      this.activeCharacter = null;
-      
-      // --- Passive: Magic Missile ---
-      if (!options.damageType && !isMagic && !defender.isDead) {
-        const missileSkill = this._findSkill(attacker, 'magic_missile');
-        if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
-          setTimeout(() => {
-            if (!defender.isDead && !attacker.isDead) {
-              this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
-              this.executeAttack(attacker, defender, true, { 
-                actionName: 'マジックミサイル', 
-                damageMultiplier: missileSkill.levelConfig.multiplier, 
-                damageType: 'skill', 
-                isMagic: true, 
-                hideActionName: true 
-              });
-            }
-          }, 300 / this.speedMult);
+    if (!options.skipAtbReset) {
+      attacker.atb = 0;
+      if (attacker.hp !== undefined) {
+        this.activeCharacter = null;
+        
+        // --- Passive: Magic Missile ---
+        if (!options.damageType && !isMagic && !defender.isDead) {
+          const missileSkill = this._findSkill(attacker, 'magic_missile');
+          if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
+            setTimeout(() => {
+              if (!defender.isDead && !attacker.isDead) {
+                this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
+                this.executeAttack(attacker, defender, true, { 
+                  actionName: 'マジックミサイル', 
+                  damageMultiplier: missileSkill.levelConfig.multiplier, 
+                  damageType: 'skill', 
+                  isMagic: true, 
+                  hideActionName: true 
+                });
+              }
+            }, 300 / this.speedMult);
+          }
         }
-      }
-      
-      // --- Passive: Mana Regen ---
-      if (!options.damageType && !options.hideActionName) {
-        const regenSkill = this._findSkill(attacker, 'mana_regen');
-        if (regenSkill && regenSkill.level > 0 && regenSkill.levelConfig) {
-          const amount = regenSkill.levelConfig.recoverMp;
-          attacker.mp.current = Math.min(attacker.mp.max, attacker.mp.current + amount);
-          setTimeout(() => {
-            this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
-          }, 600 / this.speedMult);
+        
+        // --- Passive: Mana Regen & HP Regen ---
+        if (!options.damageType && !options.hideActionName) {
+          const manaRegenSkill = this._findSkill(attacker, 'mana_regen');
+          if (manaRegenSkill && manaRegenSkill.level > 0 && manaRegenSkill.levelConfig) {
+            const amount = manaRegenSkill.levelConfig.recoverMp;
+            attacker.mp.current = Math.min(attacker.mp.max, attacker.mp.current + amount);
+            setTimeout(() => {
+              this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
+            }, 600 / this.speedMult);
+          }
+          
+          const hpRegenSkill = this._findSkill(attacker, 'regen');
+          if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
+            const amount = hpRegenSkill.levelConfig.recoverHp;
+            attacker.hp.current = Math.min(attacker.hp.max, attacker.hp.current + amount);
+            setTimeout(() => {
+              this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
+            }, 600 / this.speedMult);
+          }
         }
+      } else {
+        this.activeEnemy = null;
       }
-    } else {
-      this.activeEnemy = null;
     }
 
     // --- 呪い (Curse) の反動ダメージ ---
