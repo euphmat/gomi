@@ -50,19 +50,23 @@ Please generate the images listed below in a **5x5 grid** format.
 - mat_fluorite_illusion
 - mat_pyrite_scale
 - mat_pyrite_fang
+
 - mat_pyrite_fool_gold
 - mat_luminous_leaf
 - mat_luminous_sap
 - mat_luminous_flower
 - mat_opal_dust
+
 - mat_opal_fragment
 - mat_opal_chaos
 - mat_diamond_scale
 - mat_diamond_claw
 - mat_diamond_laser_core
+
 - mat_regalia_shard
 - mat_regalia_crown
 - mat_regalia_sword
 - mat_genesis_fragment
 - mat_genesis_core
+
 - mat_genesis_light
