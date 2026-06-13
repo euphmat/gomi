@@ -2067,6 +2067,16 @@ class BattleManager {
       }
       
       if (this.isDungeonClear && this.autoBattleMode !== 'floor') {
+        if (this.autoBattleMode === 'dungeon') {
+          setTimeout(async () => {
+            await GameDB.setGameState('currentFloor', 1);
+            this.isDungeonClear = false;
+            this.resetBattleState();
+            this.init();
+          }, 1500 / this.speedMult);
+          return;
+        }
+
         this.elements.resultOverlay.innerHTML = `
           <div class="flex flex-col items-center w-full max-w-[340px] px-4 py-6 overflow-y-auto max-h-full scrollbar-none text-center">
             <h2 class="text-4xl font-black tracking-widest text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] animate-bounce mb-6">VICTORY</h2>

@@ -267,31 +267,42 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   let currentLevel = initialInfo.level;
   
   topSection.innerHTML = `
-      <div class="relative w-24 h-24 mb-2">
-        <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(236,72,153,0.4)] animate-bounce">
-      </div>
-      <div class="text-center mb-2">
-        <span id="feed-modal-level" class="inline-block text-xs text-slate-400 font-bold bg-slate-800 px-3 py-1 rounded-full transition-all duration-300 shadow-sm border border-slate-700">Lv.${currentLevel}</span>
+      <div class="flex items-stretch gap-2 mb-3">
+        <!-- Left Column: Image & Level -->
+        <div id="feed-modal-img-box" class="w-24 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative overflow-hidden shadow-inner">
+          <div class="absolute inset-0 bg-pink-500/10 blur-xl rounded-full"></div>
+          <div class="relative w-16 h-16 mb-2 z-10">
+            <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] animate-bounce" style="animation-duration: 3s;">
+          </div>
+          <span id="feed-modal-level" class="relative z-10 inline-block text-[11px] text-pink-300 font-black bg-slate-950 px-3 py-1 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.3)] border border-pink-500/30">Lv.${currentLevel}</span>
+        </div>
+        
+        <!-- Right Column: Stats Panels Side by Side -->
+        <div class="flex-1 flex gap-1.5 min-w-0">
+          <!-- Left Panel: Monster Stats -->
+          <div class="flex-1 bg-slate-900/60 rounded-xl p-1.5 border border-slate-700/50 flex flex-col shadow-inner">
+            <div class="text-[9px] text-slate-400 font-bold text-center mb-1 border-b border-slate-700/50 pb-0.5 tracking-wider">ステータス</div>
+            <div id="feed-modal-monster-stats" class="flex flex-col gap-y-[3px] flex-1"></div>
+          </div>
+          <!-- Right Panel: Bonus Stats -->
+          <div class="flex-1 bg-slate-900/60 rounded-xl p-1.5 border border-pink-900/30 flex flex-col shadow-inner relative overflow-hidden">
+            <div class="absolute inset-0 bg-pink-500/5 pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col h-full">
+              <div class="text-[9px] text-pink-400 font-bold text-center mb-1 border-b border-pink-900/50 pb-0.5 tracking-wider">ボーナス</div>
+              <div id="feed-modal-bonus-stats" class="flex flex-col gap-y-[3px] flex-1"></div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <!-- Current Stats Box -->
-      <div class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-2 mb-3 shadow-inner flex flex-col gap-2">
-        <div>
-          <div class="text-[9px] text-slate-400 font-bold text-center mb-1">モンスターのステータス</div>
-          <div id="feed-modal-monster-stats" class="flex flex-wrap justify-center gap-1"></div>
-        </div>
-        <div class="border-t border-slate-700/50 pt-1">
-          <div class="text-[9px] text-pink-400 font-bold text-center mb-1">パーティ恩恵ボーナス (10%)</div>
-          <div id="feed-modal-bonus-stats" class="flex flex-wrap justify-center gap-1"></div>
+      <div class="w-full bg-slate-900 rounded-full h-2.5 mb-1 overflow-hidden relative shadow-inner border border-slate-800">
+        <div id="feed-modal-bar" class="bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 h-full rounded-full transition-all duration-500 ease-out relative" style="width: 0%">
+           <div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
         </div>
       </div>
-      
-      <div class="w-full mt-1 bg-slate-800 rounded-full h-2.5 mb-1 overflow-hidden relative shadow-inner">
-        <div id="feed-modal-bar" class="bg-gradient-to-r from-pink-500 to-rose-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
-      </div>
-      <div class="w-full flex justify-between text-[10px] text-slate-400 font-bold">
+      <div class="w-full flex justify-between text-[10px] text-slate-400 font-bold px-1">
         <span>成長まで</span>
-        <span id="feed-modal-progress">0 / 10</span>
+        <span id="feed-modal-progress" class="text-slate-300 font-black">0 / 10</span>
       </div>
   `;
   
@@ -326,16 +337,16 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
     
     elMonsterStats.innerHTML = Object.keys(mStats).map(k => `
-      <div class="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 px-1.5 py-0.5 rounded text-[9px] shadow-sm">
+      <div id="stat-${k}" class="flex items-center justify-between bg-slate-800/40 px-1 py-0.5 rounded text-[9px] relative transition-all duration-300">
         <span class="${colors[k]} font-bold">${labels[k]}</span>
-        <span class="text-slate-200 font-black">${mStats[k]}</span>
+        <span class="stat-value text-slate-200 font-black">${mStats[k]}</span>
       </div>
     `).join('');
 
     elBonusStats.innerHTML = Object.keys(bStats).map(k => `
-      <div class="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 px-1.5 py-0.5 rounded text-[9px] shadow-sm">
+      <div class="flex items-center justify-between bg-slate-800/40 px-1 py-0.5 rounded text-[9px]">
         <span class="${colors[k]} font-bold">${labels[k]}</span>
-        <span class="text-slate-200 font-black">+${bStats[k]}</span>
+        <span class="text-pink-300 font-black">+${bStats[k]}</span>
       </div>
     `).join('');
   };
@@ -357,30 +368,41 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         const quantity = invItem ? invItem.quantity : 0;
         
         const itemRow = document.createElement('div');
-        itemRow.className = 'bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between';
+        itemRow.className = 'bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/60 hover:border-slate-600/50 rounded-xl p-3 transition-colors';
         
         const maxFeed = quantity;
         
         itemRow.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative shadow-inner">
-              <img src="${mat.image}" class="w-full h-full object-contain">
+          <div class="flex flex-col gap-2.5 w-full">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="w-10 h-10 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative shadow-inner shrink-0">
+                  <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-black text-slate-100 mb-0.5 truncate">${mat.name}</div>
+                  <div class="text-[10px] font-bold text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400' : 'text-slate-500'}">${quantity}</span> 個</div>
+                </div>
+              </div>
+              <button class="shrink-0 px-4 py-2 h-10 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[11px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_15px_rgba(219,39,119,0.2)] flex items-center justify-center gap-1" ${maxFeed === 0 ? 'disabled' : ''}>
+                <span class="material-symbols-outlined text-[14px]">favorite</span> 与える
+              </button>
             </div>
-            <div>
-              <div class="text-sm font-bold text-white">${mat.name}</div>
-              <div class="text-[10px] text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400 font-bold' : 'text-slate-500'}">${quantity}</span> 個</div>
+            
+            <div class="flex items-center gap-1 bg-slate-900/60 rounded-lg border border-slate-700 p-0.5 shadow-inner w-full justify-between">
+              <button class="flex-1 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 transition-all btn-min" ${maxFeed === 0 ? 'disabled' : ''}>MIN</button>
+              <button class="flex-1 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 transition-all btn-minus-100" ${maxFeed === 0 ? 'disabled' : ''}>-100</button>
+              <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-14 shrink-0 h-8 bg-transparent text-center text-sm font-black text-white outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+              <button class="flex-1 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 transition-all btn-plus-100" ${maxFeed === 0 ? 'disabled' : ''}>+100</button>
+              <button class="flex-1 h-8 flex items-center justify-center bg-pink-900/30 hover:bg-pink-800/50 text-pink-400 border border-pink-700/50 active:scale-95 rounded text-[10px] font-black transition-all btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
             </div>
-          </div>
-          <div class="flex flex-col items-end gap-1">
-            <div class="flex items-center gap-1 bg-slate-900 rounded-lg border border-slate-700 p-0.5">
-              <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-14 bg-transparent text-center text-sm font-bold text-white outline-none quantity-input">
-              <button class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold text-white transition-colors btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
-            </div>
-            <button class="px-4 py-1.5 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:bg-slate-700 rounded-lg text-xs font-bold text-white transition-all active:scale-95 btn-feed shadow-md" ${maxFeed === 0 ? 'disabled' : ''}>与える</button>
           </div>
         `;
         
         const input = itemRow.querySelector('.quantity-input');
+        const btnMin = itemRow.querySelector('.btn-min');
+        const btnMinus100 = itemRow.querySelector('.btn-minus-100');
+        const btnPlus100 = itemRow.querySelector('.btn-plus-100');
         const btnMax = itemRow.querySelector('.btn-max');
         const btnFeed = itemRow.querySelector('.btn-feed');
         
@@ -392,9 +414,10 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             input.value = val;
           };
           
-          btnMax.onclick = () => {
-            input.value = maxFeed;
-          };
+          btnMin.onclick = () => { input.value = 1; input.onchange(); };
+          btnMinus100.onclick = () => { input.value = Math.max(1, (parseInt(input.value) || 0) - 100); input.onchange(); };
+          btnPlus100.onclick = () => { input.value = Math.min(maxFeed, (parseInt(input.value) || 0) + 100); input.onchange(); };
+          btnMax.onclick = () => { input.value = maxFeed; input.onchange(); };
           
           btnFeed.onclick = async () => {
             const amount = parseInt(input.value) || 0;
@@ -428,37 +451,71 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             updateTopSection();
             await renderItems();
             
-            // Check level up & show notification
+            // Check level up & show animation
             const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials);
             if (newLevelInfo.level > oldLevel) {
                const newMStats = getMonsterStats(newLevelInfo.level);
-               let diffTexts = [];
-               const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
+               
+               // Image pop animation
+               const imgEl = topSection.querySelector('img');
+               if (imgEl) {
+                 imgEl.classList.add('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
+                 imgEl.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                 setTimeout(() => {
+                   imgEl.classList.remove('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
+                 }, 400);
+               }
+
+               // LEVEL UP floating text
+               const imgBox = topSection.querySelector('#feed-modal-img-box');
+               if (imgBox) {
+                 const floater = document.createElement('div');
+                 floater.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-pink-300 font-black text-2xl whitespace-nowrap animate-fade-in-up drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-900/50 px-3 py-1 rounded-full border border-pink-500/50 backdrop-blur-sm';
+                 floater.innerHTML = `LEVEL UP!`;
+                 imgBox.appendChild(floater);
+                 setTimeout(() => floater.remove(), 1500);
+               }
+               
+               // Stat floating texts and highlight
                for (const key of Object.keys(newMStats)) {
-                 if (newMStats[key] > (oldMStats[key] || 0)) {
-                    diffTexts.push(`${labels[key]} +${newMStats[key] - (oldMStats[key] || 0)}`);
+                 const diff = newMStats[key] - (oldMStats[key] || 0);
+                 if (diff > 0) {
+                    const statEl = elMonsterStats.querySelector(`#stat-${key}`);
+                    if (statEl) {
+                       statEl.classList.add('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
+                       
+                       const valEl = statEl.querySelector('.stat-value');
+                       if (valEl) valEl.classList.add('text-pink-300');
+
+                       const statFloater = document.createElement('div');
+                       statFloater.className = 'absolute -top-6 left-1/2 -translate-x-1/2 text-pink-400 font-black text-xs whitespace-nowrap animate-fade-in-up drop-shadow-[0_1px_2px_rgba(0,0,0,1)] z-50 pointer-events-none';
+                       statFloater.innerHTML = `+${diff}`;
+                       statEl.appendChild(statFloater);
+                       
+                       setTimeout(() => {
+                           statEl.classList.remove('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
+                           if (valEl) valEl.classList.remove('text-pink-300');
+                       }, 1000);
+                       setTimeout(() => statFloater.remove(), 1200);
+                    }
                  }
                }
-               const diffStr = diffTexts.length > 0 ? `<br><span class="text-[11px] font-bold text-yellow-300 bg-yellow-900/50 px-1 py-0.5 rounded border border-yellow-700/50">ステータス成長: ${diffTexts.join(', ')}</span>` : '';
                
-               // Optional: Show floating stat text directly above monster
-               const floater = document.createElement('div');
-               floater.className = 'absolute -top-4 left-1/2 -translate-x-1/2 text-yellow-300 font-black text-sm whitespace-nowrap animate-fade-in-up drop-shadow-md z-50 pointer-events-none';
-               floater.innerHTML = `Level Up!`;
-               topSection.querySelector('.relative.w-24').appendChild(floater);
-               setTimeout(() => floater.remove(), 1500);
-
-               showNotification(document.body, `${monsterDef.name} がレベルアップ！${diffStr}`, 'success');
-               
-               elLevel.classList.add('scale-125', 'text-white', 'bg-pink-600', 'border-pink-400');
-               setTimeout(() => elLevel.classList.remove('scale-125', 'text-white', 'bg-pink-600', 'border-pink-400'), 400);
+               // Level badge animation
+               elLevel.classList.add('scale-125', 'text-white', 'bg-pink-600', 'border-pink-300');
+               setTimeout(() => elLevel.classList.remove('scale-125', 'text-white', 'bg-pink-600', 'border-pink-300'), 500);
             }
           };
         }
         list.appendChild(itemRow);
       }
     }
-    itemsContainer.innerHTML = '<h4 class="text-sm font-bold text-slate-300 mb-2 border-b border-slate-800 pb-1 mt-2">好物（ドロップ素材）</h4>';
+    itemsContainer.innerHTML = `
+      <div class="flex items-center gap-2 mb-3 mt-2 px-1">
+        <span class="material-symbols-outlined text-pink-400 text-[18px]">restaurant</span>
+        <h4 class="text-sm font-black text-slate-200">好物（ドロップ素材）</h4>
+      </div>
+    `;
     itemsContainer.appendChild(list);
   };
   
