@@ -769,6 +769,68 @@ class BattleManager {
   renderItemTab() {
     const html = renderItemTabHtml(this.obtainedItems);
     this.elements.tabContent.innerHTML = html;
+
+    this.elements.tabContent.querySelectorAll('.item-card').forEach(card => {
+      card.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const itemId = card.dataset.itemId;
+        const itemIndex = this.obtainedItems.findIndex(i => i.id === itemId);
+        if (itemIndex > -1) {
+          const item = this.obtainedItems[itemIndex];
+          const mat = MATERIALS_MAP.get(item.id);
+          if (mat) {
+             const sellPrice = mat.sellPrice || 0;
+             const totalGold = sellPrice * item.quantity;
+             
+             let toSell = item.quantity;
+
+             // Remove from pending drops
+             if (this._pendingItemDrops && this._pendingItemDrops[itemId]) {
+                 const pending = this._pendingItemDrops[itemId];
+                 if (toSell <= pending) {
+                     this._pendingItemDrops[itemId] -= toSell;
+                     toSell = 0;
+                 } else {
+                     toSell -= pending;
+                     this._pendingItemDrops[itemId] = 0;
+                 }
+             }
+
+             // If any remaining amount was already saved to DB, subtract it
+             if (toSell > 0) {
+                 const invKey = `inventory_material_${itemId}`;
+                 const currentCount = await GameDB.getGameState(invKey) || 0;
+                 await GameDB.setGameState(invKey, Math.max(0, currentCount - toSell));
+             }
+
+             // Add gold
+             if (totalGold > 0) {
+               const currentGold = await GameDB.getGameState('gold') || 0;
+               await GameDB.setGameState('gold', currentGold + totalGold);
+               const goldDisplay = document.getElementById('header-gold-display');
+               if (goldDisplay) goldDisplay.textContent = ` Gold : ${(currentGold + totalGold).toLocaleString()} `;
+               
+               // Show visual feedback (gold gain) near the click
+               const popup = document.createElement('div');
+               popup.className = `fixed z-[9999] pointer-events-none animate-float-popup text-yellow-400 font-black text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]`;
+               popup.style.left = `${e.clientX}px`;
+               popup.style.top = `${e.clientY}px`;
+               popup.style.transform = `translate(-50%, -50%)`;
+               popup.textContent = `+${totalGold} G`;
+               document.body.appendChild(popup);
+               setTimeout(() => popup.remove(), 1200);
+             }
+
+             // Remove from obtainedItems map and array
+             this.obtainedItems.splice(itemIndex, 1);
+             this.obtainedItemsMap.delete(itemId);
+
+             // Re-render
+             this.renderItemTab();
+          }
+        }
+      });
+    });
   }
 
   renderSkillTab() {
