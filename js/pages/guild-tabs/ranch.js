@@ -147,25 +147,42 @@ export async function renderRanchTab() {
     
     // Status Bonus Summary
     const summaryContainer = document.createElement('div');
-    summaryContainer.className = 'p-4 shrink-0';
-    summaryContainer.innerHTML = `<h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">monitoring</span>現在のボーナス合計</h3>`;
+    summaryContainer.className = 'p-3 shrink-0 bg-slate-900/80 backdrop-blur-sm border-t border-slate-800 w-full';
     
+    const titleBox = document.createElement('div');
+    titleBox.className = 'flex items-center gap-1 text-pink-400 mb-2.5';
+    titleBox.innerHTML = `
+      <span class="material-symbols-outlined text-[16px]">monitoring</span>
+      <span class="text-xs font-black text-slate-200">現在のボーナス合計</span>
+    `;
+    summaryContainer.appendChild(titleBox);
+
     const statsGrid = document.createElement('div');
-    statsGrid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
+    statsGrid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2';
     
     // Calculate total bonus
     const totalBonus = await calculateTotalRanchBonus();
     
-    const labels = { hp: 'HP', mp: 'MP', atk: '物理攻撃', def: '物理防御', matk: '魔法攻撃', mdef: '魔法防御', spd: '素早さ' };
-    const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
+    const statConfig = {
+      hp:   { label: 'HP',  icon: 'favorite',      color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20' },
+      mp:   { label: 'MP',  icon: 'water_drop',    color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20' },
+      atk:  { label: 'ATK', icon: 'swords',        color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/20' },
+      def:  { label: 'DEF', icon: 'shield',        color: 'text-green-400',   bg: 'bg-green-500/10',   border: 'border-green-500/20' },
+      matk: { label: 'MAT', icon: 'auto_fix_high', color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/20' },
+      mdef: { label: 'MDF', icon: 'gpp_good',      color: 'text-indigo-400',  bg: 'bg-indigo-500/10',  border: 'border-indigo-500/20' },
+      spd:  { label: 'SPD', icon: 'speed',         color: 'text-yellow-400',  bg: 'bg-yellow-500/10',  border: 'border-yellow-500/20' }
+    };
     
     Object.keys(totalBonus).forEach(key => {
       const val = totalBonus[key];
+      const cfg = statConfig[key];
+      if (!cfg) return;
       const box = document.createElement('div');
-      box.className = 'bg-slate-900/60 border border-slate-700/50 rounded-lg p-2 flex flex-col items-center justify-center';
+      box.className = `flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border ${cfg.bg} ${cfg.border} shadow-sm`;
       box.innerHTML = `
-        <span class="text-[10px] font-bold text-slate-400">${labels[key]}</span>
-        <span class="${colors[key]} font-black drop-shadow-md">+${val}</span>
+        <span class="material-symbols-outlined text-[14px] ${cfg.color}">${cfg.icon}</span>
+        <span class="text-[11px] font-bold text-slate-300">${cfg.label}</span>
+        <span class="text-[12px] font-black ${cfg.color} drop-shadow-md ml-0.5">+${val}</span>
       `;
       statsGrid.appendChild(box);
     });
