@@ -293,7 +293,6 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   header.className = 'p-4 border-b border-slate-800 flex justify-between items-center shrink-0';
   header.innerHTML = `
     <h3 class="text-lg font-black text-pink-400 flex items-center gap-2">
-      <img src="${monsterDef.image}" class="w-8 h-8 object-contain">
       ${monsterDef.name} にエサをあげる
     </h3>
     <div class="flex items-center gap-2">
@@ -346,42 +345,46 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   let currentLevel = initialInfo.level;
   
   topSection.innerHTML = `
-      <div class="flex items-stretch gap-2 mb-3">
+      <div class="flex items-stretch gap-3 mb-3">
         <!-- Left Column: Image & Level -->
-        <div id="feed-modal-img-box" class="w-24 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative shadow-inner">
-          <div class="absolute inset-0 bg-pink-500/10 blur-xl rounded-full"></div>
-          <div class="relative w-16 h-16 mb-2 z-10">
-            <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] animate-bounce" style="animation-duration: 3s;">
+        <div id="feed-modal-img-box" class="w-28 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative shadow-inner z-20">
+          <div class="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent blur-xl rounded-full"></div>
+          <div class="relative w-20 h-20 mb-3 z-10">
+            <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] animate-bounce" style="animation-duration: 3s;">
           </div>
-          <span id="feed-modal-level" class="relative z-10 inline-block text-[11px] text-pink-300 font-black bg-slate-950 px-3 py-1 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.3)] border border-pink-500/30">Lv.${currentLevel}</span>
+          <span id="feed-modal-level" class="relative z-10 inline-block text-[12px] text-pink-300 font-black bg-slate-950 px-4 py-1 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.4)] border border-pink-500/40">Lv.${currentLevel}</span>
         </div>
         
-        <!-- Right Column: Stats Panels Side by Side -->
-        <div class="flex-1 flex gap-1.5 min-w-0">
-          <!-- Left Panel: Monster Stats -->
-          <div class="flex-1 bg-slate-900/60 rounded-xl p-1.5 border border-slate-700/50 flex flex-col shadow-inner">
-            <div class="text-[9px] text-slate-400 font-bold text-center mb-1 border-b border-slate-700/50 pb-0.5 tracking-wider">ステータス</div>
-            <div id="feed-modal-monster-stats" class="flex flex-col gap-y-[3px] flex-1"></div>
+        <!-- Right Column: Stats & Bonus vertically stacked -->
+        <div class="flex-1 flex flex-col gap-2 min-w-0">
+          <!-- Top Panel: Monster Stats -->
+          <div class="flex-1 bg-slate-900/60 rounded-xl p-2 border border-slate-700/50 flex flex-col shadow-inner relative overflow-hidden">
+            <div class="absolute inset-0 bg-blue-500/5 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="text-[10px] text-slate-300 font-black mb-1.5 flex items-center gap-1.5 border-b border-slate-700/50 pb-1">
+                <span class="material-symbols-outlined text-[14px] text-blue-400">bar_chart</span> ステータス
+              </div>
+              <div id="feed-modal-monster-stats" class="grid grid-cols-4 gap-1"></div>
+            </div>
           </div>
-          <!-- Right Panel: Bonus Stats -->
-          <div class="flex-1 bg-slate-900/60 rounded-xl p-1.5 border border-pink-900/30 flex flex-col shadow-inner relative overflow-hidden">
-            <div class="absolute inset-0 bg-pink-500/5 pointer-events-none"></div>
-            <div class="relative z-10 flex flex-col h-full">
-              <div class="text-[9px] text-pink-400 font-bold text-center mb-1 border-b border-pink-900/50 pb-0.5 tracking-wider">ボーナス</div>
-              <div id="feed-modal-bonus-stats" class="flex flex-col gap-y-[3px] flex-1"></div>
+          <!-- Bottom Panel: Bonus Stats -->
+          <div class="flex-1 bg-pink-900/10 rounded-xl p-2 border border-pink-900/30 flex flex-col shadow-inner relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="text-[10px] text-pink-400 font-black mb-1.5 flex items-center gap-1.5 border-b border-pink-900/50 pb-1">
+                <span class="material-symbols-outlined text-[14px]">stars</span> ボーナス
+              </div>
+              <div id="feed-modal-bonus-stats" class="grid grid-cols-4 gap-1"></div>
             </div>
           </div>
         </div>
       </div>
       
-      <div class="w-full bg-slate-900 rounded-full h-2.5 mb-1 overflow-hidden relative shadow-inner border border-slate-800">
-        <div id="feed-modal-bar" class="bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 h-full rounded-full transition-all duration-500 ease-out relative" style="width: 0%">
+      <div class="w-full bg-slate-900 rounded-full h-5 mb-1 overflow-hidden relative shadow-inner border border-slate-700/50 flex items-center justify-center mt-2">
+        <div id="feed-modal-bar" class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 transition-all duration-500 ease-out" style="width: 0%">
            <div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
         </div>
-      </div>
-      <div class="w-full flex justify-between text-[10px] text-slate-400 font-bold px-1">
-        <span>成長まで</span>
-        <span id="feed-modal-progress" class="text-slate-300 font-black">0 / 10</span>
+        <span id="feed-modal-progress" class="relative z-10 text-[11px] text-white font-black tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">0 / 10</span>
       </div>
   `;
   
@@ -400,14 +403,63 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const elMonsterStats = topSection.querySelector('#feed-modal-monster-stats');
   const elBonusStats = topSection.querySelector('#feed-modal-bonus-stats');
 
-  const updateTopSection = () => {
-    const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(monsterData.fedMaterials || 0, isLegendary);
-    currentLevel = level;
+  const triggerLevelUpAnimation = (newLevel, oldLevel) => {
+    const oldMStats = getMonsterStats(oldLevel);
+    const newMStats = getMonsterStats(newLevel);
     
-    elLevel.textContent = `Lv.${level}`;
-    const pct = (currentLevelFed / nextLevelRequired) * 100;
-    elBar.style.width = `${pct}%`;
-    elProgress.textContent = `${currentLevelFed} / ${nextLevelRequired}`;
+    // Image pop animation
+    const imgEl = topSection.querySelector('img');
+    if (imgEl) {
+      imgEl.classList.add('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
+      imgEl.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      setTimeout(() => {
+        imgEl.classList.remove('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
+      }, 400);
+    }
+
+    // LEVEL UP floating text
+    const imgBox = topSection.querySelector('#feed-modal-img-box');
+    if (imgBox) {
+      const floater = document.createElement('div');
+      floater.className = 'absolute -top-3 left-1/2 -translate-x-1/2 text-white font-black text-[10px] whitespace-nowrap animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-600 px-2 py-0.5 rounded-full border border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.8)]';
+      floater.innerHTML = `LEVEL UP!`;
+      imgBox.appendChild(floater);
+      setTimeout(() => floater.remove(), 1500);
+    }
+    
+    // Stat floating texts and highlight
+    for (const key of Object.keys(newMStats)) {
+      const diff = newMStats[key] - (oldMStats[key] || 0);
+      if (diff > 0) {
+         const statEl = elMonsterStats.querySelector(`#stat-${key}`);
+         if (statEl) {
+            statEl.classList.add('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
+            
+            const valEl = statEl.querySelector('.stat-value');
+            if (valEl) valEl.classList.add('text-pink-300');
+
+            const statFloater = document.createElement('div');
+            statFloater.className = 'absolute -top-2.5 -right-2 text-white font-black text-[9px] whitespace-nowrap animate-bounce drop-shadow-md z-50 pointer-events-none bg-emerald-500 px-1.5 py-0.5 rounded-full border border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)] leading-none flex items-center justify-center';
+            statFloater.innerHTML = `+${diff}`;
+            statEl.appendChild(statFloater);
+            
+            setTimeout(() => {
+                statEl.classList.remove('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
+                if (valEl) valEl.classList.remove('text-pink-300');
+            }, 1000);
+            setTimeout(() => statFloater.remove(), 1200);
+         }
+      }
+    }
+    
+    // Level badge animation
+    elLevel.classList.add('scale-125', 'text-white', 'bg-pink-600', 'border-pink-300');
+    setTimeout(() => elLevel.classList.remove('scale-125', 'text-white', 'bg-pink-600', 'border-pink-300'), 500);
+  };
+
+  const updateTopSection = (overrideExp = null) => {
+    const expToUse = overrideExp !== null ? overrideExp : (monsterData.fedMaterials || 0);
+    const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(expToUse, isLegendary);
     
     const mStats = getMonsterStats(level);
     const bStats = getBonusFromStats(mStats);
@@ -416,21 +468,62 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
     
     elMonsterStats.innerHTML = Object.keys(mStats).map(k => `
-      <div id="stat-${k}" class="flex items-center justify-between bg-slate-800/40 px-1 py-0.5 rounded text-[9px] relative transition-all duration-300">
-        <span class="${colors[k]} font-bold">${labels[k]}</span>
-        <span class="stat-value text-slate-200 font-black">${mStats[k]}</span>
+      <div id="stat-${k}" class="flex flex-col items-center justify-center bg-slate-800/60 rounded py-1 border border-slate-700/50 relative transition-all duration-300">
+        <span class="${colors[k]} font-bold text-[8px] leading-none mb-1">${labels[k]}</span>
+        <span class="stat-value text-slate-100 font-black text-[11px] leading-none">${mStats[k]}</span>
       </div>
     `).join('');
 
     elBonusStats.innerHTML = Object.keys(bStats).map(k => `
-      <div class="flex items-center justify-between bg-slate-800/40 px-1 py-0.5 rounded text-[9px]">
-        <span class="${colors[k]} font-bold">${labels[k]}</span>
-        <span class="text-pink-300 font-black">+${bStats[k]}</span>
+      <div class="flex flex-col items-center justify-center bg-pink-950/40 rounded py-1 border border-pink-900/50 relative">
+        <span class="${colors[k]} font-bold text-[8px] leading-none mb-1">${labels[k]}</span>
+        <span class="text-pink-300 font-black text-[11px] leading-none">+${bStats[k]}</span>
       </div>
     `).join('');
+
+    if (level > currentLevel) {
+       triggerLevelUpAnimation(level, currentLevel);
+    }
+    currentLevel = level;
+    
+    elLevel.textContent = `Lv.${level}`;
+    const pct = (currentLevelFed / nextLevelRequired) * 100;
+    elBar.style.width = `${pct}%`;
+    elProgress.textContent = `${currentLevelFed} / ${nextLevelRequired}`;
   };
   
   let needsUpdate = false;
+
+  const balloonPool = [];
+  function getBalloon(expText, parentDiv) {
+    let el = balloonPool.pop();
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'absolute top-0 left-1/2 text-white font-black text-[10px] whitespace-nowrap shadow-lg z-[60] pointer-events-none tracking-widest bg-gradient-to-r from-pink-600 to-rose-500 px-2 py-0.5 rounded-full border border-pink-400/50';
+      el.style.willChange = 'transform, opacity';
+      if (parentDiv) parentDiv.appendChild(el);
+    }
+    el.style.visibility = 'visible';
+    el.innerHTML = `+${expText} EXP`;
+    return el;
+  }
+  
+  const flyImgPool = [];
+  function getFlyImg(src, parentDiv) {
+    let el = flyImgPool.pop();
+    if (!el) {
+      el = document.createElement('img');
+      el.className = 'absolute z-10 pointer-events-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]';
+      el.style.width = '28px';
+      el.style.height = '28px';
+      el.style.objectFit = 'contain';
+      el.style.willChange = 'transform, opacity';
+      if (parentDiv) parentDiv.appendChild(el);
+    }
+    el.style.visibility = 'visible';
+    el.src = src;
+    return el;
+  }
 
   const renderItems = async () => {
     const list = document.createElement('div');
@@ -439,7 +532,9 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     if (validDrops.length === 0) {
       list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">与えられる素材がありません。</p>`;
     } else {
-      for (const drop of validDrops) {
+      for (let i = 0; i < validDrops.length; i++) {
+        const drop = validDrops[i];
+        const expMultiplier = Math.pow(2, i);
         const mat = MATERIALS_MAP.get(drop.itemId);
         if (!mat) continue;
         
@@ -459,7 +554,10 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
                   <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 </div>
                 <div class="min-w-0 flex-1">
-                  <div class="text-xs font-black text-slate-100 mb-0.5 truncate">${mat.name}</div>
+                  <div class="text-xs font-black text-slate-100 mb-0.5 truncate flex items-center gap-2">
+                    ${mat.name}
+                    <span class="text-[9px] bg-pink-900/50 text-pink-300 px-1.5 py-0.5 rounded border border-pink-700/50">${expMultiplier} EXP</span>
+                  </div>
                   <div class="text-[10px] font-bold text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400' : 'text-slate-500'}">${quantity}</span> 個</div>
                 </div>
               </div>
@@ -515,74 +613,145 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             const oldLevel = currentLevel;
             const oldMStats = getMonsterStats(oldLevel);
             
+            const expGain = amount * expMultiplier;
+            const oldExp = monsterData.fedMaterials || 0;
+            
             // Add to fed materials
-            monsterData.fedMaterials = (monsterData.fedMaterials || 0) + amount;
+            monsterData.fedMaterials = oldExp + expGain;
             
             // Save ranch data
             let ranchData = await GameDB.getGameState('ranch_data');
             ranchData[dungeonId][monsterId] = monsterData;
             await GameDB.setGameState('ranch_data', ranchData);
             
-            // Refresh underlying field
             needsUpdate = true;
             
-            // Update modal UI smoothly
-            updateTopSection();
+            const startImg = itemRow.querySelector('img');
+            const targetImg = topSection.querySelector('img');
+            const startRect = startImg ? startImg.getBoundingClientRect() : null;
+            const endRect = targetImg ? targetImg.getBoundingClientRect() : null;
+            
+            const animCount = Math.min(30, Math.max(1, amount));
+            const spreadTime = Math.min(800, animCount * 20);
+            
+            if (startRect && endRect) {
+              const contentDiv = topSection.parentElement;
+              const contentRect = contentDiv.getBoundingClientRect();
+              
+              const imgBoxContainer = topSection.querySelector('#feed-modal-img-box .relative');
+              
+              for (let j = 0; j < animCount; j++) {
+                const delay = Math.random() * spreadTime;
+                
+                const flyImg = getFlyImg(mat.image, contentDiv);
+                flyImg.style.opacity = '0';
+                
+                const startX = startRect.left - contentRect.left + contentDiv.scrollLeft + startRect.width / 2 - 14 + (Math.random() - 0.5) * 30;
+                const startY = startRect.top - contentRect.top + contentDiv.scrollTop + startRect.height / 2 - 14 + (Math.random() - 0.5) * 30;
+                const endX = endRect.left - contentRect.left + contentDiv.scrollLeft + endRect.width / 2 - 14 + (Math.random() - 0.5) * 40;
+                const endY = endRect.top - contentRect.top + contentDiv.scrollTop + endRect.height / 2 - 14 + (Math.random() * 20);
+                
+                // Position & Scale animation
+                const flyAnim = flyImg.animate([
+                  { transform: `translate(${startX}px, ${startY}px) scale(0.5)` },
+                  { transform: `translate(${endX}px, ${endY}px) scale(1) rotate(${(Math.random() - 0.5) * 360}deg)`, offset: 0.8 },
+                  { transform: `translate(${endX}px, ${endY}px) scale(1.5) rotate(${(Math.random() - 0.5) * 360}deg)` }
+                ], {
+                  duration: 700,
+                  delay: delay,
+                  easing: 'ease-out',
+                  fill: 'both'
+                });
+
+                // Opacity animation
+                flyImg.animate([
+                  { opacity: 0, offset: 0 },
+                  { opacity: 1, offset: 0.1 },
+                  { opacity: 1, offset: 0.8 },
+                  { opacity: 0, offset: 1 }
+                ], {
+                  duration: 700,
+                  delay: delay,
+                  fill: 'both'
+                });
+                
+                flyAnim.onfinish = () => {
+                  flyImg.style.visibility = 'hidden';
+                  flyImgPool.push(flyImg);
+                };
+              }
+              
+              // Spawn single total EXP balloon
+              setTimeout(() => {
+                const imgBoxContainer = topSection.querySelector('#feed-modal-img-box .relative');
+                if (!imgBoxContainer) return;
+                
+                const expPopup = getBalloon(expGain, imgBoxContainer);
+                expPopup.style.opacity = '0';
+                
+                const popAnim = expPopup.animate([
+                  { transform: `translate(-50%, -10px) scale(0.5)`, opacity: 0 },
+                  { transform: `translate(-50%, -30px) scale(1.1)`, opacity: 1, offset: 0.2 },
+                  { transform: `translate(-50%, -60px) scale(1)`, opacity: 1, offset: 0.8 },
+                  { transform: `translate(-50%, -70px) scale(0.8)`, opacity: 0 }
+                ], {
+                  duration: 1500,
+                  easing: 'ease-out',
+                  fill: 'both'
+                });
+                
+                popAnim.onfinish = () => {
+                  expPopup.style.visibility = 'hidden';
+                  balloonPool.push(expPopup);
+                };
+              }, spreadTime + 400);
+
+              // Add small pop animation to monster image at the end
+              setTimeout(() => {
+                  const mImg = topSection.querySelector('img');
+                  if (mImg) {
+                     mImg.style.transition = 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                     mImg.style.transform = 'scale(1.15) translateY(-5px)';
+                     mImg.style.filter = 'brightness(1.3)';
+                     setTimeout(() => {
+                        mImg.style.transform = '';
+                        mImg.style.filter = '';
+                     }, 200);
+                  }
+              }, spreadTime + 400);
+            }
+            
+            needsUpdate = true;
             await renderItems();
             
-            const originalLevel = getRanchLevelInfo(monsterData.fedMaterials - amount, isLegendary).level;
-            const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials, isLegendary);
-            if (newLevelInfo.level > oldLevel) {
-               const newMStats = getMonsterStats(newLevelInfo.level);
-               
-               // Image pop animation
-               const imgEl = topSection.querySelector('img');
-               if (imgEl) {
-                 imgEl.classList.add('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
-                 imgEl.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                 setTimeout(() => {
-                   imgEl.classList.remove('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
-                 }, 400);
-               }
-
-               // LEVEL UP floating text
-               const imgBox = topSection.querySelector('#feed-modal-img-box');
-               if (imgBox) {
-                 const floater = document.createElement('div');
-                 floater.className = 'absolute -top-3 left-1/2 -translate-x-1/2 text-white font-black text-[10px] whitespace-nowrap animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-600 px-2 py-0.5 rounded-full border border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.8)]';
-                 floater.innerHTML = `LEVEL UP!`;
-                 imgBox.appendChild(floater);
-                 setTimeout(() => floater.remove(), 1500);
-               }
-               
-               // Stat floating texts and highlight
-               for (const key of Object.keys(newMStats)) {
-                 const diff = newMStats[key] - (oldMStats[key] || 0);
-                 if (diff > 0) {
-                    const statEl = elMonsterStats.querySelector(`#stat-${key}`);
-                    if (statEl) {
-                       statEl.classList.add('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
-                       
-                       const valEl = statEl.querySelector('.stat-value');
-                       if (valEl) valEl.classList.add('text-pink-300');
-
-                       const statFloater = document.createElement('div');
-                       statFloater.className = 'absolute -top-2.5 -right-2 text-white font-black text-[9px] whitespace-nowrap animate-bounce drop-shadow-md z-50 pointer-events-none bg-emerald-500 px-1.5 py-0.5 rounded-full border border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)] leading-none flex items-center justify-center';
-                       statFloater.innerHTML = `+${diff}`;
-                       statEl.appendChild(statFloater);
-                       
-                       setTimeout(() => {
-                           statEl.classList.remove('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
-                           if (valEl) valEl.classList.remove('text-pink-300');
-                       }, 1000);
-                       setTimeout(() => statFloater.remove(), 1200);
-                    }
+            const targetExp = monsterData.fedMaterials;
+            const startExp = oldExp;
+            const duration = (startRect && endRect) ? (spreadTime + 400) : 0;
+            
+            if (duration > 0) {
+              const startTime = performance.now();
+              elBar.style.transition = 'none';
+              
+              const animateBar = (time) => {
+                 const elapsed = time - startTime;
+                 let progress = elapsed / duration;
+                 if (progress > 1) progress = 1;
+                 
+                 const ease = 1 - Math.pow(1 - progress, 3);
+                 const currentVisExp = Math.floor(startExp + (targetExp - startExp) * ease);
+                 
+                 updateTopSection(currentVisExp);
+                 
+                 if (progress < 1) {
+                    requestAnimationFrame(animateBar);
+                 } else {
+                    elBar.style.transition = 'all 0.5s ease-out';
+                    updateTopSection(targetExp);
                  }
-               }
-               
-               // Level badge animation
-               elLevel.classList.add('scale-125', 'text-white', 'bg-pink-600', 'border-pink-300');
-               setTimeout(() => elLevel.classList.remove('scale-125', 'text-white', 'bg-pink-600', 'border-pink-300'), 500);
+              };
+              requestAnimationFrame(animateBar);
+            } else {
+              updateTopSection(targetExp);
             }
           };
         }
