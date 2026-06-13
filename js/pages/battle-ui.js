@@ -217,31 +217,53 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     actionsHtml = '<div class="text-slate-500 text-center py-2 text-[9px] italic">通常攻撃のみ</div>';
   }
 
-  let isCompanion = false;
-  if (!isParty && targetEntity && targetEntity.id) {
-    const checkId = targetEntity.isLegendary ? `${targetEntity.id}_legendary` : targetEntity.id;
-    for (const dId of Object.keys(ranchData)) {
-      if (ranchData[dId] && ranchData[dId][checkId]) {
-        isCompanion = true; break;
-      }
-    }
-  }
-
   let capturePanelHtml = '';
   if (!isParty && targetEntity && targetEntity.id) {
-    let badgeHtml = '';
-    if (isCompanion) {
-      badgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
+    let isNormalCaptured = false;
+    let isLegendaryCaptured = false;
+    for (const dId of Object.keys(ranchData)) {
+      if (ranchData[dId] && ranchData[dId][targetEntity.id]) isNormalCaptured = true;
+      if (ranchData[dId] && ranchData[dId][`${targetEntity.id}_legendary`]) isLegendaryCaptured = true;
+    }
+
+    let normalBadgeHtml = '';
+    if (isNormalCaptured) {
+      normalBadgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
     } else {
       const captureRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
       const pctStr = (captureRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
-      badgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${pctStr}</span>`;
+      normalBadgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${pctStr}</span>`;
     }
+
+    const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.0001);
+    const legAppPctStr = (legAppRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
+    const legAppBadgeHtml = `<span class="bg-yellow-950/80 text-yellow-400 border border-yellow-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${legAppPctStr}</span>`;
+
+    let legCapBadgeHtml = '';
+    if (isLegendaryCaptured) {
+      legCapBadgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
+    } else {
+      const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.001);
+      const legCapPctStr = (legCapRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
+      legCapBadgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${legCapPctStr}</span>`;
+    }
+
     capturePanelHtml = `
-      <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col shadow-inner shrink-0">
+      <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 shadow-inner shrink-0">
+        <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center gap-1 shrink-0">
+          <span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>牧場
+        </div>
+        <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-yellow-400">auto_awesome</span>伝説出現率</div>
+          ${legAppBadgeHtml}
+        </div>
         <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
           <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>捕獲率</div>
-          ${badgeHtml}
+          ${normalBadgeHtml}
+        </div>
+        <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>伝説捕獲率</div>
+          ${legCapBadgeHtml}
         </div>
       </div>
     `;
@@ -301,16 +323,20 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       </div>
       
       <div class="grid grid-cols-2 gap-2 min-h-0 flex-1 relative z-10">
-        <!-- Actions -->
-        <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner">
-          <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center gap-1 shrink-0">
-            <span class="material-symbols-outlined text-[12px] text-blue-400">psychology</span>行動パターン
+        <!-- Left Column: Actions + Capture -->
+        <div class="flex flex-col gap-2 min-h-0 flex-1">
+          <!-- Actions -->
+          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner flex-1 min-h-0">
+            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center gap-1 shrink-0">
+              <span class="material-symbols-outlined text-[12px] text-blue-400">psychology</span>行動パターン
+            </div>
+            <div class="flex flex-col gap-1 pb-1">
+              ${actionsHtml}
+            </div>
           </div>
-          <div class="flex flex-col gap-1 pb-1">
-            ${actionsHtml}
-          </div>
+          ${capturePanelHtml}
         </div>
-        <!-- Right Column: Drops + Capture -->
+        <!-- Right Column: Drops -->
         <div class="flex flex-col gap-2 min-h-0 flex-1">
           <!-- Drop Info -->
           <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col min-h-0 shadow-inner flex-1">
@@ -321,7 +347,6 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
               ${dropsHtml}
             </div>
           </div>
-          ${capturePanelHtml}
         </div>
       </div>
     </div>
