@@ -6,6 +6,7 @@ import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { STAT_KEYS } from '../../data/constants.js';
+import { calcItemsPerPage } from '../../data/page-utils.js';
 
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
@@ -203,7 +204,7 @@ export function renderItemLibraryTab() {
           return true;
         });
 
-    const ITEMS_PER_PAGE = viewMode === 'grid' ? 25 : 5;
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -295,7 +296,7 @@ export function renderItemLibraryTab() {
               <span class="text-[9px] font-black border px-1.5 py-0.5 rounded ${slotColor} leading-none shadow-sm">${slotLabel}</span>
               <span class="text-[13px] font-bold ${isAcquired ? 'text-gray-100' : 'text-gray-500'} truncate leading-tight">${displayName}</span>
             </div>
-            <div class="flex items-center flex-wrap gap-y-1.5 mt-1">
+            <div class="flex items-center gap-1 overflow-hidden whitespace-nowrap mt-1" style="-webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%);">
               ${performanceHtml || '<span class="text-[10px] text-gray-500 italic">性能変化なし</span>'}
             </div>
           </div>

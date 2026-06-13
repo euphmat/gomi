@@ -5,6 +5,7 @@ import { ARMORS } from '../../definitions/armors.js';
 import { SHIELDS } from '../../definitions/shields.js';
 import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
+import { calcItemsPerPage } from '../../data/page-utils.js';
 
 const ALL_DEFINITIONS = [
   ...WEAPONS,
@@ -135,7 +136,7 @@ export function renderMonsterLibraryTab() {
       gridContainer.className = 'flex flex-col gap-2 content-start';
     }
 
-    const ITEMS_PER_PAGE = viewMode === 'grid' ? 25 : 5;
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(MONSTERS.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -208,7 +209,7 @@ export function renderMonsterLibraryTab() {
               <span class="text-[9px] font-black border px-1.5 py-0.5 rounded text-gray-400 bg-gray-800/80 border-gray-700/50 leading-none shadow-sm">モンスター</span>
               <span class="text-[13px] font-bold ${isDefeated ? 'text-gray-100' : 'text-gray-500'} truncate leading-tight">${displayName}</span>
             </div>
-            <div class="flex items-center flex-wrap gap-y-1.5 mt-1">
+            <div class="flex items-center overflow-hidden whitespace-nowrap mt-1">
               <span class="text-[10px] text-gray-500 italic">討伐数: <span class="font-bold text-red-400 font-mono text-[11px]">${isDefeated ? kills : '?'}</span> 体</span>
             </div>
           </div>

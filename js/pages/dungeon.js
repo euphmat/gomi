@@ -1,5 +1,6 @@
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { GameDB } from '../data/database.js';
+import { calcItemsPerPage } from '../data/page-utils.js';
 
 window.enterDungeon = async (dungeonId) => {
   await GameDB.setGameState('currentDungeon', dungeonId);
@@ -8,10 +9,12 @@ window.enterDungeon = async (dungeonId) => {
 };
 
 let currentDungeonPage = 1;
-const ITEMS_PER_PAGE = 5;
+function getItemsPerPage() {
+  return calcItemsPerPage({ viewMode: 'list', listItemHeight: 108, minItems: 2 });
+}
 
 window.changeDungeonPage = async (delta) => {
-  const maxPage = Math.ceil(DUNGEONS.length / ITEMS_PER_PAGE);
+  const maxPage = Math.ceil(DUNGEONS.length / getItemsPerPage());
   currentDungeonPage += delta;
   if (currentDungeonPage < 1) currentDungeonPage = 1;
   if (currentDungeonPage > maxPage) currentDungeonPage = maxPage;
@@ -31,11 +34,12 @@ export async function renderDungeonPage() {
   const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
   
   const totalItems = DUNGEONS.length;
-  const maxPage = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const maxPage = Math.ceil(totalItems / getItemsPerPage());
   if (currentDungeonPage > maxPage) currentDungeonPage = maxPage || 1;
 
-  const startIndex = (currentDungeonPage - 1) * ITEMS_PER_PAGE;
-  const pageDungeons = DUNGEONS.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const itemsPerPage = getItemsPerPage();
+  const startIndex = (currentDungeonPage - 1) * itemsPerPage;
+  const pageDungeons = DUNGEONS.slice(startIndex, startIndex + itemsPerPage);
 
 const DUNGEON_THEMES = {
   slime_forest: { color: '16, 185, 129', icon: 'forest' },        // Emerald

@@ -1,5 +1,6 @@
 import { GameDB } from '../../data/database.js';
 import { STAT_KEYS } from '../../data/constants.js';
+import { calcItemsPerPage } from '../../data/page-utils.js';
 
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
@@ -186,7 +187,7 @@ export function renderStorageTab() {
           return true;
         });
 
-    const ITEMS_PER_PAGE = viewMode === 'grid' ? 25 : 5;
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -248,7 +249,7 @@ export function renderStorageTab() {
           
         let abilityHtml = '';
         if (item.ability) {
-           abilityHtml = `<div class="flex items-center shrink-0 text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1 rounded" style="padding-top: 1px; padding-bottom: 1px;"><span class="material-symbols-outlined mr-0.5" style="font-size: 10px;">star</span><span class="font-bold" style="font-size: 9px;">${item.ability.name}</span></div>`;
+           abilityHtml = `<div class="flex items-center text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1 rounded min-w-0" style="padding-top: 1px; padding-bottom: 1px;"><span class="material-symbols-outlined mr-0.5 shrink-0" style="font-size: 10px;">star</span><span class="font-bold truncate" style="font-size: 9px;">${item.ability.name}</span></div>`;
         }
 
         const performanceParts = [statsHtml, elHtml, ailHtml, abilityHtml].filter(Boolean);
