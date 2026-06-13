@@ -1631,6 +1631,9 @@ class BattleManager {
       el.innerHTML = '';
       el.className = '';
       el.style.cssText = '';
+      if (el.getAnimations) {
+        el.getAnimations().forEach(a => a.cancel());
+      }
       return el;
     }
     return document.createElement('div');
@@ -1680,8 +1683,11 @@ class BattleManager {
     if (config.fontSize) popup.style.fontSize = config.fontSize;
     
     // Most efficient text insertion
-    if (config.text) popup.textContent = config.text;
-    else if (config.html) popup.innerHTML = config.html; // fallback if needed
+    if (config.text !== undefined && config.text !== null) {
+      popup.textContent = config.text;
+    } else if (config.html) {
+      popup.innerHTML = config.html; // fallback if needed
+    }
     
     const isParty = elementId.startsWith('party-');
     const floatY = isParty ? 45 : -45; // Move further for smooth drift
@@ -1702,6 +1708,7 @@ class BattleManager {
     });
 
     anim.onfinish = () => {
+      anim.cancel();
       this._releasePoolElement(popup);
     };
   }
@@ -1723,6 +1730,7 @@ class BattleManager {
     // limit stack size to prevent infinite growth and severe layout thrashing
     if (stack.length > 5) {
       const oldest = stack.shift();
+      if (oldest.anim) oldest.anim.cancel();
       this._releasePoolElement(oldest.popup);
       this._releasePoolElement(oldest.el);
       clearTimeout(oldest.timeoutId);
@@ -1755,18 +1763,18 @@ class BattleManager {
     document.body.appendChild(wrapper);
 
     const anim = popup.animate([
-      { opacity: 0, transform: 'scale(0.5)' },
-      { opacity: 1, transform: 'scale(1.15)', offset: 0.15 },
-      { opacity: 1, transform: 'scale(1.0)', offset: 0.25 },
-      { opacity: 1, transform: 'scale(1.0)', offset: 0.7 },
-      { opacity: 0, transform: 'scale(0.9)' }
+      { opacity: 0, transform: 'scale(0.5) translateY(5px)' },
+      { opacity: 1, transform: 'scale(1.25) translateY(-2px)', offset: 0.15 },
+      { opacity: 1, transform: 'scale(1.0) translateY(0)', offset: 0.3 },
+      { opacity: 0.9, transform: 'scale(1.0) translateY(0)', offset: 0.6 },
+      { opacity: 0, transform: 'scale(0.85) translateY(-8px)' }
     ], {
       duration: dur,
       easing: 'ease-out',
       fill: 'forwards'
     });
 
-    const entry = { el: wrapper, popup: popup, baseOffset: 10, timeoutId: null };
+    const entry = { el: wrapper, popup: popup, baseOffset: 10, timeoutId: null, anim: anim };
     stack.push(entry);
 
     stack.forEach(e => {
@@ -1777,6 +1785,7 @@ class BattleManager {
     });
 
     anim.onfinish = () => {
+      anim.cancel();
       this._releasePoolElement(popup);
       this._releasePoolElement(wrapper);
       const idx = stack.indexOf(entry);
@@ -1833,12 +1842,12 @@ class BattleManager {
   // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
     if (localStorage.getItem('disableBattleAnimations') === 'true') return;
-    const html = `<span class="font-black text-[13px] ${textClass} tracking-widest whitespace-nowrap bg-black/60 px-3 py-1 rounded-full border ${borderClass}" style="box-shadow: 0 2px 6px rgba(0,0,0,0.7);">${actionName}</span>`;
+    const html = `<span class="font-black text-[15px] ${textClass} tracking-widest whitespace-nowrap bg-black/70 px-4 py-1.5 rounded-full border ${borderClass}" style="box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-shadow: 0 2px 4px rgba(0,0,0,0.9);">${actionName}</span>`;
 
     this._showLabelPopup(elementId, {
       html,
-      duration: 1000,
-      height: 28
+      duration: 1200,
+      height: 34
     });
   }
 
