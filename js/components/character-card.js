@@ -98,10 +98,10 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
             <span class="text-[9px] text-gray-400 font-normal ml-1">${jobName}</span>
           </div>
           <div class="flex gap-1">
-            <div class="flex-1 text-[10px] text-gray-200 bg-gray-800/70 rounded px-1 py-[2px] border border-gray-700/30 font-mono tracking-tight text-center">
+            <div class="flex-1 text-[10px] font-bold text-orange-300 bg-orange-900/40 rounded px-1 py-[2px] border border-orange-500/30 font-mono tracking-tight text-center shadow-inner">
               Lv ${level}
             </div>
-            <div class="flex-1 text-[10px] text-gray-200 bg-gray-800/70 rounded px-1 py-[2px] border border-gray-700/30 font-mono tracking-tight text-center">
+            <div class="flex-1 text-[10px] font-bold text-pink-300 bg-pink-900/40 rounded px-1 py-[2px] border border-pink-500/30 font-mono tracking-tight text-center shadow-inner">
               JLv ${jobLevel}
             </div>
           </div>
