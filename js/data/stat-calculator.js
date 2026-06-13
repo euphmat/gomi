@@ -16,6 +16,8 @@
 
 import { STAT_KEYS } from './constants.js';
 import { JOBS } from '../jobs/index.js';
+import { GameDB } from './database.js';
+import { MONSTERS } from '../definitions/monsters.js';
 
 /**
  * Calculate the final stats for a character.
@@ -29,8 +31,8 @@ export function calcFinalStats(character, equipmentMap) {
 
   // Start with base stats
   const result = {
-    hp: ((character.hp && character.hp.max) || 0) + (character.rebirthBonus?.hp || 0),
-    mp: ((character.mp && character.mp.max) || 0) + (character.rebirthBonus?.mp || 0),
+    hp: ((character.hp && character.hp.max) || 0) + (character.rebirthBonus?.hp || 0) + (character.ranchBonus?.hp || 0),
+    mp: ((character.mp && character.mp.max) || 0) + (character.rebirthBonus?.mp || 0) + (character.ranchBonus?.mp || 0),
     attackElements: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
     attackAilments: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0 },
     elementResist: character.elementResist ? { ...character.elementResist } : { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0 },
@@ -39,7 +41,7 @@ export function calcFinalStats(character, equipmentMap) {
   
   for (const key of statKeys) {
     if (key === 'hp' || key === 'mp') continue;
-    result[key] = (character.baseStats[key] || 0) + (character.rebirthBonus?.[key] || 0);
+    result[key] = (character.baseStats[key] || 0) + (character.rebirthBonus?.[key] || 0) + (character.ranchBonus?.[key] || 0);
   }
 
   // Add equipment bonuses
@@ -158,4 +160,69 @@ export function buildEquipmentMap(equipmentArray) {
     map.set(item.id, item);
   }
   return map;
+}
+
+/**
+ * Calculate ranch level from total fed materials.
+ * Cost for next level grows exponentially: 10, 15, 22, 33, 50, ...
+ */
+export function getRanchLevelInfo(totalFed) {
+  let level = 0;
+  let totalRequiredForCurrent = 0;
+  let totalRequiredForNext = 10;
+  
+  while (totalFed >= totalRequiredForNext) {
+    level++;
+    totalRequiredForCurrent = totalRequiredForNext;
+    const nextCost = Math.floor(10 * Math.pow(1.5, level));
+    totalRequiredForNext += nextCost;
+  }
+  
+  const currentLevelFed = totalFed - totalRequiredForCurrent;
+  const nextLevelRequired = totalRequiredForNext - totalRequiredForCurrent;
+  
+  return { level, currentLevelFed, nextLevelRequired };
+}
+
+/**
+ * Calculate the total bonus from companion monsters in the ranch.
+ * 
+ * @returns {Promise<{ hp: number, mp: number, atk: number, def: number, matk: number, mdef: number, spd: number }>}
+ */
+export async function calculateTotalRanchBonus() {
+  const ranchData = await GameDB.getGameState('ranch_data') || {};
+  const totalBonus = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
+  
+  for (const dungeonId of Object.keys(ranchData)) {
+    for (const [monsterId, data] of Object.entries(ranchData[dungeonId])) {
+      const monsterDef = MONSTERS.find(m => m.id === monsterId);
+      if (monsterDef && monsterDef.stats) {
+        const { level } = getRanchLevelInfo(data.fedMaterials || 0);
+        const levelMultiplier = 1 + (level * 0.01);
+        
+        for (const key of Object.keys(totalBonus)) {
+          const baseVal = monsterDef.stats[key] || 0;
+          if (baseVal > 0) {
+            const grownVal = baseVal * levelMultiplier;
+            const bonus = Math.max(1, Math.floor(grownVal * 0.10));
+            totalBonus[key] += bonus;
+          }
+        }
+      }
+    }
+  }
+  
+  return totalBonus;
+}
+
+/**
+ * Fetch all characters and attach the calculated ranchBonus to them.
+ * 
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getCharactersWithRanchBonus() {
+  const characters = await GameDB.getAllCharacters();
+  const ranchBonus = await calculateTotalRanchBonus();
+  characters.forEach(c => c.ranchBonus = ranchBonus);
+  return characters;
 }

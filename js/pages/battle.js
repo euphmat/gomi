@@ -2,7 +2,7 @@ import { GameDB } from '../data/database.js';
 import { MONSTERS } from '../definitions/monsters.js';
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { MATERIALS } from '../definitions/materials.js';
-import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
+import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../data/stat-calculator.js';
 import { JOBS } from '../jobs/index.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 
@@ -72,7 +72,7 @@ class BattleManager {
 
     const isReinit = this.elements.enemyArea.children.length > 0;
 
-    const rawParty = await GameDB.getAllCharacters();
+    const rawParty = await getCharactersWithRanchBonus();
     const rawEquip = await GameDB.getAllEquipment();
     this.equipMap = buildEquipmentMap(rawEquip);
 
@@ -1869,6 +1869,37 @@ class BattleManager {
       // savePartyState() is deferred to endBattle()
     }
 
+    // --- 牧場 (Ranch) コンパニオン化抽選 ---
+    // 1000分の1 (0.1%) の確率で仲間になる
+    if (Math.random() < 0.001) {
+      let ranchData = await GameDB.getGameState('ranch_data') || {};
+      const dungeonId = this.currentDungeonId;
+      if (!ranchData[dungeonId]) {
+        ranchData[dungeonId] = {};
+      }
+      
+      // まだ仲間になっていない場合のみ
+      if (!ranchData[dungeonId][enemy.id]) {
+        ranchData[dungeonId][enemy.id] = { fedMaterials: 0, level: 0 };
+        this._pendingRanchSave = ranchData; // Deferred saving like other properties
+        this._needsSave = true;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none bg-black/50 transition-opacity duration-300';
+        overlay.innerHTML = `
+          <div class="bg-slate-900 border-2 border-pink-500 rounded-2xl p-6 text-center shadow-[0_0_30px_rgba(236,72,153,0.6)] animate-bounce">
+            <h2 class="text-2xl font-black text-pink-400 mb-2">${enemy.name} が仲間になりたそうにこちらを見ている！</h2>
+            <p class="text-white font-bold">${enemy.name} を牧場に迎え入れた！</p>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => {
+          overlay.style.opacity = '0';
+          setTimeout(() => overlay.remove(), 300);
+        }, 3000);
+      }
+    }
+
     // Process Drops
     let hasNewDrops = false;
     if (enemy.drops) {
@@ -1968,6 +1999,7 @@ class BattleManager {
     if (!this._needsSave) return;
     if (this.discoveredMonsters) await GameDB.setGameState('discovered_monsters', this.discoveredMonsters);
     if (this.monsterKills) await GameDB.setGameState('monster_kills', this.monsterKills);
+    if (this._pendingRanchSave) await GameDB.setGameState('ranch_data', this._pendingRanchSave);
     if (this.currentGold !== undefined) await GameDB.setGameState('gold', this.currentGold);
     if (this._pendingItemDrops) {
       for (const [itemId, qty] of Object.entries(this._pendingItemDrops)) {

@@ -1,4 +1,5 @@
 import { GameDB } from '../../data/database.js';
+import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 import { JOBS } from '../../jobs/index.js';
 
@@ -102,7 +103,7 @@ export function renderChangeJobTab() {
     char.sp = Math.max(0, (char.jobLevel || 1) - 1) - spentSP;
 
     await GameDB.putCharacter(char);
-    characters = await GameDB.getAllCharacters();
+    characters = await getCharactersWithRanchBonus();
     showNotification(container, `${char.name} は ${jobDef.name} に転職した！`, 'success');
     render();
   };
@@ -211,7 +212,7 @@ export function renderChangeJobTab() {
     char.mp.current = 10;
 
     await GameDB.putCharacter(char);
-    characters = await GameDB.getAllCharacters();
+    characters = await getCharactersWithRanchBonus();
     showNotification(container, `${char.name} は転生した！`, 'success');
     render();
   };
@@ -239,7 +240,7 @@ export function renderChangeJobTab() {
     char.sp = Math.max(0, (char.jobLevel || 1) - 1);
 
     await GameDB.putCharacter(char);
-    characters = await GameDB.getAllCharacters();
+    characters = await getCharactersWithRanchBonus();
     showNotification(container, `SPをリセットしました！`, 'success');
     render();
   };
@@ -482,7 +483,7 @@ export function renderChangeJobTab() {
   };
 
   // ─── 初期データロード ──────────────────────────────────
-  Promise.all([GameDB.getAllCharacters(), GameDB.getGameState('gold')]).then(async ([chars, goldVal]) => {
+  Promise.all([getCharactersWithRanchBonus(), GameDB.getGameState('gold')]).then(async ([chars, goldVal]) => {
     characters = chars;
     currentGold = goldVal || 0;
 

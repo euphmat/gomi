@@ -1,6 +1,6 @@
 import { GameDB } from '../../data/database.js';
 import { createStatusBar, BAR_COLORS } from '../../components/status-bar.js';
-import { calcFinalStats, buildEquipmentMap } from '../../data/stat-calculator.js';
+import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 
 export function renderInnTab() {
   const container = document.createElement('div');
@@ -27,7 +27,7 @@ export function renderInnTab() {
   let currentParty = [];
 
   const renderStatus = async () => {
-    const rawParty = await GameDB.getAllCharacters();
+    const rawParty = await getCharactersWithRanchBonus();
     const rawEquip = await GameDB.getAllEquipment();
     const equipMap = buildEquipmentMap(rawEquip);
     currentParty = rawParty;

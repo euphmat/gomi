@@ -1,4 +1,5 @@
 import { GameDB } from '../../data/database.js';
+import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 
 import { JOBS } from '../../jobs/index.js';
@@ -363,7 +364,7 @@ export function renderAcquireSkillTab() {
   };
 
   // 初期データロード
-  GameDB.getAllCharacters().then(async chars => {
+  getCharactersWithRanchBonus().then(async chars => {
     // FIX: Check and correct SP based ONLY on current Job Lv and current acquired skills
     // -------------------------------------------------------------
     for (const char of chars) {

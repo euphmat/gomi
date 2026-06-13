@@ -11,7 +11,7 @@
  */
 import { createCharacterCard, createEmptySlotCard } from '../components/character-card.js';
 import { GameDB } from '../data/database.js';
-import { calcFinalStats, buildEquipmentMap, getEquippedItems } from '../data/stat-calculator.js';
+import { calcFinalStats, buildEquipmentMap, getEquippedItems, getCharactersWithRanchBonus } from '../data/stat-calculator.js';
 import { showEquipmentModal } from '../components/equipment-modal.js';
 
 const MAX_PARTY_SIZE = 4;
@@ -46,7 +46,7 @@ export function renderStatusPage() {
 async function _loadStatusData(container) {
   try {
     const [characters, allEquipment] = await Promise.all([
-      GameDB.getAllCharacters(),
+      getCharactersWithRanchBonus(),
       GameDB.getAllEquipment(),
     ]);
 
