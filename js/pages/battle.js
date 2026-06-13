@@ -283,7 +283,10 @@ class BattleManager {
       const { root: el, iconContainer, hpContainer, hpBar, hpText, atbContainer, stateIconsContainer } = cache;
 
       if (stateIconsContainer && !e.isDead) {
-        stateIconsContainer.innerHTML = getActiveStateIconsHTML(e);
+        const newHtml = getActiveStateIconsHTML(e);
+        if (stateIconsContainer.innerHTML !== newHtml) {
+          stateIconsContainer.innerHTML = newHtml;
+        }
       }
 
       if (e.isDead) {
@@ -311,8 +314,12 @@ class BattleManager {
         iconContainer.classList.add('drop-shadow-md');
       }
 
-      hpBar.style.transform = `scaleX(${e.currentHp / e.maxHp})`;
-      if (hpText) hpText.textContent = `${Math.floor(e.currentHp)}/${e.maxHp}`;
+      const newHpScale = `scaleX(${e.currentHp / e.maxHp})`;
+      if (hpBar.style.transform !== newHpScale) hpBar.style.transform = newHpScale;
+      if (hpText) {
+        const newHpText = `${Math.floor(e.currentHp)}/${e.maxHp}`;
+        if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
+      }
     });
 
     this.party.forEach(p => {
@@ -321,7 +328,10 @@ class BattleManager {
       const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, statBlocks, stateIconsContainer } = cache;
 
       if (stateIconsContainer && !p.isDead) {
-        stateIconsContainer.innerHTML = getActiveStateIconsHTML(p);
+        const newHtml = getActiveStateIconsHTML(p);
+        if (stateIconsContainer.innerHTML !== newHtml) {
+          stateIconsContainer.innerHTML = newHtml;
+        }
       }
 
       if (this.activeCharacter === p) {
@@ -345,30 +355,46 @@ class BattleManager {
         if (!disableAnim) el.classList.add('transition-all', 'hover:scale-[1.02]');
       }
 
-      if (lvEl) lvEl.textContent = p.level || 1;
-      if (jlvEl) jlvEl.textContent = p.jobLevel || 1;
-      if (spEl) spEl.textContent = p.sp || 0;
+      if (lvEl && lvEl.textContent !== String(p.level || 1)) lvEl.textContent = p.level || 1;
+      if (jlvEl && jlvEl.textContent !== String(p.jobLevel || 1)) jlvEl.textContent = p.jobLevel || 1;
+      if (spEl && spEl.textContent !== String(p.sp || 0)) spEl.textContent = p.sp || 0;
 
       if (hpBar) {
         const trueMaxHp = p.stats.hp || p.hp.max;
-        hpBar.style.transform = `scaleX(${p.hp.current / trueMaxHp})`;
-        if (hpText) hpText.textContent = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
+        const newHpScale = `scaleX(${p.hp.current / trueMaxHp})`;
+        if (hpBar.style.transform !== newHpScale) hpBar.style.transform = newHpScale;
+        if (hpText) {
+          const newHpText = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
+          if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
+        }
       }
 
       if (mpBar) {
         const trueMaxMp = p.stats.mp || p.mp.max;
-        mpBar.style.transform = `scaleX(${p.mp.current / trueMaxMp})`;
-        if (mpText) mpText.textContent = `${Math.floor(p.mp.current)}/${trueMaxMp}`;
+        const newMpScale = `scaleX(${p.mp.current / trueMaxMp})`;
+        if (mpBar.style.transform !== newMpScale) mpBar.style.transform = newMpScale;
+        if (mpText) {
+          const newMpText = `${Math.floor(p.mp.current)}/${trueMaxMp}`;
+          if (mpText.textContent !== newMpText) mpText.textContent = newMpText;
+        }
       }
 
       if (expBar) {
-        expBar.style.transform = `scaleX(${p.exp.current / p.exp.max})`;
-        if (expText) expText.textContent = `${Math.floor(p.exp.current)}/${p.exp.max}`;
+        const newExpScale = `scaleX(${p.exp.current / p.exp.max})`;
+        if (expBar.style.transform !== newExpScale) expBar.style.transform = newExpScale;
+        if (expText) {
+          const newExpText = `${Math.floor(p.exp.current)}/${p.exp.max}`;
+          if (expText.textContent !== newExpText) expText.textContent = newExpText;
+        }
       }
 
       if (jpBar) {
-        jpBar.style.transform = `scaleX(${p.jp.current / p.jp.max})`;
-        if (jpText) jpText.textContent = `${Math.floor(p.jp.current)}/${p.jp.max}`;
+        const newJpScale = `scaleX(${p.jp.current / p.jp.max})`;
+        if (jpBar.style.transform !== newJpScale) jpBar.style.transform = newJpScale;
+        if (jpText) {
+          const newJpText = `${Math.floor(p.jp.current)}/${p.jp.max}`;
+          if (jpText.textContent !== newJpText) jpText.textContent = newJpText;
+        }
       }
 
       const statVals = cache.statVals;
@@ -377,13 +403,14 @@ class BattleManager {
       const statLabels = cache.statLabels;
 
       if (statVals && statVals.atk) {
-        statVals.atk.textContent = p.stats.atk;
-        statVals.mat.textContent = p.stats.matk;
-        statVals.mdf.textContent = p.stats.mdef;
-        statVals.spd.textContent = p.stats.spd;
+        if (statVals.atk.textContent !== String(p.stats.atk)) statVals.atk.textContent = p.stats.atk;
+        if (statVals.mat.textContent !== String(p.stats.matk)) statVals.mat.textContent = p.stats.matk;
+        if (statVals.mdf.textContent !== String(p.stats.mdef)) statVals.mdf.textContent = p.stats.mdef;
+        if (statVals.spd.textContent !== String(p.stats.spd)) statVals.spd.textContent = p.stats.spd;
 
         if (p._defBuffTurns > 0) {
-          statVals.def.textContent = Math.floor(p.stats.def * (1 + p._defBuffPercent / 100));
+          const defStr = String(Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)));
+          if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-gray-100');
           statVals.def.classList.add('text-green-400');
           statRows.def.classList.remove('bg-gray-900/40');
@@ -392,7 +419,8 @@ class BattleManager {
           statIcons.def.classList.add('text-green-400');
           statLabels.def.classList.add('text-green-400');
         } else {
-          statVals.def.textContent = p.stats.def;
+          const defStr = String(p.stats.def);
+          if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-green-400');
           statVals.def.classList.add('text-gray-100');
           statRows.def.classList.remove('bg-green-900/40', 'border', 'border-green-500/50');
@@ -403,7 +431,8 @@ class BattleManager {
         }
 
         if (p._mdefBuffTurns > 0) {
-          statVals.mdf.textContent = p.stats.mdef + p._mdefBuffAmount;
+          const mdefStr = String(p.stats.mdef + p._mdefBuffAmount);
+          if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-gray-100');
           statVals.mdf.classList.add('text-indigo-300');
           statRows.mdf.classList.remove('bg-gray-900/40');
@@ -412,7 +441,8 @@ class BattleManager {
           statIcons.mdf.classList.add('text-indigo-300');
           statLabels.mdf.classList.add('text-indigo-300');
         } else {
-          statVals.mdf.textContent = p.stats.mdef;
+          const mdefStr = String(p.stats.mdef);
+          if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-indigo-300');
           statVals.mdf.classList.add('text-gray-100');
           statRows.mdf.classList.remove('bg-indigo-900/40', 'border', 'border-indigo-500/50');
@@ -431,7 +461,10 @@ class BattleManager {
     if (this._lastRenderedTabChar !== targetCharForTab || this._lastRenderedAutoBattle !== this.isAutoBattle) {
       this._lastRenderedTabChar = targetCharForTab;
       this._lastRenderedAutoBattle = this.isAutoBattle;
-      this.renderTabContent();
+      // Yield slightly so that current animations (popups, ATB) aren't interrupted by heavy DOM rendering
+      setTimeout(() => {
+        this.renderTabContent();
+      }, 0);
     }
   }
 
@@ -831,13 +864,21 @@ class BattleManager {
                
                // Show visual feedback (gold gain) near the click
                const popup = document.createElement('div');
-               popup.className = `fixed z-[9999] pointer-events-none animate-float-popup text-yellow-400 font-black text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]`;
+               popup.className = `fixed z-[9999] pointer-events-none text-yellow-400 font-black text-xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]`;
                popup.style.left = `${e.clientX}px`;
                popup.style.top = `${e.clientY}px`;
-               popup.style.transform = `translate(-50%, -50%)`;
                popup.textContent = `+${totalGold} G`;
                document.body.appendChild(popup);
-               setTimeout(() => popup.remove(), 1200);
+               
+               const anim = popup.animate([
+                 { opacity: 0, transform: `translate(-50%, 0) scale(0.5)` },
+                 { opacity: 1, transform: `translate(-50%, -15px) scale(1.2)`, offset: 0.15 },
+                 { opacity: 1, transform: `translate(-50%, -20px) scale(1.0)`, offset: 0.3 },
+                 { opacity: 0.9, transform: `translate(-50%, -25px) scale(1.0)`, offset: 0.7 },
+                 { opacity: 0, transform: `translate(-50%, -30px) scale(0.9)` }
+               ], { duration: 800, easing: 'ease-out', fill: 'forwards' });
+               
+               anim.onfinish = () => popup.remove();
              }
 
              // Remove from obtainedItems map and array
@@ -1610,30 +1651,59 @@ class BattleManager {
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
+    // Cache rect to avoid severe layout thrashing when hundreds of damage numbers pop
+    if (!this._rectCache) this._rectCache = { time: 0, rects: {} };
+    const now = performance.now();
+    if (now - this._rectCache.time > 16) {
+      this._rectCache.time = now;
+      this._rectCache.rects = {};
+    }
+    let rect = this._rectCache.rects[elementId];
+    if (!rect) {
+      rect = el.getBoundingClientRect();
+      this._rectCache.rects[elementId] = rect;
+    }
+
     const speed = this.speedMult || 1;
-    const dur = (config.duration || 1200) / speed;
-    const rect = el.getBoundingClientRect();
+    const dur = (config.duration || 800) / speed;
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top;
-    const spreadX = (Math.random() - 0.5) * 30;
+    const spreadX = (Math.random() - 0.5) * 60; // Spread horizontally
 
     const popup = this._getPoolElement();
-    popup.className = `fixed z-[9999] pointer-events-none animate-float-popup ${config.className || ''}`;
+    popup.className = config.className || '';
     popup.style.left = `${centerX}px`;
     popup.style.top = `${baseY}px`;
+    popup.style.transform = ''; // clear
+    popup.style.color = config.color || '#fff';
+    if (config.textShadow) popup.style.textShadow = config.textShadow;
+    if (config.fontSize) popup.style.fontSize = config.fontSize;
+    
+    // Most efficient text insertion
+    if (config.text) popup.textContent = config.text;
+    else if (config.html) popup.innerHTML = config.html; // fallback if needed
     
     const isParty = elementId.startsWith('party-');
-    const floatY = isParty ? 25 : -25;
+    const floatY = isParty ? 45 : -45; // Move further for smooth drift
     
-    popup.style.setProperty('--spread-x', `${spreadX}px`);
-    popup.style.setProperty('--float-y', `${floatY}px`);
-    popup.style.setProperty('--popup-dur', `${dur}ms`);
-    popup.innerHTML = config.html;
     document.body.appendChild(popup);
 
-    setTimeout(() => {
+    const scale = config.scale || 1.0;
+
+    // Ultra-lightweight 3-step animation: Pop -> Drift -> Fade Out
+    const anim = popup.animate([
+      { opacity: 0, transform: `translate3d(-50%, 0, 0) scale(${scale * 0.5})` },
+      { opacity: 1, transform: `translate3d(calc(-50% + ${spreadX * 0.3}px), ${floatY * 0.3}px, 0) scale(${scale})`, offset: 0.15 },
+      { opacity: 0, transform: `translate3d(calc(-50% + ${spreadX}px), ${floatY}px, 0) scale(${scale * 0.9})` }
+    ], {
+      duration: dur,
+      easing: 'ease-out',
+      fill: 'forwards'
+    });
+
+    anim.onfinish = () => {
       this._releasePoolElement(popup);
-    }, dur);
+    };
   }
 
   /**
@@ -1677,12 +1747,24 @@ class BattleManager {
     wrapper.style.transition = `transform 0.2s ease-out`;
 
     const popup = this._getPoolElement();
-    popup.className = `animate-label-popup ${config.className || ''}`;
-    popup.style.setProperty('--popup-dur', `${dur}ms`);
+    popup.className = `${config.className || ''}`;
+    popup.style.transform = ''; // Clear previous transform
     popup.innerHTML = config.html;
     
     wrapper.appendChild(popup);
     document.body.appendChild(wrapper);
+
+    const anim = popup.animate([
+      { opacity: 0, transform: 'scale(0.5)' },
+      { opacity: 1, transform: 'scale(1.15)', offset: 0.15 },
+      { opacity: 1, transform: 'scale(1.0)', offset: 0.25 },
+      { opacity: 1, transform: 'scale(1.0)', offset: 0.7 },
+      { opacity: 0, transform: 'scale(0.9)' }
+    ], {
+      duration: dur,
+      easing: 'ease-out',
+      fill: 'forwards'
+    });
 
     const entry = { el: wrapper, popup: popup, baseOffset: 10, timeoutId: null };
     stack.push(entry);
@@ -1694,57 +1776,57 @@ class BattleManager {
       }
     });
 
-    entry.timeoutId = setTimeout(() => {
+    anim.onfinish = () => {
       this._releasePoolElement(popup);
       this._releasePoolElement(wrapper);
       const idx = stack.indexOf(entry);
       if (idx !== -1) stack.splice(idx, 1);
-    }, dur);
+    };
   }
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
     if (localStorage.getItem('disableBattleAnimations') === 'true') return;
-    let html = '';
-    let duration = 1200;
+    
+    let color = '#ffffff';
+    let textShadow = '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.8)';
+    let scale = 1.0;
+    let fontSize = '26px';
+    let duration = 800;
+    let className = 'fixed z-[9999] pointer-events-none font-black select-none flex items-center justify-center';
 
     if (customColorClass.includes('text-red-500')) {
       // 弱点 (Weakness)
-      html = `
-        <div class="flex items-center justify-center" style="transform: scale(1.25);">
-          <span class="text-[34px] font-black italic select-none animate-pulse" style="color: #ef4444; text-shadow: -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 4px 6px rgba(0,0,0,0.8); line-height: 1; letter-spacing: -0.03em;">${damage}</span>
-        </div>`;
-      duration = 1500;
+      className += ' italic tracking-tighter';
+      color = '#ef4444';
+      textShadow = '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 4px 6px rgba(0,0,0,0.8)';
+      fontSize = '34px';
+      scale = 1.25;
+      duration = 900;
     } else if (customColorClass.includes('text-purple-400')) {
       // 耐性軽減 (Resist)
-      html = `
-        <div class="flex items-center justify-center" style="transform: scale(0.85);">
-          <span class="text-[22px] font-black select-none" style="color: #a855f7; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
-        </div>`;
-    } else if (customColorClass.includes('text-green-400') || customColorClass.includes('text-green-500')) {
+      color = '#a855f7';
+      textShadow = '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.8)';
+      scale = 0.85;
+      fontSize = '22px';
+    } else if (customColorClass.includes('text-green-')) {
       // HP回復
-      html = `
-        <div class="flex items-center justify-center">
-          <span class="text-[26px] font-black select-none" style="color: #4ade80; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
-        </div>`;
+      color = '#4ade80';
+      textShadow = '-1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8)';
     } else if (customColorClass.includes('text-blue-400')) {
       // MP回復
-      html = `
-        <div class="flex items-center justify-center">
-          <span class="text-[26px] font-black select-none" style="color: #60a5fa; text-shadow: -1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
-        </div>`;
-    } else {
-      // 通常ダメージ
-      html = `
-        <div class="flex items-center justify-center">
-          <span class="text-[26px] font-black select-none" style="color: #ffffff; text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.8); line-height: 1;">${damage}</span>
-        </div>`;
+      color = '#60a5fa';
+      textShadow = '-1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8)';
     }
 
     this._showFloatingPopup(elementId, {
-      html,
-      className: '',
-      duration: duration
+      text: damage,
+      className,
+      color,
+      textShadow,
+      fontSize,
+      scale,
+      duration
     });
   }
 
