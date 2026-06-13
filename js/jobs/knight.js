@@ -27,6 +27,17 @@ export const knight = {
         caster._provokeTurns = levelConfig.turns;
         caster._provokeChance = levelConfig.chance;
         battle.showDamage(caster.elementId, '挑発', 'text-amber-400');
+      },
+      autoBattle: {
+        priority: 80,
+        check: (caster, levelConfig, context) => {
+          if (!caster._provokeTurns || caster._provokeTurns <= 0) {
+            const aliveParty = context.party.filter(p => !p.isDead);
+            const anyAllyLowHp = aliveParty.some(p => p !== caster && p.hp.current / (p.stats?.hp || p.hp.max) < 0.5);
+            if (anyAllyLowHp || Math.random() < 0.4) return true;
+          }
+          return null;
+        }
       }
     },
     {
@@ -53,6 +64,15 @@ export const knight = {
           p._defBuffTurns = levelConfig.turns;
         });
         battle.showDamage(caster.elementId, 'DEF UP', 'text-blue-400');
+      },
+      autoBattle: {
+        priority: 80,
+        check: (caster, levelConfig, context) => {
+          const aliveParty = context.party.filter(p => !p.isDead);
+          const hasDefBuff = aliveParty.some(p => p._defBuffTurns && p._defBuffTurns > 0);
+          if (!hasDefBuff && Math.random() < 0.5) return true;
+          return null;
+        }
       }
     },
     {
@@ -135,6 +155,19 @@ export const knight = {
         battle.showDamage(target.elementId, damage, 'text-white');
         battle.renderEntities();
         battle.checkBattleEnd();
+      },
+      autoBattle: {
+        priority: 60,
+        check: (caster, levelConfig, context) => {
+          if (caster.equipment && caster.equipment.leftHand && Math.random() < 0.7) {
+            const aliveEnemies = context.enemies.filter(e => !e.isDead);
+            if (aliveEnemies.length === 0) return null;
+            let target = context.selectedEnemyTarget;
+            if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            return target;
+          }
+          return null;
+        }
       }
     },
     // ─── Passive Skills ──────────────────────────────────────
@@ -191,61 +224,5 @@ export const knight = {
     }
   ],
 
-  // ─── Auto Battle AI ────────────────────────────────────────
-  autoBattle: (caster, context) => {
-    const aliveEnemies = context.enemies.filter(e => !e.isDead);
-    if (aliveEnemies.length === 0) return;
-
-    const getSkillInfo = (sId) => {
-      const level = context.getSkillLevel(sId);
-      if (level > 0 && context.isSkillAutoEnabled(sId)) {
-        const skillDef = context.getSkillDef(sId);
-        if (skillDef) {
-          const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
-          if (caster.mp.current >= levelConfig.mpCost) {
-            return { id: sId, level, config: levelConfig, def: skillDef };
-          }
-        }
-      }
-      return null;
-    };
-
-    const provoke = getSkillInfo('provoke');
-    const defFormation = getSkillInfo('defense_formation');
-    const shieldAttack = getSkillInfo('shield_attack');
-
-    // 1. Provoke — if not already active, activate to protect allies
-    if (provoke && (!caster._provokeTurns || caster._provokeTurns <= 0)) {
-      // Use provoke if any ally is at low HP
-      const aliveParty = context.party.filter(p => !p.isDead);
-      const anyAllyLowHp = aliveParty.some(p => p !== caster && p.hp.current / (p.stats?.hp || p.hp.max) < 0.5);
-      if (anyAllyLowHp || Math.random() < 0.4) {
-        context.executeSkill('provoke');
-        return;
-      }
-    }
-
-    // 2. Defense Formation — if no def buff is active on party
-    if (defFormation) {
-      const aliveParty = context.party.filter(p => !p.isDead);
-      const hasDefBuff = aliveParty.some(p => p._defBuffTurns && p._defBuffTurns > 0);
-      if (!hasDefBuff && Math.random() < 0.5) {
-        context.executeSkill('defense_formation');
-        return;
-      }
-    }
-
-    // 3. Shield Attack — if shield is equipped
-    if (shieldAttack && caster.equipment && caster.equipment.leftHand) {
-      if (Math.random() < 0.7) {
-        let target = context.selectedEnemyTarget;
-        if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-        context.executeSkill('shield_attack', target);
-        return;
-      }
-    }
-
-    // Default: normal attack
-    context.executeAttack();
-  }
+  ]
 };

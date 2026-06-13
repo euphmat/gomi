@@ -29,6 +29,19 @@ export const mage = {
         if (target) {
           battle.executeAttack(caster, target, true, { actionName: 'ファイアボール', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'fire', hideActionName: true });
         }
+      },
+      autoBattle: {
+        priority: 50,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          let target = context.selectedEnemyTarget;
+          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          const resist = target.stats?.elementResist?.fire || 0;
+          if (resist > 20 && Math.random() < 0.8) return null;
+          if (Math.random() < 0.8) return target;
+          return null;
+        }
       }
     },
     {
@@ -54,6 +67,19 @@ export const mage = {
         if (target) {
           battle.executeAttack(caster, target, true, { actionName: 'アイスランス', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'ice', hideActionName: true });
         }
+      },
+      autoBattle: {
+        priority: 50,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          let target = context.selectedEnemyTarget;
+          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          const resist = target.stats?.elementResist?.ice || 0;
+          if (resist > 20 && Math.random() < 0.8) return null;
+          if (Math.random() < 0.8) return target;
+          return null;
+        }
       }
     },
     {
@@ -78,6 +104,19 @@ export const mage = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           battle.executeAttack(caster, target, true, { actionName: 'サンダー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'thunder', hideActionName: true });
+        }
+      },
+      autoBattle: {
+        priority: 50,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          let target = context.selectedEnemyTarget;
+          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          const resist = target.stats?.elementResist?.thunder || 0;
+          if (resist > 20 && Math.random() < 0.8) return null;
+          if (Math.random() < 0.8) return target;
+          return null;
         }
       }
     },
@@ -105,6 +144,15 @@ export const mage = {
           p._mdefBuffTurns = levelConfig.turns;
         });
         battle.showDamage(caster.elementId, 'MDEF UP', 'text-indigo-400');
+      },
+      autoBattle: {
+        priority: 80,
+        check: (caster, levelConfig, context) => {
+          const aliveParty = context.party.filter(p => !p.isDead);
+          const hasMdefBuff = aliveParty.some(p => p._mdefBuffTurns && p._mdefBuffTurns > 0);
+          if (!hasMdefBuff && Math.random() < 0.5) return true;
+          return null;
+        }
       }
     },
     // ─── Passive Skills ──────────────────────────────────────
@@ -142,58 +190,5 @@ export const mage = {
       ],
       getDescription: (lc) => `自身の行動終了時に、MP を ${lc.recoverMp} 回復する`
     }
-  ],
-
-  // ─── Auto Battle AI ────────────────────────────────────────
-  autoBattle: (caster, context) => {
-    const aliveEnemies = context.enemies.filter(e => !e.isDead);
-    if (aliveEnemies.length === 0) return;
-
-    const getSkillInfo = (sId) => {
-      const level = context.getSkillLevel(sId);
-      if (level > 0 && context.isSkillAutoEnabled(sId)) {
-        const skillDef = context.getSkillDef(sId);
-        if (skillDef) {
-          const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
-          if (caster.mp.current >= levelConfig.mpCost) {
-            return { id: sId, level, config: levelConfig, def: skillDef };
-          }
-        }
-      }
-      return null;
-    };
-
-    const barrier = getSkillInfo('magic_barrier');
-    const fireball = getSkillInfo('fireball');
-    const iceLance = getSkillInfo('ice_lance');
-    const thunder = getSkillInfo('thunder');
-
-    // 1. Magic Barrier — if no mdef buff is active on party
-    if (barrier) {
-      const aliveParty = context.party.filter(p => !p.isDead);
-      const hasMdefBuff = aliveParty.some(p => p._mdefBuffTurns && p._mdefBuffTurns > 0);
-      if (!hasMdefBuff && Math.random() < 0.5) {
-        context.executeSkill('magic_barrier');
-        return;
-      }
-    }
-
-    // 2. Magic Attacks
-    const attacks = [];
-    if (fireball) attacks.push('fireball');
-    if (iceLance) attacks.push('ice_lance');
-    if (thunder) attacks.push('thunder');
-
-    if (attacks.length > 0 && Math.random() < 0.8) {
-        // Pick a random elemental attack for now. Could be improved to target weakness.
-        const attackId = attacks[Math.floor(Math.random() * attacks.length)];
-        let target = context.selectedEnemyTarget;
-        if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-        context.executeSkill(attackId, target);
-        return;
-    }
-
-    // Default: normal attack
-    context.executeAttack();
-  }
+  ]
 };

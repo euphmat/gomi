@@ -24,6 +24,18 @@ export const norvice = {
       execute: (caster, levelConfig) => {
         caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
         // mp is already deducted in battle.js executeSkill
+      },
+      autoBattle: {
+        priority: 90,
+        check: (caster, levelConfig, context) => {
+          const trueMaxHp = caster.stats?.hp || caster.hp.max;
+          const hpPercent = caster.hp.current / trueMaxHp;
+          const missingHp = trueMaxHp - caster.hp.current;
+          if (hpPercent < 0.6 || (hpPercent < 0.8 && missingHp >= levelConfig.healAmount * 0.8)) {
+            return true;
+          }
+          return null;
+        }
       }
     },
     {
@@ -49,6 +61,19 @@ export const norvice = {
         if (target) {
             battle.executeAttack(caster, target, true, { actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
         }
+      },
+      autoBattle: {
+        priority: 50,
+        check: (caster, levelConfig, context) => {
+          if (Math.random() < 0.7) {
+            const aliveEnemies = context.enemies.filter(e => !e.isDead);
+            if (aliveEnemies.length === 0) return null;
+            let target = context.selectedEnemyTarget;
+            if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            return target;
+          }
+          return null;
+        }
       }
     },
     {
@@ -71,6 +96,15 @@ export const norvice = {
         caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
         if (battle) {
            battle.showDamage(caster.elementId, `+${levelConfig.recoverAmount}`, 'text-blue-400');
+        }
+      },
+      autoBattle: {
+        priority: 70,
+        check: (caster, levelConfig, context) => {
+          if (caster.mp.current < (caster.stats?.mp || caster.mp.max) * 0.3) {
+            return true;
+          }
+          return null;
         }
       }
     },
@@ -101,6 +135,17 @@ export const norvice = {
             
             battle.showDamage(target.elementId, 'ATK DOWN', 'text-blue-500');
         }
+      },
+      autoBattle: {
+        priority: 70,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          const toughEnemy = aliveEnemies.find(e => (!e.atkDebuffTurns || e.atkDebuffTurns <= 0) && (e.maxHp >= 50 || e.stats.atk >= 20));
+          if (toughEnemy && Math.random() < 0.8) {
+            return toughEnemy;
+          }
+          return null;
+        }
       }
     },
     {
@@ -125,6 +170,18 @@ export const norvice = {
         targets.forEach(target => {
             battle.executeAttack(caster, target, true, { actionName: 'なぎ払い', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
         });
+      },
+      autoBattle: {
+        priority: 60,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length >= 2) {
+            if (Math.random() < 0.8 || caster.mp.current > (caster.stats?.mp || caster.mp.max) * 0.5) {
+              return true;
+            }
+          }
+          return null;
+        }
       }
     },
     {
@@ -178,82 +235,5 @@ export const norvice = {
       ],
       getDescription: (levelConfig) => `攻撃を受けた時、${levelConfig.chance}％ の確率で受けるダメージを ${levelConfig.reduction}％ 軽減する`
     }
-  ],
-  autoBattle: (caster, context) => {
-    const aliveEnemies = context.enemies.filter(e => !e.isDead);
-    if (aliveEnemies.length === 0) return;
-
-    const getSkillInfo = (sId) => {
-      const level = context.getSkillLevel(sId);
-      if (level > 0 && context.isSkillAutoEnabled(sId)) {
-        const skillDef = context.getSkillDef(sId);
-        if (skillDef) {
-          const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
-          if (caster.mp.current >= levelConfig.mpCost) {
-             return { id: sId, level, config: levelConfig, def: skillDef };
-          }
-        }
-      }
-      return null;
-    };
-
-    const firstAid = getSkillInfo('first_aid');
-    const focus = getSkillInfo('focus');
-    const intimidate = getSkillInfo('intimidate');
-    const cleave = getSkillInfo('cleave');
-    const heavyStrike = getSkillInfo('heavy_strike');
-
-    // 1. First Aid priority (Healing)
-    if (firstAid) {
-      const trueMaxHp = caster.stats?.hp || caster.hp.max;
-      const hpPercent = caster.hp.current / trueMaxHp;
-      const missingHp = trueMaxHp - caster.hp.current;
-      // 致命傷を避けるためHP60%未満、または回復量が無駄にならないHP80%未満の時に使用
-      if (hpPercent < 0.6 || (hpPercent < 0.8 && missingHp >= firstAid.config.healAmount * 0.8)) {
-        context.executeSkill('first_aid');
-        return;
-      }
-    }
-
-    // 2. Focus priority (MP is very low)
-    if (focus) {
-      // MPが30%未満の場合に使用
-      if (caster.mp.current < (caster.stats?.mp || caster.mp.max) * 0.3) {
-        context.executeSkill('focus');
-        return;
-      }
-    }
-
-    // 3. Cleave priority (Multiple enemies)
-    if (cleave && aliveEnemies.length >= 2) {
-      // 敵が複数いる場合は高確率で使用、MPが十分にあれば確実に見舞う
-      if (Math.random() < 0.8 || caster.mp.current > (caster.stats?.mp || caster.mp.max) * 0.5) {
-        context.executeSkill('cleave');
-        return;
-      }
-    }
-
-    // 4. Intimidate priority (Tough enemy without debuff)
-    if (intimidate) {
-      const toughEnemy = aliveEnemies.find(e => (!e.atkDebuffTurns || e.atkDebuffTurns <= 0) && (e.maxHp >= 50 || e.stats.atk >= 20));
-      if (toughEnemy && Math.random() < 0.8) {
-        context.executeSkill('intimidate', toughEnemy);
-        return;
-      }
-    }
-
-    // 5. Heavy Strike priority
-    if (heavyStrike) {
-      // MPがコスト以上あれば高確率で使用
-      if (caster.mp.current >= heavyStrike.config.mpCost && Math.random() < 0.7) {
-        let target = context.selectedEnemyTarget;
-        if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-        context.executeSkill('heavy_strike', target);
-        return;
-      }
-    }
-
-    // Default: normal attack
-    context.executeAttack();
-  }
+  ]
 };

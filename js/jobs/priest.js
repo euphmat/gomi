@@ -41,6 +41,17 @@ export const priest = {
         target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
         battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
         battle.renderEntities();
+      },
+      autoBattle: {
+        priority: 90,
+        check: (caster, levelConfig, context) => {
+          const aliveParty = context.party.filter(p => !p.isDead);
+          const criticallyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.4);
+          if (criticallyInjured) return criticallyInjured;
+          const lightlyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.7);
+          if (lightlyInjured && Math.random() < 0.6) return lightlyInjured;
+          return null;
+        }
       }
     },
     {
@@ -73,6 +84,14 @@ export const priest = {
         target.atb = 0; // Reset ATB on revive just in case
         battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
         battle.renderEntities(); // This handles reviving UI
+      },
+      autoBattle: {
+        priority: 100,
+        check: (caster, levelConfig, context) => {
+          const deadParty = context.party.filter(p => p.isDead);
+          if (deadParty.length > 0) return true;
+          return null;
+        }
       }
     },
     {
@@ -103,6 +122,14 @@ export const priest = {
         target.activeAilment = null;
         battle.showActionName(target.elementId, `CURE`, 'text-green-300', 'border-green-500/50');
         battle.renderEntities();
+      },
+      autoBattle: {
+        priority: 90,
+        check: (caster, levelConfig, context) => {
+          const afflictedParty = context.party.filter(p => !p.isDead && p.activeAilment);
+          if (afflictedParty.length > 0) return true;
+          return null;
+        }
       }
     },
     {
@@ -127,6 +154,18 @@ export const priest = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           battle.executeAttack(caster, target, true, { actionName: 'ホーリー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'light', hideActionName: true });
+        }
+      },
+      autoBattle: {
+        priority: 50,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length > 0 && Math.random() < 0.8) {
+            let target = context.selectedEnemyTarget;
+            if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            return target;
+          }
+          return null;
         }
       }
     },
@@ -165,74 +204,5 @@ export const priest = {
       ],
       getDescription: (lc) => `魔法攻撃時、${lc.chance}％ の確率で全体攻撃になる`
     }
-  ],
-
-  // ─── Auto Battle AI ────────────────────────────────────────
-  autoBattle: (caster, context) => {
-    const aliveEnemies = context.enemies.filter(e => !e.isDead);
-    if (aliveEnemies.length === 0) return;
-
-    const getSkillInfo = (sId) => {
-      const level = context.getSkillLevel(sId);
-      if (level > 0 && context.isSkillAutoEnabled(sId)) {
-        const skillDef = context.getSkillDef(sId);
-        if (skillDef) {
-          const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
-          if (caster.mp.current >= levelConfig.mpCost) {
-            return { id: sId, level, config: levelConfig, def: skillDef };
-          }
-        }
-      }
-      return null;
-    };
-
-    const raise = getSkillInfo('raise');
-    const restore = getSkillInfo('restore');
-    const heal = getSkillInfo('heal');
-    const holy = getSkillInfo('holy');
-
-    // 1. Raise dead allies
-    if (raise) {
-      const deadParty = context.party.filter(p => p.isDead);
-      if (deadParty.length > 0) {
-        context.executeSkill('raise');
-        return;
-      }
-    }
-
-    // 2. Restore ailments
-    if (restore) {
-      const afflictedParty = context.party.filter(p => !p.isDead && p.activeAilment);
-      if (afflictedParty.length > 0) {
-        context.executeSkill('restore');
-        return;
-      }
-    }
-
-    // 3. Heal low HP allies
-    if (heal) {
-      const aliveParty = context.party.filter(p => !p.isDead);
-      const criticallyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.4);
-      if (criticallyInjured) {
-        context.executeSkill('heal');
-        return;
-      }
-      const lightlyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.7);
-      if (lightlyInjured && Math.random() < 0.6) {
-        context.executeSkill('heal');
-        return;
-      }
-    }
-
-    // 4. Attack
-    if (holy && Math.random() < 0.8) {
-        let target = context.selectedEnemyTarget;
-        if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-        context.executeSkill('holy', target);
-        return;
-    }
-
-    // Default: normal attack
-    context.executeAttack();
-  }
+  ]
 };
