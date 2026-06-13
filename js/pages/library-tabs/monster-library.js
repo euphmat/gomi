@@ -43,6 +43,7 @@ export function renderMonsterLibraryTab() {
   let monsterKills = {};
   let viewMode = 'grid'; // 'grid' | 'list'
   let currentPage = 1;
+  let ranchData = {};
 
   const topBar = document.createElement('div');
   topBar.className = 'flex items-center justify-end mb-4 shrink-0 pt-2 px-2';
@@ -153,15 +154,32 @@ export function renderMonsterLibraryTab() {
 
       const slot = document.createElement('div');
       
+      let isCompanion = false;
+      for (const dId of Object.keys(ranchData)) {
+        if (ranchData[dId] && ranchData[dId][monster.id]) {
+          isCompanion = true; break;
+        }
+      }
+      
+      const companionBadge = isCompanion 
+        ? '<div class="absolute top-1 right-1 bg-pink-900/90 border border-pink-500/50 text-pink-300 text-[8px] font-bold px-1 py-0.5 rounded-full flex items-center shadow-md backdrop-blur-sm z-10"><span class="material-symbols-outlined text-[10px]">pets</span></div>'
+        : '';
+
       if (viewMode === 'grid') {
         slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
         
         if (monster.image) {
           const imgClass = isDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
-          slot.innerHTML = `<img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
+          slot.innerHTML = `
+            ${companionBadge}
+            <img src="${monster.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">
+          `;
         } else {
           const iconClass = isDefeated ? 'material-symbols-outlined text-gray-500 text-3xl' : 'material-symbols-outlined text-gray-800 text-3xl';
-          slot.innerHTML = `<span class="${iconClass}">pets</span>`;
+          slot.innerHTML = `
+            ${companionBadge}
+            <span class="${iconClass}">pets</span>
+          `;
         }
       } else {
         // list view
@@ -182,6 +200,7 @@ export function renderMonsterLibraryTab() {
 
         slot.innerHTML = `
           <div class="shrink-0 relative">
+            ${companionBadge}
             ${imgHtml}
           </div>
           <div class="flex flex-col min-w-0 flex-1 justify-center gap-1">
@@ -334,12 +353,13 @@ export function renderMonsterLibraryTab() {
   };
 
   const loadData = async () => {
-    const [eq, inv, discovered, discoveredMonsters, kills] = await Promise.all([
+    const [eq, inv, discovered, discoveredMonsters, kills, ranch] = await Promise.all([
       GameDB.getAllEquipment(),
       GameDB.getAllInventory(),
       GameDB.getGameState('discovered_items'),
       GameDB.getGameState('discovered_monsters'),
-      GameDB.getGameState('monster_kills')
+      GameDB.getGameState('monster_kills'),
+      GameDB.getGameState('ranch_data')
     ]);
 
     const discoveredItems = discovered || [];
@@ -352,6 +372,7 @@ export function renderMonsterLibraryTab() {
     discoveredM.forEach(monsterId => acquiredBaseIds.add('defeated_' + monsterId));
 
     monsterKills = kills || {};
+    ranchData = ranch || {};
 
     renderGrid();
   };

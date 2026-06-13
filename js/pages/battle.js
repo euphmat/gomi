@@ -68,6 +68,7 @@ class BattleManager {
     this.monsterKills = await GameDB.getGameState('monster_kills') || {};
     this.discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
     this.currentGold = await GameDB.getGameState('gold') || 0;
+    this.ranchData = await GameDB.getGameState('ranch_data') || {};
     this._needsSave = false;
 
     const isReinit = this.elements.enemyArea.children.length > 0;
@@ -762,7 +763,7 @@ class BattleManager {
       targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
     }
 
-    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills);
+    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData);
     this.elements.tabContent.innerHTML = html;
   }
 
@@ -1870,18 +1871,20 @@ class BattleManager {
     }
 
     // --- 牧場 (Ranch) コンパニオン化抽選 ---
-    // 1000分の1 (0.1%) の確率で仲間になる
-    if (Math.random() < 0.001) {
-      let ranchData = await GameDB.getGameState('ranch_data') || {};
+    const enemyKills = this.monsterKills[enemy.id] || 0;
+    // 基本確率は0.1%。討伐数に応じて上昇し、10万体で100%になるようにする
+    const captureRate = Math.min(1.0, 0.001 + (enemyKills / 100000));
+    
+    if (Math.random() < captureRate) {
       const dungeonId = this.currentDungeonId;
-      if (!ranchData[dungeonId]) {
-        ranchData[dungeonId] = {};
+      if (!this.ranchData[dungeonId]) {
+        this.ranchData[dungeonId] = {};
       }
       
       // まだ仲間になっていない場合のみ
-      if (!ranchData[dungeonId][enemy.id]) {
-        ranchData[dungeonId][enemy.id] = { fedMaterials: 0, level: 0 };
-        this._pendingRanchSave = ranchData; // Deferred saving like other properties
+      if (!this.ranchData[dungeonId][enemy.id]) {
+        this.ranchData[dungeonId][enemy.id] = { fedMaterials: 0, level: 0 };
+        this._pendingRanchSave = this.ranchData; // Deferred saving like other properties
         this._needsSave = true;
 
         const overlay = document.createElement('div');

@@ -87,16 +87,24 @@ export async function renderRanchTab() {
     const styleEl = document.createElement('style');
     styleEl.innerHTML = `
       @keyframes wander {
-        0% { transform: translate(0, 0) scaleX(1); }
-        25% { transform: translate(30px, -10px) scaleX(1); }
-        49% { transform: translate(60px, 0) scaleX(1); }
-        50% { transform: translate(60px, 0) scaleX(-1); }
-        75% { transform: translate(30px, -10px) scaleX(-1); }
-        99% { transform: translate(0, 0) scaleX(-1); }
-        100% { transform: translate(0, 0) scaleX(1); }
+        0% { transform: translate(0, 0); }
+        25% { transform: translate(30px, -10px); }
+        49% { transform: translate(60px, 0); }
+        50% { transform: translate(60px, 0); }
+        75% { transform: translate(30px, -10px); }
+        99% { transform: translate(0, 0); }
+        100% { transform: translate(0, 0); }
+      }
+      @keyframes wander-flip {
+        0%, 49% { transform: scaleX(1); }
+        50%, 99% { transform: scaleX(-1); }
+        100% { transform: scaleX(1); }
       }
       .ranch-monster {
         animation: wander 8s infinite ease-in-out;
+      }
+      .ranch-monster-img {
+        animation: wander-flip 8s infinite;
       }
     `;
     container.appendChild(styleEl);
@@ -121,8 +129,8 @@ export async function renderRanchTab() {
       
       mEl.innerHTML = `
         <div class="ranch-monster relative" style="animation-delay: ${animDelay}s;">
-           <img src="${mDef.image}" class="w-16 h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" onerror="this.src='assets/monsters/slime.png'">
-           <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md z-10">
+           <img src="${mDef.image}" class="ranch-monster-img w-16 h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style="animation-delay: ${animDelay}s;" onerror="this.src='assets/monsters/slime.png'">
+           <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap pointer-events-none shadow-md z-10">
              Lv.${getRanchLevelInfo(mData.fedMaterials || 0).level}
            </div>
         </div>
@@ -208,10 +216,8 @@ function showNotification(container, text, type = 'info') {
 }
 
 async function showFeedModal(container, dungeonId, monsterId, monsterDef, monsterData, onUpdate) {
-  // Find valid materials (drops of this monster)
   const validDrops = monsterDef.drops || [];
   
-  // Create overlay
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in';
   
@@ -231,134 +237,221 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   `;
   
   const content = document.createElement('div');
-  content.className = 'p-4 overflow-y-auto no-scrollbar flex-1';
+  content.className = 'p-4 overflow-y-auto no-scrollbar flex-1 flex flex-col relative';
+
+  const topSection = document.createElement('div');
+  topSection.className = 'mb-4 flex flex-col items-center';
   
-  const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(monsterData.fedMaterials || 0);
+  // Base stats calculation helper
+  const getBonusStats = (level) => {
+    const stats = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
+    if (!monsterDef.stats) return stats;
+    const levelMultiplier = 1 + (level * 0.01);
+    for (const key of Object.keys(stats)) {
+      const baseVal = monsterDef.stats[key] || 0;
+      if (baseVal > 0) {
+        stats[key] = Math.max(1, Math.floor((baseVal * levelMultiplier) * 0.10));
+      }
+    }
+    return stats;
+  };
+
+  const initialInfo = getRanchLevelInfo(monsterData.fedMaterials || 0);
+  let currentLevel = initialInfo.level;
   
-  content.innerHTML = `
-    <div class="mb-6 flex flex-col items-center">
+  topSection.innerHTML = `
       <div class="relative w-24 h-24 mb-2">
         <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(236,72,153,0.4)] animate-bounce">
       </div>
-      <div class="text-center">
-        <span class="text-xs text-slate-400 font-bold bg-slate-800 px-2 py-0.5 rounded-full">Lv.${level}</span>
+      <div class="text-center mb-2">
+        <span id="feed-modal-level" class="inline-block text-xs text-slate-400 font-bold bg-slate-800 px-3 py-1 rounded-full transition-all duration-300 shadow-sm border border-slate-700">Lv.${currentLevel}</span>
       </div>
-      <div class="w-full mt-4 bg-slate-800 rounded-full h-2.5 mb-1 overflow-hidden">
-        <div class="bg-gradient-to-r from-pink-500 to-rose-500 h-2.5 rounded-full transition-all duration-300" style="width: ${(currentLevelFed / nextLevelRequired) * 100}%"></div>
+      
+      <!-- Current Stats Box -->
+      <div class="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl p-2 mb-3 shadow-inner">
+        <div class="text-[9px] text-slate-400 font-bold text-center mb-1">現在のパーティ恩恵ボーナス</div>
+        <div id="feed-modal-stats" class="flex flex-wrap justify-center gap-1">
+          <!-- Stats injected here -->
+        </div>
+      </div>
+      
+      <div class="w-full mt-1 bg-slate-800 rounded-full h-2.5 mb-1 overflow-hidden relative shadow-inner">
+        <div id="feed-modal-bar" class="bg-gradient-to-r from-pink-500 to-rose-500 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
       </div>
       <div class="w-full flex justify-between text-[10px] text-slate-400 font-bold">
         <span>成長まで</span>
-        <span>${currentLevelFed} / ${nextLevelRequired}</span>
+        <span id="feed-modal-progress">0 / 10</span>
       </div>
-    </div>
-    <h4 class="text-sm font-bold text-slate-300 mb-3 border-b border-slate-800 pb-1">好物（ドロップ素材）</h4>
   `;
   
-  const itemsList = document.createElement('div');
-  itemsList.className = 'space-y-2';
+  const itemsContainer = document.createElement('div');
   
-  if (validDrops.length === 0) {
-    itemsList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">与えられる素材がありません。</p>`;
-  } else {
-    for (const drop of validDrops) {
-      const mat = MATERIALS_MAP.get(drop.itemId);
-      if (!mat) continue;
-      
-      const invItem = await GameDB.getInventoryItem(drop.itemId);
-      const quantity = invItem ? invItem.quantity : 0;
-      
-      const itemRow = document.createElement('div');
-      itemRow.className = 'bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between';
-      
-      const maxFeed = quantity;
-      
-      itemRow.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative">
-            <img src="${mat.image}" class="w-full h-full object-contain">
-          </div>
-          <div>
-            <div class="text-sm font-bold text-white">${mat.name}</div>
-            <div class="text-[10px] text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400' : 'text-slate-500'}">${quantity}</span> 個</div>
-          </div>
-        </div>
-        <div class="flex flex-col items-end gap-1">
-          <div class="flex items-center gap-1 bg-slate-900 rounded-lg border border-slate-700 p-0.5">
-            <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-14 bg-transparent text-center text-sm font-bold text-white outline-none quantity-input">
-            <button class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold text-white transition-colors btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
-          </div>
-          <button class="px-4 py-1.5 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:bg-slate-700 rounded-lg text-xs font-bold text-white transition-all active:scale-95 btn-feed" ${maxFeed === 0 ? 'disabled' : ''}>与える</button>
-        </div>
-      `;
-      
-      const input = itemRow.querySelector('.quantity-input');
-      const btnMax = itemRow.querySelector('.btn-max');
-      const btnFeed = itemRow.querySelector('.btn-feed');
-      
-      if (maxFeed > 0) {
-        input.onchange = () => {
-          let val = parseInt(input.value) || 0;
-          if (val < 0) val = 0;
-          if (val > maxFeed) val = maxFeed;
-          input.value = val;
-        };
-        
-        btnMax.onclick = () => {
-          input.value = maxFeed;
-        };
-        
-        btnFeed.onclick = async () => {
-          const amount = parseInt(input.value) || 0;
-          if (amount <= 0 || amount > maxFeed) return;
-          
-          btnFeed.disabled = true;
-          
-          // Consume items
-          invItem.quantity -= amount;
-          if (invItem.quantity <= 0) {
-            await GameDB.deleteInventoryItem(invItem.id);
-          } else {
-            await GameDB.putInventoryItem(invItem);
-          }
-          
-          // Add to fed materials
-          monsterData.fedMaterials = (monsterData.fedMaterials || 0) + amount;
-          
-          const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials);
-          const leveledUp = newLevelInfo.level > level;
-          
-          // Save ranch data
-          let ranchData = await GameDB.getGameState('ranch_data');
-          ranchData[dungeonId][monsterId] = monsterData;
-          await GameDB.setGameState('ranch_data', ranchData);
-          
-          if (leveledUp) {
-            showNotification(document.body, `${monsterDef.name} がレベルアップしました！`, 'success');
-          } else {
-            showNotification(document.body, `${monsterDef.name} が喜んで食べています！`, 'info');
-          }
-          
-          // Close and refresh
-          overlay.remove();
-          if (onUpdate) onUpdate();
-        };
-      }
-      
-      itemsList.appendChild(itemRow);
-    }
-  }
-  
-  content.appendChild(itemsList);
+  content.appendChild(topSection);
+  content.appendChild(itemsContainer);
   modal.appendChild(header);
   modal.appendChild(content);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+
+  const elLevel = topSection.querySelector('#feed-modal-level');
+  const elBar = topSection.querySelector('#feed-modal-bar');
+  const elProgress = topSection.querySelector('#feed-modal-progress');
+  const elStats = topSection.querySelector('#feed-modal-stats');
+
+  const updateTopSection = () => {
+    const { level, currentLevelFed, nextLevelRequired } = getRanchLevelInfo(monsterData.fedMaterials || 0);
+    currentLevel = level;
+    
+    elLevel.textContent = `Lv.${level}`;
+    const pct = (currentLevelFed / nextLevelRequired) * 100;
+    elBar.style.width = `${pct}%`;
+    elProgress.textContent = `${currentLevelFed} / ${nextLevelRequired}`;
+    
+    const stats = getBonusStats(level);
+    const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
+    const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
+    
+    elStats.innerHTML = Object.keys(stats).filter(k => stats[k] > 0).map(k => `
+      <div class="flex items-center gap-1 bg-slate-900/60 border border-slate-700/50 px-1.5 py-0.5 rounded text-[9px] shadow-sm">
+        <span class="${colors[k]} font-bold">${labels[k]}</span>
+        <span class="text-slate-200 font-black">+${stats[k]}</span>
+      </div>
+    `).join('');
+  };
+  
+  const renderItems = async () => {
+    itemsContainer.innerHTML = '<h4 class="text-sm font-bold text-slate-300 mb-2 border-b border-slate-800 pb-1 mt-2">好物（ドロップ素材）</h4>';
+    const list = document.createElement('div');
+    list.className = 'space-y-2';
+    
+    if (validDrops.length === 0) {
+      list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">与えられる素材がありません。</p>`;
+    } else {
+      for (const drop of validDrops) {
+        const mat = MATERIALS_MAP.get(drop.itemId);
+        if (!mat) continue;
+        
+        const invItem = await GameDB.getInventoryItem(drop.itemId);
+        const quantity = invItem ? invItem.quantity : 0;
+        
+        const itemRow = document.createElement('div');
+        itemRow.className = 'bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between';
+        
+        const maxFeed = quantity;
+        
+        itemRow.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative shadow-inner">
+              <img src="${mat.image}" class="w-full h-full object-contain">
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white">${mat.name}</div>
+              <div class="text-[10px] text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400 font-bold' : 'text-slate-500'}">${quantity}</span> 個</div>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1">
+            <div class="flex items-center gap-1 bg-slate-900 rounded-lg border border-slate-700 p-0.5">
+              <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-14 bg-transparent text-center text-sm font-bold text-white outline-none quantity-input">
+              <button class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold text-white transition-colors btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
+            </div>
+            <button class="px-4 py-1.5 bg-pink-600 hover:bg-pink-500 disabled:opacity-50 disabled:bg-slate-700 rounded-lg text-xs font-bold text-white transition-all active:scale-95 btn-feed shadow-md" ${maxFeed === 0 ? 'disabled' : ''}>与える</button>
+          </div>
+        `;
+        
+        const input = itemRow.querySelector('.quantity-input');
+        const btnMax = itemRow.querySelector('.btn-max');
+        const btnFeed = itemRow.querySelector('.btn-feed');
+        
+        if (maxFeed > 0) {
+          input.onchange = () => {
+            let val = parseInt(input.value) || 0;
+            if (val < 0) val = 0;
+            if (val > maxFeed) val = maxFeed;
+            input.value = val;
+          };
+          
+          btnMax.onclick = () => {
+            input.value = maxFeed;
+          };
+          
+          btnFeed.onclick = async () => {
+            const amount = parseInt(input.value) || 0;
+            if (amount <= 0 || amount > maxFeed) return;
+            
+            btnFeed.disabled = true;
+            
+            // Consume items
+            invItem.quantity -= amount;
+            if (invItem.quantity <= 0) {
+              await GameDB.deleteInventoryItem(invItem.id);
+            } else {
+              await GameDB.putInventoryItem(invItem);
+            }
+            
+            const oldLevel = currentLevel;
+            const oldStats = getBonusStats(oldLevel);
+            
+            // Add to fed materials
+            monsterData.fedMaterials = (monsterData.fedMaterials || 0) + amount;
+            
+            // Save ranch data
+            let ranchData = await GameDB.getGameState('ranch_data');
+            ranchData[dungeonId][monsterId] = monsterData;
+            await GameDB.setGameState('ranch_data', ranchData);
+            
+            // Refresh underlying field
+            if (onUpdate) await onUpdate();
+            
+            // Update modal UI smoothly
+            updateTopSection();
+            await renderItems();
+            
+            // Check level up & show notification
+            const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials);
+            if (newLevelInfo.level > oldLevel) {
+               const newStats = getBonusStats(newLevelInfo.level);
+               let diffTexts = [];
+               const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
+               for (const key of Object.keys(newStats)) {
+                 if (newStats[key] > (oldStats[key] || 0)) {
+                    diffTexts.push(`${labels[key]} +${newStats[key] - (oldStats[key] || 0)}`);
+                 }
+               }
+               const diffStr = diffTexts.length > 0 ? `<br><span class="text-[11px] font-bold text-yellow-300 bg-yellow-900/50 px-1 py-0.5 rounded border border-yellow-700/50">恩恵アップ: ${diffTexts.join(', ')}</span>` : '';
+               
+               // Optional: Show floating stat text directly above monster
+               const floater = document.createElement('div');
+               floater.className = 'absolute -top-4 left-1/2 -translate-x-1/2 text-yellow-300 font-black text-sm whitespace-nowrap animate-fade-in-up drop-shadow-md z-50 pointer-events-none';
+               floater.innerHTML = `Level Up!`;
+               topSection.querySelector('.relative.w-24').appendChild(floater);
+               setTimeout(() => floater.remove(), 1500);
+
+               showNotification(document.body, `${monsterDef.name} がレベルアップ！${diffStr}`, 'success');
+               
+               elLevel.classList.add('scale-125', 'text-white', 'bg-pink-600', 'border-pink-400');
+               setTimeout(() => elLevel.classList.remove('scale-125', 'text-white', 'bg-pink-600', 'border-pink-400'), 400);
+            }
+          };
+        }
+        list.appendChild(itemRow);
+      }
+    }
+    itemsContainer.innerHTML = '';
+    itemsContainer.appendChild(list);
+  };
+  
+  updateTopSection();
+  await renderItems();
   
   header.querySelector('#btn-close-modal').onclick = () => {
-    overlay.remove();
+    overlay.classList.replace('animate-fade-in', 'animate-fade-out');
+    setTimeout(() => overlay.remove(), 200);
   };
   
   overlay.onclick = (e) => {
-    if (e.target === overlay) overlay.remove();
+    if (e.target === overlay) {
+      overlay.classList.replace('animate-fade-in', 'animate-fade-out');
+      setTimeout(() => overlay.remove(), 200);
+    }
   };
 }

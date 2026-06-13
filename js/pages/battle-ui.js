@@ -148,7 +148,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   `;
 }
 
-export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills) {
+export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills, ranchData = {}) {
   if (!targetEntity) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full" style="font-family: system-ui, -apple-system, sans-serif;">対象が選択されていません</div>';
   }
@@ -215,8 +215,22 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     actionsHtml = '<div class="text-slate-500 text-center py-2 text-[9px] italic">通常攻撃のみ</div>';
   }
 
+  let companionBadge = '';
+  if (!isParty && targetEntity && targetEntity.id) {
+    let isCompanion = false;
+    for (const dId of Object.keys(ranchData)) {
+      if (ranchData[dId] && ranchData[dId][targetEntity.id]) {
+        isCompanion = true; break;
+      }
+    }
+    if (isCompanion) {
+      companionBadge = '<div class="absolute top-2 right-2 bg-pink-900/90 border border-pink-500/50 text-pink-300 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md backdrop-blur-sm z-20"><span class="material-symbols-outlined text-[10px]">pets</span>牧場</div>';
+    }
+  }
+
   html = `
     <div class="h-full overflow-y-auto p-2 text-slate-300 flex flex-col gap-2.5 custom-scrollbar relative" style="font-family: system-ui, -apple-system, sans-serif;">
+      ${companionBadge}
       <!-- Background Glow Effect -->
       <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-red-500/15 rounded-full blur-xl pointer-events-none z-0"></div>
       
