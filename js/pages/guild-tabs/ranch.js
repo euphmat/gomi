@@ -24,10 +24,6 @@ export async function renderRanchTab() {
       <h2 class="text-xl font-black text-pink-400 flex items-center gap-2 mb-2">
         <span class="material-symbols-outlined">pets</span>モンスター牧場
       </h2>
-      <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-        ダンジョンで仲間にしたモンスターがここで過ごしています。<br>
-        好物（ドロップ素材）を与えるごとに成長し、パーティ全員に恩恵をもたらします！
-      </p>
     `;
 
     // Dungeon Selector
@@ -269,7 +265,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   topSection.innerHTML = `
       <div class="flex items-stretch gap-2 mb-3">
         <!-- Left Column: Image & Level -->
-        <div id="feed-modal-img-box" class="w-24 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative overflow-hidden shadow-inner">
+        <div id="feed-modal-img-box" class="w-24 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative shadow-inner">
           <div class="absolute inset-0 bg-pink-500/10 blur-xl rounded-full"></div>
           <div class="relative w-16 h-16 mb-2 z-10">
             <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] animate-bounce" style="animation-duration: 3s;">
@@ -470,7 +466,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
                const imgBox = topSection.querySelector('#feed-modal-img-box');
                if (imgBox) {
                  const floater = document.createElement('div');
-                 floater.className = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-pink-300 font-black text-2xl whitespace-nowrap animate-fade-in-up drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-900/50 px-3 py-1 rounded-full border border-pink-500/50 backdrop-blur-sm';
+                 floater.className = 'absolute -top-3 left-1/2 -translate-x-1/2 text-white font-black text-[10px] whitespace-nowrap animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-600 px-2 py-0.5 rounded-full border border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.8)]';
                  floater.innerHTML = `LEVEL UP!`;
                  imgBox.appendChild(floater);
                  setTimeout(() => floater.remove(), 1500);
@@ -488,7 +484,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
                        if (valEl) valEl.classList.add('text-pink-300');
 
                        const statFloater = document.createElement('div');
-                       statFloater.className = 'absolute -top-6 left-1/2 -translate-x-1/2 text-pink-400 font-black text-xs whitespace-nowrap animate-fade-in-up drop-shadow-[0_1px_2px_rgba(0,0,0,1)] z-50 pointer-events-none';
+                       statFloater.className = 'absolute -top-2.5 -right-2 text-white font-black text-[9px] whitespace-nowrap animate-bounce drop-shadow-md z-50 pointer-events-none bg-emerald-500 px-1.5 py-0.5 rounded-full border border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)] leading-none flex items-center justify-center';
                        statFloater.innerHTML = `+${diff}`;
                        statEl.appendChild(statFloater);
                        
