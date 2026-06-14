@@ -953,9 +953,9 @@ class BattleManager {
     });
   }
 
-  executeSkill(caster, skillDef, levelConfig) {
-    if (caster.mp && caster.mp.current < levelConfig.mpCost) return;
-    if (levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
+  executeSkill(caster, skillDef, levelConfig, options = {}) {
+    if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) return;
+    if (!options.isDoubleAct && levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
       this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
       caster.atb = 0;
       this.activeCharacter = null;
@@ -963,7 +963,7 @@ class BattleManager {
       return;
     }
 
-    if (caster.mp) {
+    if (!options.isDoubleAct && caster.mp) {
       caster.mp.current -= levelConfig.mpCost;
     }
 
@@ -982,6 +982,21 @@ class BattleManager {
     // Some visual effect (e.g. heal popup)
     if (skillDef.id === 'first_aid') {
       this.showDamage(caster.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+    }
+
+    // --- Passive: Double Act ---
+    if (!options.isDoubleAct && caster.jobSkills) {
+      const doubleActSkill = this._findSkill(caster, 'double_act');
+      if (doubleActSkill && doubleActSkill.level > 0 && doubleActSkill.levelConfig) {
+        if (Math.random() * 100 < doubleActSkill.levelConfig.chance) {
+          setTimeout(() => {
+            if (caster.hp !== undefined && !caster.isDead) {
+              this.showActionName(caster.elementId, 'ダブルアクト', 'text-cyan-300', 'border-cyan-500/50');
+              this.executeSkill(caster, skillDef, levelConfig, { isDoubleAct: true });
+            }
+          }, 600 / this.speedMult);
+        }
+      }
     }
 
     // --- Passive: Mana Regen ---
@@ -1193,22 +1208,6 @@ class BattleManager {
   executeAttack(attacker, defender, isParty, options = {}) {
     const actionName = options.actionName || '攻撃';
     this._abilityTriggered = false;
-
-    // --- Passive: Divine Protection (神の加護) ---
-    if (isParty && options.isMagic && !options.skipAtbReset && !options.isAoEProcessed) {
-      const divineSkill = this._findSkill(attacker, 'divine_protection');
-      if (divineSkill && divineSkill.level > 0 && Math.random() * 100 < divineSkill.levelConfig.chance) {
-        options.isAoEProcessed = true;
-        this.showActionName(attacker.elementId, '神の加護', 'text-yellow-400', 'border-yellow-500/50');
-        
-        const aliveEnemies = this.enemies.filter(e => !e.isDead);
-        aliveEnemies.forEach(e => {
-            if (e !== defender) {
-                this.executeAttack(attacker, e, isParty, { ...options, skipAtbReset: true, hideActionName: true });
-            }
-        });
-      }
-    }
 
     // --- 暗闇 (Blind) の判定 ---
     const isMagic = options.isMagic || false;
@@ -1439,6 +1438,31 @@ class BattleManager {
                 });
               }
             }, 300 / this.speedMult);
+          }
+        }
+        
+        // --- Passive: Plus One ---
+        if (!options.damageType && !isMagic && !defender.isDead) {
+          const plusOneSkill = this._findSkill(attacker, 'plus_one');
+          if (plusOneSkill && plusOneSkill.level > 0 && plusOneSkill.levelConfig) {
+            const hits = plusOneSkill.levelConfig.hits || 1;
+            for (let i = 0; i < hits; i++) {
+              setTimeout(() => {
+                let currentTarget = defender;
+                if (currentTarget.isDead) {
+                  currentTarget = this.enemies.find(e => !e.isDead);
+                }
+                if (currentTarget && !currentTarget.isDead && !attacker.isDead) {
+                  this.showActionName(attacker.elementId, '追撃', 'text-yellow-400', 'border-yellow-500/50');
+                  this.executeAttack(attacker, currentTarget, true, {
+                    actionName: '追撃',
+                    damageMultiplier: 0.5,
+                    damageType: 'ability',
+                    hideActionName: true
+                  });
+                }
+              }, (400 + i * 200) / this.speedMult);
+            }
           }
         }
         

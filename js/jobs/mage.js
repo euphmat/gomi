@@ -155,6 +155,118 @@ export const mage = {
         }
       }
     },
+    {
+      id: 'blizzard', name: 'ブリザード', icon: 'severe_cold',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 2, mpCost: 15, multiplier: 1.0 },
+        { level:  2, spCost: 2, mpCost: 18, multiplier: 1.1 },
+        { level:  3, spCost: 2, mpCost: 22, multiplier: 1.2 },
+        { level:  4, spCost: 3, mpCost: 27, multiplier: 1.3 },
+        { level:  5, spCost: 3, mpCost: 33, multiplier: 1.4 },
+        { level:  6, spCost: 3, mpCost: 40, multiplier: 1.5 },
+        { level:  7, spCost: 4, mpCost: 48, multiplier: 1.6 },
+        { level:  8, spCost: 4, mpCost: 57, multiplier: 1.7 },
+        { level:  9, spCost: 4, mpCost: 67, multiplier: 1.8 },
+        { level: 10, spCost: 6, mpCost: 80, multiplier: 2.0 }
+      ],
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の氷属性魔法攻撃を行う`,
+      execute: (caster, levelConfig, battle) => {
+        if (!battle) return;
+        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        if (aliveEnemies.length === 0) return;
+        battle.executeAttack(caster, aliveEnemies[0], true, { actionName: 'ブリザード', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'ice', hideActionName: true, isAoEProcessed: true });
+        for (let i = 1; i < aliveEnemies.length; i++) {
+          battle.executeAttack(caster, aliveEnemies[i], true, { actionName: 'ブリザード', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'ice', hideActionName: true, skipAtbReset: true, isAoEProcessed: true });
+        }
+      },
+      autoBattle: {
+        priority: 72,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length >= 3) {
+            const resistCount = aliveEnemies.filter(e => (e.stats?.elementResist?.ice || 0) > 20).length;
+            if (resistCount >= 2) return null;
+            return true;
+          }
+          return null;
+        }
+      }
+    },
+    {
+      id: 'volcano', name: 'ボルケーノ', icon: 'volcano',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 2, mpCost: 15, multiplier: 1.0 },
+        { level:  2, spCost: 2, mpCost: 18, multiplier: 1.1 },
+        { level:  3, spCost: 2, mpCost: 22, multiplier: 1.2 },
+        { level:  4, spCost: 3, mpCost: 27, multiplier: 1.3 },
+        { level:  5, spCost: 3, mpCost: 33, multiplier: 1.4 },
+        { level:  6, spCost: 3, mpCost: 40, multiplier: 1.5 },
+        { level:  7, spCost: 4, mpCost: 48, multiplier: 1.6 },
+        { level:  8, spCost: 4, mpCost: 57, multiplier: 1.7 },
+        { level:  9, spCost: 4, mpCost: 67, multiplier: 1.8 },
+        { level: 10, spCost: 6, mpCost: 80, multiplier: 2.0 }
+      ],
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の炎属性魔法攻撃を行う`,
+      execute: (caster, levelConfig, battle) => {
+        if (!battle) return;
+        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        if (aliveEnemies.length === 0) return;
+        battle.executeAttack(caster, aliveEnemies[0], true, { actionName: 'ボルケーノ', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'fire', hideActionName: true, isAoEProcessed: true });
+        for (let i = 1; i < aliveEnemies.length; i++) {
+          battle.executeAttack(caster, aliveEnemies[i], true, { actionName: 'ボルケーノ', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'fire', hideActionName: true, skipAtbReset: true, isAoEProcessed: true });
+        }
+      },
+      autoBattle: {
+        priority: 71,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length >= 3) {
+            const resistCount = aliveEnemies.filter(e => (e.stats?.elementResist?.fire || 0) > 20).length;
+            if (resistCount >= 2) return null;
+            return true;
+          }
+          return null;
+        }
+      }
+    },
+    {
+      id: 'thunderstorm', name: 'サンダーストーム', icon: 'thunderstorm',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 2, mpCost: 15, multiplier: 1.0 },
+        { level:  2, spCost: 2, mpCost: 18, multiplier: 1.1 },
+        { level:  3, spCost: 2, mpCost: 22, multiplier: 1.2 },
+        { level:  4, spCost: 3, mpCost: 27, multiplier: 1.3 },
+        { level:  5, spCost: 3, mpCost: 33, multiplier: 1.4 },
+        { level:  6, spCost: 3, mpCost: 40, multiplier: 1.5 },
+        { level:  7, spCost: 4, mpCost: 48, multiplier: 1.6 },
+        { level:  8, spCost: 4, mpCost: 57, multiplier: 1.7 },
+        { level:  9, spCost: 4, mpCost: 67, multiplier: 1.8 },
+        { level: 10, spCost: 6, mpCost: 80, multiplier: 2.0 }
+      ],
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の雷属性魔法攻撃を行う`,
+      execute: (caster, levelConfig, battle) => {
+        if (!battle) return;
+        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        if (aliveEnemies.length === 0) return;
+        battle.executeAttack(caster, aliveEnemies[0], true, { actionName: 'サンダーストーム', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'thunder', hideActionName: true, isAoEProcessed: true });
+        for (let i = 1; i < aliveEnemies.length; i++) {
+          battle.executeAttack(caster, aliveEnemies[i], true, { actionName: 'サンダーストーム', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'thunder', hideActionName: true, skipAtbReset: true, isAoEProcessed: true });
+        }
+      },
+      autoBattle: {
+        priority: 70,
+        check: (caster, levelConfig, context) => {
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length >= 3) {
+            return true;
+          }
+          return null;
+        }
+      }
+    },
     // ─── Passive Skills ──────────────────────────────────────
     {
       id: 'magic_missile', name: 'マジックミサイル', icon: 'flare', type: 'passive',

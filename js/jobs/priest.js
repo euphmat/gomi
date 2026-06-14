@@ -169,6 +169,47 @@ export const priest = {
         }
       }
     },
+    {
+      id: 'all_heal', name: 'オールヒール', icon: 'volunteer_activism',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 2, mpCost: 12, healAmount: 25 },
+        { level:  2, spCost: 2, mpCost: 15, healAmount: 35 },
+        { level:  3, spCost: 2, mpCost: 18, healAmount: 50 },
+        { level:  4, spCost: 3, mpCost: 22, healAmount: 70 },
+        { level:  5, spCost: 3, mpCost: 26, healAmount: 95 },
+        { level:  6, spCost: 3, mpCost: 30, healAmount: 125 },
+        { level:  7, spCost: 4, mpCost: 35, healAmount: 160 },
+        { level:  8, spCost: 4, mpCost: 40, healAmount: 200 },
+        { level:  9, spCost: 4, mpCost: 46, healAmount: 245 },
+        { level: 10, spCost: 6, mpCost: 55, healAmount: 300 }
+      ],
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体の HP を ${lc.healAmount} 回復する`,
+      execute: (caster, levelConfig, battle) => {
+        if (!battle) return;
+        const aliveParty = battle.party.filter(p => !p.isDead);
+        if (aliveParty.length === 0) return;
+        
+        for (const target of aliveParty) {
+          target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+        }
+        battle.renderEntities();
+      },
+      autoBattle: {
+        priority: 95,
+        check: (caster, levelConfig, context) => {
+          const aliveParty = context.party.filter(p => !p.isDead);
+          const injuredAllies = aliveParty.filter(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.6);
+          if (injuredAllies.length >= 2) return true;
+          
+          const criticallyInjured = aliveParty.filter(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.3);
+          if (criticallyInjured.length >= 1 && aliveParty.length > 1) return true;
+          
+          return null;
+        }
+      }
+    },
     // ─── Passive Skills ──────────────────────────────────────
     {
       id: 'regen', name: 'リジェネ', icon: 'favorite', type: 'passive',
@@ -186,23 +227,6 @@ export const priest = {
         { level: 10, spCost: 5, mpCost: 0, recoverHp: 120 }
       ],
       getDescription: (lc) => `自身の行動終了時に、HP を ${lc.recoverHp} 回復する`
-    },
-    {
-      id: 'divine_protection', name: '神の加護', icon: 'stars', type: 'passive',
-      maxLevel: 10,
-      levels: [
-        { level:  1, spCost: 1, mpCost: 0, chance:  5 },
-        { level:  2, spCost: 1, mpCost: 0, chance: 10 },
-        { level:  3, spCost: 1, mpCost: 0, chance: 15 },
-        { level:  4, spCost: 2, mpCost: 0, chance: 20 },
-        { level:  5, spCost: 2, mpCost: 0, chance: 25 },
-        { level:  6, spCost: 2, mpCost: 0, chance: 30 },
-        { level:  7, spCost: 3, mpCost: 0, chance: 35 },
-        { level:  8, spCost: 3, mpCost: 0, chance: 40 },
-        { level:  9, spCost: 3, mpCost: 0, chance: 45 },
-        { level: 10, spCost: 5, mpCost: 0, chance: 50 }
-      ],
-      getDescription: (lc) => `魔法攻撃時、${lc.chance}％ の確率で全体攻撃になる`
     }
   ]
 };
