@@ -1456,7 +1456,7 @@ class BattleManager {
                   this.showActionName(attacker.elementId, '追撃', 'text-yellow-400', 'border-yellow-500/50');
                   this.executeAttack(attacker, currentTarget, true, {
                     actionName: '追撃',
-                    damageMultiplier: 0.5,
+                    damageMultiplier: plusOneSkill.levelConfig.multiplier || 0.5,
                     damageType: 'ability',
                     hideActionName: true
                   });

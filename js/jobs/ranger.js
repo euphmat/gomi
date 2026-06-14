@@ -151,18 +151,18 @@ export const ranger = {
       id: 'plus_one', name: 'プラスワン', icon: 'exposure_plus_1', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, hits: 1 },
-        { level:  2, spCost: 1, mpCost: 0, hits: 1 },
-        { level:  3, spCost: 1, mpCost: 0, hits: 1 },
-        { level:  4, spCost: 2, mpCost: 0, hits: 2 },
-        { level:  5, spCost: 2, mpCost: 0, hits: 2 },
-        { level:  6, spCost: 2, mpCost: 0, hits: 2 },
-        { level:  7, spCost: 3, mpCost: 0, hits: 3 },
-        { level:  8, spCost: 3, mpCost: 0, hits: 3 },
-        { level:  9, spCost: 3, mpCost: 0, hits: 3 },
-        { level: 10, spCost: 5, mpCost: 0, hits: 4 }
+        { level:  1, spCost: 1, mpCost: 0, hits: 1, multiplier: 0.5 },
+        { level:  2, spCost: 1, mpCost: 0, hits: 1, multiplier: 0.55 },
+        { level:  3, spCost: 1, mpCost: 0, hits: 1, multiplier: 0.6 },
+        { level:  4, spCost: 2, mpCost: 0, hits: 2, multiplier: 0.65 },
+        { level:  5, spCost: 2, mpCost: 0, hits: 2, multiplier: 0.7 },
+        { level:  6, spCost: 2, mpCost: 0, hits: 2, multiplier: 0.75 },
+        { level:  7, spCost: 3, mpCost: 0, hits: 3, multiplier: 0.8 },
+        { level:  8, spCost: 3, mpCost: 0, hits: 3, multiplier: 0.85 },
+        { level:  9, spCost: 3, mpCost: 0, hits: 3, multiplier: 0.9 },
+        { level: 10, spCost: 5, mpCost: 0, hits: 4, multiplier: 1.0 }
       ],
-      getDescription: (lc) => `通常攻撃時、必ず ${lc.hits} 回追撃する。追撃ダメージの威力は通常の半分（1/2）となる`
+      getDescription: (lc) => `通常攻撃時、必ず ${lc.hits} 回追撃する。追撃ダメージの威力は通常の ${lc.multiplier} 倍となる`
     },
     {
       id: 'double_act', name: 'ダブルアクト', icon: 'flip', type: 'passive',
