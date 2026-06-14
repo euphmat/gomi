@@ -352,7 +352,7 @@ export async function renderMedalTab() {
 
         materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
           const row = document.createElement('div');
-          row.className = `flex flex-col justify-between p-1.5 rounded-lg border transition-colors ${
+          row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
             sufficient
               ? 'bg-slate-950/40 border-slate-800/50'
               : 'bg-red-950/20 border-red-800/30'
@@ -364,17 +364,14 @@ export async function renderMedalTab() {
             : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
 
           row.innerHTML = `
-            <div class="flex items-center gap-1.5 min-w-0 w-full mb-1">
+            <div class="flex items-center gap-1 min-w-0 flex-1 pr-1">
               <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">${matImage}</div>
-              <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
+              <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
             </div>
-            <div class="flex items-center justify-between w-full pl-0.5">
-              <span class="text-[8px] text-slate-500 font-bold">所持</span>
-              <div class="flex items-center gap-0.5 shrink-0">
-                <span class="text-[9px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
-                <span class="text-[8px] text-slate-500 font-bold">/</span>
-                <span class="text-[9px] font-bold text-slate-400">${required.toLocaleString()}</span>
-              </div>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <span class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
+              <span class="text-[11px] text-slate-500 font-bold">/</span>
+              <span class="text-[12px] font-bold text-slate-400">${required.toLocaleString()}</span>
             </div>
           `;
           materialsGrid.appendChild(row);
@@ -383,25 +380,22 @@ export async function renderMedalTab() {
         // ゴールドコスト
         const goldRow = document.createElement('div');
         const goldSufficient = currentGold >= goldCost;
-        goldRow.className = `flex flex-col justify-between p-1.5 rounded-lg border transition-colors ${
+        goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
           goldSufficient
             ? 'bg-slate-950/40 border-slate-800/50'
             : 'bg-red-950/20 border-red-800/30'
         }`;
         goldRow.innerHTML = `
-          <div class="flex items-center gap-1.5 min-w-0 w-full mb-1">
+          <div class="flex items-center gap-1 min-w-0 flex-1 pr-1">
             <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">
               <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1">paid</span>
             </div>
-            <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
+            <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
           </div>
-          <div class="flex items-center justify-between w-full pl-0.5">
-            <span class="text-[8px] text-slate-500 font-bold">所持</span>
-            <div class="flex items-center gap-0.5 shrink-0">
-              <span class="text-[9px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
-              <span class="text-[8px] text-slate-500 font-bold">/</span>
-              <span class="text-[9px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
-            </div>
+          <div class="flex items-center gap-0.5 shrink-0">
+            <span class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
+            <span class="text-[11px] text-slate-500 font-bold">/</span>
+            <span class="text-[12px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
           </div>
         `;
         materialsGrid.appendChild(goldRow);
