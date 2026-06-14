@@ -1,5 +1,6 @@
 import { renderShopTab } from './shop-tabs/shop-tab.js';
 import { renderStorageTab } from './shop-tabs/storage-tab.js';
+import { renderMedalTab } from './shop-tabs/medal-tab.js';
 
 /**
  * このファイルは「ショップ」画面のメインコンテナです。
@@ -12,7 +13,8 @@ export function renderShopPage() {
   // タブの定義
   const TABS = [
     { id: 'shop', label: 'ショップ', icon: 'storefront' },
-    { id: 'storage', label: '倉庫', icon: 'inventory_2' }
+    { id: 'storage', label: '倉庫', icon: 'inventory_2' },
+    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech' }
   ];
   
   let activeTabId = 'shop';
@@ -69,6 +71,9 @@ export function renderShopPage() {
         break;
       case 'storage':
         tabContent = renderStorageTab();
+        break;
+      case 'medal':
+        tabContent = renderMedalTab();
         break;
     }
 

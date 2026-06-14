@@ -4,6 +4,7 @@ import { DUNGEONS } from '../definitions/dungeons.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../data/stat-calculator.js';
 import { JOBS } from '../jobs/index.js';
+import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
@@ -66,6 +67,7 @@ class BattleManager {
 
     this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
     this.monsterKills = await GameDB.getGameState('monster_kills') || {};
+    this.playerMedals = await GameDB.getGameState('player_medals') || {};
     this.discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
     this.currentGold = await GameDB.getGameState('gold') || 0;
     this.ranchData = await GameDB.getGameState('ranch_data') || {};
@@ -828,7 +830,7 @@ class BattleManager {
       targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
     }
 
-    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData);
+    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData, this.playerMedals);
     this.elements.tabContent.innerHTML = html;
   }
 
@@ -1961,9 +1963,12 @@ class BattleManager {
       this._needsSave = true;
     }
 
-    // Increment and save monster kill counts
+    // Increment and save monster kill counts (with medal bonus)
     if (this.monsterKills) {
-      this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + 1;
+      const medalRankIndex = (this.playerMedals && this.playerMedals[enemy.id] !== undefined)
+        ? this.playerMedals[enemy.id] : -1;
+      const medalBonus = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex].killBonus : 0;
+      this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + 1 + medalBonus;
       this._needsSave = true;
     }
 

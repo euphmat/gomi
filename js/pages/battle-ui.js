@@ -150,7 +150,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   `;
 }
 
-export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills, ranchData = {}) {
+export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills, ranchData = {}, playerMedals = {}) {
   if (!targetEntity) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full" style="font-family: system-ui, -apple-system, sans-serif;">対象が選択されていません</div>';
   }
@@ -158,6 +158,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   let html = '';
   const kills = (monsterKills && targetEntity.id) ? (monsterKills[targetEntity.id] || 0) : 0;
   const bonus = Math.floor(kills / 100) * 0.1;
+  const medalRankIndex = (playerMedals && targetEntity.id && playerMedals[targetEntity.id] !== undefined) ? playerMedals[targetEntity.id] : -1;
 
   let dropsHtml = '';
   if (targetEntity.drops && targetEntity.drops.length > 0) {
@@ -284,7 +285,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
               <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
               <div class="flex gap-1 items-center">
                 <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${currentFloorNum || 1}</span>
-                <span class="text-slate-400 text-[9px] font-black bg-slate-950/80 border border-slate-800/85 px-1.5 py-0.5 rounded shrink-0">討伐: <span class="text-red-400 font-extrabold">${kills}</span></span>
+                <span class="text-slate-400 text-[9px] font-black bg-slate-950/80 border border-slate-800/85 px-1.5 py-0.5 rounded shrink-0">討伐: <span class="text-red-400 font-extrabold">${kills}</span>${medalRankIndex >= 0 ? `<span class="text-amber-400 ml-1">🏅+${medalRankIndex + 2}</span>` : ''}</span>
               </div>
             </div>
             <!-- Status Badges -->
