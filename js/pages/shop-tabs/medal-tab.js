@@ -11,40 +11,22 @@ import { calcItemsPerPage } from '../../data/page-utils.js';
  * モンスターの素材とゴールドを消費してメダルを作成・ランクアップできる機能です。
  * メダルを所持していると、対象モンスターの討伐時に討伐数ボーナスが加算されます。
  */
-export async function renderMedalTab() {
+export function renderMedalTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full overflow-hidden';
 
-  // --- データ読み込み ---
-  let playerMedals = await GameDB.getGameState('player_medals') || {};
-  let currentGold = await GameDB.getGameState('gold') || 0;
-  let inventoryItems = await GameDB.getAllInventory();
-  let discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
-  let unlockedDungeons = await GameDB.getGameState('unlocked_dungeons') || [];
-
-  const inventoryMap = {};
-  inventoryItems.forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
-
-  // モンスターID -> ダンジョンIDのマッピングを作成
+  // --- 状態管理 ---
+  let playerMedals = {};
+  let currentGold = 0;
+  let inventoryMap = {};
+  let discoveredMonsters = [];
+  let unlockedDungeons = [];
+  let allAvailableMonsters = [];
   const monsterToDungeonMap = {};
-  DUNGEONS.forEach(d => {
-    d.floors?.forEach(f => {
-      f.monsters?.forEach(mGroup => {
-        Object.keys(mGroup).forEach(key => {
-          if (key !== 'weight') {
-            if (!monsterToDungeonMap[key]) monsterToDungeonMap[key] = d.id;
-          }
-        });
-      });
-    });
-  });
-
-  // 発見済みモンスターのみ抽出
-  const allAvailableMonsters = MONSTERS.filter(m => discoveredMonsters.includes(m.id));
 
   let selectedDungeonId = 'all';
   let currentPage = 1;
-  let selectedMonsterId = allAvailableMonsters.find(m => m.id === 'slime_blue') ? 'slime_blue' : (allAvailableMonsters.length > 0 ? allAvailableMonsters[0].id : null);
+  let selectedMonsterId = null;
 
   // --- ヘッダー ---
   const headerEl = document.createElement('div');
@@ -484,7 +466,40 @@ export async function renderMedalTab() {
     renderPagination(totalPages);
   };
 
-  render();
+  Promise.all([
+    GameDB.getGameState('player_medals'),
+    GameDB.getGameState('gold'),
+    GameDB.getAllInventory(),
+    GameDB.getGameState('discovered_monsters'),
+    GameDB.getGameState('unlocked_dungeons')
+  ]).then(([pMedals, gold, invItems, dMonsters, uDungeons]) => {
+    playerMedals = pMedals || {};
+    currentGold = gold || 0;
+    
+    (invItems || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
+    discoveredMonsters = dMonsters || [];
+    unlockedDungeons = uDungeons || [];
+
+    // モンスターID -> ダンジョンIDのマッピングを作成
+    DUNGEONS.forEach(d => {
+      d.floors?.forEach(f => {
+        f.monsters?.forEach(mGroup => {
+          Object.keys(mGroup).forEach(key => {
+            if (key !== 'weight') {
+              if (!monsterToDungeonMap[key]) monsterToDungeonMap[key] = d.id;
+            }
+          });
+        });
+      });
+    });
+
+    // 発見済みモンスターのみ抽出
+    allAvailableMonsters = MONSTERS.filter(m => discoveredMonsters.includes(m.id));
+    selectedMonsterId = allAvailableMonsters.find(m => m.id === 'slime_blue') ? 'slime_blue' : (allAvailableMonsters.length > 0 ? allAvailableMonsters[0].id : null);
+
+    updateHeader();
+    render();
+  });
 
   container.appendChild(headerEl);
   container.appendChild(detailContainer);
