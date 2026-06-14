@@ -31,7 +31,7 @@ export function getMedalImageFilter(rankId) {
     case 'gold':    return 'sepia(1) saturate(2.5) brightness(1.2) hue-rotate(10deg)';
     case 'diamond': return 'brightness(1.4) contrast(1.2) saturate(0.5)';
     case 'saint':   return 'brightness(1.6) saturate(0.3) contrast(0.9)';
-    case 'black':   return 'brightness(0.2) contrast(1.5)';
+    case 'black':   return 'grayscale(1) brightness(0.4) contrast(1.2)';
     case 'stela':   return 'none';
     default:        return 'none';
   }
