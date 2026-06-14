@@ -326,7 +326,7 @@ export function renderMonsterLibraryTab() {
           ? `<div class="${containerClass}"><img src="${itemDef.image}" class="${imgClass}" onerror="this.style.display='none'"></div>` 
           : `<div class="${containerClass}"><span class="material-symbols-outlined text-[16px] text-gray-500 normal-case">category</span></div>`;
 
-        const rate = Math.min(100, parseFloat(drop.rate) + bonus);
+        const rate = parseFloat(drop.rate) + bonus;
         const rateStr = rate.toFixed(2).replace(/\.?0+$/, '');
         const rateValue = isDefeated ? `${rateStr}%` : '???%';
         const rateColor = isDefeated ? 'text-blue-400' : 'text-gray-600';

@@ -170,7 +170,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
       
       let badgeClass = '';
-      const rate = targetEntity.isLegendary ? 100 : Math.min(100, parseFloat(d.rate) + bonus);
+      const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus;
       if (rate <= 0.1) {
         badgeClass = 'bg-amber-950/80 text-amber-400 border border-amber-500/40 shadow-[0_0_6px_rgba(245,158,11,0.2)]';
       } else if (rate <= 2.0) {
