@@ -349,7 +349,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         <!-- Left Column: Image & Level -->
         <div id="feed-modal-img-box" class="w-28 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative shadow-inner z-20">
           <div class="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent blur-xl rounded-full"></div>
-          <div class="relative w-20 h-20 mb-3 z-10">
+          <div class="relative w-20 h-20 mb-3 z-10 ${isLegendary ? 'animate-rainbow' : ''}">
             <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] animate-bounce" style="animation-duration: 3s;">
           </div>
           <span id="feed-modal-level" class="relative z-10 inline-block text-[12px] text-pink-300 font-black bg-slate-950 px-4 py-1 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.4)] border border-pink-500/40">Lv.${currentLevel}</span>
