@@ -2088,11 +2088,21 @@ class BattleManager {
       const kills = this.monsterKills[enemy.id] || 0;
       const bonus = Math.floor(kills / 100) * 0.1;
       for (const drop of enemy.drops) {
-        const adjustedRate = Math.min(100, drop.rate + bonus);
-        if (enemy.isLegendary || Math.random() * 100 <= adjustedRate) {
+        const adjustedRate = drop.rate + bonus;
+        
+        let dropCount = 0;
+        if (enemy.isLegendary) {
+          dropCount = 100;
+        } else {
+          dropCount = Math.floor(adjustedRate / 100);
+          if (Math.random() * 100 <= (adjustedRate % 100)) {
+            dropCount += 1;
+          }
+        }
+
+        if (dropCount > 0) {
           const mat = MATERIALS_MAP.get(drop.itemId);
           if (mat) {
-            const dropCount = enemy.isLegendary ? 100 : 1;
             if (!this._pendingItemDrops) this._pendingItemDrops = {};
             this._pendingItemDrops[mat.id] = (this._pendingItemDrops[mat.id] || 0) + dropCount;
             this._needsSave = true;
