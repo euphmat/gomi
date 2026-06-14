@@ -62,12 +62,17 @@ export async function renderMedalTab() {
         <span class="material-symbols-outlined text-amber-400 text-lg" style="font-variation-settings: 'FILL' 1">military_tech</span>
         <span class="text-sm font-black text-slate-200 tracking-wide">メダル鋳造</span>
       </div>
-      <div class="relative flex items-center">
-        <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" style="font-size: 16px;">filter_alt</span>
-        <select id="medal-dungeon-filter" class="appearance-none bg-slate-900/80 border border-slate-700/60 text-slate-300 text-xs font-bold rounded pl-7 pr-6 py-1 cursor-pointer outline-none focus:border-amber-500/50 shadow-inner w-40 hover:bg-slate-800 transition-colors">
-          ${dungeonOptions.join('')}
-        </select>
-        <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" style="font-size: 16px;">arrow_drop_down</span>
+      <div class="flex items-center gap-2">
+        <div class="relative flex items-center">
+          <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" style="font-size: 16px;">filter_alt</span>
+          <select id="medal-dungeon-filter" class="appearance-none bg-slate-900/80 border border-slate-700/60 text-slate-300 text-xs font-bold rounded pl-7 pr-6 py-1 cursor-pointer outline-none focus:border-amber-500/50 shadow-inner w-40 hover:bg-slate-800 transition-colors">
+            ${dungeonOptions.join('')}
+          </select>
+          <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" style="font-size: 16px;">arrow_drop_down</span>
+        </div>
+        <button id="btn-medal-help" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60 hover:bg-slate-700 hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-[16px]">help</span>
+        </button>
       </div>
     `;
 
@@ -85,6 +90,11 @@ export async function renderMedalTab() {
         }
         render();
       });
+    }
+
+    const helpBtn = headerEl.querySelector('#btn-medal-help');
+    if (helpBtn) {
+      helpBtn.onclick = showMedalHelpModal;
     }
   };
   updateHeader();
@@ -524,4 +534,77 @@ function showCraftSuccessAnimation(parentEl, rank, monster) {
     overlay.style.opacity = '0';
     setTimeout(() => overlay.remove(), 500);
   }, 2000);
+}
+
+/**
+ * メダルシステムのヘルプモーダルを表示する
+ */
+function showMedalHelpModal() {
+  if (document.getElementById('medal-help-modal')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'medal-help-modal';
+  overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]';
+
+  const modal = document.createElement('div');
+  modal.className = 'bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] overflow-hidden';
+
+  // ヘッダー
+  const header = document.createElement('div');
+  header.className = 'flex items-center justify-between p-4 border-b border-slate-800 bg-slate-950/50 shrink-0';
+  header.innerHTML = `
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-amber-400">military_tech</span>
+      <h3 class="text-sm font-black text-slate-200 tracking-wide">メダルシステムについて</h3>
+    </div>
+    <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-medal-help">
+      <span class="material-symbols-outlined text-lg">close</span>
+    </button>
+  `;
+
+  // コンテンツ
+  const content = document.createElement('div');
+  content.className = 'p-5 overflow-y-auto flex flex-col gap-5 text-sm text-slate-300 leading-relaxed';
+  content.innerHTML = `
+    <p>メダルは、特定のモンスター専用の証です。素材とゴールドを消費してメダルを「鋳造」または「ランクアップ」することができます。</p>
+    
+    <div class="bg-slate-950/40 border border-slate-800/60 p-4 rounded-xl flex flex-col gap-2 shadow-inner">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="material-symbols-outlined text-emerald-400">trending_up</span>
+        <span class="font-black text-slate-200">討伐数ボーナス</span>
+      </div>
+      <p class="text-xs">メダルを所持していると、対象のモンスターを倒した際に得られる<strong>討伐数</strong>にボーナスが加算されます。</p>
+      <p class="text-xs text-amber-300">例：討伐数 +4 のシルバーメダルを持っている場合、1匹倒すだけで 5匹分（基本1 + ボーナス4）の討伐数がカウントされます。</p>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <div class="font-black text-slate-200 border-b border-slate-800 pb-1">メダルランクと効果</div>
+      <div class="grid grid-cols-2 gap-2 mt-1">
+        ${MEDAL_RANKS.map(r => `
+          <div class="flex items-center gap-2 bg-slate-800/30 p-2 rounded-lg border border-slate-700/50">
+            <img src="${r.image}" class="w-6 h-6 object-contain" onerror="this.style.display='none'">
+            <div class="flex flex-col">
+              <span class="text-[10px] font-bold" style="color: ${r.color}">${r.name}</span>
+              <span class="text-[9px] text-emerald-400">討伐数 +${r.totalKillCount}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  modal.appendChild(header);
+  modal.appendChild(content);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  const closeModal = () => {
+    overlay.style.animation = 'fade-out 0.2s ease-out forwards';
+    setTimeout(() => overlay.remove(), 200);
+  };
+
+  header.querySelector('#btn-close-medal-help').onclick = closeModal;
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeModal();
+  };
 }
