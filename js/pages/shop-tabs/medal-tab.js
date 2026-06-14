@@ -204,7 +204,7 @@ export async function renderMedalTab() {
 
       // メダルビジュアル
       const medalVisual = document.createElement('div');
-      medalVisual.className = 'relative w-20 h-20 shrink-0 flex items-center justify-center';
+      medalVisual.className = 'relative w-16 h-16 shrink-0 flex items-center justify-center';
 
       if (currentRank) {
         const filter = getMedalImageFilter(currentRank.id);
@@ -239,8 +239,8 @@ export async function renderMedalTab() {
       } else {
         // メダルなし → モンスター画像のみ（シルエット風）
         medalVisual.innerHTML = `
-          <div class="w-16 h-16 rounded-full bg-slate-800/80 border-2 border-dashed border-slate-600/50 flex items-center justify-center">
-            <img src="${monster.image}" class="w-10 h-10 object-contain opacity-30" onerror="this.style.display='none'">
+          <div class="w-14 h-14 rounded-full bg-slate-800/80 border-2 border-dashed border-slate-600/50 flex items-center justify-center">
+            <img src="${monster.image}" class="w-8 h-8 object-contain opacity-30" onerror="this.style.display='none'">
           </div>
         `;
       }
@@ -273,7 +273,7 @@ export async function renderMedalTab() {
       // --- ランクアップ/作成セクション ---
       if (!isMaxRank && nextRank) {
         const craftSection = document.createElement('div');
-        craftSection.className = 'border-t border-slate-700/60 pt-3 flex flex-col gap-2';
+        craftSection.className = 'border-t border-slate-700/60 pt-2 flex flex-col gap-1.5';
 
         const actionLabel = currentRank ? 'ランクアップ' : '鋳造';
         const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
@@ -292,23 +292,15 @@ export async function renderMedalTab() {
 
         if (currentGold < goldCost) canCraft = false;
 
-        // ヘッダー（次のランク名と効果）
-        craftSection.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-black tracking-wide" style="color: ${nextRank.color}">${nextRank.name}</span>
-              <span class="text-[9px] text-emerald-400 font-bold bg-emerald-950/50 border border-emerald-500/30 px-1.5 py-0.5 rounded">討伐数 +${nextRank.totalKillCount}/討伐</span>
-            </div>
-          </div>
-        `;
+
 
         // 素材リスト
         const materialsGrid = document.createElement('div');
-        materialsGrid.className = 'flex flex-col gap-1';
+        materialsGrid.className = 'grid grid-cols-2 gap-1.5';
 
         materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
           const row = document.createElement('div');
-          row.className = `flex items-center justify-between p-1.5 rounded border transition-colors ${
+          row.className = `flex flex-col justify-between p-1.5 rounded-lg border transition-colors ${
             sufficient
               ? 'bg-slate-950/40 border-slate-800/50'
               : 'bg-red-950/20 border-red-800/30'
@@ -317,17 +309,20 @@ export async function renderMedalTab() {
           const matName = mat ? mat.name : '不明な素材';
           const matImage = mat && mat.image
             ? `<img src="${mat.image}" class="w-5 h-5 object-contain shrink-0 drop-shadow-sm">`
-            : `<span class="material-symbols-outlined text-slate-500 text-sm shrink-0">category</span>`;
+            : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
 
           row.innerHTML = `
-            <div class="flex items-center gap-1.5 min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 min-w-0 w-full mb-1">
               <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">${matImage}</div>
-              <span class="text-[9px] font-bold text-slate-300 truncate">${matName}</span>
+              <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
             </div>
-            <div class="flex items-center gap-1 shrink-0">
-              <span class="text-[9px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
-              <span class="text-[9px] text-slate-500 font-bold">/</span>
-              <span class="text-[9px] font-bold text-slate-400">${required.toLocaleString()}</span>
+            <div class="flex items-center justify-between w-full pl-0.5">
+              <span class="text-[8px] text-slate-500 font-bold">所持</span>
+              <div class="flex items-center gap-0.5 shrink-0">
+                <span class="text-[9px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
+                <span class="text-[8px] text-slate-500 font-bold">/</span>
+                <span class="text-[9px] font-bold text-slate-400">${required.toLocaleString()}</span>
+              </div>
             </div>
           `;
           materialsGrid.appendChild(row);
@@ -336,22 +331,25 @@ export async function renderMedalTab() {
         // ゴールドコスト
         const goldRow = document.createElement('div');
         const goldSufficient = currentGold >= goldCost;
-        goldRow.className = `flex items-center justify-between p-1.5 rounded border transition-colors ${
+        goldRow.className = `flex flex-col justify-between p-1.5 rounded-lg border transition-colors ${
           goldSufficient
             ? 'bg-slate-950/40 border-slate-800/50'
             : 'bg-red-950/20 border-red-800/30'
         }`;
         goldRow.innerHTML = `
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 min-w-0 w-full mb-1">
             <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">
-              <span class="material-symbols-outlined text-amber-400 text-sm" style="font-variation-settings: 'FILL' 1">paid</span>
+              <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1">paid</span>
             </div>
-            <span class="text-[9px] font-bold text-slate-300">ゴールド</span>
+            <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
           </div>
-          <div class="flex items-center gap-1 shrink-0">
-            <span class="text-[9px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
-            <span class="text-[9px] text-slate-500 font-bold">/</span>
-            <span class="text-[9px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
+          <div class="flex items-center justify-between w-full pl-0.5">
+            <span class="text-[8px] text-slate-500 font-bold">所持</span>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <span class="text-[9px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
+              <span class="text-[8px] text-slate-500 font-bold">/</span>
+              <span class="text-[9px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
+            </div>
           </div>
         `;
         materialsGrid.appendChild(goldRow);
@@ -361,14 +359,14 @@ export async function renderMedalTab() {
         // 作成/ランクアップボタン
         const craftBtn = document.createElement('button');
         craftBtn.className = `
-          w-full py-2.5 rounded-lg text-sm font-black tracking-wide transition-all duration-200
+          w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200
           ${canCraft
-            ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_16px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
+            ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
             : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
         `;
         craftBtn.innerHTML = `
-          <div class="flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-base">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
+          <div class="flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
             <span>${currentRank ? `${nextRank.name}へランクアップ` : `${nextRank.name}を鋳造`}</span>
           </div>
         `;
