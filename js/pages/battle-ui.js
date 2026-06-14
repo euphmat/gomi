@@ -1,3 +1,5 @@
+import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
+
 export function getActiveStateIconsHTML(entity) {
   if (!entity) return '';
   const icons = [];
@@ -270,6 +272,30 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     `;
   }
 
+  let medalPanelHtml = '';
+  if (medalRankIndex >= 0) {
+    const medal = MEDAL_RANKS[medalRankIndex];
+    medalPanelHtml = `
+      <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1 shadow-inner shrink-0 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background: ${medal.color}"></div>
+        <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center justify-between shrink-0 relative z-10">
+          <div class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px] text-amber-400">military_tech</span>メダル効果
+          </div>
+          <span class="text-[9px] px-1.5 py-0.5 rounded border bg-black/40" style="color: ${medal.color}; border-color: ${medal.color}50">${medal.name}</span>
+        </div>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="text-[9px] font-bold text-slate-300">討伐ボーナス</span>
+          <span class="text-[10px] font-black text-emerald-400">+${medal.killBonus}</span>
+        </div>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="text-[9px] font-bold text-slate-300">報酬 (EXP/JP/G)</span>
+          <span class="text-[10px] font-black text-yellow-400">${medal.rewardMultiplier.toFixed(1)}倍</span>
+        </div>
+      </div>
+    `;
+  }
+
   html = `
     <div class="h-full overflow-y-auto p-2 text-slate-300 flex flex-col gap-2.5 custom-scrollbar relative" style="font-family: system-ui, -apple-system, sans-serif;">
       <!-- Background Glow Effect -->
@@ -348,6 +374,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
               ${dropsHtml}
             </div>
           </div>
+          ${medalPanelHtml}
         </div>
       </div>
     </div>
