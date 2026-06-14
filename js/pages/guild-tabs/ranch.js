@@ -846,7 +846,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             <span class="material-symbols-outlined text-[16px]">group_add</span> ボーナスについて
           </h4>
           <p class="text-xs leading-relaxed text-slate-400">
-            パーティ編成時、牧場で育てた全モンスターのステータスの <span class="text-white font-bold">10%</span> がパーティ全体のボーナスとして加算されます。<br>色々なモンスターを育てて冒険を有利に進めましょう！
+            パーティ編成時、牧場で育てた全モンスターのステータスの <span class="text-white font-bold">10%</span>（HPのみ <span class="text-white font-bold">1%</span>）がパーティ全体のボーナスとして加算されます。<br>色々なモンスターを育てて冒険を有利に進めましょう！
           </p>
         </div>
       </div>

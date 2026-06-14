@@ -229,7 +229,8 @@ export async function calculateTotalRanchBonus() {
             }
           }
           const monsterCurrentStat = baseVal + growth;
-          const bonus = Math.max(1, Math.floor(monsterCurrentStat / 10));
+          const divisor = key === 'hp' ? 100 : 10;
+          const bonus = Math.max(1, Math.floor(monsterCurrentStat / divisor));
           totalBonus[key] += bonus;
         }
       }
