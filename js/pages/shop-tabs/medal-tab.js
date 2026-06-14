@@ -299,7 +299,6 @@ export async function renderMedalTab() {
               <span class="text-xs font-black tracking-wide" style="color: ${nextRank.color}">${nextRank.name}</span>
               <span class="text-[9px] text-emerald-400 font-bold bg-emerald-950/50 border border-emerald-500/30 px-1.5 py-0.5 rounded">討伐数 +${nextRank.totalKillCount}/討伐</span>
             </div>
-            <span class="text-[9px] text-slate-500 font-bold">${actionLabel}</span>
           </div>
         `;
 
