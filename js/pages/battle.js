@@ -237,7 +237,7 @@ class BattleManager {
       return;
     }
 
-    const N = this.enemies.length;
+    const N = this.enemies.filter(e => !e.isDead).length || 1;
     const cols = N;
     this.elements.enemyArea.style.setProperty('--enemy-cols', cols);
 
@@ -291,6 +291,9 @@ class BattleManager {
     if (document.hidden) return;
     const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
     if (!this.domCache) return;
+
+    const aliveEnemiesCount = this.enemies.filter(e => !e.isDead).length || 1;
+    this.elements.enemyArea.style.setProperty('--enemy-cols', aliveEnemiesCount);
 
     this.enemies.forEach(e => {
       const cache = this.domCache.enemies[e.elementId];
