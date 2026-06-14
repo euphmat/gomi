@@ -30,7 +30,7 @@ export const ranger = {
           for (let i = 0; i < 2; i++) {
             setTimeout(() => {
               if (target && !target.isDead) {
-                battle.executeAttack(caster, target, true, { actionName: 'ダブルアロー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: i > 0 });
+                battle.executeAttack(caster, target, true, { actionName: 'ダブルアロー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
               }
             }, i * 200 / battle.speedMult);
           }
@@ -72,7 +72,7 @@ export const ranger = {
           setTimeout(() => {
             const targets = battle.enemies.filter(e => !e.isDead);
             targets.forEach(target => {
-              battle.executeAttack(caster, target, true, { actionName: 'アローレイン', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: i > 0 });
+              battle.executeAttack(caster, target, true, { actionName: 'アローレイン', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
             });
           }, i * 300 / battle.speedMult);
         }
