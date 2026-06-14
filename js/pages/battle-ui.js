@@ -307,12 +307,9 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
           </div>
           <div class="flex flex-col flex-1 justify-center min-w-0">
-            <div class="flex justify-between items-center mb-1">
-              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow">${targetEntity.name}</span>
-              <div class="flex gap-1 items-center">
-                <span class="text-slate-400 text-[10px] font-bold bg-slate-950/80 border border-slate-800 px-1.5 py-0.5 rounded shrink-0">Lv.${currentFloorNum || 1}</span>
-                <span class="text-slate-400 text-[9px] font-black bg-slate-950/80 border border-slate-800/85 px-1.5 py-0.5 rounded shrink-0">討伐: <span class="text-red-400 font-extrabold">${kills}</span>${medalRankIndex >= 0 ? `<span class="text-amber-400 ml-1">🏅+${medalRankIndex + 2}</span>` : ''}</span>
-              </div>
+            <div class="flex items-center gap-2 mb-1 overflow-hidden">
+              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
+              <span class="text-red-300 text-[10px] font-black bg-red-950/60 border border-red-900/60 px-2 py-0.5 rounded-full shrink-0 tracking-wider">討伐: ${kills.toLocaleString()}</span>
             </div>
             <!-- Status Badges -->
             <div class="flex flex-wrap gap-1 mt-0.5">
