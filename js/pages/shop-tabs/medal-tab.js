@@ -3,6 +3,7 @@ import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS, getMedalImageFilter } from '../../definitions/medal-definitions.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
+import { calcItemsPerPage } from '../../data/page-utils.js';
 
 /**
  * メダル鋳造タブ
@@ -43,7 +44,7 @@ export async function renderMedalTab() {
 
   let selectedDungeonId = 'all';
   let currentPage = 1;
-  let selectedMonsterId = allAvailableMonsters.length > 0 ? allAvailableMonsters[0].id : null;
+  let selectedMonsterId = allAvailableMonsters.find(m => m.id === 'slime_blue') ? 'slime_blue' : (allAvailableMonsters.length > 0 ? allAvailableMonsters[0].id : null);
 
   // --- ヘッダー ---
   const headerEl = document.createElement('div');
@@ -99,20 +100,63 @@ export async function renderMedalTab() {
   };
   updateHeader();
 
-  // --- メインコンテンツ ---
-  const mainContent = document.createElement('div');
-  mainContent.className = 'flex-1 overflow-y-auto p-3 flex flex-col gap-3';
+  // --- コンテナ分割 ---
+  const detailContainer = document.createElement('div');
+  detailContainer.className = 'shrink-0 p-3 pb-2 border-b border-slate-800/60 bg-slate-900/40 z-10 shadow-sm';
+
+  const scrollContainer = document.createElement('div');
+  scrollContainer.className = 'flex-1 overflow-y-auto p-3 pt-2';
+
+  const paginationContainer = document.createElement('div');
+  paginationContainer.className = 'flex items-center justify-center gap-4 py-1.5 shrink-0 bg-slate-950/80 border-t border-slate-800';
+
+  const renderPagination = (totalPages) => {
+    paginationContainer.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
+    prevBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_left</span>';
+    prevBtn.onclick = () => {
+      if (currentPage > 1) {
+        currentPage--;
+        render();
+        scrollContainer.scrollTop = 0;
+      }
+    };
+
+    const pageIndicator = document.createElement('span');
+    pageIndicator.className = 'text-[10px] font-bold text-slate-400';
+    pageIndicator.textContent = `${currentPage} / ${totalPages}`;
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
+    nextBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_right</span>';
+    nextBtn.onclick = () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        render();
+        scrollContainer.scrollTop = 0;
+      }
+    };
+
+    paginationContainer.appendChild(prevBtn);
+    paginationContainer.appendChild(pageIndicator);
+    paginationContainer.appendChild(nextBtn);
+  };
 
   // --- 描画関数 ---
   const render = () => {
-    mainContent.innerHTML = '';
+    detailContainer.innerHTML = '';
+    scrollContainer.innerHTML = '';
+    paginationContainer.innerHTML = '';
 
     const availableMonsters = selectedDungeonId === 'all' 
       ? allAvailableMonsters 
       : allAvailableMonsters.filter(m => monsterToDungeonMap[m.id] === selectedDungeonId);
 
     if (availableMonsters.length === 0) {
-      mainContent.innerHTML = `
+      scrollContainer.innerHTML = `
         <div class="flex flex-col items-center justify-center h-full gap-4 text-center">
           <span class="material-symbols-outlined text-5xl text-slate-600">explore_off</span>
           <div class="text-slate-400 text-sm font-bold">モンスターが未発見です</div>
@@ -122,15 +166,252 @@ export async function renderMedalTab() {
       return;
     }
 
-    // --- モンスター選択グリッド ---
-    const monsterGrid = document.createElement('div');
-    monsterGrid.className = 'grid grid-cols-5 gap-1.5';
+    // --- 選択モンスター詳細 (Top) ---
+    if (selectedMonsterId) {
+      const monster = MONSTERS.find(m => m.id === selectedMonsterId);
+      if (monster) {
+        const currentRankIndex = playerMedals[selectedMonsterId] !== undefined ? playerMedals[selectedMonsterId] : -1;
+        const nextRankIndex = currentRankIndex + 1;
+        const isMaxRank = nextRankIndex >= MEDAL_RANKS.length;
+        const currentRank = currentRankIndex >= 0 ? MEDAL_RANKS[currentRankIndex] : null;
+        const nextRank = !isMaxRank ? MEDAL_RANKS[nextRankIndex] : null;
 
-    const itemsPerPage = 15;
-    const totalPages = Math.ceil(availableMonsters.length / itemsPerPage);
+        // --- メダル詳細パネル ---
+        const detailPanel = document.createElement('div');
+        detailPanel.className = 'bg-slate-900/80 border border-slate-700/60 rounded-xl p-3 flex flex-col gap-3 shadow-lg';
+
+        // 上部: モンスター情報 + メダルビジュアル
+        const topSection = document.createElement('div');
+        topSection.className = 'flex items-center gap-3';
+
+        // メダルビジュアル
+        const medalVisual = document.createElement('div');
+        medalVisual.className = 'relative w-16 h-16 shrink-0 flex items-center justify-center';
+
+        if (currentRank) {
+          const filter = getMedalImageFilter(currentRank.id);
+          
+          // パーティクルアニメーション（ダイアモンド）
+          let particlesHtml = '';
+          if (currentRank.id === 'diamond') {
+            particlesHtml = `
+              <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-full">
+                <div class="absolute w-1 h-1 bg-cyan-300 rounded-full animate-pulse" style="top: 20%; left: 30%; animation-delay: 0s; box-shadow: 0 0 4px 1px rgba(103,232,249,0.6)"></div>
+                <div class="absolute w-0.5 h-0.5 bg-white rounded-full animate-pulse" style="top: 60%; left: 70%; animation-delay: 0.3s; box-shadow: 0 0 3px 1px rgba(255,255,255,0.6)"></div>
+                <div class="absolute w-1 h-1 bg-cyan-200 rounded-full animate-pulse" style="top: 40%; left: 55%; animation-delay: 0.7s; box-shadow: 0 0 4px 1px rgba(165,243,252,0.6)"></div>
+                <div class="absolute w-0.5 h-0.5 bg-blue-200 rounded-full animate-pulse" style="top: 75%; left: 25%; animation-delay: 1.1s; box-shadow: 0 0 3px 1px rgba(191,219,254,0.6)"></div>
+              </div>
+            `;
+          }
+
+          // セイントの聖なるグロー
+          let saintGlow = '';
+          if (currentRank.id === 'saint') {
+            saintGlow = `<div class="absolute inset-0 rounded-full bg-yellow-100/20 blur-md animate-pulse pointer-events-none"></div>`;
+          }
+
+          medalVisual.innerHTML = `
+            ${saintGlow}
+            <div class="absolute inset-0 flex items-center justify-center p-[22%]">
+              <img src="${monster.image}" class="w-full h-full object-contain" style="filter: ${filter}" onerror="this.style.display='none'">
+            </div>
+            <img src="${currentRank.image}" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-lg pointer-events-none">
+            ${particlesHtml}
+          `;
+        } else {
+          // メダルなし → モンスター画像のみ（シルエット風）
+          medalVisual.innerHTML = `
+            <div class="w-14 h-14 rounded-full bg-slate-800/80 border-2 border-dashed border-slate-600/50 flex items-center justify-center">
+              <img src="${monster.image}" class="w-8 h-8 object-contain opacity-30" onerror="this.style.display='none'">
+            </div>
+          `;
+        }
+
+        // モンスター名・ランク情報
+        const infoSection = document.createElement('div');
+        infoSection.className = 'flex flex-col flex-1 min-w-0 gap-1';
+
+        let currentRankBadge = '';
+        if (currentRank) {
+          currentRankBadge = `
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-black px-1.5 py-0.5 rounded" style="background: ${currentRank.color}20; color: ${currentRank.color}; border: 1px solid ${currentRank.color}40">${currentRank.name}</span>
+            </div>
+          `;
+        } else {
+          currentRankBadge = `<span class="text-[10px] text-slate-500 font-bold">メダル未所持</span>`;
+        }
+
+        infoSection.innerHTML = `
+          <div class="font-black text-slate-100 text-sm tracking-wide truncate">${monster.name}</div>
+          ${currentRankBadge}
+        `;
+
+        topSection.appendChild(medalVisual);
+        topSection.appendChild(infoSection);
+        detailPanel.appendChild(topSection);
+
+        // --- ランクアップ/作成セクション ---
+        if (!isMaxRank && nextRank) {
+          const craftSection = document.createElement('div');
+          craftSection.className = 'border-t border-slate-700/60 pt-2 flex flex-col gap-1.5';
+
+          const actionLabel = currentRank ? 'ランクアップ' : '鋳造';
+          const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
+          const materialDrops = monster.drops || [];
+
+          // 必要素材チェック
+          let canCraft = true;
+          const materialRequirements = materialDrops.map(drop => {
+            const mat = MATERIALS.find(m => m.id === drop.itemId);
+            const owned = inventoryMap[drop.itemId] || 0;
+            const required = nextRank.materialQty;
+            const sufficient = owned >= required;
+            if (!sufficient) canCraft = false;
+            return { mat, itemId: drop.itemId, owned, required, sufficient };
+          });
+
+          if (currentGold < goldCost) canCraft = false;
+
+          // 素材リスト
+          const materialsGrid = document.createElement('div');
+          materialsGrid.className = 'grid grid-cols-2 gap-1.5';
+
+          materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
+            const row = document.createElement('div');
+            row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
+              sufficient
+                ? 'bg-slate-950/40 border-slate-800/50'
+                : 'bg-red-950/20 border-red-800/30'
+            }`;
+            
+            const matName = mat ? mat.name : '不明な素材';
+            const matImage = mat && mat.image
+              ? `<img src="${mat.image}" class="w-5 h-5 object-contain shrink-0 drop-shadow-sm">`
+              : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
+
+            row.innerHTML = `
+              <div class="flex items-center gap-1 min-w-0 flex-1 pr-1">
+                <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">${matImage}</div>
+                <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
+              </div>
+              <div class="flex items-center gap-0.5 shrink-0">
+                <span class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
+                <span class="text-[11px] text-slate-500 font-bold">/</span>
+                <span class="text-[12px] font-bold text-slate-400">${required.toLocaleString()}</span>
+              </div>
+            `;
+            materialsGrid.appendChild(row);
+          });
+
+          // ゴールドコスト
+          const goldRow = document.createElement('div');
+          const goldSufficient = currentGold >= goldCost;
+          goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
+            goldSufficient
+              ? 'bg-slate-950/40 border-slate-800/50'
+              : 'bg-red-950/20 border-red-800/30'
+          }`;
+          goldRow.innerHTML = `
+            <div class="flex items-center gap-1 min-w-0 flex-1 pr-1">
+              <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">
+                <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1">paid</span>
+              </div>
+              <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
+            </div>
+            <div class="flex items-center gap-0.5 shrink-0">
+              <span class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
+              <span class="text-[11px] text-slate-500 font-bold">/</span>
+              <span class="text-[12px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
+            </div>
+          `;
+          materialsGrid.appendChild(goldRow);
+
+          craftSection.appendChild(materialsGrid);
+
+          // 作成/ランクアップボタン
+          const craftBtn = document.createElement('button');
+          craftBtn.className = `
+            w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200
+            ${canCraft
+              ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
+              : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
+          `;
+          craftBtn.innerHTML = `
+            <div class="flex items-center justify-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
+              <span>${currentRank ? `${nextRank.name}へランクアップ` : `${nextRank.name}を鋳造`}</span>
+            </div>
+          `;
+
+          if (canCraft) {
+            craftBtn.onclick = async () => {
+              // 素材消費
+              for (const drop of materialDrops) {
+                const invItem = await GameDB.getInventoryItem(drop.itemId);
+                if (invItem) {
+                  invItem.quantity -= nextRank.materialQty;
+                  if (invItem.quantity <= 0) {
+                    await GameDB.deleteInventoryItem(drop.itemId);
+                  } else {
+                    await GameDB.putInventoryItem(invItem);
+                  }
+                  inventoryMap[drop.itemId] = Math.max(0, (inventoryMap[drop.itemId] || 0) - nextRank.materialQty);
+                }
+              }
+
+              // ゴールド消費
+              currentGold -= goldCost;
+              await GameDB.setGameState('gold', currentGold);
+
+              // メダルランクを保存
+              playerMedals[selectedMonsterId] = nextRankIndex;
+              await GameDB.setGameState('player_medals', playerMedals);
+
+              // ヘッダーのゴールド表示も更新
+              const goldDisplay = document.getElementById('header-gold-display');
+              if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+
+              // 成功演出
+              showCraftSuccessAnimation(container, nextRank, monster);
+
+              // UI再描画
+              updateHeader();
+              render();
+            };
+          }
+
+          craftSection.appendChild(craftBtn);
+          detailPanel.appendChild(craftSection);
+        } else if (isMaxRank) {
+          // 最大ランク到達
+          const maxSection = document.createElement('div');
+          maxSection.className = 'border-t border-slate-700/60 pt-3 flex flex-col items-center gap-2 text-center';
+          maxSection.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg text-amber-400 animate-pulse" style="font-variation-settings: 'FILL' 1">stars</span>
+              <span class="text-sm font-black text-amber-300 tracking-wide">最高ランク到達</span>
+              <span class="material-symbols-outlined text-lg text-amber-400 animate-pulse" style="font-variation-settings: 'FILL' 1">stars</span>
+            </div>
+            <span class="text-[10px] text-slate-400 font-bold">このモンスターのメダルは最高ランクに到達しています</span>
+          `;
+          detailPanel.appendChild(maxSection);
+        }
+
+        detailContainer.appendChild(detailPanel);
+      }
+    }
+
+    // --- モンスター選択グリッド (Bottom) ---
+    const monsterGrid = document.createElement('div');
+    monsterGrid.className = 'grid grid-cols-5 gap-1.5 content-start';
+
+    // Tailwind .w-11 .h-11 corresponds to 44px + text = roughly 66px cell height. gap-1.5 is 6px.
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode: 'grid', scrollContainer, gridItemHeight: 76, gridCols: 5 });
+    const totalPages = Math.ceil(availableMonsters.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
     
-    const pageMonsters = availableMonsters.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const pageMonsters = availableMonsters.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     pageMonsters.forEach(monster => {
       const isSelected = monster.id === selectedMonsterId;
@@ -199,287 +480,16 @@ export async function renderMedalTab() {
       monsterGrid.appendChild(btn);
     });
 
-    mainContent.appendChild(monsterGrid);
-
-    if (totalPages > 1) {
-      const paginationContainer = document.createElement('div');
-      paginationContainer.className = 'flex items-center justify-center gap-4 py-1.5 shrink-0';
-
-      const prevBtn = document.createElement('button');
-      prevBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
-      prevBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_left</span>';
-      prevBtn.onclick = () => {
-        if (currentPage > 1) {
-          currentPage--;
-          render();
-        }
-      };
-
-      const pageIndicator = document.createElement('span');
-      pageIndicator.className = 'text-[10px] font-bold text-slate-400';
-      pageIndicator.textContent = `${currentPage} / ${totalPages}`;
-
-      const nextBtn = document.createElement('button');
-      nextBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
-      nextBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_right</span>';
-      nextBtn.onclick = () => {
-        if (currentPage < totalPages) {
-          currentPage++;
-          render();
-        }
-      };
-
-      paginationContainer.appendChild(prevBtn);
-      paginationContainer.appendChild(pageIndicator);
-      paginationContainer.appendChild(nextBtn);
-      mainContent.appendChild(paginationContainer);
-    }
-
-    // --- 選択モンスター詳細 ---
-    if (selectedMonsterId) {
-      const monster = MONSTERS.find(m => m.id === selectedMonsterId);
-      if (!monster) return;
-
-      const currentRankIndex = playerMedals[selectedMonsterId] !== undefined ? playerMedals[selectedMonsterId] : -1;
-      const nextRankIndex = currentRankIndex + 1;
-      const isMaxRank = nextRankIndex >= MEDAL_RANKS.length;
-      const currentRank = currentRankIndex >= 0 ? MEDAL_RANKS[currentRankIndex] : null;
-      const nextRank = !isMaxRank ? MEDAL_RANKS[nextRankIndex] : null;
-
-      // --- メダル詳細パネル ---
-      const detailPanel = document.createElement('div');
-      detailPanel.className = 'bg-slate-900/80 border border-slate-700/60 rounded-xl p-3 flex flex-col gap-3 shadow-lg';
-
-      // 上部: モンスター情報 + メダルビジュアル
-      const topSection = document.createElement('div');
-      topSection.className = 'flex items-center gap-3';
-
-      // メダルビジュアル
-      const medalVisual = document.createElement('div');
-      medalVisual.className = 'relative w-16 h-16 shrink-0 flex items-center justify-center';
-
-      if (currentRank) {
-        const filter = getMedalImageFilter(currentRank.id);
-        
-        // パーティクルアニメーション（ダイアモンド）
-        let particlesHtml = '';
-        if (currentRank.id === 'diamond') {
-          particlesHtml = `
-            <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-full">
-              <div class="absolute w-1 h-1 bg-cyan-300 rounded-full animate-pulse" style="top: 20%; left: 30%; animation-delay: 0s; box-shadow: 0 0 4px 1px rgba(103,232,249,0.6)"></div>
-              <div class="absolute w-0.5 h-0.5 bg-white rounded-full animate-pulse" style="top: 60%; left: 70%; animation-delay: 0.3s; box-shadow: 0 0 3px 1px rgba(255,255,255,0.6)"></div>
-              <div class="absolute w-1 h-1 bg-cyan-200 rounded-full animate-pulse" style="top: 40%; left: 55%; animation-delay: 0.7s; box-shadow: 0 0 4px 1px rgba(165,243,252,0.6)"></div>
-              <div class="absolute w-0.5 h-0.5 bg-blue-200 rounded-full animate-pulse" style="top: 75%; left: 25%; animation-delay: 1.1s; box-shadow: 0 0 3px 1px rgba(191,219,254,0.6)"></div>
-            </div>
-          `;
-        }
-
-        // セイントの聖なるグロー
-        let saintGlow = '';
-        if (currentRank.id === 'saint') {
-          saintGlow = `<div class="absolute inset-0 rounded-full bg-yellow-100/20 blur-md animate-pulse pointer-events-none"></div>`;
-        }
-
-        medalVisual.innerHTML = `
-          ${saintGlow}
-          <div class="absolute inset-0 flex items-center justify-center p-[22%]">
-            <img src="${monster.image}" class="w-full h-full object-contain" style="filter: ${filter}" onerror="this.style.display='none'">
-          </div>
-          <img src="${currentRank.image}" class="absolute inset-0 w-full h-full object-contain z-10 drop-shadow-lg pointer-events-none">
-          ${particlesHtml}
-        `;
-      } else {
-        // メダルなし → モンスター画像のみ（シルエット風）
-        medalVisual.innerHTML = `
-          <div class="w-14 h-14 rounded-full bg-slate-800/80 border-2 border-dashed border-slate-600/50 flex items-center justify-center">
-            <img src="${monster.image}" class="w-8 h-8 object-contain opacity-30" onerror="this.style.display='none'">
-          </div>
-        `;
-      }
-
-      // モンスター名・ランク情報
-      const infoSection = document.createElement('div');
-      infoSection.className = 'flex flex-col flex-1 min-w-0 gap-1';
-
-      let currentRankBadge = '';
-      if (currentRank) {
-        currentRankBadge = `
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-black px-1.5 py-0.5 rounded" style="background: ${currentRank.color}20; color: ${currentRank.color}; border: 1px solid ${currentRank.color}40">${currentRank.name}</span>
-          </div>
-        `;
-      } else {
-        currentRankBadge = `<span class="text-[10px] text-slate-500 font-bold">メダル未所持</span>`;
-      }
-
-      infoSection.innerHTML = `
-        <div class="font-black text-slate-100 text-sm tracking-wide truncate">${monster.name}</div>
-        ${currentRankBadge}
-      `;
-
-      topSection.appendChild(medalVisual);
-      topSection.appendChild(infoSection);
-      detailPanel.appendChild(topSection);
-
-      // --- ランクアップ/作成セクション ---
-      if (!isMaxRank && nextRank) {
-        const craftSection = document.createElement('div');
-        craftSection.className = 'border-t border-slate-700/60 pt-2 flex flex-col gap-1.5';
-
-        const actionLabel = currentRank ? 'ランクアップ' : '鋳造';
-        const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
-        const materialDrops = monster.drops || [];
-
-        // 必要素材チェック
-        let canCraft = true;
-        const materialRequirements = materialDrops.map(drop => {
-          const mat = MATERIALS.find(m => m.id === drop.itemId);
-          const owned = inventoryMap[drop.itemId] || 0;
-          const required = nextRank.materialQty;
-          const sufficient = owned >= required;
-          if (!sufficient) canCraft = false;
-          return { mat, itemId: drop.itemId, owned, required, sufficient };
-        });
-
-        if (currentGold < goldCost) canCraft = false;
-
-
-
-        // 素材リスト
-        const materialsGrid = document.createElement('div');
-        materialsGrid.className = 'grid grid-cols-2 gap-1.5';
-
-        materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
-          const row = document.createElement('div');
-          row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
-            sufficient
-              ? 'bg-slate-950/40 border-slate-800/50'
-              : 'bg-red-950/20 border-red-800/30'
-          }`;
-          
-          const matName = mat ? mat.name : '不明な素材';
-          const matImage = mat && mat.image
-            ? `<img src="${mat.image}" class="w-5 h-5 object-contain shrink-0 drop-shadow-sm">`
-            : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
-
-          row.innerHTML = `
-            <div class="flex items-center gap-1 min-w-0 flex-1 pr-1">
-              <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">${matImage}</div>
-              <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
-            </div>
-            <div class="flex items-center gap-0.5 shrink-0">
-              <span class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
-              <span class="text-[11px] text-slate-500 font-bold">/</span>
-              <span class="text-[12px] font-bold text-slate-400">${required.toLocaleString()}</span>
-            </div>
-          `;
-          materialsGrid.appendChild(row);
-        });
-
-        // ゴールドコスト
-        const goldRow = document.createElement('div');
-        const goldSufficient = currentGold >= goldCost;
-        goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
-          goldSufficient
-            ? 'bg-slate-950/40 border-slate-800/50'
-            : 'bg-red-950/20 border-red-800/30'
-        }`;
-        goldRow.innerHTML = `
-          <div class="flex items-center gap-1 min-w-0 flex-1 pr-1">
-            <div class="w-6 h-6 rounded bg-slate-900 flex items-center justify-center border border-slate-800 shrink-0">
-              <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1">paid</span>
-            </div>
-            <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
-          </div>
-          <div class="flex items-center gap-0.5 shrink-0">
-            <span class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
-            <span class="text-[11px] text-slate-500 font-bold">/</span>
-            <span class="text-[12px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
-          </div>
-        `;
-        materialsGrid.appendChild(goldRow);
-
-        craftSection.appendChild(materialsGrid);
-
-        // 作成/ランクアップボタン
-        const craftBtn = document.createElement('button');
-        craftBtn.className = `
-          w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200
-          ${canCraft
-            ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
-            : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
-        `;
-        craftBtn.innerHTML = `
-          <div class="flex items-center justify-center gap-1.5">
-            <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
-            <span>${currentRank ? `${nextRank.name}へランクアップ` : `${nextRank.name}を鋳造`}</span>
-          </div>
-        `;
-
-        if (canCraft) {
-          craftBtn.onclick = async () => {
-            // 素材消費
-            for (const drop of materialDrops) {
-              const invItem = await GameDB.getInventoryItem(drop.itemId);
-              if (invItem) {
-                invItem.quantity -= nextRank.materialQty;
-                if (invItem.quantity <= 0) {
-                  await GameDB.deleteInventoryItem(drop.itemId);
-                } else {
-                  await GameDB.putInventoryItem(invItem);
-                }
-                inventoryMap[drop.itemId] = Math.max(0, (inventoryMap[drop.itemId] || 0) - nextRank.materialQty);
-              }
-            }
-
-            // ゴールド消費
-            currentGold -= goldCost;
-            await GameDB.setGameState('gold', currentGold);
-
-            // メダルランクを保存
-            playerMedals[selectedMonsterId] = nextRankIndex;
-            await GameDB.setGameState('player_medals', playerMedals);
-
-            // ヘッダーのゴールド表示も更新
-            const goldDisplay = document.getElementById('header-gold-display');
-            if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
-
-            // 成功演出
-            showCraftSuccessAnimation(container, nextRank, monster);
-
-            // UI再描画
-            updateHeader();
-            render();
-          };
-        }
-
-        craftSection.appendChild(craftBtn);
-        detailPanel.appendChild(craftSection);
-      } else if (isMaxRank) {
-        // 最大ランク到達
-        const maxSection = document.createElement('div');
-        maxSection.className = 'border-t border-slate-700/60 pt-3 flex flex-col items-center gap-2 text-center';
-        maxSection.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-lg text-amber-400 animate-pulse" style="font-variation-settings: 'FILL' 1">stars</span>
-            <span class="text-sm font-black text-amber-300 tracking-wide">最高ランク到達</span>
-            <span class="material-symbols-outlined text-lg text-amber-400 animate-pulse" style="font-variation-settings: 'FILL' 1">stars</span>
-          </div>
-          <span class="text-[10px] text-slate-400 font-bold">このモンスターのメダルは最高ランクに到達しています</span>
-        `;
-        detailPanel.appendChild(maxSection);
-      }
-
-
-
-      mainContent.appendChild(detailPanel);
-    }
+    scrollContainer.appendChild(monsterGrid);
+    renderPagination(totalPages);
   };
 
   render();
 
   container.appendChild(headerEl);
-  container.appendChild(mainContent);
+  container.appendChild(detailContainer);
+  container.appendChild(scrollContainer);
+  container.appendChild(paginationContainer);
 
   return container;
 }
