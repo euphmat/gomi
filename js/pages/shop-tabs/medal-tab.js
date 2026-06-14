@@ -42,6 +42,7 @@ export async function renderMedalTab() {
   const allAvailableMonsters = MONSTERS.filter(m => discoveredMonsters.includes(m.id));
 
   let selectedDungeonId = 'all';
+  let currentPage = 1;
   let selectedMonsterId = allAvailableMonsters.length > 0 ? allAvailableMonsters[0].id : null;
 
   // --- ヘッダー ---
@@ -74,6 +75,7 @@ export async function renderMedalTab() {
     if (filterSelect) {
       filterSelect.addEventListener('change', (e) => {
         selectedDungeonId = e.target.value;
+        currentPage = 1;
         const availableNow = selectedDungeonId === 'all' 
           ? allAvailableMonsters 
           : allAvailableMonsters.filter(m => monsterToDungeonMap[m.id] === selectedDungeonId);
@@ -114,7 +116,13 @@ export async function renderMedalTab() {
     const monsterGrid = document.createElement('div');
     monsterGrid.className = 'grid grid-cols-5 gap-1.5';
 
-    availableMonsters.forEach(monster => {
+    const itemsPerPage = 15;
+    const totalPages = Math.ceil(availableMonsters.length / itemsPerPage);
+    if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
+    
+    const pageMonsters = availableMonsters.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    pageMonsters.forEach(monster => {
       const isSelected = monster.id === selectedMonsterId;
       const currentRankIndex = playerMedals[monster.id] !== undefined ? playerMedals[monster.id] : -1;
       const hasMedal = currentRankIndex >= 0;
@@ -170,7 +178,7 @@ export async function renderMedalTab() {
 
       btn.innerHTML = `
         ${gridVisualHtml}
-        <span class="text-[7px] font-bold ${isSelected ? 'text-amber-300' : hasMedal ? 'text-slate-300' : 'text-slate-500'} truncate w-full text-center leading-tight mt-0.5">${monster.name}</span>
+        <span class="text-[7px] font-bold ${isSelected ? 'text-amber-300' : hasMedal ? 'text-slate-300' : 'text-slate-500'} break-words line-clamp-2 w-full text-center leading-tight mt-0.5">${monster.name}</span>
       `;
 
       btn.onclick = () => {
@@ -182,6 +190,40 @@ export async function renderMedalTab() {
     });
 
     mainContent.appendChild(monsterGrid);
+
+    if (totalPages > 1) {
+      const paginationContainer = document.createElement('div');
+      paginationContainer.className = 'flex items-center justify-center gap-4 py-1.5 shrink-0';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
+      prevBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_left</span>';
+      prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          render();
+        }
+      };
+
+      const pageIndicator = document.createElement('span');
+      pageIndicator.className = 'text-[10px] font-bold text-slate-400';
+      pageIndicator.textContent = `${currentPage} / ${totalPages}`;
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
+      nextBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_right</span>';
+      nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          render();
+        }
+      };
+
+      paginationContainer.appendChild(prevBtn);
+      paginationContainer.appendChild(pageIndicator);
+      paginationContainer.appendChild(nextBtn);
+      mainContent.appendChild(paginationContainer);
+    }
 
     // --- 選択モンスター詳細 ---
     if (selectedMonsterId) {
