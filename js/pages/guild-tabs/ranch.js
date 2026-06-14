@@ -371,7 +371,8 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const getBonusFromStats = (monsterStats) => {
     const bonus = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
     for (const key of Object.keys(bonus)) {
-      bonus[key] = Math.max(1, Math.floor((monsterStats[key] || 0) / 10));
+      const divisor = key === 'hp' ? 100 : 10;
+      bonus[key] = Math.max(1, Math.floor((monsterStats[key] || 0) / divisor));
     }
     return bonus;
   };
