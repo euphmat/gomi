@@ -163,7 +163,43 @@ export async function renderRanchTab() {
     `;
     container.appendChild(styleEl);
 
-    Object.keys(monstersInDungeon).forEach((mId, index) => {
+    const monsterKeys = Object.keys(monstersInDungeon);
+    
+    // Initial random positions
+    let positions = monsterKeys.map(() => ({
+      x: 10 + Math.random() * 70,
+      y: 20 + Math.random() * 60
+    }));
+
+    // Apply repulsive force to spread monsters out
+    const iterations = 50;
+    const force = 1.0;
+    for (let i = 0; i < iterations; i++) {
+      for (let j = 0; j < positions.length; j++) {
+        for (let k = j + 1; k < positions.length; k++) {
+          const dx = positions[j].x - positions[k].x;
+          const dy = positions[j].y - positions[k].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < 18 && dist > 0) { // Repulsion radius
+            const pushX = (dx / dist) * force;
+            const pushY = (dy / dist) * force;
+            
+            positions[j].x += pushX;
+            positions[j].y += pushY;
+            positions[k].x -= pushX;
+            positions[k].y -= pushY;
+            
+            positions[j].x = Math.max(10, Math.min(80, positions[j].x));
+            positions[j].y = Math.max(20, Math.min(80, positions[j].y));
+            positions[k].x = Math.max(10, Math.min(80, positions[k].x));
+            positions[k].y = Math.max(20, Math.min(80, positions[k].y));
+          }
+        }
+      }
+    }
+
+    monsterKeys.forEach((mId, index) => {
       const isLegendary = mId.endsWith('_legendary');
       const baseId = isLegendary ? mId.replace('_legendary', '') : mId;
       const baseDef = MONSTERS_MAP.get(baseId);
@@ -175,11 +211,10 @@ export async function renderRanchTab() {
       const mEl = document.createElement('div');
       mEl.className = 'absolute cursor-pointer transition-transform hover:scale-110 active:scale-95 group';
       
-      // Random initial position
-      const left = 10 + Math.random() * 70;
-      const top = 20 + Math.random() * 60;
-      mEl.style.left = `${left}%`;
-      mEl.style.top = `${top}%`;
+      // Use calculated repelled position
+      const pos = positions[index];
+      mEl.style.left = `${pos.x}%`;
+      mEl.style.top = `${pos.y}%`;
       
       // Randomize animation delay to prevent sync
       const animDelay = Math.random() * -8;
@@ -187,7 +222,7 @@ export async function renderRanchTab() {
       mEl.innerHTML = `
         <div class="ranch-monster relative flex flex-col items-center" style="animation-delay: ${animDelay}s;">
            <div class="${isLegendary ? 'animate-rainbow' : ''}">
-             <img src="${mDef.image}" class="ranch-monster-img w-16 h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style="animation-delay: ${animDelay}s;" onerror="this.src='assets/monsters/slime.png'">
+             <img src="${mDef.image}" class="ranch-monster-img w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style="animation-delay: ${animDelay}s;" onerror="this.src='assets/monsters/slime.png'">
            </div>
            <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap pointer-events-none shadow-md z-10">
              Lv.${getRanchLevelInfo(mData.fedMaterials || 0, isLegendary).level}
