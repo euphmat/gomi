@@ -1,3 +1,134 @@
+// ─── Animation Utilities ──────────────────────────────────────
+const playSkillAnimation = (caster, targets, type, onImpact) => {
+  if (!Array.isArray(targets)) targets = [targets];
+  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  const casterEl = document.getElementById(caster.elementId);
+
+  const screenShake = (intensity = 3, duration = 150) => {
+    const container = document.getElementById('battle-scene-bg') || document.body;
+    container.animate([
+      { transform: `translate(${intensity}px, ${intensity}px)` },
+      { transform: `translate(-${intensity}px, -${intensity}px)` },
+      { transform: `translate(-${intensity}px, ${intensity}px)` },
+      { transform: `translate(${intensity}px, -${intensity}px)` },
+      { transform: `translate(0px, 0px)` }
+    ], { duration: 50, iterations: Math.ceil(duration / 50) });
+  };
+
+  const createHitSparks = (x, y, color = '#bef264') => {
+    for (let i = 0; i < 4; i++) {
+      const spark = document.createElement('div');
+      spark.style.position = 'fixed';
+      spark.style.left = `${x - 2}px`;
+      spark.style.top = `${y - 15}px`;
+      spark.style.width = '4px';
+      spark.style.height = '30px';
+      spark.style.background = color;
+      spark.style.boxShadow = `0 0 8px ${color}`;
+      spark.style.borderRadius = '2px';
+      spark.style.zIndex = '9999';
+      spark.style.pointerEvents = 'none';
+      document.body.appendChild(spark);
+
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 30 + Math.random() * 20;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+
+      const anim = spark.animate([
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
+      ], { duration: 200 + Math.random() * 100, easing: 'ease-out' });
+      
+      anim.onfinish = () => spark.remove();
+    }
+  };
+
+  targets.forEach((target, index) => {
+    const targetEl = document.getElementById(target.elementId);
+    if (!targetEl) {
+      if (onImpact) onImpact(target, index);
+      return;
+    }
+    
+    const targetRect = targetEl.getBoundingClientRect();
+    const tx = targetRect.left + targetRect.width / 2;
+    const ty = targetRect.top + targetRect.height / 2;
+
+    const casterRect = casterEl ? casterEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+    const cx = casterRect.left + casterRect.width / 2;
+    const cy = casterRect.top + casterRect.height / 2;
+
+    setTimeout(() => {
+      switch (type) {
+        case 'single_arrow': {
+          const arrow = document.createElement('div');
+          arrow.style.position = 'fixed';
+          arrow.style.left = `${cx - 20}px`;
+          arrow.style.top = `${cy - 2}px`;
+          arrow.style.width = '40px';
+          arrow.style.height = '4px';
+          arrow.style.background = 'linear-gradient(to right, transparent, #bef264, #fff)';
+          arrow.style.boxShadow = '0 0 5px #bef264';
+          arrow.style.zIndex = '9999';
+          arrow.style.pointerEvents = 'none';
+          document.body.appendChild(arrow);
+
+          const angle = Math.atan2(ty - cy, tx - cx);
+          const dist = Math.hypot(tx - cx, ty - cy);
+          const duration = 150;
+
+          const anim = arrow.animate([
+            { transform: `rotate(${angle}rad) translateX(0px)`, opacity: 0 },
+            { transform: `rotate(${angle}rad) translateX(${dist * 0.2}px)`, opacity: 1, offset: 0.2 },
+            { transform: `rotate(${angle}rad) translateX(${dist}px)`, opacity: 1 }
+          ], { duration: duration, easing: 'ease-in' });
+
+          anim.onfinish = () => {
+            arrow.remove();
+            createHitSparks(tx, ty);
+            screenShake(2, 100);
+            if (onImpact) onImpact(target, index);
+          };
+          break;
+        }
+        case 'arrow_rain': {
+          const arrow = document.createElement('div');
+          arrow.style.position = 'fixed';
+          arrow.style.left = `${tx - 2}px`;
+          arrow.style.top = `-50px`;
+          arrow.style.width = '4px';
+          arrow.style.height = '40px';
+          arrow.style.background = 'linear-gradient(to bottom, transparent, #86efac, #fff)';
+          arrow.style.boxShadow = '0 0 8px #86efac';
+          arrow.style.zIndex = '9999';
+          arrow.style.pointerEvents = 'none';
+          document.body.appendChild(arrow);
+
+          const fallDist = ty + 50;
+          
+          const anim = arrow.animate([
+            { transform: `translateY(0px)`, opacity: 1 },
+            { transform: `translateY(${fallDist}px)`, opacity: 1 }
+          ], { duration: 200, easing: 'ease-in' });
+
+          anim.onfinish = () => {
+            arrow.remove();
+            createHitSparks(tx, ty, '#86efac');
+            screenShake(3, 100);
+            if (onImpact) onImpact(target, index);
+          };
+          break;
+        }
+      }
+    }, index * 20);
+  });
+};
+
 export const ranger = {
   id: 'ranger',
   name: 'レンジャー',
@@ -27,12 +158,22 @@ export const ranger = {
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
+          battle.showActionName(caster.elementId, 'ダブルアロー', 'text-green-300', 'border-green-500/50');
           for (let i = 0; i < 2; i++) {
             setTimeout(() => {
               if (target && !target.isDead) {
-                battle.executeAttack(caster, target, true, { actionName: 'ダブルアロー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+                playSkillAnimation(caster, [target], 'single_arrow', () => {
+                  if (target.isDead) return;
+                  battle.executeAttack(caster, target, true, { 
+                    actionName: '', 
+                    damageMultiplier: levelConfig.multiplier, 
+                    damageType: 'skill', 
+                    hideActionName: true,
+                    skipAtbReset: i > 0
+                  });
+                });
               }
-            }, i * 200 / battle.speedMult);
+            }, i * 200 / (battle.speedMult || 1));
           }
         }
       },
@@ -68,13 +209,22 @@ export const ranger = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を3回行う`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
+        battle.showActionName(caster.elementId, 'アローレイン', 'text-green-300', 'border-green-500/50');
         for (let i = 0; i < 3; i++) {
           setTimeout(() => {
             const targets = battle.enemies.filter(e => !e.isDead);
-            targets.forEach(target => {
-              battle.executeAttack(caster, target, true, { actionName: 'アローレイン', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+            playSkillAnimation(caster, targets, 'arrow_rain', (target, idx) => {
+              if (target.isDead) return;
+              battle.executeAttack(caster, target, true, { 
+                actionName: '', 
+                damageMultiplier: levelConfig.multiplier, 
+                damageType: 'skill', 
+                hideActionName: true,
+                skipAtbReset: (i > 0) || (idx > 0),
+                isAoEProcessed: true
+              });
             });
-          }, i * 300 / battle.speedMult);
+          }, i * 300 / (battle.speedMult || 1));
         }
       },
       autoBattle: {
@@ -109,14 +259,24 @@ export const ranger = {
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         let hits = 15;
+        battle.showActionName(caster.elementId, '五月雨矢', 'text-green-300', 'border-green-500/50');
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
             const aliveEnemies = battle.enemies.filter(e => !e.isDead);
             if (aliveEnemies.length > 0) {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-              battle.executeAttack(caster, target, true, { actionName: '五月雨矢', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+              playSkillAnimation(caster, [target], 'arrow_rain', () => {
+                if (target.isDead) return;
+                battle.executeAttack(caster, target, true, { 
+                  actionName: '', 
+                  damageMultiplier: levelConfig.multiplier, 
+                  damageType: 'skill', 
+                  hideActionName: true,
+                  skipAtbReset: i > 0
+                });
+              });
             }
-          }, i * 100 / battle.speedMult);
+          }, i * 100 / (battle.speedMult || 1));
         }
       },
       autoBattle: {

@@ -1,3 +1,178 @@
+// ─── Animation Utilities ──────────────────────────────────────
+const playSkillAnimation = (caster, targets, type, onImpact) => {
+  if (!Array.isArray(targets)) targets = [targets];
+  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  const screenShake = (intensity = 5, duration = 300) => {
+    const container = document.getElementById('battle-scene-bg') || document.body;
+    container.animate([
+      { transform: `translate(${intensity}px, ${intensity}px)` },
+      { transform: `translate(-${intensity}px, -${intensity}px)` },
+      { transform: `translate(-${intensity}px, ${intensity}px)` },
+      { transform: `translate(${intensity}px, -${intensity}px)` },
+      { transform: `translate(0px, 0px)` }
+    ], { duration: 50, iterations: Math.ceil(duration / 50) });
+  };
+
+  const createExplosion = (x, y, color1, color2, shake = false) => {
+    if (shake) screenShake(shake.intensity || 4, shake.duration || 200);
+    const ex = document.createElement('div');
+    ex.style.position = 'fixed';
+    ex.style.left = `${x - 60}px`;
+    ex.style.top = `${y - 60}px`;
+    ex.style.width = '120px';
+    ex.style.height = '120px';
+    ex.style.borderRadius = '50%';
+    ex.style.background = `radial-gradient(circle, #fff, ${color2}, ${color1}, transparent)`;
+    ex.style.zIndex = '9999';
+    ex.style.pointerEvents = 'none';
+    ex.style.mixBlendMode = 'screen';
+    document.body.appendChild(ex);
+    
+    const anim = ex.animate([
+      { transform: 'scale(0.2)', opacity: 1 },
+      { transform: 'scale(1.5)', opacity: 0 }
+    ], { duration: 400, easing: 'ease-out' });
+    anim.onfinish = () => ex.remove();
+  };
+
+  const createIceShatter = (x, y, shake = false) => {
+    if (shake) screenShake(shake.intensity || 3, shake.duration || 150);
+    for (let i = 0; i < 6; i++) {
+      const crystal = document.createElement('div');
+      crystal.style.position = 'fixed';
+      crystal.style.left = `${x - 10}px`;
+      crystal.style.top = `${y - 10}px`;
+      crystal.style.width = '20px';
+      crystal.style.height = '20px';
+      crystal.style.background = '#e0ffff';
+      crystal.style.boxShadow = '0 0 8px #00bfff';
+      crystal.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+      crystal.style.zIndex = '9999';
+      crystal.style.pointerEvents = 'none';
+      document.body.appendChild(crystal);
+
+      const angle = (Math.PI * 2 / 6) * i;
+      const dist = 30 + Math.random() * 20;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+
+      const anim = crystal.animate([
+        { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0) rotate(${360 + Math.random()*360}deg)`, opacity: 0 }
+      ], { duration: 300 + Math.random() * 200, easing: 'ease-out' });
+      
+      anim.onfinish = () => crystal.remove();
+    }
+  };
+
+  targets.forEach((target, index) => {
+    const targetEl = document.getElementById(target.elementId);
+    if (!targetEl) {
+      if (onImpact) onImpact(target, index);
+      return;
+    }
+    
+    const targetRect = targetEl.getBoundingClientRect();
+    
+    const tx = targetRect.left + targetRect.width / 2;
+    const ty = targetRect.top + targetRect.height / 2;
+
+    setTimeout(() => {
+      switch (type) {
+        case 'flame_tongue': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 60}px`;
+          el.style.top = `${ty - 60}px`;
+          el.style.width = '120px';
+          el.style.height = '120px';
+          el.style.borderRight = '10px solid #ff4500';
+          el.style.borderBottom = '10px solid #ffeb3b';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 0 15px #ff4500';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          el.style.mixBlendMode = 'screen';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0.5) rotate(-45deg) translate(-50px, -50px)', opacity: 0 },
+            { transform: 'scale(1.2) rotate(45deg) translate(0px, 0px)', opacity: 1, offset: 0.5 },
+            { transform: 'scale(1.5) rotate(135deg) translate(30px, 30px)', opacity: 0 }
+          ], { duration: 300, easing: 'ease-in-out' });
+
+          anim.onfinish = () => {
+            el.remove();
+            createExplosion(tx, ty, '#ff4500', '#ffeb3b', { intensity: 5, duration: 200 });
+            if (onImpact) onImpact(target, index);
+          };
+          break;
+        }
+        case 'ice_brand': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 50}px`;
+          el.style.top = `${ty - 50}px`;
+          el.style.width = '100px';
+          el.style.height = '10px';
+          el.style.background = 'linear-gradient(to right, transparent, #e0ffff, #00bfff, transparent)';
+          el.style.boxShadow = '0 0 10px #00bfff';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const angle = Math.random() * 360;
+
+          const anim = el.animate([
+            { transform: `rotate(${angle}deg) scaleX(0.2) translateY(-20px)`, opacity: 0 },
+            { transform: `rotate(${angle}deg) scaleX(1.5) translateY(0px)`, opacity: 1, offset: 0.5 },
+            { transform: `rotate(${angle}deg) scaleX(0.2) translateY(20px)`, opacity: 0 }
+          ], { duration: 250, easing: 'ease-in-out' });
+
+          anim.onfinish = () => {
+            el.remove();
+            createIceShatter(tx, ty, { intensity: 2, duration: 100 });
+            if (onImpact) onImpact(target, index);
+          };
+          break;
+        }
+        case 'thunder_slash': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 80}px`;
+          el.style.top = `${ty - 80}px`;
+          el.style.width = '160px';
+          el.style.height = '160px';
+          el.style.borderLeft = '15px solid #ffff00';
+          el.style.borderTop = '15px solid #fff';
+          el.style.borderRadius = '50%';
+          el.style.filter = 'drop-shadow(0 0 15px #ffff00)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0.8) rotate(180deg)', opacity: 0 },
+            { transform: 'scale(1.2) rotate(270deg)', opacity: 1, offset: 0.3 },
+            { transform: 'scale(1.5) rotate(360deg)', opacity: 0 }
+          ], { duration: 350, easing: 'ease-out' });
+
+          anim.onfinish = () => {
+            el.remove();
+            createExplosion(tx, ty, '#ffff00', '#fff', { intensity: 4, duration: 200 });
+            if (onImpact) onImpact(target, index);
+          };
+          break;
+        }
+      }
+    }, index * 80);
+  });
+};
+
 export const magic_knight = {
   id: 'magic_knight',
   name: '魔法剣士',
@@ -32,13 +207,16 @@ export const magic_knight = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (!target) return;
 
-        battle.executeAttack(caster, target, true, {
-          actionName: 'フレイムタン',
-          damageMultiplier: levelConfig.multiplier,
-          damageType: 'skill',
-          isMagic: false,
-          isHybrid: true,
-          element: 'fire'
+        playSkillAnimation(caster, [target], 'flame_tongue', () => {
+          if (target.isDead) return;
+          battle.executeAttack(caster, target, true, {
+            actionName: 'フレイムタン',
+            damageMultiplier: levelConfig.multiplier,
+            damageType: 'skill',
+            isMagic: false,
+            isHybrid: true,
+            element: 'fire'
+          });
         });
       },
       autoBattle: {
@@ -83,16 +261,21 @@ export const magic_knight = {
             return;
           }
           const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          battle.executeAttack(caster, target, true, {
-            actionName: hitCount === 0 ? 'アイスブランド' : '',
-            damageMultiplier: levelConfig.multiplier,
-            damageType: 'skill',
-            isMagic: false,
-            isHybrid: true,
-            element: 'ice',
-            hideActionName: hitCount > 0
-          });
+          const currentHit = hitCount;
           hitCount++;
+          
+          playSkillAnimation(caster, [target], 'ice_brand', () => {
+            if (target.isDead) return;
+            battle.executeAttack(caster, target, true, {
+              actionName: currentHit === 0 ? 'アイスブランド' : '',
+              damageMultiplier: levelConfig.multiplier,
+              damageType: 'skill',
+              isMagic: false,
+              isHybrid: true,
+              element: 'ice',
+              hideActionName: currentHit > 0
+            });
+          });
         }, 300 / (battle.speedMult || 1));
       },
       autoBattle: {
@@ -129,7 +312,8 @@ export const magic_knight = {
         
         battle.showActionName(caster.elementId, 'サンダースラッシュ', 'text-yellow-300', 'border-yellow-500/50');
         
-        aliveEnemies.forEach(target => {
+        playSkillAnimation(caster, aliveEnemies, 'thunder_slash', (target, index) => {
+          if (target.isDead) return;
           battle.executeAttack(caster, target, true, {
             actionName: '',
             damageMultiplier: levelConfig.multiplier,
@@ -137,7 +321,9 @@ export const magic_knight = {
             isMagic: false,
             isHybrid: true,
             element: 'thunder',
-            hideActionName: true
+            hideActionName: true,
+            skipAtbReset: index > 0,
+            isAoEProcessed: true
           });
         });
       },

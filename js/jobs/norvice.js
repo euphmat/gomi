@@ -1,3 +1,160 @@
+// ─── Animation Utilities ──────────────────────────────────────
+const playSkillAnimation = (caster, targets, type, onImpact) => {
+  if (!Array.isArray(targets)) targets = [targets];
+  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  const screenShake = (intensity = 5, duration = 300) => {
+    const container = document.getElementById('battle-scene-bg') || document.body;
+    container.animate([
+      { transform: `translate(${intensity}px, ${intensity}px)` },
+      { transform: `translate(-${intensity}px, -${intensity}px)` },
+      { transform: `translate(-${intensity}px, ${intensity}px)` },
+      { transform: `translate(${intensity}px, -${intensity}px)` },
+      { transform: `translate(0px, 0px)` }
+    ], { duration: 50, iterations: Math.ceil(duration / 50) });
+  };
+
+  targets.forEach((target, index) => {
+    const targetEl = document.getElementById(target.elementId);
+    if (!targetEl) {
+      if (onImpact) onImpact(target, index);
+      return;
+    }
+    
+    const targetRect = targetEl.getBoundingClientRect();
+    const tx = targetRect.left + targetRect.width / 2;
+    const ty = targetRect.top + targetRect.height / 2;
+
+    setTimeout(() => {
+      switch (type) {
+        case 'first_aid': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 30}px`;
+          el.style.top = `${ty - 30}px`;
+          el.style.width = '60px';
+          el.style.height = '60px';
+          el.style.background = '#4ade80';
+          el.style.clipPath = 'polygon(35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%)';
+          el.style.boxShadow = '0 0 15px #4ade80';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0) translateY(20px)', opacity: 0 },
+            { transform: 'scale(1.2) translateY(0px)', opacity: 1, offset: 0.5 },
+            { transform: 'scale(1) translateY(-20px)', opacity: 0 }
+          ], { duration: 600, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          break;
+        }
+        case 'heavy_strike': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 50}px`;
+          el.style.top = `${ty - 50}px`;
+          el.style.width = '100px';
+          el.style.height = '100px';
+          el.style.background = 'radial-gradient(circle, #fff, #cbd5e1, transparent)';
+          el.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0.2) rotate(-45deg)', opacity: 0 },
+            { transform: 'scale(1.5) rotate(0deg)', opacity: 1, offset: 0.3 },
+            { transform: 'scale(2) rotate(45deg)', opacity: 0 }
+          ], { duration: 300, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          screenShake(4, 200);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 100);
+          break;
+        }
+        case 'focus': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 40}px`;
+          el.style.top = `${ty - 60}px`;
+          el.style.width = '80px';
+          el.style.height = '120px';
+          el.style.background = 'linear-gradient(to top, transparent, rgba(59, 130, 246, 0.8), rgba(96, 165, 250, 0.2))';
+          el.style.borderRadius = '50% 50% 10% 10%';
+          el.style.filter = 'blur(4px)';
+          el.style.zIndex = '9998';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scaleY(0)', opacity: 0, transformOrigin: 'bottom' },
+            { transform: 'scaleY(1.2)', opacity: 1, offset: 0.5, transformOrigin: 'bottom' },
+            { transform: 'scaleY(1.5)', opacity: 0, transformOrigin: 'bottom' }
+          ], { duration: 600, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          break;
+        }
+        case 'intimidate': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 40}px`;
+          el.style.top = `${ty - 80}px`;
+          el.style.width = '80px';
+          el.style.height = '80px';
+          el.style.background = 'radial-gradient(circle, #7e22ce, transparent)';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 0 20px #9333ea';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0.5) translateY(-20px)', opacity: 0 },
+            { transform: 'scale(1.5) translateY(0px)', opacity: 0.8, offset: 0.5 },
+            { transform: 'scale(2) translateY(20px)', opacity: 0 }
+          ], { duration: 500, easing: 'ease-in-out' });
+
+          anim.onfinish = () => el.remove();
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 250);
+          break;
+        }
+        case 'cleave': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 80}px`;
+          el.style.top = `${ty - 20}px`;
+          el.style.width = '160px';
+          el.style.height = '40px';
+          el.style.background = 'linear-gradient(to bottom, transparent, #fff, #94a3b8, transparent)';
+          el.style.borderRadius = '50%';
+          el.style.boxShadow = '0 0 10px #fff';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scaleX(0) translateX(-50px)', opacity: 0 },
+            { transform: 'scaleX(1.2) translateX(0px)', opacity: 1, offset: 0.5 },
+            { transform: 'scaleX(1.5) translateX(50px)', opacity: 0 }
+          ], { duration: 300, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 150);
+          break;
+        }
+      }
+    }, index * 80);
+  });
+};
+
 export const norvice = {
   id: 'norvice',
   name: 'ノービス',
@@ -21,9 +178,13 @@ export const norvice = {
         { level: 10, spCost: 5, mpCost: 13, healAmount: 120 }
       ],
       getDescription: (levelConfig) => `自身の HP を ${levelConfig.healAmount} 回復する`,
-      execute: (caster, levelConfig) => {
-        caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
-        // mp is already deducted in battle.js executeSkill
+      execute: (caster, levelConfig, battle) => {
+        if (!battle) return;
+        playSkillAnimation(caster, [caster], 'first_aid', () => {
+          caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
+          battle.showDamage(caster.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+          battle.renderEntities();
+        });
       },
       autoBattle: {
         priority: 90,
@@ -59,7 +220,10 @@ export const norvice = {
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
-            battle.executeAttack(caster, target, true, { actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+            playSkillAnimation(caster, [target], 'heavy_strike', () => {
+                if (target.isDead) return;
+                battle.executeAttack(caster, target, true, { actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+            });
         }
       },
       autoBattle: {
@@ -93,10 +257,12 @@ export const norvice = {
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.recoverAmount} 回復する`,
       execute: (caster, levelConfig, battle) => {
-        caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
-        if (battle) {
-           battle.showDamage(caster.elementId, `+${levelConfig.recoverAmount}`, 'text-blue-400');
-        }
+        if (!battle) return;
+        playSkillAnimation(caster, [caster], 'focus', () => {
+          caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
+          battle.showDamage(caster.elementId, `+${levelConfig.recoverAmount} MP`, 'text-blue-400');
+          battle.renderEntities();
+        });
       },
       autoBattle: {
         priority: 70,
@@ -129,11 +295,14 @@ export const norvice = {
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
-            if (!target.originalAtk) target.originalAtk = target.stats.atk;
-            target.stats.atk = Math.floor(target.originalAtk * (1 - levelConfig.reducePercent / 100));
-            target.atkDebuffTurns = levelConfig.turns;
-            
-            battle.showDamage(target.elementId, 'ATK DOWN', 'text-blue-500');
+            playSkillAnimation(caster, [target], 'intimidate', () => {
+                if (target.isDead) return;
+                if (!target.originalAtk) target.originalAtk = target.stats.atk;
+                target.stats.atk = Math.floor(target.originalAtk * (1 - levelConfig.reducePercent / 100));
+                target.atkDebuffTurns = levelConfig.turns;
+                
+                battle.showDamage(target.elementId, 'ATK DOWN', 'text-blue-500');
+            });
         }
       },
       autoBattle: {
@@ -167,8 +336,18 @@ export const norvice = {
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
-        targets.forEach(target => {
-            battle.executeAttack(caster, target, true, { actionName: 'なぎ払い', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+        if (targets.length === 0) return;
+
+        playSkillAnimation(caster, targets, 'cleave', (target, index) => {
+            if (target.isDead) return;
+            battle.executeAttack(caster, target, true, { 
+                actionName: 'なぎ払い', 
+                damageMultiplier: levelConfig.multiplier, 
+                damageType: 'skill', 
+                hideActionName: true,
+                skipAtbReset: index > 0,
+                isAoEProcessed: true
+            });
         });
       },
       autoBattle: {

@@ -1037,10 +1037,6 @@ class BattleManager {
       skillDef.execute(caster, levelConfig, this);
     }
     
-    // Some visual effect (e.g. heal popup)
-    if (skillDef.id === 'first_aid') {
-      this.showDamage(caster.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
-    }
 
     // --- Passive: Double Act ---
     if (!options.isDoubleAct && caster.jobSkills) {
@@ -1431,6 +1427,35 @@ class BattleManager {
         dmgColor = 'text-purple-400';
       } else if (sumMultiplier > 1.001) {
         dmgColor = 'text-red-500';
+      }
+    }
+
+    // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
+    if ((!options.damageType || options.damageType === 'ability') && localStorage.getItem('disableBattleAnimations') !== 'true') {
+      const defenderEl = document.getElementById(defender.elementId);
+      if (defenderEl) {
+        const rect = defenderEl.getBoundingClientRect();
+        const tx = rect.left + rect.width / 2;
+        const ty = rect.top + rect.height / 2;
+
+        const slash = document.createElement('div');
+        slash.style.position = 'fixed';
+        slash.style.left = `${tx - 40}px`;
+        slash.style.top = `${ty - 40}px`;
+        slash.style.width = '80px';
+        slash.style.height = '80px';
+        slash.style.background = 'linear-gradient(45deg, transparent 40%, rgba(200,200,200,0.8) 45%, #fff 50%, rgba(200,200,200,0.8) 55%, transparent 60%)';
+        slash.style.zIndex = '9998';
+        slash.style.pointerEvents = 'none';
+        document.body.appendChild(slash);
+
+        const anim = slash.animate([
+          { transform: 'scale(0.5) rotate(-20deg)', opacity: 0 },
+          { transform: 'scale(1.2) rotate(10deg)', opacity: 1, offset: 0.5 },
+          { transform: 'scale(1.5) rotate(30deg)', opacity: 0 }
+        ], { duration: 150, easing: 'ease-out' });
+
+        anim.onfinish = () => slash.remove();
       }
     }
 

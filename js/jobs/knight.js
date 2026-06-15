@@ -1,3 +1,166 @@
+// ─── Animation Utilities ──────────────────────────────────────
+const playSkillAnimation = (caster, targets, type, onImpact) => {
+  if (!Array.isArray(targets)) targets = [targets];
+  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  const casterEl = document.getElementById(caster.elementId);
+  if (!casterEl && type === 'shield_attack') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  const screenShake = (intensity = 5, duration = 300) => {
+    const container = document.getElementById('battle-scene-bg') || document.body;
+    container.animate([
+      { transform: `translate(${intensity}px, ${intensity}px)` },
+      { transform: `translate(-${intensity}px, -${intensity}px)` },
+      { transform: `translate(-${intensity}px, ${intensity}px)` },
+      { transform: `translate(${intensity}px, -${intensity}px)` },
+      { transform: `translate(0px, 0px)` }
+    ], { duration: 50, iterations: Math.ceil(duration / 50) });
+  };
+
+  const createImpact = (x, y, shake = false) => {
+    if (shake) screenShake(shake.intensity || 5, shake.duration || 200);
+    const ex = document.createElement('div');
+    ex.style.position = 'fixed';
+    ex.style.left = `${x - 50}px`;
+    ex.style.top = `${y - 50}px`;
+    ex.style.width = '100px';
+    ex.style.height = '100px';
+    ex.style.borderRadius = '50%';
+    ex.style.border = '10px solid #cbd5e1';
+    ex.style.boxShadow = '0 0 20px #94a3b8';
+    ex.style.zIndex = '9999';
+    ex.style.pointerEvents = 'none';
+    document.body.appendChild(ex);
+    
+    const anim = ex.animate([
+      { transform: 'scale(0.5)', opacity: 1, borderWidth: '20px' },
+      { transform: 'scale(1.5)', opacity: 0, borderWidth: '0px' }
+    ], { duration: 300, easing: 'ease-out' });
+    anim.onfinish = () => ex.remove();
+  };
+
+  targets.forEach((target, index) => {
+    const targetEl = document.getElementById(target.elementId);
+    if (!targetEl && type !== 'defense_formation' && type !== 'provoke') {
+      if (onImpact) onImpact(target, index);
+      return;
+    }
+    
+    const targetRect = targetEl ? targetEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+    const casterRect = casterEl ? casterEl.getBoundingClientRect() : { left: 0, top: 0, width: 0, height: 0 };
+    
+    const cx = casterRect.left + casterRect.width / 2;
+    const cy = casterRect.top + casterRect.height / 2;
+    const tx = targetRect.left + targetRect.width / 2;
+    const ty = targetRect.top + targetRect.height / 2;
+
+    setTimeout(() => {
+      switch (type) {
+        case 'provoke': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${cx - 60}px`;
+          el.style.top = `${cy - 60}px`;
+          el.style.width = '120px';
+          el.style.height = '120px';
+          el.style.borderRadius = '50%';
+          el.style.border = '4px solid #ef4444';
+          el.style.boxShadow = '0 0 15px #ef4444';
+          el.style.zIndex = '9998';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0)', opacity: 1 },
+            { transform: 'scale(2)', opacity: 0 }
+          ], { duration: 600, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          
+          const icon = document.createElement('div');
+          icon.textContent = '💢';
+          icon.style.position = 'fixed';
+          icon.style.left = `${cx - 20}px`;
+          icon.style.top = `${cy - 50}px`;
+          icon.style.fontSize = '40px';
+          icon.style.zIndex = '9999';
+          icon.style.pointerEvents = 'none';
+          document.body.appendChild(icon);
+          
+          const iconAnim = icon.animate([
+            { transform: 'scale(0) translateY(20px)', opacity: 0 },
+            { transform: 'scale(1.2) translateY(0px)', opacity: 1, offset: 0.2 },
+            { transform: 'scale(1) translateY(0px)', opacity: 1, offset: 0.3 },
+            { transform: 'scale(1) translateY(-20px)', opacity: 0 }
+          ], { duration: 800 });
+          iconAnim.onfinish = () => icon.remove();
+
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          break;
+        }
+        case 'defense_formation': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 40}px`;
+          el.style.top = `${ty - 40}px`;
+          el.style.width = '80px';
+          el.style.height = '80px';
+          el.style.clipPath = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
+          el.style.background = 'rgba(96, 165, 250, 0.4)';
+          el.style.border = '2px solid #3b82f6';
+          el.style.boxShadow = '0 0 15px #3b82f6';
+          el.style.zIndex = '9998';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0) rotate(-30deg)', opacity: 0 },
+            { transform: 'scale(1.2) rotate(0deg)', opacity: 1, offset: 0.5 },
+            { transform: 'scale(1) rotate(0deg)', opacity: 0 }
+          ], { duration: 800, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          break;
+        }
+        case 'shield_attack': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${cx - 30}px`;
+          el.style.top = `${cy - 30}px`;
+          el.style.width = '60px';
+          el.style.height = '60px';
+          el.style.background = 'linear-gradient(135deg, #e2e8f0, #94a3b8)';
+          el.style.clipPath = 'polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%)';
+          el.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0.5) rotate(-20deg)', opacity: 0 },
+            { transform: 'scale(1.2) rotate(0deg)', opacity: 1, offset: 0.2 },
+            { transform: `translate(${tx - cx}px, ${ty - cy}px) scale(1) rotate(10deg)`, opacity: 1 }
+          ], { duration: 350, easing: 'ease-in' });
+
+          anim.onfinish = () => {
+            el.remove();
+            createImpact(tx, ty, { intensity: 6, duration: 250 });
+            if (onImpact) onImpact(target, index);
+          };
+          break;
+        }
+      }
+    }, index * 50);
+  });
+};
+
 export const knight = {
   id: 'knight',
   name: 'ナイト',
@@ -24,9 +187,11 @@ export const knight = {
       getDescription: (lc) => `${lc.turns} ターンの間、${lc.chance}％ の確率で味方を庇う`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
-        caster._provokeTurns = levelConfig.turns;
-        caster._provokeChance = levelConfig.chance;
-        battle.showDamage(caster.elementId, '挑発', 'text-amber-400');
+        playSkillAnimation(caster, [caster], 'provoke', () => {
+          caster._provokeTurns = levelConfig.turns;
+          caster._provokeChance = levelConfig.chance;
+          battle.showDamage(caster.elementId, '挑発', 'text-amber-400');
+        });
       },
       autoBattle: {
         priority: 80,
@@ -59,11 +224,13 @@ export const knight = {
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         const aliveParty = battle.party.filter(p => !p.isDead);
-        aliveParty.forEach(p => {
-          p._defBuffPercent = levelConfig.defPercent;
-          p._defBuffTurns = levelConfig.turns;
+        playSkillAnimation(caster, aliveParty, 'defense_formation', (target) => {
+          if (!target.isDead) {
+            target._defBuffPercent = levelConfig.defPercent;
+            target._defBuffTurns = levelConfig.turns;
+            battle.showDamage(target.elementId, 'DEF UP', 'text-blue-400');
+          }
         });
-        battle.showDamage(caster.elementId, 'DEF UP', 'text-blue-400');
       },
       autoBattle: {
         priority: 80,
@@ -97,64 +264,68 @@ export const knight = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (!target) return;
 
-        // Calculate shield DEF bonus
-        let shieldDef = 0;
-        if (caster.equipment && caster.equipment.leftHand) {
-          const shield = battle.equipMap.get(caster.equipment.leftHand);
-          if (shield && shield.stats && shield.stats.def) {
-            shieldDef = shield.stats.def;
+        playSkillAnimation(caster, [target], 'shield_attack', () => {
+          if (target.isDead) return;
+
+          // Calculate shield DEF bonus
+          let shieldDef = 0;
+          if (caster.equipment && caster.equipment.leftHand) {
+            const shield = battle.equipMap.get(caster.equipment.leftHand);
+            if (shield && shield.stats && shield.stats.def) {
+              shieldDef = shield.stats.def;
+            }
           }
-        }
 
-        // Combined ATK = caster ATK + shield DEF
-        const combinedAtk = (caster.stats.atk || 0) + shieldDef;
-        const defStat = target.stats.def || 0;
-        let damage = Math.max(1, combinedAtk - Math.floor(defStat / 2));
-        damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
-        damage = Math.floor(damage * levelConfig.multiplier);
+          // Combined ATK = caster ATK + shield DEF
+          const combinedAtk = (caster.stats.atk || 0) + shieldDef;
+          const defStat = target.stats.def || 0;
+          let damage = Math.max(1, combinedAtk - Math.floor(defStat / 2));
+          damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
+          damage = Math.floor(damage * levelConfig.multiplier);
 
-        // Apply element damage proportionally (same as executeAttack)
-        const attackElements = caster.stats.attackElements || {};
-        const defenderElementResist = target.stats.elementResist || {};
-        let totalElementPercent = 0;
-        for (const val of Object.values(attackElements)) {
-          if (val > 0) totalElementPercent += val;
-        }
-        let elementPortionScale = 1.0;
-        if (totalElementPercent > 100) elementPortionScale = 100 / totalElementPercent;
-        let nonElementalPercent = Math.max(0, 100 - totalElementPercent);
-        if (totalElementPercent > 100) nonElementalPercent = 0;
-
-        let finalDamage = 0;
-        for (const [el, val] of Object.entries(attackElements)) {
-          if (val > 0) {
-            const resist = defenderElementResist[el] || 0;
-            const mult = Math.max(0, 1 - (resist / 100));
-            finalDamage += damage * (val * elementPortionScale / 100) * mult;
+          // Apply element damage proportionally (same as executeAttack)
+          const attackElements = caster.stats.attackElements || {};
+          const defenderElementResist = target.stats.elementResist || {};
+          let totalElementPercent = 0;
+          for (const val of Object.values(attackElements)) {
+            if (val > 0) totalElementPercent += val;
           }
-        }
-        finalDamage += damage * (nonElementalPercent / 100);
-        damage = Math.max(1, Math.floor(finalDamage));
+          let elementPortionScale = 1.0;
+          if (totalElementPercent > 100) elementPortionScale = 100 / totalElementPercent;
+          let nonElementalPercent = Math.max(0, 100 - totalElementPercent);
+          if (totalElementPercent > 100) nonElementalPercent = 0;
 
-        // Apply damage to target
-        if (target.hp !== undefined) {
-          target.hp.current -= damage;
-          if (target.hp.current <= 0) {
-            target.hp.current = 0;
-            target.isDead = true;
+          let finalDamage = 0;
+          for (const [el, val] of Object.entries(attackElements)) {
+            if (val > 0) {
+              const resist = defenderElementResist[el] || 0;
+              const mult = Math.max(0, 1 - (resist / 100));
+              finalDamage += damage * (val * elementPortionScale / 100) * mult;
+            }
           }
-        } else {
-          target.currentHp -= damage;
-          if (target.currentHp <= 0) {
-            target.currentHp = 0;
-            target.isDead = true;
-            battle.processEnemyDeath(target);
-          }
-        }
+          finalDamage += damage * (nonElementalPercent / 100);
+          damage = Math.max(1, Math.floor(finalDamage));
 
-        battle.showDamage(target.elementId, damage, 'text-white');
-        battle.renderEntities();
-        battle.checkBattleEnd();
+          // Apply damage to target
+          if (target.hp !== undefined) {
+            target.hp.current -= damage;
+            if (target.hp.current <= 0) {
+              target.hp.current = 0;
+              target.isDead = true;
+            }
+          } else {
+            target.currentHp -= damage;
+            if (target.currentHp <= 0) {
+              target.currentHp = 0;
+              target.isDead = true;
+              battle.processEnemyDeath(target);
+            }
+          }
+
+          battle.showDamage(target.elementId, damage, 'text-white');
+          battle.renderEntities();
+          battle.checkBattleEnd();
+        });
       },
       autoBattle: {
         priority: 60,

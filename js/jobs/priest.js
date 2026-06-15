@@ -1,3 +1,202 @@
+// ─── Animation Utilities ──────────────────────────────────────
+const playSkillAnimation = (caster, targets, type, onImpact) => {
+  if (!Array.isArray(targets)) targets = [targets];
+  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  const screenShake = (intensity = 5, duration = 300) => {
+    const container = document.getElementById('battle-scene-bg') || document.body;
+    container.animate([
+      { transform: `translate(${intensity}px, ${intensity}px)` },
+      { transform: `translate(-${intensity}px, -${intensity}px)` },
+      { transform: `translate(-${intensity}px, ${intensity}px)` },
+      { transform: `translate(${intensity}px, -${intensity}px)` },
+      { transform: `translate(0px, 0px)` }
+    ], { duration: 50, iterations: Math.ceil(duration / 50) });
+  };
+
+  const createSparkles = (x, y, color = '#4ade80') => {
+    for (let i = 0; i < 8; i++) {
+      const sparkle = document.createElement('div');
+      sparkle.style.position = 'fixed';
+      sparkle.style.left = `${x - 10}px`;
+      sparkle.style.top = `${y - 10}px`;
+      sparkle.style.width = '20px';
+      sparkle.style.height = '20px';
+      sparkle.style.background = `radial-gradient(circle, #fff, ${color}, transparent)`;
+      sparkle.style.clipPath = 'polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%)';
+      sparkle.style.zIndex = '9999';
+      sparkle.style.pointerEvents = 'none';
+      sparkle.style.mixBlendMode = 'screen';
+      document.body.appendChild(sparkle);
+
+      const angle = (Math.PI * 2 / 8) * i;
+      const dist = 30 + Math.random() * 30;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 20;
+
+      const anim = sparkle.animate([
+        { transform: 'translate(0, 0) scale(0)', opacity: 0 },
+        { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.2 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.5)`, opacity: 0 }
+      ], { duration: 600 + Math.random() * 400, easing: 'ease-out' });
+      
+      anim.onfinish = () => sparkle.remove();
+    }
+  };
+
+  targets.forEach((target, index) => {
+    const targetEl = document.getElementById(target.elementId);
+    let tx = window.innerWidth / 2;
+    let ty = window.innerHeight / 2;
+    if (targetEl) {
+      const targetRect = targetEl.getBoundingClientRect();
+      tx = targetRect.left + targetRect.width / 2;
+      ty = targetRect.top + targetRect.height / 2;
+    } else {
+      if (type !== 'raise') {
+        if (onImpact) onImpact(target, index);
+        return;
+      }
+    }
+
+    setTimeout(() => {
+      switch (type) {
+        case 'heal':
+        case 'all_heal': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 40}px`;
+          el.style.top = `${ty - 80}px`;
+          el.style.width = '80px';
+          el.style.height = '160px';
+          el.style.background = 'linear-gradient(to top, rgba(74, 222, 128, 0), rgba(74, 222, 128, 0.8), rgba(255, 255, 255, 1))';
+          el.style.borderRadius = '50%';
+          el.style.filter = 'drop-shadow(0 0 10px #4ade80)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          el.style.mixBlendMode = 'screen';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scaleY(0)', opacity: 0, transformOrigin: 'bottom' },
+            { transform: 'scaleY(1)', opacity: 1, offset: 0.3, transformOrigin: 'bottom' },
+            { transform: 'scaleY(1.2)', opacity: 0, transformOrigin: 'bottom' }
+          ], { duration: 600, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          
+          setTimeout(() => {
+            createSparkles(tx, ty, '#4ade80');
+            if (onImpact) onImpact(target, index);
+          }, 200);
+          break;
+        }
+        case 'raise': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 50}px`;
+          el.style.top = `${ty - 100}px`;
+          el.style.width = '100px';
+          el.style.height = '200px';
+          el.style.background = 'radial-gradient(ellipse at center, #fef08a, #ca8a04, transparent)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          el.style.mixBlendMode = 'screen';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scaleX(0)', opacity: 0 },
+            { transform: 'scaleX(1.5)', opacity: 1, offset: 0.5 },
+            { transform: 'scaleX(0)', opacity: 0 }
+          ], { duration: 800, easing: 'ease-in-out' });
+
+          anim.onfinish = () => el.remove();
+
+          setTimeout(() => {
+            createSparkles(tx, ty, '#fef08a');
+            if (onImpact) onImpact(target, index);
+          }, 400);
+          break;
+        }
+        case 'restore': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 60}px`;
+          el.style.top = `${ty - 60}px`;
+          el.style.width = '120px';
+          el.style.height = '120px';
+          el.style.borderRadius = '50%';
+          el.style.border = '8px solid #a7f3d0';
+          el.style.boxShadow = '0 0 20px #34d399 inset, 0 0 20px #34d399';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0)', opacity: 1 },
+            { transform: 'scale(1.5)', opacity: 0 }
+          ], { duration: 500, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 250);
+          break;
+        }
+        case 'holy': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 40}px`;
+          el.style.top = `0px`;
+          el.style.width = '80px';
+          el.style.height = `${ty + 40}px`;
+          el.style.background = 'linear-gradient(to right, transparent, #fff, #fef08a, #fff, transparent)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          el.style.mixBlendMode = 'screen';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scaleX(0)', opacity: 0 },
+            { transform: 'scaleX(2)', opacity: 1, offset: 0.1 },
+            { transform: 'scaleX(0.5)', opacity: 1, offset: 0.8 },
+            { transform: 'scaleX(0)', opacity: 0 }
+          ], { duration: 600 });
+
+          anim.onfinish = () => el.remove();
+
+          setTimeout(() => {
+            screenShake(6, 400);
+            const ex = document.createElement('div');
+            ex.style.position = 'fixed';
+            ex.style.left = `${tx - 100}px`;
+            ex.style.top = `${ty - 100}px`;
+            ex.style.width = '200px';
+            ex.style.height = '200px';
+            ex.style.borderRadius = '50%';
+            ex.style.background = 'radial-gradient(circle, #fff, #fef08a, transparent)';
+            ex.style.zIndex = '9999';
+            ex.style.pointerEvents = 'none';
+            ex.style.mixBlendMode = 'screen';
+            document.body.appendChild(ex);
+
+            const exAnim = ex.animate([
+              { transform: 'scale(0.5)', opacity: 1 },
+              { transform: 'scale(1.5)', opacity: 0 }
+            ], { duration: 500, easing: 'ease-out' });
+            exAnim.onfinish = () => ex.remove();
+
+            if (onImpact) onImpact(target, index);
+          }, 100);
+          break;
+        }
+      }
+    }, index * 100);
+  });
+};
+
 export const priest = {
   id: 'priest',
   name: 'プリースト',
@@ -38,9 +237,12 @@ export const priest = {
           }
         }
 
-        target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
-        battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
-        battle.renderEntities();
+        playSkillAnimation(caster, [target], 'heal', () => {
+          if (target.isDead) return;
+          target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+          battle.renderEntities();
+        });
       },
       autoBattle: {
         priority: 90,
@@ -79,11 +281,13 @@ export const priest = {
         }
         
         const target = deadParty[Math.floor(Math.random() * deadParty.length)];
-        target.isDead = false;
-        target.hp.current = Math.min(target.stats?.hp || target.hp.max, levelConfig.reviveHp);
-        target.atb = 0; // Reset ATB on revive just in case
-        battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
-        battle.renderEntities(); // This handles reviving UI
+        playSkillAnimation(caster, [target], 'raise', () => {
+          target.isDead = false;
+          target.hp.current = Math.min(target.stats?.hp || target.hp.max, levelConfig.reviveHp);
+          target.atb = 0; // Reset ATB on revive just in case
+          battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
+          battle.renderEntities(); // This handles reviving UI
+        });
       },
       autoBattle: {
         priority: 100,
@@ -119,9 +323,12 @@ export const priest = {
         }
         
         const target = afflictedParty[Math.floor(Math.random() * afflictedParty.length)];
-        target.activeAilment = null;
-        battle.showActionName(target.elementId, `CURE`, 'text-green-300', 'border-green-500/50');
-        battle.renderEntities();
+        playSkillAnimation(caster, [target], 'restore', () => {
+          if (target.isDead) return;
+          target.activeAilment = null;
+          battle.showActionName(target.elementId, `CURE`, 'text-green-300', 'border-green-500/50');
+          battle.renderEntities();
+        });
       },
       autoBattle: {
         priority: 90,
@@ -153,7 +360,10 @@ export const priest = {
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
-          battle.executeAttack(caster, target, true, { actionName: 'ホーリー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'light', hideActionName: true });
+          playSkillAnimation(caster, [target], 'holy', () => {
+            if (target.isDead) return;
+            battle.executeAttack(caster, target, true, { actionName: 'ホーリー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'light', hideActionName: true });
+          });
         }
       },
       autoBattle: {
@@ -190,11 +400,12 @@ export const priest = {
         const aliveParty = battle.party.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
         
-        for (const target of aliveParty) {
+        playSkillAnimation(caster, aliveParty, 'all_heal', (target) => {
+          if (target.isDead) return;
           target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
           battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
-        }
-        battle.renderEntities();
+          battle.renderEntities();
+        });
       },
       autoBattle: {
         priority: 95,
