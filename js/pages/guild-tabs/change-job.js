@@ -240,6 +240,14 @@ export function renderChangeJobTab() {
       char.jobSkills[targetJobId] = {};
     }
 
+    // SPリセット対象の職業から継承しているスキルがあれば解除する
+    if (char.inheritedActiveSkill && char.inheritedActiveSkill.jobId === targetJobId) {
+      char.inheritedActiveSkill = null;
+    }
+    if (char.inheritedPassiveSkill && char.inheritedPassiveSkill.jobId === targetJobId) {
+      char.inheritedPassiveSkill = null;
+    }
+
     // 現在の職業をリセットした場合はchar.spを再計算
     if (char.jobId === targetJobId) {
       char.sp = totalSp;
@@ -710,6 +718,23 @@ export function renderChangeJobTab() {
         char.jobLevels = {};
         needSave = true;
       }
+
+      if (char.inheritedActiveSkill) {
+        const { jobId, skillId } = char.inheritedActiveSkill;
+        if (!char.jobSkills || !char.jobSkills[jobId] || !char.jobSkills[jobId][skillId] || char.jobSkills[jobId][skillId] <= 0) {
+          char.inheritedActiveSkill = null;
+          needSave = true;
+        }
+      }
+
+      if (char.inheritedPassiveSkill) {
+        const { jobId, skillId } = char.inheritedPassiveSkill;
+        if (!char.jobSkills || !char.jobSkills[jobId] || !char.jobSkills[jobId][skillId] || char.jobSkills[jobId][skillId] <= 0) {
+          char.inheritedPassiveSkill = null;
+          needSave = true;
+        }
+      }
+
       if (needSave) {
         await GameDB.putCharacter(char);
       }

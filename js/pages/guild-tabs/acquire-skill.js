@@ -470,9 +470,31 @@ export function renderAcquireSkillTab() {
       const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
       const correctSP = earnedSP - spentSP;
 
+      let needSave = false;
+
       if (char.sp !== correctSP) {
         console.log(`[SP Correction] ${char.name}: ${char.sp} -> ${correctSP} (Job: ${char.jobName})`);
         char.sp = correctSP;
+        needSave = true;
+      }
+
+      if (char.inheritedActiveSkill) {
+        const { jobId, skillId } = char.inheritedActiveSkill;
+        if (!char.jobSkills || !char.jobSkills[jobId] || !char.jobSkills[jobId][skillId] || char.jobSkills[jobId][skillId] <= 0) {
+          char.inheritedActiveSkill = null;
+          needSave = true;
+        }
+      }
+
+      if (char.inheritedPassiveSkill) {
+        const { jobId, skillId } = char.inheritedPassiveSkill;
+        if (!char.jobSkills || !char.jobSkills[jobId] || !char.jobSkills[jobId][skillId] || char.jobSkills[jobId][skillId] <= 0) {
+          char.inheritedPassiveSkill = null;
+          needSave = true;
+        }
+      }
+
+      if (needSave) {
         await GameDB.putCharacter(char);
       }
     }
