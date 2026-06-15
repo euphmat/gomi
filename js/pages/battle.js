@@ -1683,7 +1683,9 @@ class BattleManager {
     if (!options.skipAtbReset) {
       attacker.atb = 0;
       if (attacker.hp !== undefined) {
-        this.activeCharacter = null;
+        if (this.activeCharacter === attacker) {
+          this.activeCharacter = null;
+        }
         
         // --- Passive: Magic Missile ---
         if (!options.damageType && !isMagic && !defender.isDead) {
