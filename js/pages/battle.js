@@ -1697,7 +1697,8 @@ class BattleManager {
                   damageMultiplier: missileSkill.levelConfig.multiplier, 
                   damageType: 'skill', 
                   isMagic: true, 
-                  hideActionName: true 
+                  hideActionName: true,
+                  skipAtbReset: true
                 });
               }
             }, 300 / this.speedMult);
@@ -1716,12 +1717,15 @@ class BattleManager {
                   currentTarget = this.enemies.find(e => !e.isDead);
                 }
                 if (currentTarget && !currentTarget.isDead && !attacker.isDead) {
-                  this.showActionName(attacker.elementId, '追撃', 'text-yellow-400', 'border-yellow-500/50');
+                  if (i === 0) {
+                    this.showActionName(attacker.elementId, '追撃', 'text-yellow-400', 'border-yellow-500/50');
+                  }
                   this.executeAttack(attacker, currentTarget, true, {
                     actionName: '追撃',
                     damageMultiplier: plusOneSkill.levelConfig.multiplier || 0.5,
                     damageType: 'ability',
-                    hideActionName: true
+                    hideActionName: true,
+                    skipAtbReset: true
                   });
                 }
               }, (400 + i * 200) / this.speedMult);

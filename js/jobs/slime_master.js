@@ -60,9 +60,10 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     const dx = x - startX;
     const dy = y - startY;
 
+    el.style.filter = 'drop-shadow(0px 20px 10px rgba(0,0,0,0.3))';
     const anim = el.animate([
-      { transform: 'translate(0px, 0px) scale(0.5)' },
-      { transform: `translate(${dx}px, ${dy}px) scale(1.5)` }
+      { transform: 'translate(0px, 0px) scale(0.5) rotate(0deg)' },
+      { transform: `translate(${dx}px, ${dy}px) scale(1.5) rotate(${Math.random() > 0.5 ? 180 : -180}deg)` }
     ], { duration: 400 + Math.random() * 200, easing: 'ease-in' });
 
     anim.onfinish = () => {
@@ -113,22 +114,32 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
         });
       } else if (type === 'slime_hazard') {
         const slimeIds = ['slime_blue', 'slime_green', 'slime_red', 'slime_water', 'slime_fire', 'slime_ice', 'slime_wind', 'slime_thunder', 'slime_flower', 'slime_grass', 'slime_dark', 'slime_earth', 'slime_angel'];
+        const randomSlime = slimeIds[Math.floor(Math.random() * slimeIds.length)];
         
-        // Rain multiple slimes on the target
-        let slimesToDrop = 5;
-        let slimesDropped = 0;
-        
-        for (let i = 0; i < slimesToDrop; i++) {
-          setTimeout(() => {
-            const randomSlime = slimeIds[Math.floor(Math.random() * slimeIds.length)];
-            createSlimeRain(tx, ty, randomSlime, () => {
-              slimesDropped++;
-              if (slimesDropped === slimesToDrop) {
-                if (onImpact) onImpact(target, index);
-              }
-            });
-          }, i * 150 + Math.random() * 50);
-        }
+        createSlimeRain(tx, ty, randomSlime, () => {
+          const ex = document.createElement('div');
+          ex.style.position = 'fixed';
+          ex.style.left = `${tx - 60}px`;
+          ex.style.top = `${ty - 60}px`;
+          ex.style.width = '120px';
+          ex.style.height = '120px';
+          ex.style.borderRadius = '50%';
+          const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00', '#0000ff', '#ff8800'];
+          const rc = colors[Math.floor(Math.random() * colors.length)];
+          ex.style.background = `radial-gradient(circle, #ffffff, ${rc}, transparent)`;
+          ex.style.mixBlendMode = 'screen';
+          ex.style.zIndex = '9999';
+          ex.style.pointerEvents = 'none';
+          document.body.appendChild(ex);
+
+          const animEx = ex.animate([
+            { transform: 'scale(0.3) rotate(0deg)', opacity: 1 },
+            { transform: 'scale(2.5) rotate(90deg)', opacity: 0 }
+          ], { duration: 500, easing: 'ease-out' });
+          animEx.onfinish = () => ex.remove();
+
+          if (onImpact) onImpact(target, index);
+        });
       }
     }, index * 100);
   });
@@ -247,17 +258,29 @@ export const slime_master = {
         { level:  9, spCost: 4, mpCost: 70, multiplier: 2.6 },
         { level: 10, spCost: 6, mpCost: 80, multiplier: 3.0 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体にスライムの雨を降らせる無属性魔法攻撃。威力 ${lc.multiplier.toFixed(2)} 倍`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に20体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.25).toFixed(2)} 倍`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
-        const targets = battle.enemies.filter(e => !e.isDead);
-        if (targets.length === 0) return;
+        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        if (aliveEnemies.length === 0) return;
+
+        const targets = [];
+        for (let i = 0; i < 20; i++) {
+          targets.push(aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]);
+        }
 
         playSkillAnimation(caster, targets, 'slime_hazard', {}, (target) => {
-          if (target.isDead) return;
+          if (target.isDead) {
+             const newAlive = battle.enemies.filter(e => !e.isDead);
+             if (newAlive.length > 0) {
+                 target = newAlive[Math.floor(Math.random() * newAlive.length)];
+             } else {
+                 return;
+             }
+          }
           battle.executeAttack(caster, target, true, {
             actionName: 'スライムハザード',
-            damageMultiplier: levelConfig.multiplier,
+            damageMultiplier: levelConfig.multiplier * 0.25,
             damageType: 'skill',
             isMagic: true,
             hideActionName: true
