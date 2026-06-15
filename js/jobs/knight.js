@@ -336,38 +336,38 @@ export const knight = {
     },
     // ─── Passive Skills ──────────────────────────────────────
     {
-      id: 'def_boost', name: '基礎物理防御力アップ', icon: 'shield_with_heart', type: 'passive',
+      id: 'def_boost', name: '防御倍率アップ', icon: 'shield_with_heart', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, bonusDef:  3 },
-        { level:  2, spCost: 1, mpCost: 0, bonusDef:  6 },
-        { level:  3, spCost: 1, mpCost: 0, bonusDef:  9 },
-        { level:  4, spCost: 2, mpCost: 0, bonusDef: 12 },
-        { level:  5, spCost: 2, mpCost: 0, bonusDef: 15 },
-        { level:  6, spCost: 2, mpCost: 0, bonusDef: 18 },
-        { level:  7, spCost: 3, mpCost: 0, bonusDef: 21 },
-        { level:  8, spCost: 3, mpCost: 0, bonusDef: 24 },
-        { level:  9, spCost: 3, mpCost: 0, bonusDef: 27 },
-        { level: 10, spCost: 5, mpCost: 0, bonusDef: 30 }
+        { level:  1, spCost: 1, mpCost: 0, bonusDefPercent:  3 },
+        { level:  2, spCost: 1, mpCost: 0, bonusDefPercent:  6 },
+        { level:  3, spCost: 1, mpCost: 0, bonusDefPercent:  9 },
+        { level:  4, spCost: 2, mpCost: 0, bonusDefPercent: 12 },
+        { level:  5, spCost: 2, mpCost: 0, bonusDefPercent: 15 },
+        { level:  6, spCost: 2, mpCost: 0, bonusDefPercent: 18 },
+        { level:  7, spCost: 3, mpCost: 0, bonusDefPercent: 21 },
+        { level:  8, spCost: 3, mpCost: 0, bonusDefPercent: 24 },
+        { level:  9, spCost: 3, mpCost: 0, bonusDefPercent: 27 },
+        { level: 10, spCost: 5, mpCost: 0, bonusDefPercent: 30 }
       ],
-      getDescription: (lc) => `物理防御力が ${lc.bonusDef} 上昇する`
+      getDescription: (lc) => `物理防御力の倍率が ${lc.bonusDefPercent}％ 上昇する`
     },
     {
-      id: 'mdef_boost', name: '基礎属性防御力アップ', icon: 'magic_button', type: 'passive',
+      id: 'mdef_boost', name: '魔法防御倍率アップ', icon: 'magic_button', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, bonusMdef:  3 },
-        { level:  2, spCost: 1, mpCost: 0, bonusMdef:  6 },
-        { level:  3, spCost: 1, mpCost: 0, bonusMdef:  9 },
-        { level:  4, spCost: 2, mpCost: 0, bonusMdef: 12 },
-        { level:  5, spCost: 2, mpCost: 0, bonusMdef: 15 },
-        { level:  6, spCost: 2, mpCost: 0, bonusMdef: 18 },
-        { level:  7, spCost: 3, mpCost: 0, bonusMdef: 21 },
-        { level:  8, spCost: 3, mpCost: 0, bonusMdef: 24 },
-        { level:  9, spCost: 3, mpCost: 0, bonusMdef: 27 },
-        { level: 10, spCost: 5, mpCost: 0, bonusMdef: 30 }
+        { level:  1, spCost: 1, mpCost: 0, bonusMdefPercent:  3 },
+        { level:  2, spCost: 1, mpCost: 0, bonusMdefPercent:  6 },
+        { level:  3, spCost: 1, mpCost: 0, bonusMdefPercent:  9 },
+        { level:  4, spCost: 2, mpCost: 0, bonusMdefPercent: 12 },
+        { level:  5, spCost: 2, mpCost: 0, bonusMdefPercent: 15 },
+        { level:  6, spCost: 2, mpCost: 0, bonusMdefPercent: 18 },
+        { level:  7, spCost: 3, mpCost: 0, bonusMdefPercent: 21 },
+        { level:  8, spCost: 3, mpCost: 0, bonusMdefPercent: 24 },
+        { level:  9, spCost: 3, mpCost: 0, bonusMdefPercent: 27 },
+        { level: 10, spCost: 5, mpCost: 0, bonusMdefPercent: 30 }
       ],
-      getDescription: (lc) => `属性防御力が ${lc.bonusMdef} 上昇する`
+      getDescription: (lc) => `魔法防御力の倍率が ${lc.bonusMdefPercent}％ 上昇する`
     },
     {
       id: 'parry', name: 'パリィ', icon: 'swords', type: 'passive',

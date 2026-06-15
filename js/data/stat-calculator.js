@@ -94,6 +94,9 @@ export function calcFinalStats(character, equipmentMap) {
     }
   }
 
+  let defMultiplier = 1.0;
+  let mdefMultiplier = 1.0;
+
   // Helper to apply passive skill bonuses
   const applyPassiveBonus = (skillMap, jobId) => {
     const jobDef = JOBS[jobId];
@@ -105,7 +108,9 @@ export function calcFinalStats(character, equipmentMap) {
         const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
         if (levelConfig.bonusHp) result.hp += levelConfig.bonusHp;
         if (levelConfig.bonusDef) result.def += levelConfig.bonusDef;
+        if (levelConfig.bonusDefPercent) defMultiplier += levelConfig.bonusDefPercent / 100;
         if (levelConfig.bonusMdef) result.mdef += levelConfig.bonusMdef;
+        if (levelConfig.bonusMdefPercent) mdefMultiplier += levelConfig.bonusMdefPercent / 100;
         if (levelConfig.bonusSpd) result.spd += levelConfig.bonusSpd;
       }
     }
@@ -138,6 +143,9 @@ export function calcFinalStats(character, equipmentMap) {
       }
     }
   }
+
+  result.def = Math.floor(result.def * defMultiplier);
+  result.mdef = Math.floor(result.mdef * mdefMultiplier);
 
   return result;
 }
