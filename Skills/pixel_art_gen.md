@@ -12,12 +12,5 @@ Please generate the images listed below in a **4x4 grid** format.
     - Highly dense pixels (comparable to or 64-bit era)
     - Intricate textures within each icon
 
-## List of Images to Generate
-Since we’ll be incorporating these icons later,
-please create hollow medal icons.
-- Bronze Medal
-- Silver Medal
-- Gold Medal
-- Platinum Medal
-- Diamond Medal
-- Stella Medal
+## List of Images to Generate (Player Job Character Icon)
+- Slime Master 16 種類

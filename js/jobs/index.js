@@ -3,11 +3,13 @@ import { knight } from './knight.js';
 import { mage } from './mage.js';
 import { priest } from './priest.js';
 import { ranger } from './ranger.js';
+import { magic_knight } from './magic_knight.js';
 
 export const JOBS = {
   [norvice.id]: norvice,
   [knight.id]: knight,
   [mage.id]: mage,
   [priest.id]: priest,
-  [ranger.id]: ranger
+  [ranger.id]: ranger,
+  [magic_knight.id]: magic_knight
 };

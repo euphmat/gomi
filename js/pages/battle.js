@@ -179,7 +179,57 @@ class BattleManager {
       this.updateCommandUI();
       this.updateTabStyles();
     }
+    this.applyStartOfBattlePassives();
     this.startAtbLoop();
+  }
+
+  applyStartOfBattlePassives() {
+    const aliveParty = this.party.filter(p => !p.isDead);
+    let mightyGuardConfig = null;
+    let weaponBlessConfig = null;
+
+    aliveParty.forEach(p => {
+      if (p.jobSkills) {
+        const mg = this._findSkill(p, 'mighty_guard');
+        if (mg && mg.level > 0 && mg.levelConfig) {
+          if (!mightyGuardConfig || mg.levelConfig.percent > mightyGuardConfig.percent) {
+            mightyGuardConfig = mg.levelConfig;
+          }
+        }
+        const wb = this._findSkill(p, 'weapon_bless');
+        if (wb && wb.level > 0 && wb.levelConfig) {
+          if (!weaponBlessConfig || wb.levelConfig.percent > weaponBlessConfig.percent) {
+            weaponBlessConfig = wb.levelConfig;
+          }
+        }
+      }
+    });
+
+    if (mightyGuardConfig) {
+      aliveParty.forEach(p => {
+        p._defBuffPercent = Math.max(p._defBuffPercent || 0, mightyGuardConfig.percent);
+        p._defBuffTurns = Math.max(p._defBuffTurns || 0, mightyGuardConfig.turns);
+        p._mdefBuffAmount = Math.max(p._mdefBuffAmount || 0, Math.floor((p.stats?.mdef || 0) * (mightyGuardConfig.percent / 100)));
+        p._mdefBuffTurns = Math.max(p._mdefBuffTurns || 0, mightyGuardConfig.turns);
+        
+        setTimeout(() => {
+          this.showDamage(p.elementId, `DEF/MDEF UP`, 'text-blue-400');
+        }, 500);
+      });
+    }
+
+    if (weaponBlessConfig) {
+      aliveParty.forEach(p => {
+        p._atkBuffPercent = Math.max(p._atkBuffPercent || 0, weaponBlessConfig.percent);
+        p._atkBuffTurns = Math.max(p._atkBuffTurns || 0, weaponBlessConfig.turns);
+        p._matkBuffPercent = Math.max(p._matkBuffPercent || 0, weaponBlessConfig.percent);
+        p._matkBuffTurns = Math.max(p._matkBuffTurns || 0, weaponBlessConfig.turns);
+        
+        setTimeout(() => {
+          this.showDamage(p.elementId, `ATK/MATK UP`, 'text-red-400');
+        }, 1000);
+      });
+    }
   }
 
   /**
@@ -1230,7 +1280,13 @@ class BattleManager {
       }
     }
 
-    const atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
+    let atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
+    if (!isMagic && attacker._atkBuffPercent && attacker._atkBuffTurns > 0) {
+      atkStat = Math.floor(atkStat * (1 + attacker._atkBuffPercent / 100));
+    }
+    if (isMagic && attacker._matkBuffPercent && attacker._matkBuffTurns > 0) {
+      atkStat = Math.floor(atkStat * (1 + attacker._matkBuffPercent / 100));
+    }
     let defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
 
     // --- 防御バフ適用 (物理防御陣形) ---
@@ -1242,7 +1298,32 @@ class BattleManager {
       defStat += defender._mdefBuffAmount;
     }
 
-    let damage = Math.max(1, atkStat - Math.floor(defStat / 2));
+    let damage = 0;
+    if (options.isHybrid) {
+      let physAtk = attacker.stats.atk || 0;
+      if (attacker._atkBuffPercent && attacker._atkBuffTurns > 0) {
+        physAtk = Math.floor(physAtk * (1 + attacker._atkBuffPercent / 100));
+      }
+      let physDef = defender.stats.def || 0;
+      if (defender._defBuffPercent && defender._defBuffTurns > 0) {
+        physDef = Math.floor(physDef * (1 + defender._defBuffPercent / 100));
+      }
+      
+      let magAtk = attacker.stats.matk || 0;
+      if (attacker._matkBuffPercent && attacker._matkBuffTurns > 0) {
+        magAtk = Math.floor(magAtk * (1 + attacker._matkBuffPercent / 100));
+      }
+      let magDef = defender.stats.mdef || 0;
+      if (defender._mdefBuffAmount && defender._mdefBuffTurns > 0) {
+        magDef += defender._mdefBuffAmount;
+      }
+      
+      const physDamage = Math.max(0, physAtk - Math.floor(physDef / 2));
+      const magDamage = Math.max(0, magAtk - Math.floor(magDef / 2));
+      damage = Math.max(1, physDamage + magDamage);
+    } else {
+      damage = Math.max(1, atkStat - Math.floor(defStat / 2));
+    }
     damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
     
     const damageMultiplier = options.damageMultiplier || 1;
@@ -1474,6 +1555,20 @@ class BattleManager {
           }
         }
         
+        // --- Passive: MP Absorb ---
+        if (!options.damageType && !isMagic) {
+          const mpAbsorbSkill = this._findSkill(attacker, 'mp_absorb');
+          if (mpAbsorbSkill && mpAbsorbSkill.level > 0 && mpAbsorbSkill.levelConfig) {
+             const mpRecover = Math.floor(damage * (mpAbsorbSkill.levelConfig.percent / 100));
+             if (mpRecover > 0) {
+                 attacker.mp.current = Math.min((attacker.stats?.mp || attacker.mp.max), attacker.mp.current + mpRecover);
+                 setTimeout(() => {
+                   this.showDamage(attacker.elementId, `+${mpRecover} MP`, 'text-blue-400');
+                 }, 400 / this.speedMult);
+             }
+          }
+        }
+
         // --- Passive: Mana Regen & HP Regen ---
         if (!options.damageType && !options.hideActionName) {
           const manaRegenSkill = this._findSkill(attacker, 'mana_regen');
@@ -1538,6 +1633,18 @@ class BattleManager {
         p._mdefBuffTurns--;
         if (p._mdefBuffTurns <= 0) {
           p._mdefBuffAmount = 0;
+        }
+      }
+      if (p._atkBuffTurns > 0) {
+        p._atkBuffTurns--;
+        if (p._atkBuffTurns <= 0) {
+          p._atkBuffPercent = 0;
+        }
+      }
+      if (p._matkBuffTurns > 0) {
+        p._matkBuffTurns--;
+        if (p._matkBuffTurns <= 0) {
+          p._matkBuffPercent = 0;
         }
       }
     });
