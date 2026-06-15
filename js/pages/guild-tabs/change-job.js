@@ -204,8 +204,17 @@ export function renderChangeJobTab() {
   };
 
   // ─── SPリセット処理 ────────────────────────────────────
-  const executeSpReset = async (char) => {
-    const cost = char.jobLevel * 1000;
+  const executeSpReset = async (char, targetJobId) => {
+    let targetJobLevel = 1;
+    if (char.jobId === targetJobId) {
+      targetJobLevel = char.jobLevel;
+    } else if (char.jobLevels && char.jobLevels[targetJobId]) {
+      targetJobLevel = char.jobLevels[targetJobId].level;
+    }
+    
+    const totalSp = Math.max(0, targetJobLevel - 1);
+    const cost = totalSp * 100;
+
     const gold = await GameDB.getGameState('gold') || 0;
     if (gold < cost) {
       showNotification(container, 'ゴールドが足りません！', 'error');
@@ -218,16 +227,20 @@ export function renderChangeJobTab() {
     const goldDisplay = document.getElementById('header-gold-display');
     if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
 
-    // 現在の職業のスキルをクリア
-    if (char.jobSkills && char.jobSkills[char.jobId]) {
-      char.jobSkills[char.jobId] = {};
+    // 対象の職業のスキルをクリア
+    if (char.jobSkills && char.jobSkills[targetJobId]) {
+      char.jobSkills[targetJobId] = {};
     }
 
-    char.sp = Math.max(0, (char.jobLevel || 1) - 1);
+    // 現在の職業をリセットした場合はchar.spを再計算
+    if (char.jobId === targetJobId) {
+      char.sp = totalSp;
+    }
 
     await GameDB.putCharacter(char);
     characters = await getCharactersWithRanchBonus();
-    showNotification(container, `SPをリセットしました！`, 'success');
+    const jobName = JOBS[targetJobId] ? JOBS[targetJobId].name : '対象ジョブ';
+    showNotification(container, `${jobName}のSPをリセットしました！`, 'success');
     render();
   };
 
@@ -486,45 +499,88 @@ export function renderChangeJobTab() {
 
   // ─── レンダリング: SPリセットタブ ────────────────────────
   const renderSpResetInnerTab = (char) => {
-    const container = document.createElement('div');
-    container.className = 'flex-1 overflow-y-auto space-y-4 pb-6 px-1';
+    const listContainer = document.createElement('div');
+    listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-6 pr-1';
 
-    const cost = char.jobLevel * 1000;
-    const canReset = currentGold >= cost;
-
-    container.innerHTML = `
-      <div class="bg-amber-950/30 border border-amber-500/20 rounded-xl p-4">
-        <h3 class="text-amber-300 font-bold mb-2 flex items-center gap-2"><span class="material-symbols-outlined">restart_alt</span>SPリセット</h3>
-        <p class="text-sm text-gray-300 leading-relaxed">現在の職業「<span class="text-white font-bold">${char.jobName}</span>」で習得したすべてのスキルを忘れ、消費したSPを還元します。振り直しを行いたい場合に実行してください。</p>
-      </div>
-
-      <div class="flex items-center justify-between bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
-        <div class="text-gray-300 font-bold">リセット費用</div>
-        <div class="text-2xl font-black text-amber-400 drop-shadow-md">${formatNumber(cost)} <span class="text-lg">G</span></div>
-      </div>
-
-      <div class="text-center mt-6">
-        ${canReset 
-          ? `<button id="btn-execute-sp-reset" class="px-8 py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)] transition-all">SPをリセットする</button>`
-          : `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed">ゴールドが足りません</button>`
+    // 獲得SPがあるジョブ (レベル > 1) を抽出
+    const spJobs = [];
+    
+    if (char.jobLevel > 1) {
+      spJobs.push({ jobId: char.jobId, level: char.jobLevel });
+    }
+    
+    if (char.jobLevels) {
+      for (const [jobId, data] of Object.entries(char.jobLevels)) {
+        if (jobId !== char.jobId && data.level > 1) {
+          spJobs.push({ jobId, level: data.level });
         }
-      </div>
-    `;
-
-    if (canReset) {
-      container.querySelector('#btn-execute-sp-reset').onclick = () => {
-        showActionModal(
-          'SPリセットの確認',
-          `本当に ${char.jobName} のスキルをリセットしますか？`,
-          `<p class="text-xs text-amber-400 font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">paid</span>費用: ${formatNumber(cost)} G</p>`,
-          () => executeSpReset(char),
-          'リセット',
-          'amber'
-        );
-      };
+      }
     }
 
-    return container;
+    if (spJobs.length === 0) {
+      listContainer.innerHTML = `<div class="text-center text-gray-500 py-8">SPを獲得したジョブはありません。</div>`;
+      return listContainer;
+    }
+
+    spJobs.forEach(({ jobId, level }) => {
+      const jobDef = JOBS[jobId];
+      if (!jobDef) return;
+
+      const totalSp = level - 1;
+      const cost = totalSp * 100;
+      const canReset = currentGold >= cost;
+
+      const row = document.createElement('div');
+      row.className = `group flex items-center gap-3 p-2.5 rounded-2xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md bg-slate-900/60 border-slate-700/60 ring-1 ring-inset ring-white/5`;
+
+      const buttonHtml = canReset
+        ? `<button class="btn-sp-reset relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden hover:scale-105 active:scale-95" data-job-id="${jobId}" data-cost="${cost}">
+            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">paid</span>
+            <span class="tracking-wide">${formatNumber(cost)}</span>
+          </button>`
+        : `<button class="relative px-3 py-1.5 bg-slate-800/80 text-slate-500 text-[11px] font-black rounded-lg shrink-0 flex items-center gap-1 border border-slate-700/80 cursor-not-allowed opacity-60 backdrop-blur-sm" disabled>
+            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">paid</span>
+            <span class="tracking-wide">${formatNumber(cost)}</span>
+          </button>`;
+
+      row.innerHTML = `
+        <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner p-1 z-10">
+          <img src="./assets/job/job_${jobId}.webp" class="w-full h-full object-contain opacity-85 group-hover:opacity-100 transition-transform duration-500" alt="${jobDef.name}" onerror="this.src='./assets/job/job_norvice.webp'">
+        </div>
+        <div class="relative flex-1 min-w-0 pr-1 z-10 flex flex-col justify-center gap-0.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-[14px] font-black tracking-wider whitespace-nowrap text-gray-100">${jobDef.name}</h3>
+            <span class="text-[9px] font-black text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-600/50 shadow-inner uppercase tracking-widest">JLv.${level}</span>
+          </div>
+          <div class="text-[11px] text-amber-400/90 font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[12px]">stars</span>獲得SP: ${totalSp}
+          </div>
+        </div>
+        <div class="relative z-10 flex items-center">
+          ${buttonHtml}
+        </div>
+      `;
+      listContainer.appendChild(row);
+    });
+
+    listContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-sp-reset');
+      if (!btn) return;
+      const jobId = btn.dataset.jobId;
+      const cost = parseInt(btn.dataset.cost, 10);
+      const jobDef = JOBS[jobId];
+
+      showActionModal(
+        'SPリセットの確認',
+        `本当に ${jobDef.name} のスキルをリセットしますか？`,
+        `<p class="text-xs text-amber-400 font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">paid</span>費用: ${formatNumber(cost)} G</p>`,
+        () => executeSpReset(char, jobId),
+        'リセット',
+        'amber'
+      );
+    });
+
+    return listContainer;
   };
 
   // ─── レンダリング ───────────────────────────────────────
