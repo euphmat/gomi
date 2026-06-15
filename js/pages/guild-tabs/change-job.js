@@ -576,20 +576,34 @@ export function renderChangeJobTab() {
 
       const totalSp = level - 1;
       const cost = totalSp * 100;
-      const canReset = currentGold >= cost;
+      
+      let hasSpentSp = false;
+      if (char.jobSkills && char.jobSkills[jobId] && Object.keys(char.jobSkills[jobId]).length > 0) {
+        hasSpentSp = true;
+      }
+      
+      const canAfford = currentGold >= cost;
 
       const row = document.createElement('div');
       row.className = `group flex items-center gap-3 p-2.5 rounded-2xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md bg-slate-900/60 border-slate-700/60 ring-1 ring-inset ring-white/5`;
 
-      const buttonHtml = canReset
-        ? `<button class="btn-sp-reset relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden hover:scale-105 active:scale-95" data-job-id="${jobId}" data-cost="${cost}">
-            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">paid</span>
-            <span class="tracking-wide">${formatNumber(cost)}</span>
-          </button>`
-        : `<button class="relative px-3 py-1.5 bg-slate-800/80 text-slate-500 text-[11px] font-black rounded-lg shrink-0 flex items-center gap-1 border border-slate-700/80 cursor-not-allowed opacity-60 backdrop-blur-sm" disabled>
+      let buttonHtml = '';
+      if (!hasSpentSp) {
+        buttonHtml = `<button class="relative px-3 py-1.5 bg-slate-800/80 text-slate-500 text-[11px] font-black rounded-lg shrink-0 flex items-center gap-1 border border-slate-700/80 cursor-not-allowed opacity-60 backdrop-blur-sm" disabled>
+            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">done_all</span>
+            <span class="tracking-wide">リセット不要</span>
+          </button>`;
+      } else if (canAfford) {
+        buttonHtml = `<button class="btn-sp-reset relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden hover:scale-105 active:scale-95" data-job-id="${jobId}" data-cost="${cost}">
             <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">paid</span>
             <span class="tracking-wide">${formatNumber(cost)}</span>
           </button>`;
+      } else {
+        buttonHtml = `<button class="relative px-3 py-1.5 bg-slate-800/80 text-slate-500 text-[11px] font-black rounded-lg shrink-0 flex items-center gap-1 border border-slate-700/80 cursor-not-allowed opacity-60 backdrop-blur-sm" disabled>
+            <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">paid</span>
+            <span class="tracking-wide">${formatNumber(cost)}</span>
+          </button>`;
+      }
 
       row.innerHTML = `
         <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner p-1 z-10">
