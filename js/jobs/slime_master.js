@@ -168,7 +168,7 @@ export const slime_master = {
       }
     }
   ],
-  statGrowth: { hp: [10, 15], mp: [2, 4], atk: [1, 2], def: [1, 2], matk: [2, 3], mdef: [2, 3], spd: [1, 2] },
+  statGrowth: { hp: [2, 4], mp: [2, 4], atk: [1, 2], def: [1, 2], matk: [1, 3], mdef: [1, 3], spd: [1, 2] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {
