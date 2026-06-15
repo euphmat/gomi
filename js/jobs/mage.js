@@ -211,7 +211,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
         case 'blizzard': {
-          createIceShatter(tx, ty, { intensity: 2, duration: 200 });
+          createIceShatter(tx, ty, false); // No screen shake for lighter effect
           const el = document.createElement('div');
           el.style.position = 'fixed';
           el.style.left = `${tx - 60}px`;
@@ -219,7 +219,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.width = '120px';
           el.style.height = '120px';
           el.style.borderRadius = '50%';
-          el.style.background = 'conic-gradient(from 0deg, transparent, rgba(224, 255, 255, 0.9), transparent)';
+          el.style.background = 'conic-gradient(from 0deg, transparent, rgba(224, 255, 255, 0.6), transparent)';
           el.style.zIndex = '9998';
           el.style.pointerEvents = 'none';
           el.style.mixBlendMode = 'screen';
@@ -227,9 +227,9 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
           const anim = el.animate([
             { transform: 'rotate(0deg) scale(0)', opacity: 0 },
-            { transform: 'rotate(180deg) scale(1.5)', opacity: 1, offset: 0.5 },
-            { transform: 'rotate(360deg) scale(2)', opacity: 0 }
-          ], { duration: 800 });
+            { transform: 'rotate(180deg) scale(1.2)', opacity: 0.8, offset: 0.5 },
+            { transform: 'rotate(360deg) scale(1.5)', opacity: 0 }
+          ], { duration: 600 }); // Slightly faster and smaller
 
           anim.onfinish = () => el.remove();
           
