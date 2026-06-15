@@ -49,7 +49,8 @@ export function renderChangeJobTab() {
     if (!isUnlocked) {
       if (jobDef.requirements) {
         for (const req of jobDef.requirements) {
-          const currentLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : (char.jobId === req.jobId ? char.jobLevel : 0);
+          const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
+          const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
           if (currentLv < req.level) {
             const jobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
             showNotification(container, `条件未達成: ${jobName} Lv${req.level}が必要`, 'error');
@@ -280,7 +281,8 @@ export function renderChangeJobTab() {
         `;
         for (const req of job.requirements) {
           const reqJobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
-          const currentLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : (char.jobId === req.jobId ? char.jobLevel : 0);
+          const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
+          const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
           const isMet = currentLv >= req.level;
           if (!isMet) allReqsMet = false;
           
