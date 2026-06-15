@@ -12,7 +12,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
 
   const createSlimeProjectile = (startX, startY, endX, endY, slimeId, onHit) => {
     const el = document.createElement('img');
-    el.src = `./assets/monster/monster_${slimeId}.webp`;
+    el.src = `./assets/monster/${slimeId}.webp`;
     el.style.position = 'fixed';
     el.style.left = `${startX - 24}px`;
     el.style.top = `${startY - 24}px`;
@@ -42,7 +42,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
 
   const createSlimeRain = (x, y, slimeId, onHit) => {
     const el = document.createElement('img');
-    el.src = `./assets/monster/monster_${slimeId}.webp`;
+    el.src = `./assets/monster/${slimeId}.webp`;
     el.style.position = 'fixed';
     // Start high above the target
     const startX = x + (Math.random() * 100 - 50);
