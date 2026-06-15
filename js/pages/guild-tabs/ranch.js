@@ -233,6 +233,22 @@ export async function renderRanchTab() {
         </div>
       `;
       
+      let touchStartY = 0;
+      let touchStartX = 0;
+      mEl.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      
+      mEl.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+          e.preventDefault();
+          showFeedModal(container, currentDungeonId, mId, mDef, mData, render);
+        }
+      });
+
       mEl.onclick = () => {
         showFeedModal(container, currentDungeonId, mId, mDef, mData, render);
       };
