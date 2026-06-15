@@ -383,7 +383,31 @@ export function renderChangeJobTab() {
         if (span) span.textContent = '転職中...';
       }
 
-     const currentHp = char.rebirthBonus?.hp || 0;
+      await changeJob(char, jobDef);
+    });
+
+    return listContainer;
+  };
+
+  // ─── レンダリング: 転生タブ ──────────────────────────────
+  const renderRebirthInnerTab = (char) => {
+    const container = document.createElement('div');
+    container.className = 'flex-1 overflow-y-auto space-y-4 pb-6 px-1';
+
+    const cost = 10000;
+    const canRebirthLevel = char.level >= 40;
+    const canRebirthGold = currentGold >= cost;
+    const canRebirth = canRebirthLevel && canRebirthGold;
+
+    const bonusHp = Math.floor(char.hp.max * 0.1);
+    const bonusMp = Math.floor(char.mp.max * 0.1);
+    const bonusAtk = Math.floor((char.baseStats.atk || 0) * 0.1);
+    const bonusDef = Math.floor((char.baseStats.def || 0) * 0.1);
+    const bonusMatk = Math.floor((char.baseStats.matk || 0) * 0.1);
+    const bonusMdef = Math.floor((char.baseStats.mdef || 0) * 0.1);
+    const bonusSpd = Math.floor((char.baseStats.spd || 0) * 0.1);
+
+    const currentHp = char.rebirthBonus?.hp || 0;
     const currentMp = char.rebirthBonus?.mp || 0;
     const currentAtk = char.rebirthBonus?.atk || 0;
     const currentDef = char.rebirthBonus?.def || 0;

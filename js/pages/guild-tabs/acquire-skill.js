@@ -74,19 +74,35 @@ export function renderAcquireSkillTab() {
     const nextDesc = isMax ? '最大レベルに達しています' : skill.getDescription(levelConfig);
     const hasEnoughSP = !isMax && selectedChar.sp >= levelConfig.spCost;
 
+    const hasEnoughSP = !isMax && selectedChar.sp >= levelConfig.spCost;
+
+    let maxPossibleLevel = currentLevel;
+    let totalMaxCost = 0;
+    if (!isMax) {
+      for (let l = currentLevel + 1; l <= skill.maxLevel; l++) {
+        const cost = skill.levels.find(lvl => lvl.level === l)?.spCost || 0;
+        if (selectedChar.sp >= totalMaxCost + cost) {
+          totalMaxCost += cost;
+          maxPossibleLevel = l;
+        } else {
+          break;
+        }
+      }
+    }
+
     let btnClass = '';
     let btnText = '';
     let isDisabled = isMax || !hasEnoughSP;
 
     if (isMax) {
       btnClass = 'bg-gray-800/80 border border-white/5 text-gray-500 cursor-not-allowed';
-      btnText = '<span class="tracking-widest font-black opacity-80">MAX</span>';
+      btnText = '<span class="tracking-widest font-black opacity-80 flex items-center justify-center h-full w-full">MAX</span>';
     } else if (currentLevel === 0) {
       btnClass = hasEnoughSP ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.5)] transform hover:-translate-y-0.5 border border-white/20' : 'bg-gray-800/80 border border-white/5 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">school</span><span class="font-bold">修得</span> <span class="ml-1 text-[11px] font-black bg-black/20 px-1.5 py-0.5 rounded-md">${levelConfig.spCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1 w-full"><span class="material-symbols-outlined text-[14px]">school</span><span class="font-bold">修得</span> <span class="ml-1 text-[10px] font-black bg-black/20 px-1 py-0.5 rounded-md">${levelConfig.spCost} SP</span></div>`;
     } else {
       btnClass = hasEnoughSP ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-400 hover:to-rose-400 text-white shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_6px_20px_rgba(249,115,22,0.5)] transform hover:-translate-y-0.5 border border-white/20' : 'bg-gray-800/80 border border-white/5 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">upgrade</span><span class="font-bold">強化</span> <span class="ml-1 text-[11px] font-black bg-black/20 px-1.5 py-0.5 rounded-md">${levelConfig.spCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1 w-full"><span class="material-symbols-outlined text-[14px]">upgrade</span><span class="font-bold">強化</span> <span class="ml-1 text-[10px] font-black bg-black/20 px-1 py-0.5 rounded-md">${levelConfig.spCost} SP</span></div>`;
     }
 
     row.innerHTML = `
@@ -117,12 +133,23 @@ export function renderAcquireSkillTab() {
         </div>
       </div>
       
-      <div class="shrink-0 flex flex-col items-end justify-center ml-1">
-        <button class="acquire-btn min-w-[85px] sm:min-w-[90px] relative overflow-hidden px-2 py-1.5 ${btnClass} text-[11px] rounded-lg active:scale-95 disabled:opacity-60 disabled:transform-none disabled:active:scale-100 transition-all duration-200" ${isDisabled ? 'disabled' : ''}>
-          <!-- Button Shine Effect -->
+      <div class="shrink-0 flex flex-col items-end justify-center ml-1 gap-1">
+        <button class="acquire-btn min-w-[85px] sm:min-w-[90px] relative overflow-hidden px-1.5 py-1 ${btnClass} text-[11px] rounded-lg active:scale-95 disabled:opacity-60 disabled:transform-none disabled:active:scale-100 transition-all duration-200" ${isDisabled ? 'disabled' : ''}>
           <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite] skew-x-12"></div>
           <span class="relative z-10 flex items-center justify-center w-full">${btnText}</span>
         </button>
+        ${!isMax && maxPossibleLevel > currentLevel ? `
+        <button class="max-btn min-w-[85px] sm:min-w-[90px] relative overflow-hidden px-1.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-[0_4px_15px_rgba(147,51,234,0.3)] hover:shadow-[0_6px_20px_rgba(147,51,234,0.5)] transform hover:-translate-y-0.5 border border-white/20 text-[11px] rounded-lg active:scale-95 transition-all duration-200">
+          <span class="relative z-10 flex items-center justify-center w-full gap-1">
+            <span class="font-bold">MAX</span>
+            <span class="ml-0.5 text-[10px] font-black bg-black/20 px-1 py-0.5 rounded-md">${totalMaxCost} SP</span>
+          </span>
+        </button>
+        ` : (!isMax ? `
+        <button class="min-w-[85px] sm:min-w-[90px] px-1.5 py-1 bg-gray-800/80 border border-white/5 text-gray-500 text-[11px] rounded-lg cursor-not-allowed">
+          <span class="flex items-center justify-center w-full font-bold opacity-80">MAX</span>
+        </button>
+        ` : '')}
       </div>
     `;
     
@@ -150,90 +177,76 @@ export function renderAcquireSkillTab() {
           await GameDB.putCharacter(selectedChar);
           // -------------------------------------------------------------
 
-          // 1. Flash effect on the row background
+          // Simple Flash effect on the row background
           const flashOverlay = document.createElement('div');
           flashOverlay.className = `absolute inset-0 z-20 pointer-events-none mix-blend-screen`;
           flashOverlay.style.background = isAcquire 
-              ? 'linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.8) 50%, rgba(16,185,129,0) 100%)' 
-              : 'linear-gradient(90deg, rgba(249,115,22,0) 0%, rgba(249,115,22,0.8) 50%, rgba(249,115,22,0) 100%)';
+              ? 'linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.4) 50%, rgba(16,185,129,0) 100%)' 
+              : 'linear-gradient(90deg, rgba(249,115,22,0) 0%, rgba(249,115,22,0.4) 50%, rgba(249,115,22,0) 100%)';
           row.appendChild(flashOverlay);
 
           flashOverlay.animate([
-            { opacity: 0, transform: 'scaleX(0)' },
-            { opacity: 1, transform: 'scaleX(1)' },
-            { opacity: 0, transform: 'scaleX(1.5)' }
+            { opacity: 0 },
+            { opacity: 1, offset: 0.3 },
+            { opacity: 0 }
           ], {
-            duration: 600,
-            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
-            fill: 'forwards'
-          });
-
-          // 2. Text Popup effect
-          const textPopup = document.createElement('div');
-          textPopup.className = `absolute z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-black text-2xl tracking-widest pointer-events-none drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] ${isAcquire ? 'text-emerald-300' : 'text-orange-300'}`;
-          textPopup.innerHTML = isAcquire ? 'ACQUIRED!' : 'UPGRADED!';
-          row.appendChild(textPopup);
-
-          textPopup.animate([
-            { opacity: 0, transform: 'translate(-50%, 0%) scale(0.5)' },
-            { opacity: 1, transform: 'translate(-50%, -50%) scale(1.2)', offset: 0.2 },
-            { opacity: 1, transform: 'translate(-50%, -50%) scale(1)', offset: 0.4 },
-            { opacity: 0, transform: 'translate(-50%, -100%) scale(1.1)' }
-          ], {
-            duration: 1000,
+            duration: 300,
             easing: 'ease-out',
             fill: 'forwards'
           });
 
-          // 3. Icon spin/glow effect
-          const iconContainer = row.querySelector('.w-11.h-11');
-          if (iconContainer) {
-            iconContainer.animate([
-              { transform: 'scale(1)', boxShadow: '0 0 0 rgba(255,255,255,0)' },
-              { transform: 'scale(1.2)', boxShadow: isAcquire ? '0 0 20px rgba(16,185,129,0.8)' : '0 0 20px rgba(249,115,22,0.8)' },
-              { transform: 'scale(1)', boxShadow: '0 0 0 rgba(255,255,255,0)' }
-            ], {
-              duration: 600,
-              easing: 'ease-out'
-            });
-          }
-
-          // 4. Particles
-          for (let i = 0; i < 20; i++) {
-            const particle = document.createElement('div');
-            const color = isAcquire ? '#34d399' : '#fb923c';
-            particle.className = 'absolute w-1.5 h-1.5 rounded-full z-40 pointer-events-none';
-            particle.style.backgroundColor = color;
-            particle.style.boxShadow = `0 0 8px ${color}`;
-            
-            particle.style.left = '50%';
-            particle.style.top = '50%';
-            
-            row.appendChild(particle);
-            
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = 40 + Math.random() * 60;
-            const tx = Math.cos(angle) * velocity;
-            const ty = Math.sin(angle) * velocity;
-            
-            particle.animate([
-              { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-              { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: 0 }
-            ], {
-              duration: 600 + Math.random() * 400,
-              easing: 'cubic-bezier(0, .9, .57, 1)',
-              fill: 'forwards'
-            });
-          }
-
-          // Wait for effects
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // Wait for short effect
+          await new Promise(resolve => setTimeout(resolve, 150));
 
           render(false); // false means soft render
         } else {
           alert('SPが足りません！');
         }
       };
+    }
+
+    if (!isMax && maxPossibleLevel > currentLevel) {
+      const maxBtn = row.querySelector('.max-btn');
+      if (maxBtn) {
+        maxBtn.onclick = async () => {
+          if (maxBtn.disabled) return;
+          
+          maxBtn.classList.add('scale-95', 'opacity-80');
+          setTimeout(() => maxBtn.classList.remove('scale-95', 'opacity-80'), 150);
+
+          if (selectedChar.sp >= totalMaxCost) {
+            maxBtn.disabled = true;
+            const acquireBtn = row.querySelector('.acquire-btn');
+            if (acquireBtn) acquireBtn.disabled = true;
+
+            selectedChar.sp -= totalMaxCost;
+            if (!selectedChar.jobSkills) selectedChar.jobSkills = {};
+            if (!selectedChar.jobSkills[selectedChar.jobId]) selectedChar.jobSkills[selectedChar.jobId] = {};
+            selectedChar.jobSkills[selectedChar.jobId][skill.id] = maxPossibleLevel;
+            
+            await GameDB.putCharacter(selectedChar);
+
+            // Simple Flash effect
+            const flashOverlay = document.createElement('div');
+            flashOverlay.className = `absolute inset-0 z-20 pointer-events-none mix-blend-screen`;
+            flashOverlay.style.background = 'linear-gradient(90deg, rgba(147,51,234,0) 0%, rgba(147,51,234,0.4) 50%, rgba(147,51,234,0) 100%)';
+            row.appendChild(flashOverlay);
+
+            flashOverlay.animate([
+              { opacity: 0 },
+              { opacity: 1, offset: 0.3 },
+              { opacity: 0 }
+            ], {
+              duration: 300,
+              easing: 'ease-out',
+              fill: 'forwards'
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 150));
+            render(false);
+          }
+        };
+      }
     }
   };
 
