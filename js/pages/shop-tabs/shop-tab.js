@@ -6,6 +6,7 @@ import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
+import { formatNumber } from '../../utils/format.js';
 
 const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
@@ -238,7 +239,7 @@ export function renderShopTab() {
         }
 
         if (ownedCount > 0) {
-          slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600 shadow-sm leading-tight">x${ownedCount}</div>`;
+          slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600 shadow-sm leading-tight">x${formatNumber(ownedCount)}</div>`;
         }
       } else {
         // list view
@@ -320,7 +321,7 @@ export function renderShopTab() {
             <div class="flex items-center gap-1.5">
               <span class="text-slate-500 font-bold uppercase tracking-widest" style="font-size: 8px;">合成</span>
               <div class="flex items-baseline gap-0.5 leading-none">
-                 <span class="text-amber-400 font-mono font-bold drop-shadow-sm" style="font-size: 11px;">${item.recipe?.price ? item.recipe.price.toLocaleString() : 0}</span>
+                 <span class="text-amber-400 font-mono font-bold drop-shadow-sm" style="font-size: 11px;">${item.recipe?.price ? formatNumber(item.recipe.price) : 0}</span>
                  <span class="text-amber-500/80 font-bold" style="font-size: 8px;">G</span>
               </div>
             </div>
@@ -529,7 +530,7 @@ export function renderShopTab() {
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
-        <div class="flex-1 text-center font-mono text-base font-black text-emerald-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="craft-count-disp">${craftCount}</div>
+        <div class="flex-1 text-center font-mono text-base font-black text-emerald-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="craft-count-disp">${formatNumber(craftCount)}</div>
         <button id="btn-plus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">+</button>
         <button id="btn-max" class="px-3 h-8 flex items-center justify-center bg-emerald-950/60 border border-emerald-800/80 rounded-lg text-xs font-bold text-emerald-400 hover:bg-emerald-900/60 active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.05)]">MAX</button>
       </div>
@@ -596,7 +597,7 @@ export function renderShopTab() {
             <span class="material-symbols-outlined text-amber-500 text-sm" style="font-variation-settings: 'FILL' 1">paid</span>
             <span class="text-xs font-bold text-slate-400">合成費用</span>
           </div>
-          <span class="text-sm font-black font-mono ${hasEnoughGold ? 'text-amber-400' : 'text-rose-400'}">${totalCost.toLocaleString()} G</span>
+          <span class="text-sm font-black font-mono ${hasEnoughGold ? 'text-amber-400' : 'text-rose-400'}">${formatNumber(totalCost)} G</span>
         </div>
       `;
       materialsSection.innerHTML = materialsHtml;
@@ -632,7 +633,7 @@ export function renderShopTab() {
     modal.querySelector('#close-craft-modal').onclick = closeModal;
 
     const updateCountDisp = () => {
-      modal.querySelector('#craft-count-disp').textContent = craftCount;
+      modal.querySelector('#craft-count-disp').textContent = formatNumber(craftCount);
       updateCraftInfo();
     };
     
@@ -659,7 +660,7 @@ export function renderShopTab() {
       // ヘッダーのゴールド表示を更新
       const headerGoldEl = document.getElementById('header-gold-display');
       if (headerGoldEl) {
-        headerGoldEl.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+        headerGoldEl.textContent = ` Gold : ${formatNumber(currentGold)} `;
       }
 
       // 素材を消費
@@ -711,7 +712,7 @@ export function renderShopTab() {
     toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-green-900/90 border border-green-500/50 rounded-xl shadow-2xl text-sm font-bold text-green-200 animate-[slide-up_0.3s_ease-out] backdrop-blur-sm';
     toast.innerHTML = `
       <span class="material-symbols-outlined text-green-400" style="font-variation-settings: 'FILL' 1">check_circle</span>
-      <span>${item.name} を ${count} 個合成しました！</span>
+      <span>${item.name} を ${formatNumber(count)} 個合成しました！</span>
     `;
     document.body.appendChild(toast);
     setTimeout(() => {

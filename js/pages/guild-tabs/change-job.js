@@ -2,7 +2,7 @@ import { GameDB } from '../../data/database.js';
 import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 import { JOBS } from '../../jobs/index.js';
-
+import { formatNumber } from '../../utils/format.js';
 /**
  * 「神殿」タブの画面 — 転職・転生・SPリセット
  */
@@ -55,7 +55,7 @@ export function renderChangeJobTab() {
       currentGold = gold - cost;
       await GameDB.setGameState('gold', currentGold);
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
       
       if (!char.unlockedJobs) char.unlockedJobs = ['norvice'];
       char.unlockedJobs.push(jobDef.id);
@@ -159,7 +159,7 @@ export function renderChangeJobTab() {
     currentGold = gold - cost;
     await GameDB.setGameState('gold', currentGold);
     const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
 
     const oldBase = char.baseStats;
     const oldHp = char.hp.max;
@@ -204,7 +204,7 @@ export function renderChangeJobTab() {
     currentGold = gold - cost;
     await GameDB.setGameState('gold', currentGold);
     const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
 
     // 現在の職業のスキルをクリア
     if (char.jobSkills && char.jobSkills[char.jobId]) {
@@ -282,11 +282,11 @@ export function renderChangeJobTab() {
             ? `<button class="btn-change-job relative px-4 py-2 bg-gradient-to-b from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-amber-50 text-xs font-bold rounded-xl shadow-[0_4px_10px_rgba(217,119,6,0.3)] hover:shadow-[0_4px_15px_rgba(217,119,6,0.5)] transition-all shrink-0 flex items-center gap-1.5 border border-amber-500/50 overflow-hidden group/btn" data-job-id="${job.id}">
                 <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]"></div>
                 <span class="relative material-symbols-outlined text-[16px] text-amber-200" style="font-variation-settings: 'FILL' 1; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">paid</span>
-                <span class="relative tracking-wide" style="text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${cost.toLocaleString()} G</span>
+                <span class="relative tracking-wide" style="text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${formatNumber(cost)} G</span>
               </button>`
             : `<button class="relative px-4 py-2 bg-gray-800 text-gray-500 text-xs font-bold rounded-xl shrink-0 flex items-center gap-1.5 border border-gray-700 cursor-not-allowed opacity-60" disabled>
                 <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">paid</span>
-                <span>${cost.toLocaleString()} G</span>
+                <span>${formatNumber(cost)} G</span>
               </button>`;
 
       row.innerHTML = `
@@ -440,8 +440,8 @@ export function renderChangeJobTab() {
         ${!canRebirthLevel
           ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60" disabled>レベル40が必要です (現在Lv.${char.level})</button>`
           : !canRebirthGold
-            ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60 flex items-center justify-center gap-2 mx-auto" disabled><span class="material-symbols-outlined text-[20px]">paid</span>${cost.toLocaleString()} G が必要です</button>`
-            : `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all flex items-center justify-center gap-2 mx-auto"><span class="material-symbols-outlined text-[20px]">paid</span>${cost.toLocaleString()} G で転生する</button>`
+            ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60 flex items-center justify-center gap-2 mx-auto" disabled><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G が必要です</button>`
+            : `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all flex items-center justify-center gap-2 mx-auto"><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G で転生する</button>`
         }
       </div>
     `;
@@ -478,7 +478,7 @@ export function renderChangeJobTab() {
 
       <div class="flex items-center justify-between bg-gray-800/50 border border-gray-700/50 rounded-xl p-4">
         <div class="text-gray-300 font-bold">リセット費用</div>
-        <div class="text-2xl font-black text-amber-400 drop-shadow-md">${cost.toLocaleString()} <span class="text-lg">G</span></div>
+        <div class="text-2xl font-black text-amber-400 drop-shadow-md">${formatNumber(cost)} <span class="text-lg">G</span></div>
       </div>
 
       <div class="text-center mt-6">
@@ -494,7 +494,7 @@ export function renderChangeJobTab() {
         showActionModal(
           'SPリセットの確認',
           `本当に ${char.jobName} のスキルをリセットしますか？`,
-          `<p class="text-xs text-amber-400 font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">paid</span>費用: ${cost.toLocaleString()} G</p>`,
+          `<p class="text-xs text-amber-400 font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">paid</span>費用: ${formatNumber(cost)} G</p>`,
           () => executeSpReset(char),
           'リセット',
           'amber'

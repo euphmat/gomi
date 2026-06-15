@@ -1,4 +1,5 @@
 import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
+import { formatNumber } from '../utils/format.js';
 
 export function getActiveStateIconsHTML(entity) {
   if (!entity) return '';
@@ -47,7 +48,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
       </div>
       <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div class="bg-red-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${e.currentHp / e.maxHp})"></div>
-        <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(e.currentHp)}/${e.maxHp}</div>
+        <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}</div>
       </div>
       <div class="w-full bg-gray-900 h-1.5 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div id="${e.elementId}-atb" class="bg-orange-500 h-full w-full origin-left" style="transform: scaleX(${e.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
@@ -100,28 +101,28 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
           <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div class="bg-red-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.hp.current / (p.stats.hp || p.hp.max)})"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.hp.current)}/${p.stats.hp || p.hp.max}</div>
+            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.hp.current))}/${formatNumber(p.stats.hp || p.hp.max)}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div class="bg-blue-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.mp.current / (p.stats.mp || p.mp.max)})"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.mp.current)}/${p.stats.mp || p.mp.max}</div>
+            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.mp.current))}/${formatNumber(p.stats.mp || p.mp.max)}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div class="bg-green-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.exp.current / p.exp.max})"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.exp.current)}/${p.exp.max}</div>
+            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.exp.current))}/${formatNumber(p.exp.max)}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div class="bg-purple-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.jp.current / p.jp.max})"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${Math.floor(p.jp.current)}/${p.jp.max}</div>
+            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.jp.current))}/${formatNumber(p.jp.max)}</div>
           </div>
         </div>
       </div>
@@ -129,23 +130,23 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
       <div class="battle-stats-container flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') !== 'false' ? 'hidden' : ''}">
         <div class="stat-row-atk flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-atk material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="stat-label-atk font-bold tracking-wider">ATK</span></div>
-          <span class="stat-val-atk text-gray-100 font-black drop-shadow-md">${p.stats.atk}</span>
+          <span class="stat-val-atk text-gray-100 font-black drop-shadow-md">${formatNumber(p.stats.atk)}</span>
         </div>
         <div class="stat-row-def flex justify-between items-center ${p._defBuffTurns > 0 ? 'bg-green-900/40 border border-green-500/50' : 'bg-gray-900/40'} rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-def material-symbols-outlined ${p._defBuffTurns > 0 ? 'text-green-400' : 'text-slate-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="stat-label-def font-bold tracking-wider ${p._defBuffTurns > 0 ? 'text-green-400' : ''}">DEF</span></div>
-          <span class="stat-val-def ${p._defBuffTurns > 0 ? 'text-green-400' : 'text-gray-100'} font-black drop-shadow-md">${p._defBuffTurns > 0 ? Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)) : p.stats.def}</span>
+          <span class="stat-val-def ${p._defBuffTurns > 0 ? 'text-green-400' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._defBuffTurns > 0 ? Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)) : p.stats.def)}</span>
         </div>
         <div class="stat-row-mat flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider">MAT</span></div>
-          <span class="stat-val-mat text-gray-100 font-black drop-shadow-md">${p.stats.matk}</span>
+          <span class="stat-val-mat text-gray-100 font-black drop-shadow-md">${formatNumber(p.stats.matk)}</span>
         </div>
         <div class="stat-row-mdf flex justify-between items-center ${p._mdefBuffTurns > 0 ? 'bg-indigo-900/40 border border-indigo-500/50' : 'bg-gray-900/40'} rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-indigo-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : ''}">MDF</span></div>
-          <span class="stat-val-mdf ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-gray-100'} font-black drop-shadow-md">${p._mdefBuffTurns > 0 ? p.stats.mdef + p._mdefBuffAmount : p.stats.mdef}</span>
+          <span class="stat-val-mdf ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._mdefBuffTurns > 0 ? p.stats.mdef + p._mdefBuffAmount : p.stats.mdef)}</span>
         </div>
         <div class="stat-row-spd flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider">SPD</span></div>
-          <span class="stat-val-spd text-gray-100 font-black drop-shadow-md">${p.stats.spd}</span>
+          <span class="stat-val-spd text-gray-100 font-black drop-shadow-md">${formatNumber(p.stats.spd)}</span>
         </div>
       </div>
     </div>
@@ -312,7 +313,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           <div class="flex flex-col flex-1 justify-center min-w-0">
             <div class="flex items-center gap-2 mb-1 overflow-hidden">
               <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
-              <span class="text-red-300 text-[10px] font-black bg-red-950/60 border border-red-900/60 px-2 py-0.5 rounded-full shrink-0 tracking-wider">討伐: ${kills.toLocaleString()}</span>
+              <span class="text-red-300 text-[10px] font-black bg-red-950/60 border border-red-900/60 px-2 py-0.5 rounded-full shrink-0 tracking-wider">討伐: ${formatNumber(kills)}</span>
             </div>
             <!-- Status Badges -->
             <div class="flex flex-wrap gap-1 mt-0.5">
@@ -393,7 +394,7 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
       <div class="item-card relative w-full h-full bg-gray-800 border border-gray-600 rounded flex flex-col group hover:border-amber-400 hover:bg-gray-700 transition-all overflow-hidden cursor-pointer active:scale-95" data-item-id="${item.id}">
         <div class="relative w-full aspect-square p-1 shrink-0">
           <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md pointer-events-none" onerror="this.style.display='none'">
-          <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10 pointer-events-none">x${item.quantity}</div>
+          <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10 pointer-events-none">x${formatNumber(item.quantity)}</div>
         </div>
         <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center break-all px-0.5 py-1 leading-tight flex-1 flex items-center justify-center pointer-events-none">
           ${item.name}

@@ -6,6 +6,7 @@
 import { GameDB } from '../data/database.js';
 import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
+import { formatNumber } from '../utils/format.js';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -216,7 +217,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
 
       // Count badge
       const countBadge = group.count > 1 
-        ? `<div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${group.count}</div>` 
+        ? `<div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10">x${formatNumber(group.count)}</div>` 
         : '';
 
       // Equipped indicator
@@ -297,7 +298,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
               <div class="flex items-center min-w-0 flex-wrap gap-y-0.5">
                 <div class="text-[13px] font-bold text-gray-100 leading-tight shrink-0 mr-1.5 truncate max-w-full">
                   ${selectedItem ? selectedItem.name : '---'}
-                  ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[10px] text-gray-400 ml-1 font-normal">x${selectedGroup.count}</span>` : ''}
+                  ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[10px] text-gray-400 ml-1 font-normal">x${formatNumber(selectedGroup.count)}</span>` : ''}
                 </div>
               </div>
               ${selectedItem ? `<div class="text-[10px] text-gray-500 leading-tight mt-0.5">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}

@@ -16,6 +16,8 @@
  * @param {string} options.colorTo - Gradient end color (CSS color)
  * @returns {string} HTML string
  */
+import { formatNumber } from '../utils/format.js';
+
 export function createStatusBar({ label, current, max, colorFrom, colorTo }) {
   const percentage = Math.min(100, Math.round((current / max) * 100));
 
@@ -29,7 +31,7 @@ export function createStatusBar({ label, current, max, colorFrom, colorTo }) {
           ${label}
         </span>
         <span class="text-gray-100 text-[10px] font-mono font-bold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] whitespace-nowrap">
-          ${current} / ${max}
+          ${formatNumber(current)} / ${formatNumber(max)}
         </span>
       </div>
     </div>

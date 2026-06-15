@@ -1,7 +1,7 @@
 import { GameDB } from '../../data/database.js';
 import { createStatusBar, BAR_COLORS } from '../../components/status-bar.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
-
+import { formatNumber } from '../../utils/format.js';
 export function renderInnTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full p-4 animate-fade-in overflow-y-auto items-center';
@@ -107,7 +107,7 @@ export function renderInnTab() {
     
     // Update header gold display
     const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
+    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(newGold)} `;
 
     const rawEquip = await GameDB.getAllEquipment();
     const equipMap = buildEquipmentMap(rawEquip);

@@ -1,7 +1,7 @@
 import { GameDB } from '../../data/database.js';
 import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
-
+import { formatNumber } from '../../utils/format.js';
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
   water: { icon: 'water_drop', color: 'text-blue-500', label: 'Water' },
@@ -214,7 +214,7 @@ export function renderStorageTab() {
         }
         
         if (item.quantity && item.quantity > 1) {
-          slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600 shadow-sm leading-tight">x${item.quantity}</div>`;
+          slot.innerHTML += `<div class="absolute bottom-1 right-1 bg-black/80 text-white text-[10px] font-bold px-1 rounded border border-gray-600 shadow-sm leading-tight">x${formatNumber(item.quantity)}</div>`;
         }
       } else {
         // list view
@@ -269,7 +269,7 @@ export function renderStorageTab() {
           imgHtml = `<span class="material-symbols-outlined text-slate-500 text-2xl">category</span>`;
         }
 
-        const quantityText = (item.quantity && item.quantity > 1) ? `x${item.quantity}` : (item.quantity === 1 ? 'x1' : '');
+        const quantityText = (item.quantity && item.quantity > 1) ? `x${formatNumber(item.quantity)}` : (item.quantity === 1 ? 'x1' : '');
 
         slot.innerHTML = `
           <div class="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
@@ -478,7 +478,7 @@ export function renderStorageTab() {
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
-        <div class="flex-1 text-center font-mono text-base font-black text-rose-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="sell-count-disp">${sellCount}</div>
+        <div class="flex-1 text-center font-mono text-base font-black text-rose-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="sell-count-disp">${formatNumber(sellCount)}</div>
         <button id="btn-plus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">+</button>
         <button id="btn-max" class="px-3 h-8 flex items-center justify-center bg-rose-950/60 border border-rose-800/80 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-900/60 active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(244,63,94,0.05)]">MAX</button>
       </div>
@@ -492,7 +492,7 @@ export function renderStorageTab() {
         bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>売却不可`;
         bottomSection.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800 text-slate-550 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';
       } else {
-        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">payments</span>売却する（${(price * sellCount).toLocaleString()} G）`;
+        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">payments</span>売却する（${formatNumber(price * sellCount)} G）`;
         bottomSection.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(239,68,68,0.25)] hover:shadow-[0_4px_25px_rgba(239,68,68,0.4)] border border-rose-400/20 cursor-pointer shrink-0';
       }
     };
@@ -516,7 +516,7 @@ export function renderStorageTab() {
     
     const updateCountDisp = () => {
       const disp = modal.querySelector('#sell-count-disp');
-      if (disp) disp.textContent = sellCount;
+      if (disp) disp.textContent = formatNumber(sellCount);
       updateBottomText();
     };
     
@@ -541,7 +541,7 @@ export function renderStorageTab() {
       
       const headerGoldEl = document.getElementById('header-gold-display');
       if (headerGoldEl) {
-        headerGoldEl.textContent = ` Gold : ${newGold.toLocaleString()} `;
+        headerGoldEl.textContent = ` Gold : ${formatNumber(newGold)} `;
       }
       
       if (item.slot) {

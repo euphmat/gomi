@@ -1,5 +1,6 @@
 import { createStatusBar, BAR_COLORS } from './status-bar.js';
 import { STAT_KEYS } from '../data/constants.js';
+import { formatNumber } from '../utils/format.js';
 
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500' },
@@ -87,7 +88,7 @@ export function showDetailedStatusModal(character, finalStats, onNameChanged) {
         <span class="material-symbols-outlined ${s.color}" style="font-size: 11px; font-variation-settings: 'FILL' 1">${s.icon}</span>
         <span class="text-[8px] text-gray-300 font-bold tracking-wider leading-none">${s.label}</span>
       </div>
-      <span class="text-[12px] font-black text-gray-100 leading-tight mt-0.5 drop-shadow-md">${finalStats[s.key]}</span>
+      <span class="text-[12px] font-black text-gray-100 leading-tight mt-0.5 drop-shadow-md">${formatNumber(finalStats[s.key])}</span>
     </div>
   `).join('');
 

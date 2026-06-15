@@ -6,6 +6,7 @@ import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '
 import { JOBS } from '../jobs/index.js';
 import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
+import { formatNumber } from '../utils/format.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -336,7 +337,7 @@ class BattleManager {
       const newHpScale = `scaleX(${e.currentHp / e.maxHp})`;
       if (hpBar.style.transform !== newHpScale) hpBar.style.transform = newHpScale;
       if (hpText) {
-        const newHpText = `${Math.floor(e.currentHp)}/${e.maxHp}`;
+        const newHpText = `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`;
         if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
       }
     });
@@ -383,7 +384,7 @@ class BattleManager {
         const newHpScale = `scaleX(${p.hp.current / trueMaxHp})`;
         if (hpBar.style.transform !== newHpScale) hpBar.style.transform = newHpScale;
         if (hpText) {
-          const newHpText = `${Math.floor(p.hp.current)}/${trueMaxHp}`;
+          const newHpText = `${formatNumber(Math.floor(p.hp.current))}/${formatNumber(trueMaxHp)}`;
           if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
         }
       }
@@ -393,7 +394,7 @@ class BattleManager {
         const newMpScale = `scaleX(${p.mp.current / trueMaxMp})`;
         if (mpBar.style.transform !== newMpScale) mpBar.style.transform = newMpScale;
         if (mpText) {
-          const newMpText = `${Math.floor(p.mp.current)}/${trueMaxMp}`;
+          const newMpText = `${formatNumber(Math.floor(p.mp.current))}/${formatNumber(trueMaxMp)}`;
           if (mpText.textContent !== newMpText) mpText.textContent = newMpText;
         }
       }
@@ -402,7 +403,7 @@ class BattleManager {
         const newExpScale = `scaleX(${p.exp.current / p.exp.max})`;
         if (expBar.style.transform !== newExpScale) expBar.style.transform = newExpScale;
         if (expText) {
-          const newExpText = `${Math.floor(p.exp.current)}/${p.exp.max}`;
+          const newExpText = `${formatNumber(Math.floor(p.exp.current))}/${formatNumber(p.exp.max)}`;
           if (expText.textContent !== newExpText) expText.textContent = newExpText;
         }
       }
@@ -411,7 +412,7 @@ class BattleManager {
         const newJpScale = `scaleX(${p.jp.current / p.jp.max})`;
         if (jpBar.style.transform !== newJpScale) jpBar.style.transform = newJpScale;
         if (jpText) {
-          const newJpText = `${Math.floor(p.jp.current)}/${p.jp.max}`;
+          const newJpText = `${formatNumber(Math.floor(p.jp.current))}/${formatNumber(p.jp.max)}`;
           if (jpText.textContent !== newJpText) jpText.textContent = newJpText;
         }
       }
@@ -422,13 +423,17 @@ class BattleManager {
       const statLabels = cache.statLabels;
 
       if (statVals && statVals.atk) {
-        if (statVals.atk.textContent !== String(p.stats.atk)) statVals.atk.textContent = p.stats.atk;
-        if (statVals.mat.textContent !== String(p.stats.matk)) statVals.mat.textContent = p.stats.matk;
-        if (statVals.mdf.textContent !== String(p.stats.mdef)) statVals.mdf.textContent = p.stats.mdef;
-        if (statVals.spd.textContent !== String(p.stats.spd)) statVals.spd.textContent = p.stats.spd;
+        const fAtk = formatNumber(p.stats.atk);
+        const fMat = formatNumber(p.stats.matk);
+        const fMdf = formatNumber(p.stats.mdef);
+        const fSpd = formatNumber(p.stats.spd);
+        if (statVals.atk.textContent !== fAtk) statVals.atk.textContent = fAtk;
+        if (statVals.mat.textContent !== fMat) statVals.mat.textContent = fMat;
+        if (statVals.mdf.textContent !== fMdf) statVals.mdf.textContent = fMdf;
+        if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
 
         if (p._defBuffTurns > 0) {
-          const defStr = String(Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)));
+          const defStr = formatNumber(Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)));
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-gray-100');
           statVals.def.classList.add('text-green-400');
@@ -438,7 +443,7 @@ class BattleManager {
           statIcons.def.classList.add('text-green-400');
           statLabels.def.classList.add('text-green-400');
         } else {
-          const defStr = String(p.stats.def);
+          const defStr = formatNumber(p.stats.def);
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-green-400');
           statVals.def.classList.add('text-gray-100');
@@ -460,7 +465,7 @@ class BattleManager {
           statIcons.mdf.classList.add('text-indigo-300');
           statLabels.mdf.classList.add('text-indigo-300');
         } else {
-          const mdefStr = String(p.stats.mdef);
+          const mdefStr = formatNumber(p.stats.mdef);
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-indigo-300');
           statVals.mdf.classList.add('text-gray-100');
@@ -879,7 +884,7 @@ class BattleManager {
                const currentGold = await GameDB.getGameState('gold') || 0;
                await GameDB.setGameState('gold', currentGold + totalGold);
                const goldDisplay = document.getElementById('header-gold-display');
-               if (goldDisplay) goldDisplay.textContent = ` Gold : ${(currentGold + totalGold).toLocaleString()} `;
+              if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold + totalGold)} `;
                
                // Show visual feedback (gold gain) near the click
                const popup = document.createElement('div');
@@ -2012,7 +2017,7 @@ class BattleManager {
       this.obtainedGold += gold;
       this._needsSave = true;
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${this.currentGold.toLocaleString()} `;
+      if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(this.currentGold)} `;
       drops.push({ text: `+${gold}`, icon: 'paid', color: 'text-yellow-400' });
     }
 
@@ -2337,7 +2342,7 @@ class BattleManager {
       await this.savePartyState(); // Save healed state
       
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${newGold.toLocaleString()} `;
+      if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(newGold)} `;
 
       this.isDungeonClear = false;
 

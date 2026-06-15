@@ -4,6 +4,7 @@ import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS, getMedalImageFilter } from '../../definitions/medal-definitions.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
+import { formatNumber } from '../../utils/format.js';
 
 /**
  * メダル鋳造タブ
@@ -278,9 +279,9 @@ export function renderMedalTab() {
                 <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
               </div>
               <div class="flex items-center gap-0.5 shrink-0">
-                <span class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${owned.toLocaleString()}</span>
-                <span class="text-[11px] text-slate-500 font-bold">/</span>
-                <span class="text-[12px] font-bold text-slate-400">${required.toLocaleString()}</span>
+                <span class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
+                <span class="text-gray-500 text-[10px]">/</span>
+                <span class="text-[12px] font-bold text-slate-400">${formatNumber(required)}</span>
               </div>
             `;
             materialsGrid.appendChild(row);
@@ -302,9 +303,9 @@ export function renderMedalTab() {
               <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
-              <span class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${currentGold.toLocaleString()}</span>
-              <span class="text-[11px] text-slate-500 font-bold">/</span>
-              <span class="text-[12px] font-bold text-slate-400">${goldCost.toLocaleString()}</span>
+              <span class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentGold)}</span>
+              <span class="text-gray-500 text-[10px]">/</span>
+              <span class="text-[12px] font-bold text-slate-400">${formatNumber(goldCost)}</span>
             </div>
           `;
           materialsGrid.appendChild(goldRow);
@@ -352,7 +353,7 @@ export function renderMedalTab() {
 
               // ヘッダーのゴールド表示も更新
               const goldDisplay = document.getElementById('header-gold-display');
-              if (goldDisplay) goldDisplay.textContent = ` Gold : ${currentGold.toLocaleString()} `;
+              if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
 
               // 成功演出
               showCraftSuccessAnimation(container, nextRank, monster);
