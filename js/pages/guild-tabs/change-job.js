@@ -233,32 +233,19 @@ export function renderChangeJobTab() {
   // ─── レンダリング: 内部タブ ──────────────────────────────
   const renderInnerTabs = () => {
     const tabContainer = document.createElement('div');
-    tabContainer.className = 'flex gap-2 p-1.5 mb-4 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-inner shrink-0 relative';
+    tabContainer.className = 'flex gap-2 px-1 mb-2 shrink-0';
     
     const tabs = [
-      { id: 'change-job', label: '転職', icon: 'sync_alt' },
-      { id: 'rebirth', label: '転生', icon: 'auto_awesome' },
-      { id: 'sp-reset', label: 'SPリセット', icon: 'restart_alt' }
+      { id: 'change-job', label: '転職' },
+      { id: 'rebirth', label: '転生' },
+      { id: 'sp-reset', label: 'SPリセット' }
     ];
 
     tabs.forEach(tab => {
       const isActive = currentInnerTab === tab.id;
       const btn = document.createElement('button');
-      btn.className = `relative flex-1 py-2.5 flex items-center justify-center gap-1.5 text-xs font-black rounded-xl transition-all duration-300 z-10 overflow-hidden ${
-        isActive 
-          ? 'text-white' 
-          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-      }`;
-      
-      if (isActive) {
-        btn.innerHTML = `
-          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 -z-10 shadow-[0_0_15px_rgba(99,102,241,0.4)] border border-white/20 rounded-xl"></div>
-          <div class="absolute inset-0 bg-white/20 translate-y-full hover:translate-y-0 transition-transform duration-300 ease-out -z-10"></div>
-          <span class="material-symbols-outlined text-[16px] drop-shadow-md">${tab.icon}</span><span class="tracking-wider drop-shadow-md">${tab.label}</span>
-        `;
-      } else {
-        btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${tab.icon}</span><span class="tracking-wider">${tab.label}</span>`;
-      }
+      btn.className = `flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${isActive ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}`;
+      btn.textContent = tab.label;
 
       btn.onclick = () => {
         if (currentInnerTab !== tab.id) {
