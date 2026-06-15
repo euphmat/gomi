@@ -237,7 +237,7 @@ export function renderMedalTab() {
         // --- ランクアップ/作成セクション ---
         if (!isMaxRank && nextRank) {
           const craftSection = document.createElement('div');
-          craftSection.className = 'border-t border-slate-700/60 pt-2 flex flex-col gap-1.5';
+          craftSection.className = 'border-t border-slate-700/60 pt-2 flex flex-col gap-1.5 h-[134px]';
 
           const actionLabel = currentRank ? 'ランクアップ' : '鋳造';
           const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
@@ -369,7 +369,7 @@ export function renderMedalTab() {
         } else if (isMaxRank) {
           // 最大ランク到達
           const maxSection = document.createElement('div');
-          maxSection.className = 'border-t border-slate-700/60 pt-3 flex flex-col items-center gap-2 text-center';
+          maxSection.className = 'border-t border-slate-700/60 pt-3 flex flex-col items-center justify-center gap-2 text-center h-[134px]';
           maxSection.innerHTML = `
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg text-amber-400 animate-pulse" style="font-variation-settings: 'FILL' 1">stars</span>
@@ -472,7 +472,7 @@ export function renderMedalTab() {
     GameDB.getGameState('gold'),
     GameDB.getAllInventory(),
     GameDB.getGameState('discovered_monsters'),
-    GameDB.getGameState('unlocked_dungeons')
+    GameDB.getGameState('unlockedDungeons')
   ]).then(([pMedals, gold, invItems, dMonsters, uDungeons]) => {
     playerMedals = pMedals || {};
     currentGold = gold || 0;
