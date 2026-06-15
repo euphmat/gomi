@@ -227,8 +227,7 @@ class BattleManager {
 
     if (protectionConfig) {
       aliveParty.forEach(p => {
-        p._defBuffPercent = Math.max(p._defBuffPercent || 0, protectionConfig.percent);
-        p._defBuffTurns = Infinity;
+        p._passiveDefBuffPercent = Math.max(p._passiveDefBuffPercent || 0, protectionConfig.percent);
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -241,8 +240,7 @@ class BattleManager {
 
     if (magicBarrierConfig) {
       aliveParty.forEach(p => {
-        p._mdefBuffAmount = Math.max(p._mdefBuffAmount || 0, Math.floor((p.stats?.mdef || 0) * (magicBarrierConfig.percent / 100)));
-        p._mdefBuffTurns = Infinity;
+        p._passiveMdefBuffAmount = Math.max(p._passiveMdefBuffAmount || 0, Math.floor((p.stats?.mdef || 0) * (magicBarrierConfig.percent / 100)));
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -255,8 +253,7 @@ class BattleManager {
 
     if (weaponBlessConfig) {
       aliveParty.forEach(p => {
-        p._atkBuffPercent = Math.max(p._atkBuffPercent || 0, weaponBlessConfig.percent);
-        p._atkBuffTurns = Infinity;
+        p._passiveAtkBuffPercent = Math.max(p._passiveAtkBuffPercent || 0, weaponBlessConfig.percent);
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -269,8 +266,7 @@ class BattleManager {
 
     if (magicBlessConfig) {
       aliveParty.forEach(p => {
-        p._matkBuffPercent = Math.max(p._matkBuffPercent || 0, magicBlessConfig.percent);
-        p._matkBuffTurns = Infinity;
+        p._passiveMatkBuffPercent = Math.max(p._passiveMatkBuffPercent || 0, magicBlessConfig.percent);
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -278,6 +274,7 @@ class BattleManager {
           }, delay);
         }
       });
+      if (isFirstFloor) delay += 500;
     }
   }
 
@@ -525,8 +522,9 @@ class BattleManager {
         const fSpd = formatNumber(p.stats.spd);
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
 
-        if (p._atkBuffTurns > 0) {
-          const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + p._atkBuffPercent / 100)));
+        if (p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0) {
+          const totalAtkPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
+          const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + totalAtkPercent / 100)));
           if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
           statVals.atk.classList.remove('text-gray-100');
           statVals.atk.classList.add('text-red-400');
@@ -547,8 +545,9 @@ class BattleManager {
           statLabels.atk.classList.remove('text-red-400');
         }
 
-        if (p._matkBuffTurns > 0) {
-          const matStr = formatNumber(Math.floor(p.stats.matk * (1 + p._matkBuffPercent / 100)));
+        if (p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0) {
+          const totalMatkPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
+          const matStr = formatNumber(Math.floor(p.stats.matk * (1 + totalMatkPercent / 100)));
           if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
           statVals.mat.classList.remove('text-gray-100');
           statVals.mat.classList.add('text-purple-400');
@@ -569,8 +568,9 @@ class BattleManager {
           statLabels.mat.classList.remove('text-purple-400');
         }
 
-        if (p._defBuffTurns > 0) {
-          const defStr = formatNumber(Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)));
+        if (p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0) {
+          const totalDefPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
+          const defStr = formatNumber(Math.floor(p.stats.def * (1 + totalDefPercent / 100)));
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-gray-100');
           statVals.def.classList.add('text-green-400');
@@ -591,8 +591,9 @@ class BattleManager {
           statLabels.def.classList.remove('text-green-400');
         }
 
-        if (p._mdefBuffTurns > 0) {
-          const mdefStr = String(p.stats.mdef + p._mdefBuffAmount);
+        if (p._mdefBuffTurns > 0 || p._passiveMdefBuffAmount > 0) {
+          const totalMdefAmount = (p._passiveMdefBuffAmount || 0) + (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0);
+          const mdefStr = String(p.stats.mdef + totalMdefAmount);
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-gray-100');
           statVals.mdf.classList.add('text-indigo-300');
@@ -1368,42 +1369,57 @@ class BattleManager {
     }
 
     let atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
-    if (!isMagic && attacker._atkBuffPercent && attacker._atkBuffTurns > 0) {
-      atkStat = Math.floor(atkStat * (1 + attacker._atkBuffPercent / 100));
+    if (!isMagic) {
+      const totalAtkPercent = (attacker._passiveAtkBuffPercent || 0) + (attacker._atkBuffTurns > 0 ? (attacker._atkBuffPercent || 0) : 0);
+      if (totalAtkPercent !== 0) {
+        atkStat = Math.floor(atkStat * (1 + totalAtkPercent / 100));
+      }
     }
-    if (isMagic && attacker._matkBuffPercent && attacker._matkBuffTurns > 0) {
-      atkStat = Math.floor(atkStat * (1 + attacker._matkBuffPercent / 100));
+    if (isMagic) {
+      const totalMatkPercent = (attacker._passiveMatkBuffPercent || 0) + (attacker._matkBuffTurns > 0 ? (attacker._matkBuffPercent || 0) : 0);
+      if (totalMatkPercent !== 0) {
+        atkStat = Math.floor(atkStat * (1 + totalMatkPercent / 100));
+      }
     }
+    
     let defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
 
-    // --- 防御バフ適用 (物理防御陣形) ---
-    if (!isMagic && defender._defBuffPercent && defender._defBuffTurns > 0) {
-      defStat = Math.floor(defStat * (1 + defender._defBuffPercent / 100));
+    // --- 防御バフ適用 (物理防御陣形 + プロテクション) ---
+    if (!isMagic) {
+      const totalDefPercent = (defender._passiveDefBuffPercent || 0) + (defender._defBuffTurns > 0 ? (defender._defBuffPercent || 0) : 0);
+      if (totalDefPercent !== 0) {
+        defStat = Math.floor(defStat * (1 + totalDefPercent / 100));
+      }
     }
     // --- 魔法防御バフ適用 (マジックバリア) ---
-    if (isMagic && defender._mdefBuffAmount && defender._mdefBuffTurns > 0) {
-      defStat += defender._mdefBuffAmount;
+    if (isMagic) {
+      const totalMdefAmount = (defender._passiveMdefBuffAmount || 0) + (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
+      defStat += totalMdefAmount;
     }
 
     let damage = 0;
     if (options.isHybrid) {
       let physAtk = attacker.stats.atk || 0;
-      if (attacker._atkBuffPercent && attacker._atkBuffTurns > 0) {
-        physAtk = Math.floor(physAtk * (1 + attacker._atkBuffPercent / 100));
+      const hTotalAtkPercent = (attacker._passiveAtkBuffPercent || 0) + (attacker._atkBuffTurns > 0 ? (attacker._atkBuffPercent || 0) : 0);
+      if (hTotalAtkPercent !== 0) {
+        physAtk = Math.floor(physAtk * (1 + hTotalAtkPercent / 100));
       }
+      
       let physDef = defender.stats.def || 0;
-      if (defender._defBuffPercent && defender._defBuffTurns > 0) {
-        physDef = Math.floor(physDef * (1 + defender._defBuffPercent / 100));
+      const hTotalDefPercent = (defender._passiveDefBuffPercent || 0) + (defender._defBuffTurns > 0 ? (defender._defBuffPercent || 0) : 0);
+      if (hTotalDefPercent !== 0) {
+        physDef = Math.floor(physDef * (1 + hTotalDefPercent / 100));
       }
       
       let magAtk = attacker.stats.matk || 0;
-      if (attacker._matkBuffPercent && attacker._matkBuffTurns > 0) {
-        magAtk = Math.floor(magAtk * (1 + attacker._matkBuffPercent / 100));
+      const hTotalMatkPercent = (attacker._passiveMatkBuffPercent || 0) + (attacker._matkBuffTurns > 0 ? (attacker._matkBuffPercent || 0) : 0);
+      if (hTotalMatkPercent !== 0) {
+        magAtk = Math.floor(magAtk * (1 + hTotalMatkPercent / 100));
       }
+      
       let magDef = defender.stats.mdef || 0;
-      if (defender._mdefBuffAmount && defender._mdefBuffTurns > 0) {
-        magDef += defender._mdefBuffAmount;
-      }
+      const hTotalMdefAmount = (defender._passiveMdefBuffAmount || 0) + (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
+      magDef += hTotalMdefAmount;
       
       const physDamage = Math.max(0, physAtk - Math.floor(physDef / 2));
       const magDamage = Math.max(0, magAtk - Math.floor(magDef / 2));
