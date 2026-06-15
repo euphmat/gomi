@@ -267,10 +267,6 @@ export function renderItemLibraryTab() {
         const performanceParts = [statsHtml, elHtml, ailHtml].filter(Boolean);
         let performanceHtml = performanceParts.join('<span class="text-gray-600/60 mx-1.5 leading-none font-light">||</span>');
 
-        if (item.ability) {
-           performanceHtml += `${performanceParts.length > 0 ? '<span class="text-gray-600/60 mx-1.5 leading-none font-light">||</span>' : ''}<span class="inline-flex items-center gap-1 text-[10px] text-amber-400 font-bold"><span class="material-symbols-outlined text-[12px]">star</span>${isAcquired ? item.ability.name : '？？？'}</span>`;
-        }
-
         let slotLabel = '素材';
         let slotColor = 'text-slate-400 bg-slate-800/80 border-slate-700/50';
         if (item.slot === 'rightHand') { slotLabel = '武器'; slotColor = 'text-rose-400 bg-rose-500/10 border-rose-500/20'; }
@@ -413,15 +409,7 @@ export function renderItemLibraryTab() {
       : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : '特殊な効果を持たない素材アイテムです。'}</div>`;
 
     // Ability
-    const abilityHtml = isAcquired && item.ability ? `
-      <div class="flex flex-col gap-1 p-3 bg-gradient-to-r from-amber-950/20 to-amber-900/10 border border-amber-700/20 rounded-xl relative overflow-hidden shadow-inner mt-1 shrink-0">
-        <div class="flex items-center gap-1.5 mb-1 shrink-0">
-          <div class="text-[9px] text-amber-300 font-black tracking-wide uppercase px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/25 rounded leading-none shadow-sm">${item.ability.name}</div>
-          <span class="text-[8px] text-amber-500/80 font-bold uppercase tracking-wider">アビリティ</span>
-        </div>
-        <div class="text-[10px] text-slate-300 leading-normal break-words pl-0.5">${item.ability.description}</div>
-      </div>
-    ` : '';
+    const abilityHtml = '';
 
     const itemImgClass = 'w-full h-full object-cover';
 

@@ -42,7 +42,7 @@ function _mergeDef(item) {
   const baseId = item.baseId || _getBaseId(item.id);
   const def = ALL_EQUIPMENT_DEFS.find(d => d.id === baseId);
   if (def) {
-    return { ...def, ...item, stats: def.stats, elements: def.elements, ailments: def.ailments, ability: def.ability };
+    return { ...def, ...item, stats: def.stats, elements: def.elements, ailments: def.ailments };
   }
   return item;
 }

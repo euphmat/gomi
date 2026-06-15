@@ -246,13 +246,8 @@ export function renderStorageTab() {
             const colorClass = val > 0 ? 'text-emerald-400' : 'text-rose-400';
             return `<div class="flex items-center shrink-0"><span class="material-symbols-outlined ${def.color} mr-0.5" style="font-size: 11px;">${def.icon}</span><span class="${colorClass} font-mono font-bold drop-shadow-sm" style="font-size: 10px;">${val > 0 ? '+' : ''}${val}%</span></div>`;
           }).join('');
-          
-        let abilityHtml = '';
-        if (item.ability) {
-           abilityHtml = `<div class="flex items-center text-amber-300 bg-amber-500/10 border border-amber-500/20 px-1 rounded min-w-0" style="padding-top: 1px; padding-bottom: 1px;"><span class="material-symbols-outlined mr-0.5 shrink-0" style="font-size: 10px;">star</span><span class="font-bold truncate" style="font-size: 9px;">${item.ability.name}</span></div>`;
-        }
 
-        const performanceParts = [statsHtml, elHtml, ailHtml, abilityHtml].filter(Boolean);
+        const performanceParts = [statsHtml, elHtml, ailHtml].filter(Boolean);
         const performanceHtml = performanceParts.join('<div class="w-px h-2 bg-slate-700/60 mx-1 shrink-0"></div>');
 
         let slotLabel = '素材';
@@ -414,15 +409,7 @@ export function renderStorageTab() {
         }).join('') + `</div>`
       : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : '素材アイテム<br>特殊な効果はありません。'}</div>`;
 
-    const abilityHtml = item.ability ? `
-      <div class="flex flex-col gap-1 p-3 bg-gradient-to-r from-amber-950/20 to-amber-900/10 border border-amber-700/20 rounded-xl relative overflow-hidden shadow-inner mt-1 shrink-0">
-        <div class="flex items-center gap-1.5 mb-1 shrink-0">
-          <div class="text-[9px] text-amber-300 font-black tracking-wide uppercase px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/25 rounded leading-none shadow-sm">${item.ability.name}</div>
-          <span class="text-[8px] text-amber-500/80 font-bold uppercase tracking-wider">アビリティ</span>
-        </div>
-        <div class="text-[10px] text-slate-300 leading-normal break-words pl-0.5">${item.ability.description}</div>
-      </div>
-    ` : '';
+    const abilityHtml = '';
 
     const itemImgClass = 'w-full h-full object-cover';
 

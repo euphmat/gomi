@@ -307,13 +307,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
               ${actionBtns}
             </div>
           </div>
-          <!-- Ability Info -->
-          ${selectedItem && selectedItem.ability ? `
-            <div class="flex items-start gap-1.5 mt-0.5 p-1.5 bg-yellow-900/10 border border-yellow-700/20 rounded-md">
-              <div class="text-[9px] text-yellow-300 font-bold px-1.5 py-[2px] bg-yellow-900/60 border border-yellow-700/50 rounded shrink-0 leading-none mt-[1px] shadow-sm">${selectedItem.ability.name}</div>
-              <div class="text-[10px] text-gray-300 leading-snug break-words">${selectedItem.ability.description}</div>
-            </div>
-          ` : ''}
+          <!-- Ability Info Removed -->
           <!-- Row 2: Stats + element/ailment chips -->
           ${renderDetailPanel(selectedGroup)}
         </div>

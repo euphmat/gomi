@@ -1368,7 +1368,7 @@ class BattleManager {
 
   executeAttack(attacker, defender, isParty, options = {}) {
     const actionName = options.actionName || '攻撃';
-    this._abilityTriggered = false;
+
 
     // --- 暗闇 (Blind) の判定 ---
     const isMagic = options.isMagic || false;
@@ -1447,21 +1447,8 @@ class BattleManager {
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
 
-    // --- 武器アビリティの発動 ---
-    // 通常攻撃時（options.damageType が指定されていない場合）のみ発動
-    if (!options.damageType && attacker.equipment && attacker.equipment.rightHand) {
-      const weaponDef = this.equipMap.get(attacker.equipment.rightHand);
-      if (weaponDef && weaponDef.ability && weaponDef.ability.execute) {
-        const origDamage = damage;
-        damage = weaponDef.ability.execute(attacker, defender, damage, this);
-        if (damage !== origDamage) {
-          options.damageType = 'ability';
-        }
-      }
-    }
-
-    // --- ポップアップの表示 (アビリティが発動しなかった場合のみ基本アクション名を表示) ---
-    if (!options.hideActionName && !this._abilityTriggered) {
+    // --- ポップアップの表示 ---
+    if (!options.hideActionName) {
       if (isParty) {
         this.showActionName(attacker.elementId, actionName, 'text-gray-100', 'border-gray-500/50');
       } else {
