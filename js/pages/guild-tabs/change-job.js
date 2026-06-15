@@ -193,9 +193,9 @@ export function renderChangeJobTab() {
     char.exp = { current: 0, max: 100 };
     char.baseStats = { atk: 1, def: 1, matk: 1, mdef: 1, spd: 1 };
     char.hp.max = 10;
-    char.hp.current = 10;
+    char.hp.current = 10 + char.rebirthBonus.hp;
     char.mp.max = 10;
-    char.mp.current = 10;
+    char.mp.current = 10 + char.rebirthBonus.mp;
 
     await GameDB.putCharacter(char);
     characters = await getCharactersWithRanchBonus();
@@ -313,7 +313,7 @@ export function renderChangeJobTab() {
         : `<div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/0 via-purple-500/0 to-indigo-500/0 group-hover:from-indigo-500/10 group-hover:via-purple-500/5 transition-all duration-700 blur-2xl pointer-events-none"></div>`;
 
       const buttonHtml = isCurrent
-        ? `<div class="relative px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-black tracking-widest rounded-lg border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified</span>装備中</div>`
+        ? `<div class="relative px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-black tracking-widest rounded-lg border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified</span>適用中</div>`
         : isUnlocked
           ? `<button class="btn-change-job relative px-4 py-1.5 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white text-[11px] font-black rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 shrink-0 overflow-hidden hover:scale-105 active:scale-95 group/btn" data-job-id="${job.id}">
               <div class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 ease-out"></div>
@@ -370,37 +370,13 @@ export function renderChangeJobTab() {
         if (span) span.textContent = '転職中...';
       }
 
-      await changeJob(char, jobDef);
-    });
-
-    return listContainer;
-  };
-
-  // ─── レンダリング: 転生タブ ──────────────────────────────
-  const renderRebirthInnerTab = (char) => {
-    const container = document.createElement('div');
-    container.className = 'flex-1 overflow-y-auto space-y-4 pb-6 px-1';
-
-    const cost = 10000;
-    const canRebirthLevel = char.level >= 40;
-    const canRebirthGold = currentGold >= cost;
-    const canRebirth = canRebirthLevel && canRebirthGold;
-
-    const bonusHp = Math.floor(char.hp.max * 0.1);
-    const bonusMp = Math.floor(char.mp.max * 0.1);
-    const bonusAtk = Math.floor((char.baseStats.atk || 0) * 0.1);
-    const bonusDef = Math.floor((char.baseStats.def || 0) * 0.1);
-    const bonusMatk = Math.floor((char.baseStats.matk || 0) * 0.1);
-    const bonusMdef = Math.floor((char.baseStats.mdef || 0) * 0.1);
-    const bonusSpd = Math.floor((char.baseStats.spd || 0) * 0.1);
-
-    const cumHp = (char.rebirthBonus?.hp || 0) + bonusHp;
-    const cumMp = (char.rebirthBonus?.mp || 0) + bonusMp;
-    const cumAtk = (char.rebirthBonus?.atk || 0) + bonusAtk;
-    const cumDef = (char.rebirthBonus?.def || 0) + bonusDef;
-    const cumMatk = (char.rebirthBonus?.matk || 0) + bonusMatk;
-    const cumMdef = (char.rebirthBonus?.mdef || 0) + bonusMdef;
-    const cumSpd = (char.rebirthBonus?.spd || 0) + bonusSpd;
+     const currentHp = char.rebirthBonus?.hp || 0;
+    const currentMp = char.rebirthBonus?.mp || 0;
+    const currentAtk = char.rebirthBonus?.atk || 0;
+    const currentDef = char.rebirthBonus?.def || 0;
+    const currentMatk = char.rebirthBonus?.matk || 0;
+    const currentMdef = char.rebirthBonus?.mdef || 0;
+    const currentSpd = char.rebirthBonus?.spd || 0;
 
     container.innerHTML = `
       <div class="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-4">
@@ -416,7 +392,7 @@ export function renderChangeJobTab() {
               <span class="text-[14px] font-black text-red-400 drop-shadow-md">+${bonusHp}</span>
             </div>
             <div class="text-[10px] font-bold text-red-300/80 bg-red-900/40 px-2 py-0.5 rounded border border-red-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-red-400 drop-shadow-[0_0_3px_rgba(248,113,113,0.8)]">+${cumHp}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-red-400 drop-shadow-[0_0_3px_rgba(248,113,113,0.8)]">+${currentHp}</span>
             </div>
           </div>
           <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-blue-500/10 border-blue-500/20 shadow-sm">
@@ -426,7 +402,7 @@ export function renderChangeJobTab() {
               <span class="text-[14px] font-black text-blue-400 drop-shadow-md">+${bonusMp}</span>
             </div>
             <div class="text-[10px] font-bold text-blue-300/80 bg-blue-900/40 px-2 py-0.5 rounded border border-blue-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-blue-400 drop-shadow-[0_0_3px_rgba(96,165,250,0.8)]">+${cumMp}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-blue-400 drop-shadow-[0_0_3px_rgba(96,165,250,0.8)]">+${currentMp}</span>
             </div>
           </div>
           <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-orange-500/10 border-orange-500/20 shadow-sm">
@@ -436,7 +412,7 @@ export function renderChangeJobTab() {
               <span class="text-[14px] font-black text-orange-400 drop-shadow-md">+${bonusAtk}</span>
             </div>
             <div class="text-[10px] font-bold text-orange-300/80 bg-orange-900/40 px-2 py-0.5 rounded border border-orange-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-orange-400 drop-shadow-[0_0_3px_rgba(251,146,60,0.8)]">+${cumAtk}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-orange-400 drop-shadow-[0_0_3px_rgba(251,146,60,0.8)]">+${currentAtk}</span>
             </div>
           </div>
           <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-green-500/10 border-green-500/20 shadow-sm">
@@ -446,7 +422,7 @@ export function renderChangeJobTab() {
               <span class="text-[14px] font-black text-green-400 drop-shadow-md">+${bonusDef}</span>
             </div>
             <div class="text-[10px] font-bold text-green-300/80 bg-green-900/40 px-2 py-0.5 rounded border border-green-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-green-400 drop-shadow-[0_0_3px_rgba(74,222,128,0.8)]">+${cumDef}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-green-400 drop-shadow-[0_0_3px_rgba(74,222,128,0.8)]">+${currentDef}</span>
             </div>
           </div>
           <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-fuchsia-500/10 border-fuchsia-500/20 shadow-sm">
@@ -456,17 +432,17 @@ export function renderChangeJobTab() {
               <span class="text-[14px] font-black text-fuchsia-400 drop-shadow-md">+${bonusMatk}</span>
             </div>
             <div class="text-[10px] font-bold text-fuchsia-300/80 bg-fuchsia-900/40 px-2 py-0.5 rounded border border-fuchsia-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-fuchsia-400 drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]">+${cumMatk}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-fuchsia-400 drop-shadow-[0_0_3px_rgba(232,121,249,0.8)]">+${currentMatk}</span>
             </div>
           </div>
           <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-indigo-500/10 border-indigo-500/20 shadow-sm">
             <div class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[14px] text-indigo-400">gpp_good</span>
+              <span class="material-symbols-outlined text-[14px] text-indigo-400">gpp_maybe</span>
               <span class="text-[12px] font-bold text-slate-300">MDF</span>
               <span class="text-[14px] font-black text-indigo-400 drop-shadow-md">+${bonusMdef}</span>
             </div>
             <div class="text-[10px] font-bold text-indigo-300/80 bg-indigo-900/40 px-2 py-0.5 rounded border border-indigo-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-indigo-400 drop-shadow-[0_0_3px_rgba(129,140,248,0.8)]">+${cumMdef}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-indigo-400 drop-shadow-[0_0_3px_rgba(129,140,248,0.8)]">+${currentMdef}</span>
             </div>
           </div>
           <div class="flex flex-col items-center justify-center px-2 py-2 rounded-lg border bg-yellow-500/10 border-yellow-500/20 shadow-sm">
@@ -476,7 +452,7 @@ export function renderChangeJobTab() {
               <span class="text-[14px] font-black text-yellow-400 drop-shadow-md">+${bonusSpd}</span>
             </div>
             <div class="text-[10px] font-bold text-yellow-300/80 bg-yellow-900/40 px-2 py-0.5 rounded border border-yellow-500/30 w-full text-center mt-1.5 flex justify-center items-center gap-1">
-              <span>累計:</span><span class="text-[12px] font-black text-yellow-400 drop-shadow-[0_0_3px_rgba(250,204,21,0.8)]">+${cumSpd}</span>
+              <span>現在:</span><span class="text-[12px] font-black text-yellow-400 drop-shadow-[0_0_3px_rgba(250,204,21,0.8)]">+${currentSpd}</span>
             </div>
           </div>
         </div>
