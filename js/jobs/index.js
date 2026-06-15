@@ -4,6 +4,7 @@ import { mage } from './mage.js';
 import { priest } from './priest.js';
 import { ranger } from './ranger.js';
 import { magic_knight } from './magic_knight.js';
+import { slime_master } from './slime_master.js';
 
 export const JOBS = {
   [norvice.id]: norvice,
@@ -11,5 +12,6 @@ export const JOBS = {
   [mage.id]: mage,
   [priest.id]: priest,
   [ranger.id]: ranger,
-  [magic_knight.id]: magic_knight
+  [magic_knight.id]: magic_knight,
+  [slime_master.id]: slime_master
 };

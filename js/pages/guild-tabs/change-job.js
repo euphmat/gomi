@@ -15,6 +15,7 @@ export function renderChangeJobTab() {
   let selectedCharId = null;
   let currentGold = 0;
   let currentInnerTab = 'change-job'; // 'change-job' | 'rebirth' | 'sp-reset'
+  let currentCapturedMonsters = [];
 
   // ─── 通知トースト ─────────────────────────────────────
   const showNotification = (parentEl, message, type = 'success') => {
@@ -49,12 +50,19 @@ export function renderChangeJobTab() {
     if (!isUnlocked) {
       if (jobDef.requirements) {
         for (const req of jobDef.requirements) {
-          const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
-          const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
-          if (currentLv < req.level) {
-            const jobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
-            showNotification(container, `条件未達成: ${jobName} Lv${req.level}が必要`, 'error');
-            return;
+          if (req.type === 'custom') {
+            if (!req.check(currentCapturedMonsters)) {
+              showNotification(container, `条件未達成: ${req.description}`, 'error');
+              return;
+            }
+          } else {
+            const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
+            const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
+            if (currentLv < req.level) {
+              const jobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
+              showNotification(container, `条件未達成: ${jobName} Lv${req.level}が必要`, 'error');
+              return;
+            }
           }
         }
       }
@@ -293,22 +301,38 @@ export function renderChangeJobTab() {
             <span class="text-[8px] font-black text-indigo-300 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-500/30 shrink-0">条件</span>
         `;
         for (const req of job.requirements) {
-          const reqJobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
-          const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
-          const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
-          const isMet = currentLv >= req.level;
-          if (!isMet) allReqsMet = false;
-          
-          const textColor = isMet ? 'text-emerald-400' : 'text-rose-400 opacity-90';
-          
-          requirementsHtml += `
-            <div class="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 rounded border ${isMet ? 'border-emerald-500/30' : 'border-rose-500/30'} shrink-0">
-              <img src="./assets/job/job_${req.jobId}.webp" class="w-3.5 h-3.5 object-contain" alt="${reqJobName}" onerror="this.style.display='none'">
-              <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
-                ${reqJobName}<span class="opacity-70 ml-0.5">Lv${req.level}</span>
-              </span>
-            </div>
-          `;
+          if (req.type === 'custom') {
+            const isMet = req.check(currentCapturedMonsters);
+            if (!isMet) allReqsMet = false;
+            
+            const textColor = isMet ? 'text-emerald-400' : 'text-rose-400 opacity-90';
+            
+            requirementsHtml += `
+              <div class="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 rounded border ${isMet ? 'border-emerald-500/30' : 'border-rose-500/30'} shrink-0">
+                <span class="material-symbols-outlined text-[10px] ${textColor}">military_tech</span>
+                <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
+                  ${req.description}
+                </span>
+              </div>
+            `;
+          } else {
+            const reqJobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
+            const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
+            const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
+            const isMet = currentLv >= req.level;
+            if (!isMet) allReqsMet = false;
+            
+            const textColor = isMet ? 'text-emerald-400' : 'text-rose-400 opacity-90';
+            
+            requirementsHtml += `
+              <div class="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 rounded border ${isMet ? 'border-emerald-500/30' : 'border-rose-500/30'} shrink-0">
+                <img src="./assets/job/job_${req.jobId}.webp" class="w-3.5 h-3.5 object-contain" alt="${reqJobName}" onerror="this.style.display='none'">
+                <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
+                  ${reqJobName}<span class="opacity-70 ml-0.5">Lv${req.level}</span>
+                </span>
+              </div>
+            `;
+          }
         }
         requirementsHtml += `</div>`;
       }
@@ -642,9 +666,14 @@ export function renderChangeJobTab() {
   };
 
   // ─── 初期データロード ──────────────────────────────────
-  Promise.all([getCharactersWithRanchBonus(), GameDB.getGameState('gold')]).then(async ([chars, goldVal]) => {
+  Promise.all([
+    getCharactersWithRanchBonus(),
+    GameDB.getGameState('gold'),
+    GameDB.getGameState('capturedMonsters')
+  ]).then(async ([chars, goldVal, capturedMonsters]) => {
     characters = chars;
     currentGold = goldVal || 0;
+    currentCapturedMonsters = capturedMonsters || [];
 
     for (const char of characters) {
       let needSave = false;

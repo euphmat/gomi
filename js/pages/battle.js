@@ -1306,6 +1306,25 @@ class BattleManager {
             return;
           }
           this.activeCharacter = nextActor.entity;
+          
+          // --- Passive: Adhesive Substance (粘着物質) ---
+          if (this.activeCharacter.jobSkills && !this.activeCharacter.isDead) {
+            const adhesiveSkill = this._findSkill(this.activeCharacter, 'adhesive_substance');
+            if (adhesiveSkill && adhesiveSkill.level > 0 && adhesiveSkill.levelConfig) {
+              const spdDown = adhesiveSkill.levelConfig.spdDown || 10;
+              let triggered = false;
+              this.enemies.forEach(enemy => {
+                if (!enemy.isDead && enemy.stats && enemy.stats.spd > 1) {
+                  enemy.stats.spd = Math.max(1, Math.floor(enemy.stats.spd * (1 - spdDown / 100)));
+                  triggered = true;
+                }
+              });
+              if (triggered && !document.hidden) {
+                this.showActionName(this.activeCharacter.elementId, '粘着物質', 'text-amber-500', 'border-amber-600/50');
+              }
+            }
+          }
+
           if (!document.hidden) this.renderEntities();
           if (this.isAutoBattle) {
             this.processAutoBattle(this.activeCharacter);
@@ -1502,6 +1521,16 @@ class BattleManager {
       }
     }
 
+    // --- Passive: Slime Body (スライムボディ) ---
+    if (!isParty && defender.jobSkills) {
+      const slimeBodySkill = this._findSkill(defender, 'slime_body');
+      if (slimeBodySkill && slimeBodySkill.level > 0 && slimeBodySkill.levelConfig) {
+        const reduction = slimeBodySkill.levelConfig.reduction || 15;
+        damage = Math.floor(damage * (1 - reduction / 100));
+        if (damage < 1) damage = 1;
+      }
+    }
+
     // --- Passive: Parry (物理攻撃を無効化) ---
     if (!isParty && !isMagic && defender.jobSkills) {
       const parrySkill = this._findSkill(defender, 'parry');
@@ -1600,8 +1629,24 @@ class BattleManager {
         this.processEnemyDeath(defender);
       }
     } else {
+      let survivedBySlimeCore = false;
+      if (defender.hp.current - damage <= 0 && defender.jobSkills) {
+        const slimeCoreSkill = this._findSkill(defender, 'slime_core');
+        if (slimeCoreSkill && slimeCoreSkill.level > 0 && slimeCoreSkill.levelConfig) {
+          const thresholdPercent = slimeCoreSkill.levelConfig.threshold || 50;
+          const currentPercent = (prevHp / (defender.stats.hp || defender.hp.max)) * 100;
+          if (currentPercent >= thresholdPercent) {
+            damage = prevHp - 1;
+            survivedBySlimeCore = true;
+            setTimeout(() => {
+              this.showActionName(defender.elementId, 'スライムコア', 'text-green-300', 'border-green-500/50');
+            }, 300 / this.speedMult);
+          }
+        }
+      }
+
       defender.hp.current -= damage;
-      if (defender.hp.current <= 0) {
+      if (defender.hp.current <= 0 && !survivedBySlimeCore) {
         defender.hp.current = 0;
         defender.isDead = true;
         this.lastKilledBy = {
