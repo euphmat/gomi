@@ -331,38 +331,72 @@ export const magic_knight = {
     },
     // ─── Passive Skills ──────────────────────────────────────
     {
-      id: 'mighty_guard', name: 'マイティーガード', icon: 'security', type: 'passive',
+      id: 'protection', name: 'プロテクション', icon: 'shield', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, percent: 10, turns: 3 },
-        { level:  2, spCost: 1, mpCost: 0, percent: 12, turns: 3 },
-        { level:  3, spCost: 1, mpCost: 0, percent: 14, turns: 3 },
-        { level:  4, spCost: 2, mpCost: 0, percent: 16, turns: 4 },
-        { level:  5, spCost: 2, mpCost: 0, percent: 18, turns: 4 },
-        { level:  6, spCost: 2, mpCost: 0, percent: 20, turns: 4 },
-        { level:  7, spCost: 3, mpCost: 0, percent: 22, turns: 5 },
-        { level:  8, spCost: 3, mpCost: 0, percent: 24, turns: 5 },
-        { level:  9, spCost: 3, mpCost: 0, percent: 26, turns: 5 },
-        { level: 10, spCost: 5, mpCost: 0, percent: 30, turns: 6 }
+        { level:  1, spCost: 1, mpCost: 0, percent: 10 },
+        { level:  2, spCost: 1, mpCost: 0, percent: 12 },
+        { level:  3, spCost: 1, mpCost: 0, percent: 14 },
+        { level:  4, spCost: 2, mpCost: 0, percent: 16 },
+        { level:  5, spCost: 2, mpCost: 0, percent: 18 },
+        { level:  6, spCost: 2, mpCost: 0, percent: 20 },
+        { level:  7, spCost: 3, mpCost: 0, percent: 22 },
+        { level:  8, spCost: 3, mpCost: 0, percent: 24 },
+        { level:  9, spCost: 3, mpCost: 0, percent: 26 },
+        { level: 10, spCost: 5, mpCost: 0, percent: 30 }
       ],
-      getDescription: (lc) => `戦闘開始時、パーティー全体の DEF と MDEF を ${lc.turns} ターンの間、${lc.percent}％ アップする`
+      getDescription: (lc) => `ダンジョン潜入時、パーティー全体の DEF を永続的に ${lc.percent}％ アップする`
     },
     {
-      id: 'weapon_bless', name: 'ウェポンブレス', icon: 'auto_awesome', type: 'passive',
+      id: 'magic_barrier', name: 'マジックバリア', icon: 'security', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, percent: 10, turns: 3 },
-        { level:  2, spCost: 1, mpCost: 0, percent: 12, turns: 3 },
-        { level:  3, spCost: 1, mpCost: 0, percent: 14, turns: 3 },
-        { level:  4, spCost: 2, mpCost: 0, percent: 16, turns: 4 },
-        { level:  5, spCost: 2, mpCost: 0, percent: 18, turns: 4 },
-        { level:  6, spCost: 2, mpCost: 0, percent: 20, turns: 4 },
-        { level:  7, spCost: 3, mpCost: 0, percent: 22, turns: 5 },
-        { level:  8, spCost: 3, mpCost: 0, percent: 24, turns: 5 },
-        { level:  9, spCost: 3, mpCost: 0, percent: 26, turns: 5 },
-        { level: 10, spCost: 5, mpCost: 0, percent: 30, turns: 6 }
+        { level:  1, spCost: 1, mpCost: 0, percent: 10 },
+        { level:  2, spCost: 1, mpCost: 0, percent: 12 },
+        { level:  3, spCost: 1, mpCost: 0, percent: 14 },
+        { level:  4, spCost: 2, mpCost: 0, percent: 16 },
+        { level:  5, spCost: 2, mpCost: 0, percent: 18 },
+        { level:  6, spCost: 2, mpCost: 0, percent: 20 },
+        { level:  7, spCost: 3, mpCost: 0, percent: 22 },
+        { level:  8, spCost: 3, mpCost: 0, percent: 24 },
+        { level:  9, spCost: 3, mpCost: 0, percent: 26 },
+        { level: 10, spCost: 5, mpCost: 0, percent: 30 }
       ],
-      getDescription: (lc) => `戦闘開始時、パーティー全体の ATK と MATK を ${lc.turns} ターンの間、${lc.percent}％ アップする`
+      getDescription: (lc) => `ダンジョン潜入時、パーティー全体の MDEF を永続的に ${lc.percent}％ アップする`
+    },
+    {
+      id: 'weapon_bless', name: 'ウェポンブレス', icon: 'swords', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 1, mpCost: 0, percent: 10 },
+        { level:  2, spCost: 1, mpCost: 0, percent: 12 },
+        { level:  3, spCost: 1, mpCost: 0, percent: 14 },
+        { level:  4, spCost: 2, mpCost: 0, percent: 16 },
+        { level:  5, spCost: 2, mpCost: 0, percent: 18 },
+        { level:  6, spCost: 2, mpCost: 0, percent: 20 },
+        { level:  7, spCost: 3, mpCost: 0, percent: 22 },
+        { level:  8, spCost: 3, mpCost: 0, percent: 24 },
+        { level:  9, spCost: 3, mpCost: 0, percent: 26 },
+        { level: 10, spCost: 5, mpCost: 0, percent: 30 }
+      ],
+      getDescription: (lc) => `ダンジョン潜入時、パーティー全体の ATK を永続的に ${lc.percent}％ アップする`
+    },
+    {
+      id: 'magic_bless', name: 'マジックブレス', icon: 'auto_awesome', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 1, mpCost: 0, percent: 10 },
+        { level:  2, spCost: 1, mpCost: 0, percent: 12 },
+        { level:  3, spCost: 1, mpCost: 0, percent: 14 },
+        { level:  4, spCost: 2, mpCost: 0, percent: 16 },
+        { level:  5, spCost: 2, mpCost: 0, percent: 18 },
+        { level:  6, spCost: 2, mpCost: 0, percent: 20 },
+        { level:  7, spCost: 3, mpCost: 0, percent: 22 },
+        { level:  8, spCost: 3, mpCost: 0, percent: 24 },
+        { level:  9, spCost: 3, mpCost: 0, percent: 26 },
+        { level: 10, spCost: 5, mpCost: 0, percent: 30 }
+      ],
+      getDescription: (lc) => `ダンジョン潜入時、パーティー全体の MATK を永続的に ${lc.percent}％ アップする`
     },
     {
       id: 'mp_absorb', name: 'MP吸収', icon: 'water_drop', type: 'passive',

@@ -185,15 +185,23 @@ class BattleManager {
 
   applyStartOfBattlePassives() {
     const aliveParty = this.party.filter(p => !p.isDead);
-    let mightyGuardConfig = null;
+    let protectionConfig = null;
+    let magicBarrierConfig = null;
     let weaponBlessConfig = null;
+    let magicBlessConfig = null;
 
     aliveParty.forEach(p => {
       if (p.jobSkills) {
-        const mg = this._findSkill(p, 'mighty_guard');
-        if (mg && mg.level > 0 && mg.levelConfig) {
-          if (!mightyGuardConfig || mg.levelConfig.percent > mightyGuardConfig.percent) {
-            mightyGuardConfig = mg.levelConfig;
+        const prot = this._findSkill(p, 'protection');
+        if (prot && prot.level > 0 && prot.levelConfig) {
+          if (!protectionConfig || prot.levelConfig.percent > protectionConfig.percent) {
+            protectionConfig = prot.levelConfig;
+          }
+        }
+        const mb = this._findSkill(p, 'magic_barrier');
+        if (mb && mb.level > 0 && mb.levelConfig) {
+          if (!magicBarrierConfig || mb.levelConfig.percent > magicBarrierConfig.percent) {
+            magicBarrierConfig = mb.levelConfig;
           }
         }
         const wb = this._findSkill(p, 'weapon_bless');
@@ -202,32 +210,66 @@ class BattleManager {
             weaponBlessConfig = wb.levelConfig;
           }
         }
+        const magb = this._findSkill(p, 'magic_bless');
+        if (magb && magb.level > 0 && magb.levelConfig) {
+          if (!magicBlessConfig || magb.levelConfig.percent > magicBlessConfig.percent) {
+            magicBlessConfig = magb.levelConfig;
+          }
+        }
       }
     });
 
-    if (mightyGuardConfig) {
+    let delay = 500;
+    const isFirstFloor = this.currentFloorNum === 1;
+
+    if (protectionConfig) {
       aliveParty.forEach(p => {
-        p._defBuffPercent = Math.max(p._defBuffPercent || 0, mightyGuardConfig.percent);
-        p._defBuffTurns = Math.max(p._defBuffTurns || 0, mightyGuardConfig.turns);
-        p._mdefBuffAmount = Math.max(p._mdefBuffAmount || 0, Math.floor((p.stats?.mdef || 0) * (mightyGuardConfig.percent / 100)));
-        p._mdefBuffTurns = Math.max(p._mdefBuffTurns || 0, mightyGuardConfig.turns);
+        p.stats.def = Math.floor((p.stats.def || 0) * (1 + protectionConfig.percent / 100));
         
-        setTimeout(() => {
-          this.showDamage(p.elementId, `DEF/MDEF UP`, 'text-blue-400');
-        }, 500);
+        if (isFirstFloor) {
+          setTimeout(() => {
+            this.showDamage(p.elementId, `DEF UP`, 'text-green-400');
+          }, delay);
+        }
       });
+      if (isFirstFloor) delay += 500;
+    }
+
+    if (magicBarrierConfig) {
+      aliveParty.forEach(p => {
+        p.stats.mdef = Math.floor((p.stats.mdef || 0) * (1 + magicBarrierConfig.percent / 100));
+        
+        if (isFirstFloor) {
+          setTimeout(() => {
+            this.showDamage(p.elementId, `MDEF UP`, 'text-indigo-300');
+          }, delay);
+        }
+      });
+      if (isFirstFloor) delay += 500;
     }
 
     if (weaponBlessConfig) {
       aliveParty.forEach(p => {
-        p._atkBuffPercent = Math.max(p._atkBuffPercent || 0, weaponBlessConfig.percent);
-        p._atkBuffTurns = Math.max(p._atkBuffTurns || 0, weaponBlessConfig.turns);
-        p._matkBuffPercent = Math.max(p._matkBuffPercent || 0, weaponBlessConfig.percent);
-        p._matkBuffTurns = Math.max(p._matkBuffTurns || 0, weaponBlessConfig.turns);
+        p.stats.atk = Math.floor((p.stats.atk || 0) * (1 + weaponBlessConfig.percent / 100));
         
-        setTimeout(() => {
-          this.showDamage(p.elementId, `ATK/MATK UP`, 'text-red-400');
-        }, 1000);
+        if (isFirstFloor) {
+          setTimeout(() => {
+            this.showDamage(p.elementId, `ATK UP`, 'text-red-400');
+          }, delay);
+        }
+      });
+      if (isFirstFloor) delay += 500;
+    }
+
+    if (magicBlessConfig) {
+      aliveParty.forEach(p => {
+        p.stats.matk = Math.floor((p.stats.matk || 0) * (1 + magicBlessConfig.percent / 100));
+        
+        if (isFirstFloor) {
+          setTimeout(() => {
+            this.showDamage(p.elementId, `MATK UP`, 'text-purple-400');
+          }, delay);
+        }
       });
     }
   }
