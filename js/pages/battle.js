@@ -473,14 +473,52 @@ class BattleManager {
       const statLabels = cache.statLabels;
 
       if (statVals && statVals.atk) {
-        const fAtk = formatNumber(p.stats.atk);
-        const fMat = formatNumber(p.stats.matk);
-        const fMdf = formatNumber(p.stats.mdef);
         const fSpd = formatNumber(p.stats.spd);
-        if (statVals.atk.textContent !== fAtk) statVals.atk.textContent = fAtk;
-        if (statVals.mat.textContent !== fMat) statVals.mat.textContent = fMat;
-        if (statVals.mdf.textContent !== fMdf) statVals.mdf.textContent = fMdf;
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
+
+        if (p._atkBuffTurns > 0) {
+          const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + p._atkBuffPercent / 100)));
+          if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
+          statVals.atk.classList.remove('text-gray-100');
+          statVals.atk.classList.add('text-red-400');
+          statRows.atk.classList.remove('bg-gray-900/40', 'border-transparent');
+          statRows.atk.classList.add('bg-red-900/40', 'border-red-500/50');
+          statIcons.atk.classList.remove('text-slate-400');
+          statIcons.atk.classList.add('text-red-400');
+          statLabels.atk.classList.add('text-red-400');
+        } else {
+          const atkStr = formatNumber(p.stats.atk);
+          if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
+          statVals.atk.classList.remove('text-red-400');
+          statVals.atk.classList.add('text-gray-100');
+          statRows.atk.classList.remove('bg-red-900/40', 'border-red-500/50');
+          statRows.atk.classList.add('bg-gray-900/40', 'border-transparent');
+          statIcons.atk.classList.remove('text-red-400');
+          statIcons.atk.classList.add('text-slate-400');
+          statLabels.atk.classList.remove('text-red-400');
+        }
+
+        if (p._matkBuffTurns > 0) {
+          const matStr = formatNumber(Math.floor(p.stats.matk * (1 + p._matkBuffPercent / 100)));
+          if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
+          statVals.mat.classList.remove('text-gray-100');
+          statVals.mat.classList.add('text-purple-400');
+          statRows.mat.classList.remove('bg-gray-900/40', 'border-transparent');
+          statRows.mat.classList.add('bg-purple-900/40', 'border-purple-500/50');
+          statIcons.mat.classList.remove('text-slate-400');
+          statIcons.mat.classList.add('text-purple-400');
+          statLabels.mat.classList.add('text-purple-400');
+        } else {
+          const matStr = formatNumber(p.stats.matk);
+          if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
+          statVals.mat.classList.remove('text-purple-400');
+          statVals.mat.classList.add('text-gray-100');
+          statRows.mat.classList.remove('bg-purple-900/40', 'border-purple-500/50');
+          statRows.mat.classList.add('bg-gray-900/40', 'border-transparent');
+          statIcons.mat.classList.remove('text-purple-400');
+          statIcons.mat.classList.add('text-slate-400');
+          statLabels.mat.classList.remove('text-purple-400');
+        }
 
         if (p._defBuffTurns > 0) {
           const defStr = formatNumber(Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)));
@@ -602,11 +640,15 @@ class BattleManager {
             spd: el.querySelector('.stat-val-spd')
           },
           statIcons: {
+            atk: el.querySelector('.stat-icon-atk'),
             def: el.querySelector('.stat-icon-def'),
+            mat: el.querySelector('.stat-icon-mat'),
             mdf: el.querySelector('.stat-icon-mdf')
           },
           statLabels: {
+            atk: el.querySelector('.stat-label-atk'),
             def: el.querySelector('.stat-label-def'),
+            mat: el.querySelector('.stat-label-mat'),
             mdf: el.querySelector('.stat-label-mdf')
           }
         };
