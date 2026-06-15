@@ -523,13 +523,13 @@ class BattleManager {
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
 
         if (p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0) {
+          const isStackedAtk = p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0;
           const totalAtkPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
           const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + totalAtkPercent / 100)));
           if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
           statVals.atk.classList.remove('text-gray-100');
           statVals.atk.classList.add('text-red-400');
-          statRows.atk.classList.remove('bg-gray-900/40', 'border-transparent');
-          statRows.atk.classList.add('bg-red-900/40', 'border-red-500/50');
+          statRows.atk.className = `stat-row-atk flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedAtk ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
           statIcons.atk.classList.remove('text-slate-400');
           statIcons.atk.classList.add('text-red-400');
           statLabels.atk.classList.add('text-red-400');
@@ -538,21 +538,20 @@ class BattleManager {
           if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
           statVals.atk.classList.remove('text-red-400');
           statVals.atk.classList.add('text-gray-100');
-          statRows.atk.classList.remove('bg-red-900/40', 'border-red-500/50');
-          statRows.atk.classList.add('bg-gray-900/40', 'border-transparent');
+          statRows.atk.className = `stat-row-atk flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
           statIcons.atk.classList.remove('text-red-400');
           statIcons.atk.classList.add('text-slate-400');
           statLabels.atk.classList.remove('text-red-400');
         }
 
         if (p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0) {
+          const isStackedMatk = p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0;
           const totalMatkPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
           const matStr = formatNumber(Math.floor(p.stats.matk * (1 + totalMatkPercent / 100)));
           if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
           statVals.mat.classList.remove('text-gray-100');
           statVals.mat.classList.add('text-purple-400');
-          statRows.mat.classList.remove('bg-gray-900/40', 'border-transparent');
-          statRows.mat.classList.add('bg-purple-900/40', 'border-purple-500/50');
+          statRows.mat.className = `stat-row-mat flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedMatk ? 'bg-purple-800/60 border-purple-400 shadow-[0_0_5px_rgba(192,132,252,0.4)]' : 'bg-purple-900/40 border-purple-500/50 shadow-none'}`;
           statIcons.mat.classList.remove('text-slate-400');
           statIcons.mat.classList.add('text-purple-400');
           statLabels.mat.classList.add('text-purple-400');
@@ -561,21 +560,20 @@ class BattleManager {
           if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
           statVals.mat.classList.remove('text-purple-400');
           statVals.mat.classList.add('text-gray-100');
-          statRows.mat.classList.remove('bg-purple-900/40', 'border-purple-500/50');
-          statRows.mat.classList.add('bg-gray-900/40', 'border-transparent');
+          statRows.mat.className = `stat-row-mat flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
           statIcons.mat.classList.remove('text-purple-400');
           statIcons.mat.classList.add('text-slate-400');
           statLabels.mat.classList.remove('text-purple-400');
         }
 
         if (p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0) {
+          const isStackedDef = p._defBuffTurns > 0 && p._passiveDefBuffPercent > 0;
           const totalDefPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
           const defStr = formatNumber(Math.floor(p.stats.def * (1 + totalDefPercent / 100)));
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-gray-100');
           statVals.def.classList.add('text-green-400');
-          statRows.def.classList.remove('bg-gray-900/40', 'border-transparent');
-          statRows.def.classList.add('bg-green-900/40', 'border-green-500/50');
+          statRows.def.className = `stat-row-def flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedDef ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
           statIcons.def.classList.remove('text-slate-400');
           statIcons.def.classList.add('text-green-400');
           statLabels.def.classList.add('text-green-400');
@@ -584,21 +582,20 @@ class BattleManager {
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-green-400');
           statVals.def.classList.add('text-gray-100');
-          statRows.def.classList.remove('bg-green-900/40', 'border-green-500/50');
-          statRows.def.classList.add('bg-gray-900/40', 'border-transparent');
+          statRows.def.className = `stat-row-def flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
           statIcons.def.classList.remove('text-green-400');
           statIcons.def.classList.add('text-slate-400');
           statLabels.def.classList.remove('text-green-400');
         }
 
         if (p._mdefBuffTurns > 0 || p._passiveMdefBuffAmount > 0) {
+          const isStackedMdef = p._mdefBuffTurns > 0 && p._passiveMdefBuffAmount > 0;
           const totalMdefAmount = (p._passiveMdefBuffAmount || 0) + (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0);
           const mdefStr = String(p.stats.mdef + totalMdefAmount);
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-gray-100');
           statVals.mdf.classList.add('text-indigo-300');
-          statRows.mdf.classList.remove('bg-gray-900/40', 'border-transparent');
-          statRows.mdf.classList.add('bg-indigo-900/40', 'border-indigo-500/50');
+          statRows.mdf.className = `stat-row-mdf flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedMdef ? 'bg-indigo-800/60 border-indigo-400 shadow-[0_0_5px_rgba(129,140,248,0.4)]' : 'bg-indigo-900/40 border-indigo-500/50 shadow-none'}`;
           statIcons.mdf.classList.remove('text-indigo-400');
           statIcons.mdf.classList.add('text-indigo-300');
           statLabels.mdf.classList.add('text-indigo-300');
@@ -607,8 +604,7 @@ class BattleManager {
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-indigo-300');
           statVals.mdf.classList.add('text-gray-100');
-          statRows.mdf.classList.remove('bg-indigo-900/40', 'border-indigo-500/50');
-          statRows.mdf.classList.add('bg-gray-900/40', 'border-transparent');
+          statRows.mdf.className = `stat-row-mdf flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
           statIcons.mdf.classList.remove('text-indigo-300');
           statIcons.mdf.classList.add('text-indigo-400');
           statLabels.mdf.classList.remove('text-indigo-300');
