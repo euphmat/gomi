@@ -12,19 +12,30 @@
 export function formatNumber(value) {
   const num = Number(value);
   if (isNaN(num)) return '0';
+  
+  const absNum = Math.abs(num);
+  if (absNum < 1000) return num.toLocaleString();
 
-  if (num >= 1_000_000_000_000) {
-    return (num / 1_000_000_000_000).toFixed(1).replace(/\.0$/, '') + 'T';
+  const suffixes = [
+    "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", 
+    "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Od", "Nd", "V", "Uv"
+  ];
+  
+  let suffixIndex = Math.floor(Math.log10(absNum) / 3);
+  let divisor = Math.pow(10, suffixIndex * 3);
+  let shortNum = absNum / divisor;
+
+  // Handle rounding up that would cause e.g. 1000K instead of 1M
+  if (shortNum >= 999.95) {
+    suffixIndex++;
+    divisor = Math.pow(10, suffixIndex * 3);
+    shortNum = absNum / divisor;
   }
-  if (num >= 1_000_000_000) {
-    return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
-  }
-  if (num >= 1_000_000) {
-    return (num / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  }
-  if (num >= 1_000) {
-    return (num / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+
+  if (suffixIndex < suffixes.length) {
+    const formattedNum = shortNum.toFixed(1).replace(/\.0$/, '');
+    return (num < 0 ? '-' : '') + formattedNum + suffixes[suffixIndex];
   }
   
-  return num.toLocaleString();
+  return num.toExponential(2);
 }
