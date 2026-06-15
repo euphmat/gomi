@@ -669,11 +669,22 @@ export function renderChangeJobTab() {
   Promise.all([
     getCharactersWithRanchBonus(),
     GameDB.getGameState('gold'),
-    GameDB.getGameState('capturedMonsters')
-  ]).then(async ([chars, goldVal, capturedMonsters]) => {
+    GameDB.getGameState('ranch_data')
+  ]).then(async ([chars, goldVal, ranchData]) => {
     characters = chars;
     currentGold = goldVal || 0;
-    currentCapturedMonsters = capturedMonsters || [];
+    
+    const captured = [];
+    if (ranchData) {
+      for (const dId in ranchData) {
+        for (const mId in ranchData[dId]) {
+          if (!captured.includes(mId)) {
+            captured.push(mId);
+          }
+        }
+      }
+    }
+    currentCapturedMonsters = captured;
 
     for (const char of characters) {
       let needSave = false;
