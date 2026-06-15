@@ -107,12 +107,12 @@ export function renderAcquireSkillTab() {
       btnClass = hasEnoughSP 
         ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-md shadow-emerald-500/20 border-emerald-400/50' 
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[13px]">school</span><span class="font-bold">修得</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">修得</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
     } else {
       btnClass = hasEnoughSP 
         ? 'bg-gradient-to-r from-orange-600 to-rose-500 hover:from-orange-500 hover:to-rose-400 text-white shadow-md shadow-orange-500/20 border-orange-400/50' 
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[13px]">upgrade</span><span class="font-bold">強化</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">強化</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
     }
 
     row.className = 'group relative p-2.5 bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl border border-white/10 hover:border-white/20 shadow-lg transition-all duration-300 overflow-hidden';
