@@ -128,23 +128,23 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
       </div>
 
       <div class="battle-stats-container flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') !== 'false' ? 'hidden' : ''}">
-        <div class="stat-row-atk flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-atk flex justify-between items-center bg-gray-900/40 border border-transparent rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-atk material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="stat-label-atk font-bold tracking-wider">ATK</span></div>
           <span class="stat-val-atk text-gray-100 font-black drop-shadow-md">${formatNumber(p.stats.atk)}</span>
         </div>
-        <div class="stat-row-def flex justify-between items-center ${p._defBuffTurns > 0 ? 'bg-green-900/40 border border-green-500/50' : 'bg-gray-900/40'} rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-def flex justify-between items-center ${p._defBuffTurns > 0 ? 'bg-green-900/40 border-green-500/50' : 'bg-gray-900/40 border-transparent'} border rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-def material-symbols-outlined ${p._defBuffTurns > 0 ? 'text-green-400' : 'text-slate-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="stat-label-def font-bold tracking-wider ${p._defBuffTurns > 0 ? 'text-green-400' : ''}">DEF</span></div>
           <span class="stat-val-def ${p._defBuffTurns > 0 ? 'text-green-400' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._defBuffTurns > 0 ? Math.floor(p.stats.def * (1 + p._defBuffPercent / 100)) : p.stats.def)}</span>
         </div>
-        <div class="stat-row-mat flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-mat flex justify-between items-center bg-gray-900/40 border border-transparent rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider">MAT</span></div>
           <span class="stat-val-mat text-gray-100 font-black drop-shadow-md">${formatNumber(p.stats.matk)}</span>
         </div>
-        <div class="stat-row-mdf flex justify-between items-center ${p._mdefBuffTurns > 0 ? 'bg-indigo-900/40 border border-indigo-500/50' : 'bg-gray-900/40'} rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-mdf flex justify-between items-center ${p._mdefBuffTurns > 0 ? 'bg-indigo-900/40 border-indigo-500/50' : 'bg-gray-900/40 border-transparent'} border rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-indigo-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : ''}">MDF</span></div>
           <span class="stat-val-mdf ${p._mdefBuffTurns > 0 ? 'text-indigo-300' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._mdefBuffTurns > 0 ? p.stats.mdef + p._mdefBuffAmount : p.stats.mdef)}</span>
         </div>
-        <div class="stat-row-spd flex justify-between items-center bg-gray-900/40 rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-spd flex justify-between items-center bg-gray-900/40 border border-transparent rounded px-1 py-0.5 transition-colors">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined text-yellow-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider">SPD</span></div>
           <span class="stat-val-spd text-gray-100 font-black drop-shadow-md">${formatNumber(p.stats.spd)}</span>
         </div>

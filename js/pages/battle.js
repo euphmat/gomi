@@ -487,8 +487,8 @@ class BattleManager {
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-gray-100');
           statVals.def.classList.add('text-green-400');
-          statRows.def.classList.remove('bg-gray-900/40');
-          statRows.def.classList.add('bg-green-900/40', 'border', 'border-green-500/50');
+          statRows.def.classList.remove('bg-gray-900/40', 'border-transparent');
+          statRows.def.classList.add('bg-green-900/40', 'border-green-500/50');
           statIcons.def.classList.remove('text-slate-400');
           statIcons.def.classList.add('text-green-400');
           statLabels.def.classList.add('text-green-400');
@@ -497,8 +497,8 @@ class BattleManager {
           if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
           statVals.def.classList.remove('text-green-400');
           statVals.def.classList.add('text-gray-100');
-          statRows.def.classList.remove('bg-green-900/40', 'border', 'border-green-500/50');
-          statRows.def.classList.add('bg-gray-900/40');
+          statRows.def.classList.remove('bg-green-900/40', 'border-green-500/50');
+          statRows.def.classList.add('bg-gray-900/40', 'border-transparent');
           statIcons.def.classList.remove('text-green-400');
           statIcons.def.classList.add('text-slate-400');
           statLabels.def.classList.remove('text-green-400');
@@ -509,8 +509,8 @@ class BattleManager {
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-gray-100');
           statVals.mdf.classList.add('text-indigo-300');
-          statRows.mdf.classList.remove('bg-gray-900/40');
-          statRows.mdf.classList.add('bg-indigo-900/40', 'border', 'border-indigo-500/50');
+          statRows.mdf.classList.remove('bg-gray-900/40', 'border-transparent');
+          statRows.mdf.classList.add('bg-indigo-900/40', 'border-indigo-500/50');
           statIcons.mdf.classList.remove('text-indigo-400');
           statIcons.mdf.classList.add('text-indigo-300');
           statLabels.mdf.classList.add('text-indigo-300');
@@ -519,8 +519,8 @@ class BattleManager {
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-indigo-300');
           statVals.mdf.classList.add('text-gray-100');
-          statRows.mdf.classList.remove('bg-indigo-900/40', 'border', 'border-indigo-500/50');
-          statRows.mdf.classList.add('bg-gray-900/40');
+          statRows.mdf.classList.remove('bg-indigo-900/40', 'border-indigo-500/50');
+          statRows.mdf.classList.add('bg-gray-900/40', 'border-transparent');
           statIcons.mdf.classList.remove('text-indigo-300');
           statIcons.mdf.classList.add('text-indigo-400');
           statLabels.mdf.classList.remove('text-indigo-300');
