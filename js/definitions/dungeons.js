@@ -223,76 +223,72 @@ export const DUNGEONS = [{
       {
         level: 1,
         monsters: [
-          { crisp: 5, weight: 60 },
-          { crisp: 3, snow_frog: 2, weight: 30 },
-          { luminous_digitalis: 1, weight: 5 },
-          { noble_opal: 1, weight: 5 }
+          { crisp: 3, weight: 50 },
+          { crisp: 4, weight: 30 },
+          { crisp: 2, geode_turtle: 1, weight: 20 }
         ]
       },
       {
         level: 2,
         monsters: [
-          { crisp: 4, geode_turtle: 2, weight: 50 },
-          { geode_turtle: 3, snow_frog: 2, weight: 40 },
-          { luminous_digitalis: 1, weight: 5 },
-          { noble_opal: 1, weight: 5 }
+          { crisp: 2, geode_turtle: 2, weight: 40 },
+          { geode_turtle: 3, weight: 30 },
+          { geode_turtle: 2, snow_frog: 1, weight: 30 }
         ]
       },
       {
         level: 3,
         monsters: [
-          { geode_turtle: 4, crystalinos: 1, weight: 50 },
-          { crystalinos: 2, crisp: 3, weight: 40 },
-          { luminous_digitalis: 1, weight: 5 },
-          { noble_opal: 1, weight: 5 }
+          { geode_turtle: 2, snow_frog: 2, weight: 40 },
+          { snow_frog: 3, weight: 30 },
+          { snow_frog: 2, crystalinos: 1, weight: 30 }
         ]
       },
       {
         level: 4,
         monsters: [
-          { crystalinos: 3, garnet_wolf: 2, weight: 50 },
-          { garnet_wolf: 4, snow_frog: 2, weight: 40 },
-          { luminous_digitalis: 1, weight: 5 },
-          { noble_opal: 1, weight: 5 }
+          { snow_frog: 1, crystalinos: 2, weight: 40 },
+          { crystalinos: 3, weight: 30 },
+          { crystalinos: 2, garnet_wolf: 1, weight: 30 }
         ]
       },
       {
         level: 5,
         monsters: [
-          { garnet_wolf: 3, amber_rex: 2, weight: 50 },
-          { amber_rex: 3, crystalinos: 2, weight: 40 },
-          { luminous_digitalis: 1, weight: 5 },
-          { noble_opal: 1, weight: 5 }
+          { crystalinos: 1, garnet_wolf: 2, weight: 30 },
+          { garnet_wolf: 3, weight: 30 },
+          { garnet_wolf: 2, amber_rex: 1, weight: 20 },
+          { amber_rex: 2, beryl_golem: 1, weight: 20 }
         ]
       },
       {
         level: 6,
         monsters: [
-          { amber_rex: 2, beryl_golem: 2, jewel_mantis: 1, weight: 50 },
-          { beryl_golem: 3, jewel_mantis: 2, weight: 40 },
-          { luminous_digitalis: 1, weight: 5 },
-          { noble_opal: 1, weight: 5 }
+          { amber_rex: 1, beryl_golem: 2, weight: 30 },
+          { beryl_golem: 2, jewel_mantis: 1, weight: 30 },
+          { jewel_mantis: 3, weight: 20 },
+          { jewel_mantis: 2, fluorite_papillon: 1, weight: 20 }
         ]
       },
       {
         level: 7,
         monsters: [
-          { fluorite_papillon: 3, pyrite_serpent: 2, weight: 50 },
-          { pyrite_serpent: 3, jewel_mantis: 3, weight: 40 },
-          { luminous_digitalis: 2, weight: 5 },
-          { noble_opal: 2, weight: 5 }
+          { fluorite_papillon: 3, weight: 30 },
+          { fluorite_papillon: 2, pyrite_serpent: 1, weight: 30 },
+          { pyrite_serpent: 2, luminous_digitalis: 1, weight: 20 },
+          { luminous_digitalis: 2, noble_opal: 1, weight: 20 }
         ]
       },
       {
         level: 8,
         monsters: [
-          { diamond_disaster: 1, crisp: 4, weight: 100 }
+          { diamond_disaster: 1, fluorite_papillon: 2, weight: 100 }
         ]
       },
       {
         level: 9,
         monsters: [
-          { harmonia_regalia: 1, beryl_golem: 2, weight: 100 }
+          { harmonia_regalia: 1, pyrite_serpent: 2, weight: 100 }
         ]
       },
       {

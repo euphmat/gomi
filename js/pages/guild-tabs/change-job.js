@@ -233,7 +233,7 @@ export function renderChangeJobTab() {
   // ─── レンダリング: 内部タブ ──────────────────────────────
   const renderInnerTabs = () => {
     const tabContainer = document.createElement('div');
-    tabContainer.className = 'flex gap-2 px-1 mb-3 shrink-0';
+    tabContainer.className = 'flex gap-2 p-1.5 mb-4 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-inner shrink-0 relative';
     
     const tabs = [
       { id: 'change-job', label: '転職', icon: 'sync_alt' },
@@ -244,8 +244,22 @@ export function renderChangeJobTab() {
     tabs.forEach(tab => {
       const isActive = currentInnerTab === tab.id;
       const btn = document.createElement('button');
-      btn.className = `flex-1 py-2 flex items-center justify-center gap-1 text-[12px] font-black rounded-lg transition-all duration-200 border ${isActive ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}`;
-      btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${tab.icon}</span>${tab.label}`;
+      btn.className = `relative flex-1 py-2.5 flex items-center justify-center gap-1.5 text-xs font-black rounded-xl transition-all duration-300 z-10 overflow-hidden ${
+        isActive 
+          ? 'text-white' 
+          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+      }`;
+      
+      if (isActive) {
+        btn.innerHTML = `
+          <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 -z-10 shadow-[0_0_15px_rgba(99,102,241,0.4)] border border-white/20 rounded-xl"></div>
+          <div class="absolute inset-0 bg-white/20 translate-y-full hover:translate-y-0 transition-transform duration-300 ease-out -z-10"></div>
+          <span class="material-symbols-outlined text-[16px] drop-shadow-md">${tab.icon}</span><span class="tracking-wider drop-shadow-md">${tab.label}</span>
+        `;
+      } else {
+        btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${tab.icon}</span><span class="tracking-wider">${tab.label}</span>`;
+      }
+
       btn.onclick = () => {
         if (currentInnerTab !== tab.id) {
           currentInnerTab = tab.id;
@@ -273,30 +287,35 @@ export function renderChangeJobTab() {
       let allReqsMet = true;
       let requirementsHtml = '';
       if (!isUnlocked && job.requirements) {
+        requirementsHtml = `
+          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 mt-1.5 w-full">
+            <span class="text-[9px] font-black text-indigo-300 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-500/30 shrink-0">解放条件</span>
+        `;
         for (const req of job.requirements) {
           const reqJobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
           const currentLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : (char.jobId === req.jobId ? char.jobLevel : 0);
           const isMet = currentLv >= req.level;
           if (!isMet) allReqsMet = false;
           
-          const badgeClass = isMet 
-            ? 'bg-emerald-900/30 border-emerald-600/50 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
-            : 'bg-rose-900/30 border-rose-600/50 text-rose-300 shadow-[0_0_10px_rgba(225,29,72,0.1)]';
+          const textColor = isMet ? 'text-emerald-400' : 'text-rose-400 opacity-90';
           const iconHtml = isMet 
-            ? '<span class="material-symbols-outlined text-[11px] leading-none drop-shadow-sm text-emerald-400">check_circle</span>' 
-            : '<span class="material-symbols-outlined text-[11px] leading-none drop-shadow-sm text-rose-400">cancel</span>';
+            ? '<span class="material-symbols-outlined text-[10px] leading-none ml-0.5">check_circle</span>' 
+            : '<span class="material-symbols-outlined text-[10px] leading-none ml-0.5 opacity-80">close</span>';
           
           requirementsHtml += `
-            <div class="flex items-center gap-1 px-2 py-0.5 rounded-full border ${badgeClass} backdrop-blur-sm shrink-0" title="条件: ${reqJobName} Lv${req.level}">
-              <img src="./assets/job/job_${req.jobId}.webp" class="w-3.5 h-3.5 object-contain drop-shadow-md" alt="${reqJobName}" onerror="this.style.display='none'">
-              <span class="text-[9px] font-black flex items-center gap-0.5 tracking-wide">${reqJobName} Lv.${req.level} ${iconHtml}</span>
+            <div class="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 rounded border ${isMet ? 'border-emerald-500/30' : 'border-rose-500/30'} shrink-0">
+              <img src="./assets/job/job_${req.jobId}.webp" class="w-3.5 h-3.5 object-contain" alt="${reqJobName}" onerror="this.style.display='none'">
+              <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
+                ${reqJobName}<span class="opacity-70 ml-0.5">Lv${req.level}</span>${iconHtml}
+              </span>
             </div>
           `;
         }
+        requirementsHtml += `</div>`;
       }
 
       const row = document.createElement('div');
-      row.className = `group flex items-center gap-4 p-4 rounded-3xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md ${
+      row.className = `group flex items-center gap-4 p-4 rounded-3xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md min-h-[96px] ${
         isCurrent
           ? 'bg-emerald-950/20 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-inset ring-emerald-500/20'
           : 'bg-slate-900/60 border-slate-700/60 hover:bg-slate-800/80 hover:border-indigo-500/50 hover:shadow-[0_8px_30px_rgba(99,102,241,0.2)] hover:-translate-y-1 cursor-pointer btn-change-job-container ring-1 ring-inset ring-white/5'
@@ -330,13 +349,13 @@ export function renderChangeJobTab() {
         <div class="relative flex items-center justify-center w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shrink-0 border border-slate-700/60 shadow-inner group-hover:border-indigo-400/40 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] transition-all duration-300 overflow-hidden p-1.5 z-10">
           <img src="./assets/job/job_${job.id}.webp" class="w-full h-full object-contain ${isCurrent ? 'opacity-100 drop-shadow-[0_0_10px_rgba(16,185,129,0.6)] scale-110' : 'opacity-85 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
-        <div class="relative flex-1 min-w-0 pr-2 z-10">
-          <h3 class="text-[17px] font-black tracking-wider mb-1 transition-colors duration-300 ${isCurrent ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 group-hover:from-white group-hover:to-indigo-200'}">${job.name}</h3>
-          <div class="flex items-center flex-wrap gap-2">
+        <div class="relative flex-1 min-w-0 pr-2 z-10 flex flex-col justify-center">
+          <div class="flex items-center gap-3">
+            <h3 class="text-[17px] font-black tracking-wider transition-colors duration-300 ${isCurrent ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 group-hover:from-white group-hover:to-indigo-200'}">${job.name}</h3>
             <span class="text-[10px] font-black text-slate-300 bg-slate-800/80 px-2.5 py-0.5 rounded-full border border-slate-600/50 shadow-inner uppercase tracking-widest flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined text-[10px] text-slate-400">military_tech</span>JLv.${savedLevel}</span>
             ${isUnlocked && !isCurrent ? '<span class="flex items-center gap-0.5 text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)] uppercase tracking-wider shrink-0"><span class="material-symbols-outlined text-[12px]">lock_open</span>解放済</span>' : ''}
-            ${requirementsHtml}
           </div>
+          ${requirementsHtml}
         </div>
         <div class="relative z-10">
           ${buttonHtml}
