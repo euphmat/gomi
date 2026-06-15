@@ -103,9 +103,13 @@ export function renderChangeJobTab() {
     char.jobName = jobDef.name;
     char.iconImage = `./assets/job/job_${jobDef.id}.webp`;
 
-    // 転職時は継承スキルをすべてリセットする
-    char.inheritedActiveSkill = null;
-    char.inheritedPassiveSkill = null;
+    // 転職先のジョブのスキルを継承していた場合は解除する（それ以外の継承スキルは維持）
+    if (char.inheritedActiveSkill && char.inheritedActiveSkill.jobId === jobDef.id) {
+      char.inheritedActiveSkill = null;
+    }
+    if (char.inheritedPassiveSkill && char.inheritedPassiveSkill.jobId === jobDef.id) {
+      char.inheritedPassiveSkill = null;
+    }
 
     // ジョブごとのSPを再計算
     let spentSP = 0;
