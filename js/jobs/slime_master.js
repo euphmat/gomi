@@ -90,7 +90,9 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
 
     setTimeout(() => {
       if (type === 'slime_throw') {
-        createSlimeProjectile(cx, cy, tx, ty, params.slimeId || 'slime_blue', () => {
+        const pSlimeId = params.slimes ? params.slimes[index].slimeId : (params.slimeId || 'slime_blue');
+        const pColor = params.slimes ? params.slimes[index].color : (params.color || '#00bfff');
+        createSlimeProjectile(cx, cy, tx, ty, pSlimeId, () => {
           // Impact explosion
           const ex = document.createElement('div');
           ex.style.position = 'fixed';
@@ -99,7 +101,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
           ex.style.width = '80px';
           ex.style.height = '80px';
           ex.style.borderRadius = '50%';
-          ex.style.background = `radial-gradient(circle, #fff, ${params.color || '#00bfff'}, transparent)`;
+          ex.style.background = `radial-gradient(circle, #fff, ${pColor}, transparent)`;
           ex.style.zIndex = '9999';
           ex.style.pointerEvents = 'none';
           document.body.appendChild(ex);
@@ -184,14 +186,16 @@ export const slime_master = {
         { level:  9, spCost: 3, mpCost: 13, multiplier: 2.0 },
         { level: 10, spCost: 5, mpCost: 15, multiplier: 2.5 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムなスライムを投げる。スライムによって属性と追加効果が変わる。基本威力 ${lc.multiplier.toFixed(2)} 倍`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムなスライムを${lc.level}回投げる。スライムによって属性と追加効果が変わる。1撃の基本威力 ${lc.multiplier.toFixed(2)} 倍`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
-        let target = battle.selectedEnemyTarget;
-        if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
-        if (!target) return;
+        let mainTarget = battle.selectedEnemyTarget;
+        if (!mainTarget || mainTarget.isDead) mainTarget = battle.enemies.find(e => !e.isDead);
+        if (!mainTarget) return;
 
-        const slimeId = BASE_SLIMES[Math.floor(Math.random() * BASE_SLIMES.length)];
+        const numThrows = levelConfig.level;
+        const targets = [];
+        const slimeDataList = [];
         
         // Define slime effects
         const slimeEffects = {
@@ -210,11 +214,21 @@ export const slime_master = {
           'slime_angel': { el: 'light', color: '#ffffff', ailment: 'silence' }
         };
 
-        const effect = slimeEffects[slimeId] || slimeEffects['slime_blue'];
+        for(let i=0; i<numThrows; i++) {
+           targets.push(mainTarget);
+           const slimeId = BASE_SLIMES[Math.floor(Math.random() * BASE_SLIMES.length)];
+           const effect = slimeEffects[slimeId] || slimeEffects['slime_blue'];
+           slimeDataList.push({ slimeId, color: effect.color, effect });
+        }
 
-        playSkillAnimation(caster, [target], 'slime_throw', { slimeId, color: effect.color }, () => {
-          if (target.isDead) return;
+        playSkillAnimation(caster, targets, 'slime_throw', { slimes: slimeDataList }, (target, index) => {
+          if (target.isDead) {
+             const newAlive = battle.enemies.filter(e => !e.isDead);
+             if (newAlive.length > 0) target = newAlive[Math.floor(Math.random() * newAlive.length)];
+             else return;
+          }
           
+          const effect = slimeDataList[index].effect;
           const origA = caster.stats.attackAilments;
           if (effect.ailment) {
             caster.stats.attackAilments = { ...(origA || {}), [effect.ailment]: 50 };
@@ -224,7 +238,7 @@ export const slime_master = {
             actionName: 'スライム投げ',
             damageMultiplier: levelConfig.multiplier,
             damageType: 'skill',
-            isMagic: true, // Let's make it magic based since they are using slimes
+            isMagic: true,
             element: effect.el,
             hideActionName: true
           });
@@ -258,14 +272,18 @@ export const slime_master = {
         { level:  9, spCost: 4, mpCost: 70, multiplier: 2.6 },
         { level: 10, spCost: 6, mpCost: 80, multiplier: 3.0 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に20体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.25).toFixed(2)} 倍`,
+      getDescription: (lc) => {
+        const numSlimes = Math.round(10 + (lc.level - 1) * (20 / 9));
+        return `MP を ${lc.mpCost} 消費し、ランダムな敵に${numSlimes}体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.25).toFixed(2)} 倍`;
+      },
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         const aliveEnemies = battle.enemies.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
 
+        const numSlimes = Math.round(10 + (levelConfig.level - 1) * (20 / 9));
         const targets = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < numSlimes; i++) {
           targets.push(aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]);
         }
 
