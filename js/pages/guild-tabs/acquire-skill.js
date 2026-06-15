@@ -74,8 +74,6 @@ export function renderAcquireSkillTab() {
     const nextDesc = isMax ? '最大レベルに達しています' : skill.getDescription(levelConfig);
     const hasEnoughSP = !isMax && selectedChar.sp >= levelConfig.spCost;
 
-    const hasEnoughSP = !isMax && selectedChar.sp >= levelConfig.spCost;
-
     let maxPossibleLevel = currentLevel;
     let totalMaxCost = 0;
     if (!isMax) {
