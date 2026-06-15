@@ -151,7 +151,6 @@ export const ranger = {
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
-          battle.showActionName(caster.elementId, 'ダブルアロー', 'text-green-300', 'border-green-500/50');
           for (let i = 0; i < 2; i++) {
             setTimeout(() => {
               if (target && !target.isDead) {
@@ -202,7 +201,6 @@ export const ranger = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を3回行う`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
-        battle.showActionName(caster.elementId, 'アローレイン', 'text-green-300', 'border-green-500/50');
         for (let i = 0; i < 3; i++) {
           setTimeout(() => {
             const targets = battle.enemies.filter(e => !e.isDead);
@@ -252,7 +250,6 @@ export const ranger = {
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         let hits = 15;
-        battle.showActionName(caster.elementId, '五月雨矢', 'text-green-300', 'border-green-500/50');
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
             const aliveEnemies = battle.enemies.filter(e => !e.isDead);

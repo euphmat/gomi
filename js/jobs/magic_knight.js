@@ -208,7 +208,8 @@ export const magic_knight = {
             damageType: 'skill',
             isMagic: false,
             isHybrid: true,
-            element: 'fire'
+            element: 'fire',
+            hideActionName: true
           });
         });
       },
@@ -260,13 +261,13 @@ export const magic_knight = {
           playSkillAnimation(caster, [target], 'ice_brand', () => {
             if (target.isDead) return;
             battle.executeAttack(caster, target, true, {
-              actionName: currentHit === 0 ? 'アイスブランド' : '',
+              actionName: 'アイスブランド',
               damageMultiplier: levelConfig.multiplier,
               damageType: 'skill',
               isMagic: false,
               isHybrid: true,
               element: 'ice',
-              hideActionName: currentHit > 0
+              hideActionName: true
             });
           });
         }, 300 / (battle.speedMult || 1));
@@ -302,8 +303,6 @@ export const magic_knight = {
         if (!battle) return;
         const aliveEnemies = battle.enemies.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
-        
-        battle.showActionName(caster.elementId, 'サンダースラッシュ', 'text-yellow-300', 'border-yellow-500/50');
         
         playSkillAnimation(caster, aliveEnemies, 'thunder_slash', (target, index) => {
           if (target.isDead) return;

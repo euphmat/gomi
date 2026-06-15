@@ -147,7 +147,7 @@ export const slime_master = {
   requirements: [
     {
       type: 'custom',
-      description: 'スライムの森のスライムを全捕獲 (王を除く)',
+      description: 'スライムの森のスライムを全捕獲',
       check: (capturedMonsters) => {
         if (!capturedMonsters) return false;
         // Check if all 13 base slimes are captured
@@ -214,7 +214,8 @@ export const slime_master = {
             damageMultiplier: levelConfig.multiplier,
             damageType: 'skill',
             isMagic: true, // Let's make it magic based since they are using slimes
-            element: effect.el
+            element: effect.el,
+            hideActionName: true
           });
           
           caster.stats.attackAilments = origA;
@@ -258,7 +259,8 @@ export const slime_master = {
             actionName: 'スライムハザード',
             damageMultiplier: levelConfig.multiplier,
             damageType: 'skill',
-            isMagic: true
+            isMagic: true,
+            hideActionName: true
           });
         });
       },
