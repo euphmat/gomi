@@ -59,6 +59,7 @@ export const SHIELDS = [
 { id: 'diamond_shield'         , name: 'ダイヤモンドシールド'            , stats: { def: 210, mdef: 200 }, recipe: { price: 50000, materials: [{ id: 'mat_diamond_claw', amount: 40 }, { id: 'mat_diamond_laser_core', amount: 15 }] } },
 { id: 'regalia_shield'         , name: '王権の盾'                        , stats: { def: 250, mdef: 250 }, recipe: { price: 55000, materials: [{ id: 'mat_regalia_crown', amount: 40 }, { id: 'mat_regalia_sword', amount: 15 }] } },
 { id: 'genesis_shield'         , name: 'ジェネシスシールド'              , stats: { def: 200, mdef: 200 }, recipe: { price: 80000, materials: [{ id: 'mat_genesis_fragment', amount: 50 }, { id: 'mat_genesis_core', amount: 10 }] } },
+
 { id: 'rust_guard_shield'      , name: '錆びついた近衛盾'                , stats: { def: 150, mdef: 50 }, recipe: { price: 5000, materials: [{ id: 'mat_rust_armor', amount: 30 }, { id: 'mat_grudge_soul', amount: 5 }] } },
 { id: 'dust_pan_shield'        , name: 'ダストパンシールド'              , stats: { def: 80, mdef: 120 }, recipe: { price: 4800, materials: [{ id: 'mat_dust_cloth', amount: 30 }, { id: 'mat_spider_web', amount: 5 }] } },
 { id: 'chandelier_shield'      , name: 'シャンデリアシールド'            , stats: { def: 120, mdef: 120 }, elements: { fire: 20 }, recipe: { price: 5200, materials: [{ id: 'mat_cursed_glass', amount: 30 }, { id: 'mat_blue_flame', amount: 5 }] } },

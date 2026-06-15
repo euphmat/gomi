@@ -143,6 +143,7 @@ export const MATERIALS = [
     { id: 'mat_genesis_fragment', name: '創世の微光', sellPrice: 1 },
     { id: 'mat_genesis_core', name: '超存在の立方核', sellPrice: 1 },
     { id: 'mat_genesis_light', name: '万象のプリズム光', sellPrice: 1 },
+
     { id: 'mat_rust_armor', name: '錆びついた近衛鎧', sellPrice: 1 },
     { id: 'mat_rust_sword', name: 'ボロボロの直剣', sellPrice: 1 },
     { id: 'mat_grudge_soul', name: '怨念の塊', sellPrice: 1 },

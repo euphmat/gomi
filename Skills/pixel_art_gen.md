@@ -12,74 +12,88 @@ Please generate the images listed below in a **4x4 grid** format.
     - Highly dense pixels (comparable to or 64-bit era)
     - Intricate textures within each icon
 
-## List of Images to Generate (Monster)
-- Slime Master 16 種類
-「亡霊の廃城」という、かつての栄華が呪いと絶望に染まった舞台にふさわしいモンスターたちを考案しました。ダークファンタジーの退廃的な雰囲気を詰め込んでいます。
+## List of Images to Generate (Equipment Icon)
 
----
+### Weapon
+- rust_guard_sword
+- dust_maid_broom
+- cursed_chandelier_flail
+- wizard_library_grimoire
 
-## 幽鬼が彷徨う古城の魔物たち
+- hollow_president_cane
+- shadow_hound_claw
+- requiem_rat_fang
+- glitter_golden_bow
 
-### ── 通常モンスター（7体）
+- death_imperator_greatsword
+- necro_origin_scythe
 
-かつて城に仕えていた者たちの成れの果てや、廃墟に巣食う不浄の存在です。
-
-1. **ラスト・ガード（錆びついた近衛兵）**
-* 空の鎧に怨念が宿った歩く甲冑。主を守るという生前の執念だけで、侵入者を無差別に排除しようとします。
-
-
-2. **ダスト・メイド（塵埃の従者）**
-* 塵や蜘蛛の巣で形成された、顔のないメイドの亡霊。手にした古びた箒で、生者を「ゴミ」として掃除しようと襲いかかってきます。
-
-
-3. **カースド・シャンデリア（呪詛の灯火）**
-* 天井に吊り下がったまま、侵入者の頭上を狙うミミックの一種。不気味な青い炎を撒き散らしながら落下してきます。
-
-
-4. **ウィザード・ライブラリ（貪食の魔導書）**
-* 書庫に放置され、魔力が暴走した古い禁書。ページを激しく羽ばたかせて飛び回り、精神を蝕む呪言を放ちます。
-
-
-5. **ホロウ・プレジデント（虚ろな肖像画）**
-* 壁に飾られた歴代領主の絵画。絵の中の瞳が怪しく光ると、見た者の自由を奪う麻痺の視線を投げかけてきます。
+### accessory
+- rust_ring
+- dust_ribbon
+- blue_flame_pendant
+- madness_ring
+- hollow_necklace
+- shadow_ring
+- plague_amulet
+- pure_gold_ring
+- broken_crown_ring
+- origin_core_ring
 
 
-6. **シャドウ・ハウンド（影に潜む猟犬）**
-* 生前、城主の狩りに付き従っていた猟犬の成れの果て。実体がなく、壁や床の「影」から突然飛び出して喉元を狙います。
+### shield
+- rust_guard_shield
+- dust_pan_shield
+- chandelier_shield
+- magic_ward_book
+- canvas_shield
+- shadow_guard
+- rat_hide_shield
+- glitter_shield
+- imperator_shield
+- origin_ward
 
 
-7. **レクイエム・ラット（葬送の変異鼠）**
-* 屍肉を喰らい、死霊魔術の残滓を浴びて巨大化した鼠。集団で行動し、噛みついた相手に不治の病を伝染させます。
+### armor
+- rust_guard_armor
+- dust_maid_dress
+- cursed_glass_armor
+- madness_robe
+- president_suit
+- shadow_pelt_armor
+- corpse_flesh_armor
+- golden_armor
+- imperator_mantle
+- necromancer_robe
 
-
-
----
-
-### ── 激レアモンスター（1体）
-
-滅多に姿を現さない、廃城に眠るかつての輝きと悲哀の象徴です。
-
-8. **ロスト・グリッター（置き去りの財宝精霊）**
-* 廃城の宝物庫にポツンと残された、まばゆい輝きを放つ純金の小悪魔。極めて臆病ですぐに逃げ出しますが、倒せば莫大な富と経験値をもたらします。
-
-
-
----
-
-### ── ボスモンスター（1体）
-
-この城を支配し、亡霊たちを統べる怨嗟の主です。
-
-9. **デス・インペレイター（怨讐の廃王）**
-* 裏切りによって命を落とし、玉座に縛り付けられた城主の亡霊。崩れた王冠を戴き、巨大な大剣と城内の怨念を操って、侵入者に生前以上の暴政（猛攻）を振るいます。
-
-
-
----
-
-### ── 裏ボスモンスター（1体）
-
-城の崩壊を引き起こした元凶であり、最深部の禁忌の間に封印されている存在です。
-
-10. **ネクロ・オリジン（災厄の降霊術師）**
-* かつて王を唆し、国を滅ぼす呪いを完成させた宮廷魔術師。自らの肉体を捨てて城そのものと融合しており、空間を歪め、死者をも超越した禁断の魔術で挑む者を絶望の底へと突き落とします。
+### materials
+- mat_rust_armor
+- mat_rust_sword
+- mat_grudge_soul
+- mat_dust_cloth
+- mat_maid_broom
+- mat_spider_web
+- mat_cursed_glass
+- mat_blue_flame
+- mat_heavy_chain
+- mat_forbidden_page
+- mat_magic_ink
+- mat_madness_cover
+- mat_old_canvas
+- mat_gold_frame
+- mat_hollow_eye
+- mat_shadow_fur
+- mat_hound_fang
+- mat_dark_collar
+- mat_rat_tail
+- mat_corpse_flesh
+- mat_plague_blood
+- mat_pure_gold
+- mat_glitter_gem
+- mat_lost_treasure
+- mat_broken_crown
+- mat_grudge_greatsword
+- mat_king_soul
+- mat_forbidden_grimoire
+- mat_necromancer_robe
+- mat_origin_core

@@ -306,7 +306,89 @@ export const DUNGEONS = [{
     image: 'assets/dungeon/ghost_castle.webp',
     bgImage: 'assets/dungeon/bg_ghost_castle.webp',
     isUnlocked: false,
-    floors: []
+    floors: [
+      {
+        level: 1,
+        monsters: [
+          { rust_guard: 3, weight: 50 },
+          { rust_guard: 2, dust_maid: 1, weight: 49.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 2,
+        monsters: [
+          { dust_maid: 3, weight: 40 },
+          { rust_guard: 2, dust_maid: 2, weight: 30 },
+          { dust_maid: 2, cursed_chandelier: 1, weight: 29.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 3,
+        monsters: [
+          { rust_guard: 2, cursed_chandelier: 1, weight: 40 },
+          { cursed_chandelier: 2, weight: 30 },
+          { cursed_chandelier: 1, wizard_library: 1, weight: 29.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 4,
+        monsters: [
+          { cursed_chandelier: 2, wizard_library: 1, weight: 40 },
+          { wizard_library: 3, weight: 30 },
+          { wizard_library: 2, hollow_president: 1, weight: 29.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 5,
+        monsters: [
+          { wizard_library: 2, hollow_president: 1, weight: 40 },
+          { hollow_president: 2, weight: 30 },
+          { hollow_president: 1, shadow_hound: 2, weight: 29.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 6,
+        monsters: [
+          { hollow_president: 1, shadow_hound: 2, weight: 30 },
+          { shadow_hound: 3, weight: 40 },
+          { shadow_hound: 2, requiem_rat: 1, weight: 29.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 7,
+        monsters: [
+          { shadow_hound: 2, requiem_rat: 2, weight: 40 },
+          { requiem_rat: 3, weight: 30 },
+          { requiem_rat: 2, death_imperator: 1, weight: 29.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 8,
+        monsters: [
+          { requiem_rat: 8, weight: 99.9 },
+          { lost_glitter: 1, weight: 0.1 }
+        ]
+      },
+      {
+        level: 9,
+        monsters: [
+          { death_imperator: 1, weight: 100 }
+        ]
+      },
+      {
+        level: 10,
+        monsters: [
+          { necro_origin: 1, weight: 100 }
+        ]
+      }
+    ]
   },
   {
     id: 'spirit_valley',
