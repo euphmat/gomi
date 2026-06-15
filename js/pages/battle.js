@@ -224,7 +224,8 @@ class BattleManager {
 
     if (protectionConfig) {
       aliveParty.forEach(p => {
-        p.stats.def = Math.floor((p.stats.def || 0) * (1 + protectionConfig.percent / 100));
+        p._defBuffPercent = Math.max(p._defBuffPercent || 0, protectionConfig.percent);
+        p._defBuffTurns = Infinity;
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -237,7 +238,8 @@ class BattleManager {
 
     if (magicBarrierConfig) {
       aliveParty.forEach(p => {
-        p.stats.mdef = Math.floor((p.stats.mdef || 0) * (1 + magicBarrierConfig.percent / 100));
+        p._mdefBuffAmount = Math.max(p._mdefBuffAmount || 0, Math.floor((p.stats?.mdef || 0) * (magicBarrierConfig.percent / 100)));
+        p._mdefBuffTurns = Infinity;
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -250,7 +252,8 @@ class BattleManager {
 
     if (weaponBlessConfig) {
       aliveParty.forEach(p => {
-        p.stats.atk = Math.floor((p.stats.atk || 0) * (1 + weaponBlessConfig.percent / 100));
+        p._atkBuffPercent = Math.max(p._atkBuffPercent || 0, weaponBlessConfig.percent);
+        p._atkBuffTurns = Infinity;
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -263,7 +266,8 @@ class BattleManager {
 
     if (magicBlessConfig) {
       aliveParty.forEach(p => {
-        p.stats.matk = Math.floor((p.stats.matk || 0) * (1 + magicBlessConfig.percent / 100));
+        p._matkBuffPercent = Math.max(p._matkBuffPercent || 0, magicBlessConfig.percent);
+        p._matkBuffTurns = Infinity;
         
         if (isFirstFloor) {
           setTimeout(() => {
