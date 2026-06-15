@@ -88,66 +88,97 @@ export function renderAcquireSkillTab() {
       }
     }
 
+    const highlightDesc = (desc) => {
+      if (!desc) return '';
+      return desc.replace(/(\d+(?:\.\d+)?)/g, '<span class="text-yellow-300 font-black px-0.5">$1</span>');
+    };
+
+    const currentDescHtml = highlightDesc(currentDesc);
+    const nextDescHtml = highlightDesc(nextDesc);
+
     let btnClass = '';
     let btnText = '';
     let isDisabled = isMax || !hasEnoughSP;
 
     if (isMax) {
-      btnClass = 'bg-gray-800/80 border border-white/5 text-gray-500 cursor-not-allowed';
-      btnText = '<span class="tracking-widest font-black opacity-80 flex items-center justify-center h-full w-full">MAX</span>';
+      btnClass = 'bg-gray-800/80 border-gray-600/50 text-gray-500 cursor-not-allowed';
+      btnText = '<span class="font-black tracking-widest">MAX</span>';
     } else if (currentLevel === 0) {
-      btnClass = hasEnoughSP ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.5)] transform hover:-translate-y-0.5 border border-white/20' : 'bg-gray-800/80 border border-white/5 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1 w-full"><span class="material-symbols-outlined text-[14px]">school</span><span class="font-bold">修得</span> <span class="ml-1 text-[10px] font-black bg-black/20 px-1 py-0.5 rounded-md">${levelConfig.spCost} SP</span></div>`;
+      btnClass = hasEnoughSP 
+        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-md shadow-emerald-500/20 border-emerald-400/50' 
+        : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[13px]">school</span><span class="font-bold">修得</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
     } else {
-      btnClass = hasEnoughSP ? 'bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-400 hover:to-rose-400 text-white shadow-[0_4px_15px_rgba(249,115,22,0.3)] hover:shadow-[0_6px_20px_rgba(249,115,22,0.5)] transform hover:-translate-y-0.5 border border-white/20' : 'bg-gray-800/80 border border-white/5 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1 w-full"><span class="material-symbols-outlined text-[14px]">upgrade</span><span class="font-bold">強化</span> <span class="ml-1 text-[10px] font-black bg-black/20 px-1 py-0.5 rounded-md">${levelConfig.spCost} SP</span></div>`;
+      btnClass = hasEnoughSP 
+        ? 'bg-gradient-to-r from-orange-600 to-rose-500 hover:from-orange-500 hover:to-rose-400 text-white shadow-md shadow-orange-500/20 border-orange-400/50' 
+        : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[13px]">upgrade</span><span class="font-bold">強化</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
     }
 
+    row.className = 'group relative p-2.5 bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl border border-white/10 hover:border-white/20 shadow-lg transition-all duration-300 overflow-hidden';
+
     row.innerHTML = `
-      <!-- Highlight Accent -->
-      <div class="absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${currentLevel === 0 ? 'from-emerald-400/50' : 'from-orange-400/50'} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div class="absolute inset-0 bg-gradient-to-br ${currentLevel === 0 ? 'from-emerald-500/5' : (isMax ? 'from-gray-500/5' : 'from-orange-500/5')} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       
-      <div class="flex items-center justify-center w-11 h-11 bg-black/40 rounded-lg shrink-0 relative shadow-inner border border-white/5 overflow-hidden group-hover:border-white/10 transition-colors">
-        <!-- Glow effect behind icon -->
-        <div class="absolute inset-0 bg-gradient-to-tr ${currentLevel === 0 ? 'from-emerald-500/20 to-transparent' : 'from-orange-500/20 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        <span class="material-symbols-outlined text-2xl ${currentLevel === 0 ? 'text-gray-400' : 'text-orange-400'} drop-shadow-md group-hover:scale-110 transition-transform duration-300 relative z-10">${skill.icon}</span>
-        ${currentLevel > 0 ? `<div class="absolute -bottom-0 -right-0 bg-gradient-to-tl from-blue-600 to-indigo-500 text-[9px] font-black text-white px-1 py-0.5 rounded-tl shadow-sm z-20">Lv.${currentLevel}</div>` : ''}
-      </div>
-      
-      <div class="flex-1 min-w-0 py-0.5 pr-1">
-        <div class="flex items-center mb-0.5 gap-x-2 flex-wrap">
-          <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate group-hover:text-white transition-colors drop-shadow-sm">${skill.name}</h3>
-          ${skill.type === 'passive' 
-            ? `<span class="text-[9px] font-bold text-emerald-300 bg-emerald-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">psychology</span>パッシブ</span>`
-            : `<span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig.mpCost}</span>`
-          }
+      <div class="flex items-center gap-3 relative z-10">
+        <!-- Icon -->
+        <div class="flex items-center justify-center w-11 h-11 bg-black/50 rounded-xl shrink-0 relative shadow-inner border border-white/10 group-hover:border-white/20 transition-colors">
+          <span class="material-symbols-outlined text-2xl ${currentLevel === 0 ? 'text-gray-400' : (isMax ? 'text-yellow-400' : 'text-orange-400')} drop-shadow-md group-hover:scale-110 transition-transform duration-300">${skill.icon}</span>
+          <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-br ${isMax ? 'from-yellow-500 to-amber-600' : (currentLevel === 0 ? 'from-gray-600 to-gray-700' : 'from-blue-600 to-indigo-600')} text-[9px] font-black ${currentLevel === 0 ? 'text-gray-300' : 'text-white'} px-1 py-0.5 rounded shadow-md border border-white/20">Lv.${currentLevel}</div>
         </div>
-        <div class="flex flex-col gap-0.5">
-          ${isMax ? `
-            <span class="text-[10px] text-gray-400 leading-snug font-medium break-words whitespace-pre-wrap">${currentDesc}</span>
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0 py-0.5">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate group-hover:text-white transition-colors">${skill.name}</h3>
+              ${skill.type === 'passive' 
+                ? `<span class="text-[9px] font-bold text-emerald-300 bg-emerald-900/40 border border-emerald-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">psychology</span>パッシブ</span>`
+                : `<span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/40 border border-cyan-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig ? levelConfig.mpCost : 0}</span>`
+              }
+            </div>
+            <div class="text-[9px] font-bold text-gray-500 tracking-wider hidden sm:block">
+              MAX Lv.${skill.maxLevel}
+            </div>
+          </div>
+          
+          <div class="flex flex-col gap-1 bg-black/20 p-1.5 rounded-lg border border-white/5">
+            ${currentLevel > 0 ? `
+              <div class="flex gap-1.5 items-start text-[10px] leading-tight">
+                <span class="font-black text-gray-500 shrink-0 w-7 mt-px">現在</span>
+                <span class="${isMax ? 'text-yellow-100/90' : 'text-gray-400'} break-words whitespace-pre-wrap flex-1">${currentDescHtml}</span>
+              </div>
+            ` : ''}
+            ${!isMax ? `
+              <div class="flex gap-1.5 items-start text-[10px] leading-tight">
+                <span class="font-black ${currentLevel === 0 ? 'text-emerald-400' : 'text-orange-400'} shrink-0 w-7 mt-px">次Lv</span>
+                <span class="text-white break-words whitespace-pre-wrap font-medium flex-1">${nextDescHtml}</span>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="shrink-0 flex flex-col gap-1.5 w-[85px] sm:w-[90px]">
+          <button class="acquire-btn w-full relative overflow-hidden py-1 border ${btnClass} text-[11px] rounded-lg active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-200" ${isDisabled ? 'disabled' : ''}>
+            ${!isDisabled ? '<div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite] skew-x-12"></div>' : ''}
+            <span class="relative z-10 flex items-center justify-center w-full">${btnText}</span>
+          </button>
+          
+          ${!isMax && maxPossibleLevel > currentLevel ? `
+          <button class="max-btn w-full relative overflow-hidden py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-500/20 border border-purple-400/50 text-[11px] rounded-lg active:scale-[0.98] transition-all duration-200">
+            <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite] skew-x-12"></div>
+            <span class="relative z-10 flex items-center justify-center w-full gap-1">
+              <span class="font-bold">MAX</span>
+              <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${totalMaxCost} SP</span>
+            </span>
+          </button>
           ` : `
-            <span class="text-[10px] text-gray-400/90 leading-tight font-medium break-words whitespace-pre-wrap">${nextDesc}</span>
+          <button class="w-full py-1 bg-gray-800/50 border border-gray-700/50 text-gray-600 text-[11px] font-black tracking-widest rounded-lg cursor-not-allowed" disabled>
+            MAX
+          </button>
           `}
         </div>
-      </div>
-      
-      <div class="shrink-0 flex flex-col items-end justify-center ml-1 gap-1">
-        <button class="acquire-btn min-w-[85px] sm:min-w-[90px] relative overflow-hidden px-1.5 py-1 ${btnClass} text-[11px] rounded-lg active:scale-95 disabled:opacity-60 disabled:transform-none disabled:active:scale-100 transition-all duration-200" ${isDisabled ? 'disabled' : ''}>
-          <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite] skew-x-12"></div>
-          <span class="relative z-10 flex items-center justify-center w-full">${btnText}</span>
-        </button>
-        ${!isMax && maxPossibleLevel > currentLevel ? `
-        <button class="max-btn min-w-[85px] sm:min-w-[90px] relative overflow-hidden px-1.5 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-[0_4px_15px_rgba(147,51,234,0.3)] hover:shadow-[0_6px_20px_rgba(147,51,234,0.5)] transform hover:-translate-y-0.5 border border-white/20 text-[11px] rounded-lg active:scale-95 transition-all duration-200">
-          <span class="relative z-10 flex items-center justify-center w-full gap-1">
-            <span class="font-bold">MAX</span>
-            <span class="ml-0.5 text-[10px] font-black bg-black/20 px-1 py-0.5 rounded-md">${totalMaxCost} SP</span>
-          </span>
-        </button>
-        ` : (!isMax ? `
-        <button class="min-w-[85px] sm:min-w-[90px] px-1.5 py-1 bg-gray-800/80 border border-white/5 text-gray-500 text-[11px] rounded-lg cursor-not-allowed">
-          <span class="flex items-center justify-center w-full font-bold opacity-80">MAX</span>
-        </button>
-        ` : '')}
       </div>
     `;
     
@@ -257,29 +288,41 @@ export function renderAcquireSkillTab() {
       ? selectedChar.inheritedPassiveSkill && selectedChar.inheritedPassiveSkill.skillId === skill.id && selectedChar.inheritedPassiveSkill.jobId === jobId
       : selectedChar.inheritedActiveSkill && selectedChar.inheritedActiveSkill.skillId === skill.id && selectedChar.inheritedActiveSkill.jobId === jobId;
 
+    const highlightDesc = (desc) => {
+      if (!desc) return '';
+      return desc.replace(/(\d+(?:\.\d+)?)/g, '<span class="text-yellow-300 font-black px-0.5">$1</span>');
+    };
+
     let btnClass = isSelected 
-        ? 'bg-indigo-600 border border-indigo-400 text-white shadow-[0_0_10px_rgba(79,70,229,0.4)]' 
-        : 'bg-gray-800/80 border border-white/5 text-gray-300 hover:bg-gray-700 hover:text-white';
-    let btnText = isSelected ? '選択中' : '選択';
+        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-md shadow-indigo-500/30' 
+        : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white';
+    let btnText = isSelected ? '選択中' : '選択する';
+
+    row.className = `group relative p-2.5 backdrop-blur-md rounded-xl border transition-all duration-300 overflow-hidden ${isSelected ? 'bg-indigo-900/20 border-indigo-500/50 shadow-lg shadow-indigo-900/20' : 'bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-white/10 hover:border-white/20 shadow-md'}`;
 
     row.innerHTML = `
-      <div class="flex items-center justify-center w-11 h-11 bg-black/40 rounded-lg shrink-0 relative shadow-inner border border-white/5 overflow-hidden">
-        <span class="material-symbols-outlined text-2xl text-indigo-400 drop-shadow-md">${skill.icon}</span>
-        <div class="absolute -bottom-0 -right-0 bg-gradient-to-tl from-indigo-600 to-purple-500 text-[9px] font-black text-white px-1 py-0.5 rounded-tl shadow-sm z-20">Lv.${level}</div>
-      </div>
-      <div class="flex-1 min-w-0 py-0.5 pr-1">
-        <div class="flex items-center mb-0.5 gap-x-2 flex-wrap">
-          <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate">${skill.name}</h3>
-          <span class="text-[9px] font-bold text-purple-300 bg-purple-900/30 px-1 py-px rounded flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined !text-[11px]">badge</span>${jobDef ? jobDef.name : ''}</span>
+      <div class="flex items-center gap-3 relative z-10">
+        <div class="flex items-center justify-center w-11 h-11 bg-black/50 rounded-xl shrink-0 relative shadow-inner border border-white/10">
+          <span class="material-symbols-outlined text-2xl text-indigo-400 drop-shadow-md">${skill.icon}</span>
+          <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-br from-indigo-600 to-purple-600 text-[9px] font-black text-white px-1 py-0.5 rounded shadow-md border border-white/20">Lv.${level}</div>
         </div>
-        <div class="flex flex-col gap-0.5">
-          <span class="text-[10px] text-gray-400 leading-snug font-medium break-words whitespace-pre-wrap">${skill.getDescription(levelConfig)}</span>
+        
+        <div class="flex-1 min-w-0 py-0.5">
+          <div class="flex items-center mb-1 gap-2 flex-wrap">
+            <h3 class="text-[13px] font-black ${isSelected ? 'text-white' : 'text-gray-100'} tracking-wide truncate">${skill.name}</h3>
+            <span class="text-[9px] font-bold text-purple-300 bg-purple-900/40 border border-purple-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">badge</span>${jobDef ? jobDef.name : ''}</span>
+          </div>
+          
+          <div class="flex flex-col gap-1 bg-black/20 p-1.5 rounded-lg border border-white/5">
+            <div class="text-[10px] text-gray-300 leading-tight font-medium break-words whitespace-pre-wrap">${highlightDesc(skill.getDescription(levelConfig))}</div>
+          </div>
         </div>
-      </div>
-      <div class="shrink-0 flex flex-col items-end justify-center ml-1">
-        <button class="inheritance-btn min-w-[70px] px-2 py-1.5 ${btnClass} text-[11px] font-bold rounded-lg transition-all duration-200">
-          ${btnText}
-        </button>
+      
+        <div class="shrink-0 flex flex-col gap-1.5 w-[85px] sm:w-[90px]">
+          <button class="inheritance-btn w-full py-1.5 border ${btnClass} text-[11px] font-bold rounded-lg active:scale-[0.98] transition-all duration-200">
+            ${btnText}
+          </button>
+        </div>
       </div>
     `;
 
