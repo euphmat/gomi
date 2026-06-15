@@ -254,24 +254,24 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scaleY(0)', transformOrigin: 'bottom', opacity: 1 },
             { transform: 'scaleY(1.5)', transformOrigin: 'bottom', opacity: 1, offset: 0.7 },
             { transform: 'scaleY(2)', transformOrigin: 'bottom', opacity: 0 }
-          ], { duration: 600, easing: 'ease-out' });
+          ], { duration: 400, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           setTimeout(() => {
-            createExplosion(tx, ty, '#ff0000', '#ff8c00', { intensity: 6, duration: 300 });
+            createExplosion(tx, ty, '#ff0000', '#ff8c00', { intensity: 3, duration: 150 });
             if (onImpact) onImpact(target, index);
-          }, 200);
+          }, 150);
           break;
         }
         case 'thunderstorm': {
-          createThunder(tx, ty, { intensity: 6, duration: 300 }, () => {
+          createThunder(tx, ty, { intensity: 3, duration: 150 }, () => {
              if (onImpact) onImpact(target, index);
           });
           setTimeout(() => {
             const rx = tx + (Math.random() - 0.5) * 80;
             const ry = ty + (Math.random() - 0.5) * 80;
             createThunder(rx, ry, false);
-          }, 150);
+          }, 50);
           break;
         }
       }
