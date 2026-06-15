@@ -14,20 +14,6 @@ Please generate the images listed below in a **4x4 grid** format.
 
 ## List of Images to Generate (Equipment Icon)
 
-### Weapon
-- rust_guard_sword
-- dust_maid_broom
-- cursed_chandelier_flail
-- wizard_library_grimoire
-
-- hollow_president_cane
-- shadow_hound_claw
-- requiem_rat_fang
-- glitter_golden_bow
-
-- death_imperator_greatsword
-- necro_origin_scythe
-
 ### accessory
 - rust_ring
 - dust_ribbon

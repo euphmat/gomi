@@ -169,7 +169,10 @@ class BattleManager {
     if (isReinit) {
       this.elements.enemyArea.innerHTML = '';
     }
+    
+    this.applyStartOfBattlePassives();
     this.renderEntities();
+    
     // Only setup button listeners once (on first init)
     if (!this._listenersSetup) {
       this.setupListeners();
@@ -179,7 +182,7 @@ class BattleManager {
       this.updateCommandUI();
       this.updateTabStyles();
     }
-    this.applyStartOfBattlePassives();
+    
     this.startAtbLoop();
   }
 
