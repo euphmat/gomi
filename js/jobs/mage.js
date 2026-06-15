@@ -608,10 +608,10 @@ export const mage = {
         { level:  4, spCost: 2, mpCost: 0, recoverMp:  4 },
         { level:  5, spCost: 2, mpCost: 0, recoverMp:  5 },
         { level:  6, spCost: 2, mpCost: 0, recoverMp:  6 },
-        { level:  7, spCost: 3, mpCost: 0, recoverMp:  8 },
-        { level:  8, spCost: 3, mpCost: 0, recoverMp: 10 },
-        { level:  9, spCost: 3, mpCost: 0, recoverMp: 12 },
-        { level: 10, spCost: 5, mpCost: 0, recoverMp: 15 }
+        { level:  7, spCost: 3, mpCost: 0, recoverMp:  7 },
+        { level:  8, spCost: 3, mpCost: 0, recoverMp:  8 },
+        { level:  9, spCost: 3, mpCost: 0, recoverMp:  9 },
+        { level: 10, spCost: 5, mpCost: 0, recoverMp: 10 }
       ],
       getDescription: (lc) => `自身の行動終了時に、MP を ${lc.recoverMp} 回復する`
     }

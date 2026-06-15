@@ -423,12 +423,12 @@ export const priest = {
         { level:  2, spCost: 1, mpCost: 0, recoverHp: 10 },
         { level:  3, spCost: 1, mpCost: 0, recoverHp: 15 },
         { level:  4, spCost: 2, mpCost: 0, recoverHp: 20 },
-        { level:  5, spCost: 2, mpCost: 0, recoverHp: 30 },
-        { level:  6, spCost: 2, mpCost: 0, recoverHp: 40 },
-        { level:  7, spCost: 3, mpCost: 0, recoverHp: 55 },
-        { level:  8, spCost: 3, mpCost: 0, recoverHp: 70 },
-        { level:  9, spCost: 3, mpCost: 0, recoverHp: 90 },
-        { level: 10, spCost: 5, mpCost: 0, recoverHp: 120 }
+        { level:  5, spCost: 2, mpCost: 0, recoverHp: 25 },
+        { level:  6, spCost: 2, mpCost: 0, recoverHp: 30 },
+        { level:  7, spCost: 3, mpCost: 0, recoverHp: 35 },
+        { level:  8, spCost: 3, mpCost: 0, recoverHp: 40 },
+        { level:  9, spCost: 3, mpCost: 0, recoverHp: 45 },
+        { level: 10, spCost: 5, mpCost: 0, recoverHp: 50 }
       ],
       getDescription: (lc) => `自身の行動終了時に、HP を ${lc.recoverHp} 回復する`
     }
