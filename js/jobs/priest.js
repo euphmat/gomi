@@ -7,14 +7,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
   }
 
   const screenShake = (intensity = 5, duration = 300) => {
-    const container = document.getElementById('battle-scene-bg') || document.body;
-    container.animate([
-      { transform: `translate(${intensity}px, ${intensity}px)` },
-      { transform: `translate(-${intensity}px, -${intensity}px)` },
-      { transform: `translate(-${intensity}px, ${intensity}px)` },
-      { transform: `translate(${intensity}px, -${intensity}px)` },
-      { transform: `translate(0px, 0px)` }
-    ], { duration: 50, iterations: Math.ceil(duration / 50) });
+    // Screen shake disabled globally by user request
   };
 
   const createSparkles = (x, y, color = '#4ade80') => {
