@@ -1440,20 +1440,21 @@ class BattleManager {
 
         const slash = document.createElement('div');
         slash.style.position = 'fixed';
-        slash.style.left = `${tx - 40}px`;
-        slash.style.top = `${ty - 40}px`;
-        slash.style.width = '80px';
-        slash.style.height = '80px';
-        slash.style.background = 'linear-gradient(45deg, transparent 40%, rgba(200,200,200,0.8) 45%, #fff 50%, rgba(200,200,200,0.8) 55%, transparent 60%)';
+        slash.style.left = `${tx}px`;
+        slash.style.top = `${ty}px`;
+        slash.style.width = '120px';
+        slash.style.height = '6px';
+        slash.style.background = 'linear-gradient(to right, transparent, rgba(255,255,255,0.8), #fff, rgba(255,255,255,0.8), transparent)';
+        slash.style.boxShadow = '0 0 8px rgba(255,255,255,0.5)';
         slash.style.zIndex = '9998';
         slash.style.pointerEvents = 'none';
         document.body.appendChild(slash);
 
         const anim = slash.animate([
-          { transform: 'scale(0.5) rotate(-20deg)', opacity: 0 },
-          { transform: 'scale(1.2) rotate(10deg)', opacity: 1, offset: 0.5 },
-          { transform: 'scale(1.5) rotate(30deg)', opacity: 0 }
-        ], { duration: 150, easing: 'ease-out' });
+          { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(0.1) scaleY(0.2)', opacity: 0 },
+          { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.0) scaleY(1.0)', opacity: 1, offset: 0.3 },
+          { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.5) scaleY(0.1)', opacity: 0 }
+        ], { duration: 200, easing: 'ease-out' });
 
         anim.onfinish = () => slash.remove();
       }
