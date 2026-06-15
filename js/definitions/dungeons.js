@@ -195,19 +195,19 @@ export const DUNGEONS = [{
       {
         level: 8,
         monsters: [
-          { boss_broodmother: 1, swarm_spider: 4, weight: 100 }
+          { boss_broodmother: 1, weight: 100 }
         ]
       },
       {
         level: 9,
         monsters: [
-          { boss_arachne: 1, spider_dark: 3, arachnid_shadow: 2, weight: 100 }
+          {weaver_golden: 1, boss_arachne: 1, weaver_golden: 1, weight: 100 }
         ]
       },
       {
         level: 10,
         monsters: [
-          { boss_deathweaver: 1, spider_dark: 4, swarm_spider: 4, weight: 100 }
+          {arachnid_crystal: 1, boss_deathweaver: 1, arachnid_crystal:1,  weight: 100 }
         ]
       }
     ]

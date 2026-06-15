@@ -187,16 +187,16 @@ export const ranger = {
       id: 'arrow_rain', name: 'アローレイン', icon: 'shower',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost:  8, multiplier: 0.4 },
-        { level:  2, spCost: 1, mpCost: 10, multiplier: 0.45 },
-        { level:  3, spCost: 1, mpCost: 12, multiplier: 0.5 },
-        { level:  4, spCost: 2, mpCost: 14, multiplier: 0.55 },
-        { level:  5, spCost: 2, mpCost: 16, multiplier: 0.6 },
-        { level:  6, spCost: 2, mpCost: 18, multiplier: 0.65 },
-        { level:  7, spCost: 3, mpCost: 20, multiplier: 0.7 },
-        { level:  8, spCost: 3, mpCost: 22, multiplier: 0.75 },
-        { level:  9, spCost: 3, mpCost: 24, multiplier: 0.8 },
-        { level: 10, spCost: 5, mpCost: 30, multiplier: 0.9 }
+        { level:  1, spCost: 1, mpCost: 15, multiplier: 0.4 },
+        { level:  2, spCost: 1, mpCost: 17, multiplier: 0.45 },
+        { level:  3, spCost: 1, mpCost: 19, multiplier: 0.5 },
+        { level:  4, spCost: 2, mpCost: 21, multiplier: 0.55 },
+        { level:  5, spCost: 2, mpCost: 22, multiplier: 0.6 },
+        { level:  6, spCost: 2, mpCost: 24, multiplier: 0.65 },
+        { level:  7, spCost: 3, mpCost: 26, multiplier: 0.7 },
+        { level:  8, spCost: 3, mpCost: 28, multiplier: 0.75 },
+        { level:  9, spCost: 3, mpCost: 30, multiplier: 0.8 },
+        { level: 10, spCost: 5, mpCost: 32, multiplier: 0.9 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を3回行う`,
       execute: (caster, levelConfig, battle) => {
