@@ -544,6 +544,9 @@ class App {
           <div class="flex gap-2 mt-2">
             ${isExport ? `
               <button id="data-copy" class="flex-1 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">コピー</button>
+              <button id="data-share" class="w-10 flex-none py-2 bg-gray-700/80 hover:bg-gray-600 text-white rounded transition-colors cursor-pointer flex items-center justify-center" title="共有">
+                <span class="material-symbols-outlined text-[16px]">share</span>
+              </button>
             ` : `
               <button id="data-confirm" class="flex-1 py-2 bg-green-600/80 hover:bg-green-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">復元</button>
             `}
@@ -575,6 +578,21 @@ class App {
         } catch (err) {
           document.execCommand('copy');
           alert('コピーしました。');
+        }
+      });
+      document.getElementById('data-share').addEventListener('click', async () => {
+        const textarea = document.getElementById('data-textarea');
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'セーブデータ',
+              text: textarea.value
+            });
+          } catch (err) {
+            console.error('Share failed:', err);
+          }
+        } else {
+          alert('お使いの環境は共有機能に対応していません。');
         }
       });
     } else {

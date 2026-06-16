@@ -14,19 +14,6 @@ Please generate the images listed below in a **4x4 grid** format.
 
 ## List of Images to Generate (Equipment Icon)
 
-### accessory
-- rust_ring
-- dust_ribbon
-- blue_flame_pendant
-- madness_ring
-- hollow_necklace
-- shadow_ring
-- plague_amulet
-- pure_gold_ring
-- broken_crown_ring
-- origin_core_ring
-
-
 ### shield
 - rust_guard_shield
 - dust_pan_shield
