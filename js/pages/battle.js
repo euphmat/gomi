@@ -1383,6 +1383,16 @@ class BattleManager {
       }
     }
 
+    // --- 沈黙 (Silence) の判定 ---
+    if (isMagic && attacker.activeAilment && attacker.activeAilment.type === 'silence' && !options.hideActionName) {
+      this.showActionName(attacker.elementId, '魔法不発', 'text-indigo-400', 'border-indigo-500/50');
+      attacker.atb = 0;
+      if (attacker.hp !== undefined) this.activeCharacter = null;
+      else this.activeEnemy = null;
+      this.renderEntities();
+      return;
+    }
+
     let atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
     if (!isMagic) {
       const totalAtkPercent = (attacker._passiveAtkBuffPercent || 0) + (attacker._atkBuffTurns > 0 ? (attacker._atkBuffPercent || 0) : 0);
@@ -1446,6 +1456,11 @@ class BattleManager {
     
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
+
+    // --- 呪い (Curse) の被ダメージ増加判定 ---
+    if (defender.activeAilment && defender.activeAilment.type === 'curse') {
+      damage = Math.floor(damage * 1.5);
+    }
 
     // --- ポップアップの表示 ---
     if (!options.hideActionName) {
