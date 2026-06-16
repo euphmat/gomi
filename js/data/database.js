@@ -51,24 +51,46 @@ const DB_NAME = 'rpg_game_db';
 const DB_VERSION = 1;
 const SAVE_SECRET_KEY = 'gomi_rpg_salt';
 
-function encodeSaveData(dataObj) {
+async function encodeSaveData(dataObj) {
   const jsonStr = JSON.stringify(dataObj);
-  const encodedStr = encodeURIComponent(jsonStr);
-  let result = '';
-  for (let i = 0; i < encodedStr.length; i++) {
-    result += String.fromCharCode(encodedStr.charCodeAt(i) ^ SAVE_SECRET_KEY.charCodeAt(i % SAVE_SECRET_KEY.length));
-  }
-  return btoa(result);
+  
+  // Compress using native CompressionStream
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const compressedStream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+  const response = new Response(compressedStream);
+  const compressedBlob = await response.blob();
+  
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Extract base64 part from data URL
+      const base64data = reader.result.split(',')[1];
+      resolve("GZ_" + base64data);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(compressedBlob);
+  });
 }
 
-function decodeSaveData(base64Str) {
-  const decodedB64 = atob(base64Str);
-  let result = '';
-  for (let i = 0; i < decodedB64.length; i++) {
-    result += String.fromCharCode(decodedB64.charCodeAt(i) ^ SAVE_SECRET_KEY.charCodeAt(i % SAVE_SECRET_KEY.length));
+async function decodeSaveData(base64Str) {
+  if (base64Str.startsWith("GZ_")) {
+    const actualBase64 = base64Str.substring(3);
+    const res = await fetch(`data:application/octet-stream;base64,${actualBase64}`);
+    const blob = await res.blob();
+    const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+    const response = new Response(decompressedStream);
+    const jsonStr = await response.text();
+    return JSON.parse(jsonStr);
+  } else {
+    // Legacy format backward compatibility
+    const decodedB64 = atob(base64Str);
+    let result = '';
+    for (let i = 0; i < decodedB64.length; i++) {
+      result += String.fromCharCode(decodedB64.charCodeAt(i) ^ SAVE_SECRET_KEY.charCodeAt(i % SAVE_SECRET_KEY.length));
+    }
+    const jsonStr = decodeURIComponent(result);
+    return JSON.parse(jsonStr);
   }
-  const jsonStr = decodeURIComponent(result);
-  return JSON.parse(jsonStr);
 }
 
 class GameDatabase {
@@ -334,7 +356,7 @@ class GameDatabase {
       inventory
     };
 
-    return encodeSaveData(data);
+    return await encodeSaveData(data);
   }
 
   /**
@@ -342,7 +364,7 @@ class GameDatabase {
    */
   async importData(base64Str) {
     try {
-      const data = decodeSaveData(base64Str);
+      const data = await decodeSaveData(base64Str);
 
       // Validate data structure loosely
       if (!data.gameState || !data.characters || !data.equipment || !data.inventory) {
