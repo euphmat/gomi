@@ -1,5 +1,5 @@
 # JRPG Pixel Art Generator
-Please generate the images listed below in a **4x4 grid** format.
+Please generate the images listed below in a **5x5 grid** format.
 
 ## Image Requirements
 - Text : **None**
@@ -12,19 +12,7 @@ Please generate the images listed below in a **4x4 grid** format.
     - Highly dense pixels (comparable to or 64-bit era)
     - Intricate textures within each icon
 
-## List of Images to Generate (Equipment Icon)
-
-### armor
-- rust_guard_armor
-- dust_maid_dress
-- cursed_glass_armor
-- madness_robe
-- president_suit
-- shadow_pelt_armor
-- corpse_flesh_armor
-- golden_armor
-- imperator_mantle
-- necromancer_robe
+## List of Images to Generate (Icon)
 
 ### materials
 - mat_rust_armor
@@ -32,25 +20,30 @@ Please generate the images listed below in a **4x4 grid** format.
 - mat_grudge_soul
 - mat_dust_cloth
 - mat_maid_broom
+
 - mat_spider_web
 - mat_cursed_glass
 - mat_blue_flame
 - mat_heavy_chain
 - mat_forbidden_page
+
 - mat_magic_ink
 - mat_madness_cover
 - mat_old_canvas
 - mat_gold_frame
 - mat_hollow_eye
+
 - mat_shadow_fur
 - mat_hound_fang
 - mat_dark_collar
 - mat_rat_tail
 - mat_corpse_flesh
+
 - mat_plague_blood
 - mat_pure_gold
 - mat_glitter_gem
 - mat_lost_treasure
+
 - mat_broken_crown
 - mat_grudge_greatsword
 - mat_king_soul
