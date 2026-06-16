@@ -233,6 +233,7 @@ export async function renderRanchTab() {
         </div>
       `;
       
+      let isOpening = false;
       let touchStartY = 0;
       let touchStartX = 0;
       mEl.addEventListener('touchstart', (e) => {
@@ -244,13 +245,21 @@ export async function renderRanchTab() {
         const dx = e.changedTouches[0].clientX - touchStartX;
         const dy = e.changedTouches[0].clientY - touchStartY;
         if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-          e.preventDefault();
-          showFeedModal(container, currentDungeonId, mId, mDef, mData, render);
+          if (e.cancelable) e.preventDefault();
+          if (isOpening) return;
+          isOpening = true;
+          setTimeout(() => {
+            showFeedModal(container, currentDungeonId, mId, mDef, mData, render);
+            setTimeout(() => { isOpening = false; }, 300);
+          }, 10);
         }
       });
 
-      mEl.onclick = () => {
+      mEl.onclick = (e) => {
+        if (isOpening) return;
+        isOpening = true;
         showFeedModal(container, currentDungeonId, mId, mDef, mData, render);
+        setTimeout(() => { isOpening = false; }, 300);
       };
       
       fieldContainer.appendChild(mEl);
