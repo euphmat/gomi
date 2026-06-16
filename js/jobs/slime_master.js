@@ -160,11 +160,12 @@ export const slime_master = {
   requirements: [
     {
       type: 'custom',
-      description: 'スライムの森のスライムを全捕獲',
+      description: 'スライムの森のスライム(キング含む)を全捕獲',
       check: (capturedMonsters) => {
         if (!capturedMonsters) return false;
-        // Check if all 13 base slimes are captured
-        return BASE_SLIMES.every(slime => capturedMonsters.includes(slime));
+        // Check if all 13 base slimes + king slimes are captured
+        const requiredSlimes = [...BASE_SLIMES, 'slime_king', 'slime_angel_king'];
+        return requiredSlimes.every(slime => capturedMonsters.includes(slime));
       }
     }
   ],
