@@ -20,16 +20,19 @@ Please generate the images listed below in a **5x5 grid** format.
 - fairy_garment
 - earth_cloak
 - swallow_breastplate
+
 - grudge_robe
 - lizard_scale_mail
 - sylph_dress
 - slime_jelly_armor
 - treant_bark_armor
+
 - griffon_feather_vest
 - siren_dancer_dress
 - resonance_stone_plate
 - mad_dragon_scale_mail
 - water_spirit_vestment
+
 - holy_fur_coat
 - storm_garb
 - spirit_knight_full_armor
