@@ -193,11 +193,18 @@ export function getRanchLevelInfo(totalFed, isLegendary = false) {
   let multiplier = isLegendary ? 2.0 : 1.5;
   let totalRequiredForNext = baseCost;
   
+  if (!isFinite(totalFed) || totalFed < 0) {
+    return { level: 0, currentLevelFed: 0, nextLevelRequired: baseCost };
+  }
+
   while (totalFed >= totalRequiredForNext) {
     level++;
     totalRequiredForCurrent = totalRequiredForNext;
     const nextCost = Math.floor(baseCost * Math.pow(multiplier, level));
     totalRequiredForNext += nextCost;
+    
+    // Safety guard against infinite loops in extreme edge cases
+    if (!isFinite(totalRequiredForNext) || level > 1000) break;
   }
   
   const currentLevelFed = totalFed - totalRequiredForCurrent;

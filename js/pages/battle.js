@@ -409,6 +409,16 @@ class BattleManager {
 
   updateEntities() {
     if (document.hidden) return;
+    if (this._updateEntitiesPending) return;
+    this._updateEntitiesPending = true;
+    requestAnimationFrame(() => {
+      this._updateEntitiesPending = false;
+      this._doUpdateEntities();
+    });
+  }
+
+  _doUpdateEntities() {
+    if (document.hidden) return;
     const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
     if (!this.domCache) return;
 
@@ -1293,9 +1303,9 @@ class BattleManager {
           const atbEl = this.atbElements[p.elementId];
           if(atbEl) {
              if (disableAnim) {
-               atbEl.style.opacity = '0';
+               if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
              } else {
-               atbEl.style.opacity = '1';
+               if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
                atbEl.style.transform = `scaleX(${p.atb / 1000})`;
              }
           }
@@ -1316,9 +1326,9 @@ class BattleManager {
           const atbEl = this.atbElements[e.elementId];
           if(atbEl) {
              if (disableAnim) {
-               atbEl.style.opacity = '0';
+               if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
              } else {
-               atbEl.style.opacity = '1';
+               if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
                atbEl.style.transform = `scaleX(${e.atb / 1000})`;
              }
           }
@@ -2392,9 +2402,11 @@ class BattleManager {
           let jobLevelUp = false;
 
           // Level Up Logic
-          while (p.exp.current >= p.exp.max) {
+          if (!p.exp.max || p.exp.max <= 0) p.exp.max = 10;
+          let loopGuardExp = 0;
+          while (p.exp.current >= p.exp.max && loopGuardExp++ < 1000) {
             p.exp.current -= p.exp.max;
-            p.exp.max = Math.floor(p.exp.max * 1.2);
+            p.exp.max = Math.max(p.exp.max + 1, Math.floor(p.exp.max * 1.2));
             p.level = (p.level || 1) + 1;
             
             const jobGrowth = JOBS[p.jobId]?.statGrowth;
@@ -2417,9 +2429,11 @@ class BattleManager {
           }
 
           // Job Level Up Logic
-          while (p.jp.current >= p.jp.max) {
+          if (!p.jp.max || p.jp.max <= 0) p.jp.max = 20;
+          let loopGuardJp = 0;
+          while (p.jp.current >= p.jp.max && loopGuardJp++ < 1000) {
             p.jp.current -= p.jp.max;
-            p.jp.max = Math.floor(p.jp.max * 1.2);
+            p.jp.max = Math.max(p.jp.max + 1, Math.floor(p.jp.max * 1.2));
             p.jobLevel = (p.jobLevel || 1) + 1;
             p.sp = (p.sp || 0) + 1;
             jobLevelUp = true;
