@@ -121,6 +121,7 @@ class BattleManager {
       };
     });
     
+
     const prevSelectedId = this.selectedPartyMember ? this.selectedPartyMember.id : null;
     
     if (prevSelectedId) {
@@ -192,6 +193,7 @@ class BattleManager {
     let magicBarrierConfig = null;
     let weaponBlessConfig = null;
     let magicBlessConfig = null;
+    let openingActConfig = null;
 
     aliveParty.forEach(p => {
       if (p.jobSkills) {
@@ -217,6 +219,12 @@ class BattleManager {
         if (magb && magb.level > 0 && magb.levelConfig) {
           if (!magicBlessConfig || magb.levelConfig.percent > magicBlessConfig.percent) {
             magicBlessConfig = magb.levelConfig;
+          }
+        }
+        const oa = this._findSkill(p, 'opening_act');
+        if (oa && oa.level > 0 && oa.levelConfig) {
+          if (!openingActConfig || oa.levelConfig.spdPercent > openingActConfig.spdPercent) {
+            openingActConfig = oa.levelConfig;
           }
         }
       }
@@ -271,6 +279,21 @@ class BattleManager {
         if (isFirstFloor) {
           setTimeout(() => {
             this.showDamage(p.elementId, `MATK UP`, 'text-purple-400');
+          }, delay);
+        }
+      });
+      if (isFirstFloor) delay += 500;
+    }
+
+    if (openingActConfig) {
+      aliveParty.forEach(p => {
+        if (p.stats && p.stats.spd) {
+          p.stats.spd = Math.floor(p.stats.spd * (1 + openingActConfig.spdPercent / 100));
+        }
+        
+        if (isFirstFloor) {
+          setTimeout(() => {
+            this.showDamage(p.elementId, `SPD UP`, 'text-teal-300');
           }, delay);
         }
       });
@@ -1168,6 +1191,15 @@ class BattleManager {
   }
 
   stopAtbLoop() {
+    this.isStopped = true;
+    if (this.autoNextTimer) {
+      clearTimeout(this.autoNextTimer);
+      this.autoNextTimer = null;
+    }
+    if (this.autoRetryTimer) {
+      clearInterval(this.autoRetryTimer);
+      this.autoRetryTimer = null;
+    }
     if (this.atbWorker) {
       this.atbWorker.terminate();
       this.atbWorker = null;
@@ -1191,6 +1223,7 @@ class BattleManager {
   }
 
   startAtbLoop() {
+    this.isStopped = false;
     let totalSpd = 0;
     let entityCount = 0;
     this.party.forEach(p => { 
@@ -1391,6 +1424,23 @@ class BattleManager {
       else this.activeEnemy = null;
       this.renderEntities();
       return;
+    }
+
+    // --- 華麗なる見切り (Splendid Evasion) の判定 ---
+    if (!isMagic && defender.hp !== undefined) {
+      const evadeSkill = this._findSkill(defender, 'splendid_evasion');
+      if (evadeSkill && evadeSkill.level > 0 && evadeSkill.levelConfig) {
+        if (Math.random() < (evadeSkill.levelConfig.evadeChance / 100)) {
+          this.showActionName(defender.elementId, 'DODGE', 'text-green-400', 'border-green-500/50');
+          if (!options.skipAtbReset && !options.isAoEProcessed) {
+            attacker.atb = 0;
+            if (attacker.hp !== undefined) this.activeCharacter = null;
+            else this.activeEnemy = null;
+            this.renderEntities();
+          }
+          return;
+        }
+      }
     }
 
     let atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
@@ -1769,6 +1819,23 @@ class BattleManager {
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
             }, 600 / this.speedMult);
+          }
+
+          // --- Passive: Energizing ---
+          const energizingSkill = this._findSkill(attacker, 'energizing');
+          if (energizingSkill && energizingSkill.level > 0 && energizingSkill.levelConfig) {
+            const amount = energizingSkill.levelConfig.recoverMp;
+            let applied = false;
+            this.party.forEach(p => {
+              if (!p.isDead && p.mp && (p.mp.current < (p.stats?.mp || p.mp.max))) {
+                p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
+                setTimeout(() => {
+                  this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
+                }, 600 / this.speedMult);
+                applied = true;
+              }
+            });
+            // Optional: If we want to show a party-wide effect indicator
           }
         }
       } else {
@@ -2562,7 +2629,7 @@ class BattleManager {
       
       if (this.isDungeonClear && this.autoBattleMode !== 'floor') {
         if (this.autoBattleMode === 'dungeon') {
-          setTimeout(async () => {
+          this.autoNextTimer = setTimeout(async () => {
             await GameDB.setGameState('currentFloor', 1);
             this.isDungeonClear = false;
             this.resetBattleState();
@@ -2594,7 +2661,7 @@ class BattleManager {
       }
 
       if (this.autoBattleMode === 'floor') {
-        setTimeout(async () => {
+        this.autoNextTimer = setTimeout(async () => {
           this.resetBattleState();
           this.init();
         }, 1500 / this.speedMult);
@@ -2602,7 +2669,7 @@ class BattleManager {
       }
 
       // dungeon mode or manual: advance to next floor
-      setTimeout(async () => {
+      this.autoNextTimer = setTimeout(async () => {
         await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
         this.resetBattleState();
         this.init();
@@ -2718,16 +2785,16 @@ class BattleManager {
       `;
 
       const okBtn = this.elements.resultOverlay.querySelector('#btn-result-ok');
-      let autoRetryTimer = null;
 
       if (willAutoRetry) {
         // Show countdown on the button
         let remaining = 5;
         okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
-        autoRetryTimer = setInterval(() => {
+        this.autoRetryTimer = setInterval(() => {
           remaining--;
           if (remaining <= 0) {
-            clearInterval(autoRetryTimer);
+            clearInterval(this.autoRetryTimer);
+            this.autoRetryTimer = null;
             this.elements.resultOverlay.classList.add('hidden');
             this.resetBattleState();
             this.init();
@@ -2739,7 +2806,10 @@ class BattleManager {
 
       if (okBtn) {
         okBtn.onclick = () => {
-          if (autoRetryTimer) clearInterval(autoRetryTimer);
+          if (this.autoRetryTimer) {
+            clearInterval(this.autoRetryTimer);
+            this.autoRetryTimer = null;
+          }
           this.elements.resultOverlay.classList.add('hidden');
           sessionStorage.removeItem('autoBattleMode');
           this.autoBattleMode = 'none';

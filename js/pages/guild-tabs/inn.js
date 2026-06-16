@@ -212,6 +212,11 @@ export function renderInnTab() {
 
     // Update function
     const updateProgress = (now) => {
+      if (!document.body.contains(overlay)) {
+        if (zzzInterval) clearInterval(zzzInterval);
+        return;
+      }
+
       const elapsed = now - startTime;
       const pct = Math.min(100, (elapsed / duration) * 100);
       

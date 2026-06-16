@@ -245,7 +245,7 @@ export const magic_knight = {
         const hits = levelConfig.hits;
         let hitCount = 0;
         const interval = setInterval(() => {
-          if (caster.isDead) {
+          if (caster.isDead || (battle && battle.isStopped)) {
             clearInterval(interval);
             return;
           }

@@ -1,5 +1,5 @@
 # JRPG Pixel Art Generator
-Please generate the images listed below in a **4x4 grid** format.
+Please generate the images listed below in a **5x5 grid** format.
 
 ## Image Requirements
 - Text : **None**
@@ -13,27 +13,155 @@ Please generate the images listed below in a **4x4 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate (Icon)
-- 'humming_leaf', name: 'ハミングリーフ'
-- 'tone_firefly', name: '音色蛍'
-- 'breeze_pixie', name: 'そよ風のピクシー'
-- 'singing_mandragora', name: '唄うマンドラゴラ'
+### accessory
+- humming_leaf_earring
+- firefly_lantern
+- fairy_choker
+- singing_seed_pendant
+- swallow_anklet
 
-- 'bell_swallow', name: '鈴鳴りの大ツバメ'
-- 'echoes_wisp', name: 'エコーズ・ウィスプ'
-- 'flute_lizard', name: 'フルート・リザード'
-- 'melody_sylph', name: '旋律のシルフ'
+- wisp_flame_charm
+- dragon_flute_ring
+- melody_music_box
+- water_drop_brooch
+- kodama_amulet
 
-- 'suikinkutsu_slime', name: '水琴窟のスライム'
-- 'kodama_treant', name: '木魂のトレント'
-- 'chanting_griffon', name: '詠唱のグリフォン'
-- 'phantom_siren', name: '幻声のセイレーン'
+- chanting_feather_ornament
+- phantom_voice_hairpin
+- resonance_core_charm
+- harp_dragon_fang
+- undine_veil_accessory
 
-- 'resonance_golem', name: '共鳴石のゴーレム'
-- 'harp_dragon', name: '狂風のハープドラゴン'
-- 'requiem_undine', name: '鎮魂のウンディーネ'
+- white_deer_horseshoe
+- wind_god_talisman
+- knight_vow
+- eternal_dragon_scale
+- genesis_crown
 
-- 'hymn_white_deer', name: '聖歌の白鹿'
-- 'storm_thunderbird', name: '嵐を呼ぶ風神鳥'
-- 'swan_song_knight', name: '絶唱の精霊騎士'
-- 'eternal_echo_dragon', name: '悠久の響竜'
-- 'genesis_song_spirit', name: '創世の唄霊'
+## armor
+- young_leaf_tunic
+- phosphorescent_mail
+- fairy_garment
+- earth_cloak
+- swallow_breastplate
+- grudge_robe
+- lizard_scale_mail
+- sylph_dress
+- slime_jelly_armor
+- treant_bark_armor
+- griffon_feather_vest
+- siren_dancer_dress
+- resonance_stone_plate
+- mad_dragon_scale_mail
+- water_spirit_vestment
+- holy_fur_coat
+- storm_garb
+- spirit_knight_full_armor
+- echo_dragon_sovereign_armor
+- genesis_divine_robe
+
+## shield
+- leaf_buckler
+- lamplight_defender
+- wind_cutter_shield
+- bark_round_shield
+- bell_chime_parrying_shield
+- phantom_shield
+- lizard_leather_tower_shield
+- wind_spirit_ecu
+- flowing_water_buckler
+- great_wood_heavy_shield
+- wing_claw_kite_shield
+- coral_shield
+- rock_wall_shield
+- dragon_bone_shield
+- teardrop_shield
+- hymn_divine_shield
+- thunder_roar_shield
+- swan_song_tower_shield
+- eternal_aegis
+- origin_guard
+
+## Weapon
+- leaf_vein_dagger
+- firefly_wand
+- pixie_bow
+- mandragora_whip
+- swallow_rapier
+- cursed_spirit_mace
+- dragon_flute_spear
+- melody_baton
+- water_chime_cane
+- great_tree_battleaxe
+- griffon_claw_blade
+- alluring_harp
+- golem_fist
+- dragon_string_bow
+- requiem_staff
+- white_deer_horn_sword
+- thunderbird_warhammer
+- swan_song_blade
+- eternal_echo_sword
+- genesis_wand
+
+## Materials
+- mat_humming_leaf_vein
+- mat_wind_song_dew
+- mat_spirit_leaf_fossil
+- mat_glow_bug_shell
+- mat_resonance_phosphorus
+- mat_eternal_light_core
+- mat_pixie_dust
+- mat_breeze_wing
+- mat_fairy_wind_stone
+- mat_singing_root
+- mat_mandragora_leaf
+- mat_choir_seed
+- mat_bell_feather
+- mat_swallow_beak
+- mat_chime_crystal
+- mat_echo_ectoplasm
+- mat_wisp_flame
+- mat_reverberating_soul
+- mat_flute_scale
+- mat_lizard_throat
+- mat_wind_dragon_horn
+- mat_sylph_garment
+- mat_melody_orb
+- mat_sylphid_heart
+- mat_water_chime_jelly
+- mat_echo_water
+- mat_suikinkutsu_core
+- mat_treant_bark
+- mat_kodama_branch
+- mat_spirit_wood_heart
+- mat_griffon_feather
+- mat_chanting_beak
+- mat_hymn_talon
+- mat_siren_scale
+- mat_phantom_tear
+- mat_mermaid_voice_jewel
+- mat_resonance_stone
+- mat_golem_joint
+- mat_vibrating_core
+- mat_harp_scale
+- mat_gale_fang
+- mat_dragon_string
+- mat_requiem_water
+- mat_undine_veil
+- mat_spirit_tear_crystal
+- mat_white_deer_fur
+- mat_hymn_antler
+- mat_sacred_hoof
+- mat_storm_feather
+- mat_thunder_bird_beak
+- mat_tempest_eye
+- mat_spirit_knight_armor
+- mat_swan_song_blade
+- mat_knight_soul_stone
+- mat_echo_dragon_scale
+- mat_eternal_fang
+- mat_resonance_dragon_core
+- mat_genesis_song_fragment
+- mat_creation_tear
+- mat_origin_melody_crystal
