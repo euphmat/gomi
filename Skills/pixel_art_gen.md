@@ -13,30 +13,6 @@ Please generate the images listed below in a **5x5 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate (Icon)
-### accessory
-- humming_leaf_earring
-- firefly_lantern
-- fairy_choker
-- singing_seed_pendant
-- swallow_anklet
-
-- wisp_flame_charm
-- dragon_flute_ring
-- melody_music_box
-- water_drop_brooch
-- kodama_amulet
-
-- chanting_feather_ornament
-- phantom_voice_hairpin
-- resonance_core_charm
-- harp_dragon_fang
-- undine_veil_accessory
-
-- white_deer_horseshoe
-- wind_god_talisman
-- knight_vow
-- eternal_dragon_scale
-- genesis_crown
 
 ## armor
 - young_leaf_tunic
