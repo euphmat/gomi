@@ -134,24 +134,24 @@ export const ranger = {
       id: 'double_arrow', name: 'ダブルアロー', icon: 'keyboard_double_arrow_right',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost:  4, multiplier: 0.8 },
-        { level:  2, spCost: 1, mpCost:  5, multiplier: 0.85 },
-        { level:  3, spCost: 1, mpCost:  6, multiplier: 0.9 },
-        { level:  4, spCost: 2, mpCost:  7, multiplier: 0.95 },
-        { level:  5, spCost: 2, mpCost:  8, multiplier: 1.0 },
-        { level:  6, spCost: 2, mpCost:  9, multiplier: 1.05 },
-        { level:  7, spCost: 3, mpCost: 10, multiplier: 1.1 },
-        { level:  8, spCost: 3, mpCost: 11, multiplier: 1.15 },
-        { level:  9, spCost: 3, mpCost: 12, multiplier: 1.2 },
-        { level: 10, spCost: 5, mpCost: 15, multiplier: 1.3 }
+        { level:  1, spCost: 1, mpCost:  4, multiplier: 0.8, hits: 2 },
+        { level:  2, spCost: 1, mpCost:  5, multiplier: 0.85, hits: 2 },
+        { level:  3, spCost: 1, mpCost:  6, multiplier: 0.9, hits: 2 },
+        { level:  4, spCost: 2, mpCost:  7, multiplier: 0.95, hits: 3 },
+        { level:  5, spCost: 2, mpCost:  8, multiplier: 1.0, hits: 3 },
+        { level:  6, spCost: 2, mpCost:  9, multiplier: 1.05, hits: 3 },
+        { level:  7, spCost: 3, mpCost: 10, multiplier: 1.1, hits: 4 },
+        { level:  8, spCost: 3, mpCost: 11, multiplier: 1.15, hits: 4 },
+        { level:  9, spCost: 3, mpCost: 12, multiplier: 1.2, hits: 4 },
+        { level: 10, spCost: 5, mpCost: 15, multiplier: 1.3, hits: 5 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を2連続で行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を${lc.hits}連続で行う`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
-          for (let i = 0; i < 2; i++) {
+          for (let i = 0; i < levelConfig.hits; i++) {
             setTimeout(() => {
               if (target && !target.isDead) {
                 playSkillAnimation(caster, [target], 'single_arrow', () => {
@@ -187,21 +187,21 @@ export const ranger = {
       id: 'arrow_rain', name: 'アローレイン', icon: 'shower',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 15, multiplier: 0.4 },
-        { level:  2, spCost: 1, mpCost: 17, multiplier: 0.45 },
-        { level:  3, spCost: 1, mpCost: 19, multiplier: 0.5 },
-        { level:  4, spCost: 2, mpCost: 21, multiplier: 0.55 },
-        { level:  5, spCost: 2, mpCost: 22, multiplier: 0.6 },
-        { level:  6, spCost: 2, mpCost: 24, multiplier: 0.65 },
-        { level:  7, spCost: 3, mpCost: 26, multiplier: 0.7 },
-        { level:  8, spCost: 3, mpCost: 28, multiplier: 0.75 },
-        { level:  9, spCost: 3, mpCost: 30, multiplier: 0.8 },
-        { level: 10, spCost: 5, mpCost: 32, multiplier: 0.9 }
+        { level:  1, spCost: 1, mpCost: 15, multiplier: 0.4, hits: 2 },
+        { level:  2, spCost: 1, mpCost: 17, multiplier: 0.45, hits: 2 },
+        { level:  3, spCost: 1, mpCost: 19, multiplier: 0.5, hits: 3 },
+        { level:  4, spCost: 2, mpCost: 21, multiplier: 0.55, hits: 3 },
+        { level:  5, spCost: 2, mpCost: 22, multiplier: 0.6, hits: 4 },
+        { level:  6, spCost: 2, mpCost: 24, multiplier: 0.65, hits: 4 },
+        { level:  7, spCost: 3, mpCost: 26, multiplier: 0.7, hits: 5 },
+        { level:  8, spCost: 3, mpCost: 28, multiplier: 0.75, hits: 5 },
+        { level:  9, spCost: 3, mpCost: 30, multiplier: 0.8, hits: 6 },
+        { level: 10, spCost: 5, mpCost: 32, multiplier: 0.9, hits: 6 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を3回行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を${lc.hits}回行う`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < levelConfig.hits; i++) {
           setTimeout(() => {
             const targets = battle.enemies.filter(e => !e.isDead);
             playSkillAnimation(caster, targets, 'arrow_rain', (target, idx) => {
@@ -235,21 +235,21 @@ export const ranger = {
       id: 'rain_of_arrows', name: '五月雨矢', icon: 'storm',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 2, mpCost: 15, multiplier: 0.15 },
-        { level:  2, spCost: 2, mpCost: 18, multiplier: 0.17 },
-        { level:  3, spCost: 2, mpCost: 21, multiplier: 0.19 },
-        { level:  4, spCost: 3, mpCost: 24, multiplier: 0.21 },
-        { level:  5, spCost: 3, mpCost: 27, multiplier: 0.23 },
-        { level:  6, spCost: 3, mpCost: 30, multiplier: 0.25 },
-        { level:  7, spCost: 4, mpCost: 34, multiplier: 0.27 },
-        { level:  8, spCost: 4, mpCost: 38, multiplier: 0.29 },
-        { level:  9, spCost: 4, mpCost: 42, multiplier: 0.31 },
-        { level: 10, spCost: 6, mpCost: 50, multiplier: 0.35 }
+        { level:  1, spCost: 2, mpCost: 15, multiplier: 0.15, hits: 6 },
+        { level:  2, spCost: 2, mpCost: 18, multiplier: 0.17, hits: 7 },
+        { level:  3, spCost: 2, mpCost: 21, multiplier: 0.19, hits: 8 },
+        { level:  4, spCost: 3, mpCost: 24, multiplier: 0.21, hits: 9 },
+        { level:  5, spCost: 3, mpCost: 27, multiplier: 0.23, hits: 10 },
+        { level:  6, spCost: 3, mpCost: 30, multiplier: 0.25, hits: 11 },
+        { level:  7, spCost: 4, mpCost: 34, multiplier: 0.27, hits: 12 },
+        { level:  8, spCost: 4, mpCost: 38, multiplier: 0.29, hits: 13 },
+        { level:  9, spCost: 4, mpCost: 42, multiplier: 0.31, hits: 14 },
+        { level: 10, spCost: 6, mpCost: 50, multiplier: 0.35, hits: 15 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を15回行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を${lc.hits}回行う`,
       execute: (caster, levelConfig, battle) => {
         if (!battle) return;
-        let hits = 15;
+        let hits = levelConfig.hits;
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
             const aliveEnemies = battle.enemies.filter(e => !e.isDead);

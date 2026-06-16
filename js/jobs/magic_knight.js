@@ -228,16 +228,16 @@ export const magic_knight = {
       id: 'ice_brand', name: 'アイスブランド', icon: 'ac_unit',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 15, multiplier: 0.6, hits: 3 },
-        { level:  2, spCost: 1, mpCost: 17, multiplier: 0.65, hits: 3 },
+        { level:  1, spCost: 1, mpCost: 15, multiplier: 0.6, hits: 2 },
+        { level:  2, spCost: 1, mpCost: 17, multiplier: 0.65, hits: 2 },
         { level:  3, spCost: 1, mpCost: 19, multiplier: 0.7, hits: 3 },
         { level:  4, spCost: 2, mpCost: 21, multiplier: 0.75, hits: 3 },
-        { level:  5, spCost: 2, mpCost: 23, multiplier: 0.8, hits: 3 },
-        { level:  6, spCost: 2, mpCost: 25, multiplier: 0.85, hits: 3 },
-        { level:  7, spCost: 3, mpCost: 27, multiplier: 0.9, hits: 3 },
-        { level:  8, spCost: 3, mpCost: 29, multiplier: 0.95, hits: 3 },
-        { level:  9, spCost: 3, mpCost: 31, multiplier: 1.0, hits: 3 },
-        { level: 10, spCost: 5, mpCost: 36, multiplier: 1.1, hits: 3 }
+        { level:  5, spCost: 2, mpCost: 23, multiplier: 0.8, hits: 4 },
+        { level:  6, spCost: 2, mpCost: 25, multiplier: 0.85, hits: 4 },
+        { level:  7, spCost: 3, mpCost: 27, multiplier: 0.9, hits: 5 },
+        { level:  8, spCost: 3, mpCost: 29, multiplier: 0.95, hits: 5 },
+        { level:  9, spCost: 3, mpCost: 31, multiplier: 1.0, hits: 6 },
+        { level: 10, spCost: 5, mpCost: 36, multiplier: 1.1, hits: 6 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の氷属性複合攻撃を ${lc.hits} 回行う`,
       execute: (caster, levelConfig, battle) => {
