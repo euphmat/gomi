@@ -276,7 +276,6 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   const medal = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex] : {
     name: '未作成',
     killBonus: 0,
-    rewardMultiplier: 1.0,
     color: '#64748b'
   };
 
@@ -292,10 +291,6 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       <div class="flex items-center justify-between relative z-10">
         <span class="text-[9px] font-bold text-slate-300">討伐ボーナス</span>
         <span class="text-[10px] font-black text-emerald-400">+${medal.killBonus}</span>
-      </div>
-      <div class="flex items-center justify-between relative z-10">
-        <span class="text-[9px] font-bold text-slate-300">報酬 (EXP/JP/G)</span>
-        <span class="text-[10px] font-black text-yellow-400">${medal.rewardMultiplier.toFixed(1)}倍</span>
       </div>
     </div>
   `;

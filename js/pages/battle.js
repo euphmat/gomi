@@ -2271,10 +2271,8 @@ class BattleManager {
 
     // Increment and save monster kill counts (with medal bonus)
     let medalRankIndex = -1;
-    let rewardMultiplier = 1.0;
     if (this.playerMedals && this.playerMedals[enemy.id] !== undefined) {
       medalRankIndex = this.playerMedals[enemy.id];
-      rewardMultiplier = MEDAL_RANKS[medalRankIndex]?.rewardMultiplier || 1.0;
     }
 
     if (this.monsterKills) {
@@ -2286,7 +2284,6 @@ class BattleManager {
     // Add Gold
     let gold = enemy.rewards.gold || 0;
     if (gold > 0) {
-      gold = Math.floor(gold * rewardMultiplier);
       this.currentGold += gold;
       this.obtainedGold += gold;
       this._needsSave = true;
@@ -2298,9 +2295,6 @@ class BattleManager {
     // Add EXP / JP to party members
     let exp = enemy.rewards.exp || 0;
     let jp = enemy.rewards.jp || 0;
-    
-    if (exp > 0) exp = Math.floor(exp * rewardMultiplier);
-    if (jp > 0) jp = Math.floor(jp * rewardMultiplier);
 
     if (exp > 0) this.obtainedExp += exp;
     

@@ -592,12 +592,11 @@ function showMedalHelpModal() {
         <span class="material-symbols-outlined text-emerald-400">trending_up</span>
         <span class="font-black text-slate-200">討伐数 & 報酬ボーナス</span>
       </div>
-      <p class="text-xs">メダルを所持していると、対象のモンスターを倒した際に得られる<strong>討伐数</strong>にボーナスが加算され、さらに獲得できる<strong>EXP・JP・GOLD</strong>もランクに応じて倍増します。</p>
+      <p class="text-xs">メダルを所持していると、対象のモンスターを倒した際に得られる<strong>討伐数</strong>にボーナスが加算されます。</p>
       <div class="text-[11px] text-amber-300 bg-amber-950/30 p-2 rounded border border-amber-900/50 flex flex-col gap-1">
-        <span>例：シルバーメダル（討伐ボーナス+3 / 報酬4.0倍）の場合</span>
+        <span>例：シルバーメダル（討伐ボーナス+3）の場合</span>
         <ul class="list-disc list-inside ml-1">
-          <li>1匹倒すだけで <strong>4匹分</strong>（基本1 + ボーナス3）の討伐数がカウント</li>
-          <li>そのモンスターから得られる EXP / JP / GOLD が <strong>4.0倍</strong> に増加</li>
+          <li>1匹倒すだけで <strong>4匹分</strong>（基本1 + ボーナス3）の討伐数がカウントされます。</li>
         </ul>
       </div>
     </div>
@@ -612,7 +611,6 @@ function showMedalHelpModal() {
               <span class="text-[10px] font-bold leading-tight" style="color: ${r.color}">${r.name}</span>
               <div class="flex flex-col">
                 <span class="text-[9px] text-emerald-400 leading-tight">討伐数 +${r.killBonus}</span>
-                <span class="text-[9px] text-yellow-400 leading-tight">報酬 ${r.rewardMultiplier.toFixed(1)}倍</span>
               </div>
             </div>
           </div>

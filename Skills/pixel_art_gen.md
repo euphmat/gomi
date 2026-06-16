@@ -14,19 +14,6 @@ Please generate the images listed below in a **4x4 grid** format.
 
 ## List of Images to Generate (Equipment Icon)
 
-### shield
-- rust_guard_shield
-- dust_pan_shield
-- chandelier_shield
-- magic_ward_book
-- canvas_shield
-- shadow_guard
-- rat_hide_shield
-- glitter_shield
-- imperator_shield
-- origin_ward
-
-
 ### armor
 - rust_guard_armor
 - dust_maid_dress
