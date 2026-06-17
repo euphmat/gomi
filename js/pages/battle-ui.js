@@ -205,11 +205,24 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   if (targetEntity.actions && targetEntity.actions.length > 0) {
     actionsHtml = targetEntity.actions.map(a => {
       const desc = a.description || '特殊な行動を行います。';
+      const isMagic = a.isMagic === true || (a.execute && /isMagic:\s*true/.test(a.execute.toString())) || (a.description && a.description.includes('魔法'));
+      const isPhysical = a.isMagic === false || (a.execute && /isMagic:\s*false/.test(a.execute.toString())) || (a.description && a.description.includes('物理'));
+      
+      let badgeHtml = '';
+      if (isMagic) {
+        badgeHtml = '<span class="bg-purple-900/60 text-purple-300 border border-purple-500/50 px-1 py-0.5 rounded text-[8px] font-black shrink-0 ml-1 tracking-wider leading-none flex items-center">魔法攻撃</span>';
+      } else if (isPhysical) {
+        badgeHtml = '<span class="bg-orange-900/60 text-orange-300 border border-orange-500/50 px-1 py-0.5 rounded text-[8px] font-black shrink-0 ml-1 tracking-wider leading-none flex items-center">物理攻撃</span>';
+      }
+
       return `
         <div class="flex flex-col bg-slate-950/40 border border-slate-850/50 px-1.5 py-1 rounded gap-0.5">
           <div class="flex justify-between items-center">
-            <span class="text-[9.5px] font-bold text-slate-200 truncate flex-1">${a.name}</span>
-            <span class="text-[8px] font-bold text-blue-400 bg-blue-900/30 px-1 rounded border border-blue-800/50 shrink-0 ml-1">${a.chance}%</span>
+            <div class="flex items-center flex-1 min-w-0">
+              <span class="text-[9.5px] font-bold text-slate-200 truncate leading-tight">${a.name}</span>
+              ${badgeHtml}
+            </div>
+            <span class="text-[8px] font-bold text-blue-400 bg-blue-900/30 px-1 rounded border border-blue-800/50 shrink-0 ml-1 flex items-center leading-tight py-0.5">${a.chance}%</span>
           </div>
           <div class="text-[8.5px] text-slate-400 leading-tight">
             ${desc}
