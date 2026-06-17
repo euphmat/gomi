@@ -248,7 +248,7 @@ class BattleManager {
 
     if (magicBarrierConfig) {
       aliveParty.forEach(p => {
-        p._passiveMdefBuffAmount = Math.max(p._passiveMdefBuffAmount || 0, Math.floor((p.stats?.mdef || 0) * (magicBarrierConfig.percent / 100)));
+        p._passiveMdefBuffPercent = Math.max(p._passiveMdefBuffPercent || 0, magicBarrierConfig.percent);
         
         if (isFirstFloor) {
           setTimeout(() => {
@@ -288,6 +288,7 @@ class BattleManager {
     if (openingActConfig) {
       aliveParty.forEach(p => {
         if (p.stats && p.stats.spd) {
+          p._passiveSpdBuffPercent = Math.max(p._passiveSpdBuffPercent || 0, openingActConfig.spdPercent);
           p.stats.spd = Math.floor(p.stats.spd * (1 + openingActConfig.spdPercent / 100));
         }
         
@@ -555,6 +556,22 @@ class BattleManager {
         const fSpd = formatNumber(p.stats.spd);
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
 
+        if (p._passiveSpdBuffPercent > 0) {
+          statVals.spd.classList.remove('text-gray-100');
+          statVals.spd.classList.add('text-teal-300');
+          statRows.spd.className = `stat-row-spd flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-teal-900/40 border-teal-500/50 shadow-none`;
+          statIcons.spd.classList.remove('text-yellow-400');
+          statIcons.spd.classList.add('text-teal-300');
+          statLabels.spd.classList.add('text-teal-300');
+        } else {
+          statVals.spd.classList.remove('text-teal-300');
+          statVals.spd.classList.add('text-gray-100');
+          statRows.spd.className = `stat-row-spd flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
+          statIcons.spd.classList.remove('text-teal-300');
+          statIcons.spd.classList.add('text-yellow-400');
+          statLabels.spd.classList.remove('text-teal-300');
+        }
+
         if (p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0) {
           const isStackedAtk = p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0;
           const totalAtkPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
@@ -613,10 +630,10 @@ class BattleManager {
           statLabels.def.classList.remove('text-green-400');
         }
 
-        if (p._mdefBuffTurns > 0 || p._passiveMdefBuffAmount > 0) {
-          const isStackedMdef = p._mdefBuffTurns > 0 && p._passiveMdefBuffAmount > 0;
-          const totalMdefAmount = (p._passiveMdefBuffAmount || 0) + (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0);
-          const mdefStr = String(p.stats.mdef + totalMdefAmount);
+        if (p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0) {
+          const isStackedMdef = p._mdefBuffTurns > 0 && p._passiveMdefBuffPercent > 0;
+          const totalMdefAmount = p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0;
+          const mdefStr = formatNumber(Math.floor(p.stats.mdef * (1 + (p._passiveMdefBuffPercent || 0) / 100)) + totalMdefAmount);
           if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
           statVals.mdf.classList.remove('text-gray-100');
           statVals.mdf.classList.add('text-indigo-300');
@@ -1483,6 +1500,7 @@ class BattleManager {
     }
     
     let defStat = isMagic ? (defender.stats.mdef || 0) : (defender.stats.def || 0);
+    let mdefStat = defender.stats.mdef || 0;
 
     // --- 防御バフ適用 (物理防御陣形 + プロテクション) ---
     if (!isMagic) {
@@ -1493,8 +1511,15 @@ class BattleManager {
     }
     // --- 魔法防御バフ適用 (マジックバリア) ---
     if (isMagic) {
-      const totalMdefAmount = (defender._passiveMdefBuffAmount || 0) + (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
-      defStat += totalMdefAmount;
+      const totalMdefPercent = (defender._passiveMdefBuffPercent || 0);
+      const totalMdefAmount = (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
+      if (totalMdefPercent !== 0) {
+        mdefStat = Math.floor(mdefStat * (1 + totalMdefPercent / 100));
+      }
+      if (totalMdefAmount !== 0) {
+        mdefStat = mdefStat + totalMdefAmount;
+      }
+      defStat = mdefStat;
     }
 
     let damage = 0;
@@ -1518,8 +1543,14 @@ class BattleManager {
       }
       
       let magDef = defender.stats.mdef || 0;
-      const hTotalMdefAmount = (defender._passiveMdefBuffAmount || 0) + (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
-      magDef += hTotalMdefAmount;
+      const hTotalMdefPercent = (defender._passiveMdefBuffPercent || 0);
+      const hTotalMdefAmount = (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
+      if (hTotalMdefPercent !== 0) {
+        magDef = Math.floor(magDef * (1 + hTotalMdefPercent / 100));
+      }
+      if (hTotalMdefAmount !== 0) {
+        magDef = magDef + hTotalMdefAmount;
+      }
       
       const physDamage = Math.max(0, physAtk - Math.floor(physDef / 2));
       const magDamage = Math.max(0, magAtk - Math.floor(magDef / 2));
