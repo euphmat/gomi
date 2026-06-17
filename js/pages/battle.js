@@ -731,13 +731,15 @@ class BattleManager {
             atk: el.querySelector('.stat-icon-atk'),
             def: el.querySelector('.stat-icon-def'),
             mat: el.querySelector('.stat-icon-mat'),
-            mdf: el.querySelector('.stat-icon-mdf')
+            mdf: el.querySelector('.stat-icon-mdf'),
+            spd: el.querySelector('.stat-icon-spd')
           },
           statLabels: {
             atk: el.querySelector('.stat-label-atk'),
             def: el.querySelector('.stat-label-def'),
             mat: el.querySelector('.stat-label-mat'),
-            mdf: el.querySelector('.stat-label-mdf')
+            mdf: el.querySelector('.stat-label-mdf'),
+            spd: el.querySelector('.stat-label-spd')
           }
         };
       }
