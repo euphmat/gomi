@@ -563,8 +563,6 @@ class BattleManager {
           statVals.atk.classList.remove('text-gray-100');
           statVals.atk.classList.add('text-red-400');
           statRows.atk.className = `stat-row-atk flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedAtk ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
-          statIcons.atk.classList.remove('text-slate-400');
-          statIcons.atk.classList.add('text-red-400');
           statLabels.atk.classList.add('text-red-400');
         } else {
           const atkStr = formatNumber(p.stats.atk);
@@ -572,8 +570,6 @@ class BattleManager {
           statVals.atk.classList.remove('text-red-400');
           statVals.atk.classList.add('text-gray-100');
           statRows.atk.className = `stat-row-atk flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statIcons.atk.classList.remove('text-red-400');
-          statIcons.atk.classList.add('text-slate-400');
           statLabels.atk.classList.remove('text-red-400');
         }
 
@@ -585,8 +581,6 @@ class BattleManager {
           statVals.mat.classList.remove('text-gray-100');
           statVals.mat.classList.add('text-purple-400');
           statRows.mat.className = `stat-row-mat flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedMatk ? 'bg-purple-800/60 border-purple-400 shadow-[0_0_5px_rgba(192,132,252,0.4)]' : 'bg-purple-900/40 border-purple-500/50 shadow-none'}`;
-          statIcons.mat.classList.remove('text-slate-400');
-          statIcons.mat.classList.add('text-purple-400');
           statLabels.mat.classList.add('text-purple-400');
         } else {
           const matStr = formatNumber(p.stats.matk);
@@ -594,8 +588,6 @@ class BattleManager {
           statVals.mat.classList.remove('text-purple-400');
           statVals.mat.classList.add('text-gray-100');
           statRows.mat.className = `stat-row-mat flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statIcons.mat.classList.remove('text-purple-400');
-          statIcons.mat.classList.add('text-slate-400');
           statLabels.mat.classList.remove('text-purple-400');
         }
 

@@ -273,9 +273,12 @@ export async function calculateTotalRanchBonus() {
 export async function getCharactersWithRanchBonus() {
   const characters = await GameDB.getAllCharacters();
   const ranchBonus = await calculateTotalRanchBonus();
+  const equipment = await GameDB.getAllEquipment();
+  const equipmentMap = buildEquipmentMap(equipment);
   
   for (const c of characters) {
     c.ranchBonus = ranchBonus;
+    let needSave = false;
     
     // Migrate old inheritedSkill format
     if (c.inheritedSkill) {
@@ -292,6 +295,20 @@ export async function getCharactersWithRanchBonus() {
         }
       }
       delete c.inheritedSkill;
+      needSave = true;
+    }
+
+    const stats = calcFinalStats(c, equipmentMap);
+    if (c.hp && stats.hp !== undefined && c.hp.current > stats.hp) {
+      c.hp.current = stats.hp;
+      needSave = true;
+    }
+    if (c.mp && stats.mp !== undefined && c.mp.current > stats.mp) {
+      c.mp.current = stats.mp;
+      needSave = true;
+    }
+
+    if (needSave) {
       await GameDB.putCharacter(c);
     }
   }
