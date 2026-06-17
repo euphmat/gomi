@@ -175,7 +175,6 @@ export const magic_knight = {
     { jobId: 'knight', level: 50 },
     { jobId: 'mage', level: 50 }
   ],
-  statGrowth: { hp: [2, 3], mp: [1, 3], atk: [1, 2], def: [1, 2], matk: [1, 2], mdef: [1, 2], spd: [0, 1] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {

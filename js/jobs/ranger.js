@@ -127,7 +127,6 @@ export const ranger = {
   name: 'レンジャー',
   icon: 'images/jobs/job_ranger.webp', // We use image path for job icon here based on the requirement, or just simple 'track_changes' material icon? The request says "## 画像 - job_ranger.webp". The UI might expect a material symbol string or a URL. Actually `knight.js` uses `icon: 'shield_person'`. But user explicitly specified `job_ranger.webp` as the image. Let's use `icon: 'assets/job_ranger.webp'`. If it doesn't work out of the box, we may need to adjust UI. Wait, let me check how norvice uses its icon. It uses `icon: 'person'`. I'll set `image: 'assets/job_ranger.webp'` and `icon: 'my_location'` just in case, but rely on `image`.
   changeCost: 50000,
-  statGrowth: { hp: [1, 3], mp: [1, 2], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [1, 2], spd: [1, 3] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {

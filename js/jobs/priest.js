@@ -195,7 +195,6 @@ export const priest = {
   name: 'プリースト',
   icon: 'health_and_safety',
   changeCost: 30000,
-  statGrowth: { hp: [1, 2], mp: [3, 5], atk: [0, 0], def: [0, 1], matk: [1, 2], mdef: [2, 4], spd: [0, 1] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {

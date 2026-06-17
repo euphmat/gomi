@@ -159,7 +159,6 @@ export const knight = {
   name: 'ナイト',
   icon: 'shield_person',
   changeCost: 30000,
-  statGrowth: { hp: [2, 4], mp: [0, 1], atk: [0, 2], def: [1, 2], matk: [0, 0], mdef: [0, 2], spd: [0, 1] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {

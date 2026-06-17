@@ -278,7 +278,6 @@ export const mage = {
   name: 'メイジ',
   icon: 'auto_awesome',
   changeCost: 30000,
-  statGrowth: { hp: [1, 2], mp: [2, 4], atk: [0, 0], def: [0, 1], matk: [2, 4], mdef: [1, 3], spd: [0, 1] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {

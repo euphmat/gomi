@@ -285,7 +285,6 @@ export const dancer = {
   image: 'assets/job_dancer.webp',
   icon: 'directions_run',
   changeCost: 100000,
-  statGrowth: { hp: [1, 2], mp: [1, 3], atk: [1, 2], def: [0, 1], matk: [1, 2], mdef: [1, 2], spd: [2, 4] },
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {

@@ -153,7 +153,6 @@ export const norvice = {
   name: 'ノービス',
   icon: 'person',
   changeCost: 0,
-  statGrowth: { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
   skills: [
     {
       id: 'first_aid', name: '応急手当', icon: 'medical_services',

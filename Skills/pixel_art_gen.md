@@ -14,47 +14,25 @@ Please generate the images listed below in a **5x5 grid** format.
 
 ## List of Images to Generate (Icon)
 
-## armor
-- young_leaf_tunic
-- phosphorescent_mail
-- fairy_garment
-- earth_cloak
-- swallow_breastplate
-
-- grudge_robe
-- lizard_scale_mail
-- sylph_dress
-- slime_jelly_armor
-- treant_bark_armor
-
-- griffon_feather_vest
-- siren_dancer_dress
-- resonance_stone_plate
-- mad_dragon_scale_mail
-- water_spirit_vestment
-
-- holy_fur_coat
-- storm_garb
-- spirit_knight_full_armor
-- echo_dragon_sovereign_armor
-- genesis_divine_robe
-
 ## shield
 - leaf_buckler
 - lamplight_defender
 - wind_cutter_shield
 - bark_round_shield
 - bell_chime_parrying_shield
+
 - phantom_shield
 - lizard_leather_tower_shield
 - wind_spirit_ecu
 - flowing_water_buckler
 - great_wood_heavy_shield
+
 - wing_claw_kite_shield
 - coral_shield
 - rock_wall_shield
 - dragon_bone_shield
 - teardrop_shield
+
 - hymn_divine_shield
 - thunder_roar_shield
 - swan_song_tower_shield
