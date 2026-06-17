@@ -929,35 +929,50 @@ class BattleManager {
         }
       }
 
-      // Sort by priority descending
-      usableSkills.sort((a, b) => b.priority - a.priority);
-
       const context = {
         enemies: this.enemies,
         party: this.party,
         selectedEnemyTarget: this.selectedEnemyTarget
       };
 
-      let skillExecuted = false;
+      let bestAction = {
+        type: 'attack',
+        score: 30,
+        target: context.selectedEnemyTarget || (this.enemies.find(e => !e.isDead) || null),
+        skill: null
+      };
+
       for (const skill of usableSkills) {
-        const targetResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
-        if (targetResult) {
-          const targetEntity = (typeof targetResult === 'object' && targetResult.id) ? targetResult : null;
+        const checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
+        if (checkResult) {
+          let target = checkResult;
+          let score = skill.priority || 50;
           
-          const prevTarget = this.selectedEnemyTarget;
-          if (targetEntity) this.selectedEnemyTarget = targetEntity;
-          this.executeSkill(character, skill.def, skill.levelConfig);
-          if (targetEntity) this.selectedEnemyTarget = prevTarget;
-          
-          skillExecuted = true;
-          break;
+          if (typeof checkResult === 'object' && checkResult.score !== undefined) {
+             score = checkResult.score;
+             target = checkResult.target;
+          } else if (checkResult === true) {
+             target = context.selectedEnemyTarget || this.enemies.find(e => !e.isDead);
+          }
+
+          if (score > bestAction.score && target) {
+            bestAction = {
+              type: 'skill',
+              score,
+              target,
+              skill
+            };
+          }
         }
       }
 
-      if (!skillExecuted) {
-        let target = this.selectedEnemyTarget;
-        if (!target || target.isDead) target = this.enemies.find(e => !e.isDead);
-        if (target) this.executeAttack(character, target, true);
+      if (bestAction.type === 'skill' && bestAction.skill && bestAction.target) {
+        const prevTarget = this.selectedEnemyTarget;
+        this.selectedEnemyTarget = bestAction.target;
+        this.executeSkill(character, bestAction.skill.def, bestAction.skill.levelConfig);
+        this.selectedEnemyTarget = prevTarget;
+      } else if (bestAction.target) {
+        this.executeAttack(character, bestAction.target, true);
       }
     }, 500 / this.speedMult);
   }

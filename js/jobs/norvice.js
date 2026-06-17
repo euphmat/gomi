@@ -179,13 +179,11 @@ export const norvice = {
         });
       },
       autoBattle: {
-        priority: 90,
         check: (caster, levelConfig, context) => {
           const trueMaxHp = caster.stats?.hp || caster.hp.max;
           const hpPercent = caster.hp.current / trueMaxHp;
-          const missingHp = trueMaxHp - caster.hp.current;
-          if (hpPercent < 0.6 || (hpPercent < 0.8 && missingHp >= levelConfig.healAmount * 0.8)) {
-            return true;
+          if (hpPercent < 0.8) {
+            return { target: caster, score: (1 - hpPercent) * 150 };
           }
           return null;
         }
@@ -220,16 +218,12 @@ export const norvice = {
         }
       },
       autoBattle: {
-        priority: 50,
         check: (caster, levelConfig, context) => {
-          if (Math.random() < 0.7) {
-            const aliveEnemies = context.enemies.filter(e => !e.isDead);
-            if (aliveEnemies.length === 0) return null;
-            let target = context.selectedEnemyTarget;
-            if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            return target;
-          }
-          return null;
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          let target = context.selectedEnemyTarget;
+          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          return { target, score: 35 * levelConfig.multiplier };
         }
       }
     },
@@ -258,11 +252,10 @@ export const norvice = {
         });
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
-          if (caster.mp.current < (caster.stats?.mp || caster.mp.max) * 0.3) {
-            return true;
-          }
+          const maxMp = caster.stats?.mp || caster.mp.max;
+          const mpPercent = caster.mp.current / maxMp;
+          if (mpPercent < 0.3) return { target: caster, score: 60 };
           return null;
         }
       }
@@ -299,12 +292,11 @@ export const norvice = {
         }
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           const toughEnemy = aliveEnemies.find(e => (!e.atkDebuffTurns || e.atkDebuffTurns <= 0) && (e.maxHp >= 50 || e.stats.atk >= 20));
-          if (toughEnemy && Math.random() < 0.8) {
-            return toughEnemy;
+          if (toughEnemy) {
+            return { target: toughEnemy, score: 70 };
           }
           return null;
         }
@@ -345,13 +337,10 @@ export const norvice = {
         });
       },
       autoBattle: {
-        priority: 60,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length >= 2) {
-            if (Math.random() < 0.8 || caster.mp.current > (caster.stats?.mp || caster.mp.max) * 0.5) {
-              return true;
-            }
+             return { target: aliveEnemies[0], score: 40 + (aliveEnemies.length * 8) };
           }
           return null;
         }

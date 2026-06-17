@@ -212,13 +212,21 @@ export const magic_knight = {
         });
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          let target = context.selectedEnemyTarget;
-          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          return target;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const enemy of aliveEnemies) {
+            const resist = enemy.stats?.elementResist?.fire || 0;
+            const score = 50 * levelConfig.multiplier * ((100 - resist) / 100);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = enemy;
+            }
+          }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
+          return null;
         }
       }
     },
@@ -270,12 +278,20 @@ export const magic_knight = {
         }, 300 / (battle.speedMult || 1));
       },
       autoBattle: {
-        priority: 65,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length > 0 && Math.random() < 0.7) {
-            return context.selectedEnemyTarget || aliveEnemies[0];
+          if (aliveEnemies.length === 0) return null;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const enemy of aliveEnemies) {
+            const resist = enemy.stats?.elementResist?.ice || 0;
+            const score = 50 * levelConfig.multiplier * levelConfig.hits * ((100 - resist) / 100);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = enemy;
+            }
           }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
           return null;
         }
       }
@@ -316,10 +332,15 @@ export const magic_knight = {
         });
       },
       autoBattle: {
-        priority: 80,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 2) return true;
+          if (aliveEnemies.length === 0) return null;
+          let totalScore = 0;
+          for (const enemy of aliveEnemies) {
+             const resist = enemy.stats?.elementResist?.thunder || 0;
+             totalScore += 35 * levelConfig.multiplier * ((100 - resist) / 100);
+          }
+          if (totalScore > 60) return { target: aliveEnemies[0], score: totalScore };
           return null;
         }
       }

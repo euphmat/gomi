@@ -186,12 +186,12 @@ export const knight = {
         });
       },
       autoBattle: {
-        priority: 80,
         check: (caster, levelConfig, context) => {
           if (!caster._provokeTurns || caster._provokeTurns <= 0) {
             const aliveParty = context.party.filter(p => !p.isDead);
             const anyAllyLowHp = aliveParty.some(p => p !== caster && p.hp.current / (p.stats?.hp || p.hp.max) < 0.5);
-            if (anyAllyLowHp || Math.random() < 0.4) return true;
+            if (anyAllyLowHp) return { target: caster, score: 95 };
+            return { target: caster, score: 75 };
           }
           return null;
         }
@@ -225,11 +225,10 @@ export const knight = {
         });
       },
       autoBattle: {
-        priority: 80,
         check: (caster, levelConfig, context) => {
           const aliveParty = context.party.filter(p => !p.isDead);
           const hasDefBuff = aliveParty.some(p => p._defBuffTurns && p._defBuffTurns > 0);
-          if (!hasDefBuff && Math.random() < 0.5) return true;
+          if (!hasDefBuff) return { target: caster, score: 85 };
           return null;
         }
       }
@@ -292,14 +291,13 @@ export const knight = {
         });
       },
       autoBattle: {
-        priority: 60,
         check: (caster, levelConfig, context) => {
-          if (caster.equipment && caster.equipment.leftHand && Math.random() < 0.7) {
+          if (caster.equipment && caster.equipment.leftHand) {
             const aliveEnemies = context.enemies.filter(e => !e.isDead);
             if (aliveEnemies.length === 0) return null;
             let target = context.selectedEnemyTarget;
             if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            return target;
+            return { target, score: 40 * levelConfig.multiplier };
           }
           return null;
         }

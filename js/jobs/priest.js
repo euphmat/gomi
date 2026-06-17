@@ -237,13 +237,22 @@ export const priest = {
         });
       },
       autoBattle: {
-        priority: 90,
         check: (caster, levelConfig, context) => {
           const aliveParty = context.party.filter(p => !p.isDead);
-          const criticallyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.4);
-          if (criticallyInjured) return criticallyInjured;
-          const lightlyInjured = aliveParty.find(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.7);
-          if (lightlyInjured && Math.random() < 0.6) return lightlyInjured;
+          if (aliveParty.length === 0) return null;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const p of aliveParty) {
+            const hpPercent = p.hp.current / (p.stats?.hp || p.hp.max);
+            if (hpPercent < 0.8) {
+              const score = (1 - hpPercent) * 150;
+              if (score > bestScore) {
+                bestScore = score;
+                bestTarget = p;
+              }
+            }
+          }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
           return null;
         }
       }
@@ -282,10 +291,11 @@ export const priest = {
         });
       },
       autoBattle: {
-        priority: 100,
         check: (caster, levelConfig, context) => {
           const deadParty = context.party.filter(p => p.isDead);
-          if (deadParty.length > 0) return true;
+          if (deadParty.length > 0) {
+            return { target: deadParty[0], score: 200 };
+          }
           return null;
         }
       }
@@ -323,10 +333,11 @@ export const priest = {
         });
       },
       autoBattle: {
-        priority: 90,
         check: (caster, levelConfig, context) => {
           const afflictedParty = context.party.filter(p => !p.isDead && p.activeAilment);
-          if (afflictedParty.length > 0) return true;
+          if (afflictedParty.length > 0) {
+             return { target: afflictedParty[0], score: 90 };
+          }
           return null;
         }
       }
@@ -360,14 +371,20 @@ export const priest = {
         }
       },
       autoBattle: {
-        priority: 50,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length > 0 && Math.random() < 0.8) {
-            let target = context.selectedEnemyTarget;
-            if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            return target;
+          if (aliveEnemies.length === 0) return null;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const enemy of aliveEnemies) {
+            const resist = enemy.stats?.elementResist?.light || 0;
+            const score = 50 * levelConfig.multiplier * ((100 - resist) / 100);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = enemy;
+            }
           }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
           return null;
         }
       }
@@ -401,15 +418,15 @@ export const priest = {
         });
       },
       autoBattle: {
-        priority: 95,
         check: (caster, levelConfig, context) => {
           const aliveParty = context.party.filter(p => !p.isDead);
-          const injuredAllies = aliveParty.filter(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.6);
-          if (injuredAllies.length >= 2) return true;
-          
-          const criticallyInjured = aliveParty.filter(p => p.hp.current / (p.stats?.hp || p.hp.max) < 0.3);
-          if (criticallyInjured.length >= 1 && aliveParty.length > 1) return true;
-          
+          let totalMissingHpPercent = 0;
+          for (const p of aliveParty) {
+             totalMissingHpPercent += (1 - (p.hp.current / (p.stats?.hp || p.hp.max)));
+          }
+          if (totalMissingHpPercent > 0.6) {
+             return { target: caster, score: totalMissingHpPercent * 100 };
+          }
           return null;
         }
       }

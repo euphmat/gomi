@@ -170,16 +170,12 @@ export const ranger = {
         }
       },
       autoBattle: {
-        priority: 50,
         check: (caster, levelConfig, context) => {
-          if (Math.random() < 0.8) {
-            const aliveEnemies = context.enemies.filter(e => !e.isDead);
-            if (aliveEnemies.length === 0) return null;
-            let target = context.selectedEnemyTarget;
-            if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            return target;
-          }
-          return null;
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          let target = context.selectedEnemyTarget;
+          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+          return { target, score: 35 * levelConfig.multiplier * levelConfig.hits };
         }
       }
     },
@@ -220,13 +216,10 @@ export const ranger = {
         }
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length >= 2) {
-            if (Math.random() < 0.8) {
-              return true;
-            }
+             return { target: aliveEnemies[0], score: 40 * levelConfig.multiplier * levelConfig.hits + (aliveEnemies.length * 10) };
           }
           return null;
         }
@@ -272,12 +265,10 @@ export const ranger = {
         }
       },
       autoBattle: {
-        priority: 80,
         check: (caster, levelConfig, context) => {
-          if (Math.random() < 0.7) {
-            return true;
-          }
-          return null;
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          return { target: aliveEnemies[0], score: 45 * levelConfig.multiplier * levelConfig.hits };
         }
       }
     },

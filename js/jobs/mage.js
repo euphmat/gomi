@@ -308,15 +308,20 @@ export const mage = {
         }
       },
       autoBattle: {
-        priority: 50,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          let target = context.selectedEnemyTarget;
-          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          const resist = target.stats?.elementResist?.fire || 0;
-          if (resist > 20 && Math.random() < 0.8) return null;
-          if (Math.random() < 0.8) return target;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const enemy of aliveEnemies) {
+            const resist = enemy.stats?.elementResist?.fire || 0;
+            const score = 50 * levelConfig.multiplier * ((100 - resist) / 100);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = enemy;
+            }
+          }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
           return null;
         }
       }
@@ -349,15 +354,20 @@ export const mage = {
         }
       },
       autoBattle: {
-        priority: 50,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          let target = context.selectedEnemyTarget;
-          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          const resist = target.stats?.elementResist?.ice || 0;
-          if (resist > 20 && Math.random() < 0.8) return null;
-          if (Math.random() < 0.8) return target;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const enemy of aliveEnemies) {
+            const resist = enemy.stats?.elementResist?.ice || 0;
+            const score = 50 * levelConfig.multiplier * ((100 - resist) / 100);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = enemy;
+            }
+          }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
           return null;
         }
       }
@@ -390,15 +400,20 @@ export const mage = {
         }
       },
       autoBattle: {
-        priority: 50,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          let target = context.selectedEnemyTarget;
-          if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          const resist = target.stats?.elementResist?.thunder || 0;
-          if (resist > 20 && Math.random() < 0.8) return null;
-          if (Math.random() < 0.8) return target;
+          let bestTarget = null;
+          let bestScore = 0;
+          for (const enemy of aliveEnemies) {
+            const resist = enemy.stats?.elementResist?.thunder || 0;
+            const score = 50 * levelConfig.multiplier * ((100 - resist) / 100);
+            if (score > bestScore) {
+              bestScore = score;
+              bestTarget = enemy;
+            }
+          }
+          if (bestScore > 0) return { target: bestTarget, score: bestScore };
           return null;
         }
       }
@@ -431,11 +446,12 @@ export const mage = {
         });
       },
       autoBattle: {
-        priority: 80,
         check: (caster, levelConfig, context) => {
           const aliveParty = context.party.filter(p => !p.isDead);
-          const hasMdefBuff = aliveParty.some(p => p._mdefBuffTurns && p._mdefBuffTurns > 0);
-          if (!hasMdefBuff && Math.random() < 0.5) return true;
+          const unbuffedCount = aliveParty.filter(p => !p._mdefBuffTurns || p._mdefBuffTurns <= 0).length;
+          if (unbuffedCount >= aliveParty.length / 2) {
+             return { target: caster, score: 85 };
+          }
           return null;
         }
       }
@@ -476,14 +492,15 @@ export const mage = {
         });
       },
       autoBattle: {
-        priority: 72,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 3) {
-            const resistCount = aliveEnemies.filter(e => (e.stats?.elementResist?.ice || 0) > 20).length;
-            if (resistCount >= 2) return null;
-            return true;
+          if (aliveEnemies.length === 0) return null;
+          let totalScore = 0;
+          for (const enemy of aliveEnemies) {
+             const resist = enemy.stats?.elementResist?.ice || 0;
+             totalScore += 35 * levelConfig.multiplier * ((100 - resist) / 100);
           }
+          if (totalScore > 60) return { target: aliveEnemies[0], score: totalScore };
           return null;
         }
       }
@@ -524,14 +541,15 @@ export const mage = {
         });
       },
       autoBattle: {
-        priority: 71,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 3) {
-            const resistCount = aliveEnemies.filter(e => (e.stats?.elementResist?.fire || 0) > 20).length;
-            if (resistCount >= 2) return null;
-            return true;
+          if (aliveEnemies.length === 0) return null;
+          let totalScore = 0;
+          for (const enemy of aliveEnemies) {
+             const resist = enemy.stats?.elementResist?.fire || 0;
+             totalScore += 35 * levelConfig.multiplier * ((100 - resist) / 100);
           }
+          if (totalScore > 60) return { target: aliveEnemies[0], score: totalScore };
           return null;
         }
       }
@@ -572,12 +590,15 @@ export const mage = {
         });
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 3) {
-            return true;
+          if (aliveEnemies.length === 0) return null;
+          let totalScore = 0;
+          for (const enemy of aliveEnemies) {
+             const resist = enemy.stats?.elementResist?.thunder || 0;
+             totalScore += 35 * levelConfig.multiplier * ((100 - resist) / 100);
           }
+          if (totalScore > 60) return { target: aliveEnemies[0], score: totalScore };
           return null;
         }
       }

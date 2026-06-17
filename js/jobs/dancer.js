@@ -322,11 +322,11 @@ export const dancer = {
         });
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 2) return true;
-          return null;
+          if (aliveEnemies.length === 0) return null;
+          let score = 40 + (aliveEnemies.length * 10);
+          return { target: aliveEnemies[0], score: score };
         }
       }
     },
@@ -370,10 +370,12 @@ export const dancer = {
         }
       },
       autoBattle: {
-        priority: 80,
         check: (caster, levelConfig, context) => {
-          if (Math.random() < 0.7) return true;
-          return null;
+          const aliveEnemies = context.enemies.filter(e => !e.isDead);
+          if (aliveEnemies.length === 0) return null;
+          const avgHits = (levelConfig.minHits + levelConfig.maxHits) / 2;
+          const score = 40 * levelConfig.multiplier * avgHits;
+          return { target: aliveEnemies[0], score: score };
         }
       }
     },
@@ -412,10 +414,9 @@ export const dancer = {
         });
       },
       autoBattle: {
-        priority: 60,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 2 && Math.random() < 0.5) return true;
+          if (aliveEnemies.length >= 2) return { target: aliveEnemies[0], score: 50 + (aliveEnemies.length * 5) };
           return null;
         }
       }
@@ -468,10 +469,9 @@ export const dancer = {
         });
       },
       autoBattle: {
-        priority: 60,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 2 && Math.random() < 0.6) return true;
+          if (aliveEnemies.length >= 2) return { target: aliveEnemies[0], score: 55 + (aliveEnemies.length * 5) };
           return null;
         }
       }

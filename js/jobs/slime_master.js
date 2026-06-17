@@ -247,13 +247,12 @@ export const slime_master = {
         });
       },
       autoBattle: {
-        priority: 60,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
           let target = context.selectedEnemyTarget;
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          return target;
+          return { target, score: 30 * levelConfig.multiplier * levelConfig.level };
         }
       }
     },
@@ -306,10 +305,12 @@ export const slime_master = {
         });
       },
       autoBattle: {
-        priority: 70,
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          if (aliveEnemies.length >= 2) return caster;
+          if (aliveEnemies.length >= 2) {
+             const numSlimes = Math.round(10 + (levelConfig.level - 1) * (20 / 9));
+             return { target: caster, score: 35 * (levelConfig.multiplier * 0.25) * numSlimes };
+          }
           return null;
         }
       }
