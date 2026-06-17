@@ -417,11 +417,14 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     // LEVEL UP floating text
     const imgBox = header.querySelector('#feed-modal-img-box');
     if (imgBox) {
+      let oldFloater = imgBox.querySelector('.level-up-floater');
+      if (oldFloater) oldFloater.remove();
+      
       const floater = document.createElement('div');
-      floater.className = 'absolute -top-3 left-1/2 -translate-x-1/2 text-white font-black text-[10px] whitespace-nowrap animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-600 px-2 py-0.5 rounded-full border border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.8)]';
+      floater.className = 'level-up-floater absolute -top-3 left-1/2 -translate-x-1/2 text-white font-black text-[10px] whitespace-nowrap animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-600 px-2 py-0.5 rounded-full border border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.8)]';
       floater.innerHTML = `LEVEL UP!`;
       imgBox.appendChild(floater);
-      setTimeout(() => floater.remove(), 1500);
+      setTimeout(() => { if (floater.parentElement) floater.remove(); }, 1500);
     }
     
     // Stat floating texts and highlight
@@ -435,16 +438,33 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             const valEl = statEl.querySelector('.stat-value');
             if (valEl) valEl.classList.add('text-pink-300');
 
-            const statFloater = document.createElement('div');
-            statFloater.className = 'absolute -top-2.5 -right-2 text-white font-black text-[9px] whitespace-nowrap animate-bounce drop-shadow-md z-50 pointer-events-none bg-emerald-500 px-1.5 py-0.5 rounded-full border border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)] leading-none flex items-center justify-center';
-            statFloater.innerHTML = `+${diff}`;
-            statEl.appendChild(statFloater);
+            let statFloater = statEl.querySelector('.stat-floater');
+            if (!statFloater) {
+               statFloater = document.createElement('div');
+               statFloater.className = 'stat-floater absolute -top-2.5 -right-2 text-white font-black text-[9px] whitespace-nowrap drop-shadow-md z-50 pointer-events-none bg-emerald-500 px-1.5 py-0.5 rounded-full border border-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.8)] leading-none flex items-center justify-center';
+               statFloater.dataset.diff = '0';
+               statEl.appendChild(statFloater);
+            }
             
-            setTimeout(() => {
+            const currentDiff = parseInt(statFloater.dataset.diff) + diff;
+            statFloater.dataset.diff = currentDiff;
+            statFloater.innerHTML = `+${currentDiff}`;
+            
+            // Re-trigger animation
+            statFloater.style.animation = 'none';
+            statFloater.offsetHeight; // force reflow
+            statFloater.style.animation = 'bounce 1s ease-in-out';
+            
+            if (statFloater.removalTimer) clearTimeout(statFloater.removalTimer);
+            statFloater.removalTimer = setTimeout(() => {
+                if (statFloater.parentElement) statFloater.remove();
+            }, 1200);
+            
+            if (statEl.highlightTimer) clearTimeout(statEl.highlightTimer);
+            statEl.highlightTimer = setTimeout(() => {
                 statEl.classList.remove('bg-pink-900/50', 'border-pink-500', 'scale-110', 'z-10');
                 if (valEl) valEl.classList.remove('text-pink-300');
             }, 1000);
-            setTimeout(() => statFloater.remove(), 1200);
          }
       }
     }
@@ -464,15 +484,27 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
     const colors = { hp: 'text-red-400', mp: 'text-blue-400', atk: 'text-orange-400', def: 'text-green-400', matk: 'text-fuchsia-400', mdef: 'text-indigo-400', spd: 'text-yellow-400' };
     
-    elMonsterStats.innerHTML = Object.keys(mStats).map(k => `
-      <div id="stat-${k}" class="flex flex-col items-center justify-center bg-slate-800/60 rounded py-1 border border-slate-700/50 relative transition-all duration-300">
-        <span class="${colors[k]} font-bold text-[8px] leading-none mb-0.5">${labels[k]}</span>
-        <div class="flex items-baseline gap-0.5">
-          <span class="stat-value text-slate-100 font-black text-[11px] leading-none">${mStats[k]}</span>
-          <span class="text-pink-400 font-bold text-[8px] leading-none">(+${bStats[k]})</span>
+    if (elMonsterStats.children.length === 0) {
+      elMonsterStats.innerHTML = Object.keys(mStats).map(k => `
+        <div id="stat-${k}" class="flex flex-col items-center justify-center bg-slate-800/60 rounded py-1 border border-slate-700/50 relative transition-all duration-300">
+          <span class="${colors[k]} font-bold text-[8px] leading-none mb-0.5">${labels[k]}</span>
+          <div class="flex items-baseline gap-0.5">
+            <span class="stat-value text-slate-100 font-black text-[11px] leading-none">${mStats[k]}</span>
+            <span class="stat-bonus text-pink-400 font-bold text-[8px] leading-none">(+${bStats[k]})</span>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `).join('');
+    } else {
+      Object.keys(mStats).forEach(k => {
+        const statEl = elMonsterStats.querySelector(`#stat-${k}`);
+        if (statEl) {
+          const valEl = statEl.querySelector('.stat-value');
+          const bonusEl = statEl.querySelector('.stat-bonus');
+          if (valEl) valEl.textContent = mStats[k];
+          if (bonusEl) bonusEl.textContent = `(+${bStats[k]})`;
+        }
+      });
+    }
 
     if (level > currentLevel) {
        triggerLevelUpAnimation(level, currentLevel);
