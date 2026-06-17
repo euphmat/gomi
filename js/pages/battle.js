@@ -198,31 +198,31 @@ class BattleManager {
     aliveParty.forEach(p => {
       if (p.jobSkills) {
         const prot = this._findSkill(p, 'protection');
-        if (prot && prot.level > 0 && prot.levelConfig) {
+        if (prot && prot.level > 0 && prot.levelConfig && prot.def.type === 'passive') {
           if (!protectionConfig || prot.levelConfig.percent > protectionConfig.percent) {
             protectionConfig = prot.levelConfig;
           }
         }
         const mb = this._findSkill(p, 'magic_barrier');
-        if (mb && mb.level > 0 && mb.levelConfig) {
+        if (mb && mb.level > 0 && mb.levelConfig && mb.def.type === 'passive') {
           if (!magicBarrierConfig || mb.levelConfig.percent > magicBarrierConfig.percent) {
             magicBarrierConfig = mb.levelConfig;
           }
         }
         const wb = this._findSkill(p, 'weapon_bless');
-        if (wb && wb.level > 0 && wb.levelConfig) {
+        if (wb && wb.level > 0 && wb.levelConfig && wb.def.type === 'passive') {
           if (!weaponBlessConfig || wb.levelConfig.percent > weaponBlessConfig.percent) {
             weaponBlessConfig = wb.levelConfig;
           }
         }
         const magb = this._findSkill(p, 'magic_bless');
-        if (magb && magb.level > 0 && magb.levelConfig) {
+        if (magb && magb.level > 0 && magb.levelConfig && magb.def.type === 'passive') {
           if (!magicBlessConfig || magb.levelConfig.percent > magicBlessConfig.percent) {
             magicBlessConfig = magb.levelConfig;
           }
         }
         const oa = this._findSkill(p, 'opening_act');
-        if (oa && oa.level > 0 && oa.levelConfig) {
+        if (oa && oa.level > 0 && oa.levelConfig && oa.def.type === 'passive') {
           if (!openingActConfig || oa.levelConfig.spdPercent > openingActConfig.spdPercent) {
             openingActConfig = oa.levelConfig;
           }
