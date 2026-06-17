@@ -933,10 +933,9 @@ class BattleManager {
           if (level > 0 && def && levelConfig && def.type !== 'passive') {
             const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
             if (isAutoEnabled && character.mp.current >= levelConfig.mpCost) {
-              if (def.autoBattle && typeof def.autoBattle.priority === 'number' && typeof def.autoBattle.check === 'function') {
+              if (def.autoBattle && typeof def.autoBattle.check === 'function') {
                 usableSkills.push({
                   id: skillId,
-                  priority: def.autoBattle.priority,
                   def,
                   levelConfig
                 });
@@ -963,7 +962,7 @@ class BattleManager {
         const checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
         if (checkResult) {
           let target = checkResult;
-          let score = skill.priority || 50;
+          let score = 50;
           
           if (typeof checkResult === 'object' && checkResult.score !== undefined) {
              score = checkResult.score;
