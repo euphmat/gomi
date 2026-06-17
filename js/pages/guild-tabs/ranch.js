@@ -9,7 +9,7 @@ const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
 
 export async function renderRanchTab() {
   const container = document.createElement('div');
-  container.className = 'flex flex-col h-full bg-[#0b0b19] overflow-y-auto no-scrollbar pb-20 relative';
+  container.className = 'flex flex-col h-full bg-[#0b0b19] overflow-hidden relative';
 
   let ranchData = await GameDB.getGameState('ranch_data') || {};
   let currentDungeonId = Object.keys(ranchData).length > 0 ? Object.keys(ranchData)[0] : null;
@@ -126,79 +126,36 @@ export async function renderRanchTab() {
 
     // Field Area
     const fieldContainer = document.createElement('div');
-    fieldContainer.className = 'relative flex-1 min-h-[300px] border-b border-slate-800 overflow-hidden';
+    fieldContainer.className = 'relative flex-1 min-h-[300px] border-b border-slate-800 overflow-y-auto no-scrollbar';
     
     const dDef = DUNGEONS.find(d => d.id === currentDungeonId);
     if (dDef && dDef.bgImage) {
       fieldContainer.style.backgroundImage = `linear-gradient(rgba(11, 11, 25, 0.4), rgba(11, 11, 25, 0.8)), url('${dDef.bgImage}')`;
       fieldContainer.style.backgroundSize = 'cover';
       fieldContainer.style.backgroundPosition = 'center';
+      fieldContainer.style.backgroundAttachment = 'local';
     }
 
     const monstersInDungeon = ranchData[currentDungeonId] || {};
     
-    // Style for animations
+    // Style for animations (optimized for grid cells)
     const styleEl = document.createElement('style');
     styleEl.innerHTML = `
-      @keyframes wander {
-        0% { transform: translate(0, 0); }
-        25% { transform: translate(30px, -10px); }
-        49% { transform: translate(60px, 0); }
-        50% { transform: translate(60px, 0); }
-        75% { transform: translate(30px, -10px); }
-        99% { transform: translate(0, 0); }
-        100% { transform: translate(0, 0); }
+      @keyframes float-idle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
       }
-      @keyframes wander-flip {
-        0%, 49% { transform: scaleX(1); }
-        50%, 99% { transform: scaleX(-1); }
-        100% { transform: scaleX(1); }
-      }
-      .ranch-monster {
-        animation: wander 8s infinite ease-in-out;
-      }
-      .ranch-monster-img {
-        animation: wander-flip 8s infinite;
+      .ranch-monster-idle {
+        animation: float-idle 3s infinite ease-in-out;
       }
     `;
     container.appendChild(styleEl);
 
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-x-2 gap-y-12 p-6 pb-12 pt-10 place-items-center w-full';
+
     const monsterKeys = Object.keys(monstersInDungeon);
     
-    // Initial random positions
-    let positions = monsterKeys.map(() => ({
-      x: 10 + Math.random() * 70,
-      y: 20 + Math.random() * 60
-    }));
-
-    // Apply repulsive force to spread monsters out
-    const iterations = 50;
-    const force = 1.0;
-    for (let i = 0; i < iterations; i++) {
-      for (let j = 0; j < positions.length; j++) {
-        for (let k = j + 1; k < positions.length; k++) {
-          const dx = positions[j].x - positions[k].x;
-          const dy = positions[j].y - positions[k].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          
-          if (dist < 18 && dist > 0) { // Repulsion radius
-            const pushX = (dx / dist) * force;
-            const pushY = (dy / dist) * force;
-            
-            positions[j].x += pushX;
-            positions[j].y += pushY;
-            positions[k].x -= pushX;
-            positions[k].y -= pushY;
-            
-            positions[j].x = Math.max(10, Math.min(80, positions[j].x));
-            positions[j].y = Math.max(20, Math.min(80, positions[j].y));
-            positions[k].x = Math.max(10, Math.min(80, positions[k].x));
-            positions[k].y = Math.max(20, Math.min(80, positions[k].y));
-          }
-        }
-      }
-    }
-
     monsterKeys.forEach((mId, index) => {
       const isLegendary = mId.endsWith('_legendary');
       const baseId = isLegendary ? mId.replace('_legendary', '') : mId;
@@ -209,20 +166,15 @@ export async function renderRanchTab() {
       const mData = monstersInDungeon[mId];
       
       const mEl = document.createElement('div');
-      mEl.className = 'absolute cursor-pointer transition-transform hover:scale-110 active:scale-95 group';
-      
-      // Use calculated repelled position
-      const pos = positions[index];
-      mEl.style.left = `${pos.x}%`;
-      mEl.style.top = `${pos.y}%`;
+      mEl.className = 'relative cursor-pointer transition-transform hover:scale-105 active:scale-95 group w-full flex justify-center';
       
       // Randomize animation delay to prevent sync
-      const animDelay = Math.random() * -8;
+      const animDelay = Math.random() * -3;
       
       mEl.innerHTML = `
-        <div class="ranch-monster relative flex flex-col items-center" style="animation-delay: ${animDelay}s;">
-           <div class="${isLegendary ? 'animate-rainbow' : ''}">
-             <img src="${mDef.image}" class="ranch-monster-img w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" style="animation-delay: ${animDelay}s;" onerror="this.src='assets/monsters/slime.png'">
+        <div class="relative flex flex-col items-center justify-center w-[72px] h-[72px] bg-slate-900/40 rounded-2xl border border-slate-700/50 shadow-inner group-hover:bg-slate-800/60 group-hover:border-pink-500/50 transition-colors backdrop-blur-sm">
+           <div class="ranch-monster-idle relative ${isLegendary ? 'animate-rainbow' : ''}" style="animation-delay: ${animDelay}s;">
+             <img src="${mDef.image}" class="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" onerror="this.src='assets/monsters/slime.png'">
            </div>
            <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap pointer-events-none shadow-md z-10">
              Lv.${getRanchLevelInfo(mData.fedMaterials || 0, isLegendary).level}
@@ -262,37 +214,38 @@ export async function renderRanchTab() {
         setTimeout(() => { isOpening = false; }, 300);
       };
       
-      fieldContainer.appendChild(mEl);
+      gridContainer.appendChild(mEl);
     });
 
+    fieldContainer.appendChild(gridContainer);
     container.appendChild(fieldContainer);
     
     // Status Bonus Summary
     const summaryContainer = document.createElement('div');
-    summaryContainer.className = 'p-3 shrink-0 bg-slate-900/80 backdrop-blur-sm border-t border-slate-800 w-full';
+    summaryContainer.className = 'p-2 shrink-0 bg-slate-900/80 backdrop-blur-sm border-t border-slate-800 w-full flex flex-col sm:flex-row sm:items-center gap-2';
     
     const titleBox = document.createElement('div');
-    titleBox.className = 'flex items-center gap-1 text-pink-400 mb-2.5';
+    titleBox.className = 'flex items-center gap-1 text-pink-400 shrink-0';
     titleBox.innerHTML = `
-      <span class="material-symbols-outlined text-[16px]">monitoring</span>
-      <span class="text-xs font-black text-slate-200">現在のボーナス合計</span>
+      <span class="material-symbols-outlined text-[14px]">monitoring</span>
+      <span class="text-[10px] font-black text-slate-200">ボーナス合計</span>
     `;
     summaryContainer.appendChild(titleBox);
 
     const statsGrid = document.createElement('div');
-    statsGrid.className = 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2';
+    statsGrid.className = 'flex flex-wrap items-center gap-1.5 flex-1';
     
     // Calculate total bonus
     const totalBonus = await calculateTotalRanchBonus();
     
     const statConfig = {
-      hp:   { label: 'HP',  icon: 'favorite',      color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20' },
-      mp:   { label: 'MP',  icon: 'water_drop',    color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20' },
-      atk:  { label: 'ATK', icon: 'swords',        color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/20' },
-      def:  { label: 'DEF', icon: 'shield',        color: 'text-green-400',   bg: 'bg-green-500/10',   border: 'border-green-500/20' },
-      matk: { label: 'MAT', icon: 'auto_fix_high', color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/20' },
-      mdef: { label: 'MDF', icon: 'gpp_good',      color: 'text-indigo-400',  bg: 'bg-indigo-500/10',  border: 'border-indigo-500/20' },
-      spd:  { label: 'SPD', icon: 'speed',         color: 'text-yellow-400',  bg: 'bg-yellow-500/10',  border: 'border-yellow-500/20' }
+      hp:   { label: 'HP',  color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/20' },
+      mp:   { label: 'MP',  color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/20' },
+      atk:  { label: 'ATK', color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/20' },
+      def:  { label: 'DEF', color: 'text-green-400',   bg: 'bg-green-500/10',   border: 'border-green-500/20' },
+      matk: { label: 'MAT', color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10', border: 'border-fuchsia-500/20' },
+      mdef: { label: 'MDF', color: 'text-indigo-400',  bg: 'bg-indigo-500/10',  border: 'border-indigo-500/20' },
+      spd:  { label: 'SPD', color: 'text-yellow-400',  bg: 'bg-yellow-500/10',  border: 'border-yellow-500/20' }
     };
     
     Object.keys(totalBonus).forEach(key => {
@@ -300,11 +253,10 @@ export async function renderRanchTab() {
       const cfg = statConfig[key];
       if (!cfg) return;
       const box = document.createElement('div');
-      box.className = `flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border ${cfg.bg} ${cfg.border} shadow-sm`;
+      box.className = `flex items-baseline gap-1 px-1.5 py-0.5 rounded border ${cfg.bg} ${cfg.border}`;
       box.innerHTML = `
-        <span class="material-symbols-outlined text-[14px] ${cfg.color}">${cfg.icon}</span>
-        <span class="text-[11px] font-bold text-slate-300">${cfg.label}</span>
-        <span class="text-[12px] font-black ${cfg.color} drop-shadow-md ml-0.5">+${val}</span>
+        <span class="text-[9px] font-bold text-slate-300">${cfg.label}</span>
+        <span class="text-[10px] font-black ${cfg.color}">+${val}</span>
       `;
       statsGrid.appendChild(box);
     });
@@ -350,17 +302,20 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   modal.className = 'bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] overflow-hidden';
   
   const header = document.createElement('div');
-  header.className = 'p-4 border-b border-slate-800 flex justify-between items-center shrink-0';
+  header.className = 'p-3 border-b border-slate-800 flex justify-between items-center shrink-0 bg-slate-800/50';
   header.innerHTML = `
-    <h3 class="text-lg font-black text-pink-400 flex items-center gap-2">
-      ${monsterDef.name} にエサをあげる
+    <h3 class="text-sm font-black text-pink-400 flex items-center gap-2 relative" id="feed-modal-img-box">
+      <div class="relative w-8 h-8 ${isLegendary ? 'animate-rainbow' : ''}">
+        <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-md">
+      </div>
+      ${monsterDef.name}
     </h3>
-    <div class="flex items-center gap-2">
-      <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">
-        <span class="material-symbols-outlined text-[18px]">help</span>
+    <div class="flex items-center gap-1.5">
+      <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">
+        <span class="material-symbols-outlined text-[16px]">help</span>
       </button>
-      <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-modal">
-        <span class="material-symbols-outlined">close</span>
+      <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-modal">
+        <span class="material-symbols-outlined text-[16px]">close</span>
       </button>
     </div>
   `;
@@ -406,46 +361,28 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   let currentLevel = initialInfo.level;
   
   topSection.innerHTML = `
-      <div class="flex items-stretch gap-3 mb-3">
-        <!-- Left Column: Image & Level -->
-        <div id="feed-modal-img-box" class="w-28 shrink-0 flex flex-col items-center justify-center bg-slate-900/60 rounded-xl border border-slate-700/50 py-3 relative shadow-inner z-20">
-          <div class="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent blur-xl rounded-full"></div>
-          <div class="relative w-20 h-20 mb-3 z-10 ${isLegendary ? 'animate-rainbow' : ''}">
-            <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)] animate-bounce" style="animation-duration: 3s;">
-          </div>
-          <span id="feed-modal-level" class="relative z-10 inline-block text-[12px] text-pink-300 font-black bg-slate-950 px-4 py-1 rounded-full shadow-[0_0_15px_rgba(236,72,153,0.4)] border border-pink-500/40">Lv.${currentLevel}</span>
-        </div>
-        
-        <!-- Right Column: Stats & Bonus vertically stacked -->
-        <div class="flex-1 flex flex-col gap-2 min-w-0">
-          <!-- Top Panel: Monster Stats -->
-          <div class="flex-1 bg-slate-900/60 rounded-xl p-2 border border-slate-700/50 flex flex-col shadow-inner relative overflow-hidden">
-            <div class="absolute inset-0 bg-blue-500/5 pointer-events-none"></div>
-            <div class="relative z-10">
-              <div class="text-[10px] text-slate-300 font-black mb-1.5 flex items-center gap-1.5 border-b border-slate-700/50 pb-1">
-                <span class="material-symbols-outlined text-[14px] text-blue-400">bar_chart</span> ステータス
-              </div>
-              <div id="feed-modal-monster-stats" class="grid grid-cols-4 gap-1"></div>
+      <!-- Stats Area Combined -->
+      <div class="bg-slate-900/60 rounded-xl p-2 border border-slate-700/50 flex flex-col shadow-inner relative overflow-hidden mb-2 w-full">
+        <div class="absolute inset-0 bg-blue-500/5 pointer-events-none"></div>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1.5">
+            <div class="text-[10px] text-slate-300 font-black flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[14px] text-blue-400">bar_chart</span> ステータス & ボーナス
+            </div>
+            <div class="flex items-center gap-2">
+               <span id="feed-modal-level" class="text-[10px] text-pink-300 font-black bg-pink-900/40 px-2 py-0.5 rounded border border-pink-500/40 shadow-[0_0_10px_rgba(236,72,153,0.2)]">Lv.${currentLevel}</span>
             </div>
           </div>
-          <!-- Bottom Panel: Bonus Stats -->
-          <div class="flex-1 bg-pink-900/10 rounded-xl p-2 border border-pink-900/30 flex flex-col shadow-inner relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-transparent pointer-events-none"></div>
-            <div class="relative z-10">
-              <div class="text-[10px] text-pink-400 font-black mb-1.5 flex items-center gap-1.5 border-b border-pink-900/50 pb-1">
-                <span class="material-symbols-outlined text-[14px]">stars</span> ボーナス
-              </div>
-              <div id="feed-modal-bonus-stats" class="grid grid-cols-4 gap-1"></div>
-            </div>
-          </div>
+          <div id="feed-modal-monster-stats" class="grid grid-cols-4 sm:grid-cols-7 gap-1"></div>
         </div>
       </div>
       
-      <div class="w-full bg-slate-900 rounded-full h-5 mb-1 overflow-hidden relative shadow-inner border border-slate-700/50 flex items-center justify-center mt-2">
+      <!-- EXP Bar -->
+      <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden relative shadow-inner border border-slate-700/50 flex items-center justify-center">
         <div id="feed-modal-bar" class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 transition-all duration-500 ease-out" style="width: 0%">
            <div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
         </div>
-        <span id="feed-modal-progress" class="relative z-10 text-[11px] text-white font-black tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">0 / 10</span>
+        <span id="feed-modal-progress" class="relative z-10 text-[9px] text-white font-black tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">0 / 10</span>
       </div>
   `;
   
@@ -462,14 +399,13 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const elBar = topSection.querySelector('#feed-modal-bar');
   const elProgress = topSection.querySelector('#feed-modal-progress');
   const elMonsterStats = topSection.querySelector('#feed-modal-monster-stats');
-  const elBonusStats = topSection.querySelector('#feed-modal-bonus-stats');
 
   const triggerLevelUpAnimation = (newLevel, oldLevel) => {
     const oldMStats = getMonsterStats(oldLevel);
     const newMStats = getMonsterStats(newLevel);
     
     // Image pop animation
-    const imgEl = topSection.querySelector('img');
+    const imgEl = header.querySelector('img');
     if (imgEl) {
       imgEl.classList.add('scale-125', 'brightness-125', 'drop-shadow-[0_0_20px_rgba(236,72,153,0.8)]');
       imgEl.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
@@ -479,7 +415,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     }
 
     // LEVEL UP floating text
-    const imgBox = topSection.querySelector('#feed-modal-img-box');
+    const imgBox = header.querySelector('#feed-modal-img-box');
     if (imgBox) {
       const floater = document.createElement('div');
       floater.className = 'absolute -top-3 left-1/2 -translate-x-1/2 text-white font-black text-[10px] whitespace-nowrap animate-bounce drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-50 pointer-events-none tracking-widest bg-pink-600 px-2 py-0.5 rounded-full border border-pink-400 shadow-[0_0_10px_rgba(236,72,153,0.8)]';
@@ -530,15 +466,11 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     
     elMonsterStats.innerHTML = Object.keys(mStats).map(k => `
       <div id="stat-${k}" class="flex flex-col items-center justify-center bg-slate-800/60 rounded py-1 border border-slate-700/50 relative transition-all duration-300">
-        <span class="${colors[k]} font-bold text-[8px] leading-none mb-1">${labels[k]}</span>
-        <span class="stat-value text-slate-100 font-black text-[11px] leading-none">${mStats[k]}</span>
-      </div>
-    `).join('');
-
-    elBonusStats.innerHTML = Object.keys(bStats).map(k => `
-      <div class="flex flex-col items-center justify-center bg-pink-950/40 rounded py-1 border border-pink-900/50 relative">
-        <span class="${colors[k]} font-bold text-[8px] leading-none mb-1">${labels[k]}</span>
-        <span class="text-pink-300 font-black text-[11px] leading-none">+${bStats[k]}</span>
+        <span class="${colors[k]} font-bold text-[8px] leading-none mb-0.5">${labels[k]}</span>
+        <div class="flex items-baseline gap-0.5">
+          <span class="stat-value text-slate-100 font-black text-[11px] leading-none">${mStats[k]}</span>
+          <span class="text-pink-400 font-bold text-[8px] leading-none">(+${bStats[k]})</span>
+        </div>
       </div>
     `).join('');
 
@@ -560,7 +492,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
     let el = balloonPool.pop();
     if (!el) {
       el = document.createElement('div');
-      el.className = 'absolute top-0 left-1/2 text-white font-black text-[10px] whitespace-nowrap shadow-lg z-[60] pointer-events-none tracking-widest bg-gradient-to-r from-pink-600 to-rose-500 px-2 py-0.5 rounded-full border border-pink-400/50';
+      el.className = 'absolute top-full left-4 text-white font-black text-[10px] whitespace-nowrap shadow-lg z-[60] pointer-events-none tracking-widest bg-gradient-to-r from-pink-600 to-rose-500 px-2 py-0.5 rounded-full border border-pink-400/50';
       el.style.willChange = 'transform, opacity';
       if (parentDiv) parentDiv.appendChild(el);
     }
@@ -608,31 +540,31 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         const maxFeed = quantity;
         
         itemRow.innerHTML = `
-          <div class="flex flex-col gap-2.5 w-full">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-3 min-w-0 flex-1">
-                <div class="w-10 h-10 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center justify-center p-1 relative shadow-inner shrink-0">
-                  <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="text-xs font-black text-slate-100 mb-0.5 truncate flex items-center gap-2">
-                    ${mat.name}
-                    <span class="text-[9px] bg-pink-900/50 text-pink-300 px-1.5 py-0.5 rounded border border-pink-700/50">${expMultiplier} EXP</span>
-                  </div>
-                  <div class="text-[10px] font-bold text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400' : 'text-slate-500'}">${quantity}</span> 個</div>
-                </div>
+          <div class="flex flex-col sm:flex-row items-center gap-2 w-full">
+            <div class="flex items-center gap-2 min-w-0 flex-1 w-full sm:w-auto">
+              <div class="w-8 h-8 bg-slate-900/80 rounded border border-slate-700 flex items-center justify-center p-1 relative shadow-inner shrink-0">
+                <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
               </div>
-              <button class="shrink-0 px-4 py-2 h-10 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[11px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_15px_rgba(219,39,119,0.2)] flex items-center justify-center gap-1" ${maxFeed === 0 ? 'disabled' : ''}>
-                <span class="material-symbols-outlined text-[14px]">favorite</span> 与える
-              </button>
+              <div class="min-w-0 flex-1">
+                <div class="text-[10px] font-black text-slate-100 truncate flex items-center gap-1">
+                  ${mat.name}
+                  <span class="text-[8px] bg-pink-900/50 text-pink-300 px-1 py-0.5 rounded border border-pink-700/50">${expMultiplier} EXP</span>
+                </div>
+                <div class="text-[9px] font-bold text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400' : 'text-slate-500'}">${quantity}</span></div>
+              </div>
             </div>
             
-            <div class="flex items-center gap-1 bg-slate-900/60 rounded-lg border border-slate-700 p-0.5 shadow-inner w-full justify-between">
-              <button class="flex-1 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 transition-all btn-min" ${maxFeed === 0 ? 'disabled' : ''}>MIN</button>
-              <button class="flex-1 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 transition-all btn-minus-100" ${maxFeed === 0 ? 'disabled' : ''}>-100</button>
-              <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-14 shrink-0 h-8 bg-transparent text-center text-sm font-black text-white outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-              <button class="flex-1 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 transition-all btn-plus-100" ${maxFeed === 0 ? 'disabled' : ''}>+100</button>
-              <button class="flex-1 h-8 flex items-center justify-center bg-pink-900/30 hover:bg-pink-800/50 text-pink-400 border border-pink-700/50 active:scale-95 rounded text-[10px] font-black transition-all btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
+            <div class="flex items-center gap-1 shrink-0 w-full sm:w-auto justify-end">
+              <div class="flex items-center bg-slate-900/60 rounded border border-slate-700 p-0.5 shadow-inner">
+                <button class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[8px] font-bold text-slate-300 btn-min" ${maxFeed === 0 ? 'disabled' : ''}>MIN</button>
+                <button class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 btn-minus-100" ${maxFeed === 0 ? 'disabled' : ''}>-</button>
+                <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-10 h-7 bg-transparent text-center text-[10px] font-black text-white outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                <button class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 btn-plus-100" ${maxFeed === 0 ? 'disabled' : ''}>+</button>
+                <button class="w-7 h-7 flex items-center justify-center bg-pink-900/30 hover:bg-pink-800/50 text-pink-400 border border-pink-700/50 active:scale-95 rounded text-[8px] font-black btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
+              </div>
+              <button class="px-3 h-8 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded text-[10px] font-black text-white transition-all active:scale-95 btn-feed flex items-center justify-center shadow-md" ${maxFeed === 0 ? 'disabled' : ''}>
+                与える
+              </button>
             </div>
           </div>
         `;
@@ -688,7 +620,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             needsUpdate = true;
             
             const startImg = itemRow.querySelector('img');
-            const targetImg = topSection.querySelector('img');
+            const targetImg = header.querySelector('img');
             const startRect = startImg ? startImg.getBoundingClientRect() : null;
             const endRect = targetImg ? targetImg.getBoundingClientRect() : null;
             
@@ -698,9 +630,8 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             if (startRect && endRect) {
               const contentDiv = topSection.parentElement;
               const contentRect = contentDiv.getBoundingClientRect();
-              
-              const imgBoxContainer = topSection.querySelector('#feed-modal-img-box .relative');
-              
+              const imgBoxContainer = header.querySelector('#feed-modal-img-box');
+
               for (let j = 0; j < animCount; j++) {
                 const delay = Math.random() * spreadTime;
                 
@@ -744,17 +675,17 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
               
               // Spawn single total EXP balloon
               setTimeout(() => {
-                const imgBoxContainer = topSection.querySelector('#feed-modal-img-box .relative');
+                const imgBoxContainer = header.querySelector('#feed-modal-img-box');
                 if (!imgBoxContainer) return;
                 
                 const expPopup = getBalloon(expGain, imgBoxContainer);
                 expPopup.style.opacity = '0';
                 
                 const popAnim = expPopup.animate([
-                  { transform: `translate(-50%, -10px) scale(0.5)`, opacity: 0 },
-                  { transform: `translate(-50%, -30px) scale(1.1)`, opacity: 1, offset: 0.2 },
-                  { transform: `translate(-50%, -60px) scale(1)`, opacity: 1, offset: 0.8 },
-                  { transform: `translate(-50%, -70px) scale(0.8)`, opacity: 0 }
+                  { transform: `translate(-50%, -5px) scale(0.5)`, opacity: 0 },
+                  { transform: `translate(-50%, 15px) scale(1.1)`, opacity: 1, offset: 0.2 },
+                  { transform: `translate(-50%, 35px) scale(1)`, opacity: 1, offset: 0.8 },
+                  { transform: `translate(-50%, 45px) scale(0.8)`, opacity: 0 }
                 ], {
                   duration: 1500,
                   easing: 'ease-out',
@@ -769,7 +700,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
 
               // Add small pop animation to monster image at the end
               setTimeout(() => {
-                  const mImg = topSection.querySelector('img');
+                  const mImg = header.querySelector('img');
                   if (mImg) {
                      mImg.style.transition = 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                      mImg.style.transform = 'scale(1.15) translateY(-5px)';

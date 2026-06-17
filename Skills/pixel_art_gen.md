@@ -13,32 +13,6 @@ Please generate the images listed below in a **5x5 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate (Icon)
-
-## shield
-- leaf_buckler
-- lamplight_defender
-- wind_cutter_shield
-- bark_round_shield
-- bell_chime_parrying_shield
-
-- phantom_shield
-- lizard_leather_tower_shield
-- wind_spirit_ecu
-- flowing_water_buckler
-- great_wood_heavy_shield
-
-- wing_claw_kite_shield
-- coral_shield
-- rock_wall_shield
-- dragon_bone_shield
-- teardrop_shield
-
-- hymn_divine_shield
-- thunder_roar_shield
-- swan_song_tower_shield
-- eternal_aegis
-- origin_guard
-
 ## Weapon
 - leaf_vein_dagger
 - firefly_wand
