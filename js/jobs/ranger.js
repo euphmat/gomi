@@ -130,7 +130,7 @@ export const ranger = {
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {
-      id: 'double_arrow', name: 'ダブルアロー', icon: 'keyboard_double_arrow_right',
+      id: 'double_arrow', name: 'ダブルアロー', icon: 'keyboard_double_arrow_right', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  4, multiplier: 0.8, hits: 2 },
@@ -145,7 +145,7 @@ export const ranger = {
         { level: 10, spCost: 5, mpCost: 15, multiplier: 1.3, hits: 5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を${lc.hits}連続で行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
@@ -155,7 +155,8 @@ export const ranger = {
               if (target && !target.isDead) {
                 playSkillAnimation(caster, [target], 'single_arrow', () => {
                   if (target.isDead) return;
-                  battle.executeAttack(caster, target, true, { 
+                  battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
                     actionName: '', 
                     damageMultiplier: levelConfig.multiplier, 
                     damageType: 'skill', 
@@ -183,7 +184,7 @@ export const ranger = {
       }
     },
     {
-      id: 'arrow_rain', name: 'アローレイン', icon: 'shower',
+      id: 'arrow_rain', name: 'アローレイン', icon: 'shower', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost: 15, multiplier: 0.4, hits: 2 },
@@ -198,14 +199,15 @@ export const ranger = {
         { level: 10, spCost: 5, mpCost: 32, multiplier: 0.9, hits: 6 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を${lc.hits}回行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         for (let i = 0; i < levelConfig.hits; i++) {
           setTimeout(() => {
             const targets = battle.enemies.filter(e => !e.isDead);
             playSkillAnimation(caster, targets, 'arrow_rain', (target, idx) => {
               if (target.isDead) return;
-              battle.executeAttack(caster, target, true, { 
+              battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
                 actionName: '', 
                 damageMultiplier: levelConfig.multiplier, 
                 damageType: 'skill', 
@@ -231,7 +233,7 @@ export const ranger = {
       }
     },
     {
-      id: 'rain_of_arrows', name: '五月雨矢', icon: 'storm',
+      id: 'rain_of_arrows', name: '五月雨矢', icon: 'storm', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 2, mpCost: 15, multiplier: 0.15, hits: 6 },
@@ -246,7 +248,7 @@ export const ranger = {
         { level: 10, spCost: 6, mpCost: 50, multiplier: 0.35, hits: 15 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を${lc.hits}回行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let hits = levelConfig.hits;
         for (let i = 0; i < hits; i++) {
@@ -256,7 +258,8 @@ export const ranger = {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'arrow_rain', () => {
                 if (target.isDead) return;
-                battle.executeAttack(caster, target, true, { 
+                battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
                   actionName: '', 
                   damageMultiplier: levelConfig.multiplier, 
                   damageType: 'skill', 

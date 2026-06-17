@@ -213,7 +213,7 @@ export const priest = {
         { level: 10, spCost: 5, mpCost: 15, healAmount: 260 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、HPが最も減っている味方単体の HP を ${lc.healAmount} 回復する`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveParty = battle.party.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
@@ -264,7 +264,7 @@ export const priest = {
         { level: 10, spCost: 5, mpCost: 30, reviveHp: 150 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、戦闘不能の味方単体を HP ${lc.reviveHp} で蘇生する`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const deadParty = battle.party.filter(p => p.isDead);
         if (deadParty.length === 0) {
@@ -306,7 +306,7 @@ export const priest = {
         { level: 10, spCost: 5, mpCost:  2 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、状態異常の味方単体の状態異常を回復する`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const afflictedParty = battle.party.filter(p => !p.isDead && p.activeAilment);
         if (afflictedParty.length === 0) {
@@ -332,7 +332,7 @@ export const priest = {
       }
     },
     {
-      id: 'holy', name: 'ホーリー', icon: 'light_mode',
+      id: 'holy', name: 'ホーリー', icon: 'light_mode', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  5, multiplier: 1.3 },
@@ -347,14 +347,15 @@ export const priest = {
         { level: 10, spCost: 5, mpCost: 16, multiplier: 2.4 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(1)} 倍の光属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'holy', () => {
             if (target.isDead) return;
-            battle.executeAttack(caster, target, true, { actionName: 'ホーリー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'light', hideActionName: true });
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, actionName: 'ホーリー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'light', hideActionName: true });
           });
         }
       },
@@ -387,7 +388,7 @@ export const priest = {
         { level: 10, spCost: 6, mpCost: 55, healAmount: 300 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体の HP を ${lc.healAmount} 回復する`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveParty = battle.party.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;

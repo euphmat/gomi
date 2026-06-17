@@ -281,7 +281,7 @@ export const mage = {
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {
-      id: 'fireball', name: 'ファイアボール', icon: 'local_fire_department',
+      id: 'fireball', name: 'ファイアボール', icon: 'local_fire_department', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  4, multiplier: 1.2 },
@@ -296,13 +296,14 @@ export const mage = {
         { level: 10, spCost: 5, mpCost: 15, multiplier: 2.2 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(1)} 倍の炎属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'fireball', () => {
-            battle.executeAttack(caster, target, true, { actionName: 'ファイアボール', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'fire', hideActionName: true });
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, actionName: 'ファイアボール', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'fire', hideActionName: true });
           });
         }
       },
@@ -321,7 +322,7 @@ export const mage = {
       }
     },
     {
-      id: 'ice_lance', name: 'アイスランス', icon: 'ac_unit',
+      id: 'ice_lance', name: 'アイスランス', icon: 'ac_unit', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  4, multiplier: 1.2 },
@@ -336,13 +337,14 @@ export const mage = {
         { level: 10, spCost: 5, mpCost: 15, multiplier: 2.2 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(1)} 倍の氷属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'ice_lance', () => {
-            battle.executeAttack(caster, target, true, { actionName: 'アイスランス', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'ice', hideActionName: true });
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, actionName: 'アイスランス', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'ice', hideActionName: true });
           });
         }
       },
@@ -361,7 +363,7 @@ export const mage = {
       }
     },
     {
-      id: 'thunder', name: 'サンダー', icon: 'bolt',
+      id: 'thunder', name: 'サンダー', icon: 'bolt', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  4, multiplier: 1.2 },
@@ -376,13 +378,14 @@ export const mage = {
         { level: 10, spCost: 5, mpCost: 15, multiplier: 2.2 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(1)} 倍の雷属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'thunder', () => {
-            battle.executeAttack(caster, target, true, { actionName: 'サンダー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', isMagic: true, element: 'thunder', hideActionName: true });
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, actionName: 'サンダー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'thunder', hideActionName: true });
           });
         }
       },
@@ -416,7 +419,7 @@ export const mage = {
         { level: 10, spCost: 5, mpCost: 15, mdefAmount: 40, turns: 5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体の魔法防御力を ${lc.turns} ターンの間 ${lc.mdefAmount} アップする`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveParty = battle.party.filter(p => !p.isDead);
         playSkillAnimation(caster, aliveParty, 'magic_barrier', (target) => {
@@ -438,7 +441,7 @@ export const mage = {
       }
     },
     {
-      id: 'blizzard', name: 'ブリザード', icon: 'severe_cold',
+      id: 'blizzard', name: 'ブリザード', icon: 'severe_cold', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 2, mpCost: 15, multiplier: 1.0 },
@@ -453,17 +456,17 @@ export const mage = {
         { level: 10, spCost: 6, mpCost: 80, multiplier: 2.0 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の氷属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveEnemies = battle.enemies.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'blizzard', (target, index) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, { 
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
               actionName: 'ブリザード', 
               damageMultiplier: levelConfig.multiplier, 
               damageType: 'skill', 
-              isMagic: true, 
               element: 'ice', 
               hideActionName: true, 
               skipAtbReset: index > 0, 
@@ -486,7 +489,7 @@ export const mage = {
       }
     },
     {
-      id: 'volcano', name: 'ボルケーノ', icon: 'volcano',
+      id: 'volcano', name: 'ボルケーノ', icon: 'volcano', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 2, mpCost: 15, multiplier: 1.0 },
@@ -501,17 +504,17 @@ export const mage = {
         { level: 10, spCost: 6, mpCost: 80, multiplier: 2.0 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の炎属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveEnemies = battle.enemies.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'volcano', (target, index) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, { 
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
               actionName: 'ボルケーノ', 
               damageMultiplier: levelConfig.multiplier, 
               damageType: 'skill', 
-              isMagic: true, 
               element: 'fire', 
               hideActionName: true, 
               skipAtbReset: index > 0, 
@@ -534,7 +537,7 @@ export const mage = {
       }
     },
     {
-      id: 'thunderstorm', name: 'サンダーストーム', icon: 'thunderstorm',
+      id: 'thunderstorm', name: 'サンダーストーム', icon: 'thunderstorm', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 2, mpCost: 15, multiplier: 1.0 },
@@ -549,17 +552,17 @@ export const mage = {
         { level: 10, spCost: 6, mpCost: 80, multiplier: 2.0 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の雷属性魔法攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveEnemies = battle.enemies.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'thunderstorm', (target, index) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, { 
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
               actionName: 'サンダーストーム', 
               damageMultiplier: levelConfig.multiplier, 
               damageType: 'skill', 
-              isMagic: true, 
               element: 'thunder', 
               hideActionName: true, 
               skipAtbReset: index > 0, 

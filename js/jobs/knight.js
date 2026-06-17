@@ -177,7 +177,7 @@ export const knight = {
         { level: 10, spCost: 5, mpCost: 14, turns: 5, chance: 50 }
       ],
       getDescription: (lc) => `${lc.turns} ターンの間、${lc.chance}％ の確率で味方を庇う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         playSkillAnimation(caster, [caster], 'provoke', () => {
           caster._provokeTurns = levelConfig.turns;
@@ -213,7 +213,7 @@ export const knight = {
         { level: 10, spCost: 5, mpCost: 15, defPercent: 40, turns: 5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全員の防御力を ${lc.turns} ターンの間 ${lc.defPercent}％ アップする`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveParty = battle.party.filter(p => !p.isDead);
         playSkillAnimation(caster, aliveParty, 'defense_formation', (target) => {
@@ -235,7 +235,7 @@ export const knight = {
       }
     },
     {
-      id: 'shield_attack', name: 'シールドアタック', icon: 'shield',
+      id: 'shield_attack', name: 'シールドアタック', icon: 'shield', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  3, multiplier: 1.0 },
@@ -250,7 +250,7 @@ export const knight = {
         { level: 10, spCost: 5, mpCost: 14, multiplier: 1.5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、盾の物理防御力＋自身の攻撃力で ${lc.multiplier.toFixed(2)} 倍の物理攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
@@ -268,55 +268,27 @@ export const knight = {
             }
           }
 
-          // Combined ATK = caster ATK + shield DEF
-          const combinedAtk = (caster.stats.atk || 0) + shieldDef;
-          const defStat = target.stats.def || 0;
-          let damage = Math.max(1, combinedAtk - Math.floor(defStat / 2));
-          damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
-          damage = Math.floor(damage * levelConfig.multiplier);
-
-          // Apply element damage proportionally (same as executeAttack)
-          const attackElements = caster.stats.attackElements || {};
-          const defenderElementResist = target.stats.elementResist || {};
-          let totalElementPercent = 0;
-          for (const val of Object.values(attackElements)) {
-            if (val > 0) totalElementPercent += val;
-          }
-          let elementPortionScale = 1.0;
-          if (totalElementPercent > 100) elementPortionScale = 100 / totalElementPercent;
-          let nonElementalPercent = Math.max(0, 100 - totalElementPercent);
-          if (totalElementPercent > 100) nonElementalPercent = 0;
-
-          let finalDamage = 0;
-          for (const [el, val] of Object.entries(attackElements)) {
-            if (val > 0) {
-              const resist = defenderElementResist[el] || 0;
-              const mult = Math.max(0, 1 - (resist / 100));
-              finalDamage += damage * (val * elementPortionScale / 100) * mult;
-            }
-          }
-          finalDamage += damage * (nonElementalPercent / 100);
-          damage = Math.max(1, Math.floor(finalDamage));
-
-          // Apply damage to target
-          if (target.hp !== undefined) {
-            target.hp.current -= damage;
-            if (target.hp.current <= 0) {
-              target.hp.current = 0;
-              target.isDead = true;
-            }
-          } else {
-            target.currentHp -= damage;
-            if (target.currentHp <= 0) {
-              target.currentHp = 0;
-              target.isDead = true;
-              battle.processEnemyDeath(target);
-            }
+          // Temporarily add shield DEF to stats so executeAttack can use it
+          const originalAtk = caster.stats.atk;
+          const originalMatk = caster.stats.matk;
+          if (shieldDef > 0) {
+            caster.stats.atk = (caster.stats.atk || 0) + shieldDef;
+            caster.stats.matk = (caster.stats.matk || 0) + shieldDef;
           }
 
-          battle.showDamage(target.elementId, damage, 'text-white');
-          battle.renderEntities();
-          battle.checkBattleEnd();
+          battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency,
+            actionName: 'シールドアタック',
+            damageMultiplier: levelConfig.multiplier,
+            damageType: 'skill',
+            hideActionName: true
+          });
+
+          // Restore original stats
+          if (shieldDef > 0) {
+            if (originalAtk !== undefined) caster.stats.atk = originalAtk; else delete caster.stats.atk;
+            if (originalMatk !== undefined) caster.stats.matk = originalMatk; else delete caster.stats.matk;
+          }
         });
       },
       autoBattle: {

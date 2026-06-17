@@ -1412,9 +1412,17 @@ class BattleManager {
   executeAttack(attacker, defender, isParty, options = {}) {
     const actionName = options.actionName || '攻撃';
 
+    let isMagic = options.isMagic || false;
+    let isHybrid = options.isHybrid || false;
+    
+    if (options.statDependency) {
+      if (options.statDependency === 'MAT') { isMagic = true; isHybrid = false; }
+      else if (options.statDependency === 'BOTH') { isHybrid = true; isMagic = false; }
+      else if (options.statDependency === 'ATK') { isMagic = false; isHybrid = false; }
+    }
+    options.isHybrid = isHybrid;
 
     // --- 暗闇 (Blind) の判定 ---
-    const isMagic = options.isMagic || false;
     if (!isMagic && attacker.activeAilment && attacker.activeAilment.type === 'blind' && !options.hideActionName) {
       if (Math.random() < 0.5) {
         this.showActionName(attacker.elementId, 'MISS', 'text-gray-400', 'border-gray-500/50');

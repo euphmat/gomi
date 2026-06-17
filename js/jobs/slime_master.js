@@ -172,7 +172,7 @@ export const slime_master = {
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {
-      id: 'slime_throw', name: 'スライム投げ', icon: 'water_drop',
+      id: 'slime_throw', name: 'スライム投げ', icon: 'water_drop', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost: 5, multiplier: 1.2 },
@@ -187,7 +187,7 @@ export const slime_master = {
         { level: 10, spCost: 5, mpCost: 15, multiplier: 2.5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムなスライムを${lc.level}回投げる。スライムによって属性と追加効果が変わる。1撃の基本威力 ${lc.multiplier.toFixed(2)} 倍`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let mainTarget = battle.selectedEnemyTarget;
         if (!mainTarget || mainTarget.isDead) mainTarget = battle.enemies.find(e => !e.isDead);
@@ -235,10 +235,10 @@ export const slime_master = {
           }
           
           battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency,
             actionName: 'スライム投げ',
             damageMultiplier: levelConfig.multiplier,
             damageType: 'skill',
-            isMagic: true,
             element: effect.el,
             hideActionName: true
           });
@@ -258,7 +258,7 @@ export const slime_master = {
       }
     },
     {
-      id: 'slime_hazard', name: 'スライムハザード', icon: 'storm',
+      id: 'slime_hazard', name: 'スライムハザード', icon: 'storm', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 2, mpCost: 30, multiplier: 1.5 },
@@ -276,7 +276,7 @@ export const slime_master = {
         const numSlimes = Math.round(10 + (lc.level - 1) * (20 / 9));
         return `MP を ${lc.mpCost} 消費し、ランダムな敵に${numSlimes}体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.25).toFixed(2)} 倍`;
       },
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const aliveEnemies = battle.enemies.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
@@ -297,10 +297,10 @@ export const slime_master = {
              }
           }
           battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency,
             actionName: 'スライムハザード',
             damageMultiplier: levelConfig.multiplier * 0.25,
             damageType: 'skill',
-            isMagic: true,
             hideActionName: true
           });
         });

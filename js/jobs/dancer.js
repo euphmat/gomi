@@ -288,7 +288,7 @@ export const dancer = {
   skills: [
     // ─── Active Skills ──────────────────────────────────────
     {
-      id: 'poison_salsa', name: 'ポイズン・サルサ', icon: 'coronavirus',
+      id: 'poison_salsa', name: 'ポイズン・サルサ', icon: 'coronavirus', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  8, multiplier: 0.5, chance: 30 },
@@ -303,14 +303,15 @@ export const dancer = {
         { level: 10, spCost: 5, mpCost: 30, multiplier: 1.0, chance: 80 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍のダメージを与え、${lc.chance}% の確率で毒を付与する。`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
         playSkillAnimation(caster, targets, 'poison_salsa', (target, idx) => {
           if (target.isDead) return;
           const origA = caster.stats.attackAilments;
           caster.stats.attackAilments = { ...(origA || {}), poison: levelConfig.chance };
-          battle.executeAttack(caster, target, true, { 
+          battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
             actionName: '', 
             damageMultiplier: levelConfig.multiplier, 
             damageType: 'skill', 
@@ -330,7 +331,7 @@ export const dancer = {
       }
     },
     {
-      id: 'juggling_dagger', name: 'ジャグリングダガー', icon: 'content_cut',
+      id: 'juggling_dagger', name: 'ジャグリングダガー', icon: 'content_cut', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost: 10, multiplier: 0.10, minHits: 3, maxHits: 5 },
@@ -345,7 +346,7 @@ export const dancer = {
         { level: 10, spCost: 5, mpCost: 40, multiplier: 0.25, minHits: 8, maxHits: 16 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵単体に ${lc.multiplier.toFixed(2)} 倍のダメージを ${lc.minHits}～${lc.maxHits} 回与える。`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const hits = Math.floor(Math.random() * (levelConfig.maxHits - levelConfig.minHits + 1)) + levelConfig.minHits;
         for (let i = 0; i < hits; i++) {
@@ -355,7 +356,8 @@ export const dancer = {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'juggling_dagger', () => {
                 if (target.isDead) return;
-                battle.executeAttack(caster, target, true, { 
+                battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
                   actionName: '', 
                   damageMultiplier: levelConfig.multiplier, 
                   damageType: 'skill', 
@@ -376,7 +378,7 @@ export const dancer = {
       }
     },
     {
-      id: 'confusion_tarantella', name: '混乱のタランテラ', icon: 'psychology_alt',
+      id: 'confusion_tarantella', name: '混乱のタランテラ', icon: 'psychology_alt', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 2, mpCost: 15, chance: 30 },
@@ -391,14 +393,15 @@ export const dancer = {
         { level: 10, spCost: 6, mpCost: 40, chance: 80 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.chance}% の確率で「混乱」を付与する。`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
         playSkillAnimation(caster, targets, 'confusion_tarantella', (target, idx) => {
           if (target.isDead) return;
           const origA = caster.stats.attackAilments;
           caster.stats.attackAilments = { ...(origA || {}), confusion: levelConfig.chance };
-          battle.executeAttack(caster, target, true, { 
+          battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
             actionName: '', 
             damageMultiplier: 0, 
             damageType: 'skill', 
@@ -418,7 +421,7 @@ export const dancer = {
       }
     },
     {
-      id: 'curse_step', name: 'カース・ステップ', icon: 'accessibility_new',
+      id: 'curse_step', name: 'カース・ステップ', icon: 'accessibility_new', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 3, mpCost: 25, chance: 30, minAilments: 1, maxAilments: 1 },
@@ -433,7 +436,7 @@ export const dancer = {
         { level: 10, spCost: 7, mpCost: 65, chance: 85, minAilments: 3, maxAilments: 5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.chance}% の確率でランダムな状態異常を ${lc.minAilments === lc.maxAilments ? lc.minAilments : lc.minAilments + '～' + lc.maxAilments} つ付与する。`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
         const allAilments = ['poison', 'burn', 'paralysis', 'sleep', 'confusion', 'curse', 'blind', 'silence'];
@@ -452,7 +455,8 @@ export const dancer = {
           });
           caster.stats.attackAilments = tempAilments;
           
-          battle.executeAttack(caster, target, true, { 
+          battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
             actionName: '', 
             damageMultiplier: 0, 
             damageType: 'skill', 

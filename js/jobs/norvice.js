@@ -170,7 +170,7 @@ export const norvice = {
         { level: 10, spCost: 5, mpCost: 13, healAmount: 120 }
       ],
       getDescription: (levelConfig) => `自身の HP を ${levelConfig.healAmount} 回復する`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         playSkillAnimation(caster, [caster], 'first_aid', () => {
           caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
@@ -192,7 +192,7 @@ export const norvice = {
       }
     },
     {
-      id: 'heavy_strike', name: '強撃', icon: 'swords',
+      id: 'heavy_strike', name: '強撃', icon: 'swords', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  2, multiplier: 1.1 },
@@ -207,14 +207,15 @@ export const norvice = {
         { level: 10, spCost: 5, mpCost: 12, multiplier: 2.0 }
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、敵単体に ${levelConfig.multiplier.toFixed(1)} 倍の物理攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
             playSkillAnimation(caster, [target], 'heavy_strike', () => {
                 if (target.isDead) return;
-                battle.executeAttack(caster, target, true, { actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
+                battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
             });
         }
       },
@@ -248,7 +249,7 @@ export const norvice = {
         { level: 10, spCost: 5, mpCost: 0, recoverAmount: 15 }
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.recoverAmount} 回復する`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         playSkillAnimation(caster, [caster], 'focus', () => {
           caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + levelConfig.recoverAmount);
@@ -282,7 +283,7 @@ export const norvice = {
         { level: 10, spCost: 5, mpCost:  8, reducePercent: 30, turns: 5 }
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、敵1体の物理攻撃力を ${levelConfig.turns} ターンの間 ${levelConfig.reducePercent}％ 低下させる`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
@@ -310,7 +311,7 @@ export const norvice = {
       }
     },
     {
-      id: 'cleave', name: 'なぎ払い', icon: 'cyclone',
+      id: 'cleave', name: 'なぎ払い', icon: 'cyclone', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost:  4, multiplier: 0.5 },
@@ -325,14 +326,15 @@ export const norvice = {
         { level: 10, spCost: 5, mpCost: 15, multiplier: 1.0 }
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、敵全体に ${levelConfig.multiplier.toFixed(2)} 倍の物理攻撃を行う`,
-      execute: (caster, levelConfig, battle) => {
+      execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
         if (targets.length === 0) return;
 
         playSkillAnimation(caster, targets, 'cleave', (target, index) => {
             if (target.isDead) return;
-            battle.executeAttack(caster, target, true, { 
+            battle.executeAttack(caster, target, true, {
+            statDependency: this.statDependency, 
                 actionName: 'なぎ払い', 
                 damageMultiplier: levelConfig.multiplier, 
                 damageType: 'skill', 
