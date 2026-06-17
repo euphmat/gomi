@@ -421,7 +421,7 @@ export const dancer = {
       }
     },
     {
-      id: 'curse_step', name: 'カース・ステップ', icon: 'accessibility_new', statDependency: 'ATK',
+      id: 'curse_step', name: 'カース・ステップ', icon: 'accessibility_new', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 3, mpCost: 25, chance: 30, minAilments: 1, maxAilments: 1 },
