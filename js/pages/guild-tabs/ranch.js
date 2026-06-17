@@ -222,7 +222,7 @@ export async function renderRanchTab() {
     
     // Status Bonus Summary
     const summaryContainer = document.createElement('div');
-    summaryContainer.className = 'p-2 shrink-0 bg-slate-900/80 backdrop-blur-sm border-t border-slate-800 w-full flex flex-col sm:flex-row sm:items-center gap-2';
+    summaryContainer.className = 'p-1.5 shrink-0 bg-slate-900/80 backdrop-blur-sm border-t border-slate-800 w-full flex flex-row items-center gap-2';
     
     const titleBox = document.createElement('div');
     titleBox.className = 'flex items-center gap-1 text-pink-400 shrink-0';
@@ -233,7 +233,7 @@ export async function renderRanchTab() {
     summaryContainer.appendChild(titleBox);
 
     const statsGrid = document.createElement('div');
-    statsGrid.className = 'flex flex-wrap items-center gap-1.5 flex-1';
+    statsGrid.className = 'flex flex-nowrap items-center gap-1.5 flex-1 overflow-x-auto no-scrollbar pr-2';
     
     // Calculate total bonus
     const totalBonus = await calculateTotalRanchBonus();
