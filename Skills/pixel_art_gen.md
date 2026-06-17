@@ -13,27 +13,6 @@ Please generate the images listed below in a **5x5 grid** format.
     - Intricate textures within each icon
 
 ## List of Images to Generate (Icon)
-## Weapon
-- leaf_vein_dagger
-- firefly_wand
-- pixie_bow
-- mandragora_whip
-- swallow_rapier
-- cursed_spirit_mace
-- dragon_flute_spear
-- melody_baton
-- water_chime_cane
-- great_tree_battleaxe
-- griffon_claw_blade
-- alluring_harp
-- golem_fist
-- dragon_string_bow
-- requiem_staff
-- white_deer_horn_sword
-- thunderbird_warhammer
-- swan_song_blade
-- eternal_echo_sword
-- genesis_wand
 
 ## Materials
 - mat_humming_leaf_vein
@@ -41,25 +20,35 @@ Please generate the images listed below in a **5x5 grid** format.
 - mat_spirit_leaf_fossil
 - mat_glow_bug_shell
 - mat_resonance_phosphorus
+
 - mat_eternal_light_core
 - mat_pixie_dust
 - mat_breeze_wing
 - mat_fairy_wind_stone
 - mat_singing_root
+
 - mat_mandragora_leaf
 - mat_choir_seed
 - mat_bell_feather
 - mat_swallow_beak
 - mat_chime_crystal
+
 - mat_echo_ectoplasm
 - mat_wisp_flame
 - mat_reverberating_soul
 - mat_flute_scale
 - mat_lizard_throat
+
 - mat_wind_dragon_horn
 - mat_sylph_garment
 - mat_melody_orb
 - mat_sylphid_heart
+
+
+
+
+
+
 - mat_water_chime_jelly
 - mat_echo_water
 - mat_suikinkutsu_core
