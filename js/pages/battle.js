@@ -2401,6 +2401,9 @@ class BattleManager {
           let baseLevelUp = false;
           let jobLevelUp = false;
 
+          const oldMaxHp = p.stats ? p.stats.hp : (p.hp.max || 0);
+          const oldMaxMp = p.stats ? p.stats.mp : (p.mp.max || 0);
+
           // Level Up Logic
           if (!p.exp.max || p.exp.max <= 0) p.exp.max = 10;
           let loopGuardExp = 0;
@@ -2416,9 +2419,7 @@ class BattleManager {
               const hpGrowth = getGrowth(jobGrowth.hp);
               const mpGrowth = getGrowth(jobGrowth.mp);
               p.hp.max += hpGrowth;
-              p.hp.current += hpGrowth;
               p.mp.max += mpGrowth;
-              p.mp.current += mpGrowth;
               p.baseStats.atk += getGrowth(jobGrowth.atk);
               p.baseStats.def += getGrowth(jobGrowth.def);
               p.baseStats.matk += getGrowth(jobGrowth.matk);
@@ -2441,7 +2442,11 @@ class BattleManager {
 
           if (baseLevelUp || jobLevelUp) {
             p.stats = calcFinalStats(p, this.equipMap);
-            if (baseLevelUp) this.showLevelUp(p.elementId, 'base');
+            if (baseLevelUp) {
+              p.hp.current += Math.max(0, p.stats.hp - oldMaxHp);
+              p.mp.current += Math.max(0, p.stats.mp - oldMaxMp);
+              this.showLevelUp(p.elementId, 'base');
+            }
             if (jobLevelUp) {
               p._skillCache = null; // Invalidate cache on job level up
               setTimeout(() => this.showLevelUp(p.elementId, 'job'), baseLevelUp ? (400 / this.speedMult) : 0);

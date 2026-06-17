@@ -147,6 +147,16 @@ export function calcFinalStats(character, equipmentMap) {
   result.def = Math.floor(result.def * defMultiplier);
   result.mdef = Math.floor(result.mdef * mdefMultiplier);
 
+  // Apply job specific stat multipliers
+  const jobDef = JOBS[character.jobId];
+  if (jobDef && jobDef.statMultiplier) {
+    for (const key of statKeys) {
+      if (jobDef.statMultiplier[key] !== undefined) {
+        result[key] = Math.floor(result[key] * jobDef.statMultiplier[key]);
+      }
+    }
+  }
+
   return result;
 }
 
