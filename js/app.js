@@ -201,7 +201,7 @@ class App {
               </div>
               <div>
                 <span class="text-sm font-bold text-gray-100 tracking-wide">設定</span>
-                <span class="text-[9px] text-gray-500 ml-2 font-mono bg-gray-800/60 px-1.5 py-0.5 rounded">v0040</span>
+                <span class="text-[11px] text-blue-300 ml-2 font-mono bg-blue-900/50 border border-blue-700/50 px-2 py-0.5 rounded-md">v0040</span>
               </div>
             </div>
             <button id="settings-close"
