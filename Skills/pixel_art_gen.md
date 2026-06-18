@@ -15,15 +15,12 @@ Please generate the images listed below in a **5x5 grid** format.
 ## List of Images to Generate (Icon)
 
 ## Materials
-- mat_storm_feather
-- mat_thunder_bird_beak
-- mat_tempest_eye
-- mat_spirit_knight_armor
-- mat_swan_song_blade
-- mat_knight_soul_stone
-- mat_echo_dragon_scale
-- mat_eternal_fang
-- mat_resonance_dragon_core
-- mat_genesis_song_fragment
-- mat_creation_tear
-- mat_origin_melody_crystal
+- mat_suikinkutsu_core
+- mat_phantom_tear
+- mat_mermaid_voice_jewel
+- mat_siren_scale
+- mat_griffon_feather
+- mat_dragon_string
+- mat_gale_fang
+- mat_resonance_stone
+- mat_vibrating_core
