@@ -28,6 +28,9 @@ export const ACCESSORIES = [
   { id: 'slime_angel_ring', name: 'エンジェルスライムリング', stats: { hp: 130, def: 27, mdef: 25 }, recipe: { price: 6500, materials: [{ id: 'slime_angel_jelly', amount: 25 }, { id: 'slime_angel_core', amount: 15 }, { id: 'slime_angel_fluid', amount: 5 }] } },
   { id: 'slime_king_ring', name: 'キングスライムリング', stats: { hp: 130, def: 27, mdef: 29 }, recipe: { price: 7000, materials: [{ id: 'slime_king_jelly', amount: 25 }, { id: 'slime_king_core', amount: 15 }, { id: 'slime_king_fluid', amount: 5 }] } },
   { id: 'slime_angel_king_ring', name: 'エンジェルキングスライムリング', stats: { hp: 150, def: 31, mdef: 29 }, recipe: { price: 7500, materials: [{ id: 'slime_angel_king_jelly', amount: 25 }, { id: 'slime_angel_king_core', amount: 15 }, { id: 'slime_angel_king_fluid', amount: 5 }] } },
+  { id: 'slime_amethyst_ring', name: 'アメジストリング', stats: { hp: 200, def: 35, mdef: 45 }, elements: { light: 10, dark: 10 }, recipe: { price: 8000, materials: [{ id: 'slime_amethyst_shard', amount: 25 }, { id: 'slime_amethyst_crystal', amount: 15 }, { id: 'slime_amethyst_heart', amount: 5 }] } },
+  { id: 'slime_tiger_eye_amulet', name: '猛虎のお守り', stats: { hp: 250, def: 45, mdef: 35, spd: 10 }, elements: { earth: 10 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 25 }, { id: 'slime_tiger_eye_fang', amount: 15 }, { id: 'slime_tiger_eye_soul', amount: 5 }] } },
+  { id: 'slime_king_devil_seal', name: '魔王の印', stats: { hp: 300, def: 55, mdef: 55 }, elements: { dark: 20 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 25 }, { id: 'slime_king_devil_wing', amount: 15 }, { id: 'slime_king_devil_crown', amount: 5 }] } },
 
   // 蜘蛛の洞窟
   { id: 'spider_cave_ring', name: 'ケイブスパイダーリング', stats: { hp: 160, def: 35, mdef: 33 }, recipe: { price: 8000, materials: [{ id: 'spider_cave_silk', amount: 250 }, { id: 'spider_cave_fang', amount: 150 }, { id: 'spider_cave_venom', amount: 50 }] } },

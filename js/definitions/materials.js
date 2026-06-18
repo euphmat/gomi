@@ -53,6 +53,16 @@ export const MATERIALS = [
   { id: 'slime_angel_king_jelly', name: 'エンジェルキングスライムのゼリー', sellPrice: 1 },
   { id: 'slime_angel_king_core', name: 'エンジェルキングスライムのコア', sellPrice: 1 },
   { id: 'slime_angel_king_fluid', name: 'エンジェルキングスライムの体液', sellPrice: 1 },
+  { id: 'slime_amethyst_shard', name: 'アメジストの欠片', sellPrice: 10 },
+  { id: 'slime_amethyst_crystal', name: '紫水晶の結晶', sellPrice: 50 },
+  { id: 'slime_amethyst_heart', name: '紫光の心臓', sellPrice: 200 },
+  { id: 'slime_tiger_eye_stone', name: '虎目石の欠片', sellPrice: 10 },
+  { id: 'slime_tiger_eye_fang', name: '虎の牙', sellPrice: 50 },
+  { id: 'slime_tiger_eye_soul', name: '猛虎の魂', sellPrice: 200 },
+  { id: 'slime_king_devil_horn', name: '悪魔王の角', sellPrice: 20 },
+  { id: 'slime_king_devil_wing', name: '悪魔王の翼膜', sellPrice: 100 },
+  { id: 'slime_king_devil_crown', name: '魔王の冠', sellPrice: 500 },
+
 
   // 蜘蛛の洞窟
   { id: 'spider_cave_silk', name: 'ケイブスパイダーの糸', sellPrice: 1 },

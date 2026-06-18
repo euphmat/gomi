@@ -30,6 +30,9 @@ export const SHIELDS = [
   { id: 'slime_king_shield', name: 'キングスライムの盾', stats: { def: 27, mdef: 29 }, elements: { water: 15, grass: 15 }, recipe: { price: 7000, materials: [{ id: 'slime_king_fluid', amount: 25 }, { id: 'slime_king_jelly', amount: 5 }] } },
   { id: 'slime_angel_shield', name: 'エンジェルスライムの盾', stats: { def: 27, mdef: 25 }, elements: { light: 20 }, recipe: { price: 7500, materials: [{ id: 'slime_angel_fluid', amount: 25 }, { id: 'slime_angel_jelly', amount: 5 }] } },
   { id: 'slime_angel_king_shield', name: 'エンジェルキングスライムの盾', stats: { def: 31, mdef: 29 }, elements: { light: 30, dark: 30 }, recipe: { price: 7500, materials: [{ id: 'slime_angel_king_fluid', amount: 25 }, { id: 'slime_angel_king_jelly', amount: 5 }] } },
+  { id: 'slime_amethyst_buckler', name: 'アメジストバックラー', stats: { def: 35, mdef: 40 }, elements: { light: 10, dark: 10 }, recipe: { price: 8000, materials: [{ id: 'slime_amethyst_shard', amount: 25 }, { id: 'slime_amethyst_crystal', amount: 5 }] } },
+  { id: 'slime_tiger_eye_shield', name: '猛虎の盾', stats: { def: 45, mdef: 30 }, elements: { earth: 10 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 25 }, { id: 'slime_tiger_eye_fang', amount: 5 }] } },
+  { id: 'slime_king_devil_shield', name: '悪魔王の魔盾', stats: { def: 55, mdef: 55 }, elements: { dark: 20 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 25 }, { id: 'slime_king_devil_wing', amount: 5 }] } },
 
   // 蜘蛛の洞窟
   { id: 'spider_cave_shield', name: 'ケイブスパイダーの盾', stats: { def: 35, mdef: 33 }, elements: {}, recipe: { price: 8000, materials: [{ id: 'spider_cave_venom', amount: 250 }, { id: 'spider_cave_silk', amount: 50 }] } },

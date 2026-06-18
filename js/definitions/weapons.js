@@ -27,6 +27,9 @@ export const WEAPONS = [
   { id: 'slime_angel_bow', name: 'エンジェルスライムボウ', stats: { atk: 52, matk: 52, spd: 13 }, elements: { light: 20 }, recipe: { price: 6500, materials: [{ id: 'slime_angel_jelly', amount: 25 }, { id: 'slime_angel_core', amount: 5 }] } },
   { id: 'slime_king_staff', name: 'キングスライムスタッフ', stats: { atk: 28, matk: 84 }, elements: { fire: 15, water: 15, }, recipe: { price: 7000, materials: [{ id: 'slime_king_jelly', amount: 25 }, { id: 'slime_king_core', amount: 5 }] } },
   { id: 'slime_angel_king_staff', name: 'エンジェルキングスライムスタッフ', stats: { atk: 30, matk: 90 }, elements: { light: 30, dark: 30 }, recipe: { price: 7500, materials: [{ id: 'slime_angel_king_jelly', amount: 25 }, { id: 'slime_angel_king_core', amount: 5 }] } },
+  { id: 'slime_amethyst_wand', name: 'アメジストワンド', stats: { atk: 25, matk: 110, spd: 10 }, elements: { light: 15, dark: 15 }, recipe: { price: 8000, materials: [{ id: 'slime_amethyst_shard', amount: 20 }, { id: 'slime_amethyst_crystal', amount: 5 }] } },
+  { id: 'slime_tiger_eye_claw', name: 'タイガークロー', stats: { atk: 85, spd: 25 }, elements: { earth: 20 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 20 }, { id: 'slime_tiger_eye_fang', amount: 5 }, { id: 'slime_tiger_eye_soul', amount: 1 }] } },
+  { id: 'slime_king_devil_scythe', name: 'デビルサイス', stats: { atk: 120, matk: 60 }, elements: { dark: 40 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 20 }, { id: 'slime_king_devil_wing', amount: 5 }, { id: 'slime_king_devil_crown', amount: 1 }] } },
 
   // 蜘蛛の洞窟
   { id: 'spider_cave_sword', name: 'ケイブスパイダーソード', stats: { atk: 40, spd: 5 }, elements: { dark: 10 }, recipe: { price: 8000, materials: [{ id: 'spider_cave_silk', amount: 250 }, { id: 'spider_cave_fang', amount: 50 }] } },

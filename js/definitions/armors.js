@@ -29,6 +29,9 @@ export const ARMORS = [
   { id: 'slime_angel_armor', name: 'エンジェルスライムアーマー', stats: { def: 40, mdef: 38 }, elements: { light: 20 }, recipe: { price: 6500, materials: [{ id: 'slime_angel_core', amount: 25 }, { id: 'slime_angel_fluid', amount: 5 }] } },
   { id: 'slime_king_armor', name: 'キングスライムアーマー', stats: { def: 41, mdef: 43 }, elements: { fire: 15, water: 15 }, recipe: { price: 7000, materials: [{ id: 'slime_king_core', amount: 25 }, { id: 'slime_king_fluid', amount: 5 }] } },
   { id: 'slime_angel_king_armor', name: 'エンジェルキングスライムアーマー', stats: { def: 46, mdef: 44 }, elements: { light: 30, dark: 30 }, recipe: { price: 7500, materials: [{ id: 'slime_angel_king_core', amount: 25 }, { id: 'slime_angel_king_fluid', amount: 5 }] } },
+  { id: 'slime_amethyst_robe', name: '紫光のローブ', stats: { def: 50, mdef: 80 }, elements: { light: 15, dark: 15 }, recipe: { price: 8000, materials: [{ id: 'slime_amethyst_crystal', amount: 20 }, { id: 'slime_amethyst_heart', amount: 5 }] } },
+  { id: 'slime_tiger_eye_armor', name: '虎目石の軽鎧', stats: { def: 75, mdef: 60, spd: 15 }, elements: { earth: 15 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 20 }, { id: 'slime_tiger_eye_fang', amount: 5 }] } },
+  { id: 'slime_king_devil_cloak', name: 'デビルクローク', stats: { def: 90, mdef: 90 }, elements: { dark: 30 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 20 }, { id: 'slime_king_devil_wing', amount: 5 }] } },
 
   // 蜘蛛の洞窟
   { id: 'spider_cave_armor', name: 'ケイブスパイダーアーマー', stats: { def: 52, mdef: 50 }, recipe: { price: 8000, materials: [{ id: 'spider_cave_fang', amount: 250 }, { id: 'spider_cave_venom', amount: 50 }] } },

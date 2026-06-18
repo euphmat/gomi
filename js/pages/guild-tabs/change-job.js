@@ -431,7 +431,7 @@ export function renderChangeJobTab() {
     container.className = 'flex-1 overflow-y-auto space-y-4 pb-6 px-1';
 
     const cost = 10000;
-    const canRebirthLevel = char.level >= 40;
+    const canRebirthLevel = char.level >= 50;
     const canRebirthGold = currentGold >= cost;
     const canRebirth = canRebirthLevel && canRebirthGold;
 
@@ -454,7 +454,7 @@ export function renderChangeJobTab() {
     container.innerHTML = `
       <div class="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-4">
         <h3 class="text-indigo-300 font-bold mb-2 flex items-center gap-2"><span class="material-symbols-outlined">auto_awesome</span>転生とは</h3>
-        <p class="text-sm text-gray-300 leading-relaxed">ベースレベル40以上で実行可能な儀式です。現在の装備を除いた基礎能力の10%を永続ボーナスとして引き継ぎ、レベル1から再度育成することができます。ジョブレベルや習得スキルは失われません。</p>
+        <p class="text-sm text-gray-300 leading-relaxed">ベースレベル50以上で実行可能な儀式です。現在の装備を除いた基礎能力の10%を永続ボーナスとして引き継ぎ、レベル1から再度育成することができます。ジョブレベルや習得スキルは失われません。</p>
       </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -533,7 +533,7 @@ export function renderChangeJobTab() {
 
       <div class="text-center mt-6">
         ${!canRebirthLevel
-          ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60" disabled>レベル40が必要です (現在Lv.${char.level})</button>`
+          ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60" disabled>レベル50が必要です (現在Lv.${char.level})</button>`
           : !canRebirthGold
             ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60 flex items-center justify-center gap-2 mx-auto" disabled><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G が必要です</button>`
             : `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all flex items-center justify-center gap-2 mx-auto"><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G で転生する</button>`
