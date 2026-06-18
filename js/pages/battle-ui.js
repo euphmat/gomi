@@ -320,7 +320,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           </div>
           <div class="flex flex-col flex-1 justify-center min-w-0">
             <div class="flex items-center gap-2 mb-1 overflow-hidden">
-              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
+              <span class="font-black ${targetEntity.isLegendary ? 'text-yellow-300 animate-rainbow' : 'text-red-400'} text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
               <span class="text-red-300 text-[10px] font-black bg-red-950/60 border border-red-900/60 px-2 py-0.5 rounded-full shrink-0 tracking-wider">討伐: ${formatNumber(kills)}</span>
             </div>
             <!-- Status Badges -->

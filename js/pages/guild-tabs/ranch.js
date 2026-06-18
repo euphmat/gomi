@@ -179,7 +179,7 @@ export async function renderRanchTab() {
            <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap pointer-events-none shadow-md z-10">
              Lv.${getRanchLevelInfo(mData.fedMaterials || 0, isLegendary).level}
            </div>
-           <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[9px] font-bold ${isLegendary ? 'text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)]' : 'text-slate-200'} whitespace-nowrap pointer-events-none shadow-md z-10 text-center w-max">
+           <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[9px] font-bold ${isLegendary ? 'text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)] animate-rainbow' : 'text-slate-200'} whitespace-nowrap pointer-events-none shadow-md z-10 text-center w-max">
              ${mDef.name}
            </div>
         </div>
@@ -308,7 +308,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
       <div class="relative w-8 h-8 ${isLegendary ? 'animate-rainbow' : ''}">
         <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-md">
       </div>
-      ${monsterDef.name}
+      <span class="${isLegendary ? 'animate-rainbow text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)]' : ''}">${monsterDef.name}</span>
     </h3>
     <div class="flex items-center gap-1.5">
       <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">
@@ -351,7 +351,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   const getBonusFromStats = (monsterStats) => {
     const bonus = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
     for (const key of Object.keys(bonus)) {
-      const divisor = key === 'hp' ? 100 : 10;
+      const divisor = 100;
       bonus[key] = Math.max(1, Math.floor((monsterStats[key] || 0) / divisor));
     }
     return bonus;
