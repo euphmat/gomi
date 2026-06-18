@@ -173,13 +173,13 @@ export async function renderRanchTab() {
       
       mEl.innerHTML = `
         <div class="relative flex flex-col items-center justify-center w-[72px] h-[72px] bg-slate-900/40 rounded-2xl border border-slate-700/50 shadow-inner group-hover:bg-slate-800/60 group-hover:border-pink-500/50 transition-colors backdrop-blur-sm">
-           <div class="ranch-monster-idle relative ${isLegendary ? 'animate-rainbow' : ''}" style="animation-delay: ${animDelay}s;">
-             <img src="${mDef.image}" class="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)]" onerror="this.src='assets/monsters/slime.png'">
+           <div class="ranch-monster-idle relative" style="animation-delay: ${animDelay}s;">
+             <img src="${mDef.image}" class="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] ${isLegendary ? 'animate-rainbow' : ''}" onerror="this.src='assets/monsters/slime.png'">
            </div>
            <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold text-pink-300 whitespace-nowrap pointer-events-none shadow-md z-10">
              Lv.${getRanchLevelInfo(mData.fedMaterials || 0, isLegendary).level}
            </div>
-           <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[9px] font-bold ${isLegendary ? 'text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)] animate-rainbow' : 'text-slate-200'} whitespace-nowrap pointer-events-none shadow-md z-10 text-center w-max">
+           <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 px-2 py-0.5 rounded-full text-[9px] font-bold ${isLegendary ? 'text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)]' : 'text-slate-200'} whitespace-nowrap pointer-events-none shadow-md z-10 text-center w-max">
              ${mDef.name}
            </div>
         </div>
@@ -305,10 +305,10 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   header.className = 'p-3 border-b border-slate-800 flex justify-between items-center shrink-0 bg-slate-800/50';
   header.innerHTML = `
     <h3 class="text-sm font-black text-pink-400 flex items-center gap-2 relative" id="feed-modal-img-box">
-      <div class="relative w-8 h-8 ${isLegendary ? 'animate-rainbow' : ''}">
-        <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-md">
+      <div class="relative w-8 h-8">
+        <img src="${monsterDef.image}" class="w-full h-full object-contain drop-shadow-md ${isLegendary ? 'animate-rainbow' : ''}">
       </div>
-      <span class="${isLegendary ? 'animate-rainbow text-yellow-300 drop-shadow-[0_0_2px_rgba(253,224,71,0.8)]' : ''}">${monsterDef.name}</span>
+      ${monsterDef.name}
     </h3>
     <div class="flex items-center gap-1.5">
       <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">

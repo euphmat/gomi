@@ -316,11 +316,11 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       <div class="flex flex-col gap-2 pb-2 border-b border-slate-700/80 shrink-0 relative z-10">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-lg bg-slate-950 border-2 border-red-500/50 overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-[0_0_12px_rgba(239,68,68,0.2)]">
-            <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md" onerror="this.style.display='none'">
+            <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
           </div>
           <div class="flex flex-col flex-1 justify-center min-w-0">
             <div class="flex items-center gap-2 mb-1 overflow-hidden">
-              <span class="font-black ${targetEntity.isLegendary ? 'text-yellow-300 animate-rainbow' : 'text-red-400'} text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
+              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
               <span class="text-red-300 text-[10px] font-black bg-red-950/60 border border-red-900/60 px-2 py-0.5 rounded-full shrink-0 tracking-wider">討伐: ${formatNumber(kills)}</span>
             </div>
             <!-- Status Badges -->
