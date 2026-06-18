@@ -99,6 +99,14 @@ export function renderItemLibraryTab() {
   const rightControls = document.createElement('div');
   rightControls.className = 'flex items-center gap-2 shrink-0';
 
+  const helpBtn = document.createElement('button');
+  helpBtn.className = 'flex items-center justify-center w-10 h-10 bg-slate-800/40 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 hover:border-blue-400 transition-colors cursor-pointer shadow-[0_0_10px_rgba(59,130,246,0.1)]';
+  helpBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">help</span>';
+  helpBtn.onclick = () => {
+    showHelpModal();
+  };
+  rightControls.appendChild(helpBtn);
+
   const viewModeContainer = document.createElement('div');
   viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-10';
 
@@ -304,6 +312,84 @@ export function renderItemLibraryTab() {
     });
     
     renderPagination(totalPages);
+  };
+
+  const showHelpModal = () => {
+    let currentAtk = 0, currentDef = 0, currentMdef = 0, currentMatk = 0;
+    WEAPONS.forEach(w => { if (acquiredBaseIds.has(w.id)) currentAtk++; });
+    ARMORS.forEach(a => { if (acquiredBaseIds.has(a.id)) currentDef++; });
+    SHIELDS.forEach(s => { if (acquiredBaseIds.has(s.id)) currentMdef++; });
+    ACCESSORIES.forEach(ac => { if (acquiredBaseIds.has(ac.id)) currentMatk++; });
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in px-4 py-8';
+    
+    const modal = document.createElement('div');
+    modal.className = 'bg-[#0c0d19] border border-slate-800 rounded-2xl w-full max-w-[390px] shadow-[0_0_50px_-12px_rgba(0,0,0,0.8)] shadow-blue-500/10 flex flex-col overflow-hidden animate-[slide-up_0.25s_cubic-bezier(0.16,1,0.3,1)] max-h-full';
+    
+    const header = document.createElement('div');
+    header.className = 'flex justify-between items-center px-4 py-3 border-b border-slate-800/80 bg-slate-900/40 shrink-0';
+    header.innerHTML = `
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-blue-400 text-lg">info</span>
+        <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">アイテム図鑑の恩恵</span>
+      </div>
+      <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shrink-0" id="close-help-modal-btn">
+        <span class="material-symbols-outlined text-lg">close</span>
+      </button>
+    `;
+    
+    const body = document.createElement('div');
+    body.className = 'p-4 flex flex-col gap-4 overflow-y-auto flex-1 min-h-0 text-slate-300 text-sm leading-relaxed';
+    body.innerHTML = `
+      <p>アイテム図鑑に登録された（一度でも入手したことがある）装備品の数に応じて、キャラクター全員の基礎ステータスにボーナスが付与されます。</p>
+      
+      <div class="flex flex-col gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+        <div class="flex items-center justify-between border-b border-slate-800/50 pb-2 mb-1">
+          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-rose-400 text-[18px]">swords</span> <span class="font-bold text-gray-200">武器</span></div>
+          <div class="flex flex-col items-end">
+            <span class="text-[10px] text-slate-500">1種につき ATK +1</span>
+            <span class="font-bold text-rose-400 font-mono text-[13px]">現在 ATK +${currentAtk}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between border-b border-slate-800/50 pb-2 mb-1">
+          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-indigo-400 text-[18px]">checkroom</span> <span class="font-bold text-gray-200">防具</span></div>
+          <div class="flex flex-col items-end">
+            <span class="text-[10px] text-slate-500">1種につき DEF +1</span>
+            <span class="font-bold text-indigo-400 font-mono text-[13px]">現在 DEF +${currentDef}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between border-b border-slate-800/50 pb-2 mb-1">
+          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-blue-400 text-[18px]">shield</span> <span class="font-bold text-gray-200">盾</span></div>
+          <div class="flex flex-col items-end">
+            <span class="text-[10px] text-slate-500">1種につき MDEF +1</span>
+            <span class="font-bold text-blue-400 font-mono text-[13px]">現在 MDEF +${currentMdef}</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-amber-400 text-[18px]">diamond</span> <span class="font-bold text-gray-200">装飾品</span></div>
+          <div class="flex flex-col items-end">
+            <span class="text-[10px] text-slate-500">1種につき MATK +1</span>
+            <span class="font-bold text-amber-400 font-mono text-[13px]">現在 MATK +${currentMatk}</span>
+          </div>
+        </div>
+      </div>
+      
+      <p class="text-[11px] text-slate-400 mt-1">※ このボーナスは転生時のステータス引き継ぎ計算（恩恵）には含まれません。<br>※ 素材アイテムによるボーナスはありません。</p>
+    `;
+    
+    modal.appendChild(header);
+    modal.appendChild(body);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const closeModal = () => {
+      modal.classList.replace('animate-[slide-up_0.25s_cubic-bezier(0.16,1,0.3,1)]', 'animate-[slide-down_0.2s_ease-in]');
+      overlay.classList.add('opacity-0');
+      setTimeout(() => overlay.remove(), 200);
+    };
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
+    modal.querySelector('#close-help-modal-btn').onclick = closeModal;
   };
 
   const showItemModal = (item, isAcquired) => {

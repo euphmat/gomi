@@ -19,7 +19,7 @@ export const DUNGEONS = [{
     { level: 11, monsters: [{ slime_earth: 2, weight: 35 }, { slime_earth: 3, slime_grass: 1, slime_flower: 1, weight: 20 }, { slime_dark: 3, weight: 22.5 }, { slime_angel: 3, weight: 22.5 }] },
     { level: 12, monsters: [{ slime_king: 1, weight: 95 }, { slime_angel_king: 1, weight: 5 }] },
     { level: 13, monsters: [{ slime_angel_king: 1, weight: 100 }] },
-    { level: 14, monsters: [{ slime_amethyst: 2, weight: 30 }, { slime_tiger_eye: 2, weight: 30 }, { slime_king_devil: 1, weight: 40 }] }
+    { level: 14, monsters: [{ slime_amethyst: 2, slime_king_devil: 1, slime_tiger_eye: 2,  weight: 100 }] }
   ]
 },
 {

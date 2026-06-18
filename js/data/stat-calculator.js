@@ -18,6 +18,10 @@ import { STAT_KEYS } from './constants.js';
 import { JOBS } from '../jobs/index.js';
 import { GameDB } from './database.js';
 import { MONSTERS } from '../definitions/monsters.js';
+import { WEAPONS } from '../definitions/weapons.js';
+import { ARMORS } from '../definitions/armors.js';
+import { SHIELDS } from '../definitions/shields.js';
+import { ACCESSORIES } from '../definitions/accessories.js';
 
 /**
  * Calculate the final stats for a character.
@@ -41,7 +45,7 @@ export function calcFinalStats(character, equipmentMap) {
   
   for (const key of statKeys) {
     if (key === 'hp' || key === 'mp') continue;
-    result[key] = (character.baseStats[key] || 0) + (character.rebirthBonus?.[key] || 0) + (character.ranchBonus?.[key] || 0);
+    result[key] = (character.baseStats[key] || 0) + (character.rebirthBonus?.[key] || 0) + (character.ranchBonus?.[key] || 0) + (character.dictionaryBonus?.[key] || 0);
   }
 
   // Add equipment bonuses
@@ -266,6 +270,44 @@ export async function calculateTotalRanchBonus() {
 }
 
 /**
+ * Calculate the total bonus from acquired items in the item dictionary.
+ * 
+ * @returns {Promise<{ atk: number, def: number, mdef: number, matk: number }>}
+ */
+export async function calculateDictionaryBonus() {
+  const [eq, inv, discovered] = await Promise.all([
+    GameDB.getAllEquipment(),
+    GameDB.getAllInventory(),
+    GameDB.getGameState('discovered_items')
+  ]);
+
+  const acquiredBaseIds = new Set();
+  const getBaseId = (id) => {
+    const lastUnderscore = id.lastIndexOf('_');
+    if (lastUnderscore > 0) {
+      const suffix = id.substring(lastUnderscore + 1);
+      if (suffix.length >= 4 && /^[a-z0-9]+$/.test(suffix) && suffix !== 'ring') {
+        return id.substring(0, lastUnderscore);
+      }
+    }
+    return id;
+  };
+
+  eq.forEach(item => acquiredBaseIds.add(item.baseId || getBaseId(item.id)));
+  inv.forEach(item => acquiredBaseIds.add(item.id));
+  if (discovered) discovered.forEach(id => acquiredBaseIds.add(id));
+
+  let atk = 0, def = 0, mdef = 0, matk = 0;
+
+  WEAPONS.forEach(w => { if (acquiredBaseIds.has(w.id)) atk += 1; });
+  ARMORS.forEach(a => { if (acquiredBaseIds.has(a.id)) def += 1; });
+  SHIELDS.forEach(s => { if (acquiredBaseIds.has(s.id)) mdef += 1; });
+  ACCESSORIES.forEach(ac => { if (acquiredBaseIds.has(ac.id)) matk += 1; });
+
+  return { atk, def, mdef, matk };
+}
+
+/**
  * Fetch all characters and attach the calculated ranchBonus to them.
  * 
  * @returns {Promise<Array<Object>>}
@@ -273,11 +315,13 @@ export async function calculateTotalRanchBonus() {
 export async function getCharactersWithRanchBonus() {
   const characters = await GameDB.getAllCharacters();
   const ranchBonus = await calculateTotalRanchBonus();
+  const dictionaryBonus = await calculateDictionaryBonus();
   const equipment = await GameDB.getAllEquipment();
   const equipmentMap = buildEquipmentMap(equipment);
   
   for (const c of characters) {
     c.ranchBonus = ranchBonus;
+    c.dictionaryBonus = dictionaryBonus;
     let needSave = false;
     
     // Migrate old inheritedSkill format
