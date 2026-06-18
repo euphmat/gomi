@@ -175,16 +175,16 @@ export const slime_master = {
       id: 'slime_throw', name: 'スライム投げ', icon: 'water_drop', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 20, multiplier: 1.2 },
-        { level:  2, spCost: 1, mpCost: 24, multiplier: 1.3 },
-        { level:  3, spCost: 1, mpCost: 28, multiplier: 1.4 },
-        { level:  4, spCost: 2, mpCost: 32, multiplier: 1.5 },
-        { level:  5, spCost: 2, mpCost: 36, multiplier: 1.6 },
-        { level:  6, spCost: 2, mpCost: 40, multiplier: 1.7 },
-        { level:  7, spCost: 3, mpCost: 44, multiplier: 1.8 },
-        { level:  8, spCost: 3, mpCost: 48, multiplier: 1.9 },
-        { level:  9, spCost: 3, mpCost: 52, multiplier: 2.0 },
-        { level: 10, spCost: 5, mpCost: 60, multiplier: 2.5 }
+        { level:  1, spCost: 1, mpCost: 10, multiplier: 1.2 },
+        { level:  2, spCost: 1, mpCost: 12, multiplier: 1.3 },
+        { level:  3, spCost: 1, mpCost: 14, multiplier: 1.4 },
+        { level:  4, spCost: 2, mpCost: 16, multiplier: 1.5 },
+        { level:  5, spCost: 2, mpCost: 18, multiplier: 1.6 },
+        { level:  6, spCost: 2, mpCost: 20, multiplier: 1.7 },
+        { level:  7, spCost: 3, mpCost: 22, multiplier: 1.8 },
+        { level:  8, spCost: 3, mpCost: 24, multiplier: 1.9 },
+        { level:  9, spCost: 3, mpCost: 26, multiplier: 2.0 },
+        { level: 10, spCost: 5, mpCost: 30, multiplier: 2.5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムなスライムを${lc.level}回投げる。スライムによって属性と追加効果が変わる。1撃の基本威力 ${lc.multiplier.toFixed(2)} 倍`,
       execute(caster, levelConfig, battle) {
@@ -260,16 +260,16 @@ export const slime_master = {
       id: 'slime_hazard', name: 'スライムハザード', icon: 'storm', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 2, mpCost: 120, multiplier: 1.5 },
-        { level:  2, spCost: 2, mpCost: 140, multiplier: 1.6 },
-        { level:  3, spCost: 2, mpCost: 160, multiplier: 1.7 },
-        { level:  4, spCost: 3, mpCost: 180, multiplier: 1.8 },
-        { level:  5, spCost: 3, mpCost: 200, multiplier: 1.9 },
-        { level:  6, spCost: 3, mpCost: 220, multiplier: 2.0 },
-        { level:  7, spCost: 4, mpCost: 240, multiplier: 2.2 },
-        { level:  8, spCost: 4, mpCost: 260, multiplier: 2.4 },
-        { level:  9, spCost: 4, mpCost: 280, multiplier: 2.6 },
-        { level: 10, spCost: 6, mpCost: 320, multiplier: 3.0 }
+        { level:  1, spCost: 2, mpCost: 60, multiplier: 1.5 },
+        { level:  2, spCost: 2, mpCost: 70, multiplier: 1.6 },
+        { level:  3, spCost: 2, mpCost: 80, multiplier: 1.7 },
+        { level:  4, spCost: 3, mpCost: 90, multiplier: 1.8 },
+        { level:  5, spCost: 3, mpCost: 100, multiplier: 1.9 },
+        { level:  6, spCost: 3, mpCost: 110, multiplier: 2.0 },
+        { level:  7, spCost: 4, mpCost: 120, multiplier: 2.2 },
+        { level:  8, spCost: 4, mpCost: 130, multiplier: 2.4 },
+        { level:  9, spCost: 4, mpCost: 140, multiplier: 2.6 },
+        { level: 10, spCost: 6, mpCost: 160, multiplier: 3.0 }
       ],
       getDescription: (lc) => {
         const numSlimes = Math.round(10 + (lc.level - 1) * (20 / 9));
