@@ -70,7 +70,7 @@ export function renderItemLibraryTab() {
   topBar.className = 'flex items-center justify-between gap-2 mb-4 shrink-0 pt-2 px-2';
 
   const filterContainer = document.createElement('div');
-  filterContainer.className = 'flex items-center gap-2 overflow-x-auto no-scrollbar pb-1';
+  filterContainer.className = 'flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1';
 
   const renderFilters = () => {
     filterContainer.innerHTML = '';
@@ -78,12 +78,12 @@ export function renderItemLibraryTab() {
       const btn = document.createElement('button');
       const isActive = activeFilter === f.id;
       btn.className = `
-        flex items-center justify-center w-10 h-10 rounded-lg transition-colors shrink-0 border
+        flex items-center justify-center w-9 h-9 rounded-lg transition-colors shrink-0 border
         ${isActive 
           ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' 
           : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'}
       `;
-      btn.innerHTML = `<span class="material-symbols-outlined text-[20px]">${f.icon}</span>`;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">${f.icon}</span>`;
       btn.onclick = () => {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
@@ -97,18 +97,18 @@ export function renderItemLibraryTab() {
   };
 
   const rightControls = document.createElement('div');
-  rightControls.className = 'flex items-center gap-2 shrink-0';
+  rightControls.className = 'flex items-center gap-1.5 shrink-0';
 
   const helpBtn = document.createElement('button');
-  helpBtn.className = 'flex items-center justify-center w-10 h-10 bg-slate-800/40 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 hover:border-blue-400 transition-colors cursor-pointer shadow-[0_0_10px_rgba(59,130,246,0.1)]';
-  helpBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">help</span>';
+  helpBtn.className = 'flex items-center justify-center w-9 h-9 bg-slate-800/40 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 hover:border-blue-400 transition-colors cursor-pointer shadow-[0_0_10px_rgba(59,130,246,0.1)]';
+  helpBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">help</span>';
   helpBtn.onclick = () => {
     showHelpModal();
   };
   rightControls.appendChild(helpBtn);
 
   const viewModeContainer = document.createElement('div');
-  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-10';
+  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-9';
 
   const updateViewModeUI = () => {
     viewModeContainer.innerHTML = '';
