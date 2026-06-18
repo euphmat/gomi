@@ -1449,7 +1449,7 @@ class BattleManager {
 
     // --- 暗闇 (Blind) の判定 ---
     if (!isMagic && attacker.activeAilment && attacker.activeAilment.type === 'blind' && !options.hideActionName) {
-      if (Math.random() < 0.5) {
+      if (Math.random() < 0.75) {
         this.showActionName(attacker.elementId, 'MISS', 'text-gray-400', 'border-gray-500/50');
         attacker.atb = 0;
         if (attacker.hp !== undefined) this.activeCharacter = null;
@@ -1566,7 +1566,7 @@ class BattleManager {
 
     // --- 呪い (Curse) の被ダメージ増加判定 ---
     if (defender.activeAilment && defender.activeAilment.type === 'curse') {
-      damage = Math.floor(damage * 1.5);
+      damage = Math.floor(damage * 2.0);
     }
 
     // --- ポップアップの表示 ---
@@ -1720,7 +1720,7 @@ class BattleManager {
 
     if (inflictedAilments.length > 0 && !defender.activeAilment) {
       const ailment = inflictedAilments[0];
-      defender.activeAilment = { type: ailment, duration: 3 };
+      defender.activeAilment = { type: ailment, duration: 10 };
       setTimeout(() => {
         const ailmentName = ailment.toUpperCase();
         this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
@@ -1783,10 +1783,12 @@ class BattleManager {
     
     const newHp = isDefenderParty ? defender.hp.current : defender.currentHp;
     if (newHp < prevHp && defender.activeAilment && defender.activeAilment.type === 'sleep') {
-      defender.activeAilment = null;
-      setTimeout(() => {
-        if (!defender.isDead) this.showActionName(defender.elementId, 'WAKE UP', 'text-blue-300', 'border-blue-500/50');
-      }, 500 / this.speedMult);
+      if (Math.random() < 0.5) {
+        defender.activeAilment = null;
+        setTimeout(() => {
+          if (!defender.isDead) this.showActionName(defender.elementId, 'WAKE UP', 'text-blue-300', 'border-blue-500/50');
+        }, 500 / this.speedMult);
+      }
     }
 
     if (!options.skipAtbReset) {
@@ -1902,7 +1904,7 @@ class BattleManager {
 
     // --- 呪い (Curse) の反動ダメージ ---
     if (attacker.activeAilment && attacker.activeAilment.type === 'curse' && !attacker.isDead) {
-      const recoil = Math.max(1, Math.floor(damage * 0.2));
+      const recoil = Math.max(1, Math.floor(damage * 0.4));
       setTimeout(() => {
         this.takeAilmentDamage(attacker, recoil, 'CURSE');
       }, 500 / this.speedMult);
@@ -2005,16 +2007,16 @@ class BattleManager {
     
     if (ailment === 'poison') {
       const maxHp = entity.hp ? (entity.stats?.hp || entity.hp.max) : entity.maxHp;
-      const dmg = Math.max(1, Math.floor(maxHp * 0.1));
+      const dmg = Math.max(1, Math.floor(maxHp * 0.2));
       this.takeAilmentDamage(entity, dmg, 'POISON');
     } else if (ailment === 'burn') {
       const maxHp = entity.hp ? (entity.stats?.hp || entity.hp.max) : entity.maxHp;
-      const dmg = Math.max(1, Math.floor(maxHp * 0.05));
+      const dmg = Math.max(1, Math.floor(maxHp * 0.15));
       this.takeAilmentDamage(entity, dmg, 'BURN');
       // Burn attack reduction is handled in executeAttack/executeSkill by modifying stats or damage?
       // Actually, we'll just apply it dynamically there if needed.
     } else if (ailment === 'paralysis') {
-      if (Math.random() < 0.5) {
+      if (Math.random() < 0.75) {
         this.showActionName(entity.elementId, '麻痺', 'text-yellow-400', 'border-yellow-500/50');
         skipTurn = true;
       }
