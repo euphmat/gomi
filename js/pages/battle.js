@@ -2112,7 +2112,46 @@ class BattleManager {
     const target = allAlive[Math.floor(Math.random() * allAlive.length)];
     
     setTimeout(() => {
-      this.executeAttack(entity, target, isParty);
+      let skillUsed = false;
+      if (isParty) {
+        const usableSkills = [];
+        if (entity._skillCache) {
+          for (const [skillId, cacheData] of entity._skillCache.entries()) {
+            const { level, def, levelConfig } = cacheData;
+            if (level > 0 && def && levelConfig && def.type !== 'passive' && !def.isPassive) {
+              if (entity.mp && entity.mp.current >= levelConfig.mpCost) {
+                usableSkills.push({ skillId, def, levelConfig });
+              }
+            }
+          }
+        }
+        if (usableSkills.length > 0) {
+          const skillObj = usableSkills[Math.floor(Math.random() * usableSkills.length)];
+          const prevTarget = this.selectedEnemyTarget;
+          this.selectedEnemyTarget = target;
+          this.executeSkill(entity, skillObj.def, skillObj.levelConfig);
+          this.selectedEnemyTarget = prevTarget;
+          skillUsed = true;
+        }
+      } else {
+        const usableSkills = [];
+        if (entity.actions && entity.actions.length > 0) {
+          for (const action of entity.actions) {
+            if (action.execute) {
+              usableSkills.push(action);
+            }
+          }
+        }
+        if (usableSkills.length > 0) {
+          const actionObj = usableSkills[Math.floor(Math.random() * usableSkills.length)];
+          actionObj.execute(entity, target, this);
+          skillUsed = true;
+        }
+      }
+
+      if (!skillUsed) {
+        this.executeAttack(entity, target, isParty);
+      }
     }, 500 / this.speedMult);
   }
 
