@@ -1219,6 +1219,23 @@ class BattleManager {
       }, 300 / this.speedMult);
     }
 
+    // --- Passive: Utattemita (歌ってみた) ---
+    const utattemitaSkill = this._findSkill(caster, 'utattemita');
+    if (utattemitaSkill && utattemitaSkill.level > 0 && utattemitaSkill.levelConfig) {
+      this.party.forEach(p => {
+        if (!p.isDead && p.hp && (p.hp.current < (p.stats?.hp || p.hp.max))) {
+          const maxHp = p.stats?.hp || p.hp.max;
+          const healAmount = Math.floor(maxHp * (utattemitaSkill.levelConfig.healPercent / 100));
+          if (healAmount > 0) {
+            p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
+            setTimeout(() => {
+              this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
+            }, 400 / this.speedMult);
+          }
+        }
+      });
+    }
+
     caster.atb = 0;
     this.activeCharacter = null;
     this.renderEntities();
@@ -1895,6 +1912,23 @@ class BattleManager {
               }
             });
             // Optional: If we want to show a party-wide effect indicator
+          }
+
+          // --- Passive: Utattemita (歌ってみた) ---
+          const utattemitaSkill = this._findSkill(attacker, 'utattemita');
+          if (utattemitaSkill && utattemitaSkill.level > 0 && utattemitaSkill.levelConfig) {
+            this.party.forEach(p => {
+              if (!p.isDead && p.hp && (p.hp.current < (p.stats?.hp || p.hp.max))) {
+                const maxHp = p.stats?.hp || p.hp.max;
+                const healAmount = Math.floor(maxHp * (utattemitaSkill.levelConfig.healPercent / 100));
+                if (healAmount > 0) {
+                  p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
+                  setTimeout(() => {
+                    this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
+                  }, 600 / this.speedMult);
+                }
+              }
+            });
           }
         }
       } else {

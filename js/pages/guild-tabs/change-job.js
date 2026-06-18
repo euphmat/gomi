@@ -302,6 +302,10 @@ export function renderChangeJobTab() {
       const isCurrent = job.id === char.jobId;
       const isUnlocked = char.unlockedJobs && char.unlockedJobs.includes(job.id);
       const savedJob = char.jobLevels && char.jobLevels[job.id];
+      
+      if (job.id === 'tsunukichi') {
+        if (char.name !== 'つぬきち' && !isUnlocked && !savedJob && !isCurrent) return;
+      }
       const savedLevel = savedJob ? savedJob.level : (isCurrent ? char.jobLevel : 1);
       const cost = job.changeCost !== undefined ? job.changeCost : 30000;
 
