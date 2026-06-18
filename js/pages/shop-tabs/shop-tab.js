@@ -53,6 +53,7 @@ export function renderShopTab() {
   let activeFilter = 'all';
   let viewMode = 'grid'; // 'grid' | 'list'
   let currentPage = 1;
+  let showUnownedOnly = false;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -67,7 +68,7 @@ export function renderShopTab() {
   topBar.className = 'flex items-center justify-between gap-2 mb-4 shrink-0 pt-2 px-2';
 
   const filterContainer = document.createElement('div');
-  filterContainer.className = 'flex items-center gap-2 overflow-x-auto no-scrollbar pb-1';
+  filterContainer.className = 'flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1';
 
   const renderFilters = () => {
     filterContainer.innerHTML = '';
@@ -75,12 +76,12 @@ export function renderShopTab() {
       const btn = document.createElement('button');
       const isActive = activeFilter === f.id;
       btn.className = `
-        flex items-center justify-center w-10 h-10 rounded-lg transition-colors shrink-0 border
+        flex items-center justify-center w-9 h-9 rounded-lg transition-colors shrink-0 border
         ${isActive 
           ? 'bg-green-600 text-white border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' 
           : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'}
       `;
-      btn.innerHTML = `<span class="material-symbols-outlined text-[20px]">${f.icon}</span>`;
+      btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">${f.icon}</span>`;
       btn.onclick = () => {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
@@ -91,6 +92,27 @@ export function renderShopTab() {
       };
       filterContainer.appendChild(btn);
     });
+
+    const toggleContainer = document.createElement('label');
+    toggleContainer.className = 'flex items-center gap-1.5 cursor-pointer ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0';
+    toggleContainer.innerHTML = `
+      <div class="relative flex items-center">
+        <input type="checkbox" class="sr-only" ${showUnownedOnly ? 'checked' : ''}>
+        <div class="block w-6 h-3 rounded-full transition-colors ${showUnownedOnly ? 'bg-emerald-500' : 'bg-gray-600'}"></div>
+        <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-transform ${showUnownedOnly ? 'translate-x-3' : 'translate-x-0'}"></div>
+      </div>
+      <span class="text-[9px] font-bold ${showUnownedOnly ? 'text-emerald-400' : 'text-gray-400'} whitespace-nowrap leading-none mt-px">未所持</span>
+    `;
+
+    const input = toggleContainer.querySelector('input');
+    input.addEventListener('change', (e) => {
+      showUnownedOnly = e.target.checked;
+      currentPage = 1;
+      renderFilters();
+      renderGrid();
+    });
+
+    filterContainer.appendChild(toggleContainer);
   };
 
   const rightControls = document.createElement('div');
@@ -204,6 +226,14 @@ export function renderShopTab() {
           if (activeFilter === 'accessory') return item.slot === 'accessory';
           return true;
         });
+
+    if (showUnownedOnly) {
+      filteredItems = filteredItems.filter(item => {
+        const isMaterial = !item.slot;
+        const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
+        return ownedCount === 0;
+      });
+    }
 
     filteredItems = filteredItems.filter(item => checkCanCraft(item));
 
