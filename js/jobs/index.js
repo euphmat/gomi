@@ -29,7 +29,7 @@ export const JOB_STAT_MULTIPLIER = {
   [magic_knight.id]: { hp: 1.1, mp: 1.3, atk: 1.1, def: 0.9, matk: 1.1, mdef: 0.9, spd: 0.6 },
   [slime_master.id]: { hp: 1.3, mp: 1.8, atk: 0.7, def: 1.1, matk: 0.8, mdef: 1.1, spd: 0.8 },
   [dancer.id]:       { hp: 0.8, mp: 1.1, atk: 0.9, def: 0.9, matk: 1.1, mdef: 0.7, spd: 1.5 },
-  [bird.id]:         { hp: 0.5, mp: 1.5, atk: 1.0, def: 1.0, matk: 1.0, mdef: 1.0, spd: 0.8 }
+  [bird.id]:         { hp: 0.5, mp: 1.5, atk: 0.3, def: 1.0, matk: 0.5, mdef: 1.5, spd: 0.8 }
 };
 
 export const JOBS = {
