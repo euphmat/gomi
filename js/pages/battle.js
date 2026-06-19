@@ -2234,17 +2234,54 @@ class BattleManager {
     const dur = (config.duration || 800) / speed;
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top;
-    const spreadX = (Math.random() - 0.5) * 60; // Spread horizontally
+    
+    // -- Repulsion logic --
+    if (!this._activeDamagePopups) this._activeDamagePopups = [];
+    const now = Date.now();
+    this._activeDamagePopups = this._activeDamagePopups.filter(p => now < p.endTime);
+
+    let finalX = centerX;
+    let finalY = baseY;
+    const R = 45; // Repulsion radius
+
+    for (let i = 0; i < 5; i++) {
+      let collided = false;
+      for (let other of this._activeDamagePopups) {
+        if (other.elementId !== elementId) continue;
+        let dx = finalX - other.x;
+        let dy = finalY - other.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < R) {
+          collided = true;
+          if (dist === 0) {
+            dx = (Math.random() - 0.5) * 10;
+            dy = (Math.random() - 0.5) * 10;
+            dist = Math.sqrt(dx * dx + dy * dy);
+          }
+          let push = (R - dist) + 5;
+          finalX += (dx / dist) * push;
+          finalY += (dy / dist) * push;
+        }
+      }
+      if (!collided) break;
+    }
+
+    // Determine spread drift based on pushed position relative to center
+    let spreadX = (finalX - centerX) * 1.5;
+    if (Math.abs(spreadX) < 10) spreadX = (Math.random() - 0.5) * 60; // fallback drift
+
+    this._activeDamagePopups.push({ elementId, x: finalX, y: finalY, endTime: now + dur });
 
     const popup = this._getPoolElement('float');
     if (!popup) return;
     
     popup.className = config.className || '';
     popup.style.display = 'block';
-    popup.style.left = `${centerX}px`;
-    popup.style.top = `${baseY}px`;
+    popup.style.left = `${finalX}px`;
+    popup.style.top = `${finalY}px`;
     popup.style.transform = ''; // clear
     popup.style.color = config.color || '#fff';
+    if (config.fontFamily) popup.style.fontFamily = config.fontFamily;
     if (config.textShadow) popup.style.textShadow = config.textShadow;
     if (config.fontSize) popup.style.fontSize = config.fontSize;
     
@@ -2362,40 +2399,42 @@ class BattleManager {
     if (localStorage.getItem('disableBattleAnimations') === 'true') return;
     
     let color = '#ffffff';
-    let textShadow = '-1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.8)';
+    let textShadow = '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 6px rgba(0,0,0,0.8)';
     let scale = 1.0;
-    let fontSize = '26px';
+    let fontSize = '32px';
     let duration = 800;
-    let className = 'fixed z-[9999] pointer-events-none font-black select-none flex items-center justify-center';
+    let className = 'fixed z-[9999] pointer-events-none select-none flex items-center justify-center tracking-wide';
+    let fontFamily = "'Anton', sans-serif";
 
     if (customColorClass.includes('text-red-500')) {
       // 弱点 (Weakness)
       className += ' italic tracking-tighter';
       color = '#ef4444';
-      textShadow = '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 4px 6px rgba(0,0,0,0.8)';
-      fontSize = '34px';
+      textShadow = '-2.5px -2.5px 0 #fff, 2.5px -2.5px 0 #fff, -2.5px 2.5px 0 #fff, 2.5px 2.5px 0 #fff, 0 6px 8px rgba(0,0,0,0.8)';
+      fontSize = '42px';
       scale = 1.25;
       duration = 900;
     } else if (customColorClass.includes('text-purple-400')) {
       // 耐性軽減 (Resist)
       color = '#a855f7';
-      textShadow = '-1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.8)';
+      textShadow = '-1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff, 0 3px 6px rgba(0,0,0,0.8)';
       scale = 0.85;
-      fontSize = '22px';
+      fontSize = '26px';
     } else if (customColorClass.includes('text-green-')) {
       // HP回復
       color = '#4ade80';
-      textShadow = '-1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8)';
+      textShadow = '-2px -2px 0 #14532d, 2px -2px 0 #14532d, -2px 2px 0 #14532d, 2px 2px 0 #14532d, 0 4px 6px rgba(0,0,0,0.8)';
     } else if (customColorClass.includes('text-blue-400')) {
       // MP回復
       color = '#60a5fa';
-      textShadow = '-1.2px -1.2px 0 #fff, 1.2px -1.2px 0 #fff, -1.2px 1.2px 0 #fff, 1.2px 1.2px 0 #fff, 0 2px 4px rgba(0,0,0,0.8)';
+      textShadow = '-2px -2px 0 #1e3a8a, 2px -2px 0 #1e3a8a, -2px 2px 0 #1e3a8a, 2px 2px 0 #1e3a8a, 0 4px 6px rgba(0,0,0,0.8)';
     }
 
     this._showFloatingPopup(elementId, {
       text: damage,
       className,
       color,
+      fontFamily,
       textShadow,
       fontSize,
       scale,
