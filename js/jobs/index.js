@@ -6,7 +6,7 @@ import { ranger } from './ranger.js';
 import { magic_knight } from './magic_knight.js';
 import { slime_master } from './slime_master.js';
 import { dancer } from './dancer.js';
-import { tsunukichi } from './tsunukichi.js';
+import { bird } from './bird.js';
 
 export const JOB_STAT_GROWTH = {
   [norvice.id]:      { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
@@ -17,7 +17,7 @@ export const JOB_STAT_GROWTH = {
   [magic_knight.id]: { hp: [2, 3], mp: [1, 3], atk: [1, 2], def: [1, 2], matk: [1, 2], mdef: [1, 2], spd: [0, 1] },
   [slime_master.id]: { hp: [2, 4], mp: [2, 4], atk: [1, 2], def: [1, 2], matk: [1, 3], mdef: [1, 3], spd: [1, 2] },
   [dancer.id]:       { hp: [1, 2], mp: [1, 3], atk: [1, 2], def: [0, 1], matk: [1, 2], mdef: [1, 2], spd: [2, 4] },
-  [tsunukichi.id]:   { hp: [2, 4], mp: [2, 4], atk: [1, 3], def: [1, 2], matk: [2, 4], mdef: [1, 3], spd: [2, 4] }
+  [bird.id]:   { hp: [2, 4], mp: [2, 4], atk: [1, 3], def: [1, 2], matk: [2, 4], mdef: [1, 3], spd: [2, 4] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -29,7 +29,7 @@ export const JOB_STAT_MULTIPLIER = {
   [magic_knight.id]: { hp: 1.1, mp: 1.3, atk: 1.1, def: 0.9, matk: 1.1, mdef: 0.9, spd: 0.6 },
   [slime_master.id]: { hp: 1.3, mp: 1.8, atk: 0.7, def: 1.1, matk: 0.8, mdef: 1.1, spd: 0.8 },
   [dancer.id]:       { hp: 0.8, mp: 1.1, atk: 0.9, def: 0.9, matk: 1.1, mdef: 0.7, spd: 1.5 },
-  [tsunukichi.id]:   { hp: 0.5, mp: 1.5, atk: 1.0, def: 1.0, matk: 1.0, mdef: 1.0, spd: 0.8 }
+  [bird.id]:   { hp: 0.5, mp: 1.5, atk: 1.0, def: 1.0, matk: 1.0, mdef: 1.0, spd: 0.8 }
 };
 
 export const JOBS = {
@@ -41,5 +41,5 @@ export const JOBS = {
   [magic_knight.id]: { ...magic_knight, statGrowth: JOB_STAT_GROWTH[magic_knight.id], statMultiplier: JOB_STAT_MULTIPLIER[magic_knight.id] },
   [slime_master.id]: { ...slime_master, statGrowth: JOB_STAT_GROWTH[slime_master.id], statMultiplier: JOB_STAT_MULTIPLIER[slime_master.id] },
   [dancer.id]: { ...dancer, statGrowth: JOB_STAT_GROWTH[dancer.id], statMultiplier: JOB_STAT_MULTIPLIER[dancer.id] },
-  [tsunukichi.id]: { ...tsunukichi, statGrowth: JOB_STAT_GROWTH[tsunukichi.id], statMultiplier: JOB_STAT_MULTIPLIER[tsunukichi.id] }
+  [bird.id]: { ...bird, statGrowth: JOB_STAT_GROWTH[bird.id], statMultiplier: JOB_STAT_MULTIPLIER[bird.id] }
 };

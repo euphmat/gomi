@@ -1219,13 +1219,13 @@ class BattleManager {
       }, 300 / this.speedMult);
     }
 
-    // --- Passive: Utattemita (歌ってみた) ---
-    const utattemitaSkill = this._findSkill(caster, 'utattemita');
-    if (utattemitaSkill && utattemitaSkill.level > 0 && utattemitaSkill.levelConfig) {
+    // --- Passive: Healing Song (いやしの歌) ---
+    const healingSongSkill = this._findSkill(caster, 'healing_song');
+    if (healingSongSkill && healingSongSkill.level > 0 && healingSongSkill.levelConfig) {
       this.party.forEach(p => {
         if (!p.isDead && p.hp && (p.hp.current < (p.stats?.hp || p.hp.max))) {
           const maxHp = p.stats?.hp || p.hp.max;
-          const healAmount = Math.floor(maxHp * (utattemitaSkill.levelConfig.healPercent / 100));
+          const healAmount = healingSongSkill.levelConfig.healAmount;
           if (healAmount > 0) {
             p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
             setTimeout(() => {
@@ -1727,7 +1727,7 @@ class BattleManager {
     
     for (const [ailment, chance] of Object.entries(attackAilments)) {
       if (chance > 0) {
-        const resist = defenderAilmentResist[ailment] || 0;
+        const resist = (defenderAilmentResist[ailment] || 0) + (defender._ailmentResistBuffTurns > 0 ? (defender._ailmentResistBuffAmount || 0) : 0);
         const finalChance = Math.max(0, chance - resist);
         if (Math.random() * 100 < finalChance) {
           inflictedAilments.push(ailment);
@@ -1914,13 +1914,13 @@ class BattleManager {
             // Optional: If we want to show a party-wide effect indicator
           }
 
-          // --- Passive: Utattemita (歌ってみた) ---
-          const utattemitaSkill = this._findSkill(attacker, 'utattemita');
-          if (utattemitaSkill && utattemitaSkill.level > 0 && utattemitaSkill.levelConfig) {
+          // --- Passive: Healing Song (いやしの歌) ---
+          const healingSongSkill = this._findSkill(attacker, 'healing_song');
+          if (healingSongSkill && healingSongSkill.level > 0 && healingSongSkill.levelConfig) {
             this.party.forEach(p => {
               if (!p.isDead && p.hp && (p.hp.current < (p.stats?.hp || p.hp.max))) {
                 const maxHp = p.stats?.hp || p.hp.max;
-                const healAmount = Math.floor(maxHp * (utattemitaSkill.levelConfig.healPercent / 100));
+                const healAmount = healingSongSkill.levelConfig.healAmount;
                 if (healAmount > 0) {
                   p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
                   setTimeout(() => {
@@ -1964,6 +1964,9 @@ class BattleManager {
         if (p._provokeTurns <= 0) {
           p._provokeChance = 0;
         }
+      }
+      if (p._ailmentResistBuffTurns > 0) {
+        p._ailmentResistBuffTurns--;
       }
       if (p._defBuffTurns > 0) {
         p._defBuffTurns--;
