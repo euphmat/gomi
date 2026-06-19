@@ -255,7 +255,11 @@ export const magic_knight = {
             clearInterval(interval);
             return;
           }
-          const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+          let targetGroup = battle.enemies;
+          if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+            targetGroup = battle.party;
+          }
+          const aliveEnemies = targetGroup.filter(e => !e.isDead);
           if (aliveEnemies.length === 0 || hitCount >= hits) {
             clearInterval(interval);
             return;
@@ -314,7 +318,11 @@ export const magic_knight = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の雷属性複合攻撃を行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         
         playSkillAnimation(caster, aliveEnemies, 'thunder_slash', (target, index) => {

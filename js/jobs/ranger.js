@@ -199,7 +199,11 @@ export const ranger = {
         if (!battle) return;
         for (let i = 0; i < levelConfig.hits; i++) {
           setTimeout(() => {
-            const targets = battle.enemies.filter(e => !e.isDead);
+            let targetGroup = battle.enemies;
+            if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+              targetGroup = battle.party;
+            }
+            const targets = targetGroup.filter(e => !e.isDead);
             playSkillAnimation(caster, targets, 'arrow_rain', (target, idx) => {
               if (target.isDead) return;
               battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
@@ -246,7 +250,11 @@ export const ranger = {
         let hits = levelConfig.hits;
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
-            const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+            let targetGroup = battle.enemies;
+            if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+              targetGroup = battle.party;
+            }
+            const aliveEnemies = targetGroup.filter(e => !e.isDead);
             if (aliveEnemies.length > 0) {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'arrow_rain', () => {

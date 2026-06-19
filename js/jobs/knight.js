@@ -215,7 +215,11 @@ export const knight = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全員の防御力を ${lc.turns} ターンの間 ${lc.defPercent}％ アップする`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveParty = battle.party.filter(p => !p.isDead);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const aliveParty = targetGroup.filter(p => !p.isDead);
         playSkillAnimation(caster, aliveParty, 'defense_formation', (target) => {
           if (!target.isDead) {
             target._defBuffPercent = levelConfig.defPercent;

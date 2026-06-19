@@ -215,7 +215,11 @@ export const priest = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、HPが最も減っている味方単体の HP を ${lc.healAmount} 回復する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveParty = battle.party.filter(p => !p.isDead);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const aliveParty = targetGroup.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
         
         // Find ally with lowest HP percentage
@@ -275,7 +279,11 @@ export const priest = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、戦闘不能の味方単体を HP ${lc.reviveHp} で蘇生する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const deadParty = battle.party.filter(p => p.isDead);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const deadParty = targetGroup.filter(p => p.isDead);
         if (deadParty.length === 0) {
           battle.showActionName(caster.elementId, 'MISS', 'text-gray-400', 'border-gray-500/50');
           return;
@@ -318,7 +326,11 @@ export const priest = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、状態異常の味方単体の状態異常を回復する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const afflictedParty = battle.party.filter(p => !p.isDead && p.activeAilment);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const afflictedParty = targetGroup.filter(p => !p.isDead && p.activeAilment);
         if (afflictedParty.length === 0) {
           battle.showActionName(caster.elementId, 'MISS', 'text-gray-400', 'border-gray-500/50');
           return;
@@ -407,7 +419,11 @@ export const priest = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体の HP を ${lc.healAmount} 回復する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveParty = battle.party.filter(p => !p.isDead);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const aliveParty = targetGroup.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
         
         playSkillAnimation(caster, aliveParty, 'all_heal', (target) => {

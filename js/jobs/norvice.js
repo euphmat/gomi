@@ -320,7 +320,11 @@ export const norvice = {
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、敵全体に ${levelConfig.multiplier.toFixed(2)} 倍の物理攻撃を行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const targets = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const targets = targetGroup.filter(e => !e.isDead);
         if (targets.length === 0) return;
 
         playSkillAnimation(caster, targets, 'cleave', (target, index) => {

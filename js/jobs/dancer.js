@@ -305,7 +305,11 @@ export const dancer = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍のダメージを与え、${lc.chance}% の確率で毒を付与する。`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const targets = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const targets = targetGroup.filter(e => !e.isDead);
         playSkillAnimation(caster, targets, 'poison_salsa', (target, idx) => {
           if (target.isDead) return;
           const origA = caster.stats.attackAilments;
@@ -351,7 +355,11 @@ export const dancer = {
         const hits = Math.floor(Math.random() * (levelConfig.maxHits - levelConfig.minHits + 1)) + levelConfig.minHits;
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
-            const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+            let targetGroup = battle.enemies;
+            if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+              targetGroup = battle.party;
+            }
+            const aliveEnemies = targetGroup.filter(e => !e.isDead);
             if (aliveEnemies.length > 0) {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'juggling_dagger', () => {
@@ -397,7 +405,11 @@ export const dancer = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.chance}% の確率で「混乱」を付与する。`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const targets = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const targets = targetGroup.filter(e => !e.isDead);
         playSkillAnimation(caster, targets, 'confusion_tarantella', (target, idx) => {
           if (target.isDead) return;
           const origA = caster.stats.attackAilments;
@@ -439,7 +451,11 @@ export const dancer = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.chance}% の確率でランダムな状態異常を ${lc.minAilments === lc.maxAilments ? lc.minAilments : lc.minAilments + '～' + lc.maxAilments} つ付与する。`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const targets = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const targets = targetGroup.filter(e => !e.isDead);
         const allAilments = ['poison', 'burn', 'paralysis', 'sleep', 'confusion', 'curse', 'blind', 'silence'];
         
         playSkillAnimation(caster, targets, 'curse_step', (target, idx) => {

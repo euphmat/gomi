@@ -138,7 +138,11 @@ export const bird = {
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、敵全体を ${levelConfig.chance}％ の確率で睡眠状態にする`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const targets = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const targets = targetGroup.filter(e => !e.isDead);
         if (targets.length === 0) return;
 
         battle.showActionName(caster.elementId, 'こもりうた', 'text-pink-300', 'border-pink-500/50');
@@ -232,7 +236,11 @@ export const bird = {
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、${levelConfig.turns} ターンの間、味方全体の状態異常耐性を ${levelConfig.amount} 上昇させる`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const targets = battle.party.filter(p => !p.isDead);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const targets = targetGroup.filter(p => !p.isDead);
         battle.showActionName(caster.elementId, '破邪の歌', 'text-blue-300', 'border-blue-500/50');
         playSkillAnimation(caster, targets, 'warding_song', (target) => {
             target._ailmentResistBuffAmount = levelConfig.amount;

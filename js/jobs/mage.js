@@ -436,7 +436,11 @@ export const mage = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体の魔法防御力を ${lc.turns} ターンの間 ${lc.mdefAmount} アップする`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveParty = battle.party.filter(p => !p.isDead);
+        let targetGroup = battle.party;
+        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.enemies;
+        }
+        const aliveParty = targetGroup.filter(p => !p.isDead);
         playSkillAnimation(caster, aliveParty, 'magic_barrier', (target) => {
           if (!target.isDead) {
             target._mdefBuffAmount = levelConfig.mdefAmount;
@@ -474,7 +478,11 @@ export const mage = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の氷属性魔法攻撃を行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'blizzard', (target, index) => {
           if (!target.isDead) {
@@ -523,7 +531,11 @@ export const mage = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の炎属性魔法攻撃を行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'volcano', (target, index) => {
           if (!target.isDead) {
@@ -572,7 +584,11 @@ export const mage = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の雷属性魔法攻撃を行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        const aliveEnemies = battle.enemies.filter(e => !e.isDead);
+        let targetGroup = battle.enemies;
+        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
+        const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'thunderstorm', (target, index) => {
           if (!target.isDead) {
