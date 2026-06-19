@@ -41,7 +41,7 @@ export const bird = {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           const awakeEnemies = aliveEnemies.filter(e => !e.activeAilment || e.activeAilment.type !== 'sleep');
           if (awakeEnemies.length >= 1) {
-             return { target: awakeEnemies[0], score: 50 + (awakeEnemies.length * 10) };
+             return { target: awakeEnemies[0], score: 60 + (awakeEnemies.length * 20) };
           }
           return null;
         }
@@ -87,9 +87,10 @@ export const bird = {
       autoBattle: {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
-          const sleepingTarget = aliveEnemies.find(e => e.activeAilment && e.activeAilment.type === 'sleep');
-          if (sleepingTarget) {
-              return { target: sleepingTarget, score: 100 * levelConfig.multiplier };
+          const sleepingEnemies = aliveEnemies.filter(e => e.activeAilment && e.activeAilment.type === 'sleep');
+          if (sleepingEnemies.length > 0) {
+              const bestTarget = sleepingEnemies.reduce((prev, curr) => (prev.currentHp > curr.currentHp) ? prev : curr);
+              return { target: bestTarget, score: 150 + (levelConfig.multiplier * 10) };
           }
           return null;
         }
@@ -124,8 +125,12 @@ export const bird = {
       autoBattle: {
         check: (caster, levelConfig, context) => {
           const aliveParty = context.party.filter(p => !p.isDead);
-          const hasBuff = aliveParty.some(p => p._ailmentResistBuffTurns && p._ailmentResistBuffTurns > 0);
-          if (!hasBuff) return { target: caster, score: 70 };
+          const buffedCount = aliveParty.filter(p => p._ailmentResistBuffTurns && p._ailmentResistBuffTurns > 0).length;
+          if (buffedCount === 0) {
+              return { target: caster, score: 150 };
+          } else if (buffedCount < aliveParty.length / 2) {
+              return { target: caster, score: 90 };
+          }
           return null;
         }
       }
