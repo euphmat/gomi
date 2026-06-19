@@ -1,3 +1,119 @@
+// ─── Animation Utilities ──────────────────────────────────────
+const playSkillAnimation = (caster, targets, type, onImpact) => {
+  if (!Array.isArray(targets)) targets = [targets];
+  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+    if (onImpact) targets.forEach((t, i) => onImpact(t, i));
+    return;
+  }
+
+  targets.forEach((target, index) => {
+    const targetEl = document.getElementById(target.elementId);
+    let tx = window.innerWidth / 2;
+    let ty = window.innerHeight / 2;
+    if (targetEl) {
+      const targetRect = targetEl.getBoundingClientRect();
+      tx = targetRect.left + targetRect.width / 2;
+      ty = targetRect.top + targetRect.height / 2;
+    } else {
+      if (onImpact) onImpact(target, index);
+      return;
+    }
+
+    setTimeout(() => {
+      switch (type) {
+        case 'lullaby': {
+          for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+              const el = document.createElement('div');
+              el.style.position = 'fixed';
+              el.style.left = `${tx - 15 + (Math.random() * 30 - 15)}px`;
+              el.style.top = `${ty - 15 + (Math.random() * 30 - 15)}px`;
+              el.style.width = '30px';
+              el.style.height = '30px';
+              el.style.fontSize = '24px';
+              el.style.color = '#f9a8d4';
+              el.style.textShadow = '0 0 5px #ec4899';
+              el.innerHTML = '♪';
+              el.style.zIndex = '9999';
+              el.style.pointerEvents = 'none';
+              document.body.appendChild(el);
+
+              const anim = el.animate([
+                { transform: 'translate(0, 0) scale(0)', opacity: 0 },
+                { transform: 'translate(0, -20px) scale(1.2)', opacity: 1, offset: 0.5 },
+                { transform: `translate(${Math.random() * 40 - 20}px, -40px) scale(0.8)`, opacity: 0 }
+              ], { duration: 1000 + Math.random() * 500, easing: 'ease-out' });
+
+              anim.onfinish = () => el.remove();
+            }, i * 200);
+          }
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 600);
+          break;
+        }
+        case 'nightmare': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 50}px`;
+          el.style.top = `${ty - 50}px`;
+          el.style.width = '100px';
+          el.style.height = '100px';
+          el.style.background = 'radial-gradient(circle, rgba(0,0,0,0.8), rgba(76,29,149,0.8), transparent)';
+          el.style.borderRadius = '50%';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const anim = el.animate([
+            { transform: 'scale(0.1)', opacity: 0 },
+            { transform: 'scale(1.5)', opacity: 1, offset: 0.7 },
+            { transform: 'scale(2)', opacity: 0 }
+          ], { duration: 600, easing: 'ease-in' });
+
+          anim.onfinish = () => el.remove();
+          
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          break;
+        }
+        case 'warding_song': {
+          const el = document.createElement('div');
+          el.style.position = 'fixed';
+          el.style.left = `${tx - 60}px`;
+          el.style.top = `${ty - 60}px`;
+          el.style.width = '120px';
+          el.style.height = '120px';
+          el.style.borderRadius = '50%';
+          el.style.border = '4px solid #93c5fd';
+          el.style.boxShadow = '0 0 15px #3b82f6 inset, 0 0 15px #3b82f6';
+          el.style.background = 'radial-gradient(circle, rgba(147, 197, 253, 0.2), transparent)';
+          el.style.zIndex = '9999';
+          el.style.pointerEvents = 'none';
+          document.body.appendChild(el);
+
+          const note = document.createElement('div');
+          note.style.position = 'absolute';
+          note.style.left = '45px';
+          note.style.top = '10px';
+          note.style.fontSize = '30px';
+          note.style.color = '#93c5fd';
+          note.innerHTML = '♫';
+          el.appendChild(note);
+
+          const anim = el.animate([
+            { transform: 'scale(0) translateY(20px)', opacity: 0 },
+            { transform: 'scale(1.2) translateY(0)', opacity: 1, offset: 0.5 },
+            { transform: 'scale(1) translateY(-20px)', opacity: 0 }
+          ], { duration: 800, easing: 'ease-out' });
+
+          anim.onfinish = () => el.remove();
+          
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          break;
+        }
+      }
+    }, index * 100);
+  });
+};
+
 export const bird = {
   id: 'bird',
   name: 'バード',
@@ -26,7 +142,7 @@ export const bird = {
         if (targets.length === 0) return;
 
         battle.showActionName(caster.elementId, 'こもりうた', 'text-pink-300', 'border-pink-500/50');
-        targets.forEach((target, index) => {
+        playSkillAnimation(caster, targets, 'lullaby', (target, index) => {
             if (target.isDead) return;
             const origA = caster.stats.attackAilments;
             caster.stats.attackAilments = { ...(origA || {}), sleep: levelConfig.chance };
@@ -62,7 +178,7 @@ export const bird = {
         { level:  9, spCost: 3, mpCost: 50, multiplier: 10.0 },
         { level: 10, spCost: 5, mpCost: 65, multiplier: 15.0 }
       ],
-      getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、睡眠状態の敵単体に ${levelConfig.multiplier.toFixed(1)} 倍の魔法攻撃。対象が睡眠状態でなければ失敗する`,
+      getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、睡眠状態の敵単体に ${levelConfig.multiplier.toFixed(1)} 倍の闇属性魔法攻撃。対象が睡眠状態でなければ失敗する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
@@ -75,8 +191,10 @@ export const bird = {
         
         if (target) {
             if (target.activeAilment && target.activeAilment.type === 'sleep') {
-                battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
-                    statDependency: this.statDependency, actionName: 'ナイトメア', damageMultiplier: levelConfig.multiplier, isMagic: true, damageType: 'skill'
+                playSkillAnimation(caster, [target], 'nightmare', () => {
+                    battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
+                        statDependency: this.statDependency, actionName: 'ナイトメア', damageMultiplier: levelConfig.multiplier, isMagic: true, damageType: 'skill', element: 'dark'
+                    });
                 });
             } else {
                 battle.showActionName(caster.elementId, 'ナイトメア', 'text-gray-400');
@@ -116,10 +234,10 @@ export const bird = {
         if (!battle) return;
         const targets = battle.party.filter(p => !p.isDead);
         battle.showActionName(caster.elementId, '破邪の歌', 'text-blue-300', 'border-blue-500/50');
-        targets.forEach(target => {
+        playSkillAnimation(caster, targets, 'warding_song', (target) => {
             target._ailmentResistBuffAmount = levelConfig.amount;
             target._ailmentResistBuffTurns = levelConfig.turns;
-            setTimeout(() => battle.showDamage(target.elementId, 'RESIST UP', 'text-blue-300'), 500);
+            battle.showDamage(target.elementId, 'RESIST UP', 'text-blue-300');
         });
       },
       autoBattle: {
