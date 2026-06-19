@@ -310,7 +310,7 @@ export const dancer = {
           if (target.isDead) return;
           const origA = caster.stats.attackAilments;
           caster.stats.attackAilments = { ...(origA || {}), poison: levelConfig.chance };
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
             actionName: '', 
             damageMultiplier: levelConfig.multiplier, 
@@ -356,7 +356,7 @@ export const dancer = {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'juggling_dagger', () => {
                 if (target.isDead) return;
-                battle.executeAttack(caster, target, true, {
+                battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
                   actionName: '', 
                   damageMultiplier: levelConfig.multiplier, 
@@ -402,7 +402,7 @@ export const dancer = {
           if (target.isDead) return;
           const origA = caster.stats.attackAilments;
           caster.stats.attackAilments = { ...(origA || {}), confusion: levelConfig.chance };
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
             actionName: '', 
             damageMultiplier: 0, 
@@ -456,7 +456,7 @@ export const dancer = {
           });
           caster.stats.attackAilments = tempAilments;
           
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
             actionName: '', 
             damageMultiplier: 0, 

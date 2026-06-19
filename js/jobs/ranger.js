@@ -155,7 +155,7 @@ export const ranger = {
               if (target && !target.isDead) {
                 playSkillAnimation(caster, [target], 'single_arrow', () => {
                   if (target.isDead) return;
-                  battle.executeAttack(caster, target, true, {
+                  battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
                     actionName: '', 
                     damageMultiplier: levelConfig.multiplier, 
@@ -202,7 +202,7 @@ export const ranger = {
             const targets = battle.enemies.filter(e => !e.isDead);
             playSkillAnimation(caster, targets, 'arrow_rain', (target, idx) => {
               if (target.isDead) return;
-              battle.executeAttack(caster, target, true, {
+              battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
                 actionName: '', 
                 damageMultiplier: levelConfig.multiplier, 
@@ -251,7 +251,7 @@ export const ranger = {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'arrow_rain', () => {
                 if (target.isDead) return;
-                battle.executeAttack(caster, target, true, {
+                battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
                   actionName: '', 
                   damageMultiplier: levelConfig.multiplier, 

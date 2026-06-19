@@ -275,7 +275,7 @@ export const knight = {
             caster.stats.matk = (caster.stats.matk || 0) + shieldDef;
           }
 
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
             actionName: 'シールドアタック',
             damageMultiplier: levelConfig.multiplier,

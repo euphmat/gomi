@@ -234,7 +234,7 @@ export const slime_master = {
             caster.stats.attackAilments = { ...(origA || {}), [effect.ailment]: 50 };
           }
           
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
             actionName: 'スライム投げ',
             damageMultiplier: levelConfig.multiplier,
@@ -295,7 +295,7 @@ export const slime_master = {
                  return;
              }
           }
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
             actionName: 'スライムハザード',
             damageMultiplier: levelConfig.multiplier * 0.25,

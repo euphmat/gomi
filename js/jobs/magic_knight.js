@@ -201,7 +201,7 @@ export const magic_knight = {
 
         playSkillAnimation(caster, [target], 'flame_tongue', () => {
           if (target.isDead) return;
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
             actionName: 'フレイムタン',
             damageMultiplier: levelConfig.multiplier,
@@ -266,7 +266,7 @@ export const magic_knight = {
           
           playSkillAnimation(caster, [target], 'ice_brand', () => {
             if (target.isDead) return;
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
               actionName: 'アイスブランド',
               damageMultiplier: levelConfig.multiplier,
@@ -319,7 +319,7 @@ export const magic_knight = {
         
         playSkillAnimation(caster, aliveEnemies, 'thunder_slash', (target, index) => {
           if (target.isDead) return;
-          battle.executeAttack(caster, target, true, {
+          battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
             actionName: '',
             damageMultiplier: levelConfig.multiplier,

@@ -302,7 +302,7 @@ export const mage = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'fireball', () => {
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, actionName: 'ファイアボール', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'fire', hideActionName: true });
           });
         }
@@ -348,7 +348,7 @@ export const mage = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'ice_lance', () => {
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, actionName: 'アイスランス', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'ice', hideActionName: true });
           });
         }
@@ -394,7 +394,7 @@ export const mage = {
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (target) {
           playSkillAnimation(caster, [target], 'thunder', () => {
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, actionName: 'サンダー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'thunder', hideActionName: true });
           });
         }
@@ -478,7 +478,7 @@ export const mage = {
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'blizzard', (target, index) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
               actionName: 'ブリザード', 
               damageMultiplier: levelConfig.multiplier, 
@@ -527,7 +527,7 @@ export const mage = {
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'volcano', (target, index) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
               actionName: 'ボルケーノ', 
               damageMultiplier: levelConfig.multiplier, 
@@ -576,7 +576,7 @@ export const mage = {
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'thunderstorm', (target, index) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
               actionName: 'サンダーストーム', 
               damageMultiplier: levelConfig.multiplier, 

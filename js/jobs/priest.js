@@ -365,7 +365,7 @@ export const priest = {
         if (target) {
           playSkillAnimation(caster, [target], 'holy', () => {
             if (target.isDead) return;
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, actionName: 'ホーリー', damageMultiplier: levelConfig.multiplier, damageType: 'skill', element: 'light', hideActionName: true });
           });
         }

@@ -212,7 +212,7 @@ export const norvice = {
         if (target) {
             playSkillAnimation(caster, [target], 'heavy_strike', () => {
                 if (target.isDead) return;
-                battle.executeAttack(caster, target, true, {
+                battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, actionName: '強撃', damageMultiplier: levelConfig.multiplier, damageType: 'skill', hideActionName: true });
             });
         }
@@ -325,7 +325,7 @@ export const norvice = {
 
         playSkillAnimation(caster, targets, 'cleave', (target, index) => {
             if (target.isDead) return;
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency, 
                 actionName: 'なぎ払い', 
                 damageMultiplier: levelConfig.multiplier, 

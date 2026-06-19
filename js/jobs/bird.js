@@ -30,7 +30,7 @@ export const bird = {
             if (target.isDead) return;
             const origA = caster.stats.attackAilments;
             caster.stats.attackAilments = { ...(origA || {}), sleep: levelConfig.chance };
-            battle.executeAttack(caster, target, true, {
+            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
                 actionName: 'こもりうた', damageMultiplier: 0.1, isMagic: true, damageType: 'skill', hideActionName: true, skipAtbReset: index > 0, isAoEProcessed: true
             });
             caster.stats.attackAilments = origA;
@@ -75,7 +75,7 @@ export const bird = {
         
         if (target) {
             if (target.activeAilment && target.activeAilment.type === 'sleep') {
-                battle.executeAttack(caster, target, true, {
+                battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
                     statDependency: this.statDependency, actionName: 'ナイトメア', damageMultiplier: levelConfig.multiplier, isMagic: true, damageType: 'skill'
                 });
             } else {
