@@ -436,16 +436,16 @@ export const priest = {
       id: 'regen', name: 'リジェネ', icon: 'favorite', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, recoverHp:  5 },
-        { level:  2, spCost: 1, mpCost: 0, recoverHp: 10 },
-        { level:  3, spCost: 1, mpCost: 0, recoverHp: 15 },
-        { level:  4, spCost: 2, mpCost: 0, recoverHp: 20 },
-        { level:  5, spCost: 2, mpCost: 0, recoverHp: 25 },
-        { level:  6, spCost: 2, mpCost: 0, recoverHp: 30 },
-        { level:  7, spCost: 3, mpCost: 0, recoverHp: 35 },
-        { level:  8, spCost: 3, mpCost: 0, recoverHp: 40 },
-        { level:  9, spCost: 3, mpCost: 0, recoverHp: 45 },
-        { level: 10, spCost: 5, mpCost: 0, recoverHp: 50 }
+        { level:  1, spCost: 1, mpCost: 0, recoverHp: 15 },
+        { level:  2, spCost: 1, mpCost: 0, recoverHp: 20 },
+        { level:  3, spCost: 1, mpCost: 0, recoverHp: 35 },
+        { level:  4, spCost: 2, mpCost: 0, recoverHp: 40 },
+        { level:  5, spCost: 2, mpCost: 0, recoverHp: 55 },
+        { level:  6, spCost: 2, mpCost: 0, recoverHp: 60 },
+        { level:  7, spCost: 3, mpCost: 0, recoverHp: 75 },
+        { level:  8, spCost: 3, mpCost: 0, recoverHp: 80 },
+        { level:  9, spCost: 3, mpCost: 0, recoverHp: 95 },
+        { level: 10, spCost: 5, mpCost: 0, recoverHp: 100 }
       ],
       getDescription: (lc) => `自身の行動終了時に、HP を ${lc.recoverHp} 回復する`
     }
