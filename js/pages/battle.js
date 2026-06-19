@@ -231,7 +231,7 @@ class BattleManager {
     });
 
     let delay = 500;
-    const isFirstFloor = this.currentFloorNum === 1;
+    const isFirstFloor = this.currentFloorNum === 1 && !this.isAutoBattle;
 
     if (protectionConfig) {
       aliveParty.forEach(p => {
