@@ -2274,7 +2274,7 @@ class BattleManager {
     const stack = this._labelStacks[elementId];
     
     // limit stack size to prevent infinite growth and severe layout thrashing
-    if (stack.length > 5) {
+    if (stack.length > 8) {
       const oldest = stack.shift();
       if (oldest.anim) oldest.anim.cancel();
       this._releasePoolElement(oldest.el); // wrapper contains popup
@@ -2282,7 +2282,9 @@ class BattleManager {
     }
 
     const speed = this.speedMult || 1;
-    const dur = (config.duration || 1000) / speed;
+    // Don't speed up popups too much at 5x speed so they remain readable and can stack up
+    const effectiveSpeed = Math.min(speed, 2.0);
+    const dur = (config.duration || 1000) / effectiveSpeed;
     const itemHeight = config.height || 28;
     const stackGap = 4;
 
@@ -2301,18 +2303,18 @@ class BattleManager {
     wrapper.style.left = `${centerX}px`;
     wrapper.style.top = `${baseY}px`;
     wrapper.style.transform = `translate(-50%, -10px)`;
-    wrapper.style.transition = `transform 0.2s ease-out`;
+    wrapper.style.transition = `transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)`;
 
     popup.className = `${config.className || ''}`;
     popup.style.transform = ''; // Clear previous transform
     popup.innerHTML = config.html;
 
     const anim = popup.animate([
-      { opacity: 0, transform: 'scale(0.5) translateY(5px)' },
-      { opacity: 1, transform: 'scale(1.25) translateY(-2px)', offset: 0.15 },
-      { opacity: 1, transform: 'scale(1.0) translateY(0)', offset: 0.3 },
-      { opacity: 0.9, transform: 'scale(1.0) translateY(0)', offset: 0.6 },
-      { opacity: 0, transform: 'scale(0.85) translateY(-8px)' }
+      { opacity: 0, transform: 'scale(0.5) translateY(10px)', offset: 0 },
+      { opacity: 1, transform: 'scale(1.1) translateY(-2px)', offset: 0.1 },
+      { opacity: 1, transform: 'scale(1.0) translateY(0)', offset: 0.2 },
+      { opacity: 0.9, transform: 'scale(1.0) translateY(0)', offset: 0.8 },
+      { opacity: 0, transform: 'scale(0.85) translateY(-10px)', offset: 1 }
     ], {
       duration: dur,
       easing: 'ease-out',
