@@ -39,11 +39,20 @@ function createSummonAction(actionName, summonPoolIds, getMonsters) {
         };
       };
       const attackerIdx = battle.enemies.indexOf(attacker);
+      const spaceLeft = 10 - battle.enemies.length;
+      const enemiesToAdd = [];
+      if (spaceLeft >= 1) enemiesToAdd.push(createEnemy(leftDef, 'L'));
+      if (spaceLeft >= 2) enemiesToAdd.push(createEnemy(rightDef, 'R'));
+
       if (attackerIdx !== -1) {
-        battle.enemies.splice(attackerIdx, 0, createEnemy(leftDef, 'L'));
-        battle.enemies.splice(attackerIdx + 2, 0, createEnemy(rightDef, 'R'));
+        if (enemiesToAdd.length === 1) {
+          battle.enemies.splice(attackerIdx, 0, enemiesToAdd[0]);
+        } else if (enemiesToAdd.length === 2) {
+          battle.enemies.splice(attackerIdx, 0, enemiesToAdd[0]);
+          battle.enemies.splice(attackerIdx + 2, 0, enemiesToAdd[1]);
+        }
       } else {
-        battle.enemies.push(createEnemy(leftDef, 'L'), createEnemy(rightDef, 'R'));
+        battle.enemies.push(...enemiesToAdd);
       }
       attacker.atb = 0;
       battle.elements.enemyArea.innerHTML = '';

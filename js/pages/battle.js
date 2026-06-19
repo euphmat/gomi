@@ -484,6 +484,24 @@ class BattleManager {
         }
       }
 
+      const allBgClasses = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
+      let targetBgClass = 'bg-gray-800/80';
+      if (p.activeAilment && !p.isDead) {
+        const ailmentBgMap = {
+          poison: 'bg-purple-900/70',
+          burn: 'bg-red-900/70',
+          paralysis: 'bg-yellow-900/70',
+          sleep: 'bg-blue-900/70',
+          blind: 'bg-stone-900/90',
+          silence: 'bg-slate-300/30',
+          curse: 'bg-black/80',
+          confusion: 'bg-pink-900/70'
+        };
+        targetBgClass = ailmentBgMap[p.activeAilment.type] || targetBgClass;
+      }
+      el.classList.remove(...allBgClasses);
+      el.classList.add(targetBgClass);
+
       if (this.activeCharacter === p) {
         el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
         el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
