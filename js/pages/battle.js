@@ -1090,7 +1090,7 @@ class BattleManager {
   executeSkill(caster, skillDef, levelConfig, options = {}) {
     if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) return;
     if (!options.isDoubleAct && levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
-      this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
+      // this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
       caster.atb = 0;
       this.activeCharacter = null;
       this.renderEntities();
@@ -1680,10 +1680,10 @@ class BattleManager {
     if (inflictedAilments.length > 0 && !defender.activeAilment) {
       const ailment = inflictedAilments[0];
       defender.activeAilment = { type: ailment, duration: 10 };
-      setTimeout(() => {
-        const ailmentName = ailment.toUpperCase();
-        this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
-      }, 500 / this.speedMult);
+      // setTimeout(() => {
+      //   const ailmentName = ailment.toUpperCase();
+      //   this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
+      // }, 500 / this.speedMult);
     }
 
     const isDefenderParty = defender.hp !== undefined;
@@ -1744,9 +1744,9 @@ class BattleManager {
     if (newHp < prevHp && defender.activeAilment && defender.activeAilment.type === 'sleep') {
       if (Math.random() < 0.5) {
         defender.activeAilment = null;
-        setTimeout(() => {
-          if (!defender.isDead) this.showActionName(defender.elementId, 'WAKE UP', 'text-blue-300', 'border-blue-500/50');
-        }, 500 / this.speedMult);
+        // setTimeout(() => {
+        //   if (!defender.isDead) this.showActionName(defender.elementId, 'WAKE UP', 'text-blue-300', 'border-blue-500/50');
+        // }, 500 / this.speedMult);
       }
     }
 
@@ -2010,22 +2010,22 @@ class BattleManager {
       // Actually, we'll just apply it dynamically there if needed.
     } else if (ailment === 'paralysis') {
       if (Math.random() < 0.75) {
-        this.showActionName(entity.elementId, '麻痺', 'text-yellow-400', 'border-yellow-500/50');
+        // this.showActionName(entity.elementId, '麻痺', 'text-yellow-400', 'border-yellow-500/50');
         skipTurn = true;
       }
     } else if (ailment === 'sleep') {
-      this.showActionName(entity.elementId, '睡眠中', 'text-blue-300', 'border-blue-500/50');
+      // this.showActionName(entity.elementId, '睡眠中', 'text-blue-300', 'border-blue-500/50');
       skipTurn = true;
     }
     
     if (entity.activeAilment && entity.activeAilment.duration <= 0 && !skipTurn) {
-      setTimeout(() => {
-        if (!entity.isDead) this.showActionName(entity.elementId, `${ailment.toUpperCase()}回復`, 'text-green-300', 'border-green-500/50');
-      }, 500 / this.speedMult);
+      // setTimeout(() => {
+      //   if (!entity.isDead) this.showActionName(entity.elementId, `${ailment.toUpperCase()}回復`, 'text-green-300', 'border-green-500/50');
+      // }, 500 / this.speedMult);
       entity.activeAilment = null;
     } else if (entity.activeAilment && entity.activeAilment.duration <= 0 && skipTurn) {
       setTimeout(() => {
-        if (!entity.isDead) this.showActionName(entity.elementId, `${ailment.toUpperCase()}回復`, 'text-green-300', 'border-green-500/50');
+        // if (!entity.isDead) this.showActionName(entity.elementId, `${ailment.toUpperCase()}回復`, 'text-green-300', 'border-green-500/50');
         entity.activeAilment = null;
         if (!document.hidden) this.renderEntities();
       }, 1000 / this.speedMult);
@@ -2058,7 +2058,7 @@ class BattleManager {
   }
 
   executeConfusionTurn(entity, isParty) {
-    this.showActionName(entity.elementId, '混乱', 'text-pink-300', 'border-pink-500/50');
+    // this.showActionName(entity.elementId, '混乱', 'text-pink-300', 'border-pink-500/50');
     entity.atb = 0;
     if (isParty) this.activeCharacter = null;
     else this.activeEnemy = null;
