@@ -23,7 +23,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       switch (type) {
         case 'lullaby': {
           for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
+            setTimeout(() => 
               const el = document.createElement('div');
               el.style.position = 'fixed';
               el.style.left = `${tx - 15 + (Math.random() * 30 - 15)}px`;

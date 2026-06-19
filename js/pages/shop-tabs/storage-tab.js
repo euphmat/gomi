@@ -37,6 +37,7 @@ export function renderStorageTab() {
   let activeFilter = 'all';
   let viewMode = 'grid'; // 'grid' | 'list'
   let currentPage = 1;
+  let sellMode = false;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -70,12 +71,33 @@ export function renderStorageTab() {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
           currentPage = 1;
+          if (activeFilter !== 'material') sellMode = false;
           renderFilters();
           renderGrid();
         }
       };
       filterContainer.appendChild(btn);
     });
+
+    if (activeFilter === 'material') {
+      const toggleContainer = document.createElement('label');
+      toggleContainer.className = 'flex items-center gap-1.5 cursor-pointer ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0';
+      toggleContainer.innerHTML = `
+        <div class="relative flex items-center">
+          <input type="checkbox" class="sr-only" ${sellMode ? 'checked' : ''}>
+          <div class="block w-6 h-3 rounded-full transition-colors ${sellMode ? 'bg-rose-500' : 'bg-gray-600'}"></div>
+          <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-transform ${sellMode ? 'translate-x-3' : 'translate-x-0'}"></div>
+        </div>
+        <span class="text-[9px] font-bold ${sellMode ? 'text-rose-400' : 'text-gray-400'} whitespace-nowrap leading-none mt-px">売却モード</span>
+      `;
+      const input = toggleContainer.querySelector('input');
+      input.addEventListener('change', (e) => {
+        sellMode = e.target.checked;
+        renderFilters();
+        renderGrid();
+      });
+      filterContainer.appendChild(toggleContainer);
+    }
   };
 
   const rightControls = document.createElement('div');
@@ -205,7 +227,9 @@ export function renderStorageTab() {
       const slot = document.createElement('div');
       
       if (viewMode === 'grid') {
-        slot.className = 'relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border border-gray-700/50 overflow-hidden cursor-pointer hover:border-gray-500 hover:bg-gray-800 transition-all shadow-sm';
+        const isSellTarget = sellMode && !item.slot && (item.sellPrice || 0) > 0;
+        const borderClass = isSellTarget ? 'border-rose-500/60 hover:border-rose-400 bg-rose-950/40 hover:bg-rose-900/40' : 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 bg-gray-900/60';
+        slot.className = `relative w-full aspect-square flex items-center justify-center rounded-md border ${borderClass} overflow-hidden cursor-pointer transition-all shadow-sm`;
         
         if (item.image) {
           slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
@@ -218,8 +242,9 @@ export function renderStorageTab() {
         }
       } else {
         // list view
-        const borderStyle = 'border-slate-700/80 hover:border-blue-500/50 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)]';
-        const bgStyle = 'bg-gradient-to-r from-slate-900/90 to-slate-800/50';
+        const isSellTarget = sellMode && !item.slot && (item.sellPrice || 0) > 0;
+        const borderStyle = isSellTarget ? 'border-rose-500/80 hover:border-rose-400/80 hover:shadow-[0_0_10px_rgba(244,63,94,0.2)]' : 'border-slate-700/80 hover:border-blue-500/50 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)]';
+        const bgStyle = isSellTarget ? 'bg-gradient-to-r from-rose-950/80 to-slate-800/50' : 'bg-gradient-to-r from-slate-900/90 to-slate-800/50';
         slot.className = `group relative w-full flex items-center gap-2.5 p-2 ${bgStyle} rounded-lg border ${borderStyle} transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm`;
         
         const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
@@ -292,11 +317,48 @@ export function renderStorageTab() {
         `;
       }
       
-      slot.onclick = () => showItemModal(item);
+      slot.onclick = async () => {
+        if (sellMode && !item.slot && (item.sellPrice || 0) > 0) {
+          const maxSell = item.quantity || 1;
+          const price = item.sellPrice || 0;
+          
+          const currentGold = await GameDB.getGameState('gold') || 0;
+          const newGold = currentGold + price * maxSell;
+          await GameDB.setGameState('gold', newGold);
+          
+          const headerGoldEl = document.getElementById('header-gold-display');
+          if (headerGoldEl) {
+            headerGoldEl.textContent = ` Gold : ${formatNumber(newGold)} `;
+          }
+
+          await GameDB.deleteInventoryItem(item.id);
+          
+          showSellSuccessEffect(item, maxSell, price * maxSell);
+          loadData();
+        } else {
+          showItemModal(item);
+        }
+      };
       gridContainer.appendChild(slot);
     });
     
     renderPagination(totalPages);
+  };
+
+  const showSellSuccessEffect = (item, count, totalGold) => {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-rose-900/90 border border-rose-500/50 rounded-xl shadow-2xl text-sm font-bold text-rose-200 animate-[slide-up_0.3s_ease-out] backdrop-blur-sm';
+    toast.innerHTML = `
+      <span class="material-symbols-outlined text-amber-400" style="font-variation-settings: 'FILL' 1">payments</span>
+      <span>${item.name} x${formatNumber(count)} を ${formatNumber(totalGold)} G で売却しました</span>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, -20px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
   };
 
   const loadData = () => {
