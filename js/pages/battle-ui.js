@@ -59,6 +59,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
 
 export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPartyMember) {
   let borderClass = 'border-gray-700';
+  let bgClass = 'bg-gray-800/80';
   const disableAnimations = localStorage.getItem('disableBattleAnimations') === 'true';
 
   if (activeCharacter === p && !(isAutoBattle && disableAnimations)) {
@@ -67,8 +68,22 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
     borderClass = 'border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]';
   }
   
+  if (p.activeAilment && !p.isDead) {
+    const ailmentBgMap = {
+      poison: 'bg-purple-900/70',
+      burn: 'bg-red-900/70',
+      paralysis: 'bg-yellow-900/70',
+      sleep: 'bg-blue-900/70',
+      blind: 'bg-stone-900/90',
+      silence: 'bg-slate-300/30',
+      curse: 'bg-black/80',
+      confusion: 'bg-pink-900/70'
+    };
+    bgClass = ailmentBgMap[p.activeAilment.type] || bgClass;
+  }
+  
   return `
-    <div id="${p.elementId}" class="party-card relative flex flex-col bg-gray-800/80 rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all cursor-pointer hover:scale-[1.02]'}">
+    <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all cursor-pointer hover:scale-[1.02]'}">
       <div class="flex flex-col mb-1.5 w-full">
         <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
           <!-- ICON -->
