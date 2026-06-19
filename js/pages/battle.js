@@ -1133,6 +1133,9 @@ class BattleManager {
     const regenSkill = this._findSkill(caster, 'mana_regen');
     if (regenSkill && regenSkill.level > 0 && regenSkill.levelConfig) {
       const amount = regenSkill.levelConfig.recoverMp;
+      if (amount > 0 && caster.mp.current < (caster.stats?.mp || caster.mp.max)) {
+        this.showActionName(caster.elementId, 'マナリジェネ', 'text-blue-300', 'border-blue-500/50');
+      }
       caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + amount);
       setTimeout(() => {
         this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
@@ -1143,6 +1146,9 @@ class BattleManager {
     const hpRegenSkill = this._findSkill(caster, 'regen');
     if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
       const amount = hpRegenSkill.levelConfig.recoverHp;
+      if (amount > 0 && caster.hp.current < (caster.stats?.hp || caster.hp.max)) {
+        this.showActionName(caster.elementId, 'リジェネ', 'text-green-300', 'border-green-500/50');
+      }
       caster.hp.current = Math.min(caster.stats?.hp || caster.hp.max, caster.hp.current + amount);
       setTimeout(() => {
         this.showDamage(caster.elementId, `+${amount}`, 'text-green-400');
@@ -1152,11 +1158,13 @@ class BattleManager {
     // --- Passive: Healing Song (いやしの歌) ---
     const healingSongSkill = this._findSkill(caster, 'healing_song');
     if (healingSongSkill && healingSongSkill.level > 0 && healingSongSkill.levelConfig) {
+      let triggered = false;
       this.party.forEach(p => {
         if (!p.isDead && p.hp && (p.hp.current < (p.stats?.hp || p.hp.max))) {
           const maxHp = p.stats?.hp || p.hp.max;
           const healAmount = healingSongSkill.levelConfig.healAmount;
           if (healAmount > 0) {
+            triggered = true;
             p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
             setTimeout(() => {
               this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
@@ -1164,6 +1172,9 @@ class BattleManager {
           }
         }
       });
+      if (triggered) {
+        this.showActionName(caster.elementId, 'いやしの歌', 'text-pink-300', 'border-pink-500/50');
+      }
     }
 
     caster.atb = 0;
@@ -1584,6 +1595,7 @@ class BattleManager {
         const reduction = slimeBodySkill.levelConfig.reduction || 15;
         damage = Math.floor(damage * (1 - reduction / 100));
         if (damage < 1) damage = 1;
+        this.showActionName(defender.elementId, 'スライムボディ', 'text-teal-300', 'border-teal-500/50');
       }
     }
 
@@ -1799,6 +1811,7 @@ class BattleManager {
           if (mpAbsorbSkill && mpAbsorbSkill.level > 0 && mpAbsorbSkill.levelConfig) {
              const mpRecover = Math.floor(damage * (mpAbsorbSkill.levelConfig.percent / 100));
              if (mpRecover > 0) {
+                 this.showActionName(attacker.elementId, 'MP吸収', 'text-indigo-300', 'border-indigo-500/50');
                  attacker.mp.current = Math.min((attacker.stats?.mp || attacker.mp.max), attacker.mp.current + mpRecover);
                  setTimeout(() => {
                    this.showDamage(attacker.elementId, `+${mpRecover} MP`, 'text-blue-400');
@@ -1812,6 +1825,9 @@ class BattleManager {
           const manaRegenSkill = this._findSkill(attacker, 'mana_regen');
           if (manaRegenSkill && manaRegenSkill.level > 0 && manaRegenSkill.levelConfig) {
             const amount = manaRegenSkill.levelConfig.recoverMp;
+            if (amount > 0 && attacker.mp.current < (attacker.stats?.mp || attacker.mp.max)) {
+              this.showActionName(attacker.elementId, 'マナリジェネ', 'text-blue-300', 'border-blue-500/50');
+            }
             attacker.mp.current = Math.min(attacker.stats?.mp || attacker.mp.max, attacker.mp.current + amount);
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
@@ -1821,6 +1837,9 @@ class BattleManager {
           const hpRegenSkill = this._findSkill(attacker, 'regen');
           if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
             const amount = hpRegenSkill.levelConfig.recoverHp;
+            if (amount > 0 && attacker.hp.current < (attacker.stats?.hp || attacker.hp.max)) {
+              this.showActionName(attacker.elementId, 'リジェネ', 'text-green-300', 'border-green-500/50');
+            }
             attacker.hp.current = Math.min(attacker.stats?.hp || attacker.hp.max, attacker.hp.current + amount);
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
@@ -1841,17 +1860,21 @@ class BattleManager {
                 applied = true;
               }
             });
-            // Optional: If we want to show a party-wide effect indicator
+            if (applied) {
+              this.showActionName(attacker.elementId, '気合伝授', 'text-orange-300', 'border-orange-500/50');
+            }
           }
 
           // --- Passive: Healing Song (いやしの歌) ---
           const healingSongSkill = this._findSkill(attacker, 'healing_song');
           if (healingSongSkill && healingSongSkill.level > 0 && healingSongSkill.levelConfig) {
+            let triggered = false;
             this.party.forEach(p => {
               if (!p.isDead && p.hp && (p.hp.current < (p.stats?.hp || p.hp.max))) {
                 const maxHp = p.stats?.hp || p.hp.max;
                 const healAmount = healingSongSkill.levelConfig.healAmount;
                 if (healAmount > 0) {
+                  triggered = true;
                   p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
                   setTimeout(() => {
                     this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
@@ -1859,6 +1882,9 @@ class BattleManager {
                 }
               }
             });
+            if (triggered) {
+              this.showActionName(attacker.elementId, 'いやしの歌', 'text-pink-300', 'border-pink-500/50');
+            }
           }
         }
       } else {
