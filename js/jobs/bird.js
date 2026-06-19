@@ -139,16 +139,16 @@ export const bird = {
       id: 'healing_song', name: 'いやしの歌', icon: 'favorite', type: 'passive',
       maxLevel: 10,
       levels: [
-        { level: 1, spCost: 1, healAmount: 10 },
-        { level: 2, spCost: 1, healAmount: 20 },
-        { level: 3, spCost: 1, healAmount: 30 },
-        { level: 4, spCost: 2, healAmount: 40 },
-        { level: 5, spCost: 2, healAmount: 60 },
-        { level: 6, spCost: 2, healAmount: 80 },
-        { level: 7, spCost: 3, healAmount: 100 },
-        { level: 8, spCost: 3, healAmount: 120 },
-        { level: 9, spCost: 3, healAmount: 150 },
-        { level: 10, spCost: 5, healAmount: 300 }
+        { level: 1, spCost: 1, healAmount: 5 },
+        { level: 2, spCost: 1, healAmount: 10 },
+        { level: 3, spCost: 1, healAmount: 15 },
+        { level: 4, spCost: 2, healAmount: 20 },
+        { level: 5, spCost: 2, healAmount: 25 },
+        { level: 6, spCost: 2, healAmount: 30 },
+        { level: 7, spCost: 3, healAmount: 35 },
+        { level: 8, spCost: 3, healAmount: 40 },
+        { level: 9, spCost: 3, healAmount: 45 },
+        { level: 10, spCost: 5, healAmount: 50 }
       ],
       getDescription: (levelConfig) => `行動終了時、生存している味方全員の HP を ${levelConfig.healAmount} 回復する`
     }
