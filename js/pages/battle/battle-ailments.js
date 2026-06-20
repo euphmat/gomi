@@ -41,6 +41,7 @@ export const ailmentMethods = {
   },
 
   takeAilmentDamage(entity, damage, ailmentName) {
+    if (this.isStopped) return;
     if (entity.isDead) return;
     damage = Math.max(1, damage);
     if (entity.hp) {
@@ -66,6 +67,7 @@ export const ailmentMethods = {
   },
 
   executeConfusionTurn(entity, isParty) {
+    if (this.isStopped) return;
     entity.atb = 0;
     if (isParty) this.activeCharacter = null;
     else this.activeEnemy = null;

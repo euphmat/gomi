@@ -90,6 +90,7 @@ export const atbMethods = {
     this.atbWorker = new Worker(this.atbWorkerUrl);
 
     this.atbWorker.onmessage = () => {
+      if (this.isStopped) return;
       const disableAnim = this._cachedDisableAnim;
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();

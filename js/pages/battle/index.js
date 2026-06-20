@@ -430,6 +430,7 @@ class BattleManager {
     if (character.isDead) return;
     
     setTimeout(() => {
+      if (this.isStopped) return;
       if (!this.isAutoBattle || this.activeCharacter !== character) return;
       
       // Gather all available skills

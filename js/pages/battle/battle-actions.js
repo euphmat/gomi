@@ -27,6 +27,7 @@ export const actionMethods = {
   },
 
   executeSkill(caster, skillDef, levelConfig, options = {}) {
+    if (this.isStopped) return;
     if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) return;
     if (!options.isDoubleAct && levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
       // this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
@@ -130,6 +131,7 @@ export const actionMethods = {
   },
 
   executeAttack(attacker, defender, isParty, options = {}) {
+    if (this.isStopped) return;
     const actionName = options.actionName || '攻撃';
 
     let isMagic = options.isMagic || false;

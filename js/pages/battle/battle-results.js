@@ -16,6 +16,8 @@ const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
 export const resultMethods = {
   checkBattleEnd() {
+    if (this.isStopped) return;
+
     const allEnemiesDead = this.enemies.every(e => e.isDead);
     if (allEnemiesDead) {
       this.endBattle(true, '勝利！');
