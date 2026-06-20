@@ -1,5 +1,5 @@
 // ─── Animation Utilities ──────────────────────────────────────
-const playSkillAnimation = (caster, targets, type, onImpact) => {
+const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
   if (!Array.isArray(targets)) targets = [targets];
   if (localStorage.getItem('disableBattleAnimations') === 'true') {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
@@ -204,9 +204,8 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
         case 'blizzard': {
-          const numIcicles = 6;
+          const numIcicles = options.hits || 6;
           let completed = 0;
-          let impactTriggered = false;
           
           for (let i = 0; i < numIcicles; i++) {
             setTimeout(() => {
@@ -245,11 +244,8 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
                 el.remove();
                 createIceShatter(targetX, targetY, false);
                 completed++;
-                // Trigger impact damage roughly when the first icicle hits
-                if (!impactTriggered) {
-                  impactTriggered = true;
-                  if (onImpact) onImpact(target, index);
-                }
+                // Trigger impact damage for EACH icicle
+                if (onImpact) onImpact(target, index, completed - 1);
               };
             }, i * 60); // Stagger the icicles
           }
@@ -490,37 +486,37 @@ export const mage = {
       id: 'blizzard', name: 'ブリザード', icon: 'severe_cold', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 2, mpCost: 30, multiplier: 1.0 },
-        { level:  2, spCost: 2, mpCost: 36, multiplier: 1.1 },
-        { level:  3, spCost: 2, mpCost: 44, multiplier: 1.2 },
-        { level:  4, spCost: 3, mpCost: 54, multiplier: 1.3 },
-        { level:  5, spCost: 3, mpCost: 66, multiplier: 1.4 },
-        { level:  6, spCost: 3, mpCost: 80, multiplier: 1.5 },
-        { level:  7, spCost: 4, mpCost: 96, multiplier: 1.6 },
-        { level:  8, spCost: 4, mpCost: 114, multiplier: 1.7 },
-        { level:  9, spCost: 4, mpCost: 134, multiplier: 1.8 },
-        { level: 10, spCost: 6, mpCost: 160, multiplier: 2.0 }
+        { level:  1, spCost: 2, mpCost: 30, multiplier: 0.34, hits: 3 },
+        { level:  2, spCost: 2, mpCost: 36, multiplier: 0.28, hits: 4 },
+        { level:  3, spCost: 2, mpCost: 44, multiplier: 0.30, hits: 4 },
+        { level:  4, spCost: 3, mpCost: 54, multiplier: 0.26, hits: 5 },
+        { level:  5, spCost: 3, mpCost: 66, multiplier: 0.24, hits: 6 },
+        { level:  6, spCost: 3, mpCost: 80, multiplier: 0.22, hits: 7 },
+        { level:  7, spCost: 4, mpCost: 96, multiplier: 0.20, hits: 8 },
+        { level:  8, spCost: 4, mpCost: 114, multiplier: 0.22, hits: 8 },
+        { level:  9, spCost: 4, mpCost: 134, multiplier: 0.20, hits: 9 },
+        { level: 10, spCost: 6, mpCost: 160, multiplier: 0.20, hits: 10 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍の氷属性魔法攻撃を行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(2)} 倍の氷属性魔法攻撃を ${lc.hits} 回行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
-        playSkillAnimation(caster, aliveEnemies, 'blizzard', (target, index) => {
+        playSkillAnimation(caster, aliveEnemies, 'blizzard', (target, index, hitIndex) => {
           if (!target.isDead) {
-            battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
-            statDependency: this.statDependency, 
+            battle.executeAttack(caster, target, true, { 
+              statDependency: this.statDependency, 
               actionName: 'ブリザード', 
               damageMultiplier: levelConfig.multiplier, 
               damageType: 'skill', 
               element: 'ice', 
               hideActionName: true, 
-              skipAtbReset: index > 0, 
+              skipAtbReset: index > 0 || hitIndex > 0, 
               isAoEProcessed: true 
             });
           }
-        });
+        }, { hits: levelConfig.hits });
       },
       autoBattle: {
         check: (caster, levelConfig, context) => {
@@ -529,7 +525,7 @@ export const mage = {
           let totalScore = 0;
           for (const enemy of aliveEnemies) {
              const resist = enemy.stats?.elementResist?.ice || 0;
-             totalScore += 35 * levelConfig.multiplier * ((100 - resist) / 100);
+             totalScore += 35 * levelConfig.multiplier * levelConfig.hits * ((100 - resist) / 100);
           }
           if (totalScore > 60) return { target: aliveEnemies[0], score: totalScore };
           return null;
