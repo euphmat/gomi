@@ -38,9 +38,9 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
     anim.onfinish = () => ex.remove();
   };
 
-  const createIceShatter = (x, y, shake = false) => {
+  const createIceShatter = (x, y, shake = false, numParticles = 8) => {
     if (shake) screenShake(shake.intensity || 2, shake.duration || 150);
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < numParticles; i++) {
       const crystal = document.createElement('div');
       crystal.style.position = 'fixed';
       crystal.style.left = `${x - 10}px`;
@@ -54,7 +54,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
       crystal.style.pointerEvents = 'none';
       document.body.appendChild(crystal);
 
-      const angle = (Math.PI * 2 / 8) * i;
+      const angle = (Math.PI * 2 / numParticles) * i;
       const dist = 40 + Math.random() * 30;
       const dx = Math.cos(angle) * dist;
       const dy = Math.sin(angle) * dist;
@@ -238,16 +238,16 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
                 { transform: `rotate(${angle}rad) translateY(0px) scale(0)`, opacity: 0 },
                 { transform: `rotate(${angle}rad) translateY(0px) scale(0.8)`, opacity: 1, offset: 0.2 },
                 { transform: `rotate(${angle}rad) translateY(-${distance}px) scale(0.8)`, opacity: 1 }
-              ], { duration: 250 + Math.random() * 150, easing: 'ease-in' });
+              ], { duration: 150 + Math.random() * 80, easing: 'ease-in' });
 
               anim.onfinish = () => {
                 el.remove();
-                createIceShatter(targetX, targetY, false);
+                createIceShatter(targetX, targetY, false, 3);
                 completed++;
                 // Trigger impact damage for EACH icicle
                 if (onImpact) onImpact(target, index, completed - 1);
               };
-            }, i * 60); // Stagger the icicles
+            }, i * 35); // Stagger the icicles with a shorter delay
           }
           break;
         }
