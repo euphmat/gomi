@@ -342,6 +342,40 @@ export async function getCharactersWithRanchBonus() {
       needSave = true;
     }
 
+    // Verify inherited active skill is mastered
+    if (c.inheritedActiveSkill) {
+      const { jobId, skillId } = c.inheritedActiveSkill;
+      const jobDef = JOBS[jobId];
+      if (jobDef) {
+        const skillDef = jobDef.skills.find(s => s.id === skillId);
+        const level = c.jobSkills && c.jobSkills[jobId] && c.jobSkills[jobId][skillId];
+        if (!skillDef || !level || level < skillDef.maxLevel) {
+          c.inheritedActiveSkill = null;
+          needSave = true;
+        }
+      } else {
+        c.inheritedActiveSkill = null;
+        needSave = true;
+      }
+    }
+
+    // Verify inherited passive skill is mastered
+    if (c.inheritedPassiveSkill) {
+      const { jobId, skillId } = c.inheritedPassiveSkill;
+      const jobDef = JOBS[jobId];
+      if (jobDef) {
+        const skillDef = jobDef.skills.find(s => s.id === skillId);
+        const level = c.jobSkills && c.jobSkills[jobId] && c.jobSkills[jobId][skillId];
+        if (!skillDef || !level || level < skillDef.maxLevel) {
+          c.inheritedPassiveSkill = null;
+          needSave = true;
+        }
+      } else {
+        c.inheritedPassiveSkill = null;
+        needSave = true;
+      }
+    }
+
     const stats = calcFinalStats(c, equipmentMap);
     if (c.hp && stats.hp !== undefined && c.hp.current > stats.hp) {
       c.hp.current = stats.hp;

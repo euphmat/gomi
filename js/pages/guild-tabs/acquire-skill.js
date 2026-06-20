@@ -375,7 +375,7 @@ export function renderAcquireSkillTab() {
                         for (const [sId, level] of Object.entries(skillsMap)) {
                             if (level > 0) {
                                 const skillDef = jobDef.skills.find(s => s.id === sId);
-                                if (skillDef) {
+                                if (skillDef && level >= skillDef.maxLevel) {
                                     inheritedSkillsList.push({ skill: skillDef, level, jobId: jId });
                                     hasSkills = true;
                                 }
