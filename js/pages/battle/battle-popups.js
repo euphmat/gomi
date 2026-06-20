@@ -99,7 +99,9 @@ export const popupMethods = {
     }
 
     const speed = this.speedMult || 1;
-    const dur = (config.duration || 800) / speed;
+    // Limit popup animation speed at high game speeds so numbers remain readable
+    const effectiveSpeed = Math.min(speed, 2.0);
+    const dur = (config.duration || 800) / effectiveSpeed;
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top;
     
