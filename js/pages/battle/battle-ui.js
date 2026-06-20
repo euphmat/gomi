@@ -569,6 +569,21 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced;
     const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
 
+    let typeLabel = '特殊';
+    let typeBadgeClass = 'text-slate-300 bg-slate-800/80 border-slate-600/50';
+    if (desc.includes('回復') || desc.includes('蘇生') || desc.includes('吸収')) {
+      typeLabel = '回復'; typeBadgeClass = 'text-emerald-300 bg-emerald-950/60 border-emerald-800/50';
+    } else if (desc.includes('アップ') || desc.includes('ダウン') || desc.includes('挑発') || desc.includes('庇う') || desc.includes('軽減') || desc.includes('状態異常')) {
+      typeLabel = '補助'; typeBadgeClass = 'text-cyan-300 bg-cyan-950/60 border-cyan-800/50';
+    } else if (skillDef.statDependency === 'BOTH' || desc.includes('複合攻撃')) {
+      typeLabel = '複合'; typeBadgeClass = 'text-yellow-300 bg-yellow-950/60 border-yellow-800/50';
+    } else if (skillDef.statDependency === 'MAT' || desc.includes('魔法攻撃')) {
+      typeLabel = '魔法'; typeBadgeClass = 'text-purple-300 bg-purple-950/60 border-purple-800/50';
+    } else if (skillDef.statDependency === 'ATK' || desc.includes('物理攻撃')) {
+      typeLabel = '物理'; typeBadgeClass = 'text-orange-300 bg-orange-950/60 border-orange-800/50';
+    }
+    const typeBadgeHtml = `<div class="text-[9px] font-bold px-1 py-[1px] rounded border ${typeBadgeClass} ml-0.5 leading-none shadow-inner shrink-0">${typeLabel}</div>`;
+
     const autoEnabled = autoSkillStates[p.id]?.[skillDef.id] !== false;
     
     // Aesthetic states
@@ -656,6 +671,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
               ${skillDef.name}
             </div>
             <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[9px] font-bold bg-slate-900/50 px-1 py-[1px] rounded border border-slate-700/50">Lv${level}</div>
+            ${typeBadgeHtml}
             ${isInherited ? `<div class="text-[9px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1 py-[1px] rounded uppercase tracking-wider">継承</div>` : ''}
           </div>
           <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${desc}</div>
