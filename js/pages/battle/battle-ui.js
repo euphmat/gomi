@@ -1,5 +1,5 @@
-import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
-import { formatNumber } from '../utils/format.js';
+import { MEDAL_RANKS } from '../../definitions/medal-definitions.js';
+import { formatNumber } from '../../utils/format.js';
 
 export function getActiveStateIconsHTML(entity) {
   if (!entity) return '';

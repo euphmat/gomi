@@ -30,7 +30,7 @@ import { renderGuildPage }   from './pages/guild.js';
 import { renderDungeonPage } from './pages/dungeon.js';
 import { renderShopPage }    from './pages/shop.js';
 import { renderLibraryPage } from './pages/library.js';
-import { renderBattlePage }  from './pages/battle.js';
+import { renderBattlePage }  from './pages/battle/index.js';
 
 class App {
   constructor() {
