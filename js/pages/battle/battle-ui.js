@@ -16,7 +16,7 @@ export function getActiveStateIconsHTML(entity) {
       curse: { icon: 'sentiment_very_dissatisfied', color: 'text-fuchsia-500', name: '呪い' },
       confusion: { icon: 'question_mark', color: 'text-pink-400', name: '混乱' }
     };
-    const data = map[entity.activeAilment.type];
+    const data = AILMENTS[entity.activeAilment.type];
     if (data) icons.push(data);
   }
 
