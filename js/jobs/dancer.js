@@ -41,27 +41,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
   };
 
   if (type === 'poison_salsa') {
-    const aura = document.createElement('div');
-    aura.style.position = 'fixed';
-    aura.style.left = `${cx - 50}px`;
-    aura.style.top = `${cy - 50}px`;
-    aura.style.width = '100px';
-    aura.style.height = '100px';
-    aura.style.borderRadius = '50%';
-    aura.style.background = 'radial-gradient(circle, rgba(168,85,247,0.8), transparent)';
-    aura.style.boxShadow = '0 0 20px #a855f7';
-    aura.style.zIndex = '9998';
-    aura.style.pointerEvents = 'none';
-    document.body.appendChild(aura);
-
-    const auraAnim = aura.animate([
-      { transform: 'scale(0.5)', opacity: 0 },
-      { transform: 'scale(2.5)', opacity: 0.8, offset: 0.4 },
-      { transform: 'scale(6)', opacity: 0 }
-    ], { duration: 500, easing: 'ease-out' });
-
-    auraAnim.onfinish = () => aura.remove();
-
     targets.forEach((target, index) => {
       setTimeout(() => {
         const targetEl = document.getElementById(target.elementId);
