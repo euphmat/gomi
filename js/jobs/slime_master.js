@@ -45,30 +45,34 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     el.src = `./assets/monster/${slimeId}.webp`;
     el.style.position = 'fixed';
     // Start high above the target
-    const startX = x + (Math.random() * 100 - 50);
-    const startY = y - window.innerHeight;
+    const startX = x + (Math.random() * 200 - 100);
+    const startY = y - window.innerHeight - 100;
     
-    el.style.left = `${startX - 30}px`;
-    el.style.top = `${startY - 30}px`;
-    el.style.width = '60px';
-    el.style.height = '60px';
+    el.style.left = `${startX - 20}px`;
+    el.style.top = `${startY - 20}px`;
+    el.style.width = '40px';
+    el.style.height = '40px';
     el.style.objectFit = 'contain';
     el.style.zIndex = '9999';
     el.style.pointerEvents = 'none';
     document.body.appendChild(el);
 
-    const dx = x - startX;
-    const dy = y - startY;
+    // Add some random target offset to make impacts look more spread out
+    const targetX = x + (Math.random() * 80 - 40);
+    const targetY = y + (Math.random() * 80 - 40);
 
-    el.style.filter = 'drop-shadow(0px 20px 10px rgba(0,0,0,0.3))';
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+
+    el.style.filter = 'drop-shadow(0px 10px 5px rgba(0,0,0,0.3))';
     const anim = el.animate([
       { transform: 'translate(0px, 0px) scale(0.5) rotate(0deg)' },
-      { transform: `translate(${dx}px, ${dy}px) scale(1.5) rotate(${Math.random() > 0.5 ? 180 : -180}deg)` }
-    ], { duration: 400 + Math.random() * 200, easing: 'ease-in' });
+      { transform: `translate(${dx}px, ${dy}px) scale(1.2) rotate(${Math.random() > 0.5 ? 180 : -180}deg)` }
+    ], { duration: 250 + Math.random() * 100, easing: 'ease-in' });
 
     anim.onfinish = () => {
       el.remove();
-      onHit();
+      onHit(targetX, targetY);
     };
   };
 
@@ -87,6 +91,8 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     const cy = casterRect.top + casterRect.height / 2;
     const tx = targetRect.left + targetRect.width / 2;
     const ty = targetRect.top + targetRect.height / 2;
+
+    const interval = type === 'slime_hazard' ? 40 : 100;
 
     setTimeout(() => {
       if (type === 'slime_throw') {
@@ -118,13 +124,13 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
         const slimeIds = ['slime_blue', 'slime_green', 'slime_red', 'slime_water', 'slime_fire', 'slime_ice', 'slime_wind', 'slime_thunder', 'slime_flower', 'slime_grass', 'slime_dark', 'slime_earth', 'slime_angel'];
         const randomSlime = slimeIds[Math.floor(Math.random() * slimeIds.length)];
         
-        createSlimeRain(tx, ty, randomSlime, () => {
+        createSlimeRain(tx, ty, randomSlime, (impactX, impactY) => {
           const ex = document.createElement('div');
           ex.style.position = 'fixed';
-          ex.style.left = `${tx - 60}px`;
-          ex.style.top = `${ty - 60}px`;
-          ex.style.width = '120px';
-          ex.style.height = '120px';
+          ex.style.left = `${impactX - 50}px`;
+          ex.style.top = `${impactY - 50}px`;
+          ex.style.width = '100px';
+          ex.style.height = '100px';
           ex.style.borderRadius = '50%';
           const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00', '#0000ff', '#ff8800'];
           const rc = colors[Math.floor(Math.random() * colors.length)];
@@ -135,15 +141,15 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
           document.body.appendChild(ex);
 
           const animEx = ex.animate([
-            { transform: 'scale(0.3) rotate(0deg)', opacity: 1 },
-            { transform: 'scale(2.5) rotate(90deg)', opacity: 0 }
-          ], { duration: 500, easing: 'ease-out' });
+            { transform: 'scale(0.2) rotate(0deg)', opacity: 1 },
+            { transform: 'scale(1.5) rotate(45deg)', opacity: 0 }
+          ], { duration: 250, easing: 'ease-out' });
           animEx.onfinish = () => ex.remove();
 
           if (onImpact) onImpact(target, index);
         });
       }
-    }, index * 100);
+    }, index * interval);
   });
 };
 
