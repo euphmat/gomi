@@ -82,6 +82,31 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
     bgClass = ailmentBgMap[p.activeAilment.type] || bgClass;
   }
   
+  const atkTotalPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
+  const defTotalPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
+  const matkTotalPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
+  const mdefPassivePercent = (p._passiveMdefBuffPercent || 0);
+  const mdefActiveAmount = (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0);
+  const spdTotalPercent = (p._passiveSpdBuffPercent || 0);
+
+  const getStatTheme = (isBuff, isDebuff, baseIconColor) => {
+    if (isBuff) return { bg: 'bg-green-900/40 border-green-500/50 shadow-none', text: 'text-green-400', val: 'text-green-400', icon: 'text-green-400' };
+    if (isDebuff) return { bg: 'bg-red-900/40 border-red-500/50 shadow-none', text: 'text-red-400', val: 'text-red-400', icon: 'text-red-400' };
+    return { bg: 'bg-gray-900/40 border-transparent shadow-none', text: '', val: 'text-gray-100', icon: baseIconColor };
+  };
+
+  const atkTheme = getStatTheme(atkTotalPercent > 0, atkTotalPercent < 0, 'text-red-400');
+  const defTheme = getStatTheme(defTotalPercent > 0, defTotalPercent < 0, 'text-slate-400');
+  const matkTheme = getStatTheme(matkTotalPercent > 0, matkTotalPercent < 0, 'text-purple-400');
+  const mdefTheme = getStatTheme(mdefPassivePercent > 0 || mdefActiveAmount > 0, mdefPassivePercent < 0 || mdefActiveAmount < 0, 'text-indigo-400');
+  const spdTheme = getStatTheme(spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400');
+
+  const finalAtk = Math.floor(p.stats.atk * (1 + atkTotalPercent / 100));
+  const finalDef = Math.floor(p.stats.def * (1 + defTotalPercent / 100));
+  const finalMatk = Math.floor(p.stats.matk * (1 + matkTotalPercent / 100));
+  const finalMdef = Math.floor(p.stats.mdef * (1 + mdefPassivePercent / 100)) + mdefActiveAmount;
+  const finalSpd = Math.floor(p.stats.spd * (1 + spdTotalPercent / 100));
+
   return `
     <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all cursor-pointer hover:scale-[1.02]'}">
       <div class="flex flex-col mb-1.5 w-full">
@@ -143,25 +168,25 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
       </div>
 
       <div class="battle-stats-container flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') !== 'false' ? 'hidden' : ''}">
-        <div class="stat-row-atk flex justify-between items-center ${p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0 ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0 ? 'bg-red-900/40 border-red-500/50 shadow-none' : 'bg-gray-900/40 border-transparent shadow-none'} border rounded px-1 py-0.5 transition-colors">
-          <div class="flex items-center gap-[3px]"><span class="stat-icon-atk material-symbols-outlined text-red-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="stat-label-atk font-bold tracking-wider ${p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0 ? 'text-red-400' : ''}">ATK</span></div>
-          <span class="stat-val-atk ${p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0 ? 'text-red-400' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0 ? Math.floor(p.stats.atk * (1 + ((p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0)) / 100)) : p.stats.atk)}</span>
+        <div class="stat-row-atk flex justify-between items-center ${atkTheme.bg} border rounded px-1 py-0.5 transition-colors">
+          <div class="flex items-center gap-[3px]"><span class="stat-icon-atk material-symbols-outlined ${atkTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="stat-label-atk font-bold tracking-wider ${atkTheme.text}">ATK</span></div>
+          <span class="stat-val-atk ${atkTheme.val} font-black drop-shadow-md">${formatNumber(finalAtk)}</span>
         </div>
-        <div class="stat-row-def flex justify-between items-center ${p._defBuffTurns > 0 && p._passiveDefBuffPercent > 0 ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0 ? 'bg-green-900/40 border-green-500/50 shadow-none' : 'bg-gray-900/40 border-transparent shadow-none'} border rounded px-1 py-0.5 transition-colors">
-          <div class="flex items-center gap-[3px]"><span class="stat-icon-def material-symbols-outlined ${p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0 ? 'text-green-400' : 'text-slate-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="stat-label-def font-bold tracking-wider ${p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0 ? 'text-green-400' : ''}">DEF</span></div>
-          <span class="stat-val-def ${p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0 ? 'text-green-400' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0 ? Math.floor(p.stats.def * (1 + ((p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0)) / 100)) : p.stats.def)}</span>
+        <div class="stat-row-def flex justify-between items-center ${defTheme.bg} border rounded px-1 py-0.5 transition-colors">
+          <div class="flex items-center gap-[3px]"><span class="stat-icon-def material-symbols-outlined ${defTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="stat-label-def font-bold tracking-wider ${defTheme.text}">DEF</span></div>
+          <span class="stat-val-def ${defTheme.val} font-black drop-shadow-md">${formatNumber(finalDef)}</span>
         </div>
-        <div class="stat-row-mat flex justify-between items-center ${p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0 ? 'bg-purple-800/60 border-purple-400 shadow-[0_0_5px_rgba(192,132,252,0.4)]' : p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0 ? 'bg-purple-900/40 border-purple-500/50 shadow-none' : 'bg-gray-900/40 border-transparent shadow-none'} border rounded px-1 py-0.5 transition-colors">
-          <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined text-purple-400" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider ${p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0 ? 'text-purple-400' : ''}">MAT</span></div>
-          <span class="stat-val-mat ${p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0 ? 'text-purple-400' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0 ? Math.floor(p.stats.matk * (1 + ((p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0)) / 100)) : p.stats.matk)}</span>
+        <div class="stat-row-mat flex justify-between items-center ${matkTheme.bg} border rounded px-1 py-0.5 transition-colors">
+          <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined ${matkTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider ${matkTheme.text}">MAT</span></div>
+          <span class="stat-val-mat ${matkTheme.val} font-black drop-shadow-md">${formatNumber(finalMatk)}</span>
         </div>
-        <div class="stat-row-mdf flex justify-between items-center ${p._mdefBuffTurns > 0 && p._passiveMdefBuffPercent > 0 ? 'bg-indigo-800/60 border-indigo-400 shadow-[0_0_5px_rgba(129,140,248,0.4)]' : p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0 ? 'bg-indigo-900/40 border-indigo-500/50 shadow-none' : 'bg-gray-900/40 border-transparent shadow-none'} border rounded px-1 py-0.5 transition-colors">
-          <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0 ? 'text-indigo-300' : 'text-indigo-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0 ? 'text-indigo-300' : ''}">MDF</span></div>
-          <span class="stat-val-mdf ${p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0 ? 'text-indigo-300' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0 ? Math.floor(p.stats.mdef * (1 + (p._passiveMdefBuffPercent || 0) / 100)) + (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0) : p.stats.mdef)}</span>
+        <div class="stat-row-mdf flex justify-between items-center ${mdefTheme.bg} border rounded px-1 py-0.5 transition-colors">
+          <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${mdefTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${mdefTheme.text}">MDF</span></div>
+          <span class="stat-val-mdf ${mdefTheme.val} font-black drop-shadow-md">${formatNumber(finalMdef)}</span>
         </div>
-        <div class="stat-row-spd flex justify-between items-center ${p._passiveSpdBuffPercent > 0 ? 'bg-teal-900/40 border-teal-500/50 shadow-none' : 'bg-gray-900/40 border-transparent shadow-none'} border rounded px-1 py-0.5 transition-colors">
-          <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined ${p._passiveSpdBuffPercent > 0 ? 'text-teal-300' : 'text-yellow-400'}" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider ${p._passiveSpdBuffPercent > 0 ? 'text-teal-300' : ''}">SPD</span></div>
-          <span class="stat-val-spd ${p._passiveSpdBuffPercent > 0 ? 'text-teal-300' : 'text-gray-100'} font-black drop-shadow-md">${formatNumber(p.stats.spd)}</span>
+        <div class="stat-row-spd flex justify-between items-center ${spdTheme.bg} border rounded px-1 py-0.5 transition-colors">
+          <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined ${spdTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider ${spdTheme.text}">SPD</span></div>
+          <span class="stat-val-spd ${spdTheme.val} font-black drop-shadow-md">${formatNumber(finalSpd)}</span>
         </div>
       </div>
     </div>
