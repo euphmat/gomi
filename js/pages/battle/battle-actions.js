@@ -4,6 +4,28 @@
  */
 
 export const actionMethods = {
+  clearEntityStatuses(entity) {
+    entity.activeAilment = null;
+    entity._defBuffTurns = 0;
+    entity._defBuffPercent = 0;
+    entity._mdefBuffTurns = 0;
+    entity._mdefBuffAmount = 0;
+    entity._atkBuffTurns = 0;
+    entity._atkBuffPercent = 0;
+    entity._matkBuffTurns = 0;
+    entity._matkBuffPercent = 0;
+    entity._provokeTurns = 0;
+    entity._provokeChance = 0;
+    entity._ailmentResistBuffTurns = 0;
+    entity._ailmentResistBuffAmount = 0;
+    if (entity.atkDebuffTurns > 0) {
+      entity.atkDebuffTurns = 0;
+      if (entity.stats && entity.originalAtk) {
+        entity.stats.atk = entity.originalAtk;
+      }
+    }
+  },
+
   executeSkill(caster, skillDef, levelConfig, options = {}) {
     if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) return;
     if (!options.isDoubleAct && levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
@@ -402,6 +424,7 @@ export const actionMethods = {
       if (defender.currentHp <= 0) {
         defender.currentHp = 0;
         defender.isDead = true;
+        this.clearEntityStatuses(defender);
         this.processEnemyDeath(defender);
       }
     } else {
@@ -425,6 +448,7 @@ export const actionMethods = {
       if (defender.hp.current <= 0 && !survivedBySlimeCore) {
         defender.hp.current = 0;
         defender.isDead = true;
+        this.clearEntityStatuses(defender);
         this.lastKilledBy = {
           monsterId: attacker.id,
           monsterName: attacker.name,

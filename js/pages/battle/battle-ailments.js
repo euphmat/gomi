@@ -48,6 +48,7 @@ export const ailmentMethods = {
       if (entity.hp.current <= 0) {
          entity.hp.current = 0;
          entity.isDead = true;
+         this.clearEntityStatuses(entity);
          this.lastKilledBy = {
            monsterId: 'ailment', monsterName: ailmentName, monsterImage: '', actionName: ailmentName
          };
@@ -57,6 +58,7 @@ export const ailmentMethods = {
       if (entity.currentHp <= 0) {
          entity.currentHp = 0;
          entity.isDead = true;
+         this.clearEntityStatuses(entity);
          this.processEnemyDeath(entity);
       }
     }
