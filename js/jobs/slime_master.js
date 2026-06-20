@@ -69,7 +69,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     const anim = el.animate([
       { transform: 'translate3d(0px, 0px, 0) scale(0.5) rotate(0deg)' },
       { transform: `translate3d(${dx}px, ${dy}px, 0) scale(1.2) rotate(${Math.random() > 0.5 ? 180 : -180}deg)` }
-    ], { duration: 600 + Math.random() * 200, easing: 'ease-in' });
+    ], { duration: 1500 + Math.random() * 1000, easing: 'ease-in' });
 
     anim.onfinish = () => {
       el.remove();
