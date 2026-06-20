@@ -427,18 +427,18 @@ export const dancer = {
       id: 'curse_step', name: 'カース・ステップ', icon: 'accessibility_new', statDependency: 'MAT',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 3, mpCost: 50, chance: 30, minAilments: 1, maxAilments: 1 },
-        { level:  2, spCost: 3, mpCost: 56, chance: 35, minAilments: 1, maxAilments: 2 },
-        { level:  3, spCost: 3, mpCost: 62, chance: 40, minAilments: 1, maxAilments: 2 },
-        { level:  4, spCost: 4, mpCost: 68, chance: 45, minAilments: 1, maxAilments: 2 },
-        { level:  5, spCost: 4, mpCost: 74, chance: 50, minAilments: 2, maxAilments: 2 },
-        { level:  6, spCost: 4, mpCost: 80, chance: 55, minAilments: 2, maxAilments: 3 },
-        { level:  7, spCost: 5, mpCost: 90, chance: 60, minAilments: 2, maxAilments: 3 },
-        { level:  8, spCost: 5, mpCost: 100, chance: 65, minAilments: 2, maxAilments: 3 },
-        { level:  9, spCost: 5, mpCost: 110, chance: 70, minAilments: 2, maxAilments: 4 },
-        { level: 10, spCost: 7, mpCost: 130, chance: 85, minAilments: 3, maxAilments: 5 }
+        { level:  1, spCost: 3, mpCost: 50, chance: 30 },
+        { level:  2, spCost: 3, mpCost: 56, chance: 35 },
+        { level:  3, spCost: 3, mpCost: 62, chance: 40 },
+        { level:  4, spCost: 4, mpCost: 68, chance: 45 },
+        { level:  5, spCost: 4, mpCost: 74, chance: 50 },
+        { level:  6, spCost: 4, mpCost: 80, chance: 55 },
+        { level:  7, spCost: 5, mpCost: 90, chance: 60 },
+        { level:  8, spCost: 5, mpCost: 100, chance: 65 },
+        { level:  9, spCost: 5, mpCost: 110, chance: 70 },
+        { level: 10, spCost: 7, mpCost: 130, chance: 85 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.chance}% の確率でランダムな状態異常を ${lc.minAilments === lc.maxAilments ? lc.minAilments : lc.minAilments + '～' + lc.maxAilments} つ付与する。`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ${lc.chance}% の確率でランダムな状態異常を1つ付与する。`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
@@ -448,15 +448,11 @@ export const dancer = {
         playSkillAnimation(caster, targets, 'curse_step', (target, idx) => {
           if (target.isDead) return;
           
-          const numAilments = Math.floor(Math.random() * (levelConfig.maxAilments - levelConfig.minAilments + 1)) + levelConfig.minAilments;
-          const shuffledAilments = allAilments.sort(() => 0.5 - Math.random());
-          const selectedAilments = shuffledAilments.slice(0, numAilments);
+          const selectedAilment = allAilments[Math.floor(Math.random() * allAilments.length)];
           
           const origA = caster.stats.attackAilments;
           const tempAilments = { ...(origA || {}) };
-          selectedAilments.forEach(ailment => {
-            tempAilments[ailment] = levelConfig.chance;
-          });
+          tempAilments[selectedAilment] = levelConfig.chance;
           caster.stats.attackAilments = tempAilments;
           
           battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
