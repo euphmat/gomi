@@ -186,6 +186,7 @@ export const resultMethods = {
           if (Math.random() * 100 <= (adjustedRate % 100)) {
             dropCount += 1;
           }
+          dropCount = Math.min(dropCount, 100);
         }
 
         if (dropCount > 0) {
@@ -280,15 +281,32 @@ export const resultMethods = {
     if (this._pendingRanchSave) await GameDB.setGameState('ranch_data', this._pendingRanchSave);
     if (this.currentGold !== undefined) await GameDB.setGameState('gold', this.currentGold);
     if (this._pendingItemDrops) {
+      let autoSellGold = 0;
       for (const [itemId, qty] of Object.entries(this._pendingItemDrops)) {
         const mat = MATERIALS_MAP.get(itemId);
         if (mat) {
           const currentItem = await GameDB.getInventoryItem(itemId) || { id: itemId, quantity: 0, type: 'material', ...mat };
-          currentItem.quantity = Math.min(99999, currentItem.quantity + qty);
+          const newQuantity = currentItem.quantity + qty;
+          if (newQuantity > 99999) {
+            autoSellGold += (newQuantity - 99999);
+            currentItem.quantity = 99999;
+          } else {
+            currentItem.quantity = newQuantity;
+          }
           await GameDB.putInventoryItem(currentItem);
         }
       }
       this._pendingItemDrops = {};
+
+      if (autoSellGold > 0) {
+        if (this.currentGold === undefined) {
+          this.currentGold = await GameDB.getGameState('gold') || 0;
+        }
+        this.currentGold += autoSellGold;
+        await GameDB.setGameState('gold', this.currentGold);
+        const goldDisplay = document.getElementById('header-gold-display');
+        if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(this.currentGold)} `;
+      }
     }
     this._needsSave = false;
   },
