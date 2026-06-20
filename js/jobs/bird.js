@@ -137,13 +137,12 @@ export const bird = {
         { level: 10, spCost: 5, mpCost: 35, chance: 80 }
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、敵全体を ${levelConfig.chance}％ の確率で睡眠状態にする`,
+      actionNameClass: 'text-pink-300', actionNameBorderClass: 'border-pink-500/50',
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
         const targets = targetGroup.filter(e => !e.isDead);
         if (targets.length === 0) return;
-
-        battle.showActionName(caster.elementId, 'こもりうた', 'text-pink-300', 'border-pink-500/50');
         playSkillAnimation(caster, targets, 'lullaby', (target, index) => {
             if (target.isDead) return;
             const origA = caster.stats.attackAilments;
@@ -167,6 +166,7 @@ export const bird = {
     },
     {
       id: 'nightmare', name: 'ナイトメア', icon: 'dark_mode', statDependency: 'MATK',
+      hideActionName: true,
       maxLevel: 10,
       levels: [
         { level:  1, spCost: 1, mpCost: 15, multiplier: 2.0 },
@@ -193,6 +193,7 @@ export const bird = {
         
         if (target) {
             if (target.activeAilment && target.activeAilment.type === 'sleep') {
+                battle.showActionName(caster.elementId, 'ナイトメア', 'text-purple-300', 'border-purple-500/50');
                 playSkillAnimation(caster, [target], 'nightmare', () => {
                     battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
                         statDependency: this.statDependency, actionName: 'ナイトメア', damageMultiplier: levelConfig.multiplier, isMagic: true, damageType: 'skill', element: 'dark'
@@ -232,6 +233,7 @@ export const bird = {
         { level: 10, spCost: 5, mpCost: 50, amount: 60, turns: 5 }
       ],
       getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、${levelConfig.turns} ターンの間、味方全体の状態異常耐性を ${levelConfig.amount} 上昇させる`,
+      actionNameClass: 'text-blue-300', actionNameBorderClass: 'border-blue-500/50',
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.party;
@@ -239,7 +241,6 @@ export const bird = {
           targetGroup = battle.enemies;
         }
         const targets = targetGroup.filter(p => !p.isDead);
-        battle.showActionName(caster.elementId, '破邪の歌', 'text-blue-300', 'border-blue-500/50');
         playSkillAnimation(caster, targets, 'warding_song', (target) => {
             target._ailmentResistBuffAmount = levelConfig.amount;
             target._ailmentResistBuffTurns = levelConfig.turns;

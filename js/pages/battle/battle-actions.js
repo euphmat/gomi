@@ -46,7 +46,14 @@ export const actionMethods = {
     // However, first_aid's execute logic currently handles its own effect:
     
     // Show action name animation
-    this.showActionName(caster.elementId, skillDef.name);
+    if (!skillDef.hideActionName) {
+      this.showActionName(
+        caster.elementId, 
+        skillDef.name,
+        skillDef.actionNameClass || 'text-green-300',
+        skillDef.actionNameBorderClass || 'border-green-500/50'
+      );
+    }
 
     if (skillDef.execute) {
       skillDef.execute(caster, levelConfig, this);
