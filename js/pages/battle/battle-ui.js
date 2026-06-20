@@ -6,11 +6,11 @@ export function getActiveStateIconsHTML(entity) {
   const icons = [];
   
   if (entity.activeAilment) {
-    const map = {
-      poison: { icon: 'water_drop', color: 'text-purple-500', name: '毒' },
-      burn: { icon: 'local_fire_department', color: 'text-red-500', name: '火傷' },
-      paralysis: { icon: 'bolt', color: 'text-yellow-400', name: '麻痺' },
-      sleep: { icon: 'snooze', color: 'text-blue-300', name: '睡眠' },
+    const AILMENTS = {
+      poison: { icon: 'skull', color: 'text-purple-500', name: '毒' },
+      burn: { icon: 'mode_heat', color: 'text-red-500', name: '火傷' },
+      paralysis: { icon: 'flash_off', color: 'text-yellow-400', name: '麻痺' },
+      sleep: { icon: 'bedtime', color: 'text-blue-300', name: '睡眠' },
       blind: { icon: 'visibility_off', color: 'text-gray-400', name: '暗闇' },
       silence: { icon: 'volume_off', color: 'text-indigo-400', name: '沈黙' },
       curse: { icon: 'sentiment_very_dissatisfied', color: 'text-fuchsia-500', name: '呪い' },
@@ -195,52 +195,95 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
 
 export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills, ranchData = {}, playerMedals = {}) {
   if (!targetEntity) {
-    return '<div class="text-xs text-gray-500 flex items-center justify-center h-full" style="font-family: system-ui, -apple-system, sans-serif;">対象が選択されていません</div>';
+    return '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が選択されていません</div>';
   }
 
-  let html = '';
   const kills = (monsterKills && targetEntity.id) ? (monsterKills[targetEntity.id] || 0) : 0;
   const bonus = Math.floor(kills / 100) * 0.1;
   const medalRankIndex = (playerMedals && targetEntity.id && playerMedals[targetEntity.id] !== undefined) ? playerMedals[targetEntity.id] : -1;
 
-  let dropsHtml = '';
-  if (targetEntity.drops && targetEntity.drops.length > 0) {
-    dropsHtml = targetEntity.drops.map(d => {
-      const mat = materials.find(m => m.id === d.itemId);
-      const itemName = mat ? mat.name : d.itemId;
-      const itemImg = mat && mat.image 
-        ? `<img src="${mat.image}" class="w-5 h-5 object-contain shrink-0 drop-shadow-sm">` 
-        : `<span class="material-symbols-outlined text-slate-500 text-[14px] shrink-0">category</span>`;
-      
-      let badgeClass = '';
-      const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus;
-      if (rate <= 0.1) {
-        badgeClass = 'bg-amber-950/80 text-amber-400 border border-amber-500/40 shadow-[0_0_6px_rgba(245,158,11,0.2)]';
-      } else if (rate <= 2.0) {
-        badgeClass = 'bg-purple-950/80 text-purple-400 border border-purple-500/45 shadow-[0_0_6px_rgba(168,85,247,0.2)]';
-      } else {
-        badgeClass = 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/40';
-      }
+  // 1. Stats & Rewards Grid
+  const stats = targetEntity.stats || {};
+  const rewards = targetEntity.rewards || {};
+  const statPills = [
+    { label: 'HP', val: stats.hp || 0, icon: 'favorite', color: 'text-red-400', bg: 'bg-red-950/30 border-red-900/40' },
+    { label: 'ATK', val: stats.atk || 0, icon: 'swords', color: 'text-orange-400', bg: 'bg-orange-950/30 border-orange-900/40' },
+    { label: 'DEF', val: stats.def || 0, icon: 'shield', color: 'text-slate-300', bg: 'bg-slate-800/30 border-slate-700/40' },
+    { label: 'MAT', val: stats.matk || 0, icon: 'auto_awesome', color: 'text-purple-400', bg: 'bg-purple-950/30 border-purple-900/40' },
+    { label: 'MDF', val: stats.mdef || 0, icon: 'security', color: 'text-indigo-400', bg: 'bg-indigo-950/30 border-indigo-900/40' },
+    { label: 'SPD', val: stats.spd || 0, icon: 'directions_run', color: 'text-amber-400', bg: 'bg-amber-950/30 border-amber-900/40' }
+  ];
 
-      const rateStr = rate.toFixed(2).replace(/\.?0+$/, '');
+  const renderStatBadge = (p) => `
+    <div class="flex items-center justify-between px-1 py-0.5 rounded border ${p.bg} shadow-inner shrink-0 min-w-0">
+      <div class="flex items-center gap-1 min-w-0 shrink-0">
+        <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined ${p.color}" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">${p.icon}</span></div>
+        <span class="text-[11px] font-bold text-slate-300 drop-shadow truncate">${p.label}</span>
+      </div>
+      <span class="text-[13px] font-black text-slate-100 drop-shadow ml-1 shrink-0">${formatNumber(p.val)}</span>
+    </div>
+  `;
+  const statPillsHtml = statPills.map(renderStatBadge).join('');
 
-      return `
-        <div class="flex justify-between items-center bg-slate-950/40 p-1.5 rounded border border-slate-850/50 hover:bg-slate-850/20 hover:border-slate-800 transition-all gap-1">
-          <div class="flex items-center gap-1.5 min-w-0 flex-1">
-            <div class="w-6 h-6 rounded bg-slate-950 flex items-center justify-center border border-slate-800 shrink-0">
-              ${itemImg}
-            </div>
-            <span class="text-slate-200 text-[9.5px] font-black leading-tight break-words">${itemName}</span>
-          </div>
-          <span class="${badgeClass} px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${rateStr}%</span>
-        </div>`;
-    }).join('');
-  } else {
-    dropsHtml = '<div class="text-slate-500 text-center py-4 text-[10px] italic">ドロップ情報なし</div>';
-  }
+  const rewardPills = [
+    { label: 'EXP', val: rewards.exp || 0, icon: 'star', color: 'text-emerald-400', bg: 'bg-emerald-950/30 border-emerald-900/40' },
+    { label: 'JP', val: rewards.jp || 0, icon: 'psychology', color: 'text-fuchsia-400', bg: 'bg-fuchsia-950/30 border-fuchsia-900/40' },
+    { label: 'GOLD', val: rewards.gold || 0, icon: 'monetization_on', color: 'text-yellow-400', bg: 'bg-yellow-950/30 border-yellow-900/40' }
+  ];
+  const rewardsHtml = rewardPills.map(renderStatBadge).join('');
 
-  const hpPct = targetEntity.maxHp > 0 ? (targetEntity.currentHp / targetEntity.maxHp) * 100 : 0;
+  // 1.5 Resistances & Weaknesses
+  const elementMap = {
+    fire: { label: '炎', color: 'text-red-400', icon: 'local_fire_department' }, water: { label: '水', color: 'text-blue-400', icon: 'water_drop' },
+    grass: { label: '草', color: 'text-emerald-400', icon: 'eco' }, ice: { label: '氷', color: 'text-cyan-300', icon: 'ac_unit' },
+    thunder: { label: '雷', color: 'text-yellow-400', icon: 'bolt' }, wind: { label: '風', color: 'text-green-300', icon: 'air' },
+    earth: { label: '土', color: 'text-amber-500', icon: 'landscape' }, light: { label: '光', color: 'text-yellow-200', icon: 'light_mode' },
+    dark: { label: '闇', color: 'text-purple-400', icon: 'dark_mode' }
+  };
+  const ailmentMap = {
+    poison: { label: '毒', color: 'text-purple-500', icon: 'skull' }, burn: { label: '火傷', color: 'text-red-500', icon: 'mode_heat' },
+    paralysis: { label: '麻痺', color: 'text-yellow-400', icon: 'flash_off' }, sleep: { label: '睡眠', color: 'text-blue-300', icon: 'bedtime' },
+    confusion: { label: '混乱', color: 'text-pink-400', icon: 'mood_bad' }, curse: { label: '呪い', color: 'text-fuchsia-500', icon: 'priority_high' },
+    blind: { label: '暗闇', color: 'text-gray-400', icon: 'visibility_off' }, silence: { label: '沈黙', color: 'text-indigo-400', icon: 'volume_off' }
+  };
 
+  const getResistBadges = (source, map) => {
+    if (!source) return [];
+    return Object.keys(source).map(key => {
+      const val = source[key];
+      if (!val || val === 0 || !map[key]) return null;
+      return { ...map[key], val: val, isWeak: val < 0 };
+    }).filter(Boolean);
+  };
+
+  const allResists = [
+    ...getResistBadges(targetEntity.elementResist || targetEntity.elements, elementMap)
+  ];
+
+  const weakBadges = allResists.filter(r => r.isWeak);
+  const resistBadges = allResists.filter(r => !r.isWeak);
+
+  const renderResistGroup = (label, badges, colorClass) => {
+    if (badges.length === 0) return '';
+    const badgeHtml = badges.map(r => `
+      <div class="flex items-center px-1.5 py-[1px] rounded border border-slate-600/60 bg-slate-950/60 shadow-inner" title="${r.label}">
+        <div class="flex items-center justify-center w-[10px] h-[10px] shrink-0"><span class="material-symbols-outlined ${r.color}" style="font-size: 14px; font-variation-settings: 'FILL' 1; transform: scale(0.7);">${r.icon}</span></div>
+        <span class="text-[10px] font-black ${r.color} drop-shadow ml-[1px]">${Math.abs(r.val)}</span>
+      </div>
+    `).join('');
+    
+    return `
+      <div class="flex flex-wrap items-center justify-center w-full mt-1 gap-0.5">
+        <span class="text-[9px] font-bold ${colorClass} shrink-0 leading-none bg-slate-800/80 px-1 py-0.5 rounded border border-slate-600/50 shadow-inner">${label}</span>
+        ${badgeHtml}
+      </div>
+    `;
+  };
+
+  const resistHtml = renderResistGroup('耐', resistBadges, 'text-slate-200');
+  const weakHtml = renderResistGroup('弱', weakBadges, 'text-slate-200');
+
+  // 2. Actions (List)
   let actionsHtml = '';
   if (targetEntity.actions && targetEntity.actions.length > 0) {
     actionsHtml = targetEntity.actions.map(a => {
@@ -248,33 +291,69 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       const isMagic = a.isMagic === true || (a.execute && /isMagic:\s*true/.test(a.execute.toString())) || (a.description && a.description.includes('魔法'));
       const isPhysical = a.isMagic === false || (a.execute && /isMagic:\s*false/.test(a.execute.toString())) || (a.description && a.description.includes('物理'));
       
-      let badgeHtml = '';
-      if (isMagic) {
-        badgeHtml = '<span class="bg-purple-900/60 text-purple-300 border border-purple-500/50 px-1 py-0.5 rounded text-[8px] font-black shrink-0 ml-1 tracking-wider leading-none flex items-center">魔法攻撃</span>';
-      } else if (isPhysical) {
-        badgeHtml = '<span class="bg-orange-900/60 text-orange-300 border border-orange-500/50 px-1 py-0.5 rounded text-[8px] font-black shrink-0 ml-1 tracking-wider leading-none flex items-center">物理攻撃</span>';
-      }
+      let icon = 'star';
+      let colorClass = 'text-slate-300';
+      if (isMagic) { icon = 'auto_awesome'; colorClass = 'text-purple-400'; }
+      else if (isPhysical) { icon = 'swords'; colorClass = 'text-orange-400'; }
+
+      let typeLabel = '特殊';
+      let typeBadgeClass = 'text-slate-300 bg-slate-800/80 border-slate-600/50';
+      if (a.type === 'physical') { typeLabel = '物理'; typeBadgeClass = 'text-orange-300 bg-orange-950/60 border-orange-800/50'; }
+      else if (a.type === 'magic') { typeLabel = '魔法'; typeBadgeClass = 'text-purple-300 bg-purple-950/60 border-purple-800/50'; }
+      else if (a.type === 'heal') { typeLabel = '回復'; typeBadgeClass = 'text-emerald-300 bg-emerald-950/60 border-emerald-800/50'; }
+      else if (a.type === 'support') { typeLabel = '補助'; typeBadgeClass = 'text-cyan-300 bg-cyan-950/60 border-cyan-800/50'; }
 
       return `
-        <div class="flex flex-col bg-slate-950/40 border border-slate-850/50 px-1.5 py-1 rounded gap-0.5">
-          <div class="flex justify-between items-center">
-            <div class="flex items-center flex-1 min-w-0">
-              <span class="text-[9.5px] font-bold text-slate-200 truncate leading-tight">${a.name}</span>
-              ${badgeHtml}
+        <div class="flex flex-col gap-0 px-1.5 py-0.5 rounded border border-slate-700/50 bg-slate-900/40 hover:bg-slate-800/60 transition-colors">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined ${colorClass}" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">${icon}</span></div>
+              <span class="text-[13px] font-black text-slate-100 leading-tight">${a.name}</span>
+              <span class="text-[9px] font-bold px-1 py-[1px] rounded border ${typeBadgeClass} ml-0.5 leading-none shadow-inner shrink-0">${typeLabel}</span>
             </div>
-            <span class="text-[8px] font-bold text-blue-400 bg-blue-900/30 px-1 rounded border border-blue-800/50 shrink-0 ml-1 flex items-center leading-tight py-0.5">${a.chance}%</span>
+            <span class="text-[10px] font-black text-blue-300 bg-blue-950/80 px-1.5 rounded border border-blue-800/50 shrink-0 ml-1 py-[1px]">${a.chance}%</span>
           </div>
-          <div class="text-[8.5px] text-slate-400 leading-tight">
-            ${desc}
-          </div>
+          <div class="text-[10px] text-slate-400 pl-[20px] leading-tight break-words">${desc}</div>
         </div>
       `;
     }).join('');
   } else {
-    actionsHtml = '<div class="text-slate-500 text-center py-2 text-[9px] italic">通常攻撃のみ</div>';
+    actionsHtml = '<div class="text-[10px] text-slate-500 italic p-2 text-center bg-slate-950/30 rounded border border-slate-800/50">通常攻撃のみ</div>';
   }
 
-  let capturePanelHtml = '';
+  // 3. Drops (List)
+  let dropsHtml = '';
+  if (targetEntity.drops && targetEntity.drops.length > 0) {
+    dropsHtml = targetEntity.drops.map(d => {
+      const mat = materials.find(m => m.id === d.itemId);
+      const itemName = mat ? mat.name : d.itemId;
+      const itemImg = mat && mat.image 
+        ? `<img src="${mat.image}" class="w-4 h-4 object-contain drop-shadow-sm">` 
+        : `<div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-slate-500" style="font-size: 18px; transform: scale(0.65);">category</span></div>`;
+      
+      const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus;
+      let rateColor = 'text-emerald-400 bg-emerald-950/80 border-emerald-800/50';
+      if (rate <= 0.1) rateColor = 'text-amber-400 bg-amber-950/80 border-amber-800/50 shadow-[0_0_8px_rgba(245,158,11,0.3)]';
+      else if (rate <= 2.0) rateColor = 'text-purple-400 bg-purple-950/80 border-purple-800/50 shadow-[0_0_8px_rgba(168,85,247,0.3)]';
+
+      return `
+        <div class="flex items-center justify-between bg-slate-950/50 border border-slate-700/50 rounded-lg px-1.5 py-0.5 hover:bg-slate-900/80 transition-colors gap-1">
+          <div class="flex items-center gap-1.5 flex-1 min-w-0">
+            <div class="w-5 h-5 rounded bg-slate-900 flex items-center justify-center border border-slate-700 shrink-0">
+              ${itemImg}
+            </div>
+            <span class="text-[11px] font-bold text-slate-200 break-words leading-tight pr-1 flex-1">${itemName}</span>
+          </div>
+          <span class="text-[10px] font-black ${rateColor} px-1.5 py-[1px] rounded border shrink-0">${rate.toFixed(2).replace(/\.?0+$/, '')}%</span>
+        </div>
+      `;
+    }).join('');
+  } else {
+    dropsHtml = '<div class="text-[10px] text-slate-500 italic p-2 text-center bg-slate-950/30 rounded border border-slate-800/50">ドロップ情報なし</div>';
+  }
+
+  // 4. Capture & Medal Info
+  let extraInfoHtml = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-1 w-full mt-1">';
   if (!isParty && targetEntity && targetEntity.id) {
     let isNormalCaptured = false;
     let isLegendaryCaptured = false;
@@ -283,149 +362,125 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       if (ranchData[dId] && ranchData[dId][`${targetEntity.id}_legendary`]) isLegendaryCaptured = true;
     }
 
-    let normalBadgeHtml = '';
-    if (isNormalCaptured) {
-      normalBadgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
-    } else {
-      const captureRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
-      const pctStr = (captureRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
-      normalBadgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${pctStr}</span>`;
-    }
-
+    const captureRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
     const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.00001);
-    const legAppPctStr = (legAppRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
-    const legAppBadgeHtml = `<span class="bg-yellow-950/80 text-yellow-400 border border-yellow-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${legAppPctStr}</span>`;
+    const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
 
-    let legCapBadgeHtml = '';
-    if (isLegendaryCaptured) {
-      legCapBadgeHtml = `<span class="bg-pink-900/80 text-pink-300 border border-pink-500/50 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0">捕獲済み</span>`;
-    } else {
-      const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
-      const legCapPctStr = (legCapRate * 100).toFixed(3).replace(/\.?0+$/, '') + '%';
-      legCapBadgeHtml = `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 tracking-wider">${legCapPctStr}</span>`;
-    }
+    const getCapBadge = (captured, rate) => captured 
+      ? `<span class="bg-pink-950/80 text-pink-300 border border-pink-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shadow-[0_0_8px_rgba(244,114,182,0.3)] shrink-0">捕獲済</span>`
+      : `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
 
-    capturePanelHtml = `
-      <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 shadow-inner shrink-0">
-        <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center gap-1 shrink-0">
-          <span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>牧場
+    extraInfoHtml += `
+      <!-- Kills -->
+      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
+        <div class="flex items-center gap-1 min-w-0 shrink-0">
+          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-red-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">swords</span></div>
+          <span class="text-[11px] text-slate-400 font-bold truncate">討伐数</span>
         </div>
-        <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
-          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-yellow-400">auto_awesome</span>伝説出現率</div>
-          ${legAppBadgeHtml}
+        <span class="text-[12px] font-black text-red-400 drop-shadow ml-1 shrink-0">${formatNumber(kills)}</span>
+      </div>
+      <!-- Normal Capture -->
+      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
+        <div class="flex items-center gap-1 min-w-0 shrink-0">
+          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
+          <span class="text-[11px] text-slate-400 font-bold truncate">通常捕獲</span>
         </div>
-        <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
-          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>捕獲率</div>
-          ${normalBadgeHtml}
+        ${getCapBadge(isNormalCaptured, captureRate)}
+      </div>
+      <!-- Legendary Appear -->
+      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
+        <div class="flex items-center gap-1 min-w-0 shrink-0">
+          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-yellow-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">auto_awesome</span></div>
+          <span class="text-[11px] text-slate-400 font-bold truncate">伝説出現</span>
         </div>
-        <div class="text-slate-400 text-[10px] font-black tracking-wider flex items-center justify-between">
-          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-pink-400">pets</span>伝説捕獲率</div>
-          ${legCapBadgeHtml}
+        <span class="bg-yellow-950/80 text-yellow-400 border border-yellow-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0 ml-1">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
+      </div>
+      <!-- Legendary Capture -->
+      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
+        <div class="flex items-center gap-1 min-w-0 shrink-0">
+          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
+          <span class="text-[11px] text-slate-400 font-bold truncate">伝説捕獲</span>
         </div>
+        ${getCapBadge(isLegendaryCaptured, legCapRate)}
       </div>
     `;
   }
 
-  const medal = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex] : {
-    name: '未作成',
-    killBonus: 0,
-    color: '#64748b'
-  };
-
-  const medalPanelHtml = `
-    <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1 shadow-inner shrink-0 relative overflow-hidden">
-      <div class="absolute inset-0 opacity-10 pointer-events-none" style="background: ${medal.color}"></div>
-      <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center justify-between shrink-0 relative z-10">
-        <div class="flex items-center gap-1">
-          <span class="material-symbols-outlined text-[12px] text-amber-400">military_tech</span>メダル効果
+  const medal = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex] : { name: '未取得', killBonus: 0, color: '#64748b' };
+  extraInfoHtml += `
+      <!-- Medal -->
+      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner col-span-2 sm:col-span-1 min-w-0">
+        <div class="flex items-center gap-1 min-w-0 shrink-0">
+          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-amber-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">military_tech</span></div>
+          <span class="text-[11px] font-bold truncate drop-shadow" style="color: ${medal.color}">${medal.name}</span>
         </div>
-        <span class="text-[9px] px-1.5 py-0.5 rounded border bg-black/40" style="color: ${medal.color}; border-color: ${medal.color}50">${medal.name}</span>
-      </div>
-      <div class="flex items-center justify-between relative z-10">
-        <span class="text-[9px] font-bold text-slate-300">討伐ボーナス</span>
-        <span class="text-[10px] font-black text-emerald-400">+${medal.killBonus}</span>
+        <span class="text-[12px] font-black text-emerald-400 shrink-0 ml-1">+${medal.killBonus}体</span>
       </div>
     </div>
   `;
 
-  html = `
-    <div class="h-full overflow-y-auto p-2 text-slate-300 flex flex-col gap-2.5 custom-scrollbar relative" style="font-family: system-ui, -apple-system, sans-serif;">
-      <!-- Background Glow Effect -->
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-28 bg-red-500/15 rounded-full blur-xl pointer-events-none z-0"></div>
+  // Master Layout Assembly
+  let html = `
+    <div class="w-full flex flex-col gap-1.5 p-1 text-slate-200">
       
-      <div class="flex flex-col gap-2 pb-2 border-b border-slate-700/80 shrink-0 relative z-10">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-lg bg-slate-950 border-2 border-red-500/50 overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-[0_0_12px_rgba(239,68,68,0.2)]">
-            <img src="${targetEntity.image}" class="w-full h-full object-contain drop-shadow-md ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
+      <!-- 1. Top Panel (Header + Stats/Rewards) -->
+      <div class="flex gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0 backdrop-blur-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <!-- Left: Avatar & Resists -->
+        <div class="flex flex-col items-center w-[112px] shrink-0 relative z-10 justify-start pt-0.5">
+          <div class="w-12 h-12 rounded-xl bg-slate-950 border border-slate-600 shadow-[0_4px_12px_rgba(0,0,0,0.5)] relative flex items-center justify-center p-1">
+            ${targetEntity.isLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-xl"></div>' : ''}
+            <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
           </div>
-          <div class="flex flex-col flex-1 justify-center min-w-0">
-            <div class="flex items-center gap-2 mb-1 overflow-hidden">
-              <span class="font-black text-red-400 text-sm tracking-wide truncate drop-shadow shrink-0">${targetEntity.name}</span>
-              <span class="text-red-300 text-[10px] font-black bg-red-950/60 border border-red-900/60 px-2 py-0.5 rounded-full shrink-0 tracking-wider">討伐: ${formatNumber(kills)}</span>
-            </div>
-            <!-- Status Badges -->
-            <div class="flex flex-wrap gap-1 mt-0.5">
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="HP">
-                 <span class="text-red-400 font-bold">HP</span><span class="text-slate-200">${targetEntity.stats?.hp || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="ATK">
-                 <span class="text-red-450 font-bold">ATK</span><span class="text-slate-200">${targetEntity.stats?.atk || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="DEF">
-                 <span class="text-slate-450 font-bold">DEF</span><span class="text-slate-200">${targetEntity.stats?.def || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="MATK">
-                 <span class="text-purple-400 font-bold">MAT</span><span class="text-slate-200">${targetEntity.stats?.matk || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="MDEF">
-                 <span class="text-indigo-400 font-bold">MDF</span><span class="text-slate-200">${targetEntity.stats?.mdef || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-slate-800 px-1 rounded text-[8px]" title="SPD">
-                 <span class="text-amber-400 font-bold">SPD</span><span class="text-slate-200">${targetEntity.stats?.spd || 0}</span>
-              </div>
-              <!-- Rewards -->
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-emerald-900/50 px-1 rounded text-[8px]" title="EXP">
-                 <span class="text-emerald-400 font-bold">EXP</span><span class="text-slate-200">${targetEntity.rewards?.exp || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-purple-900/50 px-1 rounded text-[8px]" title="JP">
-                 <span class="text-purple-400 font-bold">JP</span><span class="text-slate-200">${targetEntity.rewards?.jp || 0}</span>
-              </div>
-              <div class="flex items-center gap-0.5 bg-slate-950/60 border border-amber-900/50 px-1 rounded text-[8px]" title="GOLD">
-                 <span class="text-amber-500 font-bold">G</span><span class="text-slate-200">${targetEntity.rewards?.gold || 0}</span>
-              </div>
-            </div>
+          <div class="flex flex-col w-full mt-1.5">
+            ${resistHtml}
+            ${weakHtml}
+          </div>
+        </div>
+        
+        <!-- Right: Name & Stats Grid -->
+        <div class="flex-1 flex flex-col justify-start relative z-10 min-w-0">
+          <div class="flex items-center px-1 mb-1.5 shrink-0 min-w-0">
+            <span class="font-black text-[14px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1 content-start flex-1">
+            ${statPillsHtml}
+            ${rewardsHtml}
           </div>
         </div>
       </div>
-      
-      <div class="grid grid-cols-2 gap-2 min-h-0 flex-1 relative z-10">
-        <!-- Left Column: Actions + Capture -->
-        <div class="flex flex-col gap-2 min-h-0 flex-1">
-          <!-- Actions -->
-          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col gap-1.5 overflow-y-auto custom-scrollbar shadow-inner flex-1 min-h-0">
-            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-0.5 flex items-center gap-1 shrink-0">
-              <span class="material-symbols-outlined text-[12px] text-blue-400">psychology</span>行動パターン
-            </div>
-            <div class="flex flex-col gap-1 pb-1">
-              ${actionsHtml}
-            </div>
+
+      <!-- 2. Middle Panel (2 Columns: Actions | Drops) -->
+      <div class="flex gap-1.5">
+        <!-- Left: Actions -->
+        <div class="flex-1 min-w-0 flex flex-col bg-slate-900/50 border border-slate-700/50 rounded-xl p-1.5 overflow-hidden shadow-inner">
+          <div class="flex items-center gap-1 border-b border-slate-700/50 pb-1 mb-1.5 shrink-0">
+            <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-blue-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">psychology</span></div>
+            <span class="font-bold text-[13px] text-slate-300">行動パターン</span>
           </div>
-          ${capturePanelHtml}
+          <div class="flex flex-col gap-0.5 overflow-y-auto custom-scrollbar pr-1 pb-1">
+            ${actionsHtml}
+          </div>
         </div>
-        <!-- Right Column: Drops -->
-        <div class="flex flex-col gap-2 min-h-0 flex-1">
-          <!-- Drop Info -->
-          <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60 flex flex-col min-h-0 shadow-inner flex-1">
-            <div class="text-slate-400 text-[10px] font-black tracking-wider border-b border-slate-700/80 pb-1 mb-1 flex items-center gap-1 shrink-0">
-              <span class="material-symbols-outlined text-[12px] text-red-400">shopping_bag</span>ドロップ
-            </div>
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-0.5 flex flex-col gap-1.5">
-              ${dropsHtml}
-            </div>
+
+        <!-- Right: Drops -->
+        <div class="flex-1 min-w-0 flex flex-col bg-slate-900/50 border border-slate-700/50 rounded-xl p-1.5 overflow-hidden shadow-inner">
+          <div class="flex items-center gap-1 border-b border-slate-700/50 pb-1 mb-1.5 shrink-0">
+            <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-emerald-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">shopping_bag</span></div>
+            <span class="font-bold text-[13px] text-slate-300">ドロップアイテム</span>
           </div>
-          ${medalPanelHtml}
+          <div class="flex flex-col gap-0.5 overflow-y-auto custom-scrollbar pr-1 pb-1">
+            ${dropsHtml}
+          </div>
         </div>
       </div>
+
+      <!-- 3. Bottom Panel (Capture & Medals) -->
+      <div class="flex items-center bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shrink-0 justify-between shadow-inner">
+         ${extraInfoHtml}
+      </div>
+
     </div>
   `;
 
