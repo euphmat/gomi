@@ -502,9 +502,9 @@ class BattleManager {
 
   updateTabStyles() {
     const tabs = [
-      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', label: 'スキル' },
-      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', label: 'アイテム' },
-      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', label: 'インフォ' }
+      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', label: 'Skill' },
+      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', label: 'Item' },
+      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', label: 'Info' }
     ];
 
     tabs.forEach(({btn, id, icon, label}) => {

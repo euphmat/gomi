@@ -383,7 +383,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
         <div class="flex items-center gap-1 min-w-0 shrink-0">
           <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">通常捕獲</span>
+          <span class="text-[11px] text-slate-400 font-bold truncate">捕獲率</span>
         </div>
         ${getCapBadge(isNormalCaptured, captureRate)}
       </div>
@@ -391,7 +391,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
         <div class="flex items-center gap-1 min-w-0 shrink-0">
           <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-yellow-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">auto_awesome</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">伝説出現</span>
+          <span class="text-[11px] text-slate-400 font-bold truncate">伝説出現率</span>
         </div>
         <span class="bg-yellow-950/80 text-yellow-400 border border-yellow-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0 ml-1">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
       </div>
@@ -399,7 +399,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
         <div class="flex items-center gap-1 min-w-0 shrink-0">
           <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">伝説捕獲</span>
+          <span class="text-[11px] text-slate-400 font-bold truncate">伝説捕獲率</span>
         </div>
         ${getCapBadge(isLegendaryCaptured, legCapRate)}
       </div>
