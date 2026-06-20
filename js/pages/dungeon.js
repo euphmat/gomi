@@ -9,6 +9,8 @@ window.enterDungeon = async (dungeonId) => {
 };
 
 let currentDungeonPage = 1;
+let currentDungeonTab = 'normal'; // 'normal' | 'special'
+
 function getItemsPerPage() {
   return calcItemsPerPage({ viewMode: 'list', listItemHeight: 108, minItems: 2 });
 }
@@ -25,12 +27,60 @@ window.changeDungeonPage = async (delta) => {
   }
 };
 
+window.switchDungeonTab = async (tab) => {
+  if (currentDungeonTab === tab) return;
+  currentDungeonTab = tab;
+  currentDungeonPage = 1;
+  
+  const contentEl = document.getElementById('content');
+  if (contentEl) {
+    contentEl.innerHTML = await renderDungeonPage();
+  }
+};
+
 /**
  * このファイルは「ダンジョン」画面の中身を作って表示するためのファイルです。
  *
  * Dungeon Page
  */
 export async function renderDungeonPage() {
+  const tabsHtml = `
+    <div class="flex gap-1 p-1 bg-[#11111a] rounded-lg shadow-inner border border-gray-800/80 sticky top-0 z-20 flex-shrink-0 mx-auto w-full max-w-md">
+      <button onclick="window.switchDungeonTab('normal')" 
+              class="flex-1 py-1.5 px-2 rounded-md font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
+                currentDungeonTab === 'normal' 
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(37,99,235,0.1)]' 
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent'
+              }">
+        <span class="material-symbols-outlined text-[14px]">swords</span>
+        ノーマル
+      </button>
+      <button onclick="window.switchDungeonTab('special')" 
+              class="flex-1 py-1.5 px-2 rounded-md font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
+                currentDungeonTab === 'special' 
+                  ? 'bg-fuchsia-600/20 text-fuchsia-400 border border-fuchsia-500/30 shadow-[0_0_10px_rgba(217,70,239,0.1)]' 
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent'
+              }">
+        <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+        スペシャル
+      </button>
+    </div>
+  `;
+
+  if (currentDungeonTab === 'special') {
+    return `
+      <div class="flex flex-col h-full bg-[#0b0b19] p-4 gap-4 pb-24 overflow-y-auto">
+        ${tabsHtml}
+        <div class="flex flex-col items-center justify-center flex-1 min-h-[300px] gap-4 opacity-70">
+          <div class="w-20 h-20 bg-gray-800/50 rounded-2xl flex items-center justify-center border border-gray-700/50 shadow-inner">
+            <span class="material-symbols-outlined text-5xl text-gray-500 animate-pulse">construction</span>
+          </div>
+          <p class="text-gray-400 font-bold tracking-wider text-sm">スペシャルダンジョンは準備中です</p>
+        </div>
+      </div>
+    `;
+  }
+
   const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
   
   const totalItems = DUNGEONS.length;
@@ -144,6 +194,7 @@ const DUNGEON_THEMES = {
 
   return `
     <div class="flex flex-col h-full bg-[#0b0b19] p-4 gap-4 pb-24 overflow-y-auto">
+      ${tabsHtml}
       ${cardsHtml}
       ${paginationHtml}
     </div>
