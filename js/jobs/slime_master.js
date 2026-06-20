@@ -190,6 +190,7 @@ export const slime_master = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let mainTarget = battle.selectedEnemyTarget;
+        if (mainTarget && battle.party.includes(mainTarget)) mainTarget = null;
         if (!mainTarget || mainTarget.isDead) mainTarget = battle.enemies.find(e => !e.isDead);
         if (!mainTarget) return;
 
@@ -224,9 +225,6 @@ export const slime_master = {
         playSkillAnimation(caster, targets, 'slime_throw', { slimes: slimeDataList }, (target, index) => {
           if (target.isDead) {
              let targetGroup = battle.enemies;
-             if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-               targetGroup = battle.party;
-             }
              const newAlive = targetGroup.filter(e => !e.isDead);
              if (newAlive.length > 0) target = newAlive[Math.floor(Math.random() * newAlive.length)];
              else return;
@@ -282,9 +280,6 @@ export const slime_master = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
-        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.party;
-        }
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
 
@@ -297,9 +292,6 @@ export const slime_master = {
         playSkillAnimation(caster, targets, 'slime_hazard', {}, (target) => {
           if (target.isDead) {
              let targetGroup = battle.enemies;
-             if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-               targetGroup = battle.party;
-             }
              const newAlive = targetGroup.filter(e => !e.isDead);
              if (newAlive.length > 0) {
                  target = newAlive[Math.floor(Math.random() * newAlive.length)];

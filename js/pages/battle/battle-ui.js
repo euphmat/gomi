@@ -562,7 +562,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
   }
 
-  skillListHtml += '<div class="grid grid-cols-2 gap-1.5">';
+  skillListHtml += '<div class="flex flex-col gap-3 p-2">';
   learnedSkills.forEach(({ skillDef, level, isInherited }) => {
     const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
     const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
@@ -571,35 +571,100 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
 
     const autoEnabled = autoSkillStates[p.id]?.[skillDef.id] !== false;
     
-    const grayscaleClass = (!canCast && !isAutoBattle) ? 'grayscale opacity-60 cursor-not-allowed' : '';
+    // Aesthetic states
+    const grayscaleClass = (!canCast && !isAutoBattle) ? 'opacity-50 saturate-50 cursor-not-allowed' : '';
     
-    let btnClass = "skill-btn relative w-full flex items-center gap-1.5 p-1.5 border rounded-lg transition-all group overflow-hidden ";
+    // Core Card Design
+    let btnClass = "skill-btn relative w-full flex items-stretch gap-4 p-3.5 border rounded-2xl transition-all duration-300 group overflow-hidden ";
+    
+    let toggleHtml = '';
+    
     if (isAutoBattle) {
       if (autoEnabled) {
-        btnClass += "bg-gradient-to-r from-blue-900/30 to-blue-800/10 border-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.15)] hover:border-blue-400 hover:shadow-[0_0_8px_rgba(59,130,246,0.3)] active:scale-[0.98]";
+        // Active Auto state: Glassmorphism blue/cyan, glowing borders
+        btnClass += "bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] hover:border-cyan-400/80 hover:shadow-[0_0_25px_rgba(34,211,238,0.25)] hover:-translate-y-0.5 active:scale-[0.98] ";
+        
+        toggleHtml = `
+          <div class="flex flex-col items-center justify-center pl-4 border-l border-cyan-500/20 shrink-0 min-w-[70px]">
+            <span class="text-[10px] text-cyan-300 font-bold tracking-wider mb-1.5 uppercase drop-shadow-[0_0_2px_rgba(34,211,238,0.5)]">Auto</span>
+            <div class="relative inline-flex h-5 w-10 shrink-0 items-center rounded-full bg-cyan-500 transition-colors ease-in-out duration-300 shadow-[0_0_10px_rgba(34,211,238,0.4)]">
+              <span class="translate-x-5 inline-block h-4 w-4 transform rounded-full bg-white transition ease-in-out duration-300 shadow-sm"></span>
+            </div>
+          </div>
+        `;
       } else {
-        btnClass += "bg-gray-900 border-gray-800 opacity-40 grayscale hover:opacity-60 hover:border-gray-600 cursor-pointer";
+        // Disabled Auto state: Muted glassmorphism
+        btnClass += "bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 hover:opacity-100 hover:border-slate-500/80 hover:-translate-y-0.5 active:scale-[0.98] ";
+        
+        toggleHtml = `
+          <div class="flex flex-col items-center justify-center pl-4 border-l border-slate-700/50 shrink-0 min-w-[70px]">
+            <span class="text-[10px] text-slate-500 font-bold tracking-wider mb-1.5 uppercase">Manual</span>
+            <div class="relative inline-flex h-5 w-10 shrink-0 items-center rounded-full bg-slate-700 transition-colors ease-in-out duration-300">
+              <span class="translate-x-1 inline-block h-4 w-4 transform rounded-full bg-slate-400 transition ease-in-out duration-300 shadow-sm"></span>
+            </div>
+          </div>
+        `;
       }
     } else {
-      btnClass += "bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-600 hover:border-green-400 hover:shadow-[0_0_8px_rgba(74,222,128,0.15)] active:scale-[0.98] " + grayscaleClass;
+      // Manual battle state
+      btnClass += "bg-slate-900/60 backdrop-blur-md border-slate-700/60 hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] hover:-translate-y-0.5 active:scale-[0.98] " + grayscaleClass;
+    }
+
+    // MP Cost Display
+    let mpCostHtml = '';
+    if (levelConfig.mpCost > 0) {
+      if (canCast) {
+        mpCostHtml = `
+          <div class="flex flex-col items-end justify-center px-3 min-w-[70px]">
+            <span class="text-[10px] text-cyan-400/80 font-bold tracking-wider uppercase mb-0.5">MP</span>
+            <span class="text-xl font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${levelConfig.mpCost}</span>
+          </div>
+        `;
+      } else {
+        mpCostHtml = `
+          <div class="flex flex-col items-end justify-center px-3 min-w-[70px]">
+            <span class="text-[10px] text-rose-500/80 font-bold tracking-wider uppercase mb-0.5">MP</span>
+            <span class="text-xl font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${levelConfig.mpCost}</span>
+          </div>
+        `;
+      }
+    } else {
+      mpCostHtml = `
+        <div class="flex flex-col items-end justify-center px-3 min-w-[70px]">
+          <span class="text-[10px] text-slate-500/80 font-bold tracking-wider uppercase mb-0.5">MP</span>
+          <span class="text-xl font-mono font-black text-slate-400 leading-none">0</span>
+        </div>
+      `;
     }
 
     skillListHtml += `
       <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}">
-        <div class="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        <div class="w-8 h-8 rounded bg-gray-900 flex items-center justify-center border border-gray-700 shrink-0 shadow-inner group-hover:border-green-500/40 transition-colors z-10">
-          <span class="material-symbols-outlined ${canCast ? 'text-green-400' : 'text-gray-500'} text-[18px] group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
-        </div>
-        <div class="flex flex-col text-left flex-1 min-w-0 z-10">
-          <div class="flex justify-between items-center mb-0.5">
-            <div class="text-[10px] font-bold ${canCast ? 'text-gray-100' : 'text-gray-400'} truncate pr-1">
-              ${skillDef.name} 
-              <span class="${canCast ? 'text-green-400' : 'text-gray-500'} text-[9px] ml-0.5">Lv${level}</span>
-              ${isInherited ? `<span class="text-[8px] font-black text-indigo-300 bg-indigo-900/40 border border-indigo-700/50 px-1 py-[1px] rounded ml-1">継承</span>` : ''}
-            </div>
-            ${levelConfig.mpCost > 0 ? `<div class="text-[9px] font-bold ${canCast ? 'text-blue-300 bg-blue-900/40 border-blue-700/50' : 'text-red-400 bg-red-900/20 border-red-900/50'} px-1 py-[1px] rounded border shadow-inner shrink-0">${canCast ? `MP ${levelConfig.mpCost}` : 'MP不足'}</div>` : ''}
+        <!-- Subtle background glow on hover -->
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        
+        <!-- Left: Icon -->
+        <div class="flex items-center justify-center shrink-0 z-10">
+          <div class="w-12 h-12 rounded-xl bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-hover:border-cyan-500/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
+            <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[26px] group-hover:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
           </div>
-          <div class="text-[9px] text-gray-400 leading-none truncate">${desc}</div>
+        </div>
+        
+        <!-- Middle: Info -->
+        <div class="flex flex-col text-left flex-1 min-w-0 justify-center z-10 py-0.5">
+          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+            <div class="text-sm font-bold tracking-wide ${canCast ? 'text-slate-50' : 'text-slate-400'}">
+              ${skillDef.name}
+            </div>
+            <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[11px] font-bold bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">Lv${level}</div>
+            ${isInherited ? `<div class="text-[10px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">継承</div>` : ''}
+          </div>
+          <div class="text-xs ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-relaxed whitespace-normal pr-2 opacity-90">${desc}</div>
+        </div>
+
+        <!-- Right: MP Cost & Auto Switch (Horizontal Layout) -->
+        <div class="flex items-stretch justify-end shrink-0 z-10">
+          ${mpCostHtml}
+          ${toggleHtml}
         </div>
       </button>
     `;
