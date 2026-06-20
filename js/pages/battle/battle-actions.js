@@ -593,7 +593,7 @@ export const actionMethods = {
               }
             });
             if (applied) {
-              this.showActionName(attacker.elementId, '気合伝授', 'text-orange-300', 'border-orange-500/50');
+              this.showActionName(attacker.elementId, 'エナジャイジング', 'text-orange-300', 'border-orange-500/50');
             }
           }
 
