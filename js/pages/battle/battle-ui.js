@@ -562,7 +562,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
   }
 
-  skillListHtml += '<div class="flex flex-col gap-3 p-2">';
+  skillListHtml += '<div class="flex flex-col gap-2 p-1.5">';
   learnedSkills.forEach(({ skillDef, level, isInherited }) => {
     const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
     const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
@@ -575,7 +575,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     const grayscaleClass = (!canCast && !isAutoBattle) ? 'opacity-50 saturate-50 cursor-not-allowed' : '';
     
     // Core Card Design
-    let btnClass = "skill-btn relative w-full flex items-stretch gap-4 p-3.5 border rounded-2xl transition-all duration-300 group overflow-hidden ";
+    let btnClass = "skill-btn relative w-full flex items-stretch gap-2.5 p-2 border rounded-xl transition-all duration-300 group overflow-hidden ";
     
     let toggleHtml = '';
     
@@ -585,10 +585,10 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         btnClass += "bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] hover:border-cyan-400/80 hover:shadow-[0_0_25px_rgba(34,211,238,0.25)] hover:-translate-y-0.5 active:scale-[0.98] ";
         
         toggleHtml = `
-          <div class="flex flex-col items-center justify-center pl-4 border-l border-cyan-500/20 shrink-0 min-w-[70px]">
-            <span class="text-[10px] text-cyan-300 font-bold tracking-wider mb-1.5 uppercase drop-shadow-[0_0_2px_rgba(34,211,238,0.5)]">Auto</span>
-            <div class="relative inline-flex h-5 w-10 shrink-0 items-center rounded-full bg-cyan-500 transition-colors ease-in-out duration-300 shadow-[0_0_10px_rgba(34,211,238,0.4)]">
-              <span class="translate-x-5 inline-block h-4 w-4 transform rounded-full bg-white transition ease-in-out duration-300 shadow-sm"></span>
+          <div class="flex flex-col items-center justify-center pl-2 border-l border-cyan-500/20 shrink-0 min-w-[60px]">
+            <span class="text-[9px] text-cyan-300 font-bold tracking-wider mb-0.5 uppercase drop-shadow-[0_0_2px_rgba(34,211,238,0.5)]">Auto</span>
+            <div class="relative inline-flex h-4 w-8 shrink-0 items-center rounded-full bg-cyan-500 transition-colors ease-in-out duration-300 shadow-[0_0_10px_rgba(34,211,238,0.4)]">
+              <span class="translate-x-4 inline-block h-3 w-3 transform rounded-full bg-white transition ease-in-out duration-300 shadow-sm"></span>
             </div>
           </div>
         `;
@@ -597,10 +597,10 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         btnClass += "bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 hover:opacity-100 hover:border-slate-500/80 hover:-translate-y-0.5 active:scale-[0.98] ";
         
         toggleHtml = `
-          <div class="flex flex-col items-center justify-center pl-4 border-l border-slate-700/50 shrink-0 min-w-[70px]">
-            <span class="text-[10px] text-slate-500 font-bold tracking-wider mb-1.5 uppercase">Manual</span>
-            <div class="relative inline-flex h-5 w-10 shrink-0 items-center rounded-full bg-slate-700 transition-colors ease-in-out duration-300">
-              <span class="translate-x-1 inline-block h-4 w-4 transform rounded-full bg-slate-400 transition ease-in-out duration-300 shadow-sm"></span>
+          <div class="flex flex-col items-center justify-center pl-2 border-l border-slate-700/50 shrink-0 min-w-[60px]">
+            <span class="text-[9px] text-slate-500 font-bold tracking-wider mb-0.5 uppercase">Manual</span>
+            <div class="relative inline-flex h-4 w-8 shrink-0 items-center rounded-full bg-slate-700 transition-colors ease-in-out duration-300">
+              <span class="translate-x-1 inline-block h-3 w-3 transform rounded-full bg-slate-400 transition ease-in-out duration-300 shadow-sm"></span>
             </div>
           </div>
         `;
@@ -615,24 +615,24 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     if (levelConfig.mpCost > 0) {
       if (canCast) {
         mpCostHtml = `
-          <div class="flex flex-col items-end justify-center px-3 min-w-[70px]">
-            <span class="text-[10px] text-cyan-400/80 font-bold tracking-wider uppercase mb-0.5">MP</span>
-            <span class="text-xl font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${levelConfig.mpCost}</span>
+          <div class="flex flex-col items-end justify-center px-2 min-w-[50px]">
+            <span class="text-[9px] text-cyan-400/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
+            <span class="text-lg font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${levelConfig.mpCost}</span>
           </div>
         `;
       } else {
         mpCostHtml = `
-          <div class="flex flex-col items-end justify-center px-3 min-w-[70px]">
-            <span class="text-[10px] text-rose-500/80 font-bold tracking-wider uppercase mb-0.5">MP</span>
-            <span class="text-xl font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${levelConfig.mpCost}</span>
+          <div class="flex flex-col items-end justify-center px-2 min-w-[50px]">
+            <span class="text-[9px] text-rose-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
+            <span class="text-lg font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${levelConfig.mpCost}</span>
           </div>
         `;
       }
     } else {
       mpCostHtml = `
-        <div class="flex flex-col items-end justify-center px-3 min-w-[70px]">
-          <span class="text-[10px] text-slate-500/80 font-bold tracking-wider uppercase mb-0.5">MP</span>
-          <span class="text-xl font-mono font-black text-slate-400 leading-none">0</span>
+        <div class="flex flex-col items-end justify-center px-2 min-w-[50px]">
+          <span class="text-[9px] text-slate-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
+          <span class="text-lg font-mono font-black text-slate-400 leading-none">0</span>
         </div>
       `;
     }
@@ -644,21 +644,21 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         
         <!-- Left: Icon -->
         <div class="flex items-center justify-center shrink-0 z-10">
-          <div class="w-12 h-12 rounded-xl bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-hover:border-cyan-500/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
-            <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[26px] group-hover:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-hover:border-cyan-500/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
+            <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[22px] group-hover:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
           </div>
         </div>
         
         <!-- Middle: Info -->
-        <div class="flex flex-col text-left flex-1 min-w-0 justify-center z-10 py-0.5">
-          <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-            <div class="text-sm font-bold tracking-wide ${canCast ? 'text-slate-50' : 'text-slate-400'}">
+        <div class="flex flex-col text-left flex-1 min-w-0 justify-center z-10 py-0">
+          <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
+            <div class="text-[13px] font-bold tracking-wide ${canCast ? 'text-slate-50' : 'text-slate-400'} leading-tight">
               ${skillDef.name}
             </div>
-            <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[11px] font-bold bg-slate-900/50 px-1.5 py-0.5 rounded border border-slate-700/50">Lv${level}</div>
-            ${isInherited ? `<div class="text-[10px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1.5 py-0.5 rounded uppercase tracking-wider">継承</div>` : ''}
+            <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[9px] font-bold bg-slate-900/50 px-1 py-[1px] rounded border border-slate-700/50">Lv${level}</div>
+            ${isInherited ? `<div class="text-[9px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1 py-[1px] rounded uppercase tracking-wider">継承</div>` : ''}
           </div>
-          <div class="text-xs ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-relaxed whitespace-normal pr-2 opacity-90">${desc}</div>
+          <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${desc}</div>
         </div>
 
         <!-- Right: MP Cost & Auto Switch (Horizontal Layout) -->
