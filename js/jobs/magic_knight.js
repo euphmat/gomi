@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const screenShake = (intensity = 5, duration = 300) => {
     // Screen shake disabled globally by user request
@@ -28,7 +29,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     const anim = ex.animate([
       { transform: 'scale(0.2)', opacity: 1 },
       { transform: 'scale(1.5)', opacity: 0 }
-    ], { duration: 400, easing: 'ease-out' });
+    ], { duration: 400 / speedMult, easing: 'ease-out' });
     anim.onfinish = () => ex.remove();
   };
 
@@ -56,7 +57,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       const anim = crystal.animate([
         { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
         { transform: `translate(${dx}px, ${dy}px) scale(0) rotate(${360 + Math.random()*360}deg)`, opacity: 0 }
-      ], { duration: 300 + Math.random() * 200, easing: 'ease-out' });
+      ], { duration: (300 + Math.random() * 200) / speedMult, easing: 'ease-out' });
       
       anim.onfinish = () => crystal.remove();
     }
@@ -96,7 +97,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0.5) rotate(-45deg) translate(-50px, -50px)', opacity: 0 },
             { transform: 'scale(1.2) rotate(45deg) translate(0px, 0px)', opacity: 1, offset: 0.5 },
             { transform: 'scale(1.5) rotate(135deg) translate(30px, 30px)', opacity: 0 }
-          ], { duration: 300, easing: 'ease-in-out' });
+          ], { duration: 300 / speedMult, easing: 'ease-in-out' });
 
           anim.onfinish = () => {
             el.remove();
@@ -124,7 +125,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: `rotate(${angle}deg) scaleX(0.2) translateY(-20px)`, opacity: 0 },
             { transform: `rotate(${angle}deg) scaleX(1.5) translateY(0px)`, opacity: 1, offset: 0.5 },
             { transform: `rotate(${angle}deg) scaleX(0.2) translateY(20px)`, opacity: 0 }
-          ], { duration: 250, easing: 'ease-in-out' });
+          ], { duration: 250 / speedMult, easing: 'ease-in-out' });
 
           anim.onfinish = () => {
             el.remove();
@@ -152,7 +153,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0.8) rotate(180deg)', opacity: 0 },
             { transform: 'scale(1.2) rotate(270deg)', opacity: 1, offset: 0.3 },
             { transform: 'scale(1.5) rotate(360deg)', opacity: 0 }
-          ], { duration: 350, easing: 'ease-out' });
+          ], { duration: 350 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => {
             el.remove();
@@ -162,7 +163,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
       }
-    }, index * 80);
+    }, index * 80 / speedMult);
   });
 };
 

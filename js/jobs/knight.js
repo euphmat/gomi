@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const casterEl = document.getElementById(caster.elementId);
   if (!casterEl && type === 'shield_attack') {
@@ -34,7 +35,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     const anim = ex.animate([
       { transform: 'scale(0.5)', opacity: 1, borderWidth: '20px' },
       { transform: 'scale(1.5)', opacity: 0, borderWidth: '0px' }
-    ], { duration: 300, easing: 'ease-out' });
+    ], { duration: 300 / speedMult, easing: 'ease-out' });
     anim.onfinish = () => ex.remove();
   };
 
@@ -72,7 +73,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           const anim = el.animate([
             { transform: 'scale(0)', opacity: 1 },
             { transform: 'scale(2)', opacity: 0 }
-          ], { duration: 600, easing: 'ease-out' });
+          ], { duration: 600 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           
@@ -91,10 +92,10 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(1.2) translateY(0px)', opacity: 1, offset: 0.2 },
             { transform: 'scale(1) translateY(0px)', opacity: 1, offset: 0.3 },
             { transform: 'scale(1) translateY(-20px)', opacity: 0 }
-          ], { duration: 800 });
+          ], { duration: 800 / speedMult });
           iconAnim.onfinish = () => icon.remove();
 
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300 / speedMult);
           break;
         }
         case 'defense_formation': {
@@ -116,10 +117,10 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0) rotate(-30deg)', opacity: 0 },
             { transform: 'scale(1.2) rotate(0deg)', opacity: 1, offset: 0.5 },
             { transform: 'scale(1) rotate(0deg)', opacity: 0 }
-          ], { duration: 800, easing: 'ease-out' });
+          ], { duration: 800 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400 / speedMult);
           break;
         }
         case 'shield_attack': {
@@ -140,7 +141,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0.5) rotate(-20deg)', opacity: 0 },
             { transform: 'scale(1.2) rotate(0deg)', opacity: 1, offset: 0.2 },
             { transform: `translate(${tx - cx}px, ${ty - cy}px) scale(1) rotate(10deg)`, opacity: 1 }
-          ], { duration: 350, easing: 'ease-in' });
+          ], { duration: 350 / speedMult, easing: 'ease-in' });
 
           anim.onfinish = () => {
             el.remove();
@@ -150,7 +151,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
       }
-    }, index * 50);
+    }, index * 50 / speedMult);
   });
 };
 

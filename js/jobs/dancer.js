@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const casterEl = document.getElementById(caster.elementId);
   const casterRect = casterEl ? casterEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
@@ -34,7 +35,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       const anim = spark.animate([
         { transform: 'translate(0, 0) scale(1)', opacity: 1 },
         { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
-      ], { duration: 200 + Math.random() * 100, easing: 'ease-out' });
+      ], { duration: (200 + Math.random() * 100) / speedMult, easing: 'ease-out' });
       
       anim.onfinish = () => spark.remove();
     }
@@ -68,18 +69,18 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
               { transform: 'translateY(0) scale(0)', opacity: 0 },
               { transform: 'translateY(-20px) scale(1)', opacity: 1, offset: 0.3 },
               { transform: 'translateY(-60px) scale(1.3)', opacity: 0 }
-            ], { duration: 400 + Math.random() * 150, easing: 'ease-out' });
+            ], { duration: (400 + Math.random() * 150) / speedMult, easing: 'ease-out' });
 
             floatAnim.onfinish = () => bubble.remove();
-          }, i * 60);
+          }, i * 60 / speedMult);
         }
 
         setTimeout(() => {
           if (onImpact) onImpact(target, index);
           createHitSparks(tx, ty, '#a855f7', 8);
-        }, 400);
+        }, 400 / speedMult);
 
-      }, 300 + index * 100);
+      }, (300 + index * 100) / speedMult);
     });
 
   } else if (type === 'juggling_dagger') {
@@ -108,7 +109,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       const angle = Math.atan2(ty - midY, tx - midX);
       const angleDeg = (angle * 180 / Math.PI) - 90;
 
-      const animDuration = 500;
+      const animDuration = 500 / speedMult;
       const strikeOffset = 0.8;
 
       const anim = dagger.animate([
@@ -155,7 +156,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           { transform: 'scale(0.1) rotate(0deg)', opacity: 0 },
           { transform: 'scale(1) rotate(180deg)', opacity: 1, offset: 0.3 },
           { transform: 'scale(1) rotate(360deg)', opacity: 0 }
-        ], { duration: 1000, easing: 'ease-in-out' });
+        ], { duration: 1000 / speedMult, easing: 'ease-in-out' });
         webAnim.onfinish = () => web.remove();
 
         const spiral = document.createElement('div');
@@ -175,13 +176,13 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           { transform: 'scale(0) rotate(0deg)', opacity: 0 },
           { transform: 'scale(1) rotate(720deg)', opacity: 0.8, offset: 0.3 },
           { transform: 'scale(0.5) rotate(1440deg)', opacity: 0 }
-        ], { duration: 1000, easing: 'ease-in-out' });
+        ], { duration: 1000 / speedMult, easing: 'ease-in-out' });
         spiralAnim.onfinish = () => spiral.remove();
 
         setTimeout(() => {
           if (onImpact) onImpact(target, index);
-        }, 500);
-      }, index * 100);
+        }, 500 / speedMult);
+      }, index * 100 / speedMult);
     });
 
   } else if (type === 'curse_step') {
@@ -204,7 +205,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       { transform: 'rotateX(60deg) rotateZ(180deg)', opacity: 1, offset: 0.2 },
       { transform: 'rotateX(60deg) rotateZ(540deg)', opacity: 1, offset: 0.8 },
       { transform: 'rotateX(60deg) rotateZ(720deg)', opacity: 0 }
-    ], { duration: 1500 });
+    ], { duration: 1500 / speedMult });
     circleAnim.onfinish = () => circle.remove();
 
     targets.forEach((target, index) => {
@@ -241,16 +242,16 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
               { transform: `translate(${startX - tx}px, ${startY - ty}px) scale(0)`, opacity: 0 },
               { transform: `translate(${midX - tx}px, ${midY - ty}px) scale(1.5)`, opacity: 1, offset: 0.5 },
               { transform: `translate(0, 0) scale(0.5)`, opacity: 0 }
-            ], { duration: 600, easing: 'cubic-bezier(0.5, 0, 0.8, 1)' });
+            ], { duration: 600 / speedMult, easing: 'cubic-bezier(0.5, 0, 0.8, 1)' });
 
             flameAnim.onfinish = () => flame.remove();
-          }, i * 80);
+          }, i * 80 / speedMult);
         }
 
         setTimeout(() => {
           if (onImpact) onImpact(target, index);
-        }, 400);
-      }, 500 + index * 100);
+        }, 400 / speedMult);
+      }, (500 + index * 100) / speedMult);
     });
   } else {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));

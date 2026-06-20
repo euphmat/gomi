@@ -361,7 +361,7 @@ export const actionMethods = {
     }
 
     // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
-    if ((!options.damageType || options.damageType === 'ability') && localStorage.getItem('disableBattleAnimations') !== 'true') {
+    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
         const rect = defenderEl.getBoundingClientRect();
@@ -384,7 +384,7 @@ export const actionMethods = {
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(0.1) scaleY(0.2)', opacity: 0 },
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.0) scaleY(1.0)', opacity: 1, offset: 0.3 },
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.5) scaleY(0.1)', opacity: 0 }
-        ], { duration: 200, easing: 'ease-out' });
+        ], { duration: 200 / this.speedMult, easing: 'ease-out' });
 
         anim.onfinish = () => slash.remove();
       }

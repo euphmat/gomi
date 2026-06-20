@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const screenShake = (intensity = 5, duration = 300) => {
     // Screen shake globally disabled by user preference
@@ -32,7 +33,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
       { transform: 'translate(0px, 0px) rotate(0deg)' },
       { transform: `translate(${dx / 2}px, ${dy / 2 - 50}px) rotate(180deg)` },
       { transform: `translate(${dx}px, ${dy}px) rotate(360deg)` }
-    ], { duration: Math.max(300, dist * 0.8), easing: 'linear' });
+    ], { duration: Math.max(300, dist * 0.8) / speedMult, easing: 'linear' });
 
     anim.onfinish = () => {
       el.remove();
@@ -69,7 +70,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     const anim = el.animate([
       { transform: 'translate3d(0px, 0px, 0) scale(0.5) rotate(0deg)' },
       { transform: `translate3d(${dx}px, ${dy}px, 0) scale(1.2) rotate(${Math.random() > 0.5 ? 180 : -180}deg)` }
-    ], { duration: 1500 + Math.random() * 1000, easing: 'ease-in' });
+    ], { duration: (1500 + Math.random() * 1000) / speedMult, easing: 'ease-in' });
 
     anim.onfinish = () => {
       el.remove();
@@ -116,7 +117,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
           const animEx = ex.animate([
             { transform: 'scale(0.5)', opacity: 0.8 },
             { transform: 'scale(1.5)', opacity: 0 }
-          ], { duration: 300, easing: 'ease-out' });
+          ], { duration: 300 / speedMult, easing: 'ease-out' });
           animEx.onfinish = () => ex.remove();
 
           if (onImpact) onImpact(target, index);
@@ -144,13 +145,13 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
           const animEx = ex.animate([
             { transform: 'scale(0.2) rotate(0deg)', opacity: 1 },
             { transform: 'scale(1.5) rotate(45deg)', opacity: 0 }
-          ], { duration: 250, easing: 'ease-out' });
+          ], { duration: 250 / speedMult, easing: 'ease-out' });
           animEx.onfinish = () => ex.remove();
 
           if (onImpact) onImpact(target, index);
         });
       }
-    }, index * interval);
+    }, index * interval / speedMult);
   });
 };
 

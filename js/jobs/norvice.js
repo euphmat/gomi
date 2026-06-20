@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const screenShake = (intensity = 5, duration = 300) => {
     // Screen shake disabled globally by user request
@@ -41,10 +42,10 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0) translateY(20px)', opacity: 0 },
             { transform: 'scale(1.2) translateY(0px)', opacity: 1, offset: 0.5 },
             { transform: 'scale(1) translateY(-20px)', opacity: 0 }
-          ], { duration: 600, easing: 'ease-out' });
+          ], { duration: 600 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300 / speedMult);
           break;
         }
         case 'heavy_strike': {
@@ -64,11 +65,11 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0.2) rotate(-45deg)', opacity: 0 },
             { transform: 'scale(1.5) rotate(0deg)', opacity: 1, offset: 0.3 },
             { transform: 'scale(2) rotate(45deg)', opacity: 0 }
-          ], { duration: 300, easing: 'ease-out' });
+          ], { duration: 300 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           screenShake(4, 200);
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 100);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 100 / speedMult);
           break;
         }
         case 'focus': {
@@ -89,10 +90,10 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scaleY(0)', opacity: 0, transformOrigin: 'bottom' },
             { transform: 'scaleY(1.2)', opacity: 1, offset: 0.5, transformOrigin: 'bottom' },
             { transform: 'scaleY(1.5)', opacity: 0, transformOrigin: 'bottom' }
-          ], { duration: 600, easing: 'ease-out' });
+          ], { duration: 600 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300 / speedMult);
           break;
         }
         case 'intimidate': {
@@ -113,10 +114,10 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0.5) translateY(-20px)', opacity: 0 },
             { transform: 'scale(1.5) translateY(0px)', opacity: 0.8, offset: 0.5 },
             { transform: 'scale(2) translateY(20px)', opacity: 0 }
-          ], { duration: 500, easing: 'ease-in-out' });
+          ], { duration: 500 / speedMult, easing: 'ease-in-out' });
 
           anim.onfinish = () => el.remove();
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 250);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 250 / speedMult);
           break;
         }
         case 'cleave': {
@@ -137,14 +138,14 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scaleX(0) translateX(-50px)', opacity: 0 },
             { transform: 'scaleX(1.2) translateX(0px)', opacity: 1, offset: 0.5 },
             { transform: 'scaleX(1.5) translateX(50px)', opacity: 0 }
-          ], { duration: 300, easing: 'ease-out' });
+          ], { duration: 300 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 150);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 150 / speedMult);
           break;
         }
       }
-    }, index * 80);
+    }, index * 80 / speedMult);
   });
 };
 

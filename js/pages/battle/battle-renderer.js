@@ -76,7 +76,7 @@ export const rendererMethods = {
 
   _doUpdateEntities() {
     if (document.hidden) return;
-    const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+    const disableAnim = this._cachedDisableAnim;
     if (!this.domCache) return;
 
     const aliveEnemiesCount = this.enemies.filter(e => !e.isDead).length || 1;
@@ -227,104 +227,54 @@ export const rendererMethods = {
       const statLabels = cache.statLabels;
 
       if (statVals && statVals.atk) {
+        const applyStatTheme = (type, valElt, rowElt, iconElt, labelElt, isBuff, isDebuff, baseIconColor, isStacked) => {
+          const colors = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
+          valElt.classList.remove(...colors);
+          iconElt.classList.remove(...colors);
+          labelElt.classList.remove(...colors);
+          
+          if (isBuff) {
+            valElt.classList.add('text-green-400');
+            iconElt.classList.add('text-green-400');
+            labelElt.classList.add('text-green-400');
+            rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
+          } else if (isDebuff) {
+            valElt.classList.add('text-red-400');
+            iconElt.classList.add('text-red-400');
+            labelElt.classList.add('text-red-400');
+            rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
+          } else {
+            valElt.classList.add('text-gray-100');
+            iconElt.classList.add(baseIconColor);
+            rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
+          }
+        };
+
+        const spdTotalPercent = (p._passiveSpdBuffPercent || 0);
         const fSpd = formatNumber(p.stats.spd);
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
+        applyStatTheme('spd', statVals.spd, statRows.spd, statIcons.spd, statLabels.spd, spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400', false);
 
-        if (p._passiveSpdBuffPercent > 0) {
-          statVals.spd.classList.remove('text-gray-100');
-          statVals.spd.classList.add('text-teal-300');
-          statRows.spd.className = `stat-row-spd flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-teal-900/40 border-teal-500/50 shadow-none`;
-          statIcons.spd.classList.remove('text-yellow-400');
-          statIcons.spd.classList.add('text-teal-300');
-          statLabels.spd.classList.add('text-teal-300');
-        } else {
-          statVals.spd.classList.remove('text-teal-300');
-          statVals.spd.classList.add('text-gray-100');
-          statRows.spd.className = `stat-row-spd flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statIcons.spd.classList.remove('text-teal-300');
-          statIcons.spd.classList.add('text-yellow-400');
-          statLabels.spd.classList.remove('text-teal-300');
-        }
+        const atkTotalPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
+        const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + atkTotalPercent / 100)));
+        if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
+        applyStatTheme('atk', statVals.atk, statRows.atk, statIcons.atk, statLabels.atk, atkTotalPercent > 0, atkTotalPercent < 0, 'text-red-400', p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0);
 
-        if (p._atkBuffTurns > 0 || p._passiveAtkBuffPercent > 0) {
-          const isStackedAtk = p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0;
-          const totalAtkPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
-          const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + totalAtkPercent / 100)));
-          if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
-          statVals.atk.classList.remove('text-gray-100');
-          statVals.atk.classList.add('text-red-400');
-          statRows.atk.className = `stat-row-atk flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedAtk ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
-          statLabels.atk.classList.add('text-red-400');
-        } else {
-          const atkStr = formatNumber(p.stats.atk);
-          if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
-          statVals.atk.classList.remove('text-red-400');
-          statVals.atk.classList.add('text-gray-100');
-          statRows.atk.className = `stat-row-atk flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statLabels.atk.classList.remove('text-red-400');
-        }
+        const matkTotalPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
+        const matStr = formatNumber(Math.floor(p.stats.matk * (1 + matkTotalPercent / 100)));
+        if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
+        applyStatTheme('mat', statVals.mat, statRows.mat, statIcons.mat, statLabels.mat, matkTotalPercent > 0, matkTotalPercent < 0, 'text-purple-400', p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0);
 
-        if (p._matkBuffTurns > 0 || p._passiveMatkBuffPercent > 0) {
-          const isStackedMatk = p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0;
-          const totalMatkPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
-          const matStr = formatNumber(Math.floor(p.stats.matk * (1 + totalMatkPercent / 100)));
-          if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
-          statVals.mat.classList.remove('text-gray-100');
-          statVals.mat.classList.add('text-purple-400');
-          statRows.mat.className = `stat-row-mat flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedMatk ? 'bg-purple-800/60 border-purple-400 shadow-[0_0_5px_rgba(192,132,252,0.4)]' : 'bg-purple-900/40 border-purple-500/50 shadow-none'}`;
-          statLabels.mat.classList.add('text-purple-400');
-        } else {
-          const matStr = formatNumber(p.stats.matk);
-          if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
-          statVals.mat.classList.remove('text-purple-400');
-          statVals.mat.classList.add('text-gray-100');
-          statRows.mat.className = `stat-row-mat flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statLabels.mat.classList.remove('text-purple-400');
-        }
+        const defTotalPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
+        const defStr = formatNumber(Math.floor(p.stats.def * (1 + defTotalPercent / 100)));
+        if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
+        applyStatTheme('def', statVals.def, statRows.def, statIcons.def, statLabels.def, defTotalPercent > 0, defTotalPercent < 0, 'text-slate-400', p._defBuffTurns > 0 && p._passiveDefBuffPercent > 0);
 
-        if (p._defBuffTurns > 0 || p._passiveDefBuffPercent > 0) {
-          const isStackedDef = p._defBuffTurns > 0 && p._passiveDefBuffPercent > 0;
-          const totalDefPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
-          const defStr = formatNumber(Math.floor(p.stats.def * (1 + totalDefPercent / 100)));
-          if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
-          statVals.def.classList.remove('text-gray-100');
-          statVals.def.classList.add('text-green-400');
-          statRows.def.className = `stat-row-def flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedDef ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
-          statIcons.def.classList.remove('text-slate-400');
-          statIcons.def.classList.add('text-green-400');
-          statLabels.def.classList.add('text-green-400');
-        } else {
-          const defStr = formatNumber(p.stats.def);
-          if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
-          statVals.def.classList.remove('text-green-400');
-          statVals.def.classList.add('text-gray-100');
-          statRows.def.className = `stat-row-def flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statIcons.def.classList.remove('text-green-400');
-          statIcons.def.classList.add('text-slate-400');
-          statLabels.def.classList.remove('text-green-400');
-        }
-
-        if (p._mdefBuffTurns > 0 || p._passiveMdefBuffPercent > 0) {
-          const isStackedMdef = p._mdefBuffTurns > 0 && p._passiveMdefBuffPercent > 0;
-          const totalMdefAmount = p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0;
-          const mdefStr = formatNumber(Math.floor(p.stats.mdef * (1 + (p._passiveMdefBuffPercent || 0) / 100)) + totalMdefAmount);
-          if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
-          statVals.mdf.classList.remove('text-gray-100');
-          statVals.mdf.classList.add('text-indigo-300');
-          statRows.mdf.className = `stat-row-mdf flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStackedMdef ? 'bg-indigo-800/60 border-indigo-400 shadow-[0_0_5px_rgba(129,140,248,0.4)]' : 'bg-indigo-900/40 border-indigo-500/50 shadow-none'}`;
-          statIcons.mdf.classList.remove('text-indigo-400');
-          statIcons.mdf.classList.add('text-indigo-300');
-          statLabels.mdf.classList.add('text-indigo-300');
-        } else {
-          const mdefStr = formatNumber(p.stats.mdef);
-          if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
-          statVals.mdf.classList.remove('text-indigo-300');
-          statVals.mdf.classList.add('text-gray-100');
-          statRows.mdf.className = `stat-row-mdf flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          statIcons.mdf.classList.remove('text-indigo-300');
-          statIcons.mdf.classList.add('text-indigo-400');
-          statLabels.mdf.classList.remove('text-indigo-300');
-        }
+        const mdefPassivePercent = (p._passiveMdefBuffPercent || 0);
+        const mdefActiveAmount = (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0);
+        const mdefStr = formatNumber(Math.floor(p.stats.mdef * (1 + mdefPassivePercent / 100)) + mdefActiveAmount);
+        if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
+        applyStatTheme('mdf', statVals.mdf, statRows.mdf, statIcons.mdf, statLabels.mdf, mdefPassivePercent > 0 || mdefActiveAmount > 0, mdefPassivePercent < 0 || mdefActiveAmount < 0, 'text-indigo-400', p._mdefBuffTurns > 0 && p._passiveMdefBuffPercent > 0);
       }
     });
 

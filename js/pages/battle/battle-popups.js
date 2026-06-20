@@ -80,7 +80,7 @@ export const popupMethods = {
    * ダメージ用ポップアップ — 上方向に素早く浮遊して消える
    */
   _showFloatingPopup(elementId, config) {
-    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
+    if (this._cachedDisableAnim) return;
     if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
@@ -186,7 +186,7 @@ export const popupMethods = {
    * アクション名用ポップアップ — その場に留まってからフェードアウト
    */
   _showLabelPopup(elementId, config) {
-    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
+    if (this._cachedDisableAnim) return;
     if (document.hidden) return;
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
@@ -213,7 +213,18 @@ export const popupMethods = {
 
     const bump = itemHeight + stackGap;
 
-    const rect = el.getBoundingClientRect();
+    // Reuse shared rect cache to avoid forced layout reflow
+    if (!this._rectCache) this._rectCache = { time: 0, rects: {} };
+    const now = performance.now();
+    if (now - this._rectCache.time > 16) {
+      this._rectCache.time = now;
+      this._rectCache.rects = {};
+    }
+    let rect = this._rectCache.rects[elementId];
+    if (!rect) {
+      rect = el.getBoundingClientRect();
+      this._rectCache.rects[elementId] = rect;
+    }
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top - 8;
 
@@ -264,7 +275,7 @@ export const popupMethods = {
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
-    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
+    if (this._cachedDisableAnim) return;
     
     let color = '#ffffff';
     let textShadow = '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 6px rgba(0,0,0,0.8)';
@@ -312,7 +323,7 @@ export const popupMethods = {
 
   // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
-    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
+    if (this._cachedDisableAnim) return;
     const html = `<span class="font-black text-[15px] ${textClass} tracking-widest whitespace-nowrap bg-black/70 px-4 py-1.5 rounded-full border ${borderClass}" style="box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-shadow: 0 2px 4px rgba(0,0,0,0.9);">${actionName}</span>`;
 
     this._showLabelPopup(elementId, {
@@ -324,7 +335,7 @@ export const popupMethods = {
 
   // --- showLevelUp: レベルアップポップアップ (その場に留まる) ---
   showLevelUp(elementId, type = 'base') {
-    if (localStorage.getItem('disableBattleAnimations') === 'true') return;
+    if (this._cachedDisableAnim) return;
     const isJob = type === 'job';
     const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
     const iconColor = isJob ? 'text-red-300' : 'text-orange-300';

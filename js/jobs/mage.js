@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const casterEl = document.getElementById(caster.elementId);
   if (!casterEl && type !== 'magic_barrier') {
@@ -34,7 +35,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
     const anim = ex.animate([
       { transform: 'scale(0.2)', opacity: 1 },
       { transform: 'scale(1.5)', opacity: 0 }
-    ], { duration: 400, easing: 'ease-out' });
+    ], { duration: 400 / speedMult, easing: 'ease-out' });
     anim.onfinish = () => ex.remove();
   };
 
@@ -62,7 +63,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
       const anim = crystal.animate([
         { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
         { transform: `translate(${dx}px, ${dy}px) scale(0) rotate(${360 + Math.random()*360}deg)`, opacity: 0 }
-      ], { duration: 400 + Math.random() * 200, easing: 'ease-out' });
+      ], { duration: (400 + Math.random() * 200) / speedMult, easing: 'ease-out' });
       
       anim.onfinish = () => crystal.remove();
     }
@@ -88,7 +89,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
       { opacity: 0.2, offset: 0.2 },
       { opacity: 1, offset: 0.3 },
       { opacity: 0 }
-    ], { duration: 400 });
+    ], { duration: 400 / speedMult });
 
     anim.onfinish = () => {
       el.remove();
@@ -112,7 +113,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
     const tx = targetRect.left + targetRect.width / 2;
     const ty = targetRect.top + targetRect.height / 2;
 
-    const delay = type.includes('storm') || type === 'blizzard' || type === 'volcano' ? index * 100 : 0;
+    const delay = (type.includes('storm') || type === 'blizzard' || type === 'volcano' ? index * 100 : 0) / speedMult;
 
     setTimeout(() => {
       switch (type) {
@@ -134,7 +135,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
           const anim = el.animate([
             { transform: 'scale(0.5)' },
             { transform: `translate(${tx - cx}px, ${ty - cy}px) scale(1.5)` }
-          ], { duration: 300, easing: 'ease-in' });
+          ], { duration: 300 / speedMult, easing: 'ease-in' });
 
           anim.onfinish = () => {
             el.remove();
@@ -163,7 +164,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
             { transform: `rotate(${angle}rad) translateY(0px) scale(0)`, opacity: 0 },
             { transform: `rotate(${angle}rad) translateY(0px) scale(1)`, opacity: 1, offset: 0.3 },
             { transform: `rotate(${angle}rad) translateY(-${Math.hypot(tx - cx, ty - cy)}px) scale(1)`, opacity: 1 }
-          ], { duration: 350, easing: 'ease-in' });
+          ], { duration: 350 / speedMult, easing: 'ease-in' });
 
           anim.onfinish = () => {
             el.remove();
@@ -197,10 +198,10 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
             { transform: 'scale(0)', opacity: 0 },
             { transform: 'scale(1.2)', opacity: 1, offset: 0.5 },
             { transform: 'scale(1)', opacity: 0 }
-          ], { duration: 800, easing: 'ease-out' });
+          ], { duration: 800 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400 / speedMult);
           break;
         }
         case 'blizzard': {
@@ -238,7 +239,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
                 { transform: `rotate(${angle}rad) translateY(0px) scale(0)`, opacity: 0 },
                 { transform: `rotate(${angle}rad) translateY(0px) scale(0.8)`, opacity: 1, offset: 0.2 },
                 { transform: `rotate(${angle}rad) translateY(-${distance}px) scale(0.8)`, opacity: 1 }
-              ], { duration: 150 + Math.random() * 80, easing: 'ease-in' });
+              ], { duration: (150 + Math.random() * 80) / speedMult, easing: 'ease-in' });
 
               anim.onfinish = () => {
                 el.remove();
@@ -247,7 +248,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
                 // Trigger impact damage for EACH icicle
                 if (onImpact) onImpact(target, index, completed - 1);
               };
-            }, i * 35); // Stagger the icicles with a shorter delay
+            }, i * 35 / speedMult); // Stagger the icicles with a shorter delay
           }
           break;
         }
@@ -269,13 +270,13 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
             { transform: 'scaleY(0)', transformOrigin: 'bottom', opacity: 1 },
             { transform: 'scaleY(1.5)', transformOrigin: 'bottom', opacity: 1, offset: 0.7 },
             { transform: 'scaleY(2)', transformOrigin: 'bottom', opacity: 0 }
-          ], { duration: 400, easing: 'ease-out' });
+          ], { duration: 400 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           setTimeout(() => {
             createExplosion(tx, ty, '#ff0000', '#ff8c00', { intensity: 3, duration: 150 });
             if (onImpact) onImpact(target, index);
-          }, 150);
+          }, 150 / speedMult);
           break;
         }
         case 'thunderstorm': {
@@ -286,7 +287,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
             const rx = tx + (Math.random() - 0.5) * 80;
             const ry = ty + (Math.random() - 0.5) * 80;
             createThunder(rx, ry, false);
-          }, 50);
+          }, 50 / speedMult);
           break;
         }
       }

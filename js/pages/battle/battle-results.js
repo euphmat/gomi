@@ -216,7 +216,7 @@ export const resultMethods = {
       this.renderItemTab();
     }
 
-    if (document.hidden || localStorage.getItem('disableBattleAnimations') === 'true') return;
+    if (document.hidden || this._cachedDisableAnim) return;
     const el = this.container.querySelector(`#${enemy.elementId}`);
     if (!el) return;
     

@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   targets.forEach((target, index) => {
     const targetEl = document.getElementById(target.elementId);
@@ -42,12 +43,12 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
                 { transform: 'translate(0, 0) scale(0)', opacity: 0 },
                 { transform: 'translate(0, -20px) scale(1.2)', opacity: 1, offset: 0.5 },
                 { transform: `translate(${Math.random() * 40 - 20}px, -40px) scale(0.8)`, opacity: 0 }
-              ], { duration: 1000 + Math.random() * 500, easing: 'ease-out' });
+              ], { duration: (1000 + Math.random() * 500) / speedMult, easing: 'ease-out' });
 
               anim.onfinish = () => el.remove();
-            }, i * 200);
+            }, i * 200 / speedMult);
           }
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 600);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 600 / speedMult);
           break;
         }
         case 'nightmare': {
@@ -67,11 +68,11 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0.1)', opacity: 0 },
             { transform: 'scale(1.5)', opacity: 1, offset: 0.7 },
             { transform: 'scale(2)', opacity: 0 }
-          ], { duration: 600, easing: 'ease-in' });
+          ], { duration: 600 / speedMult, easing: 'ease-in' });
 
           anim.onfinish = () => el.remove();
           
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400 / speedMult);
           break;
         }
         case 'warding_song': {
@@ -102,15 +103,15 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(0) translateY(20px)', opacity: 0 },
             { transform: 'scale(1.2) translateY(0)', opacity: 1, offset: 0.5 },
             { transform: 'scale(1) translateY(-20px)', opacity: 0 }
-          ], { duration: 800, easing: 'ease-out' });
+          ], { duration: 800 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 400 / speedMult);
           break;
         }
       }
-    }, index * 100);
+    }, index * 100 / speedMult);
   });
 };
 

@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const casterEl = document.getElementById(caster.elementId);
 
@@ -35,7 +36,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       const anim = spark.animate([
         { transform: 'translate(0, 0) scale(1)', opacity: 1 },
         { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
-      ], { duration: 200 + Math.random() * 100, easing: 'ease-out' });
+      ], { duration: (200 + Math.random() * 100) / speedMult, easing: 'ease-out' });
       
       anim.onfinish = () => spark.remove();
     }
@@ -73,7 +74,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
           const angle = Math.atan2(ty - cy, tx - cx);
           const dist = Math.hypot(tx - cx, ty - cy);
-          const duration = 150;
+          const duration = 150 / speedMult;
 
           const anim = arrow.animate([
             { transform: `rotate(${angle}rad) translateX(0px)`, opacity: 0 },
@@ -107,7 +108,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           const anim = arrow.animate([
             { transform: `translateY(0px)`, opacity: 1 },
             { transform: `translateY(${fallDist}px)`, opacity: 1 }
-          ], { duration: 200, easing: 'ease-in' });
+          ], { duration: 200 / speedMult, easing: 'ease-in' });
 
           anim.onfinish = () => {
             arrow.remove();
@@ -118,7 +119,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
       }
-    }, index * 20);
+    }, index * 20 / speedMult);
   });
 };
 

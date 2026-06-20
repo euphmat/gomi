@@ -34,10 +34,20 @@ export const atbMethods = {
       window.removeEventListener('hashchange', this._routeChangeHandler);
       this._routeChangeHandler = null;
     }
+    if (this._settingsHandler) {
+      window.removeEventListener('settingsChanged', this._settingsHandler);
+      this._settingsHandler = null;
+    }
   },
 
   startAtbLoop() {
     this.isStopped = false;
+    // Cache localStorage reads to avoid I/O on every tick
+    this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+    this._settingsHandler = () => {
+      this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+    };
+    window.addEventListener('settingsChanged', this._settingsHandler);
     let totalSpd = 0;
     let entityCount = 0;
     this.party.forEach(p => { 
@@ -80,7 +90,7 @@ export const atbMethods = {
     this.atbWorker = new Worker(this.atbWorkerUrl);
 
     this.atbWorker.onmessage = () => {
-      const disableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+      const disableAnim = this._cachedDisableAnim;
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();
         if (this.currentTab === 'skill' || this.currentTab === 'item' || this.currentTab === 'info') {

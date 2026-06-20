@@ -5,6 +5,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
+  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
 
   const screenShake = (intensity = 5, duration = 300) => {
     // Screen shake disabled globally by user request
@@ -34,7 +35,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         { transform: 'translate(0, 0) scale(0)', opacity: 0 },
         { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: 0.2 },
         { transform: `translate(${dx}px, ${dy}px) scale(0.5)`, opacity: 0 }
-      ], { duration: 600 + Math.random() * 400, easing: 'ease-out' });
+      ], { duration: (600 + Math.random() * 400) / speedMult, easing: 'ease-out' });
       
       anim.onfinish = () => sparkle.remove();
     }
@@ -77,14 +78,14 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scaleY(0)', opacity: 0, transformOrigin: 'bottom' },
             { transform: 'scaleY(1)', opacity: 1, offset: 0.3, transformOrigin: 'bottom' },
             { transform: 'scaleY(1.2)', opacity: 0, transformOrigin: 'bottom' }
-          ], { duration: 600, easing: 'ease-out' });
+          ], { duration: 600 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           
           setTimeout(() => {
             createSparkles(tx, ty, '#4ade80');
             if (onImpact) onImpact(target, index);
-          }, 200);
+          }, 200 / speedMult);
           break;
         }
         case 'raise': {
@@ -104,14 +105,14 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scaleX(0)', opacity: 0 },
             { transform: 'scaleX(1.5)', opacity: 1, offset: 0.5 },
             { transform: 'scaleX(0)', opacity: 0 }
-          ], { duration: 800, easing: 'ease-in-out' });
+          ], { duration: 800 / speedMult, easing: 'ease-in-out' });
 
           anim.onfinish = () => el.remove();
 
           setTimeout(() => {
             createSparkles(tx, ty, '#fef08a');
             if (onImpact) onImpact(target, index);
-          }, 400);
+          }, 400 / speedMult);
           break;
         }
         case 'restore': {
@@ -131,11 +132,11 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           const anim = el.animate([
             { transform: 'scale(0)', opacity: 1 },
             { transform: 'scale(1.5)', opacity: 0 }
-          ], { duration: 500, easing: 'ease-out' });
+          ], { duration: 500 / speedMult, easing: 'ease-out' });
 
           anim.onfinish = () => el.remove();
           
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 250);
+          setTimeout(() => { if (onImpact) onImpact(target, index); }, 250 / speedMult);
           break;
         }
         case 'holy': {
@@ -156,7 +157,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scaleX(2)', opacity: 1, offset: 0.1 },
             { transform: 'scaleX(0.5)', opacity: 1, offset: 0.8 },
             { transform: 'scaleX(0)', opacity: 0 }
-          ], { duration: 600 });
+          ], { duration: 600 / speedMult });
 
           anim.onfinish = () => el.remove();
 
@@ -178,15 +179,15 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             const exAnim = ex.animate([
               { transform: 'scale(0.5)', opacity: 1 },
               { transform: 'scale(1.5)', opacity: 0 }
-            ], { duration: 500, easing: 'ease-out' });
+            ], { duration: 500 / speedMult, easing: 'ease-out' });
             exAnim.onfinish = () => ex.remove();
 
             if (onImpact) onImpact(target, index);
-          }, 100);
+          }, 100 / speedMult);
           break;
         }
       }
-    }, index * 100);
+    }, index * 100 / speedMult);
   });
 };
 

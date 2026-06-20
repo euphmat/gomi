@@ -57,12 +57,16 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   `;
 }
 
+let cachedDisableAnimations = localStorage.getItem('disableBattleAnimations') === 'true';
+window.addEventListener('settingsChanged', () => {
+  cachedDisableAnimations = localStorage.getItem('disableBattleAnimations') === 'true';
+});
+
 export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPartyMember) {
   let borderClass = 'border-gray-700';
   let bgClass = 'bg-gray-800/80';
-  const disableAnimations = localStorage.getItem('disableBattleAnimations') === 'true';
 
-  if (activeCharacter === p && !(isAutoBattle && disableAnimations)) {
+  if (activeCharacter === p && !(isAutoBattle && cachedDisableAnimations)) {
     borderClass = 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]';
   } else if (isAutoBattle && selectedPartyMember === p) {
     borderClass = 'border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]';
