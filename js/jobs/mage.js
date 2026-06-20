@@ -204,29 +204,55 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
         case 'blizzard': {
-          createIceShatter(tx, ty, false); // No screen shake for lighter effect
-          const el = document.createElement('div');
-          el.style.position = 'fixed';
-          el.style.left = `${tx - 60}px`;
-          el.style.top = `${ty - 60}px`;
-          el.style.width = '120px';
-          el.style.height = '120px';
-          el.style.borderRadius = '50%';
-          el.style.background = 'conic-gradient(from 0deg, transparent, rgba(224, 255, 255, 0.6), transparent)';
-          el.style.zIndex = '9998';
-          el.style.pointerEvents = 'none';
-          el.style.mixBlendMode = 'screen';
-          document.body.appendChild(el);
-
-          const anim = el.animate([
-            { transform: 'rotate(0deg) scale(0)', opacity: 0 },
-            { transform: 'rotate(180deg) scale(1.2)', opacity: 0.8, offset: 0.5 },
-            { transform: 'rotate(360deg) scale(1.5)', opacity: 0 }
-          ], { duration: 600 }); // Slightly faster and smaller
-
-          anim.onfinish = () => el.remove();
+          const numIcicles = 6;
+          let completed = 0;
+          let impactTriggered = false;
           
-          setTimeout(() => { if (onImpact) onImpact(target, index); }, 300);
+          for (let i = 0; i < numIcicles; i++) {
+            setTimeout(() => {
+              const el = document.createElement('div');
+              el.style.position = 'fixed';
+              
+              // Start randomly near the caster
+              const startX = cx + (Math.random() - 0.5) * 80;
+              const startY = cy + (Math.random() - 0.5) * 80 - 40;
+              
+              // Target slightly spread around the center of the target
+              const targetX = tx + (Math.random() - 0.5) * 50;
+              const targetY = ty + (Math.random() - 0.5) * 50;
+
+              el.style.left = `${startX - 10}px`;
+              el.style.top = `${startY - 25}px`;
+              el.style.width = '20px';
+              el.style.height = '50px';
+              el.style.background = 'linear-gradient(to bottom, transparent, #e0ffff, #00bfff)';
+              el.style.boxShadow = '0 0 10px #e0ffff';
+              el.style.zIndex = '9999';
+              el.style.pointerEvents = 'none';
+              el.style.clipPath = 'polygon(50% 0%, 100% 100%, 50% 85%, 0% 100%)';
+              document.body.appendChild(el);
+
+              const angle = Math.atan2(targetY - startY, targetX - startX) + Math.PI / 2;
+              const distance = Math.hypot(targetX - startX, targetY - startY);
+              
+              const anim = el.animate([
+                { transform: `rotate(${angle}rad) translateY(0px) scale(0)`, opacity: 0 },
+                { transform: `rotate(${angle}rad) translateY(0px) scale(0.8)`, opacity: 1, offset: 0.2 },
+                { transform: `rotate(${angle}rad) translateY(-${distance}px) scale(0.8)`, opacity: 1 }
+              ], { duration: 250 + Math.random() * 150, easing: 'ease-in' });
+
+              anim.onfinish = () => {
+                el.remove();
+                createIceShatter(targetX, targetY, false);
+                completed++;
+                // Trigger impact damage roughly when the first icicle hits
+                if (!impactTriggered) {
+                  impactTriggered = true;
+                  if (onImpact) onImpact(target, index);
+                }
+              };
+            }, i * 60); // Stagger the icicles
+          }
           break;
         }
         case 'volcano': {
