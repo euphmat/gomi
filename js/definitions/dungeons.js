@@ -4,6 +4,7 @@ export const DUNGEONS = [{
   description: '初心者向けの安全な森。スライムが多数生息している。',
   image: 'assets/dungeon/slime_forest.webp',
   bgImage: 'assets/dungeon/bg_slime_forest.webp',
+  theme: { color: '16, 185, 129', icon: 'forest' },
   isUnlocked: true,
   floors: [
     { level: 1, monsters: [{ slime_blue: 1, weight: 50 }, { slime_blue: 2, weight: 40 }, { slime_blue: 3, weight: 10 },] },
@@ -28,6 +29,7 @@ export const DUNGEONS = [{
   description: '蜘蛛が巣食う不気味な洞窟。',
   image: 'assets/dungeon/spider_cave.webp',
   bgImage: 'assets/dungeon/bg_spider_cave.webp',
+  theme: { color: '139, 92, 246', icon: 'bug_report' },
   isUnlocked: false,
     floors: [
       { level: 1, monsters: [{ spider_cave: 2, weight: 50 }, { spider_cave: 3, weight: 30 }, { spider_cave: 2, spider_poison: 1, weight: 20 },] },
@@ -48,6 +50,7 @@ export const DUNGEONS = [{
   description: '美しいクリスタルが輝く洞窟。',
   image: 'assets/dungeon/crystal_cave.webp',
   bgImage: 'assets/dungeon/bg_crystal_cave.webp',
+  theme: { color: '6, 182, 212', icon: 'diamond' },
   isUnlocked: false,
   floors: [
     { level: 1, monsters: [ { crisp: 3, weight: 50 }, { crisp: 4, weight: 30 }, { crisp: 2, geode_turtle: 1, weight: 20 } ] },
@@ -68,6 +71,7 @@ export const DUNGEONS = [{
   description: '亡霊が彷徨う廃城。',
   image: 'assets/dungeon/ghost_castle.webp',
   bgImage: 'assets/dungeon/bg_ghost_castle.webp',
+  theme: { color: '99, 102, 241', icon: 'castle' },
   isUnlocked: false,
   floors: [
     { level: 1, monsters: [ { rust_guard: 3, weight: 50 }, { rust_guard: 2, dust_maid: 1, weight: 49.9 }, { lost_glitter: 1, weight: 0.1 } ] },
@@ -88,6 +92,7 @@ export const DUNGEONS = [{
   description: '精霊たちの声が響く神秘的な谷。',
   image: 'assets/dungeon/spirit_valley.webp',
   bgImage: 'assets/dungeon/bg_spirit_valley.webp',
+  theme: { color: '20, 184, 166', icon: 'air' },
   isUnlocked: false,
   floors: [
     { level: 1, monsters: [{ humming_leaf: 3, weight: 60 }, { humming_leaf: 4, weight: 40 }] },
@@ -118,6 +123,7 @@ export const DUNGEONS = [{
   description: '古の魔法が眠る神殿。',
   image: 'assets/dungeon/mystic_temple.webp',
   bgImage: 'assets/dungeon/bg_mystic_temple.webp',
+  theme: { color: '245, 158, 11', icon: 'account_balance' },
   isUnlocked: false,
   floors: []
 },
@@ -127,6 +133,7 @@ export const DUNGEONS = [{
   description: '星空に最も近い高塔。',
   image: 'assets/dungeon/stargazer_tower.webp',
   bgImage: 'assets/dungeon/bg_stargazer_tower.webp',
+  theme: { color: '59, 130, 246', icon: 'routine' },
   isUnlocked: false,
   floors: []
 },
@@ -136,6 +143,7 @@ export const DUNGEONS = [{
   description: '恐ろしい魔物が潜む洞窟。',
   image: 'assets/dungeon/hell_cave.webp',
   bgImage: 'assets/dungeon/bg_hell_cave.webp',
+  theme: { color: '239, 68, 68', icon: 'local_fire_department' },
   isUnlocked: false,
   floors: []
 },
@@ -145,6 +153,7 @@ export const DUNGEONS = [{
   description: '強大な竜たちが棲む巣窟。',
   image: 'assets/dungeon/dragon_lair.webp',
   bgImage: 'assets/dungeon/bg_dragon_lair.webp',
+  theme: { color: '234, 88, 12', icon: 'local_fire_department' },
   isUnlocked: false,
   floors: []
 },
@@ -154,6 +163,7 @@ export const DUNGEONS = [{
   description: '天空に浮かぶ恐ろしい魔城。',
   image: 'assets/dungeon/sky_demon_castle.webp',
   bgImage: 'assets/dungeon/bg_sky_demon_castle.webp',
+  theme: { color: '217, 70, 239', icon: 'fort' },
   isUnlocked: false,
   floors: []
 },
@@ -163,6 +173,7 @@ export const DUNGEONS = [{
   description: '月光に照らされた静寂の礼堂。',
   image: 'assets/dungeon/moonlit_hall.webp',
   bgImage: 'assets/dungeon/bg_moonlit_hall.webp',
+  theme: { color: '203, 213, 225', icon: 'nightlight' },
   isUnlocked: false,
   floors: []
 },
@@ -172,6 +183,7 @@ export const DUNGEONS = [{
   description: '雲海の上に建設された神聖な祭壇。',
   image: 'assets/dungeon/cloud_altar.webp',
   bgImage: 'assets/dungeon/bg_cloud_altar.webp',
+  theme: { color: '56, 189, 248', icon: 'cloud' },
   isUnlocked: false,
   floors: []
 },
@@ -181,6 +193,7 @@ export const DUNGEONS = [{
   description: '決して夜が明けない迷宮。',
   image: 'assets/dungeon/dusk_labyrinth.webp',
   bgImage: 'assets/dungeon/bg_dusk_labyrinth.webp',
+  theme: { color: '192, 38, 211', icon: 'dashboard' },
   isUnlocked: false,
   floors: []
 },
@@ -190,6 +203,7 @@ export const DUNGEONS = [{
   description: '途方もない時を経た神殿の跡地。',
   image: 'assets/dungeon/eternal_ruins.webp',
   bgImage: 'assets/dungeon/bg_eternal_ruins.webp',
+  theme: { color: '168, 162, 158', icon: 'broken_image' },
   isUnlocked: false,
   floors: []
 },
@@ -199,6 +213,7 @@ export const DUNGEONS = [{
   description: '世界の理から外れた異次元空間。',
   image: 'assets/dungeon/subspace.webp',
   bgImage: 'assets/dungeon/bg_subspace.webp',
+  theme: { color: '139, 92, 246', icon: 'blur_on' },
   isUnlocked: false,
   floors: []
 }

@@ -83,26 +83,10 @@ export async function renderDungeonPage() {
   const startIndex = (currentDungeonPage - 1) * itemsPerPage;
   const pageDungeons = filteredDungeons.slice(startIndex, startIndex + itemsPerPage);
 
-const DUNGEON_THEMES = {
-  slime_forest: { color: '16, 185, 129', icon: 'forest' },        // Emerald
-  spider_cave: { color: '139, 92, 246', icon: 'bug_report' },     // Violet
-  crystal_cave: { color: '6, 182, 212', icon: 'diamond' },        // Cyan
-  ghost_castle: { color: '99, 102, 241', icon: 'castle' },        // Indigo
-  spirit_valley: { color: '20, 184, 166', icon: 'air' },          // Teal
-  mystic_temple: { color: '245, 158, 11', icon: 'account_balance' }, // Amber
-  stargazer_tower: { color: '59, 130, 246', icon: 'routine' },    // Blue
-  hell_cave: { color: '239, 68, 68', icon: 'local_fire_department' }, // Red
-  dragon_lair: { color: '234, 88, 12', icon: 'local_fire_department' }, // Orange
-  sky_demon_castle: { color: '217, 70, 239', icon: 'fort' },      // Fuchsia
-  moonlit_hall: { color: '203, 213, 225', icon: 'nightlight' },   // Slate/Silver
-  cloud_altar: { color: '56, 189, 248', icon: 'cloud' },          // Sky Blue
-  dusk_labyrinth: { color: '192, 38, 211', icon: 'dashboard' },   // Purple
-  eternal_ruins: { color: '168, 162, 158', icon: 'broken_image' }, // Stone
-  subspace: { color: '139, 92, 246', icon: 'blur_on' },           // Violet
-};
+
 
   const cardsHtml = pageDungeons.map(d => {
-    const theme = d.theme || DUNGEON_THEMES[d.id] || { color: '107, 114, 128', icon: 'swords' };
+    const theme = d.theme || { color: '107, 114, 128', icon: 'swords' };
     const themeRgb = theme.color;
 
     let isUnlocked = d.unlockCondition 

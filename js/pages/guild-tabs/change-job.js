@@ -3,6 +3,8 @@ import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
+import { calcItemsPerPage } from '../../data/page-utils.js';
+
 /**
  * 「神殿」タブの画面 — 転職・転生・SPリセット
  */
@@ -294,11 +296,71 @@ export function renderChangeJobTab() {
   };
 
   // ─── レンダリング: 転職タブ ─────────────────────────────
-  const renderChangeJobInnerTab = (char) => {
-    const listContainer = document.createElement('div');
-    listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-6 pr-1';
+  let changeJobCurrentPage = 1;
 
-    Object.values(JOBS).forEach(job => {
+  const renderChangeJobInnerTab = (char) => {
+    const wrapperContainer = document.createElement('div');
+    wrapperContainer.className = 'flex flex-col h-full overflow-hidden';
+
+    const listContainer = document.createElement('div');
+    listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-2 pr-1';
+
+    const paginationContainer = document.createElement('div');
+    paginationContainer.className = 'flex items-center justify-center gap-4 py-2 shrink-0 bg-slate-950/80 border-t border-slate-800 pb-4';
+
+    const renderPagination = (totalPages) => {
+      paginationContainer.innerHTML = '';
+      if (totalPages <= 1) return;
+      
+      const prevBtn = document.createElement('button');
+      prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${changeJobCurrentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
+      prevBtn.onclick = () => {
+        if (changeJobCurrentPage > 1) {
+          changeJobCurrentPage--;
+          renderList();
+          listContainer.scrollTop = 0;
+        }
+      };
+
+      const info = document.createElement('div');
+      info.className = 'text-xs font-bold text-slate-400 font-mono tracking-widest';
+      info.textContent = `${changeJobCurrentPage} / ${totalPages}`;
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${changeJobCurrentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
+      nextBtn.onclick = () => {
+        if (changeJobCurrentPage < totalPages) {
+          changeJobCurrentPage++;
+          renderList();
+          listContainer.scrollTop = 0;
+        }
+      };
+      
+      paginationContainer.appendChild(prevBtn);
+      paginationContainer.appendChild(info);
+      paginationContainer.appendChild(nextBtn);
+    };
+
+    const renderList = () => {
+      listContainer.innerHTML = '';
+      const allJobs = Object.values(JOBS);
+      
+      const ITEMS_PER_PAGE = calcItemsPerPage({
+        viewMode: 'list',
+        scrollContainer: listContainer,
+        listItemHeight: 76
+      });
+      
+      const totalPages = Math.ceil(allJobs.length / ITEMS_PER_PAGE) || 1;
+      if (changeJobCurrentPage > totalPages) changeJobCurrentPage = totalPages;
+      if (changeJobCurrentPage < 1) changeJobCurrentPage = 1;
+      
+      const startIndex = (changeJobCurrentPage - 1) * ITEMS_PER_PAGE;
+      const pageJobs = allJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+      pageJobs.forEach(job => {
       const isCurrent = job.id === char.jobId;
       const isUnlocked = char.unlockedJobs && char.unlockedJobs.includes(job.id);
       const savedJob = char.jobLevels && char.jobLevels[job.id];
@@ -401,7 +463,10 @@ export function renderChangeJobTab() {
         </div>
       `;
       listContainer.appendChild(row);
-    });
+      });
+
+      renderPagination(totalPages);
+    };
 
     listContainer.addEventListener('click', async (e) => {
       const btn = e.target.closest('.btn-change-job');
@@ -424,7 +489,14 @@ export function renderChangeJobTab() {
       await changeJob(char, jobDef);
     });
 
-    return listContainer;
+    wrapperContainer.appendChild(listContainer);
+    wrapperContainer.appendChild(paginationContainer);
+
+    requestAnimationFrame(() => {
+      renderList();
+    });
+
+    return wrapperContainer;
   };
 
   // ─── レンダリング: 転生タブ ──────────────────────────────
@@ -560,33 +632,93 @@ export function renderChangeJobTab() {
   };
 
   // ─── レンダリング: SPリセットタブ ────────────────────────
-  const renderSpResetInnerTab = (char) => {
-    const listContainer = document.createElement('div');
-    listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-6 pr-1';
+  let spResetCurrentPage = 1;
 
-    // 獲得SPがあるジョブ (レベル > 1) を抽出
-    const spJobs = [];
-    
-    if (char.jobLevel > 1) {
-      spJobs.push({ jobId: char.jobId, level: char.jobLevel });
-    }
-    
-    if (char.jobLevels) {
-      for (const [jobId, data] of Object.entries(char.jobLevels)) {
-        if (jobId !== char.jobId && data.level > 1) {
-          spJobs.push({ jobId, level: data.level });
+  const renderSpResetInnerTab = (char) => {
+    const wrapperContainer = document.createElement('div');
+    wrapperContainer.className = 'flex flex-col h-full overflow-hidden';
+
+    const listContainer = document.createElement('div');
+    listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-2 pr-1';
+
+    const paginationContainer = document.createElement('div');
+    paginationContainer.className = 'flex items-center justify-center gap-4 py-2 shrink-0 bg-slate-950/80 border-t border-slate-800 pb-4';
+
+    const renderPagination = (totalPages) => {
+      paginationContainer.innerHTML = '';
+      if (totalPages <= 1) return;
+      
+      const prevBtn = document.createElement('button');
+      prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${spResetCurrentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
+      prevBtn.onclick = () => {
+        if (spResetCurrentPage > 1) {
+          spResetCurrentPage--;
+          renderList();
+          listContainer.scrollTop = 0;
+        }
+      };
+
+      const info = document.createElement('div');
+      info.className = 'text-xs font-bold text-slate-400 font-mono tracking-widest';
+      info.textContent = `${spResetCurrentPage} / ${totalPages}`;
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${spResetCurrentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
+      nextBtn.onclick = () => {
+        if (spResetCurrentPage < totalPages) {
+          spResetCurrentPage++;
+          renderList();
+          listContainer.scrollTop = 0;
+        }
+      };
+      
+      paginationContainer.appendChild(prevBtn);
+      paginationContainer.appendChild(info);
+      paginationContainer.appendChild(nextBtn);
+    };
+
+    const renderList = () => {
+      listContainer.innerHTML = '';
+
+      // 獲得SPがあるジョブ (レベル > 1) を抽出
+      const spJobs = [];
+      
+      if (char.jobLevel > 1) {
+        spJobs.push({ jobId: char.jobId, level: char.jobLevel });
+      }
+      
+      if (char.jobLevels) {
+        for (const [jobId, data] of Object.entries(char.jobLevels)) {
+          if (jobId !== char.jobId && data.level > 1) {
+            spJobs.push({ jobId, level: data.level });
+          }
         }
       }
-    }
 
-    if (spJobs.length === 0) {
-      listContainer.innerHTML = `<div class="text-center text-gray-500 py-8">SPを獲得したジョブはありません。</div>`;
-      return listContainer;
-    }
+      if (spJobs.length === 0) {
+        listContainer.innerHTML = `<div class="text-center text-gray-500 py-8">SPを獲得したジョブはありません。</div>`;
+        paginationContainer.innerHTML = '';
+        return;
+      }
 
-    spJobs.forEach(({ jobId, level }) => {
-      const jobDef = JOBS[jobId];
-      if (!jobDef) return;
+      const ITEMS_PER_PAGE = calcItemsPerPage({
+        viewMode: 'list',
+        scrollContainer: listContainer,
+        listItemHeight: 76
+      });
+
+      const totalPages = Math.ceil(spJobs.length / ITEMS_PER_PAGE) || 1;
+      if (spResetCurrentPage > totalPages) spResetCurrentPage = totalPages;
+      if (spResetCurrentPage < 1) spResetCurrentPage = 1;
+
+      const startIndex = (spResetCurrentPage - 1) * ITEMS_PER_PAGE;
+      const pageJobs = spJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+      pageJobs.forEach(({ jobId, level }) => {
+        const jobDef = JOBS[jobId];
+        if (!jobDef) return;
 
       const totalSp = level - 1;
       const cost = totalSp * 100;
@@ -637,7 +769,10 @@ export function renderChangeJobTab() {
         </div>
       `;
       listContainer.appendChild(row);
-    });
+      });
+
+      renderPagination(totalPages);
+    };
 
     listContainer.addEventListener('click', (e) => {
       const btn = e.target.closest('.btn-sp-reset');
@@ -656,7 +791,14 @@ export function renderChangeJobTab() {
       );
     });
 
-    return listContainer;
+    wrapperContainer.appendChild(listContainer);
+    wrapperContainer.appendChild(paginationContainer);
+
+    requestAnimationFrame(() => {
+      renderList();
+    });
+
+    return wrapperContainer;
   };
 
   // ─── レンダリング ───────────────────────────────────────
