@@ -147,25 +147,39 @@ const DUNGEON_THEMES = {
     } else {
       return `
       <!-- 未解放ダンジョン: ${d.name} -->
-      <div class="relative overflow-hidden flex items-center bg-[#0a0a10] border border-gray-800/60 rounded-2xl p-4 gap-4 opacity-60 grayscale-[0.8] transition-all">
+      <div class="relative overflow-hidden flex items-center justify-center bg-[#0a0a10] border border-gray-800/60 rounded-2xl h-24 gap-4 transition-all">
         
+        <!-- 背景としてぼかした中身 -->
+        <div class="absolute inset-0 flex items-center p-4 gap-4 blur-md opacity-30 select-none">
+          <div class="w-16 h-16 rounded-xl flex-shrink-0 bg-black/60 border border-gray-800 flex items-center justify-center">
+            <span class="material-symbols-outlined text-gray-700 text-3xl">question_mark</span>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-gray-600 tracking-widest">${d.name}</h3>
+            <p class="text-[11px] text-gray-600 mt-1 line-clamp-1">${d.description}</p>
+          </div>
+          <div class="flex flex-col items-center justify-center w-16 h-16 bg-[#050508] rounded-xl flex-shrink-0 border border-gray-800/80"></div>
+        </div>
+
         <!-- 斜め線のパターン (LOCKED感) -->
-        <div class="absolute inset-0 opacity-[0.02]" 
-             style="background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 1px, transparent 8px);"></div>
+        <div class="absolute inset-0 opacity-[0.05]" 
+             style="background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 1px, transparent 8px); pointer-events: none;"></div>
 
-        <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-black/60 border border-gray-800 flex items-center justify-center relative z-10 shadow-inner">
-          <span class="material-symbols-outlined text-gray-700 text-3xl">question_mark</span>
-        </div>
-
-        <div class="flex-1 relative z-10">
-          <h3 class="text-lg font-bold text-gray-600 tracking-widest">${d.name}</h3>
-          <p class="text-[11px] text-gray-600 mt-1 line-clamp-1 opacity-70">${d.description}</p>
-          ${d.id === 'golden_slime_island' ? `<p class="text-[11px] text-amber-500/70 mt-1 font-bold">解放条件: メダルを18種類以上獲得 (現在: ${medalCount}種類)</p>` : ''}
-        </div>
-
-        <div class="flex flex-col items-center justify-center w-16 h-16 bg-[#050508] rounded-xl text-gray-600 font-bold flex-shrink-0 border border-gray-800/80 relative z-10 shadow-inner">
-          <span class="material-symbols-outlined text-xl mb-1">lock</span>
-          <span class="text-[8px] tracking-widest uppercase">Locked</span>
+        <!-- 前面にハッキリ表示するロック情報と解放条件 -->
+        <div class="relative z-10 flex flex-col items-center justify-center w-full h-full p-2">
+          <div class="flex items-center justify-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-gray-400 text-xl">lock</span>
+            <span class="text-sm tracking-widest text-gray-300 font-bold uppercase">Locked</span>
+          </div>
+          ${d.id === 'golden_slime_island' 
+            ? `<div class="bg-amber-900/40 border border-amber-500/50 text-amber-400 px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
+                 <span class="material-symbols-outlined text-sm">stars</span>
+                 解放条件: メダルを18種類以上獲得 (現在: ${medalCount}種類)
+               </div>`
+            : `<div class="text-[10px] text-gray-400 font-bold bg-black/60 px-4 py-1.5 rounded-full border border-gray-700 shadow-lg">
+                 条件を満たすと挑戦可能になります
+               </div>`
+          }
         </div>
       </div>`;
     }
