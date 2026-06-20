@@ -2237,8 +2237,8 @@ class BattleManager {
     
     // -- Repulsion logic --
     if (!this._activeDamagePopups) this._activeDamagePopups = [];
-    const now = Date.now();
-    this._activeDamagePopups = this._activeDamagePopups.filter(p => now < p.endTime);
+    const currentTime = Date.now();
+    this._activeDamagePopups = this._activeDamagePopups.filter(p => currentTime < p.endTime);
 
     let finalX = centerX;
     let finalY = baseY;
@@ -2269,9 +2269,7 @@ class BattleManager {
     // Determine spread drift based on pushed position relative to center
     let spreadX = (finalX - centerX) * 1.5;
     if (Math.abs(spreadX) < 10) spreadX = (Math.random() - 0.5) * 60; // fallback drift
-
-    this._activeDamagePopups.push({ elementId, x: finalX, y: finalY, endTime: now + dur });
-
+    this._activeDamagePopups.push({ elementId, x: finalX, y: finalY, endTime: currentTime + dur });
     const popup = this._getPoolElement('float');
     if (!popup) return;
     
