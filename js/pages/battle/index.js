@@ -643,8 +643,8 @@ export function renderBattlePage() {
       }
     </style>
 
-    <!-- Scrollable Battle Area (Enemies, Party, Tabs) -->
-    <div id="battle-scene-bg" class="flex-1 flex flex-col overflow-y-auto" style="background: #0b0b19;">
+    <!-- Fixed Battle Area (Enemies, Party, Tabs) -->
+    <div id="battle-scene-bg" class="flex-1 flex flex-col overflow-hidden" style="background: #0b0b19;">
       
       <!-- Enemy Area (Moved higher) -->
       <div id="enemy-area" class="shrink-0 px-2 py-1 relative z-10">
@@ -652,14 +652,14 @@ export function renderBattlePage() {
       </div>
 
       <!-- Party Area -->
-      <div id="party-area" class="grid grid-cols-4 gap-1 px-1 mt-1 relative z-10">
+      <div id="party-area" class="shrink-0 grid grid-cols-4 gap-1 px-1 mt-1 relative z-10">
         <!-- Party will be injected here -->
       </div>
       
       <!-- Tabs & Tab Content Area -->
-      <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10">
+      <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10 min-h-0">
         <!-- Tabs -->
-        <div class="flex px-1 gap-1 items-end">
+        <div class="flex px-1 gap-1 items-end shrink-0">
           <button id="tab-btn-skill" class="flex-1 py-2 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-xl text-[11px] font-bold shadow-[0_-5px_20px_rgba(34,211,238,0.25)] relative z-10 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer"><span class="material-symbols-outlined text-[15px] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" style="font-variation-settings: 'FILL' 1">auto_awesome</span>スキル</button>
           <button id="tab-btn-item" class="flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-[15px] text-slate-500">backpack</span>アイテム</button>
           <button id="tab-btn-info" class="flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-[15px] text-slate-500">info</span>インフォ</button>
