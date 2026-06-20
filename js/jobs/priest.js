@@ -224,9 +224,9 @@ export const priest = {
         
         // Find ally with lowest HP percentage
         let target = aliveParty[0];
-        let lowestHpPercent = target.hp.current / (target.stats?.hp || target.hp.max);
+        let lowestHpPercent = target.hp !== undefined ? (target.hp.current / (target.stats?.hp || target.hp.max)) : (target.currentHp / (target.stats?.hp || target.maxHp));
         for (const p of aliveParty) {
-          const hpPercent = p.hp.current / (p.stats?.hp || p.hp.max);
+          const hpPercent = p.hp !== undefined ? (p.hp.current / (p.stats?.hp || p.hp.max)) : (p.currentHp / (p.stats?.hp || p.maxHp));
           if (hpPercent < lowestHpPercent) {
             lowestHpPercent = hpPercent;
             target = p;
@@ -235,7 +235,11 @@ export const priest = {
 
         playSkillAnimation(caster, [target], 'heal', () => {
           if (target.isDead) return;
-          target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          if (target.hp !== undefined) {
+            target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          } else {
+            target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + levelConfig.healAmount);
+          }
           battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
           battle.renderEntities();
         });
@@ -247,7 +251,7 @@ export const priest = {
           let bestTarget = null;
           let bestScore = 0;
           for (const p of aliveParty) {
-            const hpPercent = p.hp.current / (p.stats?.hp || p.hp.max);
+            const hpPercent = p.hp !== undefined ? (p.hp.current / (p.stats?.hp || p.hp.max)) : (p.currentHp / (p.stats?.hp || p.maxHp));
             if (hpPercent < 0.8) {
               const score = (1 - hpPercent) * 150;
               if (score > bestScore) {
@@ -292,7 +296,11 @@ export const priest = {
         const target = deadParty[Math.floor(Math.random() * deadParty.length)];
         playSkillAnimation(caster, [target], 'raise', () => {
           target.isDead = false;
-          target.hp.current = Math.min(target.stats?.hp || target.hp.max, levelConfig.reviveHp);
+          if (target.hp !== undefined) {
+            target.hp.current = Math.min(target.stats?.hp || target.hp.max, levelConfig.reviveHp);
+          } else {
+            target.currentHp = Math.min(target.stats?.hp || target.maxHp, levelConfig.reviveHp);
+          }
           target.atb = 0; // Reset ATB on revive just in case
           battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
           battle.renderEntities(); // This handles reviving UI
@@ -428,7 +436,11 @@ export const priest = {
         
         playSkillAnimation(caster, aliveParty, 'all_heal', (target) => {
           if (target.isDead) return;
-          target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          if (target.hp !== undefined) {
+            target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          } else {
+            target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + levelConfig.healAmount);
+          }
           battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
           battle.renderEntities();
         });
@@ -438,7 +450,8 @@ export const priest = {
           const aliveParty = context.party.filter(p => !p.isDead);
           let totalMissingHpPercent = 0;
           for (const p of aliveParty) {
-             totalMissingHpPercent += (1 - (p.hp.current / (p.stats?.hp || p.hp.max)));
+             const hpPercent = p.hp !== undefined ? (p.hp.current / (p.stats?.hp || p.hp.max)) : (p.currentHp / (p.stats?.hp || p.maxHp));
+             totalMissingHpPercent += (1 - hpPercent);
           }
           if (totalMissingHpPercent > 0.6) {
              return { target: caster, score: totalMissingHpPercent * 100 };
