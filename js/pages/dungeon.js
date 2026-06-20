@@ -1,4 +1,5 @@
 import { DUNGEONS } from '../definitions/dungeons.js';
+import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
 import { GameDB } from '../data/database.js';
 import { calcItemsPerPage } from '../data/page-utils.js';
 
@@ -16,7 +17,8 @@ function getItemsPerPage() {
 }
 
 window.changeDungeonPage = async (delta) => {
-  const maxPage = Math.ceil(DUNGEONS.length / getItemsPerPage());
+  const currentList = currentDungeonTab === 'special' ? SPECIAL_DUNGEONS : DUNGEONS;
+  const maxPage = Math.ceil(currentList.length / getItemsPerPage());
   currentDungeonPage += delta;
   if (currentDungeonPage < 1) currentDungeonPage = 1;
   if (currentDungeonPage > maxPage) currentDungeonPage = maxPage;
@@ -71,7 +73,7 @@ export async function renderDungeonPage() {
   const playerMedals = await GameDB.getGameState('player_medals') || {};
   const medalCount = Object.keys(playerMedals).length;
   
-  const filteredDungeons = DUNGEONS.filter(d => currentDungeonTab === 'special' ? d.type === 'special' : d.type !== 'special');
+  const filteredDungeons = currentDungeonTab === 'special' ? SPECIAL_DUNGEONS : DUNGEONS;
 
   const totalItems = filteredDungeons.length;
   const maxPage = Math.ceil(totalItems / getItemsPerPage());
@@ -97,17 +99,15 @@ const DUNGEON_THEMES = {
   dusk_labyrinth: { color: '192, 38, 211', icon: 'dashboard' },   // Purple
   eternal_ruins: { color: '168, 162, 158', icon: 'broken_image' }, // Stone
   subspace: { color: '139, 92, 246', icon: 'blur_on' },           // Violet
-  golden_slime_island: { color: '234, 179, 8', icon: 'auto_awesome' }, // Gold
 };
 
   const cardsHtml = pageDungeons.map(d => {
-    const theme = DUNGEON_THEMES[d.id] || { color: '107, 114, 128', icon: 'swords' };
+    const theme = d.theme || DUNGEON_THEMES[d.id] || { color: '107, 114, 128', icon: 'swords' };
     const themeRgb = theme.color;
 
-    let isUnlocked = d.isUnlocked || unlockedDungeons.includes(d.id);
-    if (d.id === 'golden_slime_island') {
-      isUnlocked = medalCount >= 18;
-    }
+    let isUnlocked = d.unlockCondition 
+      ? medalCount >= (d.unlockCondition.medals || 0)
+      : (d.isUnlocked || unlockedDungeons.includes(d.id));
 
     if (isUnlocked) {
       return `

@@ -1,5 +1,6 @@
 import { GameDB } from '../../data/database.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
+import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { getRanchLevelInfo, calculateTotalRanchBonus } from '../../data/stat-calculator.js';
@@ -93,7 +94,7 @@ export async function renderRanchTab() {
       select.className = 'w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 appearance-none focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500';
       
       Object.keys(ranchData).forEach(dId => {
-        const dDef = DUNGEONS.find(d => d.id === dId);
+        const dDef = DUNGEONS.find(d => d.id === dId) || SPECIAL_DUNGEONS.find(d => d.id === dId);
         const option = document.createElement('option');
         option.value = dId;
         option.textContent = dDef ? dDef.name : dId;
@@ -128,7 +129,7 @@ export async function renderRanchTab() {
     const fieldContainer = document.createElement('div');
     fieldContainer.className = 'relative flex-1 min-h-[300px] border-b border-slate-800 overflow-y-auto no-scrollbar';
     
-    const dDef = DUNGEONS.find(d => d.id === currentDungeonId);
+    const dDef = DUNGEONS.find(d => d.id === currentDungeonId) || SPECIAL_DUNGEONS.find(d => d.id === currentDungeonId);
     if (dDef && dDef.bgImage) {
       fieldContainer.style.backgroundImage = `linear-gradient(rgba(11, 11, 25, 0.4), rgba(11, 11, 25, 0.8)), url('${dDef.bgImage}')`;
       fieldContainer.style.backgroundSize = 'cover';

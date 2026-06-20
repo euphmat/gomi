@@ -7,6 +7,7 @@
 import { GameDB } from '../../data/database.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
+import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
@@ -97,7 +98,7 @@ class BattleManager {
 
     this.currentDungeonId = await GameDB.getGameState('currentDungeon') || 'slime_forest';
     this.currentFloorNum = await GameDB.getGameState('currentFloor') || 1;
-    this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId);
+    this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId) || SPECIAL_DUNGEONS.find(d => d.id === this.currentDungeonId);
     this.floorDef = this.dungeonDef.floors.find(f => f.level === this.currentFloorNum) || this.dungeonDef.floors[this.dungeonDef.floors.length - 1];
 
     // Update Header Location

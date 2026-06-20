@@ -3,6 +3,7 @@ import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS, getMedalImageFilter } from '../../definitions/medal-definitions.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
+import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 
@@ -35,8 +36,12 @@ export function renderMedalTab() {
 
   const updateHeader = () => {
     const dungeonOptions = ['<option value="all">全てのダンジョン</option>'];
-    DUNGEONS.forEach(d => {
-      if (d.isUnlocked || unlockedDungeons.includes(d.id)) {
+    const allDungeons = [...DUNGEONS, ...SPECIAL_DUNGEONS];
+    allDungeons.forEach(d => {
+      let isUnlocked = d.unlockCondition 
+        ? Object.keys(playerMedals).length >= (d.unlockCondition.medals || 0)
+        : (d.isUnlocked || unlockedDungeons.includes(d.id));
+      if (isUnlocked) {
         dungeonOptions.push(`<option value="${d.id}" ${selectedDungeonId === d.id ? 'selected' : ''}>${d.name}</option>`);
       }
     });
@@ -482,7 +487,7 @@ export function renderMedalTab() {
     unlockedDungeons = uDungeons || [];
 
     // モンスターID -> ダンジョンIDのマッピングを作成
-    DUNGEONS.forEach(d => {
+    [...DUNGEONS, ...SPECIAL_DUNGEONS].forEach(d => {
       d.floors?.forEach(f => {
         f.monsters?.forEach(mGroup => {
           Object.keys(mGroup).forEach(key => {
