@@ -56,9 +56,9 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
     const auraAnim = aura.animate([
       { transform: 'scale(0.5)', opacity: 0 },
-      { transform: 'scale(3)', opacity: 0.8, offset: 0.5 },
-      { transform: 'scale(8)', opacity: 0 }
-    ], { duration: 800, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' });
+      { transform: 'scale(2.5)', opacity: 0.8, offset: 0.4 },
+      { transform: 'scale(6)', opacity: 0 }
+    ], { duration: 500, easing: 'ease-out' });
 
     auraAnim.onfinish = () => aura.remove();
 
@@ -70,30 +70,29 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         const tx = targetRect.left + targetRect.width / 2;
         const ty = targetRect.top + targetRect.height / 2;
 
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 3; i++) {
           setTimeout(() => {
             const bubble = document.createElement('div');
             bubble.style.position = 'fixed';
-            bubble.style.left = `${tx - 10 + (Math.random() * 40 - 20)}px`;
-            bubble.style.top = `${ty + 20 + (Math.random() * 20)}px`;
-            bubble.style.width = '20px';
-            bubble.style.height = '20px';
+            bubble.style.left = `${tx - 15 + (Math.random() * 30 - 15)}px`;
+            bubble.style.top = `${ty + 10 + (Math.random() * 15)}px`;
+            bubble.style.width = '24px';
+            bubble.style.height = '24px';
             bubble.style.borderRadius = '50%';
-            bubble.style.background = 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(168,85,247,0.9), transparent)';
-            bubble.style.boxShadow = '0 0 10px rgba(168,85,247,0.5)';
+            bubble.style.background = 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(168,85,247,0.8), transparent)';
+            bubble.style.boxShadow = '0 0 12px rgba(168,85,247,0.6)';
             bubble.style.zIndex = '9999';
             bubble.style.pointerEvents = 'none';
             document.body.appendChild(bubble);
 
             const floatAnim = bubble.animate([
               { transform: 'translateY(0) scale(0)', opacity: 0 },
-              { transform: 'translateY(-20px) scale(1)', opacity: 1, offset: 0.2 },
-              { transform: 'translateY(-80px) scale(1.5)', opacity: 0.8, offset: 0.8 },
-              { transform: 'translateY(-100px) scale(2)', opacity: 0 }
-            ], { duration: 600 + Math.random() * 300, easing: 'ease-out' });
+              { transform: 'translateY(-20px) scale(1)', opacity: 1, offset: 0.3 },
+              { transform: 'translateY(-60px) scale(1.3)', opacity: 0 }
+            ], { duration: 400 + Math.random() * 150, easing: 'ease-out' });
 
             floatAnim.onfinish = () => bubble.remove();
-          }, i * 100);
+          }, i * 60);
         }
 
         setTimeout(() => {
