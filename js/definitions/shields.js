@@ -34,6 +34,11 @@ export const SHIELDS = [
   { id: 'slime_tiger_eye_shield', name: '猛虎の盾', stats: { def: 45, mdef: 30 }, elements: { earth: 10 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 25 }, { id: 'slime_tiger_eye_fang', amount: 5 }] } },
   { id: 'slime_king_devil_shield', name: '悪魔王の魔盾', stats: { def: 55, mdef: 55 }, elements: { dark: 20 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 25 }, { id: 'slime_king_devil_wing', amount: 5 }] } },
 
+  // 黄金のスライム島
+  { id: 'gold_slime_buckler', name: '黄金のバックラー', stats: { def: 70, hp: 100 }, elements: { light: 10 }, recipe: { price: 100000, materials: [{ id: 'mat_gold_slime_drop', amount: 10 }, { id: 'mat_golden_core', amount: 5 }] } },
+  { id: 'gold_king_shield', name: '黄金王の盾', stats: { def: 80, hp: 100 }, elements: { light: 30 }, recipe: { price: 500000, materials: [{ id: 'mat_gold_king_jelly', amount: 10 }, { id: 'mat_royal_gold_core', amount: 5 }] } },
+  { id: 'kaiser_gold_aegis', name: '帝王の神聖盾', stats: { def: 100, hp: 100 }, elements: { light: 50 }, recipe: { price: 1000000, materials: [{ id: 'mat_gold_kaiser_fluid', amount: 10 }, { id: 'mat_emperor_gold_core', amount: 5 }] } },
+
   // 蜘蛛の洞窟
   { id: 'spider_cave_shield', name: 'ケイブスパイダーの盾', stats: { def: 35, mdef: 33 }, elements: {}, recipe: { price: 8000, materials: [{ id: 'spider_cave_venom', amount: 250 }, { id: 'spider_cave_silk', amount: 50 }] } },
   { id: 'spider_poison_shield', name: 'ポイズンスパイダーの盾', stats: { def: 39, mdef: 37 }, elements: {}, recipe: { price: 8500, materials: [{ id: 'spider_poison_venom', amount: 250 }, { id: 'spider_poison_silk', amount: 50 }] } },
@@ -100,6 +105,7 @@ export const SHIELDS = [
   { id: 'thunder_roar_shield', name: '雷鳴の盾', stats: { def: 440, hp: 220 }, elements: { thunder: 20 }, recipe: { price: 270000, materials: [{ id: 'mat_storm_feather', amount: 40 }, { id: 'mat_thunder_bird_beak', amount: 10 }] } },
   { id: 'swan_song_tower_shield', name: '絶唱のタワーシールド', stats: { def: 450, hp: 225 }, elements: { dark: 20 }, recipe: { price: 275000, materials: [{ id: 'mat_spirit_knight_armor', amount: 40 }, { id: 'mat_swan_song_blade', amount: 10 }] } },
   { id: 'eternal_aegis', name: 'エターナルイージス', stats: { def: 460, hp: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
-  { id: 'origin_guard', name: 'オリジンガード', stats: { def: 470, hp: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } }
+  { id: 'origin_guard', name: 'オリジンガード', stats: { def: 470, hp: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
+
 ].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));
 

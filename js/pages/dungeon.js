@@ -67,29 +67,19 @@ export async function renderDungeonPage() {
     </div>
   `;
 
-  if (currentDungeonTab === 'special') {
-    return `
-      <div class="flex flex-col h-full bg-[#0b0b19] p-4 gap-4 pb-24 overflow-y-auto">
-        ${tabsHtml}
-        <div class="flex flex-col items-center justify-center flex-1 min-h-[300px] gap-4 opacity-70">
-          <div class="w-20 h-20 bg-gray-800/50 rounded-2xl flex items-center justify-center border border-gray-700/50 shadow-inner">
-            <span class="material-symbols-outlined text-5xl text-gray-500 animate-pulse">construction</span>
-          </div>
-          <p class="text-gray-400 font-bold tracking-wider text-sm">スペシャルダンジョンは準備中です</p>
-        </div>
-      </div>
-    `;
-  }
-
   const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
+  const playerMedals = await GameDB.getGameState('player_medals') || {};
+  const medalCount = Object.keys(playerMedals).length;
   
-  const totalItems = DUNGEONS.length;
+  const filteredDungeons = DUNGEONS.filter(d => currentDungeonTab === 'special' ? d.type === 'special' : d.type !== 'special');
+
+  const totalItems = filteredDungeons.length;
   const maxPage = Math.ceil(totalItems / getItemsPerPage());
   if (currentDungeonPage > maxPage) currentDungeonPage = maxPage || 1;
 
   const itemsPerPage = getItemsPerPage();
   const startIndex = (currentDungeonPage - 1) * itemsPerPage;
-  const pageDungeons = DUNGEONS.slice(startIndex, startIndex + itemsPerPage);
+  const pageDungeons = filteredDungeons.slice(startIndex, startIndex + itemsPerPage);
 
 const DUNGEON_THEMES = {
   slime_forest: { color: '16, 185, 129', icon: 'forest' },        // Emerald
@@ -107,13 +97,19 @@ const DUNGEON_THEMES = {
   dusk_labyrinth: { color: '192, 38, 211', icon: 'dashboard' },   // Purple
   eternal_ruins: { color: '168, 162, 158', icon: 'broken_image' }, // Stone
   subspace: { color: '139, 92, 246', icon: 'blur_on' },           // Violet
+  golden_slime_island: { color: '234, 179, 8', icon: 'auto_awesome' }, // Gold
 };
 
   const cardsHtml = pageDungeons.map(d => {
     const theme = DUNGEON_THEMES[d.id] || { color: '107, 114, 128', icon: 'swords' };
     const themeRgb = theme.color;
 
-    if (d.isUnlocked || unlockedDungeons.includes(d.id)) {
+    let isUnlocked = d.isUnlocked || unlockedDungeons.includes(d.id);
+    if (d.id === 'golden_slime_island') {
+      isUnlocked = medalCount >= 18;
+    }
+
+    if (isUnlocked) {
       return `
       <!-- ダンジョン: ${d.name} -->
       <div class="relative overflow-hidden flex items-center bg-[#11111a] border rounded-2xl p-4 shadow-lg gap-4 transition-all duration-300 hover:-translate-y-1 group" 
@@ -164,6 +160,7 @@ const DUNGEON_THEMES = {
         <div class="flex-1 relative z-10">
           <h3 class="text-lg font-bold text-gray-600 tracking-widest">${d.name}</h3>
           <p class="text-[11px] text-gray-600 mt-1 line-clamp-1 opacity-70">${d.description}</p>
+          ${d.id === 'golden_slime_island' ? `<p class="text-[11px] text-amber-500/70 mt-1 font-bold">解放条件: メダルを18種類以上獲得 (現在: ${medalCount}種類)</p>` : ''}
         </div>
 
         <div class="flex flex-col items-center justify-center w-16 h-16 bg-[#050508] rounded-xl text-gray-600 font-bold flex-shrink-0 border border-gray-800/80 relative z-10 shadow-inner">

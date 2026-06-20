@@ -32,6 +32,11 @@ export const ACCESSORIES = [
   { id: 'slime_tiger_eye_amulet', name: '猛虎のお守り', stats: { hp: 250, def: 45, mdef: 35, spd: 10 }, elements: { earth: 10 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 25 }, { id: 'slime_tiger_eye_fang', amount: 15 }, { id: 'slime_tiger_eye_soul', amount: 5 }] } },
   { id: 'slime_king_devil_seal', name: '魔王の印', stats: { hp: 300, def: 55, mdef: 55 }, elements: { dark: 20 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 25 }, { id: 'slime_king_devil_wing', amount: 15 }, { id: 'slime_king_devil_crown', amount: 5 }] } },
 
+  // 黄金のスライム島
+  { id: 'gold_slime_ring',           name: '黄金の指輪',   stats: { matk: 30 }, elements: { light: 10 }, recipe: { price: 100000, materials: [{ id: 'mat_pure_gold_fluid', amount: 10 }, { id: 'mat_golden_core', amount: 5 }] } },
+  { id: 'gold_king_crown_accessory', name: '黄金王の宝冠', stats: { matk: 50 }, elements: { light: 30 }, recipe: { price: 5000000, materials: [{ id: 'mat_gold_king_crown_shard', amount: 10 }, { id: 'mat_royal_gold_core', amount: 5 }] } },
+  { id: 'kaiser_gold_emblem',        name: '帝王の紋章',   stats: { matk: 80 }, elements: { light: 50 }, recipe: { price: 1000000, materials: [{ id: 'mat_kaiser_gold_crown', amount: 10 }, { id: 'mat_emperor_gold_core', amount: 5 }] } },
+
   // 蜘蛛の洞窟
   { id: 'spider_cave_ring', name: 'ケイブスパイダーリング', stats: { hp: 160, def: 35, mdef: 33 }, recipe: { price: 8000, materials: [{ id: 'spider_cave_silk', amount: 250 }, { id: 'spider_cave_fang', amount: 150 }, { id: 'spider_cave_venom', amount: 50 }] } },
   { id: 'spider_poison_ring', name: 'ポイズンスパイダーリング', stats: { hp: 170, def: 38, mdef: 36 }, recipe: { price: 8500, materials: [{ id: 'spider_poison_silk', amount: 250 }, { id: 'spider_poison_fang', amount: 150 }, { id: 'spider_poison_venom', amount: 50 }] } },

@@ -31,6 +31,11 @@ export const WEAPONS = [
   { id: 'slime_tiger_eye_claw', name: 'タイガークロー', stats: { atk: 85, spd: 25 }, elements: { earth: 20 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 20 }, { id: 'slime_tiger_eye_fang', amount: 5 }, { id: 'slime_tiger_eye_soul', amount: 1 }] } },
   { id: 'slime_king_devil_scythe', name: 'デビルサイス', stats: { atk: 120, matk: 60 }, elements: { dark: 40 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 20 }, { id: 'slime_king_devil_wing', amount: 5 }, { id: 'slime_king_devil_crown', amount: 1 }] } },
 
+  // 黄金のスライム島
+  { id: 'gold_slime_whip', name: '黄金の鞭', stats: { atk: 120, spd: 5 }, elements: { light: 10 }, recipe: { price: 50000, materials: [{ id: 'mat_gold_slime_drop', amount: 10 }, { id: 'mat_pure_gold_fluid', amount: 5 }] } },
+  { id: 'gold_king_scepter', name: '黄金王の王笏', stats: { atk: 100, matk: 200 }, elements: { light: 30 }, recipe: { price: 200000, materials: [{ id: 'mat_gold_king_jelly', amount: 10 }, { id: 'mat_gold_king_crown_shard', amount: 5 }] } },
+  { id: 'kaiser_gold_greatsword', name: '帝王の神聖大剣', stats: { atk: 200, spd: 10 }, elements: { light: 50 }, recipe: { price: 1000000, materials: [{ id: 'mat_kaiser_gold_crown', amount: 10 }, { id: 'mat_emperor_gold_core', amount: 5 }] } },
+
   // 蜘蛛の洞窟
   { id: 'spider_cave_sword', name: 'ケイブスパイダーソード', stats: { atk: 40, spd: 5 }, elements: { dark: 10 }, recipe: { price: 8000, materials: [{ id: 'spider_cave_silk', amount: 250 }, { id: 'spider_cave_fang', amount: 50 }] } },
   { id: 'spider_poison_bow', name: 'ポイズンスパイダーボウ', stats: { atk: 42, matk: 20, spd: 8 }, elements: { dark: 15 }, recipe: { price: 8500, materials: [{ id: 'spider_poison_silk', amount: 250 }, { id: 'spider_poison_fang', amount: 50 }] } },
@@ -97,5 +102,6 @@ export const WEAPONS = [
   { id: 'thunderbird_warhammer', name: '雷鳥の戦槌', stats: { atk: 440, spd: 220 }, elements: { thunder: 20 }, recipe: { price: 270000, materials: [{ id: 'mat_storm_feather', amount: 40 }, { id: 'mat_thunder_bird_beak', amount: 10 }] } },
   { id: 'swan_song_blade', name: 'スワンソングブレード', stats: { atk: 450, spd: 225 }, elements: { dark: 20 }, recipe: { price: 275000, materials: [{ id: 'mat_spirit_knight_armor', amount: 40 }, { id: 'mat_swan_song_blade', amount: 10 }] } },
   { id: 'eternal_echo_sword', name: '悠久の響剣', stats: { atk: 460, spd: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
-  { id: 'genesis_wand', name: 'ジェネシスワンド', stats: { atk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } }
+  { id: 'genesis_wand', name: 'ジェネシスワンド', stats: { atk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
+
 ].map(item => ({ ...item, slot: 'rightHand', image: `./assets/weapon/${item.id}.webp` }));

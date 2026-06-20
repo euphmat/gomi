@@ -250,5 +250,16 @@ export const MATERIALS = [
   { id: 'mat_resonance_dragon_core', name: '共鳴竜の逆鱗', sellPrice: 1 },
   { id: 'mat_genesis_song_fragment', name: '創世の唄の欠片', sellPrice: 1 },
   { id: 'mat_creation_tear', name: '創造の涙', sellPrice: 1 },
-  { id: 'mat_origin_melody_crystal', name: '始源の旋律結晶', sellPrice: 1 }
+  { id: 'mat_origin_melody_crystal', name: '始源の旋律結晶', sellPrice: 1 },
+  
+  // 黄金のスライム島
+  { id: 'mat_gold_slime_drop', name: '黄金の粘液', sellPrice: 1 },
+  { id: 'mat_pure_gold_fluid', name: '純金の体液', sellPrice: 1 },
+  { id: 'mat_golden_core', name: '黄金の核', sellPrice: 1 },
+  { id: 'mat_gold_king_jelly', name: '王者の黄金ゼリー', sellPrice: 1 },
+  { id: 'mat_gold_king_crown_shard', name: '黄金王の冠片', sellPrice: 1 },
+  { id: 'mat_royal_gold_core', name: '豪奢な王核', sellPrice: 1 },
+  { id: 'mat_gold_kaiser_fluid', name: '皇帝の黄金液', sellPrice: 1 },
+  { id: 'mat_kaiser_gold_crown', name: '皇帝の黄金冠', sellPrice: 1 },
+  { id: 'mat_emperor_gold_core', name: '帝王の神聖核', sellPrice: 1 }
 ].map(item => ({ ...item, image: `./assets/material/${item.id}.webp` }));

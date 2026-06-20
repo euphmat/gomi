@@ -33,6 +33,11 @@ export const ARMORS = [
   { id: 'slime_tiger_eye_armor', name: '虎目石の軽鎧', stats: { def: 75, mdef: 60, spd: 15 }, elements: { earth: 15 }, recipe: { price: 8500, materials: [{ id: 'slime_tiger_eye_stone', amount: 20 }, { id: 'slime_tiger_eye_fang', amount: 5 }] } },
   { id: 'slime_king_devil_cloak', name: 'デビルクローク', stats: { def: 90, mdef: 90 }, elements: { dark: 30 }, recipe: { price: 10000, materials: [{ id: 'slime_king_devil_horn', amount: 20 }, { id: 'slime_king_devil_wing', amount: 5 }] } },
 
+  // 黄金のスライム島
+  { id: 'gold_slime_robe', name: '黄金の法衣', stats: { def: 50, mdef: 100 }, elements: { light: 10 }, recipe: { price: 100000, materials: [{ id: 'mat_gold_slime_drop', amount: 10 }, { id: 'mat_pure_gold_fluid', amount: 5 }] } },
+  { id: 'gold_king_armor', name: '黄金王の鎧', stats: { def: 80, mdef: 100 }, elements: { light: 30 }, recipe: { price: 500000, materials: [{ id: 'mat_gold_king_jelly', amount: 10 }, { id: 'mat_gold_king_crown_shard', amount: 5 }] } },
+  { id: 'kaiser_gold_mail', name: '帝王の神聖鎧', stats: { def: 100, mdef: 100 }, elements: { light: 50 }, recipe: { price: 1000000, materials: [{ id: 'mat_kaiser_gold_crown', amount: 10 }, { id: 'mat_emperor_gold_core', amount: 5 }] } },
+
   // 蜘蛛の洞窟
   { id: 'spider_cave_armor', name: 'ケイブスパイダーアーマー', stats: { def: 52, mdef: 50 }, recipe: { price: 8000, materials: [{ id: 'spider_cave_fang', amount: 250 }, { id: 'spider_cave_venom', amount: 50 }] } },
   { id: 'spider_poison_armor', name: 'ポイズンスパイダーアーマー', stats: { def: 58, mdef: 55 }, recipe: { price: 8500, materials: [{ id: 'spider_poison_fang', amount: 250 }, { id: 'spider_poison_venom', amount: 50 }] } },
@@ -99,6 +104,7 @@ export const ARMORS = [
   { id: 'storm_garb', name: '嵐の衣', stats: { def: 440, mdef: 220 }, elements: { thunder: 20 }, recipe: { price: 270000, materials: [{ id: 'mat_storm_feather', amount: 40 }, { id: 'mat_thunder_bird_beak', amount: 10 }] } },
   { id: 'spirit_knight_full_armor', name: '精霊騎士の全身鎧', stats: { def: 450, mdef: 225 }, elements: { dark: 20 }, recipe: { price: 275000, materials: [{ id: 'mat_spirit_knight_armor', amount: 40 }, { id: 'mat_swan_song_blade', amount: 10 }] } },
   { id: 'echo_dragon_sovereign_armor', name: '響竜の覇鎧', stats: { def: 460, mdef: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
-  { id: 'genesis_divine_robe', name: '創世の神衣', stats: { def: 470, mdef: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } }
+  { id: 'genesis_divine_robe', name: '創世の神衣', stats: { def: 470, mdef: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
+
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));
 

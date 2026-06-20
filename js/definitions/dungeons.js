@@ -201,5 +201,21 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_subspace.webp',
   isUnlocked: false,
   floors: []
+},
+{
+  id: 'golden_slime_island',
+  name: '黄金のスライム島',
+  description: '黄金に輝くスライムが生息する謎の島。',
+  image: 'assets/dungeon/golden_slime_island.webp',
+  bgImage: 'assets/dungeon/bg_golden_slime_island.webp',
+  isUnlocked: false,
+  type: 'special',
+  floors: [
+    { level: 1, monsters: [{ slime_gold: 1, weight: 100 }] },
+    { level: 2, monsters: [{ slime_gold: 2, weight: 100 }] },
+    { level: 3, monsters: [{ slime_gold: 3, weight: 100 }] },
+    { level: 4, monsters: [{ slime_gold_king: 1, weight: 100 }] },
+    { level: 5, monsters: [{ slime_gold_kaiser: 1, weight: 100 }] }
+  ]
 }
 ];
