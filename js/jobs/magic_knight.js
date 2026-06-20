@@ -256,9 +256,6 @@ export const magic_knight = {
             return;
           }
           let targetGroup = battle.enemies;
-          if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-            targetGroup = battle.party;
-          }
           const aliveEnemies = targetGroup.filter(e => !e.isDead);
           if (aliveEnemies.length === 0 || hitCount >= hits) {
             clearInterval(interval);
@@ -319,9 +316,6 @@ export const magic_knight = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
-        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.party;
-        }
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         

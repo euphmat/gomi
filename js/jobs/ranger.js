@@ -200,9 +200,6 @@ export const ranger = {
         for (let i = 0; i < levelConfig.hits; i++) {
           setTimeout(() => {
             let targetGroup = battle.enemies;
-            if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-              targetGroup = battle.party;
-            }
             const targets = targetGroup.filter(e => !e.isDead);
             playSkillAnimation(caster, targets, 'arrow_rain', (target, idx) => {
               if (target.isDead) return;
@@ -251,9 +248,6 @@ export const ranger = {
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
             let targetGroup = battle.enemies;
-            if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-              targetGroup = battle.party;
-            }
             const aliveEnemies = targetGroup.filter(e => !e.isDead);
             if (aliveEnemies.length > 0) {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];

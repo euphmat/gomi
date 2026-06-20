@@ -479,9 +479,6 @@ export const mage = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
-        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.party;
-        }
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'blizzard', (target, index) => {
@@ -532,9 +529,6 @@ export const mage = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
-        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.party;
-        }
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'volcano', (target, index) => {
@@ -585,9 +579,6 @@ export const mage = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
-        if (battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.party;
-        }
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
         playSkillAnimation(caster, aliveEnemies, 'thunderstorm', (target, index) => {
