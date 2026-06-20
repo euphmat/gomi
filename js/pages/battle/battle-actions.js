@@ -162,7 +162,7 @@ export const actionMethods = {
       const evadeSkill = this._findSkill(defender, 'splendid_evasion');
       if (evadeSkill && evadeSkill.level > 0 && evadeSkill.levelConfig) {
         if (Math.random() < (evadeSkill.levelConfig.evadeChance / 100)) {
-          this.showActionName(defender.elementId, 'DODGE', 'text-green-400', 'border-green-500/50');
+          this.showActionName(defender.elementId, '華麗なる見切り', 'text-green-400', 'border-green-500/50');
           if (!options.skipAtbReset && !options.isAoEProcessed) {
             attacker.atb = 0;
             if (attacker.hp !== undefined) this.activeCharacter = null;
@@ -522,10 +522,10 @@ export const actionMethods = {
                 }
                 if (currentTarget && !currentTarget.isDead && !attacker.isDead) {
                   if (i === 0) {
-                    this.showActionName(attacker.elementId, '追撃', 'text-yellow-400', 'border-yellow-500/50');
+                    this.showActionName(attacker.elementId, 'プラスワン', 'text-yellow-400', 'border-yellow-500/50');
                   }
                   this.executeAttack(attacker, currentTarget, true, {
-                    actionName: '追撃',
+                    actionName: 'プラスワン',
                     damageMultiplier: plusOneSkill.levelConfig.multiplier || 0.5,
                     damageType: 'ability',
                     hideActionName: true,
