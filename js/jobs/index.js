@@ -7,6 +7,7 @@ import { magic_knight } from './magic_knight.js';
 import { slime_master } from './slime_master.js';
 import { dancer } from './dancer.js';
 import { bird } from './bird.js';
+import { black_knight } from './black_knight.js';
 
 export const JOB_STAT_GROWTH = {
   [norvice.id]:      { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
@@ -17,7 +18,8 @@ export const JOB_STAT_GROWTH = {
   [magic_knight.id]: { hp: [2, 3], mp: [1, 3], atk: [1, 2], def: [1, 2], matk: [1, 2], mdef: [1, 2], spd: [0, 1] },
   [slime_master.id]: { hp: [2, 4], mp: [2, 4], atk: [1, 2], def: [1, 2], matk: [1, 3], mdef: [1, 3], spd: [1, 2] },
   [dancer.id]:       { hp: [1, 2], mp: [1, 3], atk: [1, 2], def: [0, 1], matk: [1, 2], mdef: [1, 2], spd: [2, 4] },
-  [bird.id]:         { hp: [1, 2], mp: [2, 4], atk: [1, 2], def: [0, 2], matk: [0, 2], mdef: [1, 3], spd: [0, 2] }
+  [bird.id]:         { hp: [1, 2], mp: [2, 4], atk: [1, 2], def: [0, 2], matk: [0, 2], mdef: [1, 3], spd: [0, 2] },
+  [black_knight.id]: { hp: [3, 5], mp: [0, 1], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [0, 1], spd: [0, 1] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -29,7 +31,8 @@ export const JOB_STAT_MULTIPLIER = {
   [magic_knight.id]: { hp: 0.9, mp: 1.3, atk: 1.0, def: 0.8, matk: 1.2, mdef: 0.9, spd: 0.6 },
   [slime_master.id]: { hp: 1.5, mp: 1.8, atk: 0.7, def: 1.3, matk: 0.8, mdef: 1.1, spd: 0.5 },
   [dancer.id]:       { hp: 0.8, mp: 1.3, atk: 1.0, def: 0.7, matk: 1.3, mdef: 0.7, spd: 1.2 },
-  [bird.id]:         { hp: 0.8, mp: 1.5, atk: 0.5, def: 1.0, matk: 0.9, mdef: 1.5, spd: 0.8 }
+  [bird.id]:         { hp: 0.8, mp: 1.5, atk: 0.5, def: 1.0, matk: 0.9, mdef: 1.5, spd: 0.8 },
+  [black_knight.id]: { hp: 3.0, mp: 0.3, atk: 1.3, def: 1.0, matk: 0.8, mdef: 0.3, spd: 0.7 }
 };
 
 export const JOBS = {
@@ -41,5 +44,6 @@ export const JOBS = {
   [magic_knight.id]: { ...magic_knight, statGrowth: JOB_STAT_GROWTH[magic_knight.id], statMultiplier: JOB_STAT_MULTIPLIER[magic_knight.id] },
   [slime_master.id]: { ...slime_master, statGrowth: JOB_STAT_GROWTH[slime_master.id], statMultiplier: JOB_STAT_MULTIPLIER[slime_master.id] },
   [dancer.id]: { ...dancer, statGrowth: JOB_STAT_GROWTH[dancer.id], statMultiplier: JOB_STAT_MULTIPLIER[dancer.id] },
-  [bird.id]: { ...bird, statGrowth: JOB_STAT_GROWTH[bird.id], statMultiplier: JOB_STAT_MULTIPLIER[bird.id] }
+  [bird.id]: { ...bird, statGrowth: JOB_STAT_GROWTH[bird.id], statMultiplier: JOB_STAT_MULTIPLIER[bird.id] },
+  [black_knight.id]: { ...black_knight, statGrowth: JOB_STAT_GROWTH[black_knight.id], statMultiplier: JOB_STAT_MULTIPLIER[black_knight.id] }
 };

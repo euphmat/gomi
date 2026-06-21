@@ -24,6 +24,12 @@ export const actionMethods = {
         entity.stats.atk = entity.originalAtk;
       }
     }
+    if (entity.defDebuffTurns > 0) {
+      entity.defDebuffTurns = 0;
+      if (entity.stats && entity.originalDef) {
+        entity.stats.def = entity.originalDef;
+      }
+    }
   },
 
   executeSkill(caster, skillDef, levelConfig, options = {}) {
@@ -203,6 +209,19 @@ export const actionMethods = {
     }
 
     let atkStat = isMagic ? (attacker.stats.matk || 0) : (attacker.stats.atk || 0);
+
+    // --- Passive: 鬼神の力 (Demon Power) ---
+    if (attacker.hp !== undefined) {
+      const demonPowerSkill = this._findSkill(attacker, 'demon_power');
+      if (demonPowerSkill && demonPowerSkill.level > 0 && demonPowerSkill.levelConfig) {
+        const hpRatio = attacker.hp.current / (attacker.stats?.hp || attacker.hp.max);
+        if (hpRatio <= 0.5) {
+          const mult = demonPowerSkill.levelConfig.atkMatkMultiplier;
+          atkStat = Math.floor(atkStat * mult);
+        }
+      }
+    }
+
     if (!isMagic) {
       const totalAtkPercent = (attacker._passiveAtkBuffPercent || 0) + (attacker._atkBuffTurns > 0 ? (attacker._atkBuffPercent || 0) : 0);
       if (totalAtkPercent !== 0) {
@@ -282,7 +301,14 @@ export const actionMethods = {
 
     // --- 呪い (Curse) の被ダメージ増加判定 ---
     if (defender.activeAilment && defender.activeAilment.type === 'curse') {
-      damage = Math.floor(damage * 2.0);
+      let curseMultiplier = 2.0;
+      if (defender.hp !== undefined) {
+        const stigmaSkill = this._findSkill(defender, 'stigma_of_atonement');
+        if (stigmaSkill && stigmaSkill.level > 0 && stigmaSkill.levelConfig) {
+          curseMultiplier = stigmaSkill.levelConfig.curseDamageMultiplier;
+        }
+      }
+      damage = Math.floor(damage * curseMultiplier);
     }
 
     // --- ポップアップの表示 ---
@@ -436,12 +462,18 @@ export const actionMethods = {
     }
 
     if (inflictedAilments.length > 0 && !defender.activeAilment) {
-      const ailment = inflictedAilments[0];
-      defender.activeAilment = { type: ailment, duration: 10 };
-      // setTimeout(() => {
-      //   const ailmentName = ailment.toUpperCase();
-      //   this.showActionName(defender.elementId, ailmentName, 'text-purple-300', 'border-purple-500/50');
-      // }, 500 / this.speedMult);
+      // --- Passive: 贖罪の烙印 (Stigma of Atonement) - 状態異常免疫 ---
+      let ailmentImmune = false;
+      if (defender.hp !== undefined) {
+        const stigmaSkill = this._findSkill(defender, 'stigma_of_atonement');
+        if (stigmaSkill && stigmaSkill.level > 0 && stigmaSkill.levelConfig) {
+          ailmentImmune = true;
+        }
+      }
+      if (!ailmentImmune) {
+        const ailment = inflictedAilments[0];
+        defender.activeAilment = { type: ailment, duration: 10 };
+      }
     }
 
     const isDefenderParty = defender.hp !== undefined;
@@ -578,6 +610,19 @@ export const actionMethods = {
                  }, 400 / this.speedMult);
              }
           }
+
+          // --- Passive: Blood Thirst (血の渇望) ---
+          const bloodThirstSkill = this._findSkill(attacker, 'blood_thirst');
+          if (bloodThirstSkill && bloodThirstSkill.level > 0 && bloodThirstSkill.levelConfig) {
+            const hpRecover = Math.floor(damage * (bloodThirstSkill.levelConfig.drainPercent / 100));
+            if (hpRecover > 0) {
+              this.showActionName(attacker.elementId, '血の渇望', 'text-red-300', 'border-red-500/50');
+              attacker.hp.current = Math.min((attacker.stats?.hp || attacker.hp.max), attacker.hp.current + hpRecover);
+              setTimeout(() => {
+                this.showDamage(attacker.elementId, `+${hpRecover}`, 'text-green-400');
+              }, 400 / this.speedMult);
+            }
+          }
         }
 
         // --- Passive: Mana Regen & HP Regen ---
@@ -654,10 +699,19 @@ export const actionMethods = {
 
     // --- 呪い (Curse) の反動ダメージ ---
     if (attacker.activeAilment && attacker.activeAilment.type === 'curse' && !attacker.isDead) {
-      const recoil = Math.max(1, Math.floor(damage * 0.4));
-      setTimeout(() => {
-        this.takeAilmentDamage(attacker, recoil, 'CURSE');
-      }, 500 / this.speedMult);
+      let recoilMultiplier = 0.4;
+      if (attacker.hp !== undefined) {
+        const stigmaSkill = this._findSkill(attacker, 'stigma_of_atonement');
+        if (stigmaSkill && stigmaSkill.level > 0 && stigmaSkill.levelConfig) {
+          recoilMultiplier = stigmaSkill.levelConfig.curseRecoilMultiplier;
+        }
+      }
+      const recoil = Math.max(1, Math.floor(damage * recoilMultiplier));
+      if (recoil > 0) {
+        setTimeout(() => {
+          this.takeAilmentDamage(attacker, recoil, 'CURSE');
+        }, 500 / this.speedMult);
+      }
     }
 
     this.renderEntities();
@@ -670,6 +724,12 @@ export const actionMethods = {
       enemy.atkDebuffTurns--;
       if (enemy.atkDebuffTurns <= 0) {
         enemy.stats.atk = enemy.originalAtk;
+      }
+    }
+    if (enemy.defDebuffTurns > 0) {
+      enemy.defDebuffTurns--;
+      if (enemy.defDebuffTurns <= 0) {
+        enemy.stats.def = enemy.originalDef;
       }
     }
 

@@ -28,6 +28,10 @@ export function getActiveStateIconsHTML(entity) {
     icons.push({ icon: 'trending_down', color: 'text-blue-400', name: '攻撃力ダウン' });
   }
 
+  if (entity.defDebuffTurns > 0) {
+    icons.push({ icon: 'shield', color: 'text-cyan-400', name: '防御力ダウン' });
+  }
+
   if (icons.length === 0) return '';
 
   return icons.map(data => 

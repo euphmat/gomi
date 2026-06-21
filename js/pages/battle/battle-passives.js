@@ -11,9 +11,16 @@ export const passiveMethods = {
     let weaponBlessConfig = null;
     let magicBlessConfig = null;
     let openingActConfig = null;
+    const stigmaCharacters = [];
 
     aliveParty.forEach(p => {
       if (p.jobSkills) {
+        // --- 贖罪の烙印 (Stigma of Atonement) ---
+        const uw = this._findSkill(p, 'stigma_of_atonement');
+        if (uw && uw.level > 0 && uw.levelConfig && uw.def.type === 'passive') {
+          stigmaCharacters.push(p);
+        }
+
         const prot = this._findSkill(p, 'protection');
         if (prot && prot.level > 0 && prot.levelConfig && prot.def.type === 'passive') {
           if (!protectionConfig || prot.levelConfig.percent > protectionConfig.percent) {
@@ -112,6 +119,20 @@ export const passiveMethods = {
         if (isFirstFloor) {
           setTimeout(() => {
             this.showDamage(p.elementId, `SPD UP`, 'text-teal-300');
+          }, delay);
+        }
+      });
+      if (isFirstFloor) delay += 500;
+    }
+
+    // --- 贖罪の烙印 (Stigma of Atonement): 常時呪い状態付与 ---
+    if (stigmaCharacters.length > 0) {
+      stigmaCharacters.forEach(p => {
+        p.activeAilment = { type: 'curse', duration: 9999 };
+        
+        if (isFirstFloor) {
+          setTimeout(() => {
+            this.showDamage(p.elementId, '贖罪の烙印', 'text-fuchsia-400');
           }, delay);
         }
       });
