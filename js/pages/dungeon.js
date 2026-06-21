@@ -378,23 +378,23 @@ export async function renderDungeonPage() {
           <!-- スキップボタン -->
           ${canSkip ? `
           <button onclick="window.openSkipModal('${d.id}', ${currentDungeonTab === 'special'})" 
-                  class="flex flex-col items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl text-white font-bold transition-all duration-200 active:scale-95 cursor-pointer overflow-hidden group/btn hover:brightness-110" 
+                  class="relative flex flex-col items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl text-white font-bold transition-all duration-200 active:scale-95 cursor-pointer overflow-hidden group/btn hover:brightness-110" 
                   style="background: linear-gradient(135deg, rgba(${themeRgb}, 0.8), rgba(${themeRgb}, 0.4)); box-shadow: 0 4px 15px rgba(${themeRgb}, 0.3); border: 1px solid rgba(${themeRgb}, 0.5);">
             <div class="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" 
-                 style="background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%);"></div>
-            <span class="material-symbols-outlined text-xl sm:text-2xl mb-0.5 sm:mb-1 drop-shadow-md">fast_forward</span>
-            <span class="text-[8px] sm:text-[9px] tracking-widest drop-shadow-md uppercase">Skip</span>
+                 style="background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%); pointer-events: none;"></div>
+            <span class="material-symbols-outlined text-xl sm:text-2xl mb-0.5 sm:mb-1 drop-shadow-md relative z-10 pointer-events-none">fast_forward</span>
+            <span class="text-[8px] sm:text-[9px] tracking-widest drop-shadow-md uppercase relative z-10 pointer-events-none">Skip</span>
           </button>
           ` : ''}
 
           <!-- 探索ボタン -->
           <button onclick="window.enterDungeon('${d.id}')" 
-                  class="flex flex-col items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl text-white font-bold transition-all duration-200 active:scale-95 cursor-pointer overflow-hidden group/btn hover:brightness-110" 
+                  class="relative flex flex-col items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl text-white font-bold transition-all duration-200 active:scale-95 cursor-pointer overflow-hidden group/btn hover:brightness-110" 
                   style="background: linear-gradient(135deg, rgba(${themeRgb}, 0.8), rgba(${themeRgb}, 0.4)); box-shadow: 0 4px 15px rgba(${themeRgb}, 0.3); border: 1px solid rgba(${themeRgb}, 0.5);">
             <div class="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" 
-                 style="background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%);"></div>
-            <span class="material-symbols-outlined text-xl sm:text-2xl mb-0.5 sm:mb-1 drop-shadow-md">${theme.icon}</span>
-            <span class="text-[8px] sm:text-[9px] tracking-widest drop-shadow-md uppercase">Explore</span>
+                 style="background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%); pointer-events: none;"></div>
+            <span class="material-symbols-outlined text-xl sm:text-2xl mb-0.5 sm:mb-1 drop-shadow-md relative z-10 pointer-events-none">${theme.icon}</span>
+            <span class="text-[8px] sm:text-[9px] tracking-widest drop-shadow-md uppercase relative z-10 pointer-events-none">Explore</span>
           </button>
         </div>
       </div>`;
