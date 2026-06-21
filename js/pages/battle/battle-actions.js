@@ -810,6 +810,38 @@ export const actionMethods = {
         if (p.hp.current < (p.stats?.hp || p.hp.max) && !p.isDead) {
           p.hp.current = Math.min(p.stats?.hp || p.hp.max, p.hp.current + p._regenHp);
           this.showDamage(p.elementId, `+${p._regenHp}`, 'text-green-400');
+          
+          if (localStorage.getItem('disableBattleAnimations') !== 'true') {
+            const el = document.getElementById(p.elementId);
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              const cx = rect.left + rect.width / 2;
+              const cy = rect.top + rect.height / 2;
+              for (let i = 0; i < 4; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.style.position = 'fixed';
+                sparkle.style.left = `${cx - 10}px`;
+                sparkle.style.top = `${cy - 10}px`;
+                sparkle.style.width = '20px';
+                sparkle.style.height = '20px';
+                sparkle.style.background = 'radial-gradient(circle, #fff, #4ade80, transparent)';
+                sparkle.style.clipPath = 'polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%)';
+                sparkle.style.zIndex = '9999';
+                sparkle.style.pointerEvents = 'none';
+                sparkle.style.mixBlendMode = 'screen';
+                document.body.appendChild(sparkle);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 15 + Math.random() * 20;
+                const anim = sparkle.animate([
+                  { transform: 'translate(0, 0) scale(0)', opacity: 0 },
+                  { transform: 'translate(0, 0) scale(0.6)', opacity: 1, offset: 0.2 },
+                  { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist - 15}px) scale(0.2)`, opacity: 0 }
+                ], { duration: 500 + Math.random() * 300, easing: 'ease-out' });
+                anim.onfinish = () => sparkle.remove();
+              }
+            }
+          }
         }
         p._regenTurns--;
         if (p._regenTurns <= 0) p._regenHp = 0;

@@ -107,31 +107,101 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           break;
         }
         case 'ice_brand': {
-          const el = document.createElement('div');
-          el.style.position = 'fixed';
-          el.style.left = `${tx - 50}px`;
-          el.style.top = `${ty - 50}px`;
-          el.style.width = '100px';
-          el.style.height = '10px';
-          el.style.background = 'linear-gradient(to right, transparent, #e0ffff, #00bfff, transparent)';
-          el.style.boxShadow = '0 0 10px #00bfff';
-          el.style.zIndex = '9999';
-          el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          // 1. Cold Mist Background
+          const mist = document.createElement('div');
+          mist.style.position = 'fixed';
+          mist.style.left = `${tx - 80}px`;
+          mist.style.top = `${ty - 80}px`;
+          mist.style.width = '160px';
+          mist.style.height = '160px';
+          mist.style.borderRadius = '50%';
+          mist.style.background = 'radial-gradient(circle, rgba(224,255,255,0.8), rgba(0,191,255,0.4), transparent)';
+          mist.style.filter = 'blur(8px)';
+          mist.style.zIndex = '9997';
+          mist.style.pointerEvents = 'none';
+          mist.style.mixBlendMode = 'screen';
+          document.body.appendChild(mist);
 
-          const angle = Math.random() * 360;
+          mist.animate([
+            { transform: 'scale(0)', opacity: 0 },
+            { transform: 'scale(1.2)', opacity: 1, offset: 0.3 },
+            { transform: 'scale(1.5)', opacity: 0 }
+          ], { duration: 600 / speedMult, easing: 'ease-out' }).onfinish = () => mist.remove();
 
-          const anim = el.animate([
-            { transform: `rotate(${angle}deg) scaleX(0.2) translateY(-20px)`, opacity: 0 },
-            { transform: `rotate(${angle}deg) scaleX(1.5) translateY(0px)`, opacity: 1, offset: 0.5 },
-            { transform: `rotate(${angle}deg) scaleX(0.2) translateY(20px)`, opacity: 0 }
-          ], { duration: 250 / speedMult, easing: 'ease-in-out' });
+          // 2. Giant Ice Crystal Forming
+          const crystal = document.createElement('div');
+          crystal.style.position = 'fixed';
+          crystal.style.left = `${tx - 40}px`;
+          crystal.style.top = `${ty - 80}px`;
+          crystal.style.width = '80px';
+          crystal.style.height = '160px';
+          crystal.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(135,206,235,0.8) 50%, rgba(0,191,255,0.6) 100%)';
+          crystal.style.clipPath = 'polygon(50% 0%, 100% 20%, 80% 80%, 50% 100%, 20% 80%, 0% 20%)';
+          crystal.style.boxShadow = '0 0 20px #00bfff, inset 0 0 15px #fff';
+          crystal.style.zIndex = '9998';
+          crystal.style.pointerEvents = 'none';
+          document.body.appendChild(crystal);
 
-          anim.onfinish = () => {
-            el.remove();
-            createIceShatter(tx, ty, { intensity: 2, duration: 100 });
+          crystal.animate([
+            { transform: 'translateY(50px) scale(0)', opacity: 0 },
+            { transform: 'translateY(0px) scale(1)', opacity: 1, offset: 0.3 },
+            { transform: 'translateY(0px) scale(1.1)', opacity: 1, offset: 0.7 },
+            { transform: 'translateY(0px) scale(1.2)', opacity: 0 }
+          ], { duration: 600 / speedMult, easing: 'ease-out' });
+
+          // 3. Frosty Slashes
+          setTimeout(() => {
+            const createSlash = (angle, delay) => {
+              setTimeout(() => {
+                const slash = document.createElement('div');
+                slash.style.position = 'fixed';
+                slash.style.left = `${tx - 100}px`;
+                slash.style.top = `${ty - 5}px`;
+                slash.style.width = '200px';
+                slash.style.height = '10px';
+                slash.style.background = 'linear-gradient(to right, transparent, #fff, #00ffff, #00bfff, transparent)';
+                slash.style.boxShadow = '0 0 15px #00ffff';
+                slash.style.zIndex = '9999';
+                slash.style.pointerEvents = 'none';
+                document.body.appendChild(slash);
+
+                slash.animate([
+                  { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
+                  { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 1, offset: 0.2 },
+                  { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 }
+                ], { duration: 250 / speedMult, easing: 'ease-in-out' }).onfinish = () => slash.remove();
+              }, delay / speedMult);
+            };
+
+            createSlash(30, 0);
+            createSlash(-45, 100);
+          }, 150 / speedMult);
+
+          // 4. Shatter Impact
+          setTimeout(() => {
+            if (document.body.contains(crystal)) crystal.remove();
+            createIceShatter(tx, ty, { intensity: 5, duration: 250 });
+            
+            const wave = document.createElement('div');
+            wave.style.position = 'fixed';
+            wave.style.left = `${tx - 50}px`;
+            wave.style.top = `${ty - 50}px`;
+            wave.style.width = '100px';
+            wave.style.height = '100px';
+            wave.style.borderRadius = '50%';
+            wave.style.border = '4px solid #00ffff';
+            wave.style.boxShadow = '0 0 20px #00bfff';
+            wave.style.zIndex = '9997';
+            wave.style.pointerEvents = 'none';
+            document.body.appendChild(wave);
+
+            wave.animate([
+              { transform: 'scale(0.5)', opacity: 1 },
+              { transform: 'scale(2.5)', opacity: 0 }
+            ], { duration: 400 / speedMult, easing: 'ease-out' }).onfinish = () => wave.remove();
+
             if (onImpact) onImpact(target, index);
-          };
+          }, 450 / speedMult);
           break;
         }
         case 'thunder_slash': {
