@@ -1,6 +1,7 @@
 import { GameDB } from '../../data/database.js';
 import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
+import { showInheritanceHelpModal } from '../../components/inheritance-help-modal.js';
 
 import { JOBS } from '../../jobs/index.js';
 
@@ -387,22 +388,33 @@ export function renderAcquireSkillTab() {
             }
         }
         
-        if (isInitial || !filterContainer.querySelector('button')) {
+        if (isInitial || !filterContainer.querySelector('button[data-job-id="all"]')) {
           filterContainer.innerHTML = `
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              <button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === 'all' ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="all">すべて</button>
-              ${Array.from(availableJobs).map(jId => {
-                const jobDef = JOBS[jId];
-                return `<button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === jId ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="${jId}">${jobDef.name}</button>`;
-              }).join('')}
+            <div class="flex items-center justify-between gap-2 pb-1">
+              <div class="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
+                <button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === 'all' ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="all">すべて</button>
+                ${Array.from(availableJobs).map(jId => {
+                  const jobDef = JOBS[jId];
+                  return `<button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === jId ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="${jId}">${jobDef.name}</button>`;
+                }).join('')}
+              </div>
+              <button id="btn-inheritance-help" class="shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-full bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-800 transition-colors shadow-sm active:scale-95">
+                <span class="material-symbols-outlined !text-[16px]">help</span>
+              </button>
             </div>
           `;
-          filterContainer.querySelectorAll('button').forEach(btn => {
+          filterContainer.querySelectorAll('button[data-job-id]').forEach(btn => {
             btn.onclick = () => {
               inheritJobFilter = btn.getAttribute('data-job-id');
               render(true);
             };
           });
+          const helpBtn = filterContainer.querySelector('#btn-inheritance-help');
+          if (helpBtn) {
+            helpBtn.onclick = () => {
+              showInheritanceHelpModal();
+            };
+          }
         }
         
         if (inheritJobFilter !== 'all') {
