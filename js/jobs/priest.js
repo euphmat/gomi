@@ -355,7 +355,17 @@ export const priest = {
       },
       autoBattle: {
         check: (caster, levelConfig, context) => {
-          const afflictedParty = context.party.filter(p => !p.isDead && p.activeAilment);
+          const afflictedParty = context.party.filter(p => {
+            if (p.isDead || !p.activeAilment) return false;
+            // ブラックナイトの「贖罪の烙印」による呪いは治さない（治してもすぐ再付与されるか、無効化されるため）
+            if (p.activeAilment.type === 'curse') {
+              const hasStigma = p._skillCache?.has('stigma_of_atonement') || 
+                                (p.jobId === 'black_knight' && p.jobSkills?.black_knight?.stigma_of_atonement > 0) ||
+                                (p.inheritedPassive?.skillId === 'stigma_of_atonement');
+              if (hasStigma) return false;
+            }
+            return true;
+          });
           if (afflictedParty.length > 0) {
              return { target: afflictedParty[0], score: 90 };
           }
