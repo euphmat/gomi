@@ -427,6 +427,7 @@ export const actionMethods = {
       } else {
         damage -= defender._barrierHp;
         defender._barrierHp = 0;
+        defender._barrierTurns = 0;
         this.showActionName(defender.elementId, 'BARRIER BREAK', 'text-amber-400', 'border-amber-600/50');
       }
     }

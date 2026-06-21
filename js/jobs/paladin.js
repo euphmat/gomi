@@ -372,16 +372,16 @@ export const paladin = {
       id: 'divine_shield', name: 'ディバインシールド', icon: 'verified_user',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 16, barrierPercent: 10, turns: 2 },
-        { level:  2, spCost: 1, mpCost: 18, barrierPercent: 13, turns: 2 },
-        { level:  3, spCost: 1, mpCost: 20, barrierPercent: 16, turns: 2 },
-        { level:  4, spCost: 2, mpCost: 22, barrierPercent: 19, turns: 3 },
-        { level:  5, spCost: 2, mpCost: 24, barrierPercent: 22, turns: 3 },
-        { level:  6, spCost: 2, mpCost: 26, barrierPercent: 25, turns: 3 },
-        { level:  7, spCost: 3, mpCost: 28, barrierPercent: 28, turns: 4 },
-        { level:  8, spCost: 3, mpCost: 30, barrierPercent: 32, turns: 4 },
-        { level:  9, spCost: 3, mpCost: 32, barrierPercent: 36, turns: 4 },
-        { level: 10, spCost: 5, mpCost: 38, barrierPercent: 40, turns: 5 }
+        { level:  1, spCost: 1, mpCost: 80, barrierPercent: 10, turns: 2 },
+        { level:  2, spCost: 1, mpCost: 85, barrierPercent: 13, turns: 2 },
+        { level:  3, spCost: 1, mpCost: 90, barrierPercent: 16, turns: 2 },
+        { level:  4, spCost: 2, mpCost: 95, barrierPercent: 19, turns: 3 },
+        { level:  5, spCost: 2, mpCost: 100, barrierPercent: 22, turns: 3 },
+        { level:  6, spCost: 2, mpCost: 105, barrierPercent: 25, turns: 3 },
+        { level:  7, spCost: 3, mpCost: 110, barrierPercent: 28, turns: 4 },
+        { level:  8, spCost: 3, mpCost: 115, barrierPercent: 32, turns: 4 },
+        { level:  9, spCost: 3, mpCost: 120, barrierPercent: 36, turns: 4 },
+        { level: 10, spCost: 5, mpCost: 130, barrierPercent: 40, turns: 5 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体に、対象の味方の最大 HP の ${lc.barrierPercent}% のバリアを ${lc.turns} ターン付与する`,
       execute(caster, levelConfig, battle) {
