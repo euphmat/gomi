@@ -10,12 +10,38 @@ import { calcFinalStats } from '../data/stat-calculator.js';
 const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
+export function calcDungeonSkipCost(dungeon) {
+  let expectedGold = 0;
+  for (const floor of dungeon.floors) {
+    if (!floor.monsters || floor.monsters.length === 0) continue;
+    const totalWeight = floor.monsters.reduce((sum, e) => sum + e.weight, 0);
+    if (totalWeight <= 0) continue;
+
+    let floorGold = 0;
+    for (const enc of floor.monsters) {
+      let encGold = 0;
+      for (const [key, count] of Object.entries(enc)) {
+        if (key === 'weight') continue;
+        const enemyDef = MONSTERS_MAP.get(key);
+        if (enemyDef && enemyDef.rewards && enemyDef.rewards.gold) {
+          encGold += count * enemyDef.rewards.gold;
+        }
+      }
+      floorGold += (enc.weight / totalWeight) * encGold;
+    }
+    expectedGold += floorGold;
+  }
+  
+  const cost = Math.max(10, Math.ceil(expectedGold * 10));
+  return Math.ceil(cost / 10) * 10;
+}
+
 export async function executeSkip(dungeonId, isSpecial, numSkips) {
   const dungeonList = isSpecial ? SPECIAL_DUNGEONS : DUNGEONS;
   const dungeon = dungeonList.find(d => d.id === dungeonId);
   if (!dungeon) return null;
 
-  const cost = (dungeon.skipCost || 10000) * numSkips;
+  const cost = calcDungeonSkipCost(dungeon) * numSkips;
   let currentGold = await GameDB.getGameState('gold') || 0;
   if (currentGold < cost) return { error: 'Not enough gold' };
 

@@ -3,7 +3,7 @@ import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
 import { MONSTERS } from '../definitions/monsters.js';
 import { GameDB } from '../data/database.js';
 import { calcItemsPerPage } from '../data/page-utils.js';
-import { executeSkip } from '../utils/skip-simulator.js';
+import { executeSkip, calcDungeonSkipCost } from '../utils/skip-simulator.js';
 import { formatNumber } from '../utils/format.js';
 import { JOBS } from '../jobs/index.js';
 
@@ -17,7 +17,7 @@ window.openSkipModal = async (dungeonId, isSpecial) => {
   const dungeonList = isSpecial ? SPECIAL_DUNGEONS : DUNGEONS;
   const dungeon = dungeonList.find(d => d.id === dungeonId);
   if (!dungeon) return;
-  const skipCost = dungeon.skipCost || 10000;
+  const skipCost = calcDungeonSkipCost(dungeon);
   const currentGold = await GameDB.getGameState('gold') || 0;
 
   const overlay = document.createElement('div');

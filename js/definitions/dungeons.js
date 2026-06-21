@@ -6,7 +6,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_slime_forest.webp',
   theme: { color: '16, 185, 129', icon: 'forest' },
   isUnlocked: true,
-  skipCost: 1000,
+
   floors: [
     { level: 1, monsters: [{ slime_blue: 1, weight: 50 }, { slime_blue: 2, weight: 40 }, { slime_blue: 3, weight: 10 },] },
     { level: 2, monsters: [{ slime_green: 1, slime_blue: 1, weight: 60 }, { slime_green: 2, weight: 40 },] },
@@ -32,7 +32,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_spider_cave.webp',
   theme: { color: '139, 92, 246', icon: 'bug_report' },
   isUnlocked: false,
-  skipCost: 2000,
+
     floors: [
       { level: 1, monsters: [{ spider_cave: 2, weight: 50 }, { spider_cave: 3, weight: 30 }, { spider_cave: 2, spider_poison: 1, weight: 20 },] },
       { level: 2, monsters: [{ spider_cave: 3, spider_poison: 1, weight: 50 }, { spider_poison: 3, weight: 30 }, { spider_poison: 2, spider_trapdoor: 1, weight: 20 },] },
@@ -54,7 +54,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_crystal_cave.webp',
   theme: { color: '6, 182, 212', icon: 'diamond' },
   isUnlocked: false,
-  skipCost: 3000,
+
   floors: [
     { level: 1, monsters: [ { crisp: 3, weight: 50 }, { crisp: 4, weight: 30 }, { crisp: 2, geode_turtle: 1, weight: 20 } ] },
     { level: 2, monsters: [ { crisp: 2, geode_turtle: 2, weight: 40 }, { geode_turtle: 3, weight: 30 }, { geode_turtle: 2, snow_frog: 1, weight: 30 } ] },
@@ -76,7 +76,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_ghost_castle.webp',
   theme: { color: '99, 102, 241', icon: 'castle' },
   isUnlocked: false,
-  skipCost: 4000,
+
   floors: [
     { level: 1, monsters: [ { rust_guard: 3, weight: 50 }, { rust_guard: 2, dust_maid: 1, weight: 49.9 }, { lost_glitter: 1, weight: 0.1 } ] },
     { level: 2, monsters: [ { dust_maid: 3, weight: 40 }, { rust_guard: 2, dust_maid: 2, weight: 30 }, { dust_maid: 2, cursed_chandelier: 1, weight: 29.9 }, { lost_glitter: 1, weight: 0.1 } ] },
@@ -98,7 +98,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_spirit_valley.webp',
   theme: { color: '20, 184, 166', icon: 'air' },
   isUnlocked: false,
-  skipCost: 5000,
+
   floors: [
     { level: 1, monsters: [{ humming_leaf: 3, weight: 60 }, { humming_leaf: 4, weight: 40 }] },
     { level: 2, monsters: [{ humming_leaf: 2, tone_firefly: 2, weight: 50 }, { tone_firefly: 3, weight: 50 }] },
@@ -130,7 +130,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_mystic_temple.webp',
   theme: { color: '245, 158, 11', icon: 'account_balance' },
   isUnlocked: false,
-  skipCost: 6000,
+
   floors: []
 },
 {
@@ -141,7 +141,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_stargazer_tower.webp',
   theme: { color: '59, 130, 246', icon: 'routine' },
   isUnlocked: false,
-  skipCost: 7000,
+
   floors: []
 },
 {
@@ -152,7 +152,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_hell_cave.webp',
   theme: { color: '239, 68, 68', icon: 'local_fire_department' },
   isUnlocked: false,
-  skipCost: 8000,
+
   floors: []
 },
 {
@@ -163,7 +163,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_dragon_lair.webp',
   theme: { color: '234, 88, 12', icon: 'local_fire_department' },
   isUnlocked: false,
-  skipCost: 9000,
+
   floors: []
 },
 {
@@ -174,7 +174,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_sky_demon_castle.webp',
   theme: { color: '217, 70, 239', icon: 'fort' },
   isUnlocked: false,
-  skipCost: 10000,
+
   floors: []
 },
 {
@@ -185,7 +185,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_moonlit_hall.webp',
   theme: { color: '203, 213, 225', icon: 'nightlight' },
   isUnlocked: false,
-  skipCost: 11000,
+
   floors: []
 },
 {
@@ -196,7 +196,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_cloud_altar.webp',
   theme: { color: '56, 189, 248', icon: 'cloud' },
   isUnlocked: false,
-  skipCost: 12000,
+
   floors: []
 },
 {
@@ -207,7 +207,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_dusk_labyrinth.webp',
   theme: { color: '192, 38, 211', icon: 'dashboard' },
   isUnlocked: false,
-  skipCost: 13000,
+
   floors: []
 },
 {
@@ -218,7 +218,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_eternal_ruins.webp',
   theme: { color: '168, 162, 158', icon: 'broken_image' },
   isUnlocked: false,
-  skipCost: 14000,
+
   floors: []
 },
 {
@@ -229,7 +229,7 @@ export const DUNGEONS = [{
   bgImage: 'assets/dungeon/bg_subspace.webp',
   theme: { color: '139, 92, 246', icon: 'blur_on' },
   isUnlocked: false,
-  skipCost: 15000,
+
   floors: []
 }
 ];
