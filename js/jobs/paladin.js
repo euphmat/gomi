@@ -386,10 +386,7 @@ export const paladin = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体に ${lc.barrierAmount} のダメージを吸収するバリアを付与し、${lc.turns} ターンの間 MDEF を ${lc.mdefPercent}% アップさせる`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        let targetGroup = battle.party;
-        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.enemies;
-        }
+        const targetGroup = battle.enemies.includes(caster) ? battle.enemies : battle.party;
         const aliveParty = targetGroup.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
 
@@ -447,10 +444,7 @@ export const paladin = {
       },
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-        let targetGroup = battle.party;
-        if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
-          targetGroup = battle.enemies;
-        }
+        const targetGroup = battle.enemies.includes(caster) ? battle.enemies : battle.party;
         const aliveParty = targetGroup.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
 

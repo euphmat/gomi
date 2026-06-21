@@ -32,6 +32,14 @@ export function getActiveStateIconsHTML(entity) {
     icons.push({ icon: 'shield', color: 'text-cyan-400', name: '防御力ダウン' });
   }
 
+  if (entity._regenTurns && entity._regenTurns > 0) {
+    icons.push({ icon: 'spa', color: 'text-green-400', name: 'サンクチュアリ' });
+  }
+
+  if ((entity._barrierHp && entity._barrierHp > 0) || (entity._mdefBuffTurns && entity._mdefBuffTurns > 0)) {
+    icons.push({ icon: 'verified_user', color: 'text-amber-300', name: 'ディバインシールド' });
+  }
+
   if (icons.length === 0) return '';
 
   return icons.map(data => 
