@@ -141,6 +141,9 @@ export const bird = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
+        if (caster.activeAilment && caster.activeAilment.type === 'confusion' && battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
         const targets = targetGroup.filter(e => !e.isDead);
         if (targets.length === 0) return;
         playSkillAnimation(caster, targets, 'lullaby', (target, index) => {

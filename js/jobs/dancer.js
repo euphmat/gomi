@@ -285,6 +285,9 @@ export const dancer = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
+        if (caster.activeAilment && caster.activeAilment.type === 'confusion' && battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
         const targets = targetGroup.filter(e => !e.isDead);
         playSkillAnimation(caster, targets, 'poison_salsa', (target, idx) => {
           if (target.isDead) return;
@@ -332,6 +335,9 @@ export const dancer = {
         for (let i = 0; i < hits; i++) {
           setTimeout(() => {
             let targetGroup = battle.enemies;
+        if (caster.activeAilment && caster.activeAilment.type === 'confusion' && battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
             const aliveEnemies = targetGroup.filter(e => !e.isDead);
             if (aliveEnemies.length > 0) {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
@@ -379,6 +385,9 @@ export const dancer = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
+        if (caster.activeAilment && caster.activeAilment.type === 'confusion' && battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
         const targets = targetGroup.filter(e => !e.isDead);
         playSkillAnimation(caster, targets, 'confusion_tarantella', (target, idx) => {
           if (target.isDead) return;
@@ -422,6 +431,9 @@ export const dancer = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
+        if (caster.activeAilment && caster.activeAilment.type === 'confusion' && battle.selectedEnemyTarget && battle.party.includes(battle.selectedEnemyTarget)) {
+          targetGroup = battle.party;
+        }
         const targets = targetGroup.filter(e => !e.isDead);
         const allAilments = ['poison', 'burn', 'paralysis', 'sleep', 'confusion', 'curse', 'blind', 'silence'];
         
