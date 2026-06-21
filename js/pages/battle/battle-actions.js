@@ -819,6 +819,7 @@ export const actionMethods = {
     const aliveParty = this.party.filter(p => !p.isDead);
     if (aliveParty.length === 0) {
       this.activeEnemy = null;
+      this.checkBattleEnd();
       return;
     }
     

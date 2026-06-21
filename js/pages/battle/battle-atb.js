@@ -91,6 +91,7 @@ export const atbMethods = {
 
     this.atbWorker.onmessage = () => {
       if (this.isStopped) return;
+
       const disableAnim = this._cachedDisableAnim;
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();
@@ -102,6 +103,10 @@ export const atbMethods = {
 
       if (this.activeCharacter || this.activeEnemy) return;
       
+      // Catch delayed deaths (e.g. from poison/curse or DOTs) after actions finish
+      this.checkBattleEnd();
+      if (this.isStopped) return;
+
       let nextActor = null;
       
       this.party.forEach(p => {
