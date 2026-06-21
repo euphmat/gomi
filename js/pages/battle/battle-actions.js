@@ -10,6 +10,7 @@ export const actionMethods = {
     entity._defBuffPercent = 0;
     entity._mdefBuffTurns = 0;
     entity._mdefBuffAmount = 0;
+    entity._mdefBuffPercent = 0;
     entity._atkBuffTurns = 0;
     entity._atkBuffPercent = 0;
     entity._matkBuffTurns = 0;
@@ -169,6 +170,24 @@ export const actionMethods = {
     }
     options.isHybrid = isHybrid;
 
+    // --- Passive: Auto Guard (オートガード) ---
+    if (!isParty && !options.isAoEProcessed && defender.hp !== undefined) {
+      const paladinsWithGuard = this.party.filter(p => !p.isDead && p !== defender && p.job === 'paladin');
+      for (const p of paladinsWithGuard) {
+        const guardSkill = this._findSkill(p, 'auto_guard');
+        if (guardSkill && guardSkill.level > 0 && guardSkill.levelConfig) {
+          if (p.equipment && p.equipment.sub && p.equipment.sub.type === 'shield') {
+            if (Math.random() * 100 < guardSkill.levelConfig.guardChance) {
+              defender = p;
+              options.isGuarded = true;
+              this.showActionName(p.elementId, 'オートガード', 'text-yellow-300', 'border-yellow-500/50');
+              break;
+            }
+          }
+        }
+      }
+    }
+
     // --- 暗闇 (Blind) の判定 ---
     if (!isMagic && attacker.activeAilment && attacker.activeAilment.type === 'blind' && !options.hideActionName) {
       if (Math.random() < 0.75) {
@@ -247,7 +266,7 @@ export const actionMethods = {
     }
     // --- 魔法防御バフ適用 (マジックバリア) ---
     if (isMagic) {
-      const totalMdefPercent = (defender._passiveMdefBuffPercent || 0);
+      const totalMdefPercent = (defender._passiveMdefBuffPercent || 0) + (defender._mdefBuffTurns > 0 ? (defender._mdefBuffPercent || 0) : 0);
       const totalMdefAmount = (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
       if (totalMdefPercent !== 0) {
         mdefStat = Math.floor(mdefStat * (1 + totalMdefPercent / 100));
@@ -279,7 +298,7 @@ export const actionMethods = {
       }
       
       let magDef = defender.stats.mdef || 0;
-      const hTotalMdefPercent = (defender._passiveMdefBuffPercent || 0);
+      const hTotalMdefPercent = (defender._passiveMdefBuffPercent || 0) + (defender._mdefBuffTurns > 0 ? (defender._mdefBuffPercent || 0) : 0);
       const hTotalMdefAmount = (defender._mdefBuffTurns > 0 ? (defender._mdefBuffAmount || 0) : 0);
       if (hTotalMdefPercent !== 0) {
         magDef = Math.floor(magDef * (1 + hTotalMdefPercent / 100));
@@ -298,6 +317,9 @@ export const actionMethods = {
     
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
+    if (options.isGuarded) {
+      damage = Math.floor(damage * 0.5);
+    }
 
     // --- 呪い (Curse) の被ダメージ増加判定 ---
     if (defender.activeAilment && defender.activeAilment.type === 'curse') {
@@ -391,6 +413,19 @@ export const actionMethods = {
           damage = 0;
           this.showActionName(defender.elementId, 'パリィ', 'text-cyan-300', 'border-cyan-500/50');
         }
+      }
+    }
+
+    // --- 汎用バリア処理 (Divine Shield etc.) ---
+    if (defender._barrierHp && defender._barrierHp > 0 && damage > 0) {
+      if (defender._barrierHp >= damage) {
+        defender._barrierHp -= damage;
+        damage = 0;
+        this.showActionName(defender.elementId, 'BARRIER BLOCK', 'text-amber-300', 'border-amber-500/50');
+      } else {
+        damage -= defender._barrierHp;
+        defender._barrierHp = 0;
+        this.showActionName(defender.elementId, 'BARRIER BREAK', 'text-amber-400', 'border-amber-600/50');
       }
     }
 
@@ -754,6 +789,7 @@ export const actionMethods = {
         p._mdefBuffTurns--;
         if (p._mdefBuffTurns <= 0) {
           p._mdefBuffAmount = 0;
+          p._mdefBuffPercent = 0;
         }
       }
       if (p._atkBuffTurns > 0) {
@@ -767,6 +803,16 @@ export const actionMethods = {
         if (p._matkBuffTurns <= 0) {
           p._matkBuffPercent = 0;
         }
+      }
+      
+      // --- アクティブリジェネ (Sanctuary等) ---
+      if (p._regenTurns && p._regenTurns > 0) {
+        if (p.hp.current < (p.stats?.hp || p.hp.max) && !p.isDead) {
+          p.hp.current = Math.min(p.stats?.hp || p.hp.max, p.hp.current + p._regenHp);
+          this.showDamage(p.elementId, `+${p._regenHp}`, 'text-green-400');
+        }
+        p._regenTurns--;
+        if (p._regenTurns <= 0) p._regenHp = 0;
       }
     });
 

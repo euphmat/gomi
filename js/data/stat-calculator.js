@@ -98,6 +98,7 @@ export function calcFinalStats(character, equipmentMap) {
     }
   }
 
+  let hpMultiplier = 1.0;
   let defMultiplier = 1.0;
   let mdefMultiplier = 1.0;
 
@@ -111,6 +112,7 @@ export function calcFinalStats(character, equipmentMap) {
         if (!skillDef || skillDef.type !== 'passive') continue;
         const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
         if (levelConfig.bonusHp) result.hp += levelConfig.bonusHp;
+        if (levelConfig.bonusHpPercent) hpMultiplier += levelConfig.bonusHpPercent / 100;
         if (levelConfig.bonusDef) result.def += levelConfig.bonusDef;
         if (levelConfig.bonusDefPercent) defMultiplier += levelConfig.bonusDefPercent / 100;
         if (levelConfig.bonusMdef) result.mdef += levelConfig.bonusMdef;
@@ -148,6 +150,7 @@ export function calcFinalStats(character, equipmentMap) {
     }
   }
 
+  result.hp = Math.floor(result.hp * hpMultiplier);
   result.def = Math.floor(result.def * defMultiplier);
   result.mdef = Math.floor(result.mdef * mdefMultiplier);
 
