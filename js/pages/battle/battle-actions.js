@@ -124,6 +124,25 @@ export const actionMethods = {
       }
     }
 
+    // --- Passive: Energizing ---
+    const energizingSkill = this._findSkill(caster, 'energizing');
+    if (energizingSkill && energizingSkill.level > 0 && energizingSkill.levelConfig) {
+      const amount = energizingSkill.levelConfig.recoverMp;
+      let applied = false;
+      this.party.forEach(p => {
+        if (!p.isDead && p.mp && (p.mp.current < (p.stats?.mp || p.mp.max))) {
+          p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
+          setTimeout(() => {
+            this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
+          }, 600 / this.speedMult);
+          applied = true;
+        }
+      });
+      if (applied) {
+        this.showActionName(caster.elementId, 'エナジャイジング', 'text-orange-300', 'border-orange-500/50');
+      }
+    }
+
     caster.atb = 0;
     this.activeCharacter = null;
     this.renderEntities();
