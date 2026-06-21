@@ -7,6 +7,7 @@ export const SPECIAL_DUNGEONS = [
     bgImage: 'assets/dungeon/bg_golden_slime_island.webp',
     theme: { color: '234, 179, 8', icon: 'auto_awesome' },
     unlockCondition: { medals: 18 },
+    skipCost: 100000,
     floors: [
       { level: 1, monsters: [{ slime_gold: 1, weight: 100 }] },
       { level: 2, monsters: [{ slime_gold: 2, weight: 100 }] },

@@ -331,6 +331,7 @@ export const resultMethods = {
       this.isDungeonClear = this.currentFloorNum >= this.dungeonDef.floors.length;
       
       if (this.isDungeonClear) {
+
         // 解放済みのダンジョンIDのリストを取得
         let unlocked = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
         const dungeonIndex = DUNGEONS.findIndex(d => d.id === this.currentDungeonId);
