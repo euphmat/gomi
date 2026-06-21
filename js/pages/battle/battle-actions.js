@@ -19,6 +19,8 @@ export const actionMethods = {
     entity._provokeChance = 0;
     entity._ailmentResistBuffTurns = 0;
     entity._ailmentResistBuffAmount = 0;
+    entity._barrierHp = 0;
+    entity._barrierTurns = 0;
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -802,6 +804,12 @@ export const actionMethods = {
         p._matkBuffTurns--;
         if (p._matkBuffTurns <= 0) {
           p._matkBuffPercent = 0;
+        }
+      }
+      if (p._barrierTurns > 0) {
+        p._barrierTurns--;
+        if (p._barrierTurns <= 0) {
+          p._barrierHp = 0;
         }
       }
       

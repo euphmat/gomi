@@ -372,18 +372,18 @@ export const paladin = {
       id: 'divine_shield', name: 'ディバインシールド', icon: 'verified_user',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 16, barrierAmount:  40, mdefPercent: 10, turns: 2 },
-        { level:  2, spCost: 1, mpCost: 18, barrierAmount:  60, mdefPercent: 13, turns: 2 },
-        { level:  3, spCost: 1, mpCost: 20, barrierAmount:  80, mdefPercent: 16, turns: 2 },
-        { level:  4, spCost: 2, mpCost: 22, barrierAmount: 110, mdefPercent: 19, turns: 3 },
-        { level:  5, spCost: 2, mpCost: 24, barrierAmount: 140, mdefPercent: 22, turns: 3 },
-        { level:  6, spCost: 2, mpCost: 26, barrierAmount: 180, mdefPercent: 25, turns: 3 },
-        { level:  7, spCost: 3, mpCost: 28, barrierAmount: 220, mdefPercent: 28, turns: 4 },
-        { level:  8, spCost: 3, mpCost: 30, barrierAmount: 270, mdefPercent: 32, turns: 4 },
-        { level:  9, spCost: 3, mpCost: 32, barrierAmount: 330, mdefPercent: 36, turns: 4 },
-        { level: 10, spCost: 5, mpCost: 38, barrierAmount: 400, mdefPercent: 40, turns: 5 }
+        { level:  1, spCost: 1, mpCost: 16, barrierPercent: 10, turns: 2 },
+        { level:  2, spCost: 1, mpCost: 18, barrierPercent: 13, turns: 2 },
+        { level:  3, spCost: 1, mpCost: 20, barrierPercent: 16, turns: 2 },
+        { level:  4, spCost: 2, mpCost: 22, barrierPercent: 19, turns: 3 },
+        { level:  5, spCost: 2, mpCost: 24, barrierPercent: 22, turns: 3 },
+        { level:  6, spCost: 2, mpCost: 26, barrierPercent: 25, turns: 3 },
+        { level:  7, spCost: 3, mpCost: 28, barrierPercent: 28, turns: 4 },
+        { level:  8, spCost: 3, mpCost: 30, barrierPercent: 32, turns: 4 },
+        { level:  9, spCost: 3, mpCost: 32, barrierPercent: 36, turns: 4 },
+        { level: 10, spCost: 5, mpCost: 38, barrierPercent: 40, turns: 5 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体に ${lc.barrierAmount} のダメージを吸収するバリアを付与し、${lc.turns} ターンの間 MDEF を ${lc.mdefPercent}% アップさせる`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体に、対象の味方の最大 HP の ${lc.barrierPercent}% のバリアを ${lc.turns} ターン付与する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targetGroup = battle.enemies.includes(caster) ? battle.enemies : battle.party;
@@ -392,16 +392,14 @@ export const paladin = {
 
         playSkillAnimation(caster, aliveParty, 'divine_shield', (target) => {
           if (target.isDead) return;
-          // Apply barrier (damage absorption shield)
-          target._barrierHp = (target._barrierHp || 0) + levelConfig.barrierAmount;
-          battle.showDamage(target.elementId, `BARRIER +${levelConfig.barrierAmount}`, 'text-amber-300');
+          
+          const maxHp = target.stats?.hp || target.hp?.max || target.maxHp || 1;
+          const barrierAmt = Math.floor(maxHp * levelConfig.barrierPercent / 100);
+          
+          target._barrierHp = (target._barrierHp || 0) + barrierAmt;
+          target._barrierTurns = levelConfig.turns;
+          battle.showDamage(target.elementId, `BARRIER +${barrierAmt}`, 'text-amber-300');
 
-          // Apply MDEF buff
-          target._mdefBuffPercent = levelConfig.mdefPercent;
-          target._mdefBuffTurns = levelConfig.turns;
-          setTimeout(() => {
-            battle.showDamage(target.elementId, 'MDEF UP', 'text-blue-300');
-          }, 300 / (battle.speedMult || 1));
           battle.renderEntities();
         });
       },
@@ -409,15 +407,9 @@ export const paladin = {
         check: (caster, levelConfig, context) => {
           const aliveParty = context.party.filter(p => !p.isDead);
           if (aliveParty.length === 0) return null;
-          // Use when party doesn't already have MDEF buff
-          const hasMdefBuff = aliveParty.some(p => p._mdefBuffTurns && p._mdefBuffTurns > 0);
-          if (!hasMdefBuff) {
-            // Higher priority if enemies seem to deal magical damage
-            return { target: caster, score: 80 };
-          }
-          // Still worth using if barriers are gone
+          
           const noBarrier = aliveParty.every(p => !p._barrierHp || p._barrierHp <= 0);
-          if (noBarrier) return { target: caster, score: 65 };
+          if (noBarrier) return { target: caster, score: 80 };
           return null;
         }
       }
