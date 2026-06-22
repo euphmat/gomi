@@ -100,6 +100,8 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   const groupedItems = Array.from(groupMap.values());
 
   let currentPage = 1;
+  let sortKey = null;
+  let sortOrder = 'desc';
   const totalPages = Math.max(1, Math.ceil(groupedItems.length / ITEMS_PER_PAGE));
   
   // Initially select the first available group, or null
@@ -191,6 +193,19 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   };
 
   const renderContent = () => {
+    // --- Sort groupedItems ---
+    groupedItems.sort((a, b) => {
+      if (sortKey) {
+        const aVal = (a.representative.stats && a.representative.stats[sortKey]) || 0;
+        const bVal = (b.representative.stats && b.representative.stats[sortKey]) || 0;
+        if (aVal !== bVal) {
+          return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+        }
+      }
+      // Fallback to ID sorting
+      return a.baseId.localeCompare(b.baseId);
+    });
+
     const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
     const pageItems = groupedItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
     
@@ -312,15 +327,23 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
           ${renderDetailPanel(selectedGroup)}
         </div>
 
-        <!-- Pagination (Middle Area) -->
-        <div class="flex items-center justify-between px-4 py-2 bg-gray-900/40 border-b border-gray-700/30 shrink-0">
-          <button id="eq-page-prev" class="p-1 rounded-lg hover:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${currentPage === 1 ? 'disabled' : ''}>
-            <span class="material-symbols-outlined">chevron_left</span>
-          </button>
-          <span class="text-xs font-mono text-gray-400 tracking-widest">PAGE <span class="text-gray-200 font-bold">${currentPage}</span> / ${totalPages}</span>
-          <button id="eq-page-next" class="p-1 rounded-lg hover:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>
-            <span class="material-symbols-outlined">chevron_right</span>
-          </button>
+        <!-- Sort Buttons (Middle Area) -->
+        <div class="flex items-center gap-1 px-3 py-2 bg-gray-900/40 border-b border-gray-700/30 shrink-0">
+          ${STAT_KEYS.map(stat => {
+            const isSelected = sortKey === stat.key;
+            const orderIcon = isSelected 
+              ? (sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward') 
+              : '';
+            return `
+              <button data-sort="${stat.key}" class="sort-btn flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 rounded-lg border transition-colors ${isSelected ? 'border-blue-400 bg-blue-900/40' : 'border-gray-700 bg-gray-800/80 hover:bg-gray-700'}">
+                <span class="material-symbols-outlined ${stat.color}" style="font-size: 14px;">${stat.icon}</span>
+                <div class="flex items-center mt-0.5">
+                  <span class="text-[9px] text-gray-300 font-bold leading-none">${stat.label}</span>
+                  ${isSelected ? `<span class="material-symbols-outlined text-blue-300 ml-0.5" style="font-size: 10px;">${orderIcon}</span>` : ''}
+                </div>
+              </button>
+            `;
+          }).join('')}
         </div>
 
         <!-- Grid (Bottom Area) -->
@@ -328,6 +351,17 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
           <div class="grid grid-cols-5 gap-2">
             ${gridHtml}
           </div>
+        </div>
+
+        <!-- Pagination (Bottom Bar) -->
+        <div class="flex items-center justify-between px-4 py-2 bg-gray-900/40 border-t border-gray-700/30 shrink-0">
+          <button id="eq-page-prev" class="p-1 rounded-lg hover:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${currentPage === 1 ? 'disabled' : ''}>
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="text-xs font-mono text-gray-400 tracking-widest">PAGE <span class="text-gray-200 font-bold">${currentPage}</span> / ${totalPages}</span>
+          <button id="eq-page-next" class="p-1 rounded-lg hover:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
         </div>
     `;
 
@@ -339,6 +373,21 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     });
     document.getElementById('eq-page-next')?.addEventListener('click', () => {
       if (currentPage < totalPages) { currentPage++; renderContent(); }
+    });
+
+    const sortBtns = overlay.querySelectorAll('.sort-btn');
+    sortBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const clickedKey = e.currentTarget.getAttribute('data-sort');
+        if (sortKey === clickedKey) {
+          sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+        } else {
+          sortKey = clickedKey;
+          sortOrder = 'desc';
+        }
+        currentPage = 1;
+        renderContent();
+      });
     });
 
     const slots = overlay.querySelectorAll('.item-slot');
