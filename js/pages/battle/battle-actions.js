@@ -66,7 +66,7 @@ export const actionMethods = {
     }
 
     if (skillDef.execute) {
-      skillDef.execute(caster, levelConfig, this);
+      skillDef.execute(caster, levelConfig, this, options);
     }
     
 

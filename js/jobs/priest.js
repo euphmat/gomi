@@ -214,7 +214,7 @@ export const priest = {
         { level: 10, spCost: 5, mpCost: 30, healAmount: 260 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、HPが最も減っている味方単体の HP を ${lc.healAmount} 回復する`,
-      execute(caster, levelConfig, battle) {
+      execute(caster, levelConfig, battle, options = {}) {
         if (!battle) return;
         let targetGroup = battle.party;
         if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
@@ -223,14 +223,19 @@ export const priest = {
         const aliveParty = targetGroup.filter(p => !p.isDead);
         if (aliveParty.length === 0) return;
         
-        // Find ally with lowest HP percentage
-        let target = aliveParty[0];
-        let lowestHpPercent = target.hp !== undefined ? (target.hp.current / (target.stats?.hp || target.hp.max)) : (target.currentHp / (target.stats?.hp || target.maxHp));
-        for (const p of aliveParty) {
-          const hpPercent = p.hp !== undefined ? (p.hp.current / (p.stats?.hp || p.hp.max)) : (p.currentHp / (p.stats?.hp || p.maxHp));
-          if (hpPercent < lowestHpPercent) {
-            lowestHpPercent = hpPercent;
-            target = p;
+        let target;
+        if (options.autoTarget && aliveParty.includes(options.autoTarget)) {
+          target = options.autoTarget;
+        } else {
+          // Find ally with lowest HP percentage
+          target = aliveParty[0];
+          let lowestHpPercent = target.hp !== undefined ? (target.hp.current / (target.stats?.hp || target.hp.max)) : (target.currentHp / (target.stats?.hp || target.maxHp));
+          for (const p of aliveParty) {
+            const hpPercent = p.hp !== undefined ? (p.hp.current / (p.stats?.hp || p.hp.max)) : (p.currentHp / (p.stats?.hp || p.maxHp));
+            if (hpPercent < lowestHpPercent) {
+              lowestHpPercent = hpPercent;
+              target = p;
+            }
           }
         }
 
@@ -333,19 +338,31 @@ export const priest = {
         { level: 10, spCost: 5, mpCost: 4 }
       ],
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、状態異常の味方単体の状態異常を回復する`,
-      execute(caster, levelConfig, battle) {
+      execute(caster, levelConfig, battle, options = {}) {
         if (!battle) return;
         let targetGroup = battle.party;
         if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
           targetGroup = battle.enemies;
         }
-        const afflictedParty = targetGroup.filter(p => !p.isDead && p.activeAilment);
+        const afflictedParty = targetGroup.filter(p => {
+          if (p.isDead || !p.activeAilment) return false;
+          // ブラックナイトの「贖罪の烙印」による呪いは治さない
+          if (p.activeAilment.type === 'curse') {
+            const hasStigma = p._skillCache?.has('stigma_of_atonement') || 
+                              (p.jobId === 'black_knight' && p.jobSkills?.black_knight?.stigma_of_atonement > 0) ||
+                              (p.inheritedPassive?.skillId === 'stigma_of_atonement');
+            if (hasStigma) return false;
+          }
+          return true;
+        });
         if (afflictedParty.length === 0) {
           battle.showActionName(caster.elementId, 'MISS', 'text-gray-400', 'border-gray-500/50');
           return;
         }
         
-        const target = afflictedParty[Math.floor(Math.random() * afflictedParty.length)];
+        const target = options.autoTarget && afflictedParty.includes(options.autoTarget)
+            ? options.autoTarget
+            : afflictedParty[Math.floor(Math.random() * afflictedParty.length)];
         playSkillAnimation(caster, [target], 'restore', () => {
           if (target.isDead) return;
           target.activeAilment = null;

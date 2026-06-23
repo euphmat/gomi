@@ -503,7 +503,7 @@ class BattleManager {
       if (bestAction.type === 'skill' && bestAction.skill && bestAction.target) {
         const prevTarget = this.selectedEnemyTarget;
         this.selectedEnemyTarget = bestAction.target;
-        this.executeSkill(character, bestAction.skill.def, bestAction.skill.levelConfig);
+        this.executeSkill(character, bestAction.skill.def, bestAction.skill.levelConfig, { autoTarget: bestAction.target });
         this.selectedEnemyTarget = prevTarget;
       } else if (bestAction.target) {
         this.executeAttack(character, bestAction.target, true);
