@@ -349,7 +349,7 @@ export const resultMethods = {
           this.autoNextTimer = setTimeout(async () => {
             await GameDB.setGameState('currentFloor', 1);
             this.isDungeonClear = false;
-            this.resetBattleState();
+            this.resetBattleState(true);
             this.init();
           }, 1500 / this.speedMult);
           return;
@@ -379,7 +379,7 @@ export const resultMethods = {
 
       if (this.autoBattleMode === 'floor') {
         this.autoNextTimer = setTimeout(async () => {
-          this.resetBattleState();
+          this.resetBattleState(true);
           this.init();
         }, 1500 / this.speedMult);
         return;
@@ -388,7 +388,7 @@ export const resultMethods = {
       // dungeon mode or manual: advance to next floor
       this.autoNextTimer = setTimeout(async () => {
         await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
-        this.resetBattleState();
+        this.resetBattleState(true);
         this.init();
       }, 1500 / this.speedMult);
       return;
@@ -516,7 +516,7 @@ export const resultMethods = {
             clearInterval(this.autoRetryTimer);
             this.autoRetryTimer = null;
             this.elements.resultOverlay.classList.add('hidden');
-            this.resetBattleState();
+            this.resetBattleState(true);
             this.init();
           } else {
             okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;

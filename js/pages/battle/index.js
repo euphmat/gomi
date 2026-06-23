@@ -92,10 +92,6 @@ class BattleManager {
 
     const isReinit = this.elements.enemyArea.children.length > 0;
 
-    const rawParty = await getCharactersWithRanchBonus();
-    const rawEquip = await GameDB.getAllEquipment();
-    this.equipMap = buildEquipmentMap(rawEquip);
-
     this.currentDungeonId = await GameDB.getGameState('currentDungeon') || 'slime_forest';
     this.currentFloorNum = await GameDB.getGameState('currentFloor') || 1;
     this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId) || SPECIAL_DUNGEONS.find(d => d.id === this.currentDungeonId);
@@ -118,24 +114,35 @@ class BattleManager {
       sceneBg.style.backgroundImage = 'radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%)';
     }
 
-    this.party = rawParty.map((char, index) => {
-      const stats = calcFinalStats(char, this.equipMap);
-      
-      // Cap current HP/MP to true max in case equipment was changed
-      const trueMaxHp = stats.hp || char.hp.max;
-      const trueMaxMp = stats.mp || char.mp.max;
-      char.hp.current = Math.min(char.hp.current, trueMaxHp);
-      char.mp.current = Math.min(char.mp.current, trueMaxMp);
+    if (!this.party || this.party.length === 0) {
+      const rawParty = await getCharactersWithRanchBonus();
+      const rawEquip = await GameDB.getAllEquipment();
+      this.equipMap = buildEquipmentMap(rawEquip);
 
-      return {
-        ...char,
-        stats,
-        atb: Math.floor(Math.random() * 501),
-        index,
-        isDead: char.hp.current <= 0,
-        elementId: `party-${index}`
-      };
-    });
+      this.party = rawParty.map((char, index) => {
+        const stats = calcFinalStats(char, this.equipMap);
+        
+        // Cap current HP/MP to true max in case equipment was changed
+        const trueMaxHp = stats.hp || char.hp.max;
+        const trueMaxMp = stats.mp || char.mp.max;
+        char.hp.current = Math.min(char.hp.current, trueMaxHp);
+        char.mp.current = Math.min(char.mp.current, trueMaxMp);
+
+        return {
+          ...char,
+          stats,
+          atb: Math.floor(Math.random() * 501),
+          index,
+          isDead: char.hp.current <= 0,
+          elementId: `party-${index}`
+        };
+      });
+    } else {
+      // Re-use party in memory, just reset ATB for the next battle
+      this.party.forEach(char => {
+        char.atb = Math.floor(Math.random() * 501);
+      });
+    }
     
 
     const prevSelectedId = this.selectedPartyMember ? this.selectedPartyMember.id : null;
@@ -260,8 +267,10 @@ class BattleManager {
     return this.autoBattleMode !== 'none';
   }
 
-  resetBattleState() {
-    this.party = [];
+  resetBattleState(keepParty = false) {
+    if (!keepParty) {
+      this.party = [];
+    }
     this.enemies = [];
     this.activeCharacter = null;
     this.activeEnemy = null;
