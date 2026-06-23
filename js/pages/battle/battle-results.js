@@ -400,6 +400,9 @@ export const resultMethods = {
         p.hp.current = stats.hp || p.hp.max;
         p.mp.current = stats.mp || p.mp.max;
         p.isDead = false;
+        if (this.clearEntityStatuses) {
+          this.clearEntityStatuses(p);
+        }
       }
       
       const currentGold = await GameDB.getGameState('gold') || 0;
@@ -539,6 +542,20 @@ export const resultMethods = {
   },
 
   async savePartyState() {
+    const TRANSIENT_FIELDS = [
+      'activeAilment',
+      '_defBuffTurns', '_defBuffPercent', '_defBuffAmount',
+      '_mdefBuffTurns', '_mdefBuffPercent', '_mdefBuffAmount',
+      '_atkBuffTurns', '_atkBuffPercent', '_atkBuffAmount',
+      '_matkBuffTurns', '_matkBuffPercent', '_matkBuffAmount',
+      '_provokeTurns', '_provokeChance',
+      '_ailmentResistBuffTurns', '_ailmentResistBuffAmount',
+      '_barrierTurns', '_barrierHp',
+      'atkDebuffTurns', 'atkDebuffPercent',
+      'defDebuffTurns', 'defDebuffPercent',
+      '_regenTurns', '_regenHp'
+    ];
+
     for (const p of this.party) {
       const original = await GameDB.getCharacter(p.id);
       if (original) {
@@ -550,6 +567,15 @@ export const resultMethods = {
         original.mp = p.mp;
         original.exp = p.exp;
         original.jp = p.jp;
+
+        for (const field of TRANSIENT_FIELDS) {
+          if (p[field] !== undefined) {
+            original[field] = p[field];
+          } else {
+            delete original[field];
+          }
+        }
+
         await GameDB.putCharacter(original);
       }
     }
