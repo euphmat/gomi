@@ -756,106 +756,104 @@ export const actionMethods = {
     this.checkBattleEnd();
   },
 
-  executeEnemyTurn(enemy) {
-    if (!this.atbWorker) return;
-    if (enemy.atkDebuffTurns > 0) {
-      enemy.atkDebuffTurns--;
-      if (enemy.atkDebuffTurns <= 0) {
-        enemy.stats.atk = enemy.originalAtk;
+  decrementBuffTurns(entity) {
+    if (entity.atkDebuffTurns > 0) {
+      entity.atkDebuffTurns--;
+      if (entity.atkDebuffTurns <= 0) {
+        entity.stats.atk = entity.originalAtk;
       }
     }
-    if (enemy.defDebuffTurns > 0) {
-      enemy.defDebuffTurns--;
-      if (enemy.defDebuffTurns <= 0) {
-        enemy.stats.def = enemy.originalDef;
+    if (entity.defDebuffTurns > 0) {
+      entity.defDebuffTurns--;
+      if (entity.defDebuffTurns <= 0) {
+        entity.stats.def = entity.originalDef;
       }
     }
-
-    // --- 挑発/防御バフのターンデクリメント ---
-    this.party.forEach(p => {
-      if (p._provokeTurns > 0) {
-        p._provokeTurns--;
-        if (p._provokeTurns <= 0) {
-          p._provokeChance = 0;
-        }
+    if (entity._provokeTurns > 0) {
+      entity._provokeTurns--;
+      if (entity._provokeTurns <= 0) {
+        entity._provokeChance = 0;
       }
-      if (p._ailmentResistBuffTurns > 0) {
-        p._ailmentResistBuffTurns--;
+    }
+    if (entity._ailmentResistBuffTurns > 0) {
+      entity._ailmentResistBuffTurns--;
+    }
+    if (entity._defBuffTurns > 0) {
+      entity._defBuffTurns--;
+      if (entity._defBuffTurns <= 0) {
+        entity._defBuffPercent = 0;
       }
-      if (p._defBuffTurns > 0) {
-        p._defBuffTurns--;
-        if (p._defBuffTurns <= 0) {
-          p._defBuffPercent = 0;
-        }
+    }
+    if (entity._mdefBuffTurns > 0) {
+      entity._mdefBuffTurns--;
+      if (entity._mdefBuffTurns <= 0) {
+        entity._mdefBuffAmount = 0;
+        entity._mdefBuffPercent = 0;
       }
-      if (p._mdefBuffTurns > 0) {
-        p._mdefBuffTurns--;
-        if (p._mdefBuffTurns <= 0) {
-          p._mdefBuffAmount = 0;
-          p._mdefBuffPercent = 0;
-        }
+    }
+    if (entity._atkBuffTurns > 0) {
+      entity._atkBuffTurns--;
+      if (entity._atkBuffTurns <= 0) {
+        entity._atkBuffPercent = 0;
       }
-      if (p._atkBuffTurns > 0) {
-        p._atkBuffTurns--;
-        if (p._atkBuffTurns <= 0) {
-          p._atkBuffPercent = 0;
-        }
+    }
+    if (entity._matkBuffTurns > 0) {
+      entity._matkBuffTurns--;
+      if (entity._matkBuffTurns <= 0) {
+        entity._matkBuffPercent = 0;
       }
-      if (p._matkBuffTurns > 0) {
-        p._matkBuffTurns--;
-        if (p._matkBuffTurns <= 0) {
-          p._matkBuffPercent = 0;
-        }
+    }
+    if (entity._barrierTurns > 0) {
+      entity._barrierTurns--;
+      if (entity._barrierTurns <= 0) {
+        entity._barrierHp = 0;
       }
-      if (p._barrierTurns > 0) {
-        p._barrierTurns--;
-        if (p._barrierTurns <= 0) {
-          p._barrierHp = 0;
-        }
-      }
-      
-      // --- アクティブリジェネ (Sanctuary等) ---
-      if (p._regenTurns && p._regenTurns > 0) {
-        if (p.hp.current < (p.stats?.hp || p.hp.max) && !p.isDead) {
-          p.hp.current = Math.min(p.stats?.hp || p.hp.max, p.hp.current + p._regenHp);
-          this.showDamage(p.elementId, `+${p._regenHp}`, 'text-green-400');
-          
-          if (localStorage.getItem('disableBattleAnimations') !== 'true') {
-            const el = document.getElementById(p.elementId);
-            if (el) {
-              const rect = el.getBoundingClientRect();
-              const cx = rect.left + rect.width / 2;
-              const cy = rect.top + rect.height / 2;
-              for (let i = 0; i < 4; i++) {
-                const sparkle = document.createElement('div');
-                sparkle.style.position = 'fixed';
-                sparkle.style.left = `${cx - 10}px`;
-                sparkle.style.top = `${cy - 10}px`;
-                sparkle.style.width = '20px';
-                sparkle.style.height = '20px';
-                sparkle.style.background = 'radial-gradient(circle, #fff, #4ade80, transparent)';
-                sparkle.style.clipPath = 'polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%)';
-                sparkle.style.zIndex = '9999';
-                sparkle.style.pointerEvents = 'none';
-                sparkle.style.mixBlendMode = 'screen';
-                document.body.appendChild(sparkle);
-                
-                const angle = Math.random() * Math.PI * 2;
-                const dist = 15 + Math.random() * 20;
-                const anim = sparkle.animate([
-                  { transform: 'translate(0, 0) scale(0)', opacity: 0 },
-                  { transform: 'translate(0, 0) scale(0.6)', opacity: 1, offset: 0.2 },
-                  { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist - 15}px) scale(0.2)`, opacity: 0 }
-                ], { duration: 500 + Math.random() * 300, easing: 'ease-out' });
-                anim.onfinish = () => sparkle.remove();
-              }
+    }
+    
+    if (entity._regenTurns && entity._regenTurns > 0) {
+      if (entity.hp && entity.hp.current < (entity.stats?.hp || entity.hp.max) && !entity.isDead) {
+        entity.hp.current = Math.min(entity.stats?.hp || entity.hp.max, entity.hp.current + entity._regenHp);
+        this.showDamage(entity.elementId, `+${entity._regenHp}`, 'text-green-400');
+        
+        if (localStorage.getItem('disableBattleAnimations') !== 'true') {
+          const el = document.getElementById(entity.elementId);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            for (let i = 0; i < 4; i++) {
+              const sparkle = document.createElement('div');
+              sparkle.style.position = 'fixed';
+              sparkle.style.left = `${cx - 10}px`;
+              sparkle.style.top = `${cy - 10}px`;
+              sparkle.style.width = '20px';
+              sparkle.style.height = '20px';
+              sparkle.style.background = 'radial-gradient(circle, #fff, #4ade80, transparent)';
+              sparkle.style.clipPath = 'polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%)';
+              sparkle.style.zIndex = '9999';
+              sparkle.style.pointerEvents = 'none';
+              sparkle.style.mixBlendMode = 'screen';
+              document.body.appendChild(sparkle);
+              
+              const angle = Math.random() * Math.PI * 2;
+              const dist = 15 + Math.random() * 20;
+              const anim = sparkle.animate([
+                { transform: 'translate(0, 0) scale(0)', opacity: 0 },
+                { transform: 'translate(0, 0) scale(0.6)', opacity: 1, offset: 0.2 },
+                { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist - 15}px) scale(0.2)`, opacity: 0 }
+              ], { duration: 500 + Math.random() * 300, easing: 'ease-out' });
+              anim.onfinish = () => sparkle.remove();
             }
           }
         }
-        p._regenTurns--;
-        if (p._regenTurns <= 0) p._regenHp = 0;
       }
-    });
+      entity._regenTurns--;
+      if (entity._regenTurns <= 0) entity._regenHp = 0;
+    }
+  },
+
+  executeEnemyTurn(enemy) {
+    if (!this.atbWorker) return;
 
     const aliveParty = this.party.filter(p => !p.isDead);
     if (aliveParty.length === 0) {

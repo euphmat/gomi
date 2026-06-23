@@ -156,6 +156,10 @@ export const atbMethods = {
       });
 
       if (nextActor) {
+        if (this.decrementBuffTurns) {
+          this.decrementBuffTurns(nextActor.entity);
+        }
+
         if (this.processPreActionAilment(nextActor.entity)) {
           nextActor.entity.atb = 0;
           if (!document.hidden) this.renderEntities();
