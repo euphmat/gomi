@@ -287,15 +287,25 @@ export const rendererMethods = {
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
         applyStatTheme('spd', statVals.spd, statRows.spd, statIcons.spd, statLabels.spd, spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400', false);
 
+        let demonPowerMult = 1;
+        if (p.hp && p.hp.current / (p.stats?.hp || p.hp.max) <= 0.5) {
+          if (p.jobSkills) {
+            const dpSkill = p.jobSkills.find(s => s.id === 'demon_power');
+            if (dpSkill && dpSkill.level > 0 && dpSkill.levelConfig) {
+              demonPowerMult = dpSkill.levelConfig.atkMatkMultiplier;
+            }
+          }
+        }
+
         const atkTotalPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
-        const atkStr = formatNumber(Math.floor(p.stats.atk * (1 + atkTotalPercent / 100)));
+        const atkStr = formatNumber(Math.floor((p.stats.atk * demonPowerMult) * (1 + atkTotalPercent / 100)));
         if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
-        applyStatTheme('atk', statVals.atk, statRows.atk, statIcons.atk, statLabels.atk, atkTotalPercent > 0, atkTotalPercent < 0, 'text-red-400', p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0);
+        applyStatTheme('atk', statVals.atk, statRows.atk, statIcons.atk, statLabels.atk, atkTotalPercent > 0 || demonPowerMult > 1, atkTotalPercent < 0, 'text-red-400', p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0);
 
         const matkTotalPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
-        const matStr = formatNumber(Math.floor(p.stats.matk * (1 + matkTotalPercent / 100)));
+        const matStr = formatNumber(Math.floor((p.stats.matk * demonPowerMult) * (1 + matkTotalPercent / 100)));
         if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
-        applyStatTheme('mat', statVals.mat, statRows.mat, statIcons.mat, statLabels.mat, matkTotalPercent > 0, matkTotalPercent < 0, 'text-purple-400', p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0);
+        applyStatTheme('mat', statVals.mat, statRows.mat, statIcons.mat, statLabels.mat, matkTotalPercent > 0 || demonPowerMult > 1, matkTotalPercent < 0, 'text-purple-400', p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0);
 
         const defTotalPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
         const defStr = formatNumber(Math.floor(p.stats.def * (1 + defTotalPercent / 100)));

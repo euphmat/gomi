@@ -101,6 +101,16 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
     bgClass = ailmentBgMap[p.activeAilment.type] || bgClass;
   }
   
+  let demonPowerMult = 1;
+  if (p.hp && p.hp.current / (p.stats?.hp || p.hp.max) <= 0.5) {
+    if (p.jobSkills) {
+      const dpSkill = p.jobSkills.find(s => s.id === 'demon_power');
+      if (dpSkill && dpSkill.level > 0 && dpSkill.levelConfig) {
+        demonPowerMult = dpSkill.levelConfig.atkMatkMultiplier;
+      }
+    }
+  }
+
   const atkTotalPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
   const defTotalPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
   const matkTotalPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
@@ -114,15 +124,15 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
     return { bg: 'bg-gray-900/40 border-transparent shadow-none', text: '', val: 'text-gray-100', icon: baseIconColor };
   };
 
-  const atkTheme = getStatTheme(atkTotalPercent > 0, atkTotalPercent < 0, 'text-red-400');
+  const atkTheme = getStatTheme(atkTotalPercent > 0 || demonPowerMult > 1, atkTotalPercent < 0, 'text-red-400');
   const defTheme = getStatTheme(defTotalPercent > 0, defTotalPercent < 0, 'text-slate-400');
-  const matkTheme = getStatTheme(matkTotalPercent > 0, matkTotalPercent < 0, 'text-purple-400');
+  const matkTheme = getStatTheme(matkTotalPercent > 0 || demonPowerMult > 1, matkTotalPercent < 0, 'text-purple-400');
   const mdefTheme = getStatTheme(mdefPassivePercent > 0 || mdefActiveAmount > 0, mdefPassivePercent < 0 || mdefActiveAmount < 0, 'text-indigo-400');
   const spdTheme = getStatTheme(spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400');
 
-  const finalAtk = Math.floor(p.stats.atk * (1 + atkTotalPercent / 100));
+  const finalAtk = Math.floor((p.stats.atk * demonPowerMult) * (1 + atkTotalPercent / 100));
   const finalDef = Math.floor(p.stats.def * (1 + defTotalPercent / 100));
-  const finalMatk = Math.floor(p.stats.matk * (1 + matkTotalPercent / 100));
+  const finalMatk = Math.floor((p.stats.matk * demonPowerMult) * (1 + matkTotalPercent / 100));
   const finalMdef = Math.floor(p.stats.mdef * (1 + mdefPassivePercent / 100)) + mdefActiveAmount;
   const finalSpd = Math.floor(p.stats.spd * (1 + spdTotalPercent / 100));
 
