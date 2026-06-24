@@ -505,6 +505,14 @@ export function renderMedalTab() {
 
     updateHeader();
     render();
+
+    // 初回レンダリング後、DOMレイアウトが確定したタイミングで再描画し、
+    // 正確な高さからページングを再計算させる
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        render();
+      });
+    });
   });
 
   container.appendChild(headerEl);
