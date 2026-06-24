@@ -58,10 +58,10 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
         </div>
         <img src="${e.image}" class="w-full h-full object-contain p-1 ${e.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
-      <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
-        ${e._barrierHp && e._barrierHp > 0 ? `<div class="absolute inset-0 bg-amber-400 transition-transform duration-300 origin-left" style="transform: scaleX(${Math.min(1, (e.currentHp + e._barrierHp) / Math.max(e.maxHp, e.currentHp + e._barrierHp))})"></div>` : ''}
-        <div class="absolute inset-0 bg-red-600 transition-transform duration-300 origin-left" style="transform: scaleX(${Math.min(1, e.currentHp / Math.max(e.maxHp, e.currentHp + (e._barrierHp || 0)))})"></div>
-        <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">
+      <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-visible shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
+        ${e._barrierHp && e._barrierHp > 0 ? `<div class="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-300 rounded shadow-[0_0_8px_rgba(251,191,36,0.5)]" style="width: ${Math.min(150, ((e.currentHp + e._barrierHp) / Math.max(1, e.maxHp)) * 100)}%;"></div>` : ''}
+        <div class="absolute inset-y-0 left-0 bg-red-600 transition-all duration-300 rounded-l ${e.currentHp >= e.maxHp ? 'rounded-r' : ''}" style="width: ${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%;"></div>
+        <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-10">
           ${formatNumber(Math.floor(e.currentHp))}${e._barrierHp && e._barrierHp > 0 ? `<span class="text-amber-300 text-[7.5px] ml-[2px]">+${formatNumber(e._barrierHp)}</span>` : ''}/${formatNumber(e.maxHp)}
         </div>
       </div>
@@ -158,10 +158,10 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
       <div class="flex flex-col gap-[3px] mb-1.5">
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
-          <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            ${p._barrierHp && p._barrierHp > 0 ? `<div class="absolute inset-0 bg-amber-400 transition-transform duration-300 origin-left" style="transform: scaleX(${Math.min(1, (p.hp.current + p._barrierHp) / Math.max((p.stats.hp || p.hp.max), p.hp.current + p._barrierHp))})"></div>` : ''}
-            <div class="absolute inset-0 bg-red-600 transition-transform duration-300 origin-left" style="transform: scaleX(${Math.min(1, p.hp.current / Math.max((p.stats.hp || p.hp.max), p.hp.current + (p._barrierHp || 0)))})"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">
+          <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-visible shadow-inner border border-gray-700/50">
+            ${p._barrierHp && p._barrierHp > 0 ? `<div class="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-300 rounded shadow-[0_0_8px_rgba(251,191,36,0.5)]" style="width: ${Math.min(150, ((p.hp.current + p._barrierHp) / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%;"></div>` : ''}
+            <div class="absolute inset-y-0 left-0 bg-red-600 transition-all duration-300 rounded-l ${p.hp.current >= (p.stats.hp || p.hp.max) ? 'rounded-r' : ''}" style="width: ${Math.min(100, (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%;"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-10">
               ${formatNumber(Math.floor(p.hp.current))}${p._barrierHp && p._barrierHp > 0 ? `<span class="text-amber-300 text-[7.5px] ml-[2px]">+${formatNumber(p._barrierHp)}</span>` : ''}/${formatNumber(p.stats.hp || p.hp.max)}
             </div>
           </div>
