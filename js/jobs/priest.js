@@ -366,7 +366,6 @@ export const priest = {
         playSkillAnimation(caster, [target], 'restore', () => {
           if (target.isDead) return;
           target.activeAilment = null;
-          battle.showActionName(target.elementId, `CURE`, 'text-green-300', 'border-green-500/50');
           battle.renderEntities();
         });
       },
