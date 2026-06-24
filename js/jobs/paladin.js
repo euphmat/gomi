@@ -398,7 +398,7 @@ export const paladin = {
           
           target._barrierHp = (target._barrierHp || 0) + barrierAmt;
           target._barrierTurns = levelConfig.turns;
-          battle.showDamage(target.elementId, `BARRIER +${barrierAmt}`, 'text-amber-300');
+          battle.showDamage(target.elementId, `BARRIER +${barrierAmt}`, 'text-blue-300');
 
           battle.renderEntities();
         });
