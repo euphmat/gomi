@@ -418,16 +418,16 @@ export const paladin = {
       id: 'sanctuary', name: 'サンクチュアリ', icon: 'spa',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 18, regenHp:  15, turns: 3, statusResist:  0 },
-        { level:  2, spCost: 1, mpCost: 20, regenHp:  20, turns: 3, statusResist:  0 },
-        { level:  3, spCost: 1, mpCost: 22, regenHp:  25, turns: 3, statusResist:  5 },
-        { level:  4, spCost: 2, mpCost: 24, regenHp:  35, turns: 3, statusResist:  5 },
-        { level:  5, spCost: 2, mpCost: 26, regenHp:  45, turns: 4, statusResist: 10 },
-        { level:  6, spCost: 2, mpCost: 28, regenHp:  55, turns: 4, statusResist: 10 },
-        { level:  7, spCost: 3, mpCost: 30, regenHp:  70, turns: 4, statusResist: 15 },
-        { level:  8, spCost: 3, mpCost: 34, regenHp:  85, turns: 5, statusResist: 15 },
-        { level:  9, spCost: 3, mpCost: 38, regenHp: 100, turns: 5, statusResist: 20 },
-        { level: 10, spCost: 5, mpCost: 44, regenHp: 120, turns: 5, statusResist: 25 }
+        { level:  1, spCost: 1, mpCost: 38, regenHp:  45, turns: 3, statusResist:  0 },
+        { level:  2, spCost: 1, mpCost: 40, regenHp:  60, turns: 3, statusResist:  0 },
+        { level:  3, spCost: 1, mpCost: 52, regenHp:  75, turns: 3, statusResist:  5 },
+        { level:  4, spCost: 2, mpCost: 54, regenHp:  85, turns: 3, statusResist:  5 },
+        { level:  5, spCost: 2, mpCost: 66, regenHp: 105, turns: 4, statusResist: 10 },
+        { level:  6, spCost: 2, mpCost: 78, regenHp: 125, turns: 4, statusResist: 10 },
+        { level:  7, spCost: 3, mpCost: 80, regenHp: 150, turns: 4, statusResist: 15 },
+        { level:  8, spCost: 3, mpCost: 84, regenHp: 185, turns: 5, statusResist: 15 },
+        { level:  9, spCost: 3, mpCost: 88, regenHp: 200, turns: 5, statusResist: 20 },
+        { level: 10, spCost: 5, mpCost: 94, regenHp: 250, turns: 5, statusResist: 25 }
       ],
       getDescription: (lc) => {
         let desc = `MP を ${lc.mpCost} 消費し、味方全体に ${lc.turns} ターンの間、毎ターン HP ${lc.regenHp} 回復するリジェネを付与する`;
