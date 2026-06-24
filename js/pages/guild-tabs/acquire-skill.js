@@ -388,27 +388,36 @@ export function renderAcquireSkillTab() {
             }
         }
         
-        if (isInitial || !filterContainer.querySelector('button[data-job-id="all"]')) {
+        if (isInitial || !filterContainer.querySelector('#job-filter-select')) {
           filterContainer.innerHTML = `
             <div class="flex items-center justify-between gap-2 pb-1">
-              <div class="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
-                <button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === 'all' ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="all">すべて</button>
-                ${Array.from(availableJobs).map(jId => {
-                  const jobDef = JOBS[jId];
-                  return `<button class="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold border transition-all ${inheritJobFilter === jId ? 'bg-indigo-600/80 text-white border-indigo-400' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}" data-job-id="${jId}">${jobDef.name}</button>`;
-                }).join('')}
+              <div class="flex-1 min-w-0">
+                <div class="relative">
+                  <select id="job-filter-select" class="w-full appearance-none bg-gray-800 text-gray-100 text-[12px] font-bold py-1.5 pl-3 pr-8 rounded-lg border border-white/10 focus:outline-none focus:border-indigo-500 transition-colors shadow-sm cursor-pointer">
+                    <option value="all" ${inheritJobFilter === 'all' ? 'selected' : ''}>すべて</option>
+                    ${Array.from(availableJobs).map(jId => {
+                      const jobDef = JOBS[jId];
+                      return `<option value="${jId}" ${inheritJobFilter === jId ? 'selected' : ''}>${jobDef.name}</option>`;
+                    }).join('')}
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                    <span class="material-symbols-outlined !text-[18px]">arrow_drop_down</span>
+                  </div>
+                </div>
               </div>
               <button id="btn-inheritance-help" class="shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-full bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-800 transition-colors shadow-sm active:scale-95">
                 <span class="material-symbols-outlined !text-[16px]">help</span>
               </button>
             </div>
           `;
-          filterContainer.querySelectorAll('button[data-job-id]').forEach(btn => {
-            btn.onclick = () => {
-              inheritJobFilter = btn.getAttribute('data-job-id');
+          
+          const selectEl = filterContainer.querySelector('#job-filter-select');
+          if (selectEl) {
+            selectEl.onchange = (e) => {
+              inheritJobFilter = e.target.value;
               render(true);
             };
-          });
+          }
           const helpBtn = filterContainer.querySelector('#btn-inheritance-help');
           if (helpBtn) {
             helpBtn.onclick = () => {
