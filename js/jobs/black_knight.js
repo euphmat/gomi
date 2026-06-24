@@ -539,7 +539,12 @@ export const black_knight = {
           if (hpRatio < 0.2) return null; // HP が低すぎる場合は使わない
           let target = context.selectedEnemyTarget;
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          return { target, score: 60 * levelConfig.multiplier };
+          
+          const targetHpRatio = target.hp.current / (target.stats?.hp || target.hp.max);
+          const finishBonus = targetHpRatio < 0.5 ? 50 : 0;
+          const randomFactor = Math.random() * 40;
+          
+          return { target, score: 50 * levelConfig.multiplier + finishBonus + randomFactor };
         }
       }
     },
@@ -592,7 +597,8 @@ export const black_knight = {
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           if (hpRatio < 0.15) return null;
           const avgHits = (levelConfig.minHits + levelConfig.maxHits) / 2;
-          const score = 40 * levelConfig.multiplier * avgHits;
+          const randomFactor = Math.random() * 40;
+          const score = 40 * levelConfig.multiplier * avgHits + randomFactor;
           return { target: aliveEnemies[0], score };
         }
       }
@@ -649,8 +655,20 @@ export const black_knight = {
           if (aliveEnemies.length === 0) return null;
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           if (hpRatio < 0.2) return null;
-          const noDebuff = aliveEnemies.some(e => !e.atkDebuffTurns || e.atkDebuffTurns <= 0);
-          if (noDebuff) return { target: aliveEnemies[0], score: 70 + aliveEnemies.length * 5 };
+          
+          // ATKダウン、DEFダウン、または呪いが入っていない敵がいるかチェック
+          const noDebuff = aliveEnemies.some(e => {
+            const hasAtkDown = e.atkDebuffTurns && e.atkDebuffTurns > 0;
+            const hasDefDown = e.defDebuffTurns && e.defDebuffTurns > 0;
+            const hasCurse = e.activeAilment && e.activeAilment.type === 'curse';
+            return !hasAtkDown || !hasDefDown || !hasCurse;
+          });
+          
+          if (noDebuff) {
+            // 未付与のデバフがある場合、最優先(500)で撃つ
+            return { target: aliveEnemies[0], score: 500 };
+          }
+          // デバフが全て入っている場合は撃たない
           return null;
         }
       }
