@@ -35,7 +35,7 @@ export const JOB_STAT_MULTIPLIER = {
   [dancer.id]:       { hp: 0.8, mp: 1.3, atk: 1.0, def: 0.7, matk: 1.3, mdef: 0.7, spd: 1.1 },
   [bird.id]:         { hp: 0.8, mp: 1.5, atk: 0.5, def: 1.0, matk: 0.9, mdef: 1.5, spd: 0.8 },
   [black_knight.id]: { hp: 3.0, mp: 0.3, atk: 1.6, def: 1.0, matk: 1.0, mdef: 0.3, spd: 0.7 },
-  [paladin.id]:      { hp: 2.0, mp: 1.2, atk: 0.8, def: 1.2, matk: 0.8, mdef: 1.5, spd: 0.5 }
+  [paladin.id]:      { hp: 2.0, mp: 1.2, atk: 0.8, def: 1.1, matk: 0.8, mdef: 1.1, spd: 0.5 }
 };
 
 export const JOBS = {
