@@ -262,7 +262,14 @@ export async function calculateTotalRanchBonus() {
           }
           const monsterCurrentStat = baseVal + growth;
           const divisor = 100;
-          const bonus = Math.max(1, Math.floor(monsterCurrentStat / divisor));
+          let bonus = Math.max(1, Math.floor(monsterCurrentStat / divisor));
+          
+          // 餌を与えてレベルが上がった分（level - 1）だけ固定で+1する恩恵を追加 (SPDは対象外)
+          if (key !== 'spd') {
+            const levelUpBonus = Math.max(0, level - 1);
+            bonus += levelUpBonus;
+          }
+          
           totalBonus[key] += bonus;
         }
       }
