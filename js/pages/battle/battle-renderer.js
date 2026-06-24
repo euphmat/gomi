@@ -120,8 +120,24 @@ export const rendererMethods = {
         iconContainer.classList.add('drop-shadow-md');
       }
 
-      const newHpScale = `scaleX(${e.currentHp / e.maxHp})`;
-      if (hpBar.style.transform !== newHpScale) hpBar.style.transform = newHpScale;
+      const newHpWidth = `${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%`;
+      if (hpBar.style.width !== newHpWidth) hpBar.style.width = newHpWidth;
+      if (hpBar.style.transform) hpBar.style.transform = '';
+
+      if (cache.hpBarrierBar) {
+        const shieldPct = e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0;
+        const hpPct = Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100);
+        if (shieldPct > 0) {
+          cache.hpBarrierBar.classList.remove('opacity-0');
+          cache.hpBarrierBar.classList.add('opacity-100');
+          cache.hpBarrierBar.style.width = `${shieldPct}%`;
+          cache.hpBarrierBar.style.left = `${Math.min(100 - shieldPct, hpPct)}%`;
+        } else {
+          cache.hpBarrierBar.classList.remove('opacity-100');
+          cache.hpBarrierBar.classList.add('opacity-0');
+        }
+      }
+
       if (hpText) {
         const newHpText = `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`;
         if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
@@ -185,8 +201,24 @@ export const rendererMethods = {
 
       if (hpBar) {
         const trueMaxHp = p.stats.hp || p.hp.max;
-        const newHpScale = `scaleX(${p.hp.current / trueMaxHp})`;
-        if (hpBar.style.transform !== newHpScale) hpBar.style.transform = newHpScale;
+        const hpPct = Math.min(100, (p.hp.current / Math.max(1, trueMaxHp)) * 100);
+        const newHpWidth = `${hpPct}%`;
+        if (hpBar.style.width !== newHpWidth) hpBar.style.width = newHpWidth;
+        if (hpBar.style.transform) hpBar.style.transform = '';
+
+        if (cache.hpBarrierBar) {
+          const shieldPct = p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, trueMaxHp)) * 100) : 0;
+          if (shieldPct > 0) {
+            cache.hpBarrierBar.classList.remove('opacity-0');
+            cache.hpBarrierBar.classList.add('opacity-100');
+            cache.hpBarrierBar.style.width = `${shieldPct}%`;
+            cache.hpBarrierBar.style.left = `${Math.min(100 - shieldPct, hpPct)}%`;
+          } else {
+            cache.hpBarrierBar.classList.remove('opacity-100');
+            cache.hpBarrierBar.classList.add('opacity-0');
+          }
+        }
+
         if (hpText) {
           const newHpText = `${formatNumber(Math.floor(p.hp.current))}/${formatNumber(trueMaxHp)}`;
           if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
@@ -305,8 +337,9 @@ export const rendererMethods = {
           iconContainer: el.children[0],
           stateIconsContainer: el.querySelector('.state-icons-container'),
           hpContainer: el.children[1],
-          hpBar: el.children[1].children[0],
-          hpText: el.children[1].children[1],
+          hpBar: el.querySelector('.bg-red-600'),
+          hpBarrierBar: el.querySelector('.hp-barrier-bar'),
+          hpText: el.querySelector('.hp-text'),
           atbContainer: el.children[2]
         };
       }
@@ -330,7 +363,8 @@ export const rendererMethods = {
           jlvEl: el.querySelector(`.${p.elementId}-jlv`),
           spEl: el.querySelector(`.${p.elementId}-sp`),
           hpBar: hpBarEl,
-          hpText: hpBarEl ? hpBarEl.nextElementSibling : null,
+          hpBarrierBar: el.querySelector('.hp-barrier-bar'),
+          hpText: el.querySelector('.hp-text'),
           mpBar: mpBarEl,
           mpText: mpBarEl ? mpBarEl.nextElementSibling : null,
           expBar: expBarEl,

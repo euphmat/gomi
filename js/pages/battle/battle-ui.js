@@ -60,9 +60,9 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
       </div>
       <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div class="absolute inset-y-0 left-0 bg-red-600 transition-all duration-300" style="width: ${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%;"></div>
-        ${e._barrierHp && e._barrierHp > 0 ? `<div class="absolute inset-y-0 bg-blue-500/90 transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${Math.min(100 - Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100), (e.currentHp / Math.max(1, e.maxHp)) * 100)}%; width: ${Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100)}%; background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px);"></div>` : ''}
-        <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
-          ${formatNumber(Math.floor(e.currentHp))}${e._barrierHp && e._barrierHp > 0 ? `<span class="text-blue-300 text-[7.5px] ml-[2px]">+${formatNumber(e._barrierHp)}</span>` : ''}/${formatNumber(e.maxHp)}
+        <div class="hp-barrier-bar absolute inset-y-0 bg-blue-500/90 transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300 ${e._barrierHp && e._barrierHp > 0 ? 'opacity-100' : 'opacity-0'}" style="left: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100 - Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100), (e.currentHp / Math.max(1, e.maxHp)) * 100) : 0}%; width: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0}%; background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px);"></div>
+        <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
+          ${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}
         </div>
       </div>
       <div class="w-full bg-gray-900 h-1.5 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
@@ -160,9 +160,9 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
           <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
             <div class="absolute inset-y-0 left-0 bg-red-600 transition-all duration-300" style="width: ${Math.min(100, (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%;"></div>
-            ${p._barrierHp && p._barrierHp > 0 ? `<div class="absolute inset-y-0 bg-blue-500/90 transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${Math.min(100 - Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100), (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%; width: ${Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%; background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px);"></div>` : ''}
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
-              ${formatNumber(Math.floor(p.hp.current))}${p._barrierHp && p._barrierHp > 0 ? `<span class="text-blue-300 text-[7.5px] ml-[2px]">+${formatNumber(p._barrierHp)}</span>` : ''}/${formatNumber(p.stats.hp || p.hp.max)}
+            <div class="hp-barrier-bar absolute inset-y-0 bg-blue-500/90 transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300 ${p._barrierHp && p._barrierHp > 0 ? 'opacity-100' : 'opacity-0'}" style="left: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100 - Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100), (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; width: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px);"></div>
+            <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
+              ${formatNumber(Math.floor(p.hp.current))}/${formatNumber(p.stats.hp || p.hp.max)}
             </div>
           </div>
         </div>

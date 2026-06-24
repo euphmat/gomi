@@ -204,20 +204,20 @@ export function buildEquipmentMap(equipmentArray) {
  * Cost for next level grows exponentially: 10, 15, 22, 33, 50, ...
  */
 export function getRanchLevelInfo(totalFed, isLegendary = false) {
-  let level = 0;
+  let level = 1;
   let totalRequiredForCurrent = 0;
   let baseCost = isLegendary ? 50 : 10;
   let multiplier = isLegendary ? 2.0 : 1.5;
   let totalRequiredForNext = baseCost;
   
   if (!isFinite(totalFed) || totalFed < 0) {
-    return { level: 0, currentLevelFed: 0, nextLevelRequired: baseCost };
+    return { level: 1, currentLevelFed: 0, nextLevelRequired: baseCost };
   }
 
   while (totalFed >= totalRequiredForNext) {
     level++;
     totalRequiredForCurrent = totalRequiredForNext;
-    const nextCost = Math.floor(baseCost * Math.pow(multiplier, level));
+    const nextCost = Math.floor(baseCost * Math.pow(multiplier, level - 1));
     totalRequiredForNext += nextCost;
     
     // Safety guard against infinite loops in extreme edge cases
