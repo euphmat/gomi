@@ -103,10 +103,10 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   
   let demonPowerMult = 1;
   if (p.hp && p.hp.current / (p.stats?.hp || p.hp.max) <= 0.5) {
-    if (p.jobSkills) {
-      const dpSkill = p.jobSkills.find(s => s.id === 'demon_power');
-      if (dpSkill && dpSkill.level > 0 && dpSkill.levelConfig) {
-        demonPowerMult = dpSkill.levelConfig.atkMatkMultiplier;
+    if (p._skillCache && p._skillCache.has('demon_power')) {
+      const dpInfo = p._skillCache.get('demon_power');
+      if (dpInfo && dpInfo.level > 0 && dpInfo.levelConfig) {
+        demonPowerMult = dpInfo.levelConfig.atkMatkMultiplier || 1;
       }
     }
   }
