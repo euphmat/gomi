@@ -123,7 +123,7 @@ export async function executeSkip(dungeonId, isSpecial, numSkips) {
           const captureRate = Math.min(1.0, 0.0001 + Math.floor(currentKills / 100) * 0.0001);
           if (Math.random() < captureRate) {
             if (!ranchData[dungeonId][trackingId]) {
-              ranchData[dungeonId][trackingId] = { fedMaterials: 0, level: 0 };
+              ranchData[dungeonId][trackingId] = { fedMaterials: 0, level: 1 };
               captures.push({ id: trackingId, name: isLegendary ? `伝説の${enemyDef.name}` : enemyDef.name });
               stateNeedsSave = true;
             }

@@ -152,7 +152,7 @@ export const resultMethods = {
       
       // まだ仲間になっていない場合のみ
       if (!this.ranchData[dungeonId][saveId]) {
-        this.ranchData[dungeonId][saveId] = { fedMaterials: 0, level: 0 };
+        this.ranchData[dungeonId][saveId] = { fedMaterials: 0, level: 1 };
         this._pendingRanchSave = this.ranchData; // Deferred saving like other properties
         this._needsSave = true;
 

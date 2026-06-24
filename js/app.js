@@ -72,6 +72,24 @@ class App {
         }
       }
 
+      // ── Ranch Level 0 Correction Logic (Global) ──
+      const ranchData = await GameDB.getGameState('ranch_data');
+      if (ranchData) {
+        let ranchChanged = false;
+        for (const dId of Object.keys(ranchData)) {
+          for (const mId of Object.keys(ranchData[dId])) {
+            if (ranchData[dId][mId] && ranchData[dId][mId].level === 0) {
+              ranchData[dId][mId].level = 1;
+              ranchChanged = true;
+            }
+          }
+        }
+        if (ranchChanged) {
+          console.log('[App] Ranch Level Correction applied.');
+          await GameDB.setGameState('ranch_data', ranchData);
+        }
+      }
+
     } catch (error) {
       console.error('[App] Failed to open database:', error);
     }
