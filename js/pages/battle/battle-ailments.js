@@ -44,26 +44,40 @@ export const ailmentMethods = {
     if (this.isStopped) return;
     if (entity.isDead) return;
     damage = Math.max(1, damage);
-    if (entity.hp) {
-      entity.hp.current -= damage;
-      if (entity.hp.current <= 0) {
-         entity.hp.current = 0;
-         entity.isDead = true;
-         this.clearEntityStatuses(entity);
-         this.lastKilledBy = {
-           monsterId: 'ailment', monsterName: ailmentName, monsterImage: '', actionName: ailmentName
-         };
-      }
-    } else {
-      entity.currentHp -= damage;
-      if (entity.currentHp <= 0) {
-         entity.currentHp = 0;
-         entity.isDead = true;
-         this.clearEntityStatuses(entity);
-         this.processEnemyDeath(entity);
+    
+    let originalDamage = damage;
+    if (ailmentName === 'CURSE' && entity._barrierHp && entity._barrierHp > 0) {
+      if (entity._barrierHp >= damage) {
+        entity._barrierHp -= damage;
+        damage = 0;
+      } else {
+        damage -= entity._barrierHp;
+        entity._barrierHp = 0;
       }
     }
-    this.showDamage(entity.elementId, damage, 'text-purple-400');
+
+    if (damage > 0) {
+      if (entity.hp) {
+        entity.hp.current -= damage;
+        if (entity.hp.current <= 0) {
+           entity.hp.current = 0;
+           entity.isDead = true;
+           this.clearEntityStatuses(entity);
+           this.lastKilledBy = {
+             monsterId: 'ailment', monsterName: ailmentName, monsterImage: '', actionName: ailmentName
+           };
+        }
+      } else {
+        entity.currentHp -= damage;
+        if (entity.currentHp <= 0) {
+           entity.currentHp = 0;
+           entity.isDead = true;
+           this.clearEntityStatuses(entity);
+           this.processEnemyDeath(entity);
+        }
+      }
+    }
+    this.showDamage(entity.elementId, originalDamage, 'text-purple-400');
   },
 
   executeConfusionTurn(entity, isParty) {
