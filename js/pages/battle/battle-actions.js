@@ -178,12 +178,15 @@ export const actionMethods = {
       for (const p of paladinsWithGuard) {
         const guardSkill = this._findSkill(p, 'auto_guard');
         if (guardSkill && guardSkill.level > 0 && guardSkill.levelConfig) {
-          if (p.equipment && p.equipment.sub && p.equipment.sub.type === 'shield') {
-            if (Math.random() * 100 < guardSkill.levelConfig.guardChance) {
-              defender = p;
-              options.isGuarded = true;
-              this.showActionName(p.elementId, 'オートガード', 'text-yellow-300', 'border-yellow-500/50');
-              break;
+          if (p.equipment && p.equipment.leftHand) {
+            const shield = this.equipMap && this.equipMap.get(p.equipment.leftHand);
+            if (shield) {
+              if (Math.random() * 100 < guardSkill.levelConfig.guardChance) {
+                defender = p;
+                options.isGuarded = true;
+                this.showActionName(p.elementId, 'オートガード', 'text-yellow-300', 'border-yellow-500/50');
+                break;
+              }
             }
           }
         }
