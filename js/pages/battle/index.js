@@ -440,73 +440,82 @@ class BattleManager {
     if (character.isDead) return;
     
     setTimeout(() => {
-      if (this.isStopped) return;
-      if (!this.isAutoBattle || this.activeCharacter !== character) return;
-      
-      // Gather all available skills
-      const usableSkills = [];
-      if (character._skillCache) {
-        for (const [skillId, cacheData] of character._skillCache.entries()) {
-          const { level, def, levelConfig } = cacheData;
-          if (level > 0 && def && levelConfig && def.type !== 'passive') {
-            const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
-            if (isAutoEnabled && character.mp.current >= levelConfig.mpCost) {
-              if (def.autoBattle && typeof def.autoBattle.check === 'function') {
-                usableSkills.push({
-                  id: skillId,
-                  def,
-                  levelConfig
-                });
+      try {
+        if (this.isStopped) return;
+        if (!this.isAutoBattle || this.activeCharacter !== character) return;
+        
+        // Gather all available skills
+        const usableSkills = [];
+        if (character._skillCache) {
+          for (const [skillId, cacheData] of character._skillCache.entries()) {
+            const { level, def, levelConfig } = cacheData;
+            if (level > 0 && def && levelConfig && def.type !== 'passive') {
+              const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
+              if (isAutoEnabled && character.mp.current >= levelConfig.mpCost) {
+                if (def.autoBattle && typeof def.autoBattle.check === 'function') {
+                  usableSkills.push({
+                    id: skillId,
+                    def,
+                    levelConfig
+                  });
+                }
               }
             }
           }
         }
-      }
 
-      const context = {
-        enemies: this.enemies,
-        party: this.party,
-        selectedEnemyTarget: this.selectedEnemyTarget
-      };
+        const context = {
+          enemies: this.enemies,
+          party: this.party,
+          selectedEnemyTarget: this.selectedEnemyTarget
+        };
 
-      let bestAction = {
-        type: 'attack',
-        score: 30,
-        target: context.selectedEnemyTarget || (this.enemies.find(e => !e.isDead) || null),
-        skill: null
-      };
+        let bestAction = {
+          type: 'attack',
+          score: 30,
+          target: context.selectedEnemyTarget || (this.enemies.find(e => !e.isDead) || null),
+          skill: null
+        };
 
-      for (const skill of usableSkills) {
-        const checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
-        if (checkResult) {
-          let target = checkResult;
-          let score = 50;
-          
-          if (typeof checkResult === 'object' && checkResult.score !== undefined) {
-             score = checkResult.score;
-             target = checkResult.target;
-          } else if (checkResult === true) {
-             target = context.selectedEnemyTarget || this.enemies.find(e => !e.isDead);
-          }
-
-          if (score > bestAction.score && target) {
-            bestAction = {
-              type: 'skill',
-              score,
-              target,
-              skill
-            };
+        for (const skill of usableSkills) {
+          const checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
+          if (checkResult) {
+            let score = 0;
+            let target = null;
+            if (typeof checkResult === 'object' && checkResult.score !== undefined) {
+              score = checkResult.score;
+              target = checkResult.target;
+            } else if (checkResult === true) {
+              target = context.selectedEnemyTarget || this.enemies.find(e => !e.isDead);
+            }
+            
+            if (score > bestAction.score && target) {
+              bestAction = {
+                type: 'skill',
+                score,
+                target,
+                skill
+              };
+            }
           }
         }
-      }
 
-      if (bestAction.type === 'skill' && bestAction.skill && bestAction.target) {
-        const prevTarget = this.selectedEnemyTarget;
-        this.selectedEnemyTarget = bestAction.target;
-        this.executeSkill(character, bestAction.skill.def, bestAction.skill.levelConfig, { autoTarget: bestAction.target });
-        this.selectedEnemyTarget = prevTarget;
-      } else if (bestAction.target) {
-        this.executeAttack(character, bestAction.target, true);
+        if (bestAction.type === 'skill' && bestAction.skill && bestAction.target) {
+          const prevTarget = this.selectedEnemyTarget;
+          this.selectedEnemyTarget = bestAction.target;
+          this.executeSkill(character, bestAction.skill.def, bestAction.skill.levelConfig, { autoTarget: bestAction.target });
+          this.selectedEnemyTarget = prevTarget;
+        } else if (bestAction.target) {
+          this.executeAttack(character, bestAction.target, true);
+        } else {
+          // Fallback if no target exists but battle hasn't ended yet
+          this.activeCharacter = null;
+          character.atb = 0;
+        }
+      } catch (err) {
+        console.error("AutoBattle execution error:", err);
+        this.activeCharacter = null;
+        character.atb = 0;
       }
     }, 500 / this.speedMult);
   }
@@ -596,7 +605,10 @@ class BattleManager {
 
         if (found.def && found.levelConfig) {
           const levelConfig = found.levelConfig;
-          if (this.activeCharacter.mp.current < levelConfig.mpCost) return;
+          if (this.activeCharacter.mp.current < levelConfig.mpCost) {
+            this.showDamage(this.activeCharacter.elementId, 'MP不足', 'text-blue-400');
+            return;
+          }
           this.executeSkill(this.activeCharacter, found.def, levelConfig);
         }
       });

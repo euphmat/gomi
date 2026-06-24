@@ -66,7 +66,11 @@ export const actionMethods = {
     }
 
     if (skillDef.execute) {
-      skillDef.execute(caster, levelConfig, this, options);
+      try {
+        skillDef.execute(caster, levelConfig, this, options);
+      } catch (err) {
+        console.error(`Skill Execution Error [${skillDef.id}]:`, err);
+      }
     }
     
 

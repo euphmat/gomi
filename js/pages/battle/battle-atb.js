@@ -51,12 +51,14 @@ export const atbMethods = {
     let totalSpd = 0;
     let entityCount = 0;
     this.party.forEach(p => { 
-      const spd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+      const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+      const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
       totalSpd += spd; 
       entityCount++; 
     });
     this.enemies.forEach(e => { 
-      const spd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+      const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+      const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
       totalSpd += spd; 
       entityCount++; 
     });
@@ -111,7 +113,8 @@ export const atbMethods = {
       
       this.party.forEach(p => {
         if (p.isDead) return;
-        const spd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+        const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+        const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
         const speedRatio = spd / avgSpd;
         p.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
         if (p.atb >= 1000) {
@@ -134,7 +137,8 @@ export const atbMethods = {
       
       this.enemies.forEach(e => {
         if (e.isDead) return;
-        const spd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+        const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+        const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
         const speedRatio = spd / avgSpd;
         e.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
         if (e.atb >= 1000) {

@@ -113,7 +113,6 @@ export const passiveMethods = {
       aliveParty.forEach(p => {
         if (p.stats && p.stats.spd) {
           p._passiveSpdBuffPercent = Math.max(p._passiveSpdBuffPercent || 0, openingActConfig.spdPercent);
-          p.stats.spd = Math.floor(p.stats.spd * (1 + openingActConfig.spdPercent / 100));
         }
         
         if (isFirstFloor) {

@@ -283,7 +283,7 @@ export const rendererMethods = {
         };
 
         const spdTotalPercent = (p._passiveSpdBuffPercent || 0);
-        const fSpd = formatNumber(p.stats.spd);
+        const fSpd = formatNumber(Math.floor(p.stats.spd * (1 + spdTotalPercent / 100)));
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
         applyStatTheme('spd', statVals.spd, statRows.spd, statIcons.spd, statLabels.spd, spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400', false);
 
