@@ -366,7 +366,7 @@ export function renderChangeJobTab() {
       const savedJob = char.jobLevels && char.jobLevels[job.id];
       
 
-      const savedLevel = savedJob ? savedJob.level : (isCurrent ? char.jobLevel : 1);
+      const savedLevel = isCurrent ? char.jobLevel : (savedJob ? savedJob.level : 1);
       const cost = job.changeCost !== undefined ? job.changeCost : 30000;
 
       let allReqsMet = true;
