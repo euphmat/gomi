@@ -120,21 +120,21 @@ export const rendererMethods = {
         iconContainer.classList.add('drop-shadow-md');
       }
 
-      const newHpWidth = `${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%`;
+      const hpPct = Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100);
+      const newHpWidth = `${hpPct}%`;
       if (hpBar.style.width !== newHpWidth) hpBar.style.width = newHpWidth;
+      if (hpBar.style.left !== '0px' && hpBar.style.left !== '0%') hpBar.style.left = '0';
       if (hpBar.style.transform) hpBar.style.transform = '';
 
       if (cache.hpBarrierBar) {
         const shieldPct = e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0;
-        const hpPct = Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100);
         if (shieldPct > 0) {
-          cache.hpBarrierBar.classList.remove('opacity-0');
-          cache.hpBarrierBar.classList.add('opacity-100');
+          cache.hpBarrierBar.style.opacity = '1';
           cache.hpBarrierBar.style.width = `${shieldPct}%`;
           cache.hpBarrierBar.style.left = `${Math.min(100 - shieldPct, hpPct)}%`;
         } else {
-          cache.hpBarrierBar.classList.remove('opacity-100');
-          cache.hpBarrierBar.classList.add('opacity-0');
+          cache.hpBarrierBar.style.opacity = '0';
+          cache.hpBarrierBar.style.width = '0%';
         }
       }
 
@@ -204,18 +204,18 @@ export const rendererMethods = {
         const hpPct = Math.min(100, (p.hp.current / Math.max(1, trueMaxHp)) * 100);
         const newHpWidth = `${hpPct}%`;
         if (hpBar.style.width !== newHpWidth) hpBar.style.width = newHpWidth;
+        if (hpBar.style.left !== '0px' && hpBar.style.left !== '0%') hpBar.style.left = '0';
         if (hpBar.style.transform) hpBar.style.transform = '';
 
         if (cache.hpBarrierBar) {
           const shieldPct = p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, trueMaxHp)) * 100) : 0;
           if (shieldPct > 0) {
-            cache.hpBarrierBar.classList.remove('opacity-0');
-            cache.hpBarrierBar.classList.add('opacity-100');
+            cache.hpBarrierBar.style.opacity = '1';
             cache.hpBarrierBar.style.width = `${shieldPct}%`;
             cache.hpBarrierBar.style.left = `${Math.min(100 - shieldPct, hpPct)}%`;
           } else {
-            cache.hpBarrierBar.classList.remove('opacity-100');
-            cache.hpBarrierBar.classList.add('opacity-0');
+            cache.hpBarrierBar.style.opacity = '0';
+            cache.hpBarrierBar.style.width = '0%';
           }
         }
 
