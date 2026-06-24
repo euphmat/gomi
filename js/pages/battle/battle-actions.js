@@ -37,7 +37,12 @@ export const actionMethods = {
 
   executeSkill(caster, skillDef, levelConfig, options = {}) {
     if (this.isStopped) return;
-    if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) return;
+    if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) {
+      caster.atb = 0;
+      this.activeCharacter = null;
+      this.renderEntities();
+      return;
+    }
     if (!options.isDoubleAct && levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
       // this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
       caster.atb = 0;
@@ -83,8 +88,14 @@ export const actionMethods = {
             if (caster.hp !== undefined && !caster.isDead) {
               this.showActionName(caster.elementId, 'ダブルアクト', 'text-cyan-300', 'border-cyan-500/50');
               this.executeSkill(caster, skillDef, levelConfig, { isDoubleAct: true });
+            } else {
+              caster.atb = 0;
+              this.activeCharacter = null;
+              this.renderEntities();
+              this.checkBattleEnd();
             }
           }, 600 / this.speedMult);
+          return;
         }
       }
     }
