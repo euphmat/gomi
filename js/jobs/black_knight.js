@@ -540,7 +540,10 @@ export const black_knight = {
           let target = context.selectedEnemyTarget;
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
           
-          const targetHpRatio = target.hp.current / (target.stats?.hp || target.hp.max);
+          const tHp = target.hp !== undefined ? target.hp.current : target.currentHp;
+          const tMaxHp = target.hp !== undefined ? (target.stats?.hp || target.hp.max) : target.maxHp;
+          const targetHpRatio = tHp / tMaxHp;
+          
           // HPが半分以下の敵には大きなフィニッシュボーナス
           const finishBonus = targetHpRatio < 0.5 ? 150 : 0;
           // 敵が単体の場合は単体高火力スキルとして優先
