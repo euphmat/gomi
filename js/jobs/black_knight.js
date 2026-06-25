@@ -656,12 +656,12 @@ export const black_knight = {
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           if (hpRatio < 0.2) return null;
           
-          // ATKダウン、DEFダウン、または呪いが入っていない敵がいるかチェック
+          // ATKダウンまたはDEFダウンが入っていない敵がいるかチェック
+          // (呪いは確率付与であり、耐性をもつ敵もいるため判定条件から外す)
           const noDebuff = aliveEnemies.some(e => {
             const hasAtkDown = e.atkDebuffTurns && e.atkDebuffTurns > 0;
             const hasDefDown = e.defDebuffTurns && e.defDebuffTurns > 0;
-            const hasCurse = e.activeAilment && e.activeAilment.type === 'curse';
-            return !hasAtkDown || !hasDefDown || !hasCurse;
+            return !hasAtkDown || !hasDefDown;
           });
           
           if (noDebuff) {
