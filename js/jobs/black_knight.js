@@ -619,24 +619,22 @@ export const black_knight = {
       id: 'curse_blade', name: 'カースブレード', icon: 'destruction',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 2, mpCost: 0, hpPercent: 12, atkReduce: 10, defReduce: 10, curseChance: 30, turns: 2 },
-        { level:  2, spCost: 2, mpCost: 0, hpPercent: 12, atkReduce: 13, defReduce: 13, curseChance: 35, turns: 2 },
-        { level:  3, spCost: 2, mpCost: 0, hpPercent: 12, atkReduce: 16, defReduce: 16, curseChance: 40, turns: 3 },
-        { level:  4, spCost: 3, mpCost: 0, hpPercent: 13, atkReduce: 18, defReduce: 18, curseChance: 45, turns: 3 },
-        { level:  5, spCost: 3, mpCost: 0, hpPercent: 13, atkReduce: 20, defReduce: 20, curseChance: 50, turns: 3 },
-        { level:  6, spCost: 3, mpCost: 0, hpPercent: 13, atkReduce: 22, defReduce: 22, curseChance: 55, turns: 4 },
-        { level:  7, spCost: 4, mpCost: 0, hpPercent: 14, atkReduce: 24, defReduce: 24, curseChance: 60, turns: 4 },
-        { level:  8, spCost: 4, mpCost: 0, hpPercent: 14, atkReduce: 26, defReduce: 26, curseChance: 65, turns: 4 },
-        { level:  9, spCost: 4, mpCost: 0, hpPercent: 15, atkReduce: 28, defReduce: 28, curseChance: 70, turns: 5 },
-        { level: 10, spCost: 6, mpCost: 0, hpPercent: 15, atkReduce: 30, defReduce: 30, curseChance: 80, turns: 5 }
+        { level:  1, spCost: 2, mpCost: 20, atkReduce: 10, defReduce: 10, curseChance: 30, turns: 2 },
+        { level:  2, spCost: 2, mpCost: 22, atkReduce: 13, defReduce: 13, curseChance: 35, turns: 2 },
+        { level:  3, spCost: 2, mpCost: 24, atkReduce: 16, defReduce: 16, curseChance: 40, turns: 3 },
+        { level:  4, spCost: 3, mpCost: 26, atkReduce: 18, defReduce: 18, curseChance: 45, turns: 3 },
+        { level:  5, spCost: 3, mpCost: 28, atkReduce: 20, defReduce: 20, curseChance: 50, turns: 3 },
+        { level:  6, spCost: 3, mpCost: 30, atkReduce: 22, defReduce: 22, curseChance: 55, turns: 4 },
+        { level:  7, spCost: 4, mpCost: 32, atkReduce: 24, defReduce: 24, curseChance: 60, turns: 4 },
+        { level:  8, spCost: 4, mpCost: 34, atkReduce: 26, defReduce: 26, curseChance: 65, turns: 4 },
+        { level:  9, spCost: 4, mpCost: 36, atkReduce: 28, defReduce: 28, curseChance: 70, turns: 5 },
+        { level: 10, spCost: 6, mpCost: 40, atkReduce: 30, defReduce: 30, curseChance: 80, turns: 5 }
       ],
-      getDescription: (lc) => `自身の HP を ${lc.hpPercent}% 消費し、敵全体の ATK/DEF を ${lc.turns} ターン ${lc.atkReduce}% 低下させ、${lc.curseChance}% の確率で呪いを付与する`,
+      getDescription: (lc) => `自身の MP を ${lc.mpCost} 消費し、敵全体の ATK/DEF を ${lc.turns} ターン ${lc.atkReduce}% 低下させ、${lc.curseChance}% の確率で呪いを付与する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
         if (targets.length === 0) return;
-
-        consumeHp(caster, levelConfig.hpPercent, battle);
 
         playSkillAnimation(caster, targets, 'curse_blade', (target) => {
           if (target.isDead) return;
@@ -665,24 +663,24 @@ export const black_knight = {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
-          // カースブレードはダメージを伴わずHP回復がないため、HPが危険域の時は控える
-          if (hpRatio < 0.25) return null;
           
-          // ATKダウン、DEFダウン、呪いのいずれかが入っていない敵がいるかチェック
-          const noDebuff = aliveEnemies.some(e => {
+          if (caster.mp.current < levelConfig.mpCost) return null;
+          
+          // デバフ状態の敵がいるかチェック
+          const hasDebuffedEnemy = aliveEnemies.some(e => {
             const hasAtkDown = e.atkDebuffTurns && e.atkDebuffTurns > 0;
             const hasDefDown = e.defDebuffTurns && e.defDebuffTurns > 0;
             const hasCurse = e.activeAilment && e.activeAilment.type === 'curse';
-            return !hasAtkDown || !hasDefDown || !hasCurse;
+            return hasAtkDown || hasDefDown || hasCurse;
           });
           
-          if (noDebuff) {
-            // 未付与のデバフや呪いがある場合、戦闘序盤の起点として最優先で撃つ
-            return { target: aliveEnemies[0], score: 450 + Math.random() * 50 };
+          // デバフ状態の敵がいるときは発動しない
+          if (hasDebuffedEnemy) {
+            return null;
           }
-          // デバフが十分に入っている場合は他の攻撃スキルを優先させる
-          return null;
+
+          // 未付与の場合は戦闘序盤の起点として最優先で撃つ
+          return { target: aliveEnemies[0], score: 450 + Math.random() * 50 };
         }
       }
     },
