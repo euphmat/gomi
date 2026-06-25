@@ -743,7 +743,7 @@ export const black_knight = {
         { level:  9, spCost: 3, mpCost: 0, drainPercent: 19 },
         { level: 10, spCost: 5, mpCost: 0, drainPercent: 20 }
       ],
-      getDescription: (lc) => `通常攻撃時、与えたダメージの ${lc.drainPercent}% を HP として吸収する`
+      getDescription: (lc) => `アクティブスキルでダメージを与えた時、与えたダメージの ${lc.drainPercent}% を HP として吸収する`
     },
     {
       id: 'stigma_of_atonement', name: '贖罪の烙印', icon: 'gavel', type: 'passive',

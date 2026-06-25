@@ -654,6 +654,7 @@ export const actionMethods = {
         }
         
         // --- Passive: MP Absorb ---
+        // --- Passive: MP Absorb ---
         if (!options.damageType && !isMagic) {
           const mpAbsorbSkill = this._findSkill(attacker, 'mp_absorb');
           if (mpAbsorbSkill && mpAbsorbSkill.level > 0 && mpAbsorbSkill.levelConfig) {
@@ -666,8 +667,10 @@ export const actionMethods = {
                  }, 400 / this.speedMult);
              }
           }
+        }
 
-          // --- Passive: Blood Thirst (血の渇望) ---
+        // --- Passive: Blood Thirst (血の渇望) ---
+        if (options.damageType === 'skill') {
           const bloodThirstSkill = this._findSkill(attacker, 'blood_thirst');
           if (bloodThirstSkill && bloodThirstSkill.level > 0 && bloodThirstSkill.levelConfig) {
             const hpRecover = Math.floor(damage * (bloodThirstSkill.levelConfig.drainPercent / 100));
