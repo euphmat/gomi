@@ -471,7 +471,7 @@ export const actionMethods = {
     }
 
     // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
-    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim) {
+    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
         const rect = defenderEl.getBoundingClientRect();
@@ -833,7 +833,7 @@ export const actionMethods = {
         entity.hp.current = Math.min(entity.stats?.hp || entity.hp.max, entity.hp.current + entity._regenHp);
         this.showDamage(entity.elementId, `+${entity._regenHp}`, 'text-green-400');
         
-        if (localStorage.getItem('disableBattleAnimations') !== 'true') {
+        if (localStorage.getItem('disableBattleAnimations') !== 'true' && !document.hidden) {
           const el = document.getElementById(entity.elementId);
           if (el) {
             const rect = el.getBoundingClientRect();
