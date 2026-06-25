@@ -248,28 +248,28 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
   // ─── Curse Blade ─────────────────────────────────────────────
   } else if (type === 'curse_blade') {
-    // Caster dark aura charge
-    const darkAura = document.createElement('div');
-    darkAura.style.position = 'fixed';
-    darkAura.style.left = `${cx - 70}px`;
-    darkAura.style.top = `${cy - 70}px`;
-    darkAura.style.width = '140px';
-    darkAura.style.height = '140px';
-    darkAura.style.borderRadius = '50%';
-    darkAura.style.background = 'radial-gradient(circle, rgba(88,28,135,0.6), rgba(30,10,60,0.3), transparent)';
-    darkAura.style.boxShadow = '0 0 40px rgba(88,28,135,0.5)';
-    darkAura.style.zIndex = '9997';
-    darkAura.style.pointerEvents = 'none';
-    (document.getElementById('battle-effects-layer') || document.body).appendChild(darkAura);
+    // 詠唱者の暗黒オーラ（溜め）
+    const darkFlash = document.createElement('div');
+    darkFlash.style.position = 'fixed';
+    darkFlash.style.left = `${cx - 60}px`;
+    darkFlash.style.top = `${cy - 60}px`;
+    darkFlash.style.width = '120px';
+    darkFlash.style.height = '120px';
+    darkFlash.style.borderRadius = '50%';
+    darkFlash.style.background = 'radial-gradient(circle, rgba(147,51,234,0.8), rgba(88,28,135,0.4), transparent)';
+    darkFlash.style.boxShadow = '0 0 20px #9333ea';
+    darkFlash.style.zIndex = '9997';
+    darkFlash.style.pointerEvents = 'none';
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(darkFlash);
 
-    const darkAuraAnim = darkAura.animate([
-      { transform: 'scale(0) rotate(0deg)', opacity: 0 },
-      { transform: 'scale(1.2) rotate(180deg)', opacity: 1, offset: 0.4 },
-      { transform: 'scale(0.8) rotate(360deg)', opacity: 0.5 }
-    ], { duration: 600 / speedMult, easing: 'ease-in-out' });
-    darkAuraAnim.onfinish = () => darkAura.remove();
+    const flashAnim = darkFlash.animate([
+      { transform: 'scale(0.5)', opacity: 1 },
+      { transform: 'scale(1.5)', opacity: 0 }
+    ], { duration: 300 / speedMult, easing: 'ease-out' });
+    flashAnim.onfinish = () => darkFlash.remove();
 
     targets.forEach((target, index) => {
+      // 対象ごとにタイミングを少しずらして「薙ぎ払い」感を出す
       setTimeout(() => {
         const targetEl = document.getElementById(target.elementId);
         if (!targetEl) { if (onImpact) onImpact(target, index); return; }
@@ -277,57 +277,58 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         const tx = targetRect.left + targetRect.width / 2;
         const ty = targetRect.top + targetRect.height / 2;
 
-        // Cursed rune circle under target
-        const rune = document.createElement('div');
-        rune.style.position = 'fixed';
-        rune.style.left = `${tx - 35}px`;
-        rune.style.top = `${ty + 5}px`;
-        rune.style.width = '70px';
-        rune.style.height = '70px';
-        rune.style.border = '2px dashed #a855f7';
-        rune.style.borderRadius = '50%';
-        rune.style.boxShadow = '0 0 12px #a855f7, inset 0 0 12px rgba(168,85,247,0.3)';
-        rune.style.transform = 'rotateX(60deg)';
-        rune.style.zIndex = '9997';
-        rune.style.pointerEvents = 'none';
-        (document.getElementById('battle-effects-layer') || document.body).appendChild(rune);
+        // 闇の斬撃（巨大な横薙ぎ）
+        const sweep = document.createElement('div');
+        sweep.style.position = 'fixed';
+        sweep.style.left = `${tx - 150}px`; // 幅広の斬撃
+        sweep.style.top = `${ty - 10}px`;
+        sweep.style.width = '300px';
+        sweep.style.height = '20px';
+        sweep.style.background = 'linear-gradient(to right, transparent, #4c1d95, #a855f7, #d8b4fe, #a855f7, #4c1d95, transparent)';
+        sweep.style.boxShadow = '0 0 15px #a855f7, 0 0 30px #581c87';
+        sweep.style.borderRadius = '50%'; // 曲線的なエフェクトに
+        sweep.style.zIndex = '9999';
+        sweep.style.pointerEvents = 'none';
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(sweep);
 
-        const runeAnim = rune.animate([
-          { transform: 'rotateX(60deg) rotateZ(0deg) scale(0)', opacity: 0 },
-          { transform: 'rotateX(60deg) rotateZ(180deg) scale(1)', opacity: 1, offset: 0.3 },
-          { transform: 'rotateX(60deg) rotateZ(540deg) scale(1.2)', opacity: 0 }
-        ], { duration: 800 / speedMult, easing: 'ease-in-out' });
-        runeAnim.onfinish = () => rune.remove();
+        // 左から右へ振り抜くようなアニメーション
+        const sweepAnim = sweep.animate([
+          { transform: 'translateX(-60px) rotate(-10deg) scaleX(0.2) scaleY(0.5)', opacity: 0 },
+          { transform: 'translateX(0px) rotate(-5deg) scaleX(1.2) scaleY(1.5)', opacity: 1, offset: 0.3 },
+          { transform: 'translateX(60px) rotate(0deg) scaleX(1.5) scaleY(0.2)', opacity: 0 }
+        ], { duration: 350 / speedMult, easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)' });
+        sweepAnim.onfinish = () => sweep.remove();
 
-        // Dark energy tendrils rising from rune
-        for (let t = 0; t < 4; t++) {
-          setTimeout(() => {
-            const tendril = document.createElement('div');
-            tendril.style.position = 'fixed';
-            tendril.style.left = `${tx - 3 + (Math.random() * 30 - 15)}px`;
-            tendril.style.top = `${ty + 20}px`;
-            tendril.style.width = '6px';
-            tendril.style.height = '30px';
-            tendril.style.background = 'linear-gradient(to top, #581c87, #a855f7, transparent)';
-            tendril.style.borderRadius = '3px';
-            tendril.style.boxShadow = '0 0 8px #a855f7';
-            tendril.style.zIndex = '9998';
-            tendril.style.pointerEvents = 'none';
-            (document.getElementById('battle-effects-layer') || document.body).appendChild(tendril);
+        // 斬撃のインパクト火花
+        for (let s = 0; s < 4; s++) {
+          const spark = document.createElement('div');
+          spark.style.position = 'fixed';
+          spark.style.left = `${tx - 3}px`;
+          spark.style.top = `${ty - 3}px`;
+          spark.style.width = '6px';
+          spark.style.height = '6px';
+          spark.style.backgroundColor = '#d8b4fe';
+          spark.style.boxShadow = '0 0 8px #a855f7';
+          spark.style.borderRadius = '50%';
+          spark.style.zIndex = '9999';
+          spark.style.pointerEvents = 'none';
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(spark);
 
-            const tendrilAnim = tendril.animate([
-              { transform: 'translateY(0) scaleY(0)', opacity: 0 },
-              { transform: 'translateY(-30px) scaleY(1)', opacity: 1, offset: 0.4 },
-              { transform: 'translateY(-60px) scaleY(0.5)', opacity: 0 }
-            ], { duration: 500 / speedMult, easing: 'ease-out' });
-            tendrilAnim.onfinish = () => tendril.remove();
-          }, t * 60 / speedMult);
+          const angle = (Math.PI * 2 / 4) * s + Math.random() * 0.5;
+          const dist = 30 + Math.random() * 40;
+          const sparkAnim = spark.animate([
+            { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+            { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
+          ], { duration: 300 / speedMult, easing: 'ease-out' });
+          sparkAnim.onfinish = () => spark.remove();
         }
 
+        // アニメーションの一番太くなるタイミング(offset:0.3付近)でダメージ判定を発生させる
         setTimeout(() => {
           if (onImpact) onImpact(target, index);
-        }, 400 / speedMult);
-      }, (400 + index * 80) / speedMult);
+        }, 100 / speedMult);
+
+      }, (150 + index * 80) / speedMult); // 詠唱開始から150ms後に順次斬撃開始
     });
 
   // ─── Hell Gate ───────────────────────────────────────────────
