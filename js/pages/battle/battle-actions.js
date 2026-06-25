@@ -767,9 +767,7 @@ export const actionMethods = {
       }
       const recoil = Math.max(1, Math.floor(damage * recoilMultiplier));
       if (recoil > 0) {
-        setTimeout(() => {
-          this.takeAilmentDamage(attacker, recoil, 'CURSE');
-        }, 500 / this.speedMult);
+        this.takeAilmentDamage(attacker, recoil, 'CURSE');
       }
     }
 
