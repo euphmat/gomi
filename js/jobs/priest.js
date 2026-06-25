@@ -275,18 +275,18 @@ export const priest = {
       id: 'raise', name: 'レイズ', icon: 'settings_backup_restore',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 2, mpCost: 20, reviveHp: 10 },
-        { level:  2, spCost: 2, mpCost: 24, reviveHp: 20 },
-        { level:  3, spCost: 2, mpCost: 28, reviveHp: 30 },
-        { level:  4, spCost: 3, mpCost: 32, reviveHp: 40 },
-        { level:  5, spCost: 3, mpCost: 36, reviveHp: 50 },
-        { level:  6, spCost: 3, mpCost: 40, reviveHp: 65 },
-        { level:  7, spCost: 4, mpCost: 44, reviveHp: 80 },
-        { level:  8, spCost: 4, mpCost: 48, reviveHp: 100 },
-        { level:  9, spCost: 4, mpCost: 52, reviveHp: 120 },
-        { level: 10, spCost: 5, mpCost: 60, reviveHp: 150 }
+        { level:  1, spCost: 2, mpCost: 20, revivePercent: 10 },
+        { level:  2, spCost: 2, mpCost: 24, revivePercent: 14 },
+        { level:  3, spCost: 2, mpCost: 28, revivePercent: 18 },
+        { level:  4, spCost: 3, mpCost: 32, revivePercent: 22 },
+        { level:  5, spCost: 3, mpCost: 36, revivePercent: 26 },
+        { level:  6, spCost: 3, mpCost: 40, revivePercent: 31 },
+        { level:  7, spCost: 4, mpCost: 44, revivePercent: 35 },
+        { level:  8, spCost: 4, mpCost: 48, revivePercent: 40 },
+        { level:  9, spCost: 4, mpCost: 52, revivePercent: 45 },
+        { level: 10, spCost: 5, mpCost: 60, revivePercent: 50 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、戦闘不能の味方単体を HP ${lc.reviveHp} で蘇生する`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、戦闘不能の味方単体を HP ${lc.revivePercent}% で蘇生する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.party;
@@ -303,9 +303,11 @@ export const priest = {
         playSkillAnimation(caster, [target], 'raise', () => {
           target.isDead = false;
           if (target.hp !== undefined) {
-            target.hp.current = Math.min(target.stats?.hp || target.hp.max, levelConfig.reviveHp);
+            const maxHp = target.stats?.hp || target.hp.max;
+            target.hp.current = Math.max(1, Math.floor(maxHp * (levelConfig.revivePercent / 100)));
           } else {
-            target.currentHp = Math.min(target.stats?.hp || target.maxHp, levelConfig.reviveHp);
+            const maxHp = target.stats?.hp || target.maxHp;
+            target.currentHp = Math.max(1, Math.floor(maxHp * (levelConfig.revivePercent / 100)));
           }
           target.atb = 0; // Reset ATB on revive just in case
           battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
