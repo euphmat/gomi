@@ -615,31 +615,45 @@ export const black_knight = {
       id: 'curse_blade', name: 'カースブレード', icon: 'destruction',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 2, mpCost: 20, atkReduce: 10, defReduce: 10, curseChance: 30, turns: 2 },
-        { level:  2, spCost: 2, mpCost: 22, atkReduce: 13, defReduce: 13, curseChance: 35, turns: 2 },
-        { level:  3, spCost: 2, mpCost: 24, atkReduce: 16, defReduce: 16, curseChance: 40, turns: 3 },
-        { level:  4, spCost: 3, mpCost: 26, atkReduce: 18, defReduce: 18, curseChance: 45, turns: 3 },
-        { level:  5, spCost: 3, mpCost: 28, atkReduce: 20, defReduce: 20, curseChance: 50, turns: 3 },
-        { level:  6, spCost: 3, mpCost: 30, atkReduce: 22, defReduce: 22, curseChance: 55, turns: 4 },
-        { level:  7, spCost: 4, mpCost: 32, atkReduce: 24, defReduce: 24, curseChance: 60, turns: 4 },
-        { level:  8, spCost: 4, mpCost: 34, atkReduce: 26, defReduce: 26, curseChance: 65, turns: 4 },
-        { level:  9, spCost: 4, mpCost: 36, atkReduce: 28, defReduce: 28, curseChance: 70, turns: 5 },
-        { level: 10, spCost: 6, mpCost: 40, atkReduce: 30, defReduce: 30, curseChance: 80, turns: 5 }
+        { level:  1, spCost: 2, mpCost: 20, atkReduce: 10, defReduce: 10, curseChance: 30, turns: 2, multiplier: 0.5 },
+        { level:  2, spCost: 2, mpCost: 22, atkReduce: 13, defReduce: 13, curseChance: 35, turns: 2, multiplier: 0.5 },
+        { level:  3, spCost: 2, mpCost: 24, atkReduce: 16, defReduce: 16, curseChance: 40, turns: 3, multiplier: 0.6 },
+        { level:  4, spCost: 3, mpCost: 26, atkReduce: 18, defReduce: 18, curseChance: 45, turns: 3, multiplier: 0.6 },
+        { level:  5, spCost: 3, mpCost: 28, atkReduce: 20, defReduce: 20, curseChance: 50, turns: 3, multiplier: 0.7 },
+        { level:  6, spCost: 3, mpCost: 30, atkReduce: 22, defReduce: 22, curseChance: 55, turns: 4, multiplier: 0.7 },
+        { level:  7, spCost: 4, mpCost: 32, atkReduce: 24, defReduce: 24, curseChance: 60, turns: 4, multiplier: 0.8 },
+        { level:  8, spCost: 4, mpCost: 34, atkReduce: 26, defReduce: 26, curseChance: 65, turns: 4, multiplier: 0.8 },
+        { level:  9, spCost: 4, mpCost: 36, atkReduce: 28, defReduce: 28, curseChance: 70, turns: 5, multiplier: 0.9 },
+        { level: 10, spCost: 6, mpCost: 40, atkReduce: 30, defReduce: 30, curseChance: 80, turns: 5, multiplier: 1.0 }
       ],
-      getDescription: (lc) => `自身の MP を ${lc.mpCost} 消費し、敵全体の ATK/DEF を ${lc.turns} ターン ${lc.atkReduce}% 低下させ、${lc.curseChance}% の確率で呪いを付与する`,
+      getDescription: (lc) => `自身の MP を ${lc.mpCost} 消費し、敵全体に ${lc.multiplier.toFixed(1)} 倍のダメージを与え、ATK/DEF を ${lc.turns} ターン ${lc.atkReduce}% 低下させ、${lc.curseChance}% の確率で呪いを付与する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         const targets = battle.enemies.filter(e => !e.isDead);
         if (targets.length === 0) return;
 
-        playSkillAnimation(caster, targets, 'curse_blade', (target) => {
+        playSkillAnimation(caster, targets, 'curse_blade', (target, index) => {
           if (target.isDead) return;
+
+          // ダメージ処理を追加
+          battle.executeAttack(caster, target, true, {
+            statDependency: 'ATK',
+            actionName: '',
+            damageMultiplier: levelConfig.multiplier,
+            damageType: 'skill',
+            element: 'dark',
+            hideActionName: true,
+            skipAtbReset: index > 0,
+            isAoEProcessed: true
+          });
 
           // ATK debuff
           if (!target.originalAtk) target.originalAtk = target.stats.atk;
           target.stats.atk = Math.floor(target.originalAtk * (1 - levelConfig.atkReduce / 100));
           target.atkDebuffTurns = levelConfig.turns;
-          battle.showDamage(target.elementId, 'ATK DOWN', 'text-blue-500');
+          setTimeout(() => {
+            battle.showDamage(target.elementId, 'ATK DOWN', 'text-blue-500');
+          }, 300 / (battle.speedMult || 1));
 
           // DEF debuff
           if (!target.originalDef) target.originalDef = target.stats.def;
@@ -647,7 +661,7 @@ export const black_knight = {
           target.defDebuffTurns = levelConfig.turns;
           setTimeout(() => {
             battle.showDamage(target.elementId, 'DEF DOWN', 'text-cyan-500');
-          }, 300 / (battle.speedMult || 1));
+          }, 600 / (battle.speedMult || 1));
 
           // Curse ailment
           if (!target.activeAilment && Math.random() * 100 < levelConfig.curseChance) {
@@ -761,7 +775,7 @@ export const black_knight = {
         { level:  9, spCost: 3, mpCost: 0, drainPercent: 19 },
         { level: 10, spCost: 5, mpCost: 0, drainPercent: 20 }
       ],
-      getDescription: (lc) => `アクティブスキルでダメージを与えた時、与えたダメージの ${lc.drainPercent}% を HP として吸収する`
+      getDescription: (lc) => `通常攻撃やアクティブスキルでダメージを与えた時、与えたダメージの ${lc.drainPercent}% を HP として吸収する`
     },
     {
       id: 'stigma_of_atonement', name: '贖罪の烙印', icon: 'gavel', type: 'passive',

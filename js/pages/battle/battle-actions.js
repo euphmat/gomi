@@ -670,7 +670,7 @@ export const actionMethods = {
         }
 
         // --- Passive: Blood Thirst (血の渇望) ---
-        if (options.damageType === 'skill') {
+        if (options.damageType === 'skill' || !options.damageType) {
           const bloodThirstSkill = this._findSkill(attacker, 'blood_thirst');
           if (bloodThirstSkill && bloodThirstSkill.level > 0 && bloodThirstSkill.levelConfig) {
             const hpRecover = Math.floor(damage * (bloodThirstSkill.levelConfig.drainPercent / 100));
