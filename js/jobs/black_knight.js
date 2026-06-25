@@ -500,25 +500,23 @@ export const black_knight = {
       id: 'blood_saber', name: 'ブラッドセイバー', icon: 'bloodtype', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, hpPercent: 15, multiplier: 2.0 },
-        { level:  2, spCost: 1, mpCost: 0, hpPercent: 15, multiplier: 2.2 },
-        { level:  3, spCost: 1, mpCost: 0, hpPercent: 15, multiplier: 2.4 },
-        { level:  4, spCost: 2, mpCost: 0, hpPercent: 16, multiplier: 2.6 },
-        { level:  5, spCost: 2, mpCost: 0, hpPercent: 16, multiplier: 2.8 },
-        { level:  6, spCost: 2, mpCost: 0, hpPercent: 17, multiplier: 3.0 },
-        { level:  7, spCost: 3, mpCost: 0, hpPercent: 17, multiplier: 3.1 },
-        { level:  8, spCost: 3, mpCost: 0, hpPercent: 18, multiplier: 3.2 },
-        { level:  9, spCost: 3, mpCost: 0, hpPercent: 19, multiplier: 3.3 },
-        { level: 10, spCost: 5, mpCost: 0, hpPercent: 20, multiplier: 3.5 }
+        { level:  1, spCost: 1, mpCost: 15, multiplier: 2.0 },
+        { level:  2, spCost: 1, mpCost: 17, multiplier: 2.2 },
+        { level:  3, spCost: 1, mpCost: 19, multiplier: 2.4 },
+        { level:  4, spCost: 2, mpCost: 21, multiplier: 2.6 },
+        { level:  5, spCost: 2, mpCost: 23, multiplier: 2.8 },
+        { level:  6, spCost: 2, mpCost: 25, multiplier: 3.0 },
+        { level:  7, spCost: 3, mpCost: 27, multiplier: 3.1 },
+        { level:  8, spCost: 3, mpCost: 29, multiplier: 3.2 },
+        { level:  9, spCost: 3, mpCost: 31, multiplier: 3.3 },
+        { level: 10, spCost: 5, mpCost: 35, multiplier: 3.5 }
       ],
-      getDescription: (lc) => `自身の HP を ${lc.hpPercent}% 消費し、敵単体に ${lc.multiplier.toFixed(1)} 倍の物理攻撃ダメージを与える`,
+      getDescription: (lc) => `自身の MP を ${lc.mpCost} 消費し、敵単体に ${lc.multiplier.toFixed(1)} 倍の物理攻撃ダメージを与える`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
         if (!target || target.isDead) target = battle.enemies.find(e => !e.isDead);
         if (!target) return;
-
-        consumeHp(caster, levelConfig.hpPercent, battle);
 
         playSkillAnimation(caster, [target], 'blood_saber', () => {
           if (target.isDead) return;
@@ -535,8 +533,7 @@ export const black_knight = {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
-          if (hpRatio < 0.2) return null; // HP が低すぎる場合は使わない
+          if (caster.mp.current < levelConfig.mpCost) return null;
           let target = context.selectedEnemyTarget;
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
           
@@ -558,22 +555,20 @@ export const black_knight = {
       id: 'shadow_lance', name: 'シャドウランス', icon: 'north', statDependency: 'ATK',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 0, hpPercent: 10, multiplier: 0.40, minHits: 3, maxHits: 5 },
-        { level:  2, spCost: 1, mpCost: 0, hpPercent: 10, multiplier: 0.45, minHits: 3, maxHits: 5 },
-        { level:  3, spCost: 1, mpCost: 0, hpPercent: 11, multiplier: 0.50, minHits: 3, maxHits: 6 },
-        { level:  4, spCost: 2, mpCost: 0, hpPercent: 11, multiplier: 0.55, minHits: 4, maxHits: 7 },
-        { level:  5, spCost: 2, mpCost: 0, hpPercent: 12, multiplier: 0.60, minHits: 4, maxHits: 7 },
-        { level:  6, spCost: 2, mpCost: 0, hpPercent: 12, multiplier: 0.65, minHits: 4, maxHits: 8 },
-        { level:  7, spCost: 3, mpCost: 0, hpPercent: 13, multiplier: 0.70, minHits: 5, maxHits: 9 },
-        { level:  8, spCost: 3, mpCost: 0, hpPercent: 13, multiplier: 0.75, minHits: 5, maxHits: 9 },
-        { level:  9, spCost: 3, mpCost: 0, hpPercent: 14, multiplier: 0.80, minHits: 6, maxHits: 10 },
-        { level: 10, spCost: 5, mpCost: 0, hpPercent: 15, multiplier: 0.80, minHits: 6, maxHits: 10 }
+        { level:  1, spCost: 1, mpCost: 10, multiplier: 0.40, minHits: 3, maxHits: 5 },
+        { level:  2, spCost: 1, mpCost: 12, multiplier: 0.45, minHits: 3, maxHits: 5 },
+        { level:  3, spCost: 1, mpCost: 14, multiplier: 0.50, minHits: 3, maxHits: 6 },
+        { level:  4, spCost: 2, mpCost: 16, multiplier: 0.55, minHits: 4, maxHits: 7 },
+        { level:  5, spCost: 2, mpCost: 18, multiplier: 0.60, minHits: 4, maxHits: 7 },
+        { level:  6, spCost: 2, mpCost: 20, multiplier: 0.65, minHits: 4, maxHits: 8 },
+        { level:  7, spCost: 3, mpCost: 22, multiplier: 0.70, minHits: 5, maxHits: 9 },
+        { level:  8, spCost: 3, mpCost: 24, multiplier: 0.75, minHits: 5, maxHits: 9 },
+        { level:  9, spCost: 3, mpCost: 26, multiplier: 0.80, minHits: 6, maxHits: 10 },
+        { level: 10, spCost: 5, mpCost: 30, multiplier: 0.80, minHits: 6, maxHits: 10 }
       ],
-      getDescription: (lc) => `自身の HP を ${lc.hpPercent}% 消費し、ランダムな敵に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を ${lc.minHits}～${lc.maxHits} 回行う`,
+      getDescription: (lc) => `自身の MP を ${lc.mpCost} 消費し、ランダムな敵に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を ${lc.minHits}～${lc.maxHits} 回行う`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
-
-        consumeHp(caster, levelConfig.hpPercent, battle);
 
         const hits = Math.floor(Math.random() * (levelConfig.maxHits - levelConfig.minHits + 1)) + levelConfig.minHits;
         for (let i = 0; i < hits; i++) {
@@ -600,8 +595,9 @@ export const black_knight = {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
+          if (caster.mp.current < levelConfig.mpCost) return null;
+          
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
-          if (hpRatio < 0.15) return null;
           const avgHits = (levelConfig.minHits + levelConfig.maxHits) / 2;
           
           // 血の渇望(Blood Thirst)による回復量が多いため、自身のHPが低い時は優先的に使用して回復を狙う
