@@ -541,10 +541,13 @@ export const black_knight = {
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
           
           const targetHpRatio = target.hp.current / (target.stats?.hp || target.hp.max);
-          const finishBonus = targetHpRatio < 0.5 ? 50 : 0;
+          // HPが半分以下の敵には大きなフィニッシュボーナス
+          const finishBonus = targetHpRatio < 0.5 ? 150 : 0;
+          // 敵が単体の場合は単体高火力スキルとして優先
+          const singleTargetBonus = aliveEnemies.length === 1 ? 100 : 0;
           const randomFactor = Math.random() * 40;
           
-          return { target, score: 50 * levelConfig.multiplier + finishBonus + randomFactor };
+          return { target, score: 70 * levelConfig.multiplier + finishBonus + singleTargetBonus + randomFactor };
         }
       }
     },
@@ -597,8 +600,14 @@ export const black_knight = {
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           if (hpRatio < 0.15) return null;
           const avgHits = (levelConfig.minHits + levelConfig.maxHits) / 2;
+          
+          // 血の渇望(Blood Thirst)による回復量が多いため、自身のHPが低い時は優先的に使用して回復を狙う
+          const lowHpBonus = hpRatio < 0.4 ? 150 : 0;
+          // 敵が複数の場合はヒットが分散するが、全体的に削るのにも有効
+          const groupBonus = aliveEnemies.length >= 2 ? 50 : 0;
           const randomFactor = Math.random() * 40;
-          const score = 40 * levelConfig.multiplier * avgHits + randomFactor;
+          
+          const score = 45 * levelConfig.multiplier * avgHits + lowHpBonus + groupBonus + randomFactor;
           return { target: aliveEnemies[0], score };
         }
       }
@@ -654,21 +663,22 @@ export const black_knight = {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
-          if (hpRatio < 0.2) return null;
+          // カースブレードはダメージを伴わずHP回復がないため、HPが危険域の時は控える
+          if (hpRatio < 0.25) return null;
           
-          // ATKダウンまたはDEFダウンが入っていない敵がいるかチェック
-          // (呪いは確率付与であり、耐性をもつ敵もいるため判定条件から外す)
+          // ATKダウン、DEFダウン、呪いのいずれかが入っていない敵がいるかチェック
           const noDebuff = aliveEnemies.some(e => {
             const hasAtkDown = e.atkDebuffTurns && e.atkDebuffTurns > 0;
             const hasDefDown = e.defDebuffTurns && e.defDebuffTurns > 0;
-            return !hasAtkDown || !hasDefDown;
+            const hasCurse = e.activeAilment && e.activeAilment.type === 'curse';
+            return !hasAtkDown || !hasDefDown || !hasCurse;
           });
           
           if (noDebuff) {
-            // 未付与のデバフがある場合、最優先(500)で撃つ
-            return { target: aliveEnemies[0], score: 500 };
+            // 未付与のデバフや呪いがある場合、戦闘序盤の起点として最優先で撃つ
+            return { target: aliveEnemies[0], score: 450 + Math.random() * 50 };
           }
-          // デバフが全て入っている場合は撃たない
+          // デバフが十分に入っている場合は他の攻撃スキルを優先させる
           return null;
         }
       }
@@ -717,12 +727,23 @@ export const black_knight = {
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           if (hpRatio < 0.25) return null;
           if (caster.mp.current < levelConfig.mpCost) return null;
+          
           let totalScore = 0;
           for (const enemy of aliveEnemies) {
             const resist = enemy.stats?.elementResist?.dark || 0;
-            totalScore += 35 * levelConfig.multiplier * ((100 - resist) / 100);
+            totalScore += 40 * levelConfig.multiplier * ((100 - resist) / 100);
           }
-          if (totalScore > 60) return { target: aliveEnemies[0], score: totalScore };
+          
+          // 敵が多いほど強力なAoEとして高評価
+          if (aliveEnemies.length >= 3) totalScore += 150;
+          else if (aliveEnemies.length === 2) totalScore += 50;
+
+          // 鬼神の力(HP50%以下で発動)を狙うため、HPに余裕がある時は積極的にHPを消費するスキルとして評価を上げる
+          if (hpRatio > 0.6) {
+            totalScore += 100;
+          }
+
+          if (totalScore > 80) return { target: aliveEnemies[0], score: totalScore + Math.random() * 30 };
           return null;
         }
       }
