@@ -103,5 +103,15 @@ export const ACCESSORIES = [
   { id: 'wind_god_talisman'        , name: '風神の護符'            , stats: { matk: 440, spd: 220 }, elements: { thunder: 20 }, recipe: { price: 270000, materials: [{ id: 'mat_storm_feather', amount: 40 }, { id: 'mat_thunder_bird_beak', amount: 10 }] } },
   { id: 'knight_vow'               , name: '騎士の誓い'            , stats: { matk: 450, spd: 225 }, elements:    { dark: 20 }, recipe: { price: 275000, materials: [{ id: 'mat_spirit_knight_armor', amount: 40 }, { id: 'mat_swan_song_blade', amount: 10 }] } },
   { id: 'eternal_dragon_scale'     , name: '悠久の竜鱗'            , stats: { matk: 460, spd: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
-  { id: 'genesis_crown'            , name: '創世の宝冠'            , stats: { matk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } }
+  { id: 'genesis_crown'            , name: '創世の宝冠'            , stats: { matk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
+
+  // 神秘の神殿
+  { id: 'aether_ring'          , name: 'エーテルリング'      , stats: { matk: 480, spd: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_aether_ore', amount: 40 }, { id: 'mat_translucent_marble', amount: 10 }] } },
+  { id: 'aegis_charm'          , name: 'アイギスチャーム'    , stats: { matk: 485, spd: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_mossy_stone', amount: 40 }, { id: 'mat_aegis_shield_piece', amount: 10 }] } },
+  { id: 'rune_amulet'          , name: 'ルーンアミュレット'  , stats: { matk: 490, spd: 245 }, elements:    { fire: 20 }, recipe: { price: 295000, materials: [{ id: 'mat_glowing_rune_stone', amount: 40 }, { id: 'mat_ancient_priest_scroll', amount: 10 }] } },
+  { id: 'guardian_ring'        , name: 'ガーディアンリング'  , stats: { matk: 500, spd: 250 }, elements:    { dark: 20 }, recipe: { price: 300000, materials: [{ id: 'mat_obsidian_shard', amount: 40 }, { id: 'mat_guardian_eye', amount: 10 }] } },
+  { id: 'altar_pendant'        , name: '祭壇のペンダント'    , stats: { matk: 510, spd: 255 }, elements:   { earth: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_temple_pillar_fragment', amount: 40 }, { id: 'mat_altar_stone', amount: 10 }] } },
+  { id: 'prism_brooch'         , name: 'プリズムブローチ'    , stats: { matk: 515, spd: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_temple_crystal', amount: 40 }, { id: 'mat_crystallos_heart', amount: 10 }] } },
+  { id: 'machina_gear_ring'    , name: 'マキナギアリング'    , stats: { matk: 520, spd: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_four_armed_joint', amount: 10 }] } },
+  { id: 'sanctum_seal'         , name: '至聖所の印'          , stats: { matk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_sanctum_key_fragment', amount: 10 }] } }
 ].map(item => ({ ...item, slot: 'accessory', image: `./assets/accessory/${item.id}.webp` }));

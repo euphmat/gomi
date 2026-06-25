@@ -106,6 +106,15 @@ export const SHIELDS = [
   { id: 'swan_song_tower_shield'     , name: '絶唱のタワーシールド'  , stats: { def: 450, hp: 225 }, elements:    { dark: 20 }, recipe: { price: 275000, materials: [{ id: 'mat_spirit_knight_armor', amount: 40 }, { id: 'mat_swan_song_blade', amount: 10 }] } },
   { id: 'eternal_aegis'              , name: 'エターナルイージス'    , stats: { def: 460, hp: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'origin_guard'               , name: 'オリジンガード'        , stats: { def: 470, hp: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
+  // 神秘の神殿
+  { id: 'aether_shield'              , name: 'エーテルシールド'      , stats: { def: 480, hp: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_aether_ore', amount: 40 }, { id: 'mat_translucent_marble', amount: 10 }] } },
+  { id: 'aegis_shield'               , name: 'アイギスの大盾'        , stats: { def: 485, hp: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_mossy_stone', amount: 40 }, { id: 'mat_aegis_shield_piece', amount: 10 }] } },
+  { id: 'rune_buckler'               , name: 'ルーンバックラー'      , stats: { def: 490, hp: 245 }, elements:    { fire: 20 }, recipe: { price: 295000, materials: [{ id: 'mat_glowing_rune_stone', amount: 40 }, { id: 'mat_ancient_priest_scroll', amount: 10 }] } },
+  { id: 'guardian_shield'            , name: 'ガーディアンシールド'  , stats: { def: 500, hp: 250 }, elements:    { dark: 20 }, recipe: { price: 300000, materials: [{ id: 'mat_obsidian_shard', amount: 40 }, { id: 'mat_guardian_eye', amount: 10 }] } },
+  { id: 'basilica_wall'              , name: 'バシリカの防壁'        , stats: { def: 510, hp: 255 }, elements:   { earth: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_temple_pillar_fragment', amount: 40 }, { id: 'mat_altar_stone', amount: 10 }] } },
+  { id: 'crystallos_shield'          , name: 'クリスタロスシールド'  , stats: { def: 515, hp: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_temple_crystal', amount: 40 }, { id: 'mat_magic_reflect_prism', amount: 10 }] } },
+  { id: 'machina_defender'           , name: 'マキナディフェンダー'  , stats: { def: 520, hp: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_atlas_support_pillar', amount: 10 }] } },
+  { id: 'sanctum_tower_shield'       , name: 'サンクトゥムタワーシールド', stats: { def: 530, hp: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
 
 ].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));
 

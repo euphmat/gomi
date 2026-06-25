@@ -106,5 +106,15 @@ export const ARMORS = [
   { id: 'echo_dragon_sovereign_armor', name: '響竜の覇鎧'              , stats: { def: 460, mdef: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'genesis_divine_robe'        , name: '創世の神衣'              , stats: { def: 470, mdef: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
 
+  // 神秘の神殿
+  { id: 'colossus_mail'        , name: 'コロッサスメイル'    , stats: { def: 480, mdef: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_translucent_marble', amount: 40 }, { id: 'mat_colossus_core', amount: 10 }] } },
+  { id: 'aegis_armor'          , name: 'アイギスアーマー'    , stats: { def: 485, mdef: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_monolith_fragment', amount: 40 }, { id: 'mat_aegis_shield_piece', amount: 10 }] } },
+  { id: 'gigas_robe'           , name: 'ギガースローブ'      , stats: { def: 490, mdef: 245 }, elements:    { fire: 20 }, recipe: { price: 295000, materials: [{ id: 'mat_gigas_clay', amount: 40 }, { id: 'mat_ancient_priest_scroll', amount: 10 }] } },
+  { id: 'xenolith_mail'        , name: 'ゼノリスメイル'      , stats: { def: 500, mdef: 250 }, elements:    { dark: 20 }, recipe: { price: 300000, materials: [{ id: 'mat_xenolith_meteorite', amount: 40 }, { id: 'mat_guardian_eye', amount: 10 }] } },
+  { id: 'basilica_plate'       , name: 'バシリカプレート'    , stats: { def: 510, mdef: 255 }, elements:   { earth: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_altar_stone', amount: 40 }, { id: 'mat_basilica_foundation', amount: 10 }] } },
+  { id: 'crystallos_cloak'     , name: 'クリスタロスクローク', stats: { def: 515, mdef: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_magic_reflect_prism', amount: 40 }, { id: 'mat_crystallos_heart', amount: 10 }] } },
+  { id: 'atlas_armor'          , name: 'アトラスアーマー'    , stats: { def: 520, mdef: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_atlas_support_pillar', amount: 10 }] } },
+  { id: 'sanctum_plate'        , name: 'サンクトゥムプレート', stats: { def: 530, mdef: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
+
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));
 

@@ -104,4 +104,14 @@ export const WEAPONS = [
   { id: 'eternal_echo_sword'   , name: '悠久の響剣'          , stats: { atk: 460, spd: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'genesis_wand'         , name: 'ジェネシスワンド'    , stats: { atk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
 
+  // 神秘の神殿
+  { id: 'aether_blade'         , name: 'エーテルブレード'    , stats: { atk: 480, spd: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_aether_ore', amount: 40 }, { id: 'mat_translucent_marble', amount: 10 }] } },
+  { id: 'aegis_mace'           , name: 'アイギスメイス'      , stats: { atk: 485, spd: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_mossy_stone', amount: 40 }, { id: 'mat_monolith_fragment', amount: 10 }] } },
+  { id: 'rune_staff'           , name: 'ルーンスタッフ'      , stats: { atk: 490, spd: 245 }, elements:    { fire: 20 }, recipe: { price: 295000, materials: [{ id: 'mat_glowing_rune_stone', amount: 40 }, { id: 'mat_ancient_priest_scroll', amount: 10 }] } },
+  { id: 'xenolith_dagger'      , name: 'ゼノリスダガー'      , stats: { atk: 500, spd: 250 }, elements:    { dark: 20 }, recipe: { price: 300000, materials: [{ id: 'mat_obsidian_shard', amount: 40 }, { id: 'mat_xenolith_meteorite', amount: 10 }] } },
+  { id: 'basilica_hammer'      , name: 'バシリカハンマー'    , stats: { atk: 510, spd: 255 }, elements:   { earth: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_temple_pillar_fragment', amount: 40 }, { id: 'mat_basilica_foundation', amount: 10 }] } },
+  { id: 'crystallos_wand'      , name: 'クリスタロスワンド'  , stats: { atk: 515, spd: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_temple_crystal', amount: 40 }, { id: 'mat_magic_reflect_prism', amount: 10 }] } },
+  { id: 'machina_bow'          , name: 'マキナボウ'          , stats: { atk: 520, spd: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_four_armed_joint', amount: 10 }] } },
+  { id: 'sanctum_spear'        , name: 'サンクトゥムスピア'  , stats: { atk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
+
 ].map(item => ({ ...item, slot: 'rightHand', image: `./assets/weapon/${item.id}.webp` }));

@@ -63,6 +63,16 @@ export const MATERIALS = [
   { id: 'slime_king_devil_wing' , name: '悪魔王の翼膜'                    , sellPrice: 100 },
   { id: 'slime_king_devil_crown', name: '魔王の冠'                        , sellPrice: 500 },
 
+  // 黄金のスライム島
+  { id: 'mat_gold_slime_drop'      , name: '黄金の粘液'      , sellPrice: 1 },
+  { id: 'mat_pure_gold_fluid'      , name: '純金の体液'      , sellPrice: 1 },
+  { id: 'mat_golden_core'          , name: '黄金の核'        , sellPrice: 1 },
+  { id: 'mat_gold_king_jelly'      , name: '王者の黄金ゼリー', sellPrice: 1 },
+  { id: 'mat_gold_king_crown_shard', name: '黄金王の冠片'    , sellPrice: 1 },
+  { id: 'mat_royal_gold_core'      , name: '豪奢な王核'      , sellPrice: 1 },
+  { id: 'mat_gold_kaiser_fluid'    , name: '皇帝の黄金液'    , sellPrice: 1 },
+  { id: 'mat_kaiser_gold_crown'    , name: '皇帝の黄金冠'    , sellPrice: 1 },
+  { id: 'mat_emperor_gold_core'    , name: '帝王の神聖核'    , sellPrice: 1 },
 
   // 蜘蛛の洞窟
   { id: 'spider_cave_silk'      , name: 'ケイブスパイダーの糸'        , sellPrice: 1 },
@@ -252,14 +262,29 @@ export const MATERIALS = [
   { id: 'mat_creation_tear'        , name: '創造の涙'              , sellPrice: 1 },
   { id: 'mat_origin_melody_crystal', name: '始源の旋律結晶'        , sellPrice: 1 },
   
-  // 黄金のスライム島
-  { id: 'mat_gold_slime_drop'      , name: '黄金の粘液'      , sellPrice: 1 },
-  { id: 'mat_pure_gold_fluid'      , name: '純金の体液'      , sellPrice: 1 },
-  { id: 'mat_golden_core'          , name: '黄金の核'        , sellPrice: 1 },
-  { id: 'mat_gold_king_jelly'      , name: '王者の黄金ゼリー', sellPrice: 1 },
-  { id: 'mat_gold_king_crown_shard', name: '黄金王の冠片'    , sellPrice: 1 },
-  { id: 'mat_royal_gold_core'      , name: '豪奢な王核'      , sellPrice: 1 },
-  { id: 'mat_gold_kaiser_fluid'    , name: '皇帝の黄金液'    , sellPrice: 1 },
-  { id: 'mat_kaiser_gold_crown'    , name: '皇帝の黄金冠'    , sellPrice: 1 },
-  { id: 'mat_emperor_gold_core'    , name: '帝王の神聖核'    , sellPrice: 1 }
+  // 神秘の神殿
+  { id: 'mat_aether_ore'            , name: 'エーテル鉱石'          , sellPrice: 1 },
+  { id: 'mat_translucent_marble'    , name: '半透明の大理石'        , sellPrice: 1 },
+  { id: 'mat_colossus_core'         , name: '巨像の動力核'          , sellPrice: 1 },
+  { id: 'mat_mossy_stone'           , name: '苔生した岩片'          , sellPrice: 1 },
+  { id: 'mat_monolith_fragment'     , name: '一枚岩の欠片'          , sellPrice: 1 },
+  { id: 'mat_aegis_shield_piece'    , name: '神盾の破片'            , sellPrice: 1 },
+  { id: 'mat_gigas_clay'            , name: 'ギガースの土塊'        , sellPrice: 1 },
+  { id: 'mat_glowing_rune_stone'    , name: '発光するルーン石'      , sellPrice: 1 },
+  { id: 'mat_ancient_priest_scroll' , name: '古代神官の巻物'        , sellPrice: 1 },
+  { id: 'mat_obsidian_shard'        , name: '黒曜石の鋭片'          , sellPrice: 1 },
+  { id: 'mat_xenolith_meteorite'    , name: 'ゼノリス隕石'          , sellPrice: 1 },
+  { id: 'mat_guardian_eye'          , name: '守護者の黒眼'          , sellPrice: 1 },
+  { id: 'mat_temple_pillar_fragment', name: '神殿柱の破片'          , sellPrice: 1 },
+  { id: 'mat_altar_stone'           , name: '祭壇の石材'            , sellPrice: 1 },
+  { id: 'mat_basilica_foundation'   , name: '大聖堂の礎'            , sellPrice: 1 },
+  { id: 'mat_temple_crystal'        , name: '神殿の魔結晶'          , sellPrice: 1 },
+  { id: 'mat_magic_reflect_prism'   , name: '魔反射のプリズム'      , sellPrice: 1 },
+  { id: 'mat_crystallos_heart'      , name: 'クリスタロスの心核'    , sellPrice: 1 },
+  { id: 'mat_machina_gear'          , name: 'マキナの歯車'          , sellPrice: 1 },
+  { id: 'mat_four_armed_joint'      , name: '四腕の関節機構'        , sellPrice: 1 },
+  { id: 'mat_atlas_support_pillar'  , name: '天を支える支柱'        , sellPrice: 1 },
+  { id: 'mat_sacred_bronze'         , name: '神聖なる青銅'          , sellPrice: 1 },
+  { id: 'mat_talos_armor_plate'     , name: 'タロスの装甲板'        , sellPrice: 1 },
+  { id: 'mat_sanctum_key_fragment'  , name: '至聖所の鍵の欠片'      , sellPrice: 1 }
 ].map(item => ({ ...item, image: `./assets/material/${item.id}.webp` }));

@@ -131,7 +131,16 @@ export const DUNGEONS = [{
   theme: { color: '245, 158, 11', icon: 'account_balance' },
   isUnlocked: false,
 
-  floors: []
+  floors: [
+    { level: 1, monsters: [{ aether_colossus: 1, weight: 100 }] },
+    { level: 2, monsters: [{ gran_aegis: 1, weight: 100 }] },
+    { level: 3, monsters: [{ rune_gigas: 1, weight: 100 }] },
+    { level: 4, monsters: [{ xenolith_guardian: 1, weight: 100 }] },
+    { level: 5, monsters: [{ gol_basilica: 1, weight: 100 }] },
+    { level: 6, monsters: [{ crystallos: 1, weight: 100 }] },
+    { level: 7, monsters: [{ atlas_machina: 1, weight: 100 }] },
+    { level: 8, monsters: [{ sanctum_talos: 1, weight: 100 }] }
+  ]
 },
 {
   id: 'stargazer_tower',
