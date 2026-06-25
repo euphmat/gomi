@@ -82,6 +82,16 @@ class BattleManager {
     // Stop existing ATB loop before re-initializing
     this.stopAtbLoop();
 
+    let effectsLayer = document.getElementById('battle-effects-layer');
+    if (!effectsLayer) {
+      effectsLayer = document.createElement('div');
+      effectsLayer.id = 'battle-effects-layer';
+      effectsLayer.className = 'fixed inset-0 pointer-events-none z-[9998]';
+      document.body.appendChild(effectsLayer);
+    } else {
+      effectsLayer.innerHTML = '';
+    }
+
     this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
     this.monsterKills = await GameDB.getGameState('monster_kills') || {};
     this.playerMedals = await GameDB.getGameState('player_medals') || {};

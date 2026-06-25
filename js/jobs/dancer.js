@@ -25,7 +25,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       spark.style.borderRadius = '2px';
       spark.style.zIndex = '9999';
       spark.style.pointerEvents = 'none';
-      document.body.appendChild(spark);
+      (document.getElementById('battle-effects-layer') || document.body).appendChild(spark);
 
       const angle = Math.random() * Math.PI * 2;
       const dist = 30 + Math.random() * 20;
@@ -63,7 +63,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             bubble.style.boxShadow = '0 0 12px rgba(168,85,247,0.6)';
             bubble.style.zIndex = '9999';
             bubble.style.pointerEvents = 'none';
-            document.body.appendChild(bubble);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(bubble);
 
             const floatAnim = bubble.animate([
               { transform: 'translateY(0) scale(0)', opacity: 0 },
@@ -101,7 +101,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       dagger.style.filter = 'drop-shadow(0 0 6px rgba(56, 189, 248, 0.8))';
       dagger.style.zIndex = '9999';
       dagger.style.pointerEvents = 'none';
-      document.body.appendChild(dagger);
+      (document.getElementById('battle-effects-layer') || document.body).appendChild(dagger);
 
       const midX = cx + (Math.random() * 80 - 40);
       const midY = cy - 60 - Math.random() * 40;
@@ -150,7 +150,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         web.style.borderRadius = '50%';
         web.style.zIndex = '9998';
         web.style.pointerEvents = 'none';
-        document.body.appendChild(web);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(web);
 
         const webAnim = web.animate([
           { transform: 'scale(0.1) rotate(0deg)', opacity: 0 },
@@ -170,7 +170,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         spiral.style.mixBlendMode = 'screen';
         spiral.style.zIndex = '9999';
         spiral.style.pointerEvents = 'none';
-        document.body.appendChild(spiral);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(spiral);
 
         const spiralAnim = spiral.animate([
           { transform: 'scale(0) rotate(0deg)', opacity: 0 },
@@ -198,7 +198,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     circle.style.transform = 'rotateX(60deg)';
     circle.style.zIndex = '9997';
     circle.style.pointerEvents = 'none';
-    document.body.appendChild(circle);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(circle);
 
     const circleAnim = circle.animate([
       { transform: 'rotateX(60deg) rotateZ(0deg)', opacity: 0 },
@@ -231,7 +231,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             flame.style.borderRadius = '50%';
             flame.style.zIndex = '9999';
             flame.style.pointerEvents = 'none';
-            document.body.appendChild(flame);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(flame);
 
             const startX = tx + (Math.random() * 200 - 100);
             const startY = ty - 200 - Math.random() * 100;

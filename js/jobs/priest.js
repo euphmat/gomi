@@ -24,7 +24,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       sparkle.style.zIndex = '9999';
       sparkle.style.pointerEvents = 'none';
       sparkle.style.mixBlendMode = 'screen';
-      document.body.appendChild(sparkle);
+      (document.getElementById('battle-effects-layer') || document.body).appendChild(sparkle);
 
       const angle = (Math.PI * 2 / 8) * i;
       const dist = 30 + Math.random() * 30;
@@ -72,7 +72,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
           el.style.mixBlendMode = 'screen';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scaleY(0)', opacity: 0, transformOrigin: 'bottom' },
@@ -99,7 +99,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
           el.style.mixBlendMode = 'screen';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scaleX(0)', opacity: 0 },
@@ -127,7 +127,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.boxShadow = '0 0 20px #34d399 inset, 0 0 20px #34d399';
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0)', opacity: 1 },
@@ -150,7 +150,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
           el.style.mixBlendMode = 'screen';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scaleX(0)', opacity: 0 },
@@ -174,7 +174,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             ex.style.zIndex = '9999';
             ex.style.pointerEvents = 'none';
             ex.style.mixBlendMode = 'screen';
-            document.body.appendChild(ex);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(ex);
 
             const exAnim = ex.animate([
               { transform: 'scale(0.5)', opacity: 1 },

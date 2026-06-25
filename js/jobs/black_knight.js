@@ -26,7 +26,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     aura.style.boxShadow = '0 0 30px rgba(220,38,38,0.8)';
     aura.style.zIndex = '9997';
     aura.style.pointerEvents = 'none';
-    document.body.appendChild(aura);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(aura);
 
     const auraAnim = aura.animate([
       { transform: 'scale(0)', opacity: 0 },
@@ -54,7 +54,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         slash.style.boxShadow = '0 0 15px #dc2626, 0 0 30px #991b1b';
         slash.style.zIndex = '9999';
         slash.style.pointerEvents = 'none';
-        document.body.appendChild(slash);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(slash);
 
         const slashAnim = slash.animate([
           { transform: 'rotate(-45deg) scaleX(0)', opacity: 0 },
@@ -75,7 +75,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           slash2.style.boxShadow = '0 0 15px #ef4444, 0 0 30px #dc2626';
           slash2.style.zIndex = '9999';
           slash2.style.pointerEvents = 'none';
-          document.body.appendChild(slash2);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(slash2);
 
           const slash2Anim = slash2.animate([
             { transform: 'rotate(45deg) scaleX(0)', opacity: 0 },
@@ -99,7 +99,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             drop.style.boxShadow = `0 0 6px ${i % 2 === 0 ? '#dc2626' : '#991b1b'}`;
             drop.style.zIndex = '9999';
             drop.style.pointerEvents = 'none';
-            document.body.appendChild(drop);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(drop);
 
             const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.5;
             const dist = 25 + Math.random() * 35;
@@ -126,7 +126,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           burst.style.background = 'radial-gradient(circle, rgba(239,68,68,0.8), rgba(127,29,29,0.4), transparent)';
           burst.style.zIndex = '9998';
           burst.style.pointerEvents = 'none';
-          document.body.appendChild(burst);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(burst);
 
           const burstAnim = burst.animate([
             { transform: 'scale(0.3)', opacity: 1 },
@@ -160,7 +160,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         lance.style.zIndex = '9999';
         lance.style.pointerEvents = 'none';
         lance.style.borderRadius = '2px';
-        document.body.appendChild(lance);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(lance);
 
         // Lance tip (arrowhead)
         const tip = document.createElement('div');
@@ -173,7 +173,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         tip.style.filter = 'drop-shadow(0 0 6px #7c3aed)';
         tip.style.zIndex = '10000';
         tip.style.pointerEvents = 'none';
-        document.body.appendChild(tip);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(tip);
 
         const startX = tx - 3 + (Math.random() * 20 - 10);
         const startY = ty - 200 - Math.random() * 50;
@@ -206,7 +206,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           ring.style.boxShadow = '0 0 15px #7c3aed, inset 0 0 10px rgba(124,58,237,0.3)';
           ring.style.zIndex = '9999';
           ring.style.pointerEvents = 'none';
-          document.body.appendChild(ring);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(ring);
 
           const ringAnim = ring.animate([
             { transform: 'scale(0.3)', opacity: 1 },
@@ -227,7 +227,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             spark.style.boxShadow = '0 0 6px #7c3aed';
             spark.style.zIndex = '9999';
             spark.style.pointerEvents = 'none';
-            document.body.appendChild(spark);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(spark);
 
             const sa = Math.random() * Math.PI * 2;
             const sd = 15 + Math.random() * 25;
@@ -260,7 +260,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     darkAura.style.boxShadow = '0 0 40px rgba(88,28,135,0.5)';
     darkAura.style.zIndex = '9997';
     darkAura.style.pointerEvents = 'none';
-    document.body.appendChild(darkAura);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(darkAura);
 
     const darkAuraAnim = darkAura.animate([
       { transform: 'scale(0) rotate(0deg)', opacity: 0 },
@@ -290,7 +290,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         rune.style.transform = 'rotateX(60deg)';
         rune.style.zIndex = '9997';
         rune.style.pointerEvents = 'none';
-        document.body.appendChild(rune);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(rune);
 
         const runeAnim = rune.animate([
           { transform: 'rotateX(60deg) rotateZ(0deg) scale(0)', opacity: 0 },
@@ -313,7 +313,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             tendril.style.boxShadow = '0 0 8px #a855f7';
             tendril.style.zIndex = '9998';
             tendril.style.pointerEvents = 'none';
-            document.body.appendChild(tendril);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(tendril);
 
             const tendrilAnim = tendril.animate([
               { transform: 'translateY(0) scaleY(0)', opacity: 0 },
@@ -349,7 +349,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     vortex.style.zIndex = '9996';
     vortex.style.pointerEvents = 'none';
     vortex.style.mixBlendMode = 'screen';
-    document.body.appendChild(vortex);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(vortex);
 
     const vortexAnim = vortex.animate([
       { transform: 'scale(0) rotate(0deg)', opacity: 0 },
@@ -371,7 +371,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     ring.style.boxShadow = '0 0 30px #6d28d9, inset 0 0 30px rgba(109,40,217,0.4)';
     ring.style.zIndex = '9997';
     ring.style.pointerEvents = 'none';
-    document.body.appendChild(ring);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(ring);
 
     const ringAnim = ring.animate([
       { transform: 'scale(0) rotate(0deg)', opacity: 0 },
@@ -408,7 +408,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         beam.style.transform = `rotate(${angle}deg)`;
         beam.style.zIndex = '9998';
         beam.style.pointerEvents = 'none';
-        document.body.appendChild(beam);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(beam);
 
         const beamAnim = beam.animate([
           { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
@@ -431,7 +431,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           explosion.style.zIndex = '9999';
           explosion.style.pointerEvents = 'none';
           explosion.style.mixBlendMode = 'screen';
-          document.body.appendChild(explosion);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(explosion);
 
           const explAnim = explosion.animate([
             { transform: 'scale(0.2)', opacity: 1 },
@@ -452,7 +452,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             particle.style.boxShadow = `0 0 8px ${p % 2 === 0 ? '#a78bfa' : '#6d28d9'}`;
             particle.style.zIndex = '9999';
             particle.style.pointerEvents = 'none';
-            document.body.appendChild(particle);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(particle);
 
             const pa = Math.random() * Math.PI * 2;
             const pd = 20 + Math.random() * 30;

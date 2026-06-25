@@ -24,7 +24,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     ex.style.zIndex = '9999';
     ex.style.pointerEvents = 'none';
     ex.style.mixBlendMode = 'screen';
-    document.body.appendChild(ex);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(ex);
     
     const anim = ex.animate([
       { transform: 'scale(0.2)', opacity: 1 },
@@ -47,7 +47,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       crystal.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
       crystal.style.zIndex = '9999';
       crystal.style.pointerEvents = 'none';
-      document.body.appendChild(crystal);
+      (document.getElementById('battle-effects-layer') || document.body).appendChild(crystal);
 
       const angle = (Math.PI * 2 / 6) * i;
       const dist = 30 + Math.random() * 20;
@@ -91,7 +91,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
           el.style.mixBlendMode = 'screen';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0.5) rotate(-45deg) translate(-50px, -50px)', opacity: 0 },
@@ -120,7 +120,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           mist.style.zIndex = '9997';
           mist.style.pointerEvents = 'none';
           mist.style.mixBlendMode = 'screen';
-          document.body.appendChild(mist);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(mist);
 
           mist.animate([
             { transform: 'scale(0)', opacity: 0 },
@@ -140,7 +140,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           crystal.style.boxShadow = '0 0 20px #00bfff, inset 0 0 15px #fff';
           crystal.style.zIndex = '9998';
           crystal.style.pointerEvents = 'none';
-          document.body.appendChild(crystal);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(crystal);
 
           crystal.animate([
             { transform: 'translateY(50px) scale(0)', opacity: 0 },
@@ -163,7 +163,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
                 slash.style.boxShadow = '0 0 15px #00ffff';
                 slash.style.zIndex = '9999';
                 slash.style.pointerEvents = 'none';
-                document.body.appendChild(slash);
+                (document.getElementById('battle-effects-layer') || document.body).appendChild(slash);
 
                 slash.animate([
                   { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
@@ -193,7 +193,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             wave.style.boxShadow = '0 0 20px #00bfff';
             wave.style.zIndex = '9997';
             wave.style.pointerEvents = 'none';
-            document.body.appendChild(wave);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(wave);
 
             wave.animate([
               { transform: 'scale(0.5)', opacity: 1 },
@@ -217,7 +217,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.filter = 'drop-shadow(0 0 15px #ffff00)';
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0.8) rotate(180deg)', opacity: 0 },

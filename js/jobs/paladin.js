@@ -26,7 +26,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       sparkle.style.zIndex = '9999';
       sparkle.style.pointerEvents = 'none';
       sparkle.style.mixBlendMode = 'screen';
-      document.body.appendChild(sparkle);
+      (document.getElementById('battle-effects-layer') || document.body).appendChild(sparkle);
 
       const angle = (Math.PI * 2 / count) * i;
       const dist = 30 + Math.random() * 30;
@@ -64,7 +64,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         pillar.style.zIndex = '9998';
         pillar.style.pointerEvents = 'none';
         pillar.style.mixBlendMode = 'screen';
-        document.body.appendChild(pillar);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(pillar);
 
         const pillarAnim = pillar.animate([
           { transform: 'scaleX(0)', opacity: 0 },
@@ -86,7 +86,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           slash1.style.boxShadow = '0 0 15px #fbbf24';
           slash1.style.zIndex = '9999';
           slash1.style.pointerEvents = 'none';
-          document.body.appendChild(slash1);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(slash1);
 
           const slash1Anim = slash1.animate([
             { transform: 'rotate(-45deg) scaleX(0)', opacity: 0 },
@@ -107,7 +107,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             slash2.style.boxShadow = '0 0 15px #f59e0b';
             slash2.style.zIndex = '9999';
             slash2.style.pointerEvents = 'none';
-            document.body.appendChild(slash2);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(slash2);
 
             const slash2Anim = slash2.animate([
               { transform: 'rotate(45deg) scaleX(0)', opacity: 0 },
@@ -130,7 +130,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             burst.style.zIndex = '9999';
             burst.style.pointerEvents = 'none';
             burst.style.mixBlendMode = 'screen';
-            document.body.appendChild(burst);
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(burst);
 
             const burstAnim = burst.animate([
               { transform: 'scale(0.3)', opacity: 1 },
@@ -168,7 +168,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         shield.style.boxShadow = '0 0 20px rgba(251,191,36,0.4), inset 0 0 15px rgba(59,130,246,0.3)';
         shield.style.zIndex = '9998';
         shield.style.pointerEvents = 'none';
-        document.body.appendChild(shield);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(shield);
 
         const shieldAnim = shield.animate([
           { transform: 'scale(0) rotate(-30deg)', opacity: 0 },
@@ -190,7 +190,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         ring.style.boxShadow = '0 0 15px rgba(59,130,246,0.4)';
         ring.style.zIndex = '9997';
         ring.style.pointerEvents = 'none';
-        document.body.appendChild(ring);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(ring);
 
         const ringAnim = ring.animate([
           { transform: 'scale(0.5)', opacity: 0 },
@@ -221,7 +221,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     aura.style.zIndex = '9997';
     aura.style.pointerEvents = 'none';
     aura.style.mixBlendMode = 'screen';
-    document.body.appendChild(aura);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(aura);
 
     const auraAnim = aura.animate([
       { transform: 'scale(0)', opacity: 0 },
@@ -251,7 +251,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         pillar.style.zIndex = '9998';
         pillar.style.pointerEvents = 'none';
         pillar.style.mixBlendMode = 'screen';
-        document.body.appendChild(pillar);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(pillar);
 
         const pillarAnim = pillar.animate([
           { transform: 'scaleY(0)', opacity: 0, transformOrigin: 'bottom' },
@@ -273,7 +273,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         rune.style.transform = 'rotateX(60deg)';
         rune.style.zIndex = '9997';
         rune.style.pointerEvents = 'none';
-        document.body.appendChild(rune);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(rune);
 
         const runeAnim = rune.animate([
           { transform: 'rotateX(60deg) scale(0)', opacity: 0 },

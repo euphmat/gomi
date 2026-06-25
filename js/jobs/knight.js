@@ -30,7 +30,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     ex.style.boxShadow = '0 0 20px #94a3b8';
     ex.style.zIndex = '9999';
     ex.style.pointerEvents = 'none';
-    document.body.appendChild(ex);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(ex);
     
     const anim = ex.animate([
       { transform: 'scale(0.5)', opacity: 1, borderWidth: '20px' },
@@ -68,7 +68,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.boxShadow = '0 0 15px #ef4444';
           el.style.zIndex = '9998';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0)', opacity: 1 },
@@ -85,7 +85,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           icon.style.fontSize = '40px';
           icon.style.zIndex = '9999';
           icon.style.pointerEvents = 'none';
-          document.body.appendChild(icon);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(icon);
           
           const iconAnim = icon.animate([
             { transform: 'scale(0) translateY(20px)', opacity: 0 },
@@ -111,7 +111,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.boxShadow = '0 0 15px #3b82f6';
           el.style.zIndex = '9998';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0) rotate(-30deg)', opacity: 0 },
@@ -135,7 +135,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0.5) rotate(-20deg)', opacity: 0 },

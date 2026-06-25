@@ -22,7 +22,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     el.style.objectFit = 'contain';
     el.style.zIndex = '9999';
     el.style.pointerEvents = 'none';
-    document.body.appendChild(el);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
     // Parabolic arc calculation
     const dx = endX - startX;
@@ -56,7 +56,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     el.style.objectFit = 'contain';
     el.style.zIndex = '9999';
     el.style.pointerEvents = 'none';
-    document.body.appendChild(el);
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
     // Add some random target offset to make impacts look more spread out
     const targetX = x + (Math.random() * 80 - 40);
@@ -112,7 +112,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
           ex.style.background = `radial-gradient(circle, #fff, ${pColor}, transparent)`;
           ex.style.zIndex = '9999';
           ex.style.pointerEvents = 'none';
-          document.body.appendChild(ex);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(ex);
 
           const animEx = ex.animate([
             { transform: 'scale(0.5)', opacity: 0.8 },
@@ -140,7 +140,7 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
           ex.style.mixBlendMode = 'screen';
           ex.style.zIndex = '9999';
           ex.style.pointerEvents = 'none';
-          document.body.appendChild(ex);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(ex);
 
           const animEx = ex.animate([
             { transform: 'scale(0.2) rotate(0deg)', opacity: 1 },

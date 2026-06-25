@@ -26,7 +26,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
       spark.style.borderRadius = '2px';
       spark.style.zIndex = '9999';
       spark.style.pointerEvents = 'none';
-      document.body.appendChild(spark);
+      (document.getElementById('battle-effects-layer') || document.body).appendChild(spark);
 
       const angle = Math.random() * Math.PI * 2;
       const dist = 30 + Math.random() * 20;
@@ -70,7 +70,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           arrow.style.boxShadow = '0 0 5px #bef264';
           arrow.style.zIndex = '9999';
           arrow.style.pointerEvents = 'none';
-          document.body.appendChild(arrow);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(arrow);
 
           const angle = Math.atan2(ty - cy, tx - cx);
           const dist = Math.hypot(tx - cx, ty - cy);
@@ -101,7 +101,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           arrow.style.boxShadow = '0 0 8px #86efac';
           arrow.style.zIndex = '9999';
           arrow.style.pointerEvents = 'none';
-          document.body.appendChild(arrow);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(arrow);
 
           const fallDist = ty + 50;
           

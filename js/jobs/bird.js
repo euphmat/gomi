@@ -37,7 +37,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
               el.innerHTML = '♪';
               el.style.zIndex = '9999';
               el.style.pointerEvents = 'none';
-              document.body.appendChild(el);
+              (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
               const anim = el.animate([
                 { transform: 'translate(0, 0) scale(0)', opacity: 0 },
@@ -62,7 +62,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.borderRadius = '50%';
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const anim = el.animate([
             { transform: 'scale(0.1)', opacity: 0 },
@@ -88,7 +88,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           el.style.background = 'radial-gradient(circle, rgba(147, 197, 253, 0.2), transparent)';
           el.style.zIndex = '9999';
           el.style.pointerEvents = 'none';
-          document.body.appendChild(el);
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
 
           const note = document.createElement('div');
           note.style.position = 'absolute';

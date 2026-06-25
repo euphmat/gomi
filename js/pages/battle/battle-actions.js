@@ -488,7 +488,7 @@ export const actionMethods = {
         slash.style.boxShadow = '0 0 8px rgba(255,255,255,0.5)';
         slash.style.zIndex = '9998';
         slash.style.pointerEvents = 'none';
-        document.body.appendChild(slash);
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(slash);
 
         const anim = slash.animate([
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(0.1) scaleY(0.2)', opacity: 0 },
@@ -851,7 +851,7 @@ export const actionMethods = {
               sparkle.style.zIndex = '9999';
               sparkle.style.pointerEvents = 'none';
               sparkle.style.mixBlendMode = 'screen';
-              document.body.appendChild(sparkle);
+              (document.getElementById('battle-effects-layer') || document.body).appendChild(sparkle);
               
               const angle = Math.random() * Math.PI * 2;
               const dist = 15 + Math.random() * 20;
