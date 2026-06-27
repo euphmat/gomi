@@ -357,33 +357,33 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       const btnMax = itemRow.querySelector('.btn-max');
       const btnFeed = itemRow.querySelector('.btn-feed');
 
-      if (maxFeed > 0) {
-        const updateValue = (val, isManual = false) => {
-          const currentMax = parseInt(slider.max) || 1;
-          let parsed = parseInt(val) || 1;
-          if (parsed < 1) parsed = 1;
-          if (parsed > currentMax) parsed = currentMax;
-          input.value = parsed;
-          slider.value = parsed;
-          globalSliderValues[drop.itemId] = parsed;
-          if (isManual) {
-            globalSliderManualFlags[drop.itemId] = true;
-          }
-          const percentage = currentMax > 1 ? ((parsed - 1) / (currentMax - 1)) * 100 : 100;
-          if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
-        };
-
-        // 初期化
-        updateValue(initialVal, false);
-
-        input.onchange = () => updateValue(input.value, true);
-        slider.oninput = () => updateValue(slider.value, true);
-        if (btnMax) {
-          btnMax.onclick = () => updateValue(parseInt(slider.max) || 1, true);
+      const updateValue = (val, isManual = false) => {
+        const currentMax = parseInt(slider.max) || 1;
+        let parsed = parseInt(val) || 1;
+        if (parsed < 1) parsed = 1;
+        if (parsed > currentMax) parsed = currentMax;
+        if (input) input.value = parsed;
+        if (slider) slider.value = parsed;
+        globalSliderValues[drop.itemId] = parsed;
+        if (isManual) {
+          globalSliderManualFlags[drop.itemId] = true;
         }
+        const percentage = currentMax > 1 ? ((parsed - 1) / (currentMax - 1)) * 100 : 100;
+        if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
+      };
+
+      // 初期化
+      if (maxFeed > 0) {
+        updateValue(initialVal, false);
       }
 
-      if (maxFeed > 0 && btnFeed) {
+      if (input) input.onchange = () => updateValue(input.value, true);
+      if (slider) slider.oninput = () => updateValue(slider.value, true);
+      if (btnMax) {
+        btnMax.onclick = () => updateValue(parseInt(slider.max) || 1, true);
+      }
+
+      if (btnFeed) {
         btnFeed.onclick = async () => {
           const currentInv = await GameDB.getInventoryItem(drop.itemId);
           const actualMax = currentInv ? currentInv.quantity : 0;
