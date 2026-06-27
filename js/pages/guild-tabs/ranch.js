@@ -149,6 +149,43 @@ export async function renderRanchTab() {
       .ranch-monster-idle {
         animation: float-idle 3s infinite ease-in-out;
       }
+      
+      /* Custom Slider Styles */
+      .quantity-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #f472b6;
+        border: 2.5px solid #fff;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
+        transition: transform 0.1s;
+      }
+      .quantity-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.15);
+      }
+      .quantity-slider::-webkit-slider-thumb:active {
+        transform: scale(0.95);
+      }
+      .quantity-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #f472b6;
+        border: 2.5px solid #fff;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
+        transition: transform 0.1s;
+        box-sizing: border-box;
+      }
+      .quantity-slider::-moz-range-thumb:hover {
+        transform: scale(1.15);
+      }
+      .quantity-slider::-moz-range-thumb:active {
+        transform: scale(0.95);
+      }
     `;
     container.appendChild(styleEl);
 
@@ -573,54 +610,61 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         const maxFeed = quantity;
         
         itemRow.innerHTML = `
-          <div class="flex flex-col sm:flex-row items-center gap-2 w-full">
-            <div class="flex items-center gap-2 min-w-0 flex-1 w-full sm:w-auto">
-              <div class="w-8 h-8 bg-slate-900/80 rounded border border-slate-700 flex items-center justify-center p-1 relative shadow-inner shrink-0">
-                <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="text-[10px] font-black text-slate-100 truncate flex items-center gap-1">
-                  ${mat.name}
-                  <span class="text-[8px] bg-pink-900/50 text-pink-300 px-1 py-0.5 rounded border border-pink-700/50">${expMultiplier} EXP</span>
+          <div class="flex flex-col gap-3 w-full">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="w-10 h-10 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center justify-center p-1.5 relative shadow-inner shrink-0">
+                  <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 </div>
-                <div class="text-[9px] font-bold text-slate-400">所持: <span class="${quantity > 0 ? 'text-green-400' : 'text-slate-500'}">${quantity}</span></div>
+                <div class="min-w-0 flex-1">
+                  <div class="text-[11px] font-black text-slate-100 truncate flex items-center gap-2">
+                    ${mat.name}
+                    <span class="text-[9px] bg-pink-900/50 text-pink-300 px-1.5 py-0.5 rounded border border-pink-700/50 shadow-inner">${expMultiplier} EXP</span>
+                  </div>
+                  <div class="text-[10px] font-bold text-slate-400 mt-1">所持: <span class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
+                </div>
               </div>
-            </div>
-            
-            <div class="flex items-center gap-1 shrink-0 w-full sm:w-auto justify-end">
-              <div class="flex items-center bg-slate-900/60 rounded border border-slate-700 p-0.5 shadow-inner">
-                <button class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[8px] font-bold text-slate-300 btn-min" ${maxFeed === 0 ? 'disabled' : ''}>MIN</button>
-                <button class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 btn-minus-100" ${maxFeed === 0 ? 'disabled' : ''}>-</button>
-                <input type="number" min="0" max="${maxFeed}" value="${maxFeed > 0 ? 1 : 0}" ${maxFeed === 0 ? 'disabled' : ''} class="w-10 h-7 bg-transparent text-center text-[10px] font-black text-white outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                <button class="w-7 h-7 flex items-center justify-center bg-slate-800 hover:bg-slate-700 active:scale-95 rounded text-[10px] font-bold text-slate-300 btn-plus-100" ${maxFeed === 0 ? 'disabled' : ''}>+</button>
-                <button class="w-7 h-7 flex items-center justify-center bg-pink-900/30 hover:bg-pink-800/50 text-pink-400 border border-pink-700/50 active:scale-95 rounded text-[8px] font-black btn-max" ${maxFeed === 0 ? 'disabled' : ''}>MAX</button>
-              </div>
-              <button class="px-3 h-8 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded text-[10px] font-black text-white transition-all active:scale-95 btn-feed flex items-center justify-center shadow-md" ${maxFeed === 0 ? 'disabled' : ''}>
+              <button class="px-5 h-9 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[11px] font-black text-white transition-all active:scale-95 btn-feed flex items-center justify-center shadow-[0_0_10px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
                 与える
               </button>
+            </div>
+            
+            <div class="flex items-center gap-3 px-1 pt-1 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
+              <span class="text-[10px] font-bold text-slate-400 w-6 text-right shrink-0">1</span>
+              <div class="relative flex-1 flex items-center h-4">
+                <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
+                <input type="range" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? 1 : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0">
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 w-8 shrink-0">MAX</span>
+              <div class="bg-slate-900 border border-slate-700 rounded w-14 h-7 flex items-center justify-center shadow-inner shrink-0 relative overflow-hidden">
+                <input type="number" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? 1 : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[11px] font-black text-pink-300 outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10">
+              </div>
             </div>
           </div>
         `;
         
         const input = itemRow.querySelector('.quantity-input');
-        const btnMin = itemRow.querySelector('.btn-min');
-        const btnMinus100 = itemRow.querySelector('.btn-minus-100');
-        const btnPlus100 = itemRow.querySelector('.btn-plus-100');
-        const btnMax = itemRow.querySelector('.btn-max');
+        const slider = itemRow.querySelector('.quantity-slider');
+        const sliderProgress = itemRow.querySelector('.slider-progress');
         const btnFeed = itemRow.querySelector('.btn-feed');
         
         if (maxFeed > 0) {
-          input.onchange = () => {
-            let val = parseInt(input.value) || 0;
-            if (val < 0) val = 0;
-            if (val > maxFeed) val = maxFeed;
-            input.value = val;
+          const updateValue = (val) => {
+            let parsed = parseInt(val) || 1;
+            if (parsed < 1) parsed = 1;
+            if (parsed > maxFeed) parsed = maxFeed;
+            input.value = parsed;
+            slider.value = parsed;
+            const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
+            sliderProgress.style.width = \`\${percentage}%\`;
           };
-          
-          btnMin.onclick = () => { input.value = 1; input.onchange(); };
-          btnMinus100.onclick = () => { input.value = Math.max(1, (parseInt(input.value) || 0) - 100); input.onchange(); };
-          btnPlus100.onclick = () => { input.value = Math.min(maxFeed, (parseInt(input.value) || 0) + 100); input.onchange(); };
-          btnMax.onclick = () => { input.value = maxFeed; input.onchange(); };
+
+          // Initialize progress
+          updateValue(1);
+
+          input.onchange = () => updateValue(input.value);
+          slider.oninput = () => updateValue(slider.value);
           
           btnFeed.onclick = async () => {
             const amount = parseInt(input.value) || 0;
