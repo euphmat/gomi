@@ -277,14 +277,15 @@ async function _loadStatusData(container) {
           }
 
           const focusBtns = [
-            { id: 'overall', label: '総合' },
-            { id: 'physical', label: '物理攻撃' },
-            { id: 'magic', label: '魔法攻撃' },
-            { id: 'defense', label: '防御' },
-            { id: 'speed', label: '速度' }
+            { id: 'overall', label: '総合', icon: 'stars', color: 'text-indigo-400' },
+            { id: 'physical', label: '物理攻撃', icon: 'swords', color: 'text-red-400' },
+            { id: 'magic', label: '魔法攻撃', icon: 'auto_awesome', color: 'text-purple-400' },
+            { id: 'defense', label: '防御', icon: 'shield', color: 'text-slate-400' },
+            { id: 'speed', label: '速度', icon: 'directions_run', color: 'text-yellow-400' }
           ].map(f => `
-            <button class="focus-btn flex-1 py-1.5 text-[10px] font-bold rounded border ${currentFocus === f.id ? 'bg-indigo-600/50 border-indigo-500 text-white shadow-inner' : 'bg-gray-800 border-gray-600/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200'} transition-all" data-focus="${f.id}">
-              ${f.label}
+            <button class="focus-btn flex-1 py-1 flex items-center justify-center gap-1 text-[10px] font-bold rounded border ${currentFocus === f.id ? 'bg-indigo-600/50 border-indigo-500 text-white shadow-inner' : 'bg-gray-800 border-gray-600/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200'} transition-all" data-focus="${f.id}">
+              <span class="material-symbols-outlined !text-[12px] ${f.color}" style="font-variation-settings: 'FILL' 1">${f.icon}</span>
+              <span class="truncate">${f.label}</span>
             </button>
           `).join('');
 
