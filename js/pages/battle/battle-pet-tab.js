@@ -292,13 +292,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
             onRanchDataUpdated(freshRanch);
           }
 
-          // レベルアップチェック＆通知
           const newInfo = getRanchLevelInfo(monsterData.fedMaterials, variant.isLeg);
-          if (newInfo.level > info.level) {
-            showBattleFeedNotification(`${variant.label} が Lv.${newInfo.level} になりました！`, 'success');
-          } else {
-            showBattleFeedNotification(`${variant.label} に ${amount} 個の ${mat.name} を与えました (+${expGain} EXP)`, 'info');
-          }
 
           // 再描画 (親タブ全体を更新)
           const latestInv = await GameDB.getAllInventory();
@@ -316,29 +310,4 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
   }
 
   sectionEl.appendChild(itemsContainer);
-}
 
-/**
- * 戦闘中の餌やり通知
- */
-function showBattleFeedNotification(text, type = 'info') {
-  const el = document.createElement('div');
-  el.className = `fixed top-20 left-1/2 -translate-x-1/2 px-5 py-2.5 rounded-full text-[11px] font-bold shadow-lg z-[9999] text-white flex items-center gap-2 ${
-    type === 'success' ? 'bg-emerald-600 shadow-[0_0_15px_rgba(5,150,105,0.5)]' :
-    'bg-pink-600 shadow-[0_0_15px_rgba(236,72,153,0.5)]'
-  }`;
-  el.style.animation = 'fade-in 0.3s ease-out';
-  el.innerHTML = `
-    <span class="material-symbols-outlined text-[16px]">
-      ${type === 'success' ? 'celebration' : 'restaurant'}
-    </span>
-    ${text}
-  `;
-  document.body.appendChild(el);
-  setTimeout(() => {
-    el.style.opacity = '0';
-    el.style.transform = 'translate(-50%, -10px)';
-    el.style.transition = 'all 0.3s';
-    setTimeout(() => el.remove(), 300);
-  }, 2500);
-}
