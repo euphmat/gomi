@@ -280,7 +280,10 @@ export const resultMethods = {
     if (!this._needsSave) return;
     if (this.discoveredMonsters) await GameDB.setGameState('discovered_monsters', this.discoveredMonsters);
     if (this.monsterKills) await GameDB.setGameState('monster_kills', this.monsterKills);
-    if (this._pendingRanchSave) await GameDB.setGameState('ranch_data', this._pendingRanchSave);
+    if (this._pendingRanchSave) {
+      await GameDB.setGameState('ranch_data', this._pendingRanchSave);
+      this._pendingRanchSave = null;
+    }
     if (this.currentGold !== undefined) await GameDB.setGameState('gold', this.currentGold);
     if (this._pendingItemDrops) {
       let autoSellGold = 0;

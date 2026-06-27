@@ -612,6 +612,9 @@ class BattleManager {
       this.currentDungeonId,
       async (updatedRanchData) => {
         this.ranchData = updatedRanchData;
+        if (this._pendingRanchSave) {
+          this._pendingRanchSave = updatedRanchData;
+        }
         
         // 牧場ボーナスを再計算してパーティメンバーのステータスを更新
         const rawParty = await getCharactersWithRanchBonus();
