@@ -12,8 +12,9 @@ import { formatNumber } from '../../utils/format.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
-// --- モジュールレベルでスライダーの値を保持 (階層クリアやタブ切り替え、餌やり後も値を維持) ---
+// --- モジュールレベルでスライダーの値を保持 (手動で変更した場合のみ) ---
 const globalSliderValues = {};
+const globalSliderManualFlags = {};
 let isLegendaryToggleActive = false;
 let currentTargetEntityId = null;
 
@@ -32,14 +33,19 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     return;
   }
 
-  // Preserve slider values before re-rendering
+  // Preserve slider values before re-rendering (only if manually adjusted)
   tabContent.querySelectorAll('.quantity-slider').forEach(slider => {
-    globalSliderValues[slider.dataset.itemId] = slider.value;
+    if (globalSliderManualFlags[slider.dataset.itemId]) {
+      globalSliderValues[slider.dataset.itemId] = slider.value;
+    }
   });
 
   if (targetEntity.id !== currentTargetEntityId) {
     currentTargetEntityId = targetEntity.id;
     isLegendaryToggleActive = !!targetEntity.isLegendary;
+    // リクエスト対応: モンスターを切り替えたらスライダーの値をリセットしてMAXに戻す
+    Object.keys(globalSliderValues).forEach(k => delete globalSliderValues[k]);
+    Object.keys(globalSliderManualFlags).forEach(k => delete globalSliderManualFlags[k]);
   }
 
   const kills = monsterKills[targetEntity.id] || 0;
@@ -224,8 +230,11 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       const quantity = inventoryMap[drop.itemId] || 0;
       const maxFeed = quantity;
       
-      // 復元値があればそれを使う、なければ最大値または1
-      let initialVal = globalSliderValues[drop.itemId] !== undefined ? parseInt(globalSliderValues[drop.itemId]) : (maxFeed > 0 ? maxFeed : 1);
+      // 手動で調整された値があればそれを使う、なければ最大値 (MAX規定)
+      let initialVal = maxFeed > 0 ? maxFeed : 1;
+      if (globalSliderManualFlags[drop.itemId] && globalSliderValues[drop.itemId] !== undefined) {
+        initialVal = parseInt(globalSliderValues[drop.itemId]);
+      }
       if (initialVal > maxFeed) initialVal = maxFeed;
       if (initialVal < 1) initialVal = maxFeed > 0 ? maxFeed : 1;
 
@@ -272,24 +281,27 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       const btnFeed = itemRow.querySelector('.btn-feed');
 
       if (maxFeed > 0) {
-        const updateValue = (val) => {
+        const updateValue = (val, isManual = false) => {
           let parsed = parseInt(val) || 1;
           if (parsed < 1) parsed = 1;
           if (parsed > maxFeed) parsed = maxFeed;
           input.value = parsed;
           slider.value = parsed;
           globalSliderValues[drop.itemId] = parsed;
+          if (isManual) {
+            globalSliderManualFlags[drop.itemId] = true;
+          }
           const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
           if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
         };
 
         // 初期化
-        updateValue(initialVal);
+        updateValue(initialVal, false);
 
-        input.onchange = () => updateValue(input.value);
-        slider.oninput = () => updateValue(slider.value);
+        input.onchange = () => updateValue(input.value, true);
+        slider.oninput = () => updateValue(slider.value, true);
         if (btnMax) {
-          btnMax.onclick = () => updateValue(maxFeed);
+          btnMax.onclick = () => updateValue(maxFeed, true);
         }
       }
 
@@ -331,6 +343,10 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           const latestInv = await GameDB.getAllInventory();
           const latestInvMap = {};
           if (latestInv) latestInv.forEach(item => latestInvMap[item.id] = item.quantity);
+
+          // 餌やり後はスライダーを手動設定状態から解除しMAXに戻す
+          delete globalSliderManualFlags[drop.itemId];
+          delete globalSliderValues[drop.itemId];
 
           await renderBattlePetTab(tabContent, targetEntity, monsterKills, freshRanch, variant.dungeonId, onRanchDataUpdated);
         };
