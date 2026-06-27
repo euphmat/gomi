@@ -635,9 +635,28 @@ class BattleManager {
           }
         });
         
-        // パーティカードを完全に再描画して最新ステータスを表示
-        this.elements.partyArea.innerHTML = '';
-        this.renderEntities();
+        // パーティカードを完全に再描画して最新ステータスを表示 (崩れを防止するため、クリアせずに直接上書き)
+        const newHtml = this.party.map(p => renderPartyCardHtml(p, this.activeCharacter, this.isAutoBattle, this.selectedPartyMember)).join('');
+        this.elements.partyArea.innerHTML = newHtml;
+        
+        // リスナーを再アタッチ
+        this.elements.partyArea.querySelectorAll('.party-card').forEach(el => {
+          el.addEventListener('click', (e) => {
+            const elementId = e.currentTarget.id;
+            const p = this.party.find(char => char.elementId === elementId);
+            if (p && !p.isDead) {
+              if (this.isAutoBattle) {
+                this.selectedPartyMember = p;
+                this.currentTab = 'skill';
+                this.updateTabStyles();
+                this.renderTabContent();
+              }
+              this.updateEntities();
+            }
+          });
+        });
+        
+        this.cacheDOMElements();
       }
     );
   }
