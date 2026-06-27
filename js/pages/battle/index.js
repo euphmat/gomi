@@ -96,6 +96,12 @@ class BattleManager {
       effectsLayer.innerHTML = '';
     }
 
+    if (!this.elements.tabContent.dataset.hoverListenerAdded) {
+      this.elements.tabContent.addEventListener('mouseenter', () => this.isTabHovered = true);
+      this.elements.tabContent.addEventListener('mouseleave', () => this.isTabHovered = false);
+      this.elements.tabContent.dataset.hoverListenerAdded = 'true';
+    }
+
     this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
     this.monsterKills = await GameDB.getGameState('monster_kills') || {};
     this.playerMedals = await GameDB.getGameState('player_medals') || {};
@@ -351,7 +357,8 @@ class BattleManager {
   }
 
   setupListeners() {
-    this.elements.btnAutoFloor.onclick = () => {
+    this.elements.btnAutoFloor.onpointerdown = (e) => {
+      e.preventDefault();
       this.autoBattleMode = this.autoBattleMode === 'floor' ? 'none' : 'floor';
       sessionStorage.setItem('autoBattleMode', this.autoBattleMode);
       this.updateCommandUI();
@@ -361,7 +368,8 @@ class BattleManager {
       }
     };
 
-    this.elements.btnAutoDungeon.onclick = () => {
+    this.elements.btnAutoDungeon.onpointerdown = (e) => {
+      e.preventDefault();
       this.autoBattleMode = this.autoBattleMode === 'dungeon' ? 'none' : 'dungeon';
       sessionStorage.setItem('autoBattleMode', this.autoBattleMode);
       this.updateCommandUI();
@@ -371,18 +379,20 @@ class BattleManager {
       }
     };
 
-    this.elements.btnRun.onclick = () => {
+    this.elements.btnRun.onpointerdown = (e) => {
+      e.preventDefault();
       if (!this.isAutoBattle && !this.activeCharacter) return;
       sessionStorage.removeItem('autoBattleMode');
       this.autoBattleMode = 'none';
       this.endBattle(false, '撤退した！', false);
     };
 
-    this.elements.btnAttack.onclick = () => {
+    this.elements.btnAttack.onpointerdown = (e) => {
+      e.preventDefault();
       if (!this.activeCharacter || this.isAutoBattle) return;
       
       if (!this.selectedEnemyTarget || this.selectedEnemyTarget.isDead) {
-        this.selectedEnemyTarget = this.enemies.find(e => !e.isDead);
+        this.selectedEnemyTarget = this.enemies.find(en => !en.isDead);
       }
       
       if (!this.selectedEnemyTarget) return;
@@ -590,15 +600,44 @@ class BattleManager {
       }
       
       const targetId = targetEntity ? targetEntity.id : 'none';
-      if (!force && this.elements.tabContent.dataset.renderedTab === 'pet' && this.elements.tabContent.dataset.petTargetId === targetId) return;
+      const now = Date.now();
+      const lastRendered = parseInt(this.elements.tabContent.dataset.lastPetRenderTime || '0');
+      
+      if (!force && this.elements.tabContent.dataset.renderedTab === 'pet' && this.elements.tabContent.dataset.petTargetId === targetId) {
+        if (this.isTabHovered) return;
+        if (now - lastRendered < 1000) return;
+      }
       
       this.elements.tabContent.dataset.renderedTab = 'pet';
       this.elements.tabContent.dataset.petTargetId = targetId;
+      this.elements.tabContent.dataset.lastPetRenderTime = now;
       this.renderPetTab();
     } else if (this.currentTab === 'medal') {
-      if (!force && this.elements.tabContent.dataset.renderedTab === 'medal') return;
+      let targetEntity = null;
+      if (this.infoTarget && this.infoTarget.type === 'enemy') {
+        targetEntity = this.infoTarget.entity;
+      } else if (this.selectedEnemyTarget) {
+        targetEntity = this.selectedEnemyTarget;
+      } else {
+        targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+      }
+
+      if (!targetEntity && !force && this.elements.tabContent.dataset.renderedTab === 'medal') {
+        return;
+      }
+
+      const targetId = targetEntity ? targetEntity.id : 'none';
+      const now = Date.now();
+      const lastRendered = parseInt(this.elements.tabContent.dataset.lastMedalRenderTime || '0');
+
+      if (!force && this.elements.tabContent.dataset.renderedTab === 'medal' && this.elements.tabContent.dataset.medalTargetId === targetId) {
+        if (this.isTabHovered) return;
+        if (now - lastRendered < 1000) return;
+      }
       
       this.elements.tabContent.dataset.renderedTab = 'medal';
+      this.elements.tabContent.dataset.medalTargetId = targetId;
+      this.elements.tabContent.dataset.lastMedalRenderTime = now;
       this.renderMedalTab();
     }
   }
