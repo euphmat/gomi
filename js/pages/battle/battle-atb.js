@@ -125,6 +125,8 @@ export const atbMethods = {
       
       while (!nextActor && loops < MAX_LOOPS) {
         loops++;
+        let candidates = [];
+        
         this.party.forEach(p => {
           if (p.isDead) return;
           const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
@@ -132,8 +134,7 @@ export const atbMethods = {
           const speedRatio = spd / avgSpd;
           p.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
           if (p.atb >= 1000) {
-            p.atb = 1000;
-            if (!nextActor) nextActor = { type: 'party', entity: p };
+            candidates.push({ type: 'party', entity: p, atb: p.atb });
           }
           
           if (!document.hidden && loops === 1) { // 描画更新は最初のループのみ
@@ -143,7 +144,7 @@ export const atbMethods = {
                  if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
                } else {
                  if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-                 atbEl.style.transform = `scaleX(${p.atb / 1000})`;
+                 atbEl.style.transform = `scaleX(${Math.min(1000, p.atb) / 1000})`;
                }
             }
           }
@@ -156,8 +157,7 @@ export const atbMethods = {
           const speedRatio = spd / avgSpd;
           e.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
           if (e.atb >= 1000) {
-            e.atb = 1000;
-            if (!nextActor) nextActor = { type: 'enemy', entity: e };
+            candidates.push({ type: 'enemy', entity: e, atb: e.atb });
           }
 
           if (!document.hidden && loops === 1) {
@@ -167,11 +167,19 @@ export const atbMethods = {
                  if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
                } else {
                  if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-                 atbEl.style.transform = `scaleX(${e.atb / 1000})`;
+                 atbEl.style.transform = `scaleX(${Math.min(1000, e.atb) / 1000})`;
                }
             }
           }
         });
+        
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => b.atb - a.atb);
+          nextActor = candidates[0];
+          candidates.forEach(c => {
+             c.entity.atb = 1000;
+          });
+        }
       }
 
       if (nextActor) {
