@@ -385,13 +385,15 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
 
       if (maxFeed > 0 && btnFeed) {
         btnFeed.onclick = async () => {
-          const amount = parseInt(input.value) || 0;
-          if (amount <= 0 || amount > maxFeed) return;
+          const currentInv = await GameDB.getInventoryItem(drop.itemId);
+          const actualMax = currentInv ? currentInv.quantity : 0;
+          let amount = parseInt(input.value) || 0;
+          if (amount <= 0 || amount > actualMax) amount = actualMax;
+          if (amount === 0) return;
 
           btnFeed.disabled = true;
 
           // アイテム消費
-          const currentInv = await GameDB.getInventoryItem(drop.itemId);
           if (currentInv) {
             currentInv.quantity -= amount;
             if (currentInv.quantity <= 0) {
