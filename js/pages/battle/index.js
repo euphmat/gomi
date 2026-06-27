@@ -565,16 +565,35 @@ class BattleManager {
     });
   }
 
-  renderTabContent() {
+  renderTabContent(force = false) {
     if (this.currentTab === 'skill') {
+      this.elements.tabContent.dataset.renderedTab = 'skill';
       this.renderSkillTab();
     } else if (this.currentTab === 'item') {
+      this.elements.tabContent.dataset.renderedTab = 'item';
       this.renderItemTab();
     } else if (this.currentTab === 'info') {
+      this.elements.tabContent.dataset.renderedTab = 'info';
       this.renderInfoTab();
     } else if (this.currentTab === 'pet') {
+      let targetEntity = null;
+      if (this.infoTarget && this.infoTarget.type === 'enemy') {
+        targetEntity = this.infoTarget.entity;
+      } else if (this.selectedEnemyTarget) {
+        targetEntity = this.selectedEnemyTarget;
+      } else {
+        targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+      }
+      const targetId = targetEntity ? targetEntity.id : 'none';
+      if (!force && this.elements.tabContent.dataset.renderedTab === 'pet' && this.elements.tabContent.dataset.petTargetId === targetId) return;
+      
+      this.elements.tabContent.dataset.renderedTab = 'pet';
+      this.elements.tabContent.dataset.petTargetId = targetId;
       this.renderPetTab();
     } else if (this.currentTab === 'medal') {
+      if (!force && this.elements.tabContent.dataset.renderedTab === 'medal') return;
+      
+      this.elements.tabContent.dataset.renderedTab = 'medal';
       this.renderMedalTab();
     }
   }
