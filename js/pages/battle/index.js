@@ -584,6 +584,11 @@ class BattleManager {
       } else {
         targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
       }
+      
+      if (!targetEntity && !force && this.elements.tabContent.dataset.renderedTab === 'pet') {
+        return; // 一時的に敵がいなくなった場合は以前の表示を維持
+      }
+      
       const targetId = targetEntity ? targetEntity.id : 'none';
       if (!force && this.elements.tabContent.dataset.renderedTab === 'pet' && this.elements.tabContent.dataset.petTargetId === targetId) return;
       
