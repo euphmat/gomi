@@ -610,8 +610,34 @@ class BattleManager {
       this.monsterKills,
       this.ranchData,
       this.currentDungeonId,
-      (updatedRanchData) => {
+      async (updatedRanchData) => {
         this.ranchData = updatedRanchData;
+        
+        // 牧場ボーナスを再計算してパーティメンバーのステータスを更新
+        const rawParty = await getCharactersWithRanchBonus();
+        this.party.forEach(char => {
+          const updatedChar = rawParty.find(c => c.id === char.id);
+          if (updatedChar) {
+            const oldMaxHp = char.stats.hp;
+            const oldMaxMp = char.stats.mp;
+            
+            char.ranchBonus = updatedChar.ranchBonus;
+            char.stats = calcFinalStats(char, this.equipMap);
+            
+            // 最大HP/MPの上昇分を現在のHP/MPにも加算
+            const hpDiff = char.stats.hp - oldMaxHp;
+            const mpDiff = char.stats.mp - oldMaxMp;
+            if (hpDiff > 0) char.hp.current += hpDiff;
+            if (mpDiff > 0) char.mp.current += mpDiff;
+            
+            char.hp.current = Math.min(char.hp.current, char.stats.hp);
+            char.mp.current = Math.min(char.mp.current, char.stats.mp);
+          }
+        });
+        
+        // パーティカードを完全に再描画して最新ステータスを表示
+        this.elements.partyArea.innerHTML = '';
+        this.renderEntities();
       }
     );
   }

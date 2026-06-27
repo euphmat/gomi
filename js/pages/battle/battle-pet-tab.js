@@ -77,13 +77,13 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     .quantity-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: #f472b6;
-      border: 2px solid #fff;
+      border: 2.5px solid #fff;
       cursor: pointer;
-      box-shadow: 0 0 8px rgba(244, 114, 182, 0.6), 0 1px 3px rgba(0,0,0,0.3);
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
       transition: transform 0.1s;
     }
     .quantity-slider::-webkit-slider-thumb:hover {
@@ -93,13 +93,13 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
       transform: scale(0.95);
     }
     .quantity-slider::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: #f472b6;
-      border: 2px solid #fff;
+      border: 2.5px solid #fff;
       cursor: pointer;
-      box-shadow: 0 0 8px rgba(244, 114, 182, 0.6), 0 1px 3px rgba(0,0,0,0.3);
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
       transition: transform 0.1s;
       box-sizing: border-box;
     }
@@ -261,8 +261,8 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
         <div class="flex items-center gap-2 px-1 pt-0.5 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
           <span class="text-[9px] font-bold text-slate-400 w-4 text-right shrink-0">1</span>
           <div class="relative flex-1 flex items-center h-4">
-            <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
-            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
+            <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
             <input type="range" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0" data-item-id="${drop.itemId}">
           </div>
           <span class="text-[9px] font-black text-slate-400 w-7 shrink-0 cursor-pointer hover:text-slate-200 btn-max text-center">MAX</span>
