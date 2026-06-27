@@ -174,7 +174,7 @@ export const rendererMethods = {
       el.classList.remove(...allBgClasses);
       el.classList.add(targetBgClass);
 
-      if (this.activeCharacter === p) {
+      if (this.activeCharacter === p && !this.isAutoBattle) {
         el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
         el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
       } else if (this.isAutoBattle && this.selectedPartyMember === p) {

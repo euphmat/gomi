@@ -81,7 +81,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   let borderClass = 'border-gray-700';
   let bgClass = 'bg-gray-800/80';
 
-  if (activeCharacter === p && !(isAutoBattle && cachedDisableAnimations)) {
+  if (activeCharacter === p && !isAutoBattle) {
     borderClass = 'border-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]';
   } else if (isAutoBattle && selectedPartyMember === p) {
     borderClass = 'border-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]';

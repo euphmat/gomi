@@ -191,20 +191,21 @@ export const actionMethods = {
     if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
       const attackerEl = document.getElementById(attacker.elementId);
       if (attackerEl) {
+        const animDuration = Math.max(150, 300 / this.speedMult);
         if (isMagic) {
           attackerEl.animate([
             { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-            { transform: 'translateY(-10px) scale(1.05)', filter: 'brightness(1.5)', offset: 0.5 },
+            { transform: 'translateY(-15px) scale(1.1)', filter: 'brightness(1.5)', offset: 0.5 },
             { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-          ], { duration: 400 / this.speedMult, easing: 'ease-in-out' });
+          ], { duration: animDuration, easing: 'ease-in-out' });
         } else {
-          const direction = isParty ? -20 : 20; 
+          const direction = isParty ? -30 : 30; 
           attackerEl.animate([
-            { transform: 'translateY(0)' },
-            { transform: `translateY(${direction}px)`, offset: 0.2 },
-            { transform: `translateY(${direction}px)`, offset: 0.4 },
-            { transform: 'translateY(0)' }
-          ], { duration: 300 / this.speedMult, easing: 'ease-out' });
+            { transform: 'translateY(0) scale(1)' },
+            { transform: `translateY(${direction}px) scale(1.05)`, offset: 0.2 },
+            { transform: `translateY(${direction}px) scale(1.05)`, offset: 0.4 },
+            { transform: 'translateY(0) scale(1)' }
+          ], { duration: animDuration, easing: 'ease-out' });
         }
       }
     }
@@ -504,19 +505,20 @@ export const actionMethods = {
         slash.style.position = 'fixed';
         slash.style.left = `${tx}px`;
         slash.style.top = `${ty}px`;
-        slash.style.width = '120px';
-        slash.style.height = '6px';
-        slash.style.background = 'linear-gradient(to right, transparent, rgba(255,255,255,0.8), #fff, rgba(255,255,255,0.8), transparent)';
-        slash.style.boxShadow = '0 0 8px rgba(255,255,255,0.5)';
+        slash.style.width = '160px'; // Made slightly larger
+        slash.style.height = '8px';  // Made thicker
+        slash.style.background = 'linear-gradient(to right, transparent, rgba(255,255,255,0.9), #fff, rgba(255,255,255,0.9), transparent)';
+        slash.style.boxShadow = '0 0 12px rgba(255,255,255,0.8)'; // Stronger glow
         slash.style.zIndex = '9998';
         slash.style.pointerEvents = 'none';
         (document.getElementById('battle-effects-layer') || document.body).appendChild(slash);
 
+        const slashDuration = Math.max(120, 200 / this.speedMult);
         const anim = slash.animate([
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(0.1) scaleY(0.2)', opacity: 0 },
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.0) scaleY(1.0)', opacity: 1, offset: 0.3 },
           { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.5) scaleY(0.1)', opacity: 0 }
-        ], { duration: 200 / this.speedMult, easing: 'ease-out' });
+        ], { duration: slashDuration, easing: 'ease-out' });
 
         anim.onfinish = () => slash.remove();
       }
