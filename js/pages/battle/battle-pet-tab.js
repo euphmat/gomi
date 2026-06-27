@@ -359,16 +359,17 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
 
       if (maxFeed > 0) {
         const updateValue = (val, isManual = false) => {
+          const currentMax = parseInt(slider.max) || 1;
           let parsed = parseInt(val) || 1;
           if (parsed < 1) parsed = 1;
-          if (parsed > maxFeed) parsed = maxFeed;
+          if (parsed > currentMax) parsed = currentMax;
           input.value = parsed;
           slider.value = parsed;
           globalSliderValues[drop.itemId] = parsed;
           if (isManual) {
             globalSliderManualFlags[drop.itemId] = true;
           }
-          const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
+          const percentage = currentMax > 1 ? ((parsed - 1) / (currentMax - 1)) * 100 : 100;
           if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
         };
 
@@ -378,7 +379,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
         input.onchange = () => updateValue(input.value, true);
         slider.oninput = () => updateValue(slider.value, true);
         if (btnMax) {
-          btnMax.onclick = () => updateValue(maxFeed, true);
+          btnMax.onclick = () => updateValue(parseInt(slider.max) || 1, true);
         }
       }
 

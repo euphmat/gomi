@@ -651,21 +651,20 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         const sliderProgress = itemRow.querySelector('.slider-progress');
         const btnFeed = itemRow.querySelector('.btn-feed');
         
-        let currentMaxFeed = maxFeed;
-
         const updateValue = (val) => {
-          if (currentMaxFeed === 0) return;
+          const currentMax = parseInt(slider.max) || 1;
+          if (currentMax === 0) return;
           let parsed = parseInt(val) || 1;
           if (parsed < 1) parsed = 1;
-          if (parsed > currentMaxFeed) parsed = currentMaxFeed;
+          if (parsed > currentMax) parsed = currentMax;
           input.value = parsed;
           slider.value = parsed;
-          const percentage = currentMaxFeed > 1 ? ((parsed - 1) / (currentMaxFeed - 1)) * 100 : 100;
-          sliderProgress.style.width = `${percentage}%`;
+          const percentage = currentMax > 1 ? ((parsed - 1) / (currentMax - 1)) * 100 : 100;
+          if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
         };
 
         // Initialize progress
-        if (currentMaxFeed > 0) updateValue(1);
+        if (maxFeed > 0) updateValue(maxFeed);
 
         input.onchange = () => { manualSliderFlags[drop.itemId] = true; updateValue(input.value); };
         slider.oninput = () => { manualSliderFlags[drop.itemId] = true; updateValue(slider.value); };
