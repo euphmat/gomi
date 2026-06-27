@@ -24,6 +24,23 @@ import { createNavBar, initNavBar } from './components/nav-bar.js';
 import { GameDB } from './data/database.js';
 import { JOBS } from './jobs/index.js';
 
+// --- Dev Mode Reset on Reload ---
+localStorage.removeItem('devModeEnabled');
+if (parseInt(localStorage.getItem('autoBattleSpeed') || 1) > 5) {
+  localStorage.setItem('autoBattleSpeed', 5);
+}
+
+
+// --- SetTimeout Patch for High Speed ---
+const originalSetTimeout = window.setTimeout;
+window.setTimeout = function(fn, delay, ...args) {
+  const speed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
+  if (speed >= 10 && delay > 0 && typeof delay === 'number' && delay <= 2000) {
+    delay = 0; // 開発者モード中はアニメーション用の遅延を強制0msにする
+  }
+  return originalSetTimeout(fn, delay, ...args);
+};
+
 // ─── Page Imports ────────────────────────────────────────
 import { renderStatusPage }  from './pages/status.js';
 import { renderGuildPage }   from './pages/guild.js';
@@ -162,6 +179,25 @@ class App {
    * Bind the settings button to open a settings modal.
    */
   initSettingsButton() {
+    const headerLoc = document.getElementById('header-location');
+    if (headerLoc) {
+      headerLoc.style.cursor = 'default';
+      let clickCount = 0;
+      let clickTimer = null;
+      headerLoc.addEventListener('click', () => {
+        clickCount++;
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => { clickCount = 0; }, 500);
+        if (clickCount >= 10) {
+          clickCount = 0;
+          if (localStorage.getItem('devModeEnabled') !== 'true') {
+            localStorage.setItem('devModeEnabled', 'true');
+            alert('【開発者モード解放】\n速度設定に10〜50倍速が追加されました。\n設定を開き直してください。');
+          }
+        }
+      });
+    }
+
     const btn = document.getElementById('btn-setting');
     if (btn) {
       btn.addEventListener('click', () => this.showSettingsModal());
@@ -321,18 +357,30 @@ class App {
               </div>
             </div>
             <div class="px-1">
-              <input type="range" id="setting-speed-slider"
-                     min="1" max="5" step="1"
-                     value="${localStorage.getItem('autoBattleSpeed') || 1}"
-                     class="setting-slider">
-              <div class="flex justify-between mt-2.5 px-0.5">
-                ${[1,2,3,4,5].map(v => `
-                  <div class="speed-step ${parseInt(localStorage.getItem('autoBattleSpeed') || 1) >= v ? 'active' : ''}"
-                       data-speed="${v}">
-                    <span class="text-[9px] ${parseInt(localStorage.getItem('autoBattleSpeed') || 1) >= v ? 'text-yellow-400 font-bold' : 'text-gray-600'} transition-colors">${v === 1 ? '等倍' : v + 'x'}</span>
+              ${(() => {
+                const devMode = localStorage.getItem('devModeEnabled') === 'true';
+                const speeds = devMode ? [1, 2, 3, 4, 5, 10, 20, 30, 40, 50] : [1, 2, 3, 4, 5];
+                const current = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
+                let idx = speeds.indexOf(current);
+                if (idx === -1) idx = speeds.length - 1;
+
+                return `
+                  <input type="range" id="setting-speed-slider"
+                         min="0" max="${speeds.length - 1}" step="1"
+                         value="${idx}"
+                         class="setting-slider"
+                         data-speeds='${JSON.stringify(speeds)}'>
+                  <div class="flex justify-between mt-2.5 px-0.5">
+                    ${speeds.map((v, i) => `
+                      <div class="speed-step ${current >= v ? 'active' : ''}"
+                           data-speed="${v}" data-idx="${i}">
+                        <span class="text-[9px] ${current >= v ? 'text-yellow-400 font-bold' : 'text-gray-600'} transition-colors"
+                              style="${speeds.length > 5 ? 'transform: scale(0.85); transform-origin: center; white-space: nowrap;' : ''}">${v === 1 ? '等倍' : v + 'x'}</span>
+                      </div>
+                    `).join('')}
                   </div>
-                `).join('')}
-              </div>
+                `;
+              })()}
             </div>
           </div>
 
@@ -449,6 +497,10 @@ class App {
     const speedSlider = document.getElementById('setting-speed-slider');
     const speedValue = document.getElementById('setting-speed-value');
     const speedSteps = overlay.querySelectorAll('.speed-step');
+    let speedOptions = [1, 2, 3, 4, 5];
+    if (speedSlider && speedSlider.dataset.speeds) {
+      speedOptions = JSON.parse(speedSlider.dataset.speeds);
+    }
 
     const updateSpeedUI = (val) => {
       speedValue.textContent = val;
@@ -467,12 +519,25 @@ class App {
       });
     };
 
+    const applySpeedSetting = (val) => {
+      updateSpeedUI(val);
+      localStorage.setItem('autoBattleSpeed', val);
+      
+      // 10倍速以上ならアニメーションを強制無効化
+      if (val >= 10) {
+        localStorage.setItem('disableBattleAnimations', 'true');
+        const toggleAnim = document.getElementById('toggle-battle-anim');
+        if (toggleAnim) toggleAnim.classList.add('active');
+      }
+      
+      window.dispatchEvent(new Event('settingsChanged'));
+    };
+
     if (speedSlider) {
       speedSlider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        updateSpeedUI(val);
-        localStorage.setItem('autoBattleSpeed', val);
-        window.dispatchEvent(new Event('settingsChanged'));
+        const idx = parseInt(e.target.value);
+        const val = speedOptions[idx];
+        applySpeedSetting(val);
       });
     }
 
@@ -480,10 +545,9 @@ class App {
     speedSteps.forEach(step => {
       step.addEventListener('click', () => {
         const val = parseInt(step.dataset.speed);
-        speedSlider.value = val;
-        updateSpeedUI(val);
-        localStorage.setItem('autoBattleSpeed', val);
-        window.dispatchEvent(new Event('settingsChanged'));
+        const idx = parseInt(step.dataset.idx);
+        speedSlider.value = idx;
+        applySpeedSetting(val);
       });
     });
 

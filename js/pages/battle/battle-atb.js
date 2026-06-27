@@ -75,15 +75,23 @@ export const atbMethods = {
       this.atbWorkerUrl = null;
     }
 
+    // speedMultが高い場合はtick間隔を極限まで短くする
+    let tickInterval = 100;
+    if (this.speedMult >= 50) tickInterval = 5;
+    else if (this.speedMult >= 20) tickInterval = 15;
+    else if (this.speedMult >= 10) tickInterval = 30;
+    else if (this.speedMult >= 5) tickInterval = 50;
+
     const workerCode = `
       let timer = null;
+      let interval = ${tickInterval};
       self.onmessage = function(e) {
-        if (e.data === 'start') {
-          if (timer) clearInterval(timer);
-          timer = setInterval(() => self.postMessage('tick'), 100);
-        } else if (e.data === 'stop') {
+        if (e.data === 'stop') {
           clearInterval(timer);
           timer = null;
+        } else if (e.data === 'start') {
+          if (timer) clearInterval(timer);
+          timer = setInterval(() => self.postMessage('tick'), interval);
         }
       };
     `;
@@ -111,53 +119,60 @@ export const atbMethods = {
 
       let nextActor = null;
       
-      this.party.forEach(p => {
-        if (p.isDead) return;
-        const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
-        const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
-        const speedRatio = spd / avgSpd;
-        p.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
-        if (p.atb >= 1000) {
-          p.atb = 1000;
-          if (!nextActor) nextActor = { type: 'party', entity: p };
-        }
-        
-        if (!document.hidden) {
-          const atbEl = this.atbElements[p.elementId];
-          if(atbEl) {
-             if (disableAnim) {
-               if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
-             } else {
-               if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-               atbEl.style.transform = `scaleX(${p.atb / 1000})`;
-             }
-          }
-        }
-      });
+      let loops = 0;
+      // アニメ無効時はティックを待たずに次の行動者が決まるまで一気に時間を進める
+      const MAX_LOOPS = disableAnim ? 50 : 1;
       
-      this.enemies.forEach(e => {
-        if (e.isDead) return;
-        const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
-        const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
-        const speedRatio = spd / avgSpd;
-        e.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
-        if (e.atb >= 1000) {
-          e.atb = 1000;
-          if (!nextActor) nextActor = { type: 'enemy', entity: e };
-        }
-
-        if (!document.hidden) {
-          const atbEl = this.atbElements[e.elementId];
-          if(atbEl) {
-             if (disableAnim) {
-               if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
-             } else {
-               if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-               atbEl.style.transform = `scaleX(${e.atb / 1000})`;
-             }
+      while (!nextActor && loops < MAX_LOOPS) {
+        loops++;
+        this.party.forEach(p => {
+          if (p.isDead) return;
+          const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
+          const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
+          const speedRatio = spd / avgSpd;
+          p.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
+          if (p.atb >= 1000) {
+            p.atb = 1000;
+            if (!nextActor) nextActor = { type: 'party', entity: p };
           }
-        }
-      });
+          
+          if (!document.hidden && loops === 1) { // 描画更新は最初のループのみ
+            const atbEl = this.atbElements[p.elementId];
+            if(atbEl) {
+               if (disableAnim) {
+                 if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
+               } else {
+                 if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
+                 atbEl.style.transform = `scaleX(${p.atb / 1000})`;
+               }
+            }
+          }
+        });
+        
+        this.enemies.forEach(e => {
+          if (e.isDead) return;
+          const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
+          const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
+          const speedRatio = spd / avgSpd;
+          e.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
+          if (e.atb >= 1000) {
+            e.atb = 1000;
+            if (!nextActor) nextActor = { type: 'enemy', entity: e };
+          }
+
+          if (!document.hidden && loops === 1) {
+            const atbEl = this.atbElements[e.elementId];
+            if(atbEl) {
+               if (disableAnim) {
+                 if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
+               } else {
+                 if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
+                 atbEl.style.transform = `scaleX(${e.atb / 1000})`;
+               }
+            }
+          }
+        });
+      }
 
       if (nextActor) {
         if (this.decrementBuffTurns) {
