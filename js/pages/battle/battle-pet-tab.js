@@ -88,6 +88,21 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
 
   // (スタイルは index.html のグローバルCSSに移動しました)
 
+  let currentLevel = null;
+  if (isLegendaryToggleActive && isLegendaryCaptured) {
+    const mData = ranchData[capturedLegDungeonId]?.[`${targetEntity.id}_legendary`];
+    if (mData) {
+      const info = getRanchLevelInfo(mData.fedMaterials || 0, true);
+      currentLevel = info.level;
+    }
+  } else if (!isLegendaryToggleActive && isNormalCaptured) {
+    const mData = ranchData[capturedDungeonId]?.[targetEntity.id];
+    if (mData) {
+      const info = getRanchLevelInfo(mData.fedMaterials || 0, false);
+      currentLevel = info.level;
+    }
+  }
+
   // --- ヘッダー (捕獲情報統合・3分割グリッド化) ---
   const isDisplayLegendary = targetEntity.isLegendary || isLegendaryToggleActive;
   const headerHtml = `
@@ -99,6 +114,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
       <div class="flex flex-col min-w-0 flex-1">
         <div class="flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
           <div class="flex items-center gap-1.5 min-w-0">
+            ${currentLevel !== null ? `<span class="text-[10px] text-pink-300 font-black bg-pink-900/40 px-2 py-0.5 rounded border border-pink-500/40 shrink-0">Lv.${currentLevel}</span>` : ''}
             <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
             <label class="relative inline-flex items-center cursor-pointer shrink-0">
               <input type="checkbox" class="sr-only peer" id="legendary-toggle" ${isLegendaryToggleActive ? 'checked' : ''}>
@@ -272,16 +288,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
   const info = getRanchLevelInfo(monsterData.fedMaterials || 0, variant.isLeg);
   const pct = (info.currentLevelFed / info.nextLevelRequired) * 100;
 
-  // ヘッダー + レベル + EXPバー
   sectionEl.innerHTML = `
-    <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-2">
-      <div class="flex items-center gap-1.5">
-        <span class="material-symbols-outlined text-pink-400 text-[14px]" style="font-variation-settings: 'FILL' 1">restaurant</span>
-        <span class="font-bold text-[12px] text-slate-300">餌やり</span>
-        ${variant.isLeg ? '<span class="text-[9px] font-black text-yellow-300 bg-yellow-900/50 px-1.5 py-0.5 rounded border border-yellow-700/50">伝説</span>' : ''}
-      </div>
-      <span class="text-[10px] text-pink-300 font-black bg-pink-900/40 px-2 py-0.5 rounded border border-pink-500/40">Lv.${info.level}</span>
-    </div>
     <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden relative shadow-inner border border-slate-700/50 flex items-center justify-center mb-2">
       <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 transition-all duration-500 ease-out" style="width: ${pct}%">
         <div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
