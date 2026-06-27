@@ -225,9 +225,9 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       const maxFeed = quantity;
       
       // 復元値があればそれを使う、なければ最大値または1
-      let initialVal = globalSliderValues[drop.itemId] !== undefined ? parseInt(globalSliderValues[drop.itemId]) : (maxFeed > 0 ? 1 : 1);
+      let initialVal = globalSliderValues[drop.itemId] !== undefined ? parseInt(globalSliderValues[drop.itemId]) : (maxFeed > 0 ? maxFeed : 1);
       if (initialVal > maxFeed) initialVal = maxFeed;
-      if (initialVal < 1) initialVal = maxFeed > 0 ? 1 : 1;
+      if (initialVal < 1) initialVal = maxFeed > 0 ? maxFeed : 1;
 
       const itemRow = document.createElement('div');
       itemRow.className = 'bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors flex flex-col gap-1.5';
