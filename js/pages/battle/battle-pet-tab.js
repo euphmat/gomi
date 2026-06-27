@@ -14,6 +14,8 @@ const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
 // --- モジュールレベルでスライダーの値を保持 (階層クリアやタブ切り替え、餌やり後も値を維持) ---
 const globalSliderValues = {};
+let isLegendaryToggleActive = false;
+let currentTargetEntityId = null;
 
 /**
  * Pet タブの HTML を生成して tabContent に描画する
@@ -34,6 +36,11 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   tabContent.querySelectorAll('.quantity-slider').forEach(slider => {
     globalSliderValues[slider.dataset.itemId] = slider.value;
   });
+
+  if (targetEntity.id !== currentTargetEntityId) {
+    currentTargetEntityId = targetEntity.id;
+    isLegendaryToggleActive = !!targetEntity.isLegendary;
+  }
 
   const kills = monsterKills[targetEntity.id] || 0;
 
@@ -76,16 +83,24 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   // (スタイルは index.html のグローバルCSSに移動しました)
 
   // --- ヘッダー (捕獲情報統合・3分割グリッド化) ---
+  const isDisplayLegendary = targetEntity.isLegendary || isLegendaryToggleActive;
   const headerHtml = `
     <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
       <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-md relative flex items-center justify-center p-1 shrink-0">
-        ${targetEntity.isLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
-        <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
+        ${isDisplayLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
+        <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${isDisplayLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
       <div class="flex flex-col min-w-0 flex-1">
         <div class="flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
-          <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
-          <span class="text-[9px] text-slate-400 font-bold shrink-0">討伐数: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" class="sr-only peer" id="legendary-toggle" ${isLegendaryToggleActive ? 'checked' : ''}>
+              <div class="w-6 h-3 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-slate-300 peer-checked:after:bg-yellow-400 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-yellow-600/50 border border-slate-600 peer-checked:border-yellow-500/50 shadow-inner"></div>
+              <span class="ml-1 text-[8px] font-black ${isLegendaryToggleActive ? 'text-yellow-400 drop-shadow-[0_0_2px_rgba(250,204,21,0.5)]' : 'text-slate-500'}">伝説</span>
+            </label>
+          </div>
+          <span class="text-[9px] text-slate-400 font-bold shrink-0 ml-1">討伐数: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
         </div>
         <div class="grid grid-cols-3 gap-0.5 w-full">
           <!-- 捕獲率 -->
@@ -118,12 +133,27 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   `;
   container.innerHTML = headerHtml;
 
-  // --- 餌やりセクション ---
-  if (isNormalCaptured || isLegendaryCaptured) {
-    const variants = [];
-    if (isNormalCaptured) variants.push({ key: targetEntity.id, dungeonId: capturedDungeonId, isLeg: false, label: targetEntity.name });
-    if (isLegendaryCaptured) variants.push({ key: `${targetEntity.id}_legendary`, dungeonId: capturedLegDungeonId, isLeg: true, label: `伝説の${targetEntity.name}` });
+  const toggleInput = container.querySelector('#legendary-toggle');
+  if (toggleInput) {
+    toggleInput.addEventListener('change', (e) => {
+      isLegendaryToggleActive = e.target.checked;
+      renderBattlePetTab(tabContent, targetEntity, monsterKills, ranchData, currentDungeonId, onRanchDataUpdated);
+    });
+  }
 
+  // --- 餌やりセクション ---
+  const variants = [];
+  if (isLegendaryToggleActive) {
+    if (isLegendaryCaptured) {
+      variants.push({ key: `${targetEntity.id}_legendary`, dungeonId: capturedLegDungeonId, isLeg: true, label: `伝説の${targetEntity.name}` });
+    }
+  } else {
+    if (isNormalCaptured) {
+      variants.push({ key: targetEntity.id, dungeonId: capturedDungeonId, isLeg: false, label: targetEntity.name });
+    }
+  }
+
+  if (variants.length > 0) {
     for (const variant of variants) {
       const feedSection = document.createElement('div');
       feedSection.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
@@ -135,7 +165,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     noCapDiv.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-3 shadow-inner flex flex-col items-center justify-center gap-2 text-center';
     noCapDiv.innerHTML = `
       <span class="material-symbols-outlined text-3xl text-slate-600">heart_broken</span>
-      <span class="text-[11px] text-slate-400 font-bold">まだ仲間になっていません</span>
+      <span class="text-[11px] text-slate-400 font-bold">${isLegendaryToggleActive ? '伝説のモンスターは' : ''}まだ仲間になっていません</span>
       <span class="text-[10px] text-slate-500">ダンジョンで討伐を繰り返すと仲間になることがあります</span>
     `;
     container.appendChild(noCapDiv);
