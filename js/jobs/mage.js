@@ -206,10 +206,21 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
         }
         case 'blizzard': {
           const numIcicles = options.hits || 6;
+          // 軽量化のため、描画する氷柱は最大3本にする
+          const visualIcicles = Math.min(numIcicles, 3);
           let completed = 0;
           
           for (let i = 0; i < numIcicles; i++) {
             setTimeout(() => {
+              if (i >= visualIcicles) {
+                // エフェクトを省略し、アニメーション時間分だけ待ってからダメージ判定
+                setTimeout(() => {
+                  completed++;
+                  if (onImpact) onImpact(target, index, completed - 1);
+                }, 190 / speedMult);
+                return;
+              }
+
               const el = document.createElement('div');
               el.style.position = 'fixed';
               
@@ -243,7 +254,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
 
               anim.onfinish = () => {
                 el.remove();
-                createIceShatter(targetX, targetY, false, 3);
+                createIceShatter(targetX, targetY, false, 2); // 破片の数も3から2に減らして軽量化
                 completed++;
                 // Trigger impact damage for EACH icicle
                 if (onImpact) onImpact(target, index, completed - 1);
