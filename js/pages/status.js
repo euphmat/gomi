@@ -95,17 +95,21 @@ async function _loadStatusData(container) {
           for (const item of validItems) {
             let score = 0;
             if (item.stats) {
+              const overallScore = (item.stats.hp || 0) + (item.stats.mp || 0) + (item.stats.atk || 0) + (item.stats.def || 0) + (item.stats.matk || 0) + (item.stats.mdef || 0) + (item.stats.spd || 0);
+              let focusScore = 0;
               if (focus === 'overall') {
-                score += (item.stats.hp || 0) + (item.stats.mp || 0) + (item.stats.atk || 0) + (item.stats.def || 0) + (item.stats.matk || 0) + (item.stats.mdef || 0) + (item.stats.spd || 0);
+                focusScore = overallScore;
               } else if (focus === 'physical') {
-                score += (item.stats.atk || 0);
+                focusScore = (item.stats.atk || 0);
               } else if (focus === 'magic') {
-                score += (item.stats.matk || 0) + (item.stats.mp || 0);
+                focusScore = (item.stats.matk || 0) + (item.stats.mp || 0);
               } else if (focus === 'defense') {
-                score += (item.stats.hp || 0) + (item.stats.def || 0) + (item.stats.mdef || 0);
+                focusScore = (item.stats.hp || 0) + (item.stats.def || 0) + (item.stats.mdef || 0);
               } else if (focus === 'speed') {
-                score += (item.stats.spd || 0);
+                focusScore = (item.stats.spd || 0);
               }
+              // 重視ステータスを最優先しつつ、同値の場合は総合値（overallScore）をタイブレーカーとして加算する
+              score = focusScore * 1000000 + overallScore;
             }
             if (score > bestScore || (score === bestScore && item.id === oldEquipment[slot])) {
               bestScore = score;
