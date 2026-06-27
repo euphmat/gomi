@@ -138,9 +138,9 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     const materialsGrid = document.createElement('div');
     materialsGrid.className = 'grid grid-cols-2 gap-1.5';
 
-    materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
+    materialRequirements.forEach(({ mat, itemId, owned, required, sufficient }) => {
       const row = document.createElement('div');
-      row.id = `battle-medal-mat-row-${drop.itemId}`;
+      row.id = `battle-medal-mat-row-${itemId}`;
       row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
         sufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'
       }`;
@@ -156,7 +156,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
           <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
         </div>
         <div class="flex items-center gap-0.5 shrink-0">
-          <span id="battle-medal-mat-owned-${drop.itemId}" class="text-[11px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
+          <span id="battle-medal-mat-owned-${itemId}" class="text-[11px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
           <span class="text-gray-500 text-[9px]">/</span>
           <span class="text-[11px] font-bold text-slate-400">${formatNumber(required)}</span>
         </div>
