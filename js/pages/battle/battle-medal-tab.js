@@ -262,30 +262,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     container.appendChild(maxSection);
   }
 
-  // --- メダルランク一覧 ---
-  const rankListPanel = document.createElement('div');
-  rankListPanel.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
-  rankListPanel.innerHTML = `
-    <div class="flex items-center gap-1.5 border-b border-slate-700/50 pb-1 mb-1.5">
-      <span class="material-symbols-outlined text-amber-400 text-[14px]" style="font-variation-settings: 'FILL' 1">format_list_bulleted</span>
-      <span class="font-bold text-[11px] text-slate-300">メダルランク</span>
-    </div>
-    <div class="grid grid-cols-4 gap-1">
-      ${MEDAL_RANKS.map((r, idx) => {
-        const isCurrentRank = idx === currentRankIndex;
-        return `
-          <div class="flex flex-col items-center gap-0.5 p-1 rounded border ${
-            isCurrentRank ? 'bg-amber-950/40 border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'bg-slate-800/30 border-slate-700/50'
-          }">
-            <img src="${r.image}" class="w-6 h-6 object-contain ${idx > currentRankIndex ? 'opacity-30 grayscale' : ''}" onerror="this.style.display='none'">
-            <span class="text-[7px] font-bold leading-tight text-center" style="color: ${r.color}">${r.name.replace('メダル', '')}</span>
-            <span class="text-[7px] text-emerald-400 font-bold">+${r.killBonus}</span>
-          </div>
-        `;
-      }).join('')}
-    </div>
-  `;
-  container.appendChild(rankListPanel);
+
 
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
