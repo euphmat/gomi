@@ -594,7 +594,7 @@ class BattleManager {
     this.elements.tabContent.innerHTML = html;
   }
 
-  renderPetTab() {
+  async renderPetTab() {
     let targetEntity = null;
     if (this.infoTarget && this.infoTarget.type === 'enemy') {
       targetEntity = this.infoTarget.entity;
@@ -604,7 +604,7 @@ class BattleManager {
       targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
     }
 
-    renderBattlePetTab(
+    await renderBattlePetTab(
       this.elements.tabContent,
       targetEntity,
       this.monsterKills,

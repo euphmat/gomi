@@ -21,11 +21,17 @@ const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
  * @param {string} currentDungeonId - 現在のダンジョンID
  * @param {Function} onRanchDataUpdated - ranch_data 更新時コールバック
  */
-export function renderBattlePetTab(tabContent, targetEntity, monsterKills, ranchData, currentDungeonId, onRanchDataUpdated) {
+export async function renderBattlePetTab(tabContent, targetEntity, monsterKills, ranchData, currentDungeonId, onRanchDataUpdated) {
   if (!targetEntity || !targetEntity.id) {
     tabContent.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が選択されていません</div>';
     return;
   }
+
+  // Preserve slider values before re-rendering
+  const preservedValues = {};
+  tabContent.querySelectorAll('.quantity-slider').forEach(slider => {
+    preservedValues[slider.dataset.itemId] = slider.value;
+  });
 
   const kills = monsterKills[targetEntity.id] || 0;
 
@@ -51,68 +57,53 @@ export function renderBattlePetTab(tabContent, targetEntity, monsterKills, ranch
   const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
 
   const getCapBadge = (captured, rate) => captured
-    ? `<span class="bg-pink-950/80 text-pink-300 border border-pink-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shadow-[0_0_8px_rgba(244,114,182,0.3)] shrink-0">捕獲済</span>`
-    : `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
+    ? `<span class="text-pink-400 text-[9px] font-black shrink-0 ml-1">捕獲済</span>`
+    : `<span class="text-emerald-400 text-[9px] font-black shrink-0 ml-1">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
+
+  // --- インベントリの一括取得 (ちらつき防止) ---
+  const allInv = await GameDB.getAllInventory();
+  const inventoryMap = {};
+  if (allInv) {
+    allInv.forEach(item => inventoryMap[item.id] = item.quantity);
+  }
 
   // --- コンテナ作成 ---
   const container = document.createElement('div');
   container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
-  // --- ヘッダー ---
+  // --- ヘッダー (捕獲情報統合) ---
   const headerHtml = `
     <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
       <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-md relative flex items-center justify-center p-1 shrink-0">
         ${targetEntity.isLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
         <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
-      <div class="flex flex-col min-w-0">
-        <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
-        <span class="text-[10px] text-slate-400 font-bold">討伐数: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
-      </div>
-    </div>
-  `;
-
-  // --- 捕獲情報パネル ---
-  const captureInfoHtml = `
-    <div class="bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner">
-      <div class="flex items-center gap-1 border-b border-slate-700/50 pb-1 mb-1.5 shrink-0">
-        <span class="material-symbols-outlined text-pink-400 text-[14px]" style="font-variation-settings: 'FILL' 1">pets</span>
-        <span class="font-bold text-[12px] text-slate-300">捕獲情報</span>
-      </div>
-      <div class="grid grid-cols-3 gap-1">
-        <!-- 捕獲率 -->
-        <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-1 shadow-inner min-w-0">
-          <div class="flex items-center gap-1 min-w-0 shrink-0">
-            <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
-            <span class="text-[10px] text-slate-400 font-bold truncate">捕獲率</span>
-          </div>
-          ${getCapBadge(isNormalCaptured, captureRate)}
+      <div class="flex flex-col min-w-0 flex-1">
+        <div class="flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-0.5">
+          <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
+          <span class="text-[9px] text-slate-400 font-bold shrink-0">討伐: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
         </div>
-        <!-- 伝説出現率 -->
-        <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-1 shadow-inner min-w-0">
-          <div class="flex items-center gap-1 min-w-0 shrink-0">
-            <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-yellow-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">auto_awesome</span></div>
-            <span class="text-[10px] text-slate-400 font-bold truncate">伝説出現</span>
+        <div class="flex items-center gap-1 overflow-hidden">
+          <div class="flex items-center bg-slate-950/40 px-1 py-0.5 rounded border border-slate-700/50 min-w-0">
+            <span class="material-symbols-outlined text-[10px] text-pink-400 shrink-0" style="font-variation-settings: 'FILL' 1;">pets</span>
+            ${getCapBadge(isNormalCaptured, captureRate)}
           </div>
-          <span class="bg-yellow-950/80 text-yellow-400 border border-yellow-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0 ml-1">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
-        </div>
-        <!-- 伝説捕獲率 -->
-        <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-1 shadow-inner min-w-0">
-          <div class="flex items-center gap-1 min-w-0 shrink-0">
-            <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
-            <span class="text-[10px] text-slate-400 font-bold truncate">伝説捕獲</span>
+          <div class="flex items-center bg-slate-950/40 px-1 py-0.5 rounded border border-slate-700/50 min-w-0">
+            <span class="material-symbols-outlined text-[10px] text-yellow-400 shrink-0" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+            <span class="text-[9px] text-yellow-400 font-black shrink-0 ml-1">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
           </div>
-          ${getCapBadge(isLegendaryCaptured, legCapRate)}
+          <div class="flex items-center bg-slate-950/40 px-1 py-0.5 rounded border border-slate-700/50 min-w-0">
+            <span class="material-symbols-outlined text-[10px] text-pink-400 shrink-0" style="font-variation-settings: 'FILL' 1;">pets</span>
+            ${getCapBadge(isLegendaryCaptured, legCapRate)}
+          </div>
         </div>
       </div>
     </div>
   `;
-
-  container.innerHTML = headerHtml + captureInfoHtml;
+  container.innerHTML = headerHtml;
 
   // --- 餌やりセクション ---
   if (isNormalCaptured || isLegendaryCaptured) {
-    // 通常と伝説、仲間になっている方を表示（両方いれば両方表示）
     const variants = [];
     if (isNormalCaptured) variants.push({ key: targetEntity.id, dungeonId: capturedDungeonId, isLeg: false, label: targetEntity.name });
     if (isLegendaryCaptured) variants.push({ key: `${targetEntity.id}_legendary`, dungeonId: capturedLegDungeonId, isLeg: true, label: `伝説の${targetEntity.name}` });
@@ -121,7 +112,7 @@ export function renderBattlePetTab(tabContent, targetEntity, monsterKills, ranch
       const feedSection = document.createElement('div');
       feedSection.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
       container.appendChild(feedSection);
-      renderFeedSection(feedSection, variant, targetEntity, ranchData, onRanchDataUpdated);
+      renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent);
     }
   } else {
     const noCapDiv = document.createElement('div');
@@ -134,14 +125,15 @@ export function renderBattlePetTab(tabContent, targetEntity, monsterKills, ranch
     container.appendChild(noCapDiv);
   }
 
+  // 同期的に DOM を置換 (ちらつき防止)
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
 }
 
 /**
- * 餌やりセクションを描画
+ * 餌やりセクションを描画 (同期版)
  */
-async function renderFeedSection(sectionEl, variant, targetEntity, ranchData, onRanchDataUpdated) {
+function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent) {
   const monsterData = ranchData[variant.dungeonId][variant.key];
   if (!monsterData) return;
 
@@ -183,12 +175,16 @@ async function renderFeedSection(sectionEl, variant, targetEntity, ranchData, on
       const mat = MATERIALS_MAP.get(drop.itemId);
       if (!mat) continue;
 
-      const invItem = await GameDB.getInventoryItem(drop.itemId);
-      const quantity = invItem ? invItem.quantity : 0;
+      const quantity = inventoryMap[drop.itemId] || 0;
       const maxFeed = quantity;
+      
+      // 復元値があればそれを使う、なければ最大値または1
+      let initialVal = preservedValues[drop.itemId] !== undefined ? parseInt(preservedValues[drop.itemId]) : (maxFeed > 0 ? 1 : 1);
+      if (initialVal > maxFeed) initialVal = maxFeed;
+      if (initialVal < 1) initialVal = maxFeed > 0 ? 1 : 1;
 
       const itemRow = document.createElement('div');
-      itemRow.className = 'bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors';
+      itemRow.className = 'bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors flex flex-col gap-1.5';
 
       itemRow.innerHTML = `
         <div class="flex items-center justify-between gap-2">
@@ -204,21 +200,32 @@ async function renderFeedSection(sectionEl, variant, targetEntity, ranchData, on
               <div class="text-[9px] font-bold text-slate-400 mt-0.5">所持: <span class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
             </div>
           </div>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <div class="bg-slate-900 border border-slate-700 rounded w-12 h-6 flex items-center justify-center shadow-inner">
-              <input type="number" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? 1 : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[10px] font-black text-pink-300 outline-none appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none quantity-input">
-            </div>
-            <button class="px-3 h-6 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded text-[10px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_8px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>与える</button>
+          <button class="px-3 h-7 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded text-[10px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_8px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
+            与える
+          </button>
+        </div>
+        <!-- スライダーエリア -->
+        <div class="flex items-center gap-2 pl-[40px]">
+          <input type="range" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="flex-1 quantity-slider accent-pink-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" data-item-id="${drop.itemId}">
+          <div class="w-10 h-5 bg-slate-900 border border-slate-700 rounded flex items-center justify-center shrink-0">
+            <span class="text-[10px] font-black text-pink-300 quantity-display">${initialVal}</span>
           </div>
         </div>
       `;
 
-      const input = itemRow.querySelector('.quantity-input');
+      const slider = itemRow.querySelector('.quantity-slider');
+      const display = itemRow.querySelector('.quantity-display');
       const btnFeed = itemRow.querySelector('.btn-feed');
+
+      if (maxFeed > 0 && slider) {
+        slider.oninput = (e) => {
+          display.textContent = e.target.value;
+        };
+      }
 
       if (maxFeed > 0 && btnFeed) {
         btnFeed.onclick = async () => {
-          const amount = parseInt(input.value) || 0;
+          const amount = parseInt(slider.value) || 0;
           if (amount <= 0 || amount > maxFeed) return;
 
           btnFeed.disabled = true;
@@ -248,17 +255,22 @@ async function renderFeedSection(sectionEl, variant, targetEntity, ranchData, on
             onRanchDataUpdated(freshRanch);
           }
 
-          // レベルアップチェック＆再描画
+          // レベルアップチェック＆通知
           const newInfo = getRanchLevelInfo(monsterData.fedMaterials, variant.isLeg);
           if (newInfo.level > info.level) {
-            // レベルアップ通知
             showBattleFeedNotification(`${variant.label} が Lv.${newInfo.level} になりました！`, 'success');
           } else {
             showBattleFeedNotification(`${variant.label} に ${amount} 個の ${mat.name} を与えました (+${expGain} EXP)`, 'info');
           }
 
-          // セクション再描画
-          renderFeedSection(sectionEl, variant, targetEntity, await GameDB.getGameState('ranch_data'), onRanchDataUpdated);
+          // 再描画 (親タブ全体を更新)
+          const latestInv = await GameDB.getAllInventory();
+          const latestInvMap = {};
+          if (latestInv) latestInv.forEach(item => latestInvMap[item.id] = item.quantity);
+          
+          // Slider value reset to 1 after feeding to avoid confusion
+          preservedValues[drop.itemId] = 1;
+          renderBattlePetTab(tabContent, targetEntity, monsterKills, freshRanch, variant.dungeonId, onRanchDataUpdated);
         };
       }
 
