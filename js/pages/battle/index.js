@@ -658,7 +658,7 @@ class BattleManager {
     if (!wrapper) {
       this.elements.tabContent.innerHTML = `
         <div class="sub-tab-wrapper flex flex-col h-full w-full bg-transparent">
-          <div class="sub-tab-header flex gap-1.5 overflow-x-auto px-1.5 pt-1.5 pb-1 shrink-0 custom-scrollbar border-b border-slate-700/50 mb-1"></div>
+          <div class="sub-tab-header flex flex-wrap gap-1.5 px-1.5 pt-1.5 pb-1 shrink-0 border-b border-slate-700/50 mb-1"></div>
           <div class="sub-tab-body flex-1 min-h-0 overflow-y-auto custom-scrollbar relative bg-transparent pr-1"></div>
         </div>
       `;
@@ -676,8 +676,9 @@ class BattleManager {
       const opacity = isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-80';
       
       return `
-        <div class="sub-tab-item flex items-center justify-center w-7 h-7 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all shrink-0 mb-1 backdrop-blur-sm" data-id="${m.id}" title="${m.name}">
-          <img src="${m.image}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
+        <div class="sub-tab-item flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all shrink-0 mb-1 backdrop-blur-sm" data-id="${m.id}" title="${m.name}">
+          <img src="${m.image}" class="w-3.5 h-3.5 object-contain" onerror="this.style.display='none'">
+          <span class="text-[10px] font-bold whitespace-nowrap tracking-wide ${isSelected ? 'text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]' : 'text-slate-400 drop-shadow-md'}">${m.name}</span>
         </div>
       `;
     }).join('');
