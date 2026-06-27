@@ -603,13 +603,14 @@ function showMedalHelpModal() {
     <div class="bg-slate-950/40 border border-slate-800/60 p-4 rounded-xl flex flex-col gap-2 shadow-inner">
       <div class="flex items-center gap-2 mb-1">
         <span class="material-symbols-outlined text-emerald-400">trending_up</span>
-        <span class="font-black text-slate-200">討伐数 & 報酬ボーナス</span>
+        <span class="font-black text-slate-200">討伐ボーナス & 追加出現</span>
       </div>
-      <p class="text-xs">メダルを所持していると、対象のモンスターを倒した際に得られる<strong>討伐数</strong>にボーナスが加算されます。</p>
+      <p class="text-xs">メダルを所持していると、対象モンスターの<strong>討伐数</strong>にボーナスが加算されるほか、バトル時に<strong>追加出現</strong>する効果があります。</p>
       <div class="text-[11px] text-amber-300 bg-amber-950/30 p-2 rounded border border-amber-900/50 flex flex-col gap-1">
-        <span>例：シルバーメダル（討伐ボーナス+3）の場合</span>
+        <span>例：ステラメダルの場合</span>
         <ul class="list-disc list-inside ml-1">
-          <li>1匹倒すだけで <strong>4匹分</strong>（基本1 + ボーナス3）の討伐数がカウントされます。</li>
+          <li>討伐ボーナス <strong>+127</strong> が加算されます。</li>
+          <li>対象モンスターがバトルで <strong>必ず3体追加出現</strong> します。</li>
         </ul>
       </div>
     </div>
@@ -617,17 +618,28 @@ function showMedalHelpModal() {
     <div class="flex flex-col gap-2">
       <div class="font-black text-slate-200 border-b border-slate-800 pb-1">メダルランクと効果</div>
       <div class="grid grid-cols-2 gap-2 mt-1">
-        ${MEDAL_RANKS.map(r => `
+        ${MEDAL_RANKS.map(r => {
+          let spawnText = '';
+          if (r.id === 'bronze') spawnText = '追加出現 1体(10%)';
+          else if (r.id === 'silver') spawnText = '追加出現 1体(50%)';
+          else if (r.id === 'gold') spawnText = '追加出現 1体';
+          else if (r.id === 'diamond') spawnText = '追加出現 1〜2体';
+          else if (r.id === 'saint') spawnText = '追加出現 1〜2体';
+          else if (r.id === 'black') spawnText = '追加出現 2体';
+          else if (r.id === 'stela') spawnText = '追加出現 3体';
+          
+          return `
           <div class="flex items-center gap-2 bg-slate-800/30 p-2 rounded-lg border border-slate-700/50">
             <img src="${r.image}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
             <div class="flex flex-col gap-0.5">
               <span class="text-[10px] font-bold leading-tight" style="color: ${r.color}">${r.name}</span>
               <div class="flex flex-col">
                 <span class="text-[9px] text-emerald-400 leading-tight">討伐数 +${r.killBonus}</span>
+                <span class="text-[9px] text-cyan-400 leading-tight">${spawnText}</span>
               </div>
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       </div>
     </div>
   `;
