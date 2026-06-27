@@ -478,7 +478,20 @@ class App {
 
     const toggleBattleAnim = document.getElementById('toggle-battle-anim');
     if (toggleBattleAnim) {
+      const currentSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
+      if (currentSpeed >= 10) {
+        toggleBattleAnim.style.pointerEvents = 'none';
+        const section = toggleBattleAnim.closest('.settings-section');
+        if (section) {
+          section.style.opacity = '0.5';
+          section.style.pointerEvents = 'none';
+        }
+      }
+
       toggleBattleAnim.addEventListener('click', () => {
+        const speed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
+        if (speed >= 10) return;
+
         const isActive = toggleBattleAnim.classList.toggle('active');
         localStorage.setItem('disableBattleAnimations', isActive);
         window.dispatchEvent(new Event('settingsChanged'));
@@ -523,11 +536,29 @@ class App {
       updateSpeedUI(val);
       localStorage.setItem('autoBattleSpeed', val);
       
-      // 10倍速以上ならアニメーションを強制無効化
+      const toggleAnim = document.getElementById('toggle-battle-anim');
+      const section = toggleAnim ? toggleAnim.closest('.settings-section') : null;
+      
+      // 10倍速以上ならアニメーションを強制無効化し、トグルを操作不可に
       if (val >= 10) {
         localStorage.setItem('disableBattleAnimations', 'true');
-        const toggleAnim = document.getElementById('toggle-battle-anim');
-        if (toggleAnim) toggleAnim.classList.add('active');
+        if (toggleAnim) {
+          toggleAnim.classList.add('active');
+          toggleAnim.style.pointerEvents = 'none';
+          if (section) {
+            section.style.opacity = '0.5';
+            section.style.pointerEvents = 'none';
+          }
+        }
+      } else {
+        // 5倍速以下に戻した場合は操作可能に
+        if (toggleAnim) {
+          toggleAnim.style.pointerEvents = '';
+          if (section) {
+            section.style.opacity = '';
+            section.style.pointerEvents = '';
+          }
+        }
       }
       
       window.dispatchEvent(new Event('settingsChanged'));

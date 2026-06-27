@@ -522,6 +522,61 @@ export const actionMethods = {
 
         anim.onfinish = () => slash.remove();
       }
+    } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden) {
+      const attackerEl = document.getElementById(attacker.elementId);
+      const defenderEl = document.getElementById(defender.elementId);
+      if (attackerEl && defenderEl) {
+        const attackerRect = attackerEl.getBoundingClientRect();
+        const defenderRect = defenderEl.getBoundingClientRect();
+        const startX = attackerRect.left + attackerRect.width / 2;
+        const startY = attackerRect.top + attackerRect.height / 2;
+        const endX = defenderRect.left + defenderRect.width / 2;
+        const endY = defenderRect.top + defenderRect.height / 2;
+        
+        const missile = document.createElement('div');
+        missile.style.position = 'fixed';
+        missile.style.left = `${startX}px`;
+        missile.style.top = `${startY}px`;
+        missile.style.width = '12px';
+        missile.style.height = '12px';
+        missile.style.background = 'radial-gradient(circle, #f0abfc, #d946ef, transparent)';
+        missile.style.borderRadius = '50%';
+        missile.style.boxShadow = '0 0 10px #e879f9';
+        missile.style.zIndex = '9998';
+        missile.style.pointerEvents = 'none';
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(missile);
+
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const duration = Math.max(200, 300 / this.speedMult);
+        const anim = missile.animate([
+          { transform: 'translate(-50%, -50%) scale(0.5)' },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.5)` }
+        ], { duration, easing: 'ease-in' });
+        
+        anim.onfinish = () => {
+          missile.remove();
+          const explode = document.createElement('div');
+          explode.style.position = 'fixed';
+          explode.style.left = `${endX}px`;
+          explode.style.top = `${endY}px`;
+          explode.style.width = '30px';
+          explode.style.height = '30px';
+          explode.style.background = 'radial-gradient(circle, #fdf4ff, #e879f9, transparent)';
+          explode.style.borderRadius = '50%';
+          explode.style.transform = 'translate(-50%, -50%)';
+          explode.style.zIndex = '9998';
+          explode.style.pointerEvents = 'none';
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(explode);
+          
+          const expAnim = explode.animate([
+            { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 1 },
+            { transform: 'translate(-50%, -50%) scale(2)', opacity: 0 }
+          ], { duration: 150, easing: 'ease-out' });
+          expAnim.onfinish = () => explode.remove();
+        };
+      }
     }
 
     this.showDamage(defender.elementId, damage, dmgColor);
