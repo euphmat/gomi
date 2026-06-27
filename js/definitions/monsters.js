@@ -31,8 +31,8 @@ function createSummonAction(actionName, summonPoolIds, getMonsters) {
           },
           uniqueId: `enemy-summon-${Date.now()}-${suffix}`,
           currentHp: baseStats.hp,
-          hp: { current: baseStats.hp, max: baseStats.hp },
           maxHp: baseStats.hp,
+          image: `assets/monsters/${mDef.id}.png`,
           atb: 0,
           isDead: false,
           elementId: `enemy-summon-${Date.now()}-${suffix}`
