@@ -634,11 +634,11 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
               <div class="relative flex-1 flex items-center h-4">
                 <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
-                <input type="range" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? 1 : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0">
+                <input type="range" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? maxFeed : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0">
               </div>
               <span class="text-[10px] font-bold text-slate-400 w-8 shrink-0">MAX</span>
               <div class="bg-slate-900 border border-slate-700 rounded w-14 h-7 flex items-center justify-center shadow-inner shrink-0 relative overflow-hidden">
-                <input type="number" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? 1 : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[11px] font-black text-pink-300 outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10">
+                <input type="number" min="1" max="${maxFeed || 1}" value="${maxFeed > 0 ? maxFeed : 1}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[11px] font-black text-pink-300 outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10">
               </div>
             </div>
           </div>

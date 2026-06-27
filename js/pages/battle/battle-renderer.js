@@ -48,14 +48,9 @@ export const rendererMethods = {
         const uniqueId = e.currentTarget.dataset.id;
         const enemy = this.enemies.find(en => en.uniqueId === uniqueId);
         if (enemy && !enemy.isDead) {
-          this.currentTab = 'info';
-          this.updateTabStyles();
           this.selectedEnemyTarget = enemy;
           this.infoTarget = { type: 'enemy', entity: enemy };
           this.renderEntities();
-          if (this.currentTab === 'info') {
-            this.renderTabContent();
-          }
         }
       });
     });

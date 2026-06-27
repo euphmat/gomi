@@ -176,6 +176,11 @@ class BattleManager {
     const monsterIds = this.resolveMonsters(this.floorDef.monsters);
 
     const uniqueMonsterIds = [...new Set(monsterIds)];
+    this.floorUniqueMonsterIds = uniqueMonsterIds;
+    if (!this.subTabSelectedMonsterId || !uniqueMonsterIds.includes(this.subTabSelectedMonsterId)) {
+      this.subTabSelectedMonsterId = uniqueMonsterIds[0];
+    }
+
     for (const mId of uniqueMonsterIds) {
       const medalRankIndex = this.playerMedals[mId] !== undefined ? this.playerMedals[mId] : -1;
       const spawnBonus = calcMedalSpawnBonus(medalRankIndex);
@@ -586,20 +591,7 @@ class BattleManager {
       this.elements.tabContent.dataset.renderedTab = 'info';
       this.renderInfoTab();
     } else if (this.currentTab === 'pet') {
-      let targetEntity = null;
-      if (this.infoTarget && this.infoTarget.type === 'enemy') {
-        targetEntity = this.infoTarget.entity;
-      } else if (this.selectedEnemyTarget) {
-        targetEntity = this.selectedEnemyTarget;
-      } else {
-        targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
-      }
-      
-      if (!targetEntity && !force && this.elements.tabContent.dataset.renderedTab === 'pet') {
-        return; // 一時的に敵がいなくなった場合は以前の表示を維持
-      }
-      
-      const targetId = targetEntity ? targetEntity.id : 'none';
+      const targetId = this.subTabSelectedMonsterId || 'none';
       const now = Date.now();
       const lastRendered = parseInt(this.elements.tabContent.dataset.lastPetRenderTime || '0');
       
@@ -613,20 +605,7 @@ class BattleManager {
       this.elements.tabContent.dataset.lastPetRenderTime = now;
       this.renderPetTab();
     } else if (this.currentTab === 'medal') {
-      let targetEntity = null;
-      if (this.infoTarget && this.infoTarget.type === 'enemy') {
-        targetEntity = this.infoTarget.entity;
-      } else if (this.selectedEnemyTarget) {
-        targetEntity = this.selectedEnemyTarget;
-      } else {
-        targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
-      }
-
-      if (!targetEntity && !force && this.elements.tabContent.dataset.renderedTab === 'medal') {
-        return;
-      }
-
-      const targetId = targetEntity ? targetEntity.id : 'none';
+      const targetId = this.subTabSelectedMonsterId || 'none';
       const now = Date.now();
       const lastRendered = parseInt(this.elements.tabContent.dataset.lastMedalRenderTime || '0');
 
@@ -642,33 +621,85 @@ class BattleManager {
     }
   }
 
-  renderInfoTab() {
-    let targetEntity = null;
+  renderSubTabsUI() {
+    let wrapper = this.elements.tabContent.querySelector('.sub-tab-wrapper');
+    if (!wrapper) {
+      this.elements.tabContent.innerHTML = `
+        <div class="sub-tab-wrapper flex flex-col h-full w-full bg-transparent">
+          <div class="sub-tab-header flex gap-1.5 overflow-x-auto px-1.5 pt-1.5 pb-1 shrink-0 custom-scrollbar border-b border-slate-700/50 mb-1"></div>
+          <div class="sub-tab-body flex-1 min-h-0 overflow-y-auto custom-scrollbar relative bg-transparent pr-1"></div>
+        </div>
+      `;
+      wrapper = this.elements.tabContent.querySelector('.sub-tab-wrapper');
+    }
+    const header = wrapper.querySelector('.sub-tab-header');
+    const body = wrapper.querySelector('.sub-tab-body');
+
+    const monsterDefs = (this.floorUniqueMonsterIds || []).map(mId => MONSTERS.find(m => m.id === mId)).filter(Boolean);
     
-    if (this.infoTarget && this.infoTarget.type === 'enemy') {
-      targetEntity = this.infoTarget.entity;
-    } else if (this.selectedEnemyTarget) {
-      targetEntity = this.selectedEnemyTarget;
-    } else {
-      targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+    header.innerHTML = monsterDefs.map(m => {
+      const isSelected = this.subTabSelectedMonsterId === m.id;
+      const bgClass = isSelected ? 'bg-blue-600/20 border-blue-400' : 'bg-slate-900/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-slate-600';
+      const shadowClass = isSelected ? 'shadow-[0_0_12px_rgba(96,165,250,0.25)]' : 'shadow-inner';
+      const opacity = isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-80';
+      
+      return `
+        <div class="sub-tab-item flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all shrink-0 mb-1 backdrop-blur-sm" data-id="${m.id}" title="${m.name}">
+          <img src="${m.image}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
+          <span class="text-[11px] font-bold whitespace-nowrap tracking-wide ${isSelected ? 'text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]' : 'text-slate-400 drop-shadow-md'}">${m.name}</span>
+        </div>
+      `;
+    }).join('');
+
+    header.querySelectorAll('.sub-tab-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        if (this.subTabSelectedMonsterId !== id) {
+          this.subTabSelectedMonsterId = id;
+          this.renderTabContent(true);
+        }
+      });
+    });
+
+    return body;
+  }
+
+  getSubTabTargetEntity() {
+    const id = this.subTabSelectedMonsterId;
+    if (!id) return null;
+    const monsterDef = MONSTERS.find(m => m.id === id);
+    if (!monsterDef) return null;
+    
+    return {
+      ...monsterDef,
+      stats: { hp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0, ...(monsterDef.stats || {}) },
+      elementResist: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0, ...(monsterDef.elements || {}) },
+      ailmentResist: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, ...(monsterDef.ailments || {}) }
+    };
+  }
+
+  renderInfoTab() {
+    const body = this.renderSubTabsUI();
+    const targetEntity = this.getSubTabTargetEntity();
+    if (!targetEntity) {
+      body.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が存在しません</div>';
+      return;
     }
 
     const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData, this.playerMedals);
-    this.elements.tabContent.innerHTML = html;
+    body.innerHTML = html;
   }
 
   async renderPetTab() {
-    let targetEntity = null;
-    if (this.infoTarget && this.infoTarget.type === 'enemy') {
-      targetEntity = this.infoTarget.entity;
-    } else if (this.selectedEnemyTarget) {
-      targetEntity = this.selectedEnemyTarget;
-    } else {
-      targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+    const body = this.renderSubTabsUI();
+    const targetEntity = this.getSubTabTargetEntity();
+    if (!targetEntity) {
+      body.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が存在しません</div>';
+      return;
     }
 
     await renderBattlePetTab(
-      this.elements.tabContent,
+      body,
       targetEntity,
       this.monsterKills,
       this.ranchData,
@@ -728,17 +759,15 @@ class BattleManager {
   }
 
   async renderMedalTab() {
-    let targetEntity = null;
-    if (this.infoTarget && this.infoTarget.type === 'enemy') {
-      targetEntity = this.infoTarget.entity;
-    } else if (this.selectedEnemyTarget) {
-      targetEntity = this.selectedEnemyTarget;
-    } else {
-      targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+    const body = this.renderSubTabsUI();
+    const targetEntity = this.getSubTabTargetEntity();
+    if (!targetEntity) {
+      body.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が存在しません</div>';
+      return;
     }
 
     await renderBattleMedalTab(
-      this.elements.tabContent,
+      body,
       targetEntity,
       this.playerMedals,
       this.currentGold,
