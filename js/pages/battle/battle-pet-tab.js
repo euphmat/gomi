@@ -310,4 +310,4 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
   }
 
   sectionEl.appendChild(itemsContainer);
-
+}
