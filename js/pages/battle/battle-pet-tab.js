@@ -12,6 +12,9 @@ import { formatNumber } from '../../utils/format.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
+// --- モジュールレベルでスライダーの値を保持 (階層クリアやタブ切り替え、餌やり後も値を維持) ---
+const globalSliderValues = {};
+
 /**
  * Pet タブの HTML を生成して tabContent に描画する
  * @param {HTMLElement} tabContent - タブコンテンツコンテナ
@@ -28,9 +31,8 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   }
 
   // Preserve slider values before re-rendering
-  const preservedValues = {};
   tabContent.querySelectorAll('.quantity-slider').forEach(slider => {
-    preservedValues[slider.dataset.itemId] = slider.value;
+    globalSliderValues[slider.dataset.itemId] = slider.value;
   });
 
   const kills = monsterKills[targetEntity.id] || 0;
@@ -126,7 +128,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
       const feedSection = document.createElement('div');
       feedSection.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
       container.appendChild(feedSection);
-      renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent, monsterKills);
+      renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, onRanchDataUpdated, tabContent, monsterKills);
     }
   } else {
     const noCapDiv = document.createElement('div');
@@ -147,7 +149,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
 /**
  * 餌やりセクションを描画 (同期版)
  */
-function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent, monsterKills) {
+function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inventoryMap, onRanchDataUpdated, tabContent, monsterKills) {
   const monsterData = ranchData[variant.dungeonId][variant.key];
   if (!monsterData) return;
 
@@ -193,7 +195,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       const maxFeed = quantity;
       
       // 復元値があればそれを使う、なければ最大値または1
-      let initialVal = preservedValues[drop.itemId] !== undefined ? parseInt(preservedValues[drop.itemId]) : (maxFeed > 0 ? 1 : 1);
+      let initialVal = globalSliderValues[drop.itemId] !== undefined ? parseInt(globalSliderValues[drop.itemId]) : (maxFeed > 0 ? 1 : 1);
       if (initialVal > maxFeed) initialVal = maxFeed;
       if (initialVal < 1) initialVal = maxFeed > 0 ? 1 : 1;
 
@@ -246,6 +248,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           if (parsed > maxFeed) parsed = maxFeed;
           input.value = parsed;
           slider.value = parsed;
+          globalSliderValues[drop.itemId] = parsed;
           const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
           if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
         };
@@ -298,9 +301,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           const latestInv = await GameDB.getAllInventory();
           const latestInvMap = {};
           if (latestInv) latestInv.forEach(item => latestInvMap[item.id] = item.quantity);
-          
-          // Slider value reset to 1 after feeding to avoid confusion
-          preservedValues[drop.itemId] = 1;
+
           await renderBattlePetTab(tabContent, targetEntity, monsterKills, freshRanch, variant.dungeonId, onRanchDataUpdated);
         };
       }
