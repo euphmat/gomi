@@ -244,10 +244,12 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
                 if (slider) slider.disabled = false;
               }
             }
-            // re-eval manual logic
-            if (input && quantity > 0) {
-              const evt = new Event('change');
-              input.dispatchEvent(evt);
+            const sliderProgress = itemRow.querySelector('.slider-progress');
+            if (sliderProgress) {
+              const currentVal = parseInt(input ? input.value : 1) || 1;
+              const maxFeed = quantity || 1;
+              const percentage = maxFeed > 1 ? ((currentVal - 1) / (maxFeed - 1)) * 100 : 100;
+              sliderProgress.style.width = `${percentage}%`;
             }
           }
         }
