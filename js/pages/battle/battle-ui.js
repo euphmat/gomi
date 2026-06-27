@@ -384,73 +384,6 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     dropsHtml = '<div class="text-[10px] text-slate-500 italic p-2 text-center bg-slate-950/30 rounded border border-slate-800/50">ドロップ情報なし</div>';
   }
 
-  // 4. Capture & Medal Info
-  let extraInfoHtml = '<div class="grid grid-cols-2 sm:grid-cols-3 gap-1 w-full mt-1">';
-  if (!isParty && targetEntity && targetEntity.id) {
-    let isNormalCaptured = false;
-    let isLegendaryCaptured = false;
-    for (const dId of Object.keys(ranchData)) {
-      if (ranchData[dId] && ranchData[dId][targetEntity.id]) isNormalCaptured = true;
-      if (ranchData[dId] && ranchData[dId][`${targetEntity.id}_legendary`]) isLegendaryCaptured = true;
-    }
-
-    const captureRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
-    const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.00001);
-    const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
-
-    const getCapBadge = (captured, rate) => captured 
-      ? `<span class="bg-pink-950/80 text-pink-300 border border-pink-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shadow-[0_0_8px_rgba(244,114,182,0.3)] shrink-0">捕獲済</span>`
-      : `<span class="bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
-
-    extraInfoHtml += `
-      <!-- Kills -->
-      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
-        <div class="flex items-center gap-1 min-w-0 shrink-0">
-          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-red-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">swords</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">討伐数</span>
-        </div>
-        <span class="text-[12px] font-black text-red-400 drop-shadow ml-1 shrink-0">${formatNumber(kills)}</span>
-      </div>
-      <!-- Normal Capture -->
-      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
-        <div class="flex items-center gap-1 min-w-0 shrink-0">
-          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">捕獲率</span>
-        </div>
-        ${getCapBadge(isNormalCaptured, captureRate)}
-      </div>
-      <!-- Legendary Appear -->
-      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
-        <div class="flex items-center gap-1 min-w-0 shrink-0">
-          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-yellow-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">auto_awesome</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">伝説出現率</span>
-        </div>
-        <span class="bg-yellow-950/80 text-yellow-400 border border-yellow-700/50 px-1.5 py-0.5 rounded text-[9px] font-black shrink-0 ml-1">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
-      </div>
-      <!-- Legendary Capture -->
-      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner min-w-0">
-        <div class="flex items-center gap-1 min-w-0 shrink-0">
-          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-pink-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">pets</span></div>
-          <span class="text-[11px] text-slate-400 font-bold truncate">伝説捕獲率</span>
-        </div>
-        ${getCapBadge(isLegendaryCaptured, legCapRate)}
-      </div>
-    `;
-  }
-
-  const medal = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex] : { name: '未取得', killBonus: 0, color: '#64748b' };
-  extraInfoHtml += `
-      <!-- Medal -->
-      <div class="flex items-center justify-between bg-slate-950/40 border border-slate-700/50 rounded px-1.5 py-0.5 shadow-inner col-span-2 sm:col-span-1 min-w-0">
-        <div class="flex items-center gap-1 min-w-0 shrink-0">
-          <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined text-amber-400" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">military_tech</span></div>
-          <span class="text-[11px] font-bold truncate drop-shadow" style="color: ${medal.color}">${medal.name}</span>
-        </div>
-        <span class="text-[12px] font-black text-emerald-400 shrink-0 ml-1">+${medal.killBonus}体</span>
-      </div>
-    </div>
-  `;
-
   // Master Layout Assembly
   let html = `
     <div class="w-full flex flex-col gap-1.5 p-1 text-slate-200">
@@ -506,11 +439,6 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             ${dropsHtml}
           </div>
         </div>
-      </div>
-
-      <!-- 3. Bottom Panel (Capture & Medals) -->
-      <div class="flex items-center bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shrink-0 justify-between shadow-inner">
-         ${extraInfoHtml}
       </div>
 
     </div>

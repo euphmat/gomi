@@ -13,6 +13,8 @@ import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '
 import { JOBS } from '../../jobs/index.js';
 import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-definitions.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
+import { renderBattlePetTab } from './battle-pet-tab.js';
+import { renderBattleMedalTab } from './battle-medal-tab.js';
 import { formatNumber } from '../../utils/format.js';
 
 // --- Mixin imports ---
@@ -67,6 +69,8 @@ class BattleManager {
       tabBtnSkill: container.querySelector('#tab-btn-skill'),
       tabBtnItem: container.querySelector('#tab-btn-item'),
       tabBtnInfo: container.querySelector('#tab-btn-info'),
+      tabBtnPet: container.querySelector('#tab-btn-pet'),
+      tabBtnMedal: container.querySelector('#tab-btn-medal'),
       tabContent: container.querySelector('#tab-content')
     };
     
@@ -406,7 +410,9 @@ class BattleManager {
     [
       { btn: this.elements.tabBtnSkill, id: 'skill' },
       { btn: this.elements.tabBtnItem, id: 'item' },
-      { btn: this.elements.tabBtnInfo, id: 'info' }
+      { btn: this.elements.tabBtnInfo, id: 'info' },
+      { btn: this.elements.tabBtnPet, id: 'pet' },
+      { btn: this.elements.tabBtnMedal, id: 'medal' }
     ].forEach(({btn, id}) => {
       btn.onclick = () => {
         this.currentTab = id;
@@ -541,18 +547,20 @@ class BattleManager {
 
   updateTabStyles() {
     const tabs = [
-      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', label: 'Skill' },
-      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', label: 'Item' },
-      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', label: 'Info' }
+      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', color: 'cyan', label: 'Skill' },
+      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', color: 'emerald', label: 'Item' },
+      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', color: 'blue', label: 'Info' },
+      { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', color: 'pink', label: 'Pet' },
+      { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', color: 'amber', label: 'Medal' }
     ];
 
-    tabs.forEach(({btn, id, icon, label}) => {
+    tabs.forEach(({btn, id, icon, color, label}) => {
       if (this.currentTab === id) {
-        btn.className = 'flex-1 py-2 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-xl text-[11px] font-bold shadow-[0_-5px_20px_rgba(34,211,238,0.25)] relative z-10 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[15px] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" style="font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
+        btn.className = `flex-1 py-1.5 bg-slate-800 border-t-[3px] border-t-${color}-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-lg text-[10px] font-bold shadow-[0_-5px_20px_rgba(var(--color-${color}-400),0.25)] relative z-10 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer`;
+        btn.innerHTML = `<span class="material-symbols-outlined text-${color}-400 drop-shadow-[0_0_8px_rgba(var(--color-${color}-400),0.8)]" style="font-size: 13px; font-variation-settings: 'FILL' 1">${icon}</span>${label}`;
       } else {
-        btn.className = 'flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100';
-        btn.innerHTML = `<span class="material-symbols-outlined text-[15px] text-slate-500">${icon}</span>${label}`;
+        btn.className = 'flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100';
+        btn.innerHTML = `<span class="material-symbols-outlined text-${color}-400/70" style="font-size: 13px;">${icon}</span>${label}`;
       }
     });
   }
@@ -564,6 +572,10 @@ class BattleManager {
       this.renderItemTab();
     } else if (this.currentTab === 'info') {
       this.renderInfoTab();
+    } else if (this.currentTab === 'pet') {
+      this.renderPetTab();
+    } else if (this.currentTab === 'medal') {
+      this.renderMedalTab();
     }
   }
 
@@ -580,6 +592,50 @@ class BattleManager {
 
     const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData, this.playerMedals);
     this.elements.tabContent.innerHTML = html;
+  }
+
+  renderPetTab() {
+    let targetEntity = null;
+    if (this.infoTarget && this.infoTarget.type === 'enemy') {
+      targetEntity = this.infoTarget.entity;
+    } else if (this.selectedEnemyTarget) {
+      targetEntity = this.selectedEnemyTarget;
+    } else {
+      targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+    }
+
+    renderBattlePetTab(
+      this.elements.tabContent,
+      targetEntity,
+      this.monsterKills,
+      this.ranchData,
+      this.currentDungeonId,
+      (updatedRanchData) => {
+        this.ranchData = updatedRanchData;
+      }
+    );
+  }
+
+  async renderMedalTab() {
+    let targetEntity = null;
+    if (this.infoTarget && this.infoTarget.type === 'enemy') {
+      targetEntity = this.infoTarget.entity;
+    } else if (this.selectedEnemyTarget) {
+      targetEntity = this.selectedEnemyTarget;
+    } else {
+      targetEntity = this.enemies.find(e => !e.isDead) || this.enemies[0];
+    }
+
+    await renderBattleMedalTab(
+      this.elements.tabContent,
+      targetEntity,
+      this.playerMedals,
+      this.currentGold,
+      (updatedMedals, updatedGold) => {
+        this.playerMedals = updatedMedals;
+        this.currentGold = updatedGold;
+      }
+    );
   }
 
   renderItemTab() {
@@ -701,13 +757,15 @@ export function renderBattlePage() {
       <!-- Tabs & Tab Content Area -->
       <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10 min-h-0">
         <!-- Tabs -->
-        <div class="flex px-1 gap-1 items-end shrink-0">
-          <button id="tab-btn-skill" class="flex-1 py-2 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-xl text-[11px] font-bold shadow-[0_-5px_20px_rgba(34,211,238,0.25)] relative z-10 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer"><span class="material-symbols-outlined text-[15px] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" style="font-variation-settings: 'FILL' 1">auto_awesome</span>スキル</button>
-          <button id="tab-btn-item" class="flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-[15px] text-slate-500">backpack</span>アイテム</button>
-          <button id="tab-btn-info" class="flex-1 py-2 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-xl text-[11px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-[15px] text-slate-500">info</span>インフォ</button>
+        <div class="flex px-0.5 gap-0.5 items-end shrink-0">
+          <button id="tab-btn-skill" class="flex-1 py-1.5 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-lg text-[10px] font-bold shadow-[0_-5px_20px_rgba(var(--color-cyan-400),0.25)] relative z-10 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer"><span class="material-symbols-outlined text-cyan-400 drop-shadow-[0_0_8px_rgba(var(--color-cyan-400),0.8)]" style="font-size: 13px; font-variation-settings: 'FILL' 1">auto_awesome</span>Skill</button>
+          <button id="tab-btn-item" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-emerald-400/70" style="font-size: 13px;">backpack</span>Item</button>
+          <button id="tab-btn-info" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-blue-400/70" style="font-size: 13px;">info</span>Info</button>
+          <button id="tab-btn-pet" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-pink-400/70" style="font-size: 13px;">pets</span>Pet</button>
+          <button id="tab-btn-medal" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-amber-400/70" style="font-size: 13px;">military_tech</span>Medal</button>
         </div>
         <!-- Tab Content -->
-        <div id="tab-content" class="flex-1 bg-slate-800 border border-slate-600/50 rounded-b-xl rounded-tr-xl p-2.5 min-h-[120px] overflow-y-auto shadow-xl mb-2 relative z-0">
+        <div id="tab-content" class="flex-1 bg-slate-800 border border-slate-600/50 rounded-b-xl p-2.5 min-h-[120px] overflow-y-auto shadow-xl mb-2 relative z-0">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）
