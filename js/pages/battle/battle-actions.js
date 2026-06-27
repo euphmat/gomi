@@ -538,43 +538,49 @@ export const actionMethods = {
         missile.style.position = 'fixed';
         missile.style.left = `${startX}px`;
         missile.style.top = `${startY}px`;
-        missile.style.width = '12px';
-        missile.style.height = '12px';
-        missile.style.background = 'radial-gradient(circle, #f0abfc, #d946ef, transparent)';
+        missile.style.width = '35px';
+        missile.style.height = '8px';
+        missile.style.background = 'linear-gradient(to right, transparent, #d946ef, #fdf4ff)';
         missile.style.borderRadius = '50%';
-        missile.style.boxShadow = '0 0 10px #e879f9';
+        missile.style.boxShadow = '0 0 15px #e879f9, 0 0 5px #fff';
         missile.style.zIndex = '9998';
         missile.style.pointerEvents = 'none';
         (document.getElementById('battle-effects-layer') || document.body).appendChild(missile);
 
         const dx = endX - startX;
         const dy = endY - startY;
+        const angle = Math.atan2(dy, dx);
+        
+        delayDamageMs = -1; // -1 means damage is handled manually in anim.onfinish
 
         const duration = Math.max(200, 300 / this.speedMult);
-        delayDamageMs = duration;
         const anim = missile.animate([
-          { transform: 'translate(-50%, -50%) scale(0.5)' },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.5)` }
-        ], { duration, easing: 'ease-in' });
+          { transform: `translate(-50%, -50%) rotate(${angle}rad) scale(0.5)` },
+          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${angle}rad) scale(1.5)` }
+        ], { duration, easing: 'cubic-bezier(0.5, 0, 1, 1)' });
         
         anim.onfinish = () => {
           missile.remove();
+          
+          this.showDamage(defender.elementId, damage, dmgColor);
+          
           const explode = document.createElement('div');
           explode.style.position = 'fixed';
           explode.style.left = `${endX}px`;
           explode.style.top = `${endY}px`;
-          explode.style.width = '30px';
-          explode.style.height = '30px';
-          explode.style.background = 'radial-gradient(circle, #fdf4ff, #e879f9, transparent)';
+          explode.style.width = '40px';
+          explode.style.height = '40px';
+          explode.style.background = 'radial-gradient(circle, #fff, #f0abfc, transparent)';
           explode.style.borderRadius = '50%';
           explode.style.transform = 'translate(-50%, -50%)';
           explode.style.zIndex = '9998';
           explode.style.pointerEvents = 'none';
+          explode.style.mixBlendMode = 'screen';
           (document.getElementById('battle-effects-layer') || document.body).appendChild(explode);
           
           const expAnim = explode.animate([
-            { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 1 },
-            { transform: 'translate(-50%, -50%) scale(2)', opacity: 0 }
+            { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 1 },
+            { transform: 'translate(-50%, -50%) scale(2.5)', opacity: 0 }
           ], { duration: 150, easing: 'ease-out' });
           expAnim.onfinish = () => explode.remove();
         };
@@ -585,7 +591,7 @@ export const actionMethods = {
       setTimeout(() => {
         this.showDamage(defender.elementId, damage, dmgColor);
       }, delayDamageMs);
-    } else {
+    } else if (delayDamageMs === 0) {
       this.showDamage(defender.elementId, damage, dmgColor);
     }
 
