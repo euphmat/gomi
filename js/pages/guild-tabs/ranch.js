@@ -657,7 +657,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             input.value = parsed;
             slider.value = parsed;
             const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
-            sliderProgress.style.width = \`\${percentage}%\`;
+            sliderProgress.style.width = `${percentage}%`;
           };
 
           // Initialize progress
