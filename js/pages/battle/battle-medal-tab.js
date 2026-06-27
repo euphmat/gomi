@@ -140,6 +140,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
     materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
       const row = document.createElement('div');
+      row.id = `battle-medal-mat-row-${drop.itemId}`;
       row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
         sufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'
       }`;
@@ -155,7 +156,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
           <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
         </div>
         <div class="flex items-center gap-0.5 shrink-0">
-          <span class="text-[11px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
+          <span id="battle-medal-mat-owned-${drop.itemId}" class="text-[11px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
           <span class="text-gray-500 text-[9px]">/</span>
           <span class="text-[11px] font-bold text-slate-400">${formatNumber(required)}</span>
         </div>
@@ -166,6 +167,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     // ゴールドコスト
     const goldSufficient = currentGold >= goldCost;
     const goldRow = document.createElement('div');
+    goldRow.id = 'battle-medal-gold-row';
     goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
       goldSufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'
     }`;
@@ -177,7 +179,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
         <span class="text-[9px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
       </div>
       <div class="flex items-center gap-0.5 shrink-0">
-        <span class="text-[11px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentGold)}</span>
+        <span id="battle-medal-gold-owned" class="text-[11px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentGold)}</span>
         <span class="text-gray-500 text-[9px]">/</span>
         <span class="text-[11px] font-bold text-slate-400">${formatNumber(goldCost)}</span>
       </div>
@@ -187,12 +189,14 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
     // 鋳造/ランクアップボタン
     const craftBtn = document.createElement('button');
+    craftBtn.id = 'battle-medal-craft-btn';
     craftBtn.className = `
       w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200
       ${canCraft
         ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
         : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
     `;
+    craftBtn.disabled = !canCraft;
     craftBtn.innerHTML = `
       <div class="flex items-center justify-center gap-1.5">
         <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
@@ -200,50 +204,55 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       </div>
     `;
 
-    if (canCraft) {
-      craftBtn.onclick = async () => {
-        craftBtn.disabled = true;
-        craftBtn.className = 'w-full py-2 rounded-lg text-[11px] font-black tracking-wide bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed';
+    craftBtn.onclick = async () => {
+      if (craftBtn.disabled) return;
+      // 再チェック
+      if (currentGold < goldCost) return;
+      for (const drop of materialDrops) {
+        if ((inventoryMap[drop.itemId] || 0) < nextRank.materialQty) return;
+      }
 
-        // 素材消費
-        for (const drop of materialDrops) {
-          const invItem = await GameDB.getInventoryItem(drop.itemId);
-          if (invItem) {
-            invItem.quantity -= nextRank.materialQty;
-            if (invItem.quantity <= 0) {
-              await GameDB.deleteInventoryItem(invItem.id);
-            } else {
-              await GameDB.putInventoryItem(invItem);
-            }
+      craftBtn.disabled = true;
+      craftBtn.className = 'w-full py-2 rounded-lg text-[11px] font-black tracking-wide bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed';
+
+      // 素材消費
+      for (const drop of materialDrops) {
+        const invItem = await GameDB.getInventoryItem(drop.itemId);
+        if (invItem) {
+          invItem.quantity -= nextRank.materialQty;
+          if (invItem.quantity <= 0) {
+            await GameDB.deleteInventoryItem(invItem.id);
+          } else {
+            await GameDB.putInventoryItem(invItem);
           }
         }
+      }
 
-        // ゴールド消費
-        let updatedGold = currentGold - goldCost;
-        await GameDB.setGameState('gold', updatedGold);
+      // ゴールド消費
+      let updatedGold = currentGold - goldCost;
+      await GameDB.setGameState('gold', updatedGold);
 
-        // メダルランク保存
-        playerMedals[targetEntity.id] = nextRankIndex;
-        await GameDB.setGameState('player_medals', playerMedals);
+      // メダルランク保存
+      playerMedals[targetEntity.id] = nextRankIndex;
+      await GameDB.setGameState('player_medals', playerMedals);
 
-        // ヘッダーのゴールド表示更新
-        const goldDisplay = document.getElementById('header-gold-display');
-        if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(updatedGold)} `;
+      // ヘッダーのゴールド表示更新
+      const goldDisplay = document.getElementById('header-gold-display');
+      if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(updatedGold)} `;
 
-        // 成功演出
-        showMedalCraftAnimation(nextRank, targetEntity);
+      // 成功演出
+      showMedalCraftAnimation(nextRank, targetEntity);
 
-        // コールバック
-        if (onMedalUpdated) {
-          onMedalUpdated(playerMedals, updatedGold);
-        }
+      // コールバック
+      if (onMedalUpdated) {
+        onMedalUpdated(playerMedals, updatedGold);
+      }
 
-        // 再描画
-        setTimeout(() => {
-          renderBattleMedalTab(tabContent, targetEntity, playerMedals, updatedGold, onMedalUpdated);
-        }, 500);
-      };
-    }
+      // 再描画
+      setTimeout(() => {
+        renderBattleMedalTab(tabContent, targetEntity, playerMedals, updatedGold, onMedalUpdated);
+      }, 500);
+    };
 
     craftPanel.appendChild(craftBtn);
     container.appendChild(craftPanel);
@@ -266,6 +275,68 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
+
+  // --- リアルタイム反映 (ポーリング) ---
+  if (tabContent._medalSyncTimer) {
+    clearInterval(tabContent._medalSyncTimer);
+  }
+  tabContent._medalSyncTimer = setInterval(async () => {
+    if (!document.body.contains(container)) {
+      clearInterval(tabContent._medalSyncTimer);
+      return;
+    }
+    
+    if (isMaxRank || !nextRank) return;
+
+    const [gold, allInv] = await Promise.all([
+      GameDB.getGameState('gold'),
+      GameDB.getAllInventory()
+    ]);
+    
+    let currentGoldSync = gold || 0;
+    currentGold = currentGoldSync; // Update upper scope
+
+    const newInvMap = {};
+    (allInv || []).forEach(item => { newInvMap[item.id] = item.quantity || 0; });
+    
+    const materialDrops = targetEntity.drops || [];
+    const goldCost = (targetEntity.rewards?.gold || 0) * nextRank.goldMultiplier;
+    
+    let canCraftSync = true;
+    materialDrops.forEach(drop => {
+      const owned = newInvMap[drop.itemId] || 0;
+      const required = nextRank.materialQty;
+      const sufficient = owned >= required;
+      if (!sufficient) canCraftSync = false;
+      
+      const row = container.querySelector(`#battle-medal-mat-row-${drop.itemId}`);
+      const valEl = container.querySelector(`#battle-medal-mat-owned-${drop.itemId}`);
+      if (row && valEl) {
+        row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${sufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'}`;
+        valEl.className = `text-[11px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}`;
+        valEl.textContent = formatNumber(owned);
+      }
+      inventoryMap[drop.itemId] = owned; // update outer scope
+    });
+    
+    const goldSufficient = currentGoldSync >= goldCost;
+    if (!goldSufficient) canCraftSync = false;
+    
+    const goldRow = container.querySelector('#battle-medal-gold-row');
+    const goldValEl = container.querySelector('#battle-medal-gold-owned');
+    if (goldRow && goldValEl) {
+      goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${goldSufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'}`;
+      goldValEl.className = `text-[11px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}`;
+      goldValEl.textContent = formatNumber(currentGoldSync);
+    }
+    
+    const btn = container.querySelector('#battle-medal-craft-btn');
+    if (btn && !btn.disabled && !canCraftSync || btn && btn.disabled && canCraftSync) {
+      // update style
+      btn.disabled = !canCraftSync;
+      btn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+    }
+  }, 200);
 }
 
 /**

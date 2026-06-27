@@ -180,6 +180,77 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   // 同期的に DOM を置換 (ちらつき防止)
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
+
+  // --- リアルタイム反映 (ポーリング) ---
+  if (tabContent._petSyncTimer) {
+    clearInterval(tabContent._petSyncTimer);
+  }
+  tabContent._petSyncTimer = setInterval(async () => {
+    if (!document.body.contains(container)) {
+      clearInterval(tabContent._petSyncTimer);
+      return;
+    }
+
+    const allInvSync = await GameDB.getAllInventory();
+    const newInvMap = {};
+    if (allInvSync) {
+      allInvSync.forEach(item => newInvMap[item.id] = item.quantity);
+    }
+    
+    // update inventoryMap reference for click handlers
+    Object.keys(newInvMap).forEach(k => inventoryMap[k] = newInvMap[k]);
+
+    for (const variant of variants) {
+      const monsterDef = MONSTERS.find(m => m.id === targetEntity.id);
+      if (!monsterDef) continue;
+      const validDrops = monsterDef.drops || [];
+      
+      for (const drop of validDrops) {
+        const quantity = newInvMap[drop.itemId] || 0;
+        const ownedSpan = container.querySelector(`#battle-pet-mat-owned-${variant.key}-${drop.itemId}`);
+        if (ownedSpan && parseInt(ownedSpan.textContent) !== quantity) {
+          ownedSpan.textContent = quantity;
+          ownedSpan.className = quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500';
+
+          const itemRow = container.querySelector(`#battle-pet-mat-row-${variant.key}-${drop.itemId}`);
+          if (itemRow) {
+            const slider = itemRow.querySelector('.quantity-slider');
+            const input = itemRow.querySelector('.quantity-input');
+            const btnFeed = itemRow.querySelector('.btn-feed');
+            
+            if (slider) {
+              slider.max = quantity || 1;
+              if (parseInt(slider.value) > quantity) slider.value = quantity || 1;
+            }
+            if (input) {
+              input.max = quantity || 1;
+              if (parseInt(input.value) > quantity) input.value = quantity || 1;
+            }
+            if (btnFeed) {
+              btnFeed.disabled = (quantity === 0);
+            }
+            const parentFlex = input ? input.closest('.flex.items-center.gap-2.px-1') : null;
+            if (parentFlex) {
+              if (quantity === 0) {
+                parentFlex.classList.add('opacity-50', 'pointer-events-none');
+                input.disabled = true;
+                if (slider) slider.disabled = true;
+              } else {
+                parentFlex.classList.remove('opacity-50', 'pointer-events-none');
+                input.disabled = false;
+                if (slider) slider.disabled = false;
+              }
+            }
+            // re-eval manual logic
+            if (input && quantity > 0) {
+              const evt = new Event('change');
+              input.dispatchEvent(evt);
+            }
+          }
+        }
+      }
+    }
+  }, 200);
 }
 
 /**
@@ -239,6 +310,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       if (initialVal < 1) initialVal = maxFeed > 0 ? maxFeed : 1;
 
       const itemRow = document.createElement('div');
+      itemRow.id = `battle-pet-mat-row-${variant.key}-${drop.itemId}`;
       itemRow.className = 'bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors flex flex-col gap-1.5';
 
       itemRow.innerHTML = `
@@ -252,7 +324,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
                 ${mat.name}
                 <span class="text-[8px] bg-pink-900/50 text-pink-300 px-1 py-0.5 rounded border border-pink-700/50">${expMultiplier} EXP</span>
               </div>
-              <div class="text-[9px] font-bold text-slate-400 mt-0.5">所持: <span class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
+              <div class="text-[9px] font-bold text-slate-400 mt-0.5">所持: <span id="battle-pet-mat-owned-${variant.key}-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
             </div>
           </div>
           <button class="px-3 h-7 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded text-[10px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_8px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
@@ -321,6 +393,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
             } else {
               await GameDB.putInventoryItem(currentInv);
             }
+            inventoryMap[drop.itemId] = Math.max(0, inventoryMap[drop.itemId] - amount);
           }
 
           // EXP 加算
