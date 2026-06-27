@@ -74,40 +74,40 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   // Custom Slider Styles (統一されたピンクの光沢のあるつまみ)
   const styleEl = document.createElement('style');
   styleEl.innerHTML = `
-    .quantity-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #f472b6;
-      border: 2.5px solid #fff;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
+    input[type="range"].quantity-slider::-webkit-slider-thumb {
+      -webkit-appearance: none !important;
+      appearance: none !important;
+      width: 18px !important;
+      height: 18px !important;
+      border-radius: 50% !important;
+      background: #f472b6 !important;
+      border: 2.5px solid #fff !important;
+      cursor: pointer !important;
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3) !important;
+      transition: transform 0.1s !important;
     }
-    .quantity-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
+    input[type="range"].quantity-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15) !important;
     }
-    .quantity-slider::-webkit-slider-thumb:active {
-      transform: scale(0.95);
+    input[type="range"].quantity-slider::-webkit-slider-thumb:active {
+      transform: scale(0.95) !important;
     }
-    .quantity-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #f472b6;
-      border: 2.5px solid #fff;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
-      transition: transform 0.1s;
-      box-sizing: border-box;
+    input[type="range"].quantity-slider::-moz-range-thumb {
+      width: 18px !important;
+      height: 18px !important;
+      border-radius: 50% !important;
+      background: #f472b6 !important;
+      border: 2.5px solid #fff !important;
+      cursor: pointer !important;
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3) !important;
+      transition: transform 0.1s !important;
+      box-sizing: border-box !important;
     }
-    .quantity-slider::-moz-range-thumb:hover {
-      transform: scale(1.15);
+    input[type="range"].quantity-slider::-moz-range-thumb:hover {
+      transform: scale(1.15) !important;
     }
-    .quantity-slider::-moz-range-thumb:active {
-      transform: scale(0.95);
+    input[type="range"].quantity-slider::-moz-range-thumb:active {
+      transform: scale(0.95) !important;
     }
   `;
   container.appendChild(styleEl);
