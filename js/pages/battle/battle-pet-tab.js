@@ -218,14 +218,17 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
             const input = itemRow.querySelector('.quantity-input');
             const btnFeed = itemRow.querySelector('.btn-feed');
             
-            if (slider) {
-              slider.max = quantity || 1;
-              if (parseInt(slider.value) > quantity) slider.value = quantity || 1;
+            if (slider) slider.max = quantity || 1;
+            if (input) input.max = quantity || 1;
+            
+            if (!globalSliderManualFlags[drop.itemId] && quantity > 0) {
+              if (slider) slider.value = quantity;
+              if (input) input.value = quantity;
+            } else {
+              if (slider && parseInt(slider.value) > quantity) slider.value = quantity || 1;
+              if (input && parseInt(input.value) > quantity) input.value = quantity || 1;
             }
-            if (input) {
-              input.max = quantity || 1;
-              if (parseInt(input.value) > quantity) input.value = quantity || 1;
-            }
+            
             if (btnFeed) {
               btnFeed.disabled = (quantity === 0);
             }

@@ -556,6 +556,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
   };
   
   let needsUpdate = false;
+  const manualSliderFlags = {};
 
   const balloonPool = [];
   function getBalloon(expText, parentDiv) {
@@ -666,8 +667,8 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         // Initialize progress
         if (currentMaxFeed > 0) updateValue(1);
 
-        input.onchange = () => updateValue(input.value);
-        slider.oninput = () => updateValue(slider.value);
+        input.onchange = () => { manualSliderFlags[drop.itemId] = true; updateValue(input.value); };
+        slider.oninput = () => { manualSliderFlags[drop.itemId] = true; updateValue(slider.value); };
         
         btnFeed.onclick = async () => {
           const currentInv = await GameDB.getInventoryItem(drop.itemId);
@@ -677,6 +678,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
           if (amount === 0) return;
           
           btnFeed.disabled = true;
+          delete manualSliderFlags[drop.itemId];
           
           // Consume items
           currentInv.quantity -= amount;
@@ -873,14 +875,17 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
           const input = itemRow.querySelector('.quantity-input');
           const btnFeed = itemRow.querySelector('.btn-feed');
           
-          if (slider) {
-            slider.max = quantity || 1;
-            if (parseInt(slider.value) > quantity) slider.value = quantity || 1;
+          if (slider) slider.max = quantity || 1;
+          if (input) input.max = quantity || 1;
+          
+          if (!manualSliderFlags[drop.itemId] && quantity > 0) {
+            if (slider) slider.value = quantity;
+            if (input) input.value = quantity;
+          } else {
+            if (slider && parseInt(slider.value) > quantity) slider.value = quantity || 1;
+            if (input && parseInt(input.value) > quantity) input.value = quantity || 1;
           }
-          if (input) {
-            input.max = quantity || 1;
-            if (parseInt(input.value) > quantity) input.value = quantity || 1;
-          }
+          
           if (btnFeed) {
             btnFeed.disabled = (quantity === 0);
           }
