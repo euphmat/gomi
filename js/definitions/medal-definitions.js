@@ -9,14 +9,33 @@
  */
 
 export const MEDAL_RANKS = [
-  { id: 'bronze',  name: 'ブロンズメダル',     killBonus: 1,   totalKillCount: 2,   materialQty: 100,   goldMultiplier: 1000,    color: '#CD7F32', image: './assets/medal/bronze_medal.webp'  },
-  { id: 'silver',  name: 'シルバーメダル',     killBonus: 3,   totalKillCount: 4,   materialQty: 500,   goldMultiplier: 5000,    color: '#C0C0C0', image: './assets/medal/silver_medal.webp'  },
-  { id: 'gold',    name: 'ゴールドメダル',     killBonus: 7,   totalKillCount: 8,   materialQty: 1000,  goldMultiplier: 10000,   color: '#FFD700', image: './assets/medal/gold_medal.webp'    },
-  { id: 'diamond', name: 'ダイアモンドメダル', killBonus: 15,  totalKillCount: 16,  materialQty: 3000,  goldMultiplier: 50000,   color: '#B9F2FF', image: './assets/medal/diamond_medal.webp' },
-  { id: 'saint',   name: 'セイントメダル',     killBonus: 31,  totalKillCount: 32,  materialQty: 5000,  goldMultiplier: 80000,   color: '#FFFACD', image: './assets/medal/saint_medal.webp'   },
-  { id: 'black',   name: 'ブラックメダル',     killBonus: 63,  totalKillCount: 64,  materialQty: 10000, goldMultiplier: 100000,  color: '#2D2D2D', image: './assets/medal/black_medal.webp'   },
-  { id: 'stela',   name: 'ステラメダル',       killBonus: 127, totalKillCount: 128, materialQty: 50000, goldMultiplier: 1000000, color: '#E8E0FF', image: './assets/medal/stela_medal.webp'   },
+  { id: 'bronze',  name: 'ブロンズメダル',     killBonus: 1,   totalKillCount: 2,   materialQty: 100,   goldMultiplier: 1000,    color: '#CD7F32', image: './assets/medal/bronze_medal.webp',  spawnBonusRates: [{ chance: 0.1, count: 1 }] },
+  { id: 'silver',  name: 'シルバーメダル',     killBonus: 3,   totalKillCount: 4,   materialQty: 500,   goldMultiplier: 5000,    color: '#C0C0C0', image: './assets/medal/silver_medal.webp',  spawnBonusRates: [{ chance: 0.5, count: 1 }] },
+  { id: 'gold',    name: 'ゴールドメダル',     killBonus: 7,   totalKillCount: 8,   materialQty: 1000,  goldMultiplier: 10000,   color: '#FFD700', image: './assets/medal/gold_medal.webp',    spawnBonusRates: [{ chance: 1.0, count: 1 }] },
+  { id: 'diamond', name: 'ダイアモンドメダル', killBonus: 15,  totalKillCount: 16,  materialQty: 3000,  goldMultiplier: 50000,   color: '#B9F2FF', image: './assets/medal/diamond_medal.webp', spawnBonusRates: [{ chance: 1.0, count: 1 }, { chance: 0.1, count: 1 }] },
+  { id: 'saint',   name: 'セイントメダル',     killBonus: 31,  totalKillCount: 32,  materialQty: 5000,  goldMultiplier: 80000,   color: '#FFFACD', image: './assets/medal/saint_medal.webp',   spawnBonusRates: [{ chance: 1.0, count: 1 }, { chance: 0.5, count: 1 }] },
+  { id: 'black',   name: 'ブラックメダル',     killBonus: 63,  totalKillCount: 64,  materialQty: 10000, goldMultiplier: 100000,  color: '#2D2D2D', image: './assets/medal/black_medal.webp',   spawnBonusRates: [{ chance: 1.0, count: 2 }] },
+  { id: 'stela',   name: 'ステラメダル',       killBonus: 127, totalKillCount: 128, materialQty: 50000, goldMultiplier: 1000000, color: '#E8E0FF', image: './assets/medal/stela_medal.webp',   spawnBonusRates: [{ chance: 1.0, count: 3 }] },
 ];
+
+/**
+ * メダルランクに応じた追加出現数を計算する
+ * @param {number} rankIndex - メダルランクのインデックス
+ * @returns {number} 追加で出現するモンスターの数
+ */
+export function calcMedalSpawnBonus(rankIndex) {
+  if (rankIndex < 0 || rankIndex >= MEDAL_RANKS.length) return 0;
+  const rank = MEDAL_RANKS[rankIndex];
+  if (!rank.spawnBonusRates) return 0;
+  
+  let totalBonus = 0;
+  for (const bonus of rank.spawnBonusRates) {
+    if (Math.random() < bonus.chance) {
+      totalBonus += bonus.count;
+    }
+  }
+  return totalBonus;
+}
 
 /**
  * メダルランクに応じたCSSフィルターを返す

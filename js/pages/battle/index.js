@@ -11,7 +11,7 @@ import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
-import { MEDAL_RANKS } from '../../definitions/medal-definitions.js';
+import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-definitions.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { formatNumber } from '../../utils/format.js';
 
@@ -164,6 +164,15 @@ class BattleManager {
     }
 
     const monsterIds = this.resolveMonsters(this.floorDef.monsters);
+
+    const uniqueMonsterIds = [...new Set(monsterIds)];
+    for (const mId of uniqueMonsterIds) {
+      const medalRankIndex = this.playerMedals[mId] !== undefined ? this.playerMedals[mId] : -1;
+      const spawnBonus = calcMedalSpawnBonus(medalRankIndex);
+      for (let j = 0; j < spawnBonus; j++) {
+        monsterIds.push(mId);
+      }
+    }
 
     this.enemies = monsterIds.map((monsterId, i) => {
       const monsterDef = MONSTERS.find(m => m.id === monsterId);

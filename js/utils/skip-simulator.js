@@ -3,7 +3,7 @@ import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
 import { MONSTERS } from '../definitions/monsters.js';
 import { MATERIALS } from '../definitions/materials.js';
-import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
+import { MEDAL_RANKS, calcMedalSpawnBonus } from '../definitions/medal-definitions.js';
 import { JOBS } from '../jobs/index.js';
 import { calcFinalStats } from '../data/stat-calculator.js';
 
@@ -92,7 +92,11 @@ export async function executeSkip(dungeonId, isSpecial, numSkips) {
         const enemyDef = MONSTERS_MAP.get(key);
         if (!enemyDef) continue;
 
-        for (let c = 0; c < count; c++) {
+        let medalRankIndex = playerMedals[key] !== undefined ? playerMedals[key] : -1;
+        const spawnBonus = calcMedalSpawnBonus(medalRankIndex);
+        const actualCount = count + spawnBonus;
+
+        for (let c = 0; c < actualCount; c++) {
           const currentKills = monsterKills[enemyDef.id] || 0;
           const legAppRate = Math.min(1.0, 0.00001 + Math.floor(currentKills / 100) * 0.00001);
           const isLegendary = Math.random() < legAppRate;
