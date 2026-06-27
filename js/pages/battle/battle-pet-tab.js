@@ -57,8 +57,8 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
 
   const getCapBadge = (captured, rate) => captured
-    ? `<span class="text-pink-400 text-[9px] font-black shrink-0 ml-1">捕獲済</span>`
-    : `<span class="text-emerald-400 text-[9px] font-black shrink-0 ml-1">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
+    ? `<span class="text-pink-400 text-[9px] font-black shrink-0">捕獲済</span>`
+    : `<span class="text-emerald-400 text-[9px] font-black shrink-0">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
 
   // --- インベントリの一括取得 (ちらつき防止) ---
   const allInv = await GameDB.getAllInventory();
@@ -71,7 +71,48 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   const container = document.createElement('div');
   container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
-  // --- ヘッダー (捕獲情報統合) ---
+  // Custom Slider Styles (統一されたピンクの光沢のあるつまみ)
+  const styleEl = document.createElement('style');
+  styleEl.innerHTML = `
+    .quantity-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #f472b6;
+      border: 2px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(244, 114, 182, 0.6), 0 1px 3px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+    .quantity-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .quantity-slider::-webkit-slider-thumb:active {
+      transform: scale(0.95);
+    }
+    .quantity-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #f472b6;
+      border: 2px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(244, 114, 182, 0.6), 0 1px 3px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+      box-sizing: border-box;
+    }
+    .quantity-slider::-moz-range-thumb:hover {
+      transform: scale(1.15);
+    }
+    .quantity-slider::-moz-range-thumb:active {
+      transform: scale(0.95);
+    }
+  `;
+  container.appendChild(styleEl);
+
+  // --- ヘッダー (捕獲情報統合・3分割グリッド化) ---
   const headerHtml = `
     <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
       <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-md relative flex items-center justify-center p-1 shrink-0">
@@ -79,22 +120,34 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
         <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
       <div class="flex flex-col min-w-0 flex-1">
-        <div class="flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-0.5">
+        <div class="flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
           <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
-          <span class="text-[9px] text-slate-400 font-bold shrink-0">討伐: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
+          <span class="text-[9px] text-slate-400 font-bold shrink-0">討伐数: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
         </div>
-        <div class="flex items-center gap-1 overflow-hidden">
-          <div class="flex items-center bg-slate-950/40 px-1 py-0.5 rounded border border-slate-700/50 min-w-0">
-            <span class="material-symbols-outlined text-[10px] text-pink-400 shrink-0" style="font-variation-settings: 'FILL' 1;">pets</span>
-            ${getCapBadge(isNormalCaptured, captureRate)}
+        <div class="grid grid-cols-3 gap-0.5 w-full">
+          <!-- 捕獲率 -->
+          <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
+            <span class="text-[8px] text-slate-400 font-black shrink-0">捕獲率:</span>
+            <div class="flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-pink-400 shrink-0" style="font-size: 8px; font-variation-settings: 'FILL' 1;">pets</span>
+              ${getCapBadge(isNormalCaptured, captureRate)}
+            </div>
           </div>
-          <div class="flex items-center bg-slate-950/40 px-1 py-0.5 rounded border border-slate-700/50 min-w-0">
-            <span class="material-symbols-outlined text-[10px] text-yellow-400 shrink-0" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-            <span class="text-[9px] text-yellow-400 font-black shrink-0 ml-1">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
+          <!-- 伝説出現 -->
+          <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
+            <span class="text-[8px] text-slate-400 font-black shrink-0">伝説出現:</span>
+            <div class="flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-yellow-400 shrink-0" style="font-size: 8px; font-variation-settings: 'FILL' 1;">auto_awesome</span>
+              <span class="text-[9px] text-yellow-400 font-black shrink-0">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
+            </div>
           </div>
-          <div class="flex items-center bg-slate-950/40 px-1 py-0.5 rounded border border-slate-700/50 min-w-0">
-            <span class="material-symbols-outlined text-[10px] text-pink-400 shrink-0" style="font-variation-settings: 'FILL' 1;">pets</span>
-            ${getCapBadge(isLegendaryCaptured, legCapRate)}
+          <!-- 伝説捕獲 -->
+          <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
+            <span class="text-[8px] text-slate-400 font-black shrink-0">伝説捕獲:</span>
+            <div class="flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-pink-400 shrink-0" style="font-size: 8px; font-variation-settings: 'FILL' 1;">pets</span>
+              ${getCapBadge(isLegendaryCaptured, legCapRate)}
+            </div>
           </div>
         </div>
       </div>
@@ -112,7 +165,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
       const feedSection = document.createElement('div');
       feedSection.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
       container.appendChild(feedSection);
-      renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent);
+      renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent, monsterKills);
     }
   } else {
     const noCapDiv = document.createElement('div');
@@ -133,7 +186,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
 /**
  * 餌やりセクションを描画 (同期版)
  */
-function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent) {
+function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inventoryMap, preservedValues, onRanchDataUpdated, tabContent, monsterKills) {
   const monsterData = ranchData[variant.dungeonId][variant.key];
   if (!monsterData) return;
 
@@ -204,28 +257,51 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
             与える
           </button>
         </div>
-        <!-- スライダーエリア -->
-        <div class="flex items-center gap-2 pl-[40px]">
-          <input type="range" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="flex-1 quantity-slider accent-pink-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" data-item-id="${drop.itemId}">
-          <div class="w-10 h-5 bg-slate-900 border border-slate-700 rounded flex items-center justify-center shrink-0">
-            <span class="text-[10px] font-black text-pink-300 quantity-display">${initialVal}</span>
+        <!-- スライダーエリア (牧場画面と統一) -->
+        <div class="flex items-center gap-2 px-1 pt-0.5 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
+          <span class="text-[9px] font-bold text-slate-400 w-4 text-right shrink-0">1</span>
+          <div class="relative flex-1 flex items-center h-4">
+            <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
+            <input type="range" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0" data-item-id="${drop.itemId}">
+          </div>
+          <span class="text-[9px] font-black text-slate-400 w-7 shrink-0 cursor-pointer hover:text-slate-200 btn-max text-center">MAX</span>
+          <div class="bg-slate-900 border border-slate-700 rounded w-10 h-5 flex items-center justify-center shadow-inner shrink-0 relative overflow-hidden">
+            <input type="number" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[10px] font-black text-pink-300 outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10">
           </div>
         </div>
       `;
 
+      const input = itemRow.querySelector('.quantity-input');
       const slider = itemRow.querySelector('.quantity-slider');
-      const display = itemRow.querySelector('.quantity-display');
+      const sliderProgress = itemRow.querySelector('.slider-progress');
+      const btnMax = itemRow.querySelector('.btn-max');
       const btnFeed = itemRow.querySelector('.btn-feed');
 
-      if (maxFeed > 0 && slider) {
-        slider.oninput = (e) => {
-          display.textContent = e.target.value;
+      if (maxFeed > 0) {
+        const updateValue = (val) => {
+          let parsed = parseInt(val) || 1;
+          if (parsed < 1) parsed = 1;
+          if (parsed > maxFeed) parsed = maxFeed;
+          input.value = parsed;
+          slider.value = parsed;
+          const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
+          if (sliderProgress) sliderProgress.style.width = `${percentage}%`;
         };
+
+        // 初期化
+        updateValue(initialVal);
+
+        input.onchange = () => updateValue(input.value);
+        slider.oninput = () => updateValue(slider.value);
+        if (btnMax) {
+          btnMax.onclick = () => updateValue(maxFeed);
+        }
       }
 
       if (maxFeed > 0 && btnFeed) {
         btnFeed.onclick = async () => {
-          const amount = parseInt(slider.value) || 0;
+          const amount = parseInt(input.value) || 0;
           if (amount <= 0 || amount > maxFeed) return;
 
           btnFeed.disabled = true;
@@ -270,7 +346,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           
           // Slider value reset to 1 after feeding to avoid confusion
           preservedValues[drop.itemId] = 1;
-          renderBattlePetTab(tabContent, targetEntity, monsterKills, freshRanch, variant.dungeonId, onRanchDataUpdated);
+          await renderBattlePetTab(tabContent, targetEntity, monsterKills, freshRanch, variant.dungeonId, onRanchDataUpdated);
         };
       }
 
