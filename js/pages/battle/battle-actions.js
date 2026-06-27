@@ -926,8 +926,11 @@ export const actionMethods = {
         if (rand < cumulative) {
           if (action.execute) {
             action.execute(enemy, target, this);
+            // Reset ATB even if the action didn't call executeAttack internally
+            if (enemy.atb !== 0) enemy.atb = 0;
             this.activeEnemy = null;
             this.updateEntities();
+            this.checkBattleEnd();
             return;
           }
         }

@@ -492,7 +492,7 @@ class BattleManager {
         const context = {
           enemies: this.enemies,
           party: this.party,
-          selectedEnemyTarget: this.selectedEnemyTarget
+          selectedEnemyTarget: (this.selectedEnemyTarget && !this.selectedEnemyTarget.isDead) ? this.selectedEnemyTarget : null
         };
 
         let bestAction = {
@@ -511,7 +511,7 @@ class BattleManager {
               score = checkResult.score;
               target = checkResult.target;
             } else if (checkResult === true) {
-              target = context.selectedEnemyTarget || this.enemies.find(e => !e.isDead);
+              target = context.selectedEnemyTarget || this.enemies.find(e => !e.isDead) || null;
             }
             
             if (score > bestAction.score && target) {
