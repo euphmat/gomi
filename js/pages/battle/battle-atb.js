@@ -176,9 +176,8 @@ export const atbMethods = {
         if (candidates.length > 0) {
           candidates.sort((a, b) => b.atb - a.atb);
           nextActor = candidates[0];
-          candidates.forEach(c => {
-             c.entity.atb = 1000;
-          });
+          // 待機中のキャラクターのATBを1000に制限すると、
+          // 高速戦闘時に1tickで1000以上稼ぐ高速キャラクターが無限に割り込んでしまうため制限を撤廃
         }
       }
 
