@@ -494,6 +494,7 @@ export const actionMethods = {
     }
 
     // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
+    let delayDamageMs = 0;
     if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
@@ -550,6 +551,7 @@ export const actionMethods = {
         const dy = endY - startY;
 
         const duration = Math.max(200, 300 / this.speedMult);
+        delayDamageMs = duration;
         const anim = missile.animate([
           { transform: 'translate(-50%, -50%) scale(0.5)' },
           { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1.5)` }
@@ -579,7 +581,13 @@ export const actionMethods = {
       }
     }
 
-    this.showDamage(defender.elementId, damage, dmgColor);
+    if (delayDamageMs > 0) {
+      setTimeout(() => {
+        this.showDamage(defender.elementId, damage, dmgColor);
+      }, delayDamageMs);
+    } else {
+      this.showDamage(defender.elementId, damage, dmgColor);
+    }
 
     // --- 状態異常付与判定 ---
     const attackAilments = attacker.stats.attackAilments || {};
