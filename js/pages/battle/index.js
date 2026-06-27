@@ -676,9 +676,8 @@ class BattleManager {
       const opacity = isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-80';
       
       return `
-        <div class="sub-tab-item flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all shrink-0 mb-1 backdrop-blur-sm" data-id="${m.id}" title="${m.name}">
+        <div class="sub-tab-item flex items-center justify-center w-7 h-7 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all shrink-0 mb-1 backdrop-blur-sm" data-id="${m.id}" title="${m.name}">
           <img src="${m.image}" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
-          <span class="text-[11px] font-bold whitespace-nowrap tracking-wide ${isSelected ? 'text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]' : 'text-slate-400 drop-shadow-md'}">${m.name}</span>
         </div>
       `;
     }).join('');
