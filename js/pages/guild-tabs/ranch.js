@@ -605,6 +605,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         const quantity = invItem ? invItem.quantity : 0;
         
         const itemRow = document.createElement('div');
+        itemRow.id = `ranch-item-row-${drop.itemId}`;
         itemRow.className = 'bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/60 hover:border-slate-600/50 rounded-xl p-3 transition-colors';
         
         const maxFeed = quantity;
@@ -621,7 +622,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
                     ${mat.name}
                     <span class="text-[9px] bg-pink-900/50 text-pink-300 px-1.5 py-0.5 rounded border border-pink-700/50 shadow-inner">${expMultiplier} EXP</span>
                   </div>
-                  <div class="text-[10px] font-bold text-slate-400 mt-1">所持: <span class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
+                  <div class="text-[10px] font-bold text-slate-400 mt-1">所持: <span id="ranch-item-owned-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
                 </div>
               </div>
               <button class="px-5 h-9 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[11px] font-black text-white transition-all active:scale-95 btn-feed flex items-center justify-center shadow-[0_0_10px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
@@ -649,36 +650,41 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         const sliderProgress = itemRow.querySelector('.slider-progress');
         const btnFeed = itemRow.querySelector('.btn-feed');
         
-        if (maxFeed > 0) {
-          const updateValue = (val) => {
-            let parsed = parseInt(val) || 1;
-            if (parsed < 1) parsed = 1;
-            if (parsed > maxFeed) parsed = maxFeed;
-            input.value = parsed;
-            slider.value = parsed;
-            const percentage = maxFeed > 1 ? ((parsed - 1) / (maxFeed - 1)) * 100 : 100;
-            sliderProgress.style.width = `${percentage}%`;
-          };
+        let currentMaxFeed = maxFeed;
 
-          // Initialize progress
-          updateValue(1);
+        const updateValue = (val) => {
+          if (currentMaxFeed === 0) return;
+          let parsed = parseInt(val) || 1;
+          if (parsed < 1) parsed = 1;
+          if (parsed > currentMaxFeed) parsed = currentMaxFeed;
+          input.value = parsed;
+          slider.value = parsed;
+          const percentage = currentMaxFeed > 1 ? ((parsed - 1) / (currentMaxFeed - 1)) * 100 : 100;
+          sliderProgress.style.width = `${percentage}%`;
+        };
 
-          input.onchange = () => updateValue(input.value);
-          slider.oninput = () => updateValue(slider.value);
+        // Initialize progress
+        if (currentMaxFeed > 0) updateValue(1);
+
+        input.onchange = () => updateValue(input.value);
+        slider.oninput = () => updateValue(slider.value);
+        
+        btnFeed.onclick = async () => {
+          const currentInv = await GameDB.getInventoryItem(drop.itemId);
+          const actualMax = currentInv ? currentInv.quantity : 0;
+          let amount = parseInt(input.value) || 0;
+          if (amount <= 0 || amount > actualMax) amount = actualMax;
+          if (amount === 0) return;
           
-          btnFeed.onclick = async () => {
-            const amount = parseInt(input.value) || 0;
-            if (amount <= 0 || amount > maxFeed) return;
-            
-            btnFeed.disabled = true;
-            
-            // Consume items
-            invItem.quantity -= amount;
-            if (invItem.quantity <= 0) {
-              await GameDB.deleteInventoryItem(invItem.id);
-            } else {
-              await GameDB.putInventoryItem(invItem);
-            }
+          btnFeed.disabled = true;
+          
+          // Consume items
+          currentInv.quantity -= amount;
+          if (currentInv.quantity <= 0) {
+            await GameDB.deleteInventoryItem(currentInv.id);
+          } else {
+            await GameDB.putInventoryItem(currentInv);
+          }
             
             const oldLevel = currentLevel;
             const oldMStats = getMonsterStats(oldLevel);
@@ -823,7 +829,6 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
               updateTopSection(targetExp);
             }
           };
-        }
         list.appendChild(itemRow);
       }
     }
@@ -846,6 +851,60 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
       if (needsUpdate && onUpdate) onUpdate();
     }, 200);
   };
+
+  // --- リアルタイム反映 (ポーリング) ---
+  const ranchSyncTimer = setInterval(async () => {
+    if (!document.body.contains(overlay)) {
+      clearInterval(ranchSyncTimer);
+      return;
+    }
+    
+    for (const drop of validDrops) {
+      const invItem = await GameDB.getInventoryItem(drop.itemId);
+      const quantity = invItem ? invItem.quantity : 0;
+      const ownedSpan = overlay.querySelector(`#ranch-item-owned-${drop.itemId}`);
+      if (ownedSpan && parseInt(ownedSpan.textContent) !== quantity) {
+        ownedSpan.textContent = quantity;
+        ownedSpan.className = quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500';
+        
+        const itemRow = document.getElementById(`ranch-item-row-${drop.itemId}`);
+        if (itemRow) {
+          const slider = itemRow.querySelector('.quantity-slider');
+          const input = itemRow.querySelector('.quantity-input');
+          const btnFeed = itemRow.querySelector('.btn-feed');
+          
+          if (slider) {
+            slider.max = quantity || 1;
+            if (parseInt(slider.value) > quantity) slider.value = quantity || 1;
+          }
+          if (input) {
+            input.max = quantity || 1;
+            if (parseInt(input.value) > quantity) input.value = quantity || 1;
+          }
+          if (btnFeed) {
+            btnFeed.disabled = (quantity === 0);
+          }
+          const parentFlex = input ? input.closest('.flex.items-center.gap-3.px-1') : null;
+          if (parentFlex) {
+            if (quantity === 0) {
+              parentFlex.classList.add('opacity-50', 'pointer-events-none');
+              input.disabled = true;
+              if (slider) slider.disabled = true;
+            } else {
+              parentFlex.classList.remove('opacity-50', 'pointer-events-none');
+              input.disabled = false;
+              if (slider) slider.disabled = false;
+            }
+          }
+          // re-eval maxFeed by emitting input event
+          if (input && quantity > 0) {
+              const evt = new Event('change');
+              input.dispatchEvent(evt);
+          }
+        }
+      }
+    }
+  }, 1000);
 
   header.querySelector('#btn-close-modal').onclick = closeModal;
   

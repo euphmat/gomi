@@ -133,6 +133,53 @@ export function renderMedalTab() {
     paginationContainer.appendChild(nextBtn);
   };
 
+  const updateDynamicValues = () => {
+    if (!selectedMonsterId) return;
+    const monster = MONSTERS.find(m => m.id === selectedMonsterId);
+    if (!monster) return;
+    
+    const currentRankIndex = playerMedals[selectedMonsterId] !== undefined ? playerMedals[selectedMonsterId] : -1;
+    const nextRankIndex = currentRankIndex + 1;
+    if (nextRankIndex >= MEDAL_RANKS.length) return;
+    const nextRank = MEDAL_RANKS[nextRankIndex];
+    
+    const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
+    const materialDrops = monster.drops || [];
+    
+    let canCraft = true;
+    materialDrops.forEach(drop => {
+      const owned = inventoryMap[drop.itemId] || 0;
+      const required = nextRank.materialQty;
+      const sufficient = owned >= required;
+      if (!sufficient) canCraft = false;
+      
+      const row = detailContainer.querySelector(`#medal-mat-row-${drop.itemId}`);
+      const valEl = detailContainer.querySelector(`#medal-mat-owned-${drop.itemId}`);
+      if (row && valEl) {
+        row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${sufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'}`;
+        valEl.className = `text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}`;
+        valEl.textContent = formatNumber(owned);
+      }
+    });
+    
+    const goldSufficient = currentGold >= goldCost;
+    if (!goldSufficient) canCraft = false;
+    
+    const goldRow = detailContainer.querySelector('#medal-gold-row');
+    const goldValEl = detailContainer.querySelector('#medal-gold-owned');
+    if (goldRow && goldValEl) {
+      goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${goldSufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'}`;
+      goldValEl.className = `text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}`;
+      goldValEl.textContent = formatNumber(currentGold);
+    }
+    
+    const btn = detailContainer.querySelector('#medal-craft-btn');
+    if (btn) {
+      btn.disabled = !canCraft;
+      btn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canCraft ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+    }
+  };
+
   // --- 描画関数 ---
   const render = () => {
     detailContainer.innerHTML = '';
@@ -267,6 +314,7 @@ export function renderMedalTab() {
 
           materialRequirements.forEach(({ mat, owned, required, sufficient }) => {
             const row = document.createElement('div');
+            row.id = `medal-mat-row-${drop.itemId}`;
             row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
               sufficient
                 ? 'bg-slate-950/40 border-slate-800/50'
@@ -284,7 +332,7 @@ export function renderMedalTab() {
                 <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">${matName}</span>
               </div>
               <div class="flex items-center gap-0.5 shrink-0">
-                <span class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
+                <span id="medal-mat-owned-${drop.itemId}" class="text-[12px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(owned)}</span>
                 <span class="text-gray-500 text-[10px]">/</span>
                 <span class="text-[12px] font-bold text-slate-400">${formatNumber(required)}</span>
               </div>
@@ -294,6 +342,7 @@ export function renderMedalTab() {
 
           // ゴールドコスト
           const goldRow = document.createElement('div');
+          goldRow.id = 'medal-gold-row';
           const goldSufficient = currentGold >= goldCost;
           goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${
             goldSufficient
@@ -308,7 +357,7 @@ export function renderMedalTab() {
               <span class="text-[10px] font-bold text-slate-300 truncate leading-tight">ゴールド</span>
             </div>
             <div class="flex items-center gap-0.5 shrink-0">
-              <span class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentGold)}</span>
+              <span id="medal-gold-owned" class="text-[12px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentGold)}</span>
               <span class="text-gray-500 text-[10px]">/</span>
               <span class="text-[12px] font-bold text-slate-400">${formatNumber(goldCost)}</span>
             </div>
@@ -319,12 +368,14 @@ export function renderMedalTab() {
 
           // 作成/ランクアップボタン
           const craftBtn = document.createElement('button');
+          craftBtn.id = 'medal-craft-btn';
           craftBtn.className = `
             w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200
             ${canCraft
               ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
               : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
           `;
+          craftBtn.disabled = !canCraft;
           craftBtn.innerHTML = `
             <div class="flex items-center justify-center gap-1.5">
               <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
@@ -332,42 +383,47 @@ export function renderMedalTab() {
             </div>
           `;
 
-          if (canCraft) {
-            craftBtn.onclick = async () => {
-              // 素材消費
-              for (const drop of materialDrops) {
-                const invItem = await GameDB.getInventoryItem(drop.itemId);
-                if (invItem) {
-                  invItem.quantity -= nextRank.materialQty;
-                  if (invItem.quantity <= 0) {
-                    await GameDB.deleteInventoryItem(drop.itemId);
-                  } else {
-                    await GameDB.putInventoryItem(invItem);
-                  }
-                  inventoryMap[drop.itemId] = Math.max(0, (inventoryMap[drop.itemId] || 0) - nextRank.materialQty);
+          craftBtn.onclick = async () => {
+            if (craftBtn.disabled) return;
+            // 再チェック
+            if (currentGold < goldCost) return;
+            for (const drop of materialDrops) {
+              if ((inventoryMap[drop.itemId] || 0) < nextRank.materialQty) return;
+            }
+
+            // 素材消費
+            for (const drop of materialDrops) {
+              const invItem = await GameDB.getInventoryItem(drop.itemId);
+              if (invItem) {
+                invItem.quantity -= nextRank.materialQty;
+                if (invItem.quantity <= 0) {
+                  await GameDB.deleteInventoryItem(drop.itemId);
+                } else {
+                  await GameDB.putInventoryItem(invItem);
                 }
+                inventoryMap[drop.itemId] = Math.max(0, (inventoryMap[drop.itemId] || 0) - nextRank.materialQty);
               }
+            }
 
-              // ゴールド消費
-              currentGold -= goldCost;
-              await GameDB.setGameState('gold', currentGold);
+            // ゴールド消費
+            currentGold -= goldCost;
+            await GameDB.setGameState('gold', currentGold);
 
-              // メダルランクを保存
-              playerMedals[selectedMonsterId] = nextRankIndex;
-              await GameDB.setGameState('player_medals', playerMedals);
+            // メダルランクを保存
+            playerMedals[selectedMonsterId] = nextRankIndex;
+            await GameDB.setGameState('player_medals', playerMedals);
 
-              // ヘッダーのゴールド表示も更新
-              const goldDisplay = document.getElementById('header-gold-display');
-              if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
+            // ヘッダーのゴールド表示も更新
+            const goldDisplay = document.getElementById('header-gold-display');
+            if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
 
-              // 成功演出
-              showCraftSuccessAnimation(container, nextRank, monster);
+            // 成功演出
+            showCraftSuccessAnimation(container, nextRank, monster);
 
-              // UI再描画
-              updateHeader();
-              render();
-            };
-          }
+            // UI再描画
+            updateHeader();
+            render();
+          };
 
           craftSection.appendChild(craftBtn);
           detailPanel.appendChild(craftSection);
@@ -519,6 +575,42 @@ export function renderMedalTab() {
   container.appendChild(detailContainer);
   container.appendChild(scrollContainer);
   container.appendChild(paginationContainer);
+
+  // --- リアルタイム反映 (ポーリング) ---
+  const syncTimer = setInterval(async () => {
+    if (!document.body.contains(container)) {
+      clearInterval(syncTimer);
+      return;
+    }
+    const [gold, invItems, pMedals] = await Promise.all([
+      GameDB.getGameState('gold'),
+      GameDB.getAllInventory(),
+      GameDB.getGameState('player_medals')
+    ]);
+    
+    let changed = false;
+    if (currentGold !== (gold || 0)) {
+      currentGold = gold || 0;
+      changed = true;
+    }
+    
+    (invItems || []).forEach(item => {
+      if (inventoryMap[item.id] !== item.quantity) {
+        inventoryMap[item.id] = item.quantity;
+        changed = true;
+      }
+    });
+
+    if (JSON.stringify(playerMedals) !== JSON.stringify(pMedals || {})) {
+      playerMedals = pMedals || {};
+      changed = true;
+    }
+
+    if (changed) {
+      updateDynamicValues();
+      updateHeader(); // ゴールドなどの更新も含めてヘッダー再描画
+    }
+  }, 1000);
 
   return container;
 }
