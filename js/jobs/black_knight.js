@@ -333,56 +333,81 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
   // ─── Hell Gate ───────────────────────────────────────────────
   } else if (type === 'hell_gate') {
-    // Phase 1: Dark portal opens at center
-    const portalX = window.innerWidth / 2;
-    const portalY = window.innerHeight / 2 - 30;
+    // Phase 1: Massive Hell Gate opens behind/at caster
+    const portalX = cx;
+    const portalY = cy;
 
-    // Dark vortex background
-    const vortex = document.createElement('div');
-    vortex.style.position = 'fixed';
-    vortex.style.left = `${portalX - 120}px`;
-    vortex.style.top = `${portalY - 120}px`;
-    vortex.style.width = '240px';
-    vortex.style.height = '240px';
-    vortex.style.borderRadius = '50%';
-    vortex.style.background = 'conic-gradient(from 0deg, #1e1b4b, #312e81, #1e1b4b, #0f0a2e, #1e1b4b)';
-    vortex.style.boxShadow = '0 0 60px rgba(30,27,75,0.8), 0 0 100px rgba(15,10,46,0.6)';
-    vortex.style.zIndex = '9996';
-    vortex.style.pointerEvents = 'none';
-    vortex.style.mixBlendMode = 'screen';
-    (document.getElementById('battle-effects-layer') || document.body).appendChild(vortex);
+    // Dark aura sucking into caster
+    const aura = document.createElement('div');
+    aura.style.position = 'fixed';
+    aura.style.left = `${portalX - 200}px`;
+    aura.style.top = `${portalY - 200}px`;
+    aura.style.width = '400px';
+    aura.style.height = '400px';
+    aura.style.borderRadius = '50%';
+    aura.style.background = 'conic-gradient(from 0deg, transparent, rgba(147, 51, 234, 0.2), rgba(88, 28, 135, 0.8), transparent)';
+    aura.style.boxShadow = 'inset 0 0 100px #3b0764';
+    aura.style.zIndex = '9995';
+    aura.style.pointerEvents = 'none';
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(aura);
 
-    const vortexAnim = vortex.animate([
-      { transform: 'scale(0) rotate(0deg)', opacity: 0 },
-      { transform: 'scale(0.8) rotate(180deg)', opacity: 0.8, offset: 0.2 },
-      { transform: 'scale(1) rotate(360deg)', opacity: 0.9, offset: 0.5 },
-      { transform: 'scale(1.2) rotate(720deg)', opacity: 0 }
+    const auraAnim = aura.animate([
+      { transform: 'scale(2) rotate(0deg)', opacity: 0 },
+      { transform: 'scale(1) rotate(-180deg)', opacity: 1, offset: 0.5 },
+      { transform: 'scale(0) rotate(-360deg)', opacity: 0 }
     ], { duration: 1500 / speedMult, easing: 'ease-in-out' });
-    vortexAnim.onfinish = () => vortex.remove();
+    auraAnim.onfinish = () => aura.remove();
 
-    // Inner portal ring
-    const ring = document.createElement('div');
-    ring.style.position = 'fixed';
-    ring.style.left = `${portalX - 80}px`;
-    ring.style.top = `${portalY - 80}px`;
-    ring.style.width = '160px';
-    ring.style.height = '160px';
-    ring.style.borderRadius = '50%';
-    ring.style.border = '6px solid #6d28d9';
-    ring.style.boxShadow = '0 0 30px #6d28d9, inset 0 0 30px rgba(109,40,217,0.4)';
-    ring.style.zIndex = '9997';
-    ring.style.pointerEvents = 'none';
-    (document.getElementById('battle-effects-layer') || document.body).appendChild(ring);
+    // The Gate itself - jagged dark rift
+    const rift = document.createElement('div');
+    rift.style.position = 'fixed';
+    rift.style.left = `${portalX - 20}px`;
+    rift.style.top = `${portalY - 150}px`;
+    rift.style.width = '40px';
+    rift.style.height = '300px';
+    rift.style.background = 'black';
+    rift.style.boxShadow = '0 0 30px #c084fc, 0 0 60px #7e22ce, 0 0 100px #3b0764';
+    rift.style.borderRadius = '50%';
+    rift.style.zIndex = '9996';
+    rift.style.pointerEvents = 'none';
+    (document.getElementById('battle-effects-layer') || document.body).appendChild(rift);
 
-    const ringAnim = ring.animate([
-      { transform: 'scale(0) rotate(0deg)', opacity: 0 },
-      { transform: 'scale(1) rotate(90deg)', opacity: 1, offset: 0.2 },
-      { transform: 'scale(1.2) rotate(270deg)', opacity: 0.8, offset: 0.6 },
-      { transform: 'scale(0.5) rotate(360deg)', opacity: 0 }
-    ], { duration: 1200 / speedMult, easing: 'ease-in-out' });
-    ringAnim.onfinish = () => ring.remove();
+    const riftAnim = rift.animate([
+      { transform: 'scaleX(0)', opacity: 0 },
+      { transform: 'scaleX(1) scaleY(1.2)', opacity: 1, offset: 0.2 },
+      { transform: 'scaleX(2) scaleY(1.5)', opacity: 1, offset: 0.8 },
+      { transform: 'scaleX(0) scaleY(0)', opacity: 0 }
+    ], { duration: 2000 / speedMult, easing: 'ease-in-out' });
+    riftAnim.onfinish = () => rift.remove();
 
-    // Phase 2: Dark energy beams shoot out to all targets
+    // Dark energy bursts out of the rift
+    setTimeout(() => {
+      for (let p = 0; p < 15; p++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'fixed';
+        particle.style.left = `${portalX}px`;
+        particle.style.top = `${portalY + (Math.random() * 200 - 100)}px`;
+        particle.style.width = `${Math.random() * 10 + 5}px`;
+        particle.style.height = `${Math.random() * 10 + 5}px`;
+        particle.style.borderRadius = '50%';
+        particle.style.background = Math.random() > 0.5 ? '#c084fc' : '#581c87';
+        particle.style.boxShadow = '0 0 10px #e9d5ff';
+        particle.style.zIndex = '9997';
+        particle.style.pointerEvents = 'none';
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(particle);
+
+        const angle = (Math.random() * Math.PI) - Math.PI / 2; // Rightwards spread
+        const dist = 300 + Math.random() * 300;
+        
+        const pAnim = particle.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
+        ], { duration: (800 + Math.random() * 600) / speedMult, easing: 'ease-out' });
+        pAnim.onfinish = () => particle.remove();
+      }
+    }, 400 / speedMult);
+
+    // Phase 2: Hell Gates engulf the targets
     targets.forEach((target, index) => {
       setTimeout(() => {
         const targetEl = document.getElementById(target.elementId);
@@ -391,83 +416,78 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         const tx = targetRect.left + targetRect.width / 2;
         const ty = targetRect.top + targetRect.height / 2;
 
-        // Dark beam from portal to target
-        const dx = tx - portalX;
-        const dy = ty - portalY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        // Ground gate opening below target
+        const groundGate = document.createElement('div');
+        groundGate.style.position = 'fixed';
+        groundGate.style.left = `${tx - 100}px`;
+        groundGate.style.top = `${ty - 20}px`; // slightly below center
+        groundGate.style.width = '200px';
+        groundGate.style.height = '60px';
+        groundGate.style.borderRadius = '50%';
+        groundGate.style.background = 'radial-gradient(ellipse at center, #000000 40%, #581c87 80%, transparent 100%)';
+        groundGate.style.boxShadow = '0 0 40px #7e22ce, inset 0 0 20px #c084fc';
+        groundGate.style.zIndex = '9995'; // Behind target if possible
+        groundGate.style.pointerEvents = 'none';
+        (document.getElementById('battle-effects-layer') || document.body).appendChild(groundGate);
 
-        const beam = document.createElement('div');
-        beam.style.position = 'fixed';
-        beam.style.left = `${portalX}px`;
-        beam.style.top = `${portalY - 4}px`;
-        beam.style.width = `${dist}px`;
-        beam.style.height = '8px';
-        beam.style.background = 'linear-gradient(to right, #4c1d95, #7c3aed, #a78bfa, #7c3aed)';
-        beam.style.boxShadow = '0 0 15px #7c3aed, 0 0 30px #4c1d95';
-        beam.style.transformOrigin = '0 50%';
-        beam.style.transform = `rotate(${angle}deg)`;
-        beam.style.zIndex = '9998';
-        beam.style.pointerEvents = 'none';
-        (document.getElementById('battle-effects-layer') || document.body).appendChild(beam);
+        const groundGateAnim = groundGate.animate([
+          { transform: 'scale(0) rotateX(60deg)', opacity: 0 },
+          { transform: 'scale(1) rotateX(60deg)', opacity: 1, offset: 0.2 },
+          { transform: 'scale(1.2) rotateX(60deg)', opacity: 1, offset: 0.8 },
+          { transform: 'scale(0) rotateX(60deg)', opacity: 0 }
+        ], { duration: 1200 / speedMult, easing: 'ease-in-out' });
+        groundGateAnim.onfinish = () => groundGate.remove();
 
-        const beamAnim = beam.animate([
-          { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 0 },
-          { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 1, offset: 0.4 },
-          { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0 }
-        ], { duration: 400 / speedMult, easing: 'ease-out' });
-        beamAnim.onfinish = () => beam.remove();
-
-        // Dark explosion on target
+        // Dark demonic hand/claw reaching up from the ground gate
         setTimeout(() => {
-          const explosion = document.createElement('div');
-          explosion.style.position = 'fixed';
-          explosion.style.left = `${tx - 50}px`;
-          explosion.style.top = `${ty - 50}px`;
-          explosion.style.width = '100px';
-          explosion.style.height = '100px';
-          explosion.style.borderRadius = '50%';
-          explosion.style.background = 'radial-gradient(circle, #a78bfa, #6d28d9, #1e1b4b, transparent)';
-          explosion.style.boxShadow = '0 0 30px #6d28d9';
-          explosion.style.zIndex = '9999';
-          explosion.style.pointerEvents = 'none';
-          explosion.style.mixBlendMode = 'screen';
-          (document.getElementById('battle-effects-layer') || document.body).appendChild(explosion);
+          const claw = document.createElement('div');
+          claw.style.position = 'fixed';
+          claw.style.left = `${tx - 60}px`;
+          claw.style.top = `${ty - 60}px`;
+          claw.style.width = '120px';
+          claw.style.height = '120px';
+          claw.style.background = 'linear-gradient(to top, #3b0764, #7e22ce, transparent)';
+          claw.style.clipPath = 'polygon(20% 100%, 80% 100%, 100% 40%, 80% 0%, 50% 30%, 20% 0%, 0% 40%)';
+          claw.style.zIndex = '9998';
+          claw.style.pointerEvents = 'none';
+          (document.getElementById('battle-effects-layer') || document.body).appendChild(claw);
 
-          const explAnim = explosion.animate([
-            { transform: 'scale(0.2)', opacity: 1 },
-            { transform: 'scale(1.5)', opacity: 0 }
-          ], { duration: 350 / speedMult, easing: 'ease-out' });
-          explAnim.onfinish = () => explosion.remove();
+          const clawAnim = claw.animate([
+            { transform: 'translateY(100px) scale(0.5)', opacity: 0 },
+            { transform: 'translateY(-20px) scale(1)', opacity: 0.9, offset: 0.3 },
+            { transform: 'translateY(-40px) scale(1.2)', opacity: 0 }
+          ], { duration: 600 / speedMult, easing: 'ease-out' });
+          clawAnim.onfinish = () => claw.remove();
 
-          // Dark particles
-          for (let p = 0; p < 6; p++) {
-            const particle = document.createElement('div');
-            particle.style.position = 'fixed';
-            particle.style.left = `${tx - 3}px`;
-            particle.style.top = `${ty - 3}px`;
-            particle.style.width = '6px';
-            particle.style.height = '6px';
-            particle.style.borderRadius = '50%';
-            particle.style.background = p % 2 === 0 ? '#a78bfa' : '#6d28d9';
-            particle.style.boxShadow = `0 0 8px ${p % 2 === 0 ? '#a78bfa' : '#6d28d9'}`;
-            particle.style.zIndex = '9999';
-            particle.style.pointerEvents = 'none';
-            (document.getElementById('battle-effects-layer') || document.body).appendChild(particle);
+          // Damage impact numbers hit exactly as claw grabs
+          setTimeout(() => {
+            if (onImpact) onImpact(target, index);
+            
+            // Extra impact spark
+            const spark = document.createElement('div');
+            spark.style.position = 'fixed';
+            spark.style.left = `${tx - 50}px`;
+            spark.style.top = `${ty - 50}px`;
+            spark.style.width = '100px';
+            spark.style.height = '100px';
+            spark.style.borderRadius = '50%';
+            spark.style.background = 'radial-gradient(circle, #f3e8ff, #c084fc, transparent)';
+            spark.style.mixBlendMode = 'screen';
+            spark.style.zIndex = '9999';
+            spark.style.pointerEvents = 'none';
+            (document.getElementById('battle-effects-layer') || document.body).appendChild(spark);
+            
+            const sparkAnim = spark.animate([
+              { transform: 'scale(0.5)', opacity: 1 },
+              { transform: 'scale(1.5)', opacity: 0 }
+            ], { duration: 300 / speedMult, easing: 'ease-out' });
+            sparkAnim.onfinish = () => spark.remove();
 
-            const pa = Math.random() * Math.PI * 2;
-            const pd = 20 + Math.random() * 30;
+          }, 150 / speedMult); // Impact timing
 
-            const pAnim = particle.animate([
-              { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-              { transform: `translate(${Math.cos(pa) * pd}px, ${Math.sin(pa) * pd}px) scale(0)`, opacity: 0 }
-            ], { duration: (250 + Math.random() * 150) / speedMult, easing: 'ease-out' });
-            pAnim.onfinish = () => particle.remove();
-          }
-
-          if (onImpact) onImpact(target, index);
         }, 200 / speedMult);
-      }, (500 + index * 80) / speedMult);
+
+      }, (1000 + index * 300) / speedMult); // Delay for each target
     });
 
   } else {
