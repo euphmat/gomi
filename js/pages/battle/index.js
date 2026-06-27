@@ -658,7 +658,7 @@ class BattleManager {
     if (!wrapper) {
       this.elements.tabContent.innerHTML = `
         <div class="sub-tab-wrapper flex flex-col h-full w-full bg-transparent">
-          <div class="sub-tab-header flex gap-1 px-1.5 pt-1.5 pb-1 shrink-0 border-b border-slate-700/50 mb-1 w-full overflow-hidden"></div>
+          <div class="sub-tab-header flex gap-1.5 px-1.5 pt-1.5 pb-1 shrink-0 border-b border-slate-700/50 mb-1 w-full overflow-hidden"></div>
           <div class="sub-tab-body flex-1 min-h-0 overflow-y-auto custom-scrollbar relative bg-transparent pr-1"></div>
         </div>
       `;
@@ -675,12 +675,20 @@ class BattleManager {
       const shadowClass = isSelected ? 'shadow-[0_0_12px_rgba(96,165,250,0.25)]' : 'shadow-inner';
       const opacity = isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-80';
       
-      return `
-        <div class="sub-tab-item flex-1 flex items-center justify-center gap-1 px-1.5 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all min-w-0 mb-1 backdrop-blur-sm" data-id="${m.id}" title="${m.name}">
-          <img src="${m.image}" class="w-3.5 h-3.5 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
-          <span class="text-[10px] font-bold truncate tracking-wide pointer-events-none ${isSelected ? 'text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]' : 'text-slate-400 drop-shadow-md'}">${m.name}</span>
-        </div>
-      `;
+      if (isSelected) {
+        return `
+          <div class="sub-tab-item flex items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" title="${m.name}">
+            <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
+            <span class="text-[11px] font-bold tracking-wide whitespace-nowrap pointer-events-none text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]">${m.name}</span>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="sub-tab-item flex items-center justify-center w-7 h-7 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" title="${m.name}">
+            <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
+          </div>
+        `;
+      }
     }).join('');
 
     header.querySelectorAll('.sub-tab-item').forEach(el => {
