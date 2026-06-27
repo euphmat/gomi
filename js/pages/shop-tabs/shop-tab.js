@@ -54,6 +54,7 @@ export function renderShopTab() {
   let viewMode = 'grid'; // 'grid' | 'list'
   let currentPage = 1;
   let showUnownedOnly = false;
+  let purchaseMode = false;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -113,6 +114,25 @@ export function renderShopTab() {
     });
 
     filterContainer.appendChild(toggleContainer);
+
+    const purchaseModeContainer = document.createElement('label');
+    purchaseModeContainer.className = 'flex items-center gap-1.5 cursor-pointer ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0';
+    purchaseModeContainer.innerHTML = `
+      <div class="relative flex items-center">
+        <input type="checkbox" class="sr-only" ${purchaseMode ? 'checked' : ''}>
+        <div class="block w-6 h-3 rounded-full transition-colors ${purchaseMode ? 'bg-amber-500' : 'bg-gray-600'}"></div>
+        <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-transform ${purchaseMode ? 'translate-x-3' : 'translate-x-0'}"></div>
+      </div>
+      <span class="text-[9px] font-bold ${purchaseMode ? 'text-amber-400' : 'text-gray-400'} whitespace-nowrap leading-none mt-px">購入モード</span>
+    `;
+
+    const pmInput = purchaseModeContainer.querySelector('input');
+    pmInput.addEventListener('change', (e) => {
+      purchaseMode = e.target.checked;
+      renderFilters();
+    });
+
+    filterContainer.appendChild(purchaseModeContainer);
   };
 
   const rightControls = document.createElement('div');
@@ -354,11 +374,75 @@ export function renderShopTab() {
         `;
       }
 
-      slot.onclick = () => showCraftModal(item);
+      slot.onclick = () => {
+        if (purchaseMode && canCraft) {
+          performCraft(item, 1);
+        } else {
+          showCraftModal(item);
+        }
+      };
       gridContainer.appendChild(slot);
     });
     
     renderPagination(totalPages);
+  };
+
+  /** 合成実行処理 */
+  const performCraft = async (item, craftCount) => {
+    if (craftCount <= 0) return;
+    const isMaterial = !item.slot;
+    const price = item.recipe.price || 0;
+    const totalCost = price * craftCount;
+
+    // ゴールドを減らす
+    currentGold -= totalCost;
+    await GameDB.setGameState('gold', currentGold);
+
+    // ヘッダーのゴールド表示を更新
+    const headerGoldEl = document.getElementById('header-gold-display');
+    if (headerGoldEl) {
+      headerGoldEl.textContent = ` Gold : ${formatNumber(currentGold)} `;
+    }
+
+    // 素材を消費
+    for (const mat of item.recipe.materials) {
+      const invItem = await GameDB.getInventoryItem(mat.id);
+      if (invItem) {
+        const totalMatCost = mat.amount * craftCount;
+        const newQty = (invItem.quantity || 0) - totalMatCost;
+        if (newQty <= 0) {
+          await GameDB.deleteInventoryItem(mat.id);
+        } else {
+          await GameDB.putInventoryItem({ ...invItem, quantity: newQty });
+        }
+        inventoryMap[mat.id] = Math.max(0, (inventoryMap[mat.id] || 0) - totalMatCost);
+      }
+    }
+
+    if (isMaterial) {
+      const currentQty = inventoryMap[item.id] || 0;
+      const newQty = currentQty + craftCount;
+      const matItem = ALL_DEFINITIONS.find(d => d.id === item.id) || item;
+      await GameDB.putInventoryItem({ ...matItem, quantity: newQty });
+      inventoryMap[item.id] = newQty;
+    } else {
+      // 装備アイテムを作成（ユニークID付与）
+      for (let i = 0; i < craftCount; i++) {
+        const uniqueId = `${item.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+        const newEquipment = {
+          id: uniqueId,
+          baseId: item.id,
+        };
+        await GameDB.putEquipment(newEquipment);
+      }
+      equipmentCountMap[item.id] = (equipmentCountMap[item.id] || 0) + craftCount;
+    }
+
+    // 合成成功エフェクト
+    showCraftSuccessEffect(item, craftCount);
+
+    // グリッド再描画
+    renderGrid();
   };
 
   /** 合成可能かチェック */
@@ -667,59 +751,8 @@ export function renderShopTab() {
     // 合成実行
     craftBtn.onclick = async () => {
       if (craftCount <= 0) return;
-
-      const totalCost = price * craftCount;
-
-      // ゴールドを減らす
-      currentGold -= totalCost;
-      await GameDB.setGameState('gold', currentGold);
-
-      // ヘッダーのゴールド表示を更新
-      const headerGoldEl = document.getElementById('header-gold-display');
-      if (headerGoldEl) {
-        headerGoldEl.textContent = ` Gold : ${formatNumber(currentGold)} `;
-      }
-
-      // 素材を消費
-      for (const mat of item.recipe.materials) {
-        const invItem = await GameDB.getInventoryItem(mat.id);
-        if (invItem) {
-          const totalMatCost = mat.amount * craftCount;
-          const newQty = (invItem.quantity || 0) - totalMatCost;
-          if (newQty <= 0) {
-            await GameDB.deleteInventoryItem(mat.id);
-          } else {
-            await GameDB.putInventoryItem({ ...invItem, quantity: newQty });
-          }
-          inventoryMap[mat.id] = Math.max(0, (inventoryMap[mat.id] || 0) - totalMatCost);
-        }
-      }
-
-      if (isMaterial) {
-        const currentQty = inventoryMap[item.id] || 0;
-        const newQty = currentQty + craftCount;
-        const matItem = ALL_DEFINITIONS.find(d => d.id === item.id) || item;
-        await GameDB.putInventoryItem({ ...matItem, quantity: newQty });
-        inventoryMap[item.id] = newQty;
-      } else {
-        // 装備アイテムを作成（ユニークID付与）
-        for (let i = 0; i < craftCount; i++) {
-          const uniqueId = `${item.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-          const newEquipment = {
-            id: uniqueId,
-            baseId: item.id,
-          };
-          await GameDB.putEquipment(newEquipment);
-        }
-        equipmentCountMap[item.id] = (equipmentCountMap[item.id] || 0) + craftCount;
-      }
-
-      // 合成成功エフェクト
       closeModal();
-      showCraftSuccessEffect(item, craftCount);
-
-      // グリッド再描画
-      renderGrid();
+      await performCraft(item, craftCount);
     };
   };
 
