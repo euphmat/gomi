@@ -175,11 +175,13 @@ class BattleManager {
 
     const monsterIds = this.resolveMonsters(this.floorDef.monsters);
 
-    const uniqueMonsterIds = [...new Set(monsterIds)];
-    this.floorUniqueMonsterIds = uniqueMonsterIds;
-    if (!this.subTabSelectedMonsterId || !uniqueMonsterIds.includes(this.subTabSelectedMonsterId)) {
-      this.subTabSelectedMonsterId = uniqueMonsterIds[0];
+    const allFloorMonsterIds = this.getAllPossibleMonsters(this.floorDef.monsters);
+    this.floorUniqueMonsterIds = allFloorMonsterIds;
+    if (!this.subTabSelectedMonsterId || !allFloorMonsterIds.includes(this.subTabSelectedMonsterId)) {
+      this.subTabSelectedMonsterId = allFloorMonsterIds[0];
     }
+
+    const uniqueMonsterIds = [...new Set(monsterIds)];
 
     for (const mId of uniqueMonsterIds) {
       const medalRankIndex = this.playerMedals[mId] !== undefined ? this.playerMedals[mId] : -1;
@@ -242,6 +244,28 @@ class BattleManager {
     }
     
     this.startAtbLoop();
+  }
+
+  getAllPossibleMonsters(monsterDefs) {
+    if (!monsterDefs || monsterDefs.length === 0) return [];
+    if (typeof monsterDefs[0] === 'string') {
+      return [...new Set(monsterDefs)];
+    }
+    const allIds = new Set();
+    for (const entry of monsterDefs) {
+      if (entry.members) {
+        for (const e of entry.members) {
+          allIds.add(e.id);
+        }
+      } else if (entry.id) {
+        allIds.add(entry.id);
+      } else {
+        for (const key of Object.keys(entry)) {
+          if (key !== 'weight') allIds.add(key);
+        }
+      }
+    }
+    return [...allIds];
   }
 
   /**
