@@ -187,8 +187,8 @@ export const actionMethods = {
     }
     options.isHybrid = isHybrid;
 
-    // --- 攻撃者のアクションアニメーション ---
-    if (!this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
+    // --- 攻撃者のアクションアニメーション (モンスター側のみ) ---
+    if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
       const attackerEl = document.getElementById(attacker.elementId);
       if (attackerEl) {
         if (isMagic) {
