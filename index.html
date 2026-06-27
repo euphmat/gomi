@@ -416,6 +416,48 @@
       cursor: pointer;
     }
 
+    /* Quantity Slider */
+    .quantity-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+    .quantity-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f472b6;
+      border: 2.5px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.1s ease;
+    }
+    .quantity-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .quantity-slider::-webkit-slider-thumb:active {
+      transform: scale(0.95);
+    }
+    .quantity-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f472b6;
+      border: 2.5px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.1s ease;
+      box-sizing: border-box;
+    }
+    .quantity-slider::-moz-range-thumb:hover {
+      transform: scale(1.15);
+    }
+    .quantity-slider::-moz-range-thumb:active {
+      transform: scale(0.95);
+    }
+
     /* Speed step dots */
     .speed-step {
       position: relative;

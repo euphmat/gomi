@@ -71,46 +71,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   const container = document.createElement('div');
   container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
-  // Custom Slider Styles (統一されたピンクの光沢のあるつまみ)
-  const styleEl = document.createElement('style');
-  styleEl.innerHTML = `
-    input[type="range"].quantity-slider::-webkit-slider-thumb {
-      -webkit-appearance: none !important;
-      appearance: none !important;
-      width: 18px !important;
-      height: 18px !important;
-      border-radius: 50% !important;
-      background: #f472b6 !important;
-      border: 2.5px solid #fff !important;
-      cursor: pointer !important;
-      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3) !important;
-      transition: transform 0.1s !important;
-    }
-    input[type="range"].quantity-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.15) !important;
-    }
-    input[type="range"].quantity-slider::-webkit-slider-thumb:active {
-      transform: scale(0.95) !important;
-    }
-    input[type="range"].quantity-slider::-moz-range-thumb {
-      width: 18px !important;
-      height: 18px !important;
-      border-radius: 50% !important;
-      background: #f472b6 !important;
-      border: 2.5px solid #fff !important;
-      cursor: pointer !important;
-      box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3) !important;
-      transition: transform 0.1s !important;
-      box-sizing: border-box !important;
-    }
-    input[type="range"].quantity-slider::-moz-range-thumb:hover {
-      transform: scale(1.15) !important;
-    }
-    input[type="range"].quantity-slider::-moz-range-thumb:active {
-      transform: scale(0.95) !important;
-    }
-  `;
-  container.appendChild(styleEl);
+  // (スタイルは index.html のグローバルCSSに移動しました)
 
   // --- ヘッダー (捕獲情報統合・3分割グリッド化) ---
   const headerHtml = `
