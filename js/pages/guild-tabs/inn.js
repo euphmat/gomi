@@ -127,163 +127,29 @@ export function renderInnTab() {
       }
     }
 
-    // Effect Overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 bg-gradient-to-b from-slate-950 via-indigo-950/95 to-slate-950 z-[9999] opacity-0 backdrop-blur-md transition-opacity duration-700 flex flex-col items-center justify-center pointer-events-auto';
-    overlay.innerHTML = `
-      <div class="flex flex-col items-center gap-6 max-w-sm w-full px-8 relative">
-        <!-- Pulse Glow Background -->
-        <div class="absolute w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl animate-inn-pulse-glow"></div>
-        
-        <!-- Main Floating Icon -->
-        <div class="relative flex items-center justify-center w-24 h-24 bg-slate-900/60 rounded-full border border-indigo-500/20 shadow-[0_0_25px_rgba(99,102,241,0.2)] animate-inn-float z-10">
-          <span class="material-symbols-outlined text-indigo-400 text-5xl transition-all duration-300" style="font-variation-settings: 'FILL' 1" id="inn-icon">hotel</span>
-        </div>
-        
-        <!-- Zzz Container -->
-        <div id="zzz-container" class="absolute w-full h-40 -top-16 pointer-events-none z-20 overflow-hidden"></div>
-
-        <!-- Text Info -->
-        <div class="flex flex-col items-center gap-1.5 z-10 text-center">
-          <span class="text-white text-base font-bold tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] min-h-[28px] flex items-center" id="inn-status-text">チェックイン中...</span>
-          <span class="text-indigo-300/80 text-xs font-semibold tracking-wider" id="inn-progress-text">0%</span>
-        </div>
-
-        <!-- Progress Bar Container -->
-        <div class="w-64 h-2.5 bg-slate-900/90 rounded-full border border-white/10 overflow-hidden relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.8)] z-10">
-          <!-- Glow Gradient Progress Bar -->
-          <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-75 ease-out shadow-[0_0_12px_rgba(168,85,247,0.7)]" style="width: 0%;" id="inn-progress-bar"></div>
-          <!-- Shimmer line effect -->
-          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]"></div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
+    // Simple Flash Effect
+    const flash = document.createElement('div');
+    flash.className = 'fixed inset-0 bg-white z-[10000] opacity-0 pointer-events-none transition-opacity duration-200';
+    document.body.appendChild(flash);
 
     // Block interaction on button
     btnRest.disabled = true;
-    
-    // Fade in overlay
+
+    // Trigger flash and heal
     requestAnimationFrame(() => {
-      overlay.style.opacity = '1';
-    });
-
-    // Elements
-    const progressBar = overlay.querySelector('#inn-progress-bar');
-    const progressText = overlay.querySelector('#inn-progress-text');
-    const statusText = overlay.querySelector('#inn-status-text');
-    const innIcon = overlay.querySelector('#inn-icon');
-    const zzzContainer = overlay.querySelector('#zzz-container');
-
-    const duration = 2200; // ms
-    const startTime = performance.now();
-    let zzzInterval = null;
-
-    // Spawn Zzz elements
-    const spawnZzz = () => {
-      const zzz = document.createElement('span');
-      zzz.className = 'absolute text-indigo-300 font-bold select-none pointer-events-none animate-zzz drop-shadow';
+      flash.style.opacity = '0.5';
       
-      // Random styling
-      const size = Math.random() > 0.6 ? 'text-lg' : (Math.random() > 0.3 ? 'text-base' : 'text-xs');
-      zzz.classList.add(size);
-      zzz.style.opacity = (Math.random() * 0.4 + 0.4).toFixed(2);
-      
-      // Random position (around center)
-      const leftOffset = Math.floor(Math.random() * 60) - 30; // -30px to 30px
-      zzz.style.left = `calc(50% + ${leftOffset}px)`;
-      zzz.style.bottom = '10px';
-      
-      // Random movement offset
-      const xOffset = Math.floor(Math.random() * 80) - 40; // -40px to 40px
-      zzz.style.setProperty('--x-offset', `${xOffset}px`);
-      
-      // Zzz content
-      const words = ['Z', 'z', 'Zz', 'Zzz...'];
-      zzz.textContent = words[Math.floor(Math.random() * words.length)];
-      
-      zzzContainer.appendChild(zzz);
-      
-      // Remove after animation completes
       setTimeout(() => {
-        zzz.remove();
-      }, 2200);
-    };
-
-    // Update function
-    const updateProgress = (now) => {
-      if (!document.body.contains(overlay)) {
-        if (zzzInterval) clearInterval(zzzInterval);
-        return;
-      }
-
-      const elapsed = now - startTime;
-      const pct = Math.min(100, (elapsed / duration) * 100);
-      
-      // Update UI
-      progressBar.style.width = `${pct}%`;
-      progressText.textContent = `${Math.floor(pct)}%`;
-
-      // Status texts and icons depending on progress
-      if (pct < 20) {
-        statusText.textContent = '🛏️ 部屋へ移動中...';
-        innIcon.textContent = 'hotel';
-      } else if (pct < 60) {
-        statusText.textContent = '💤 ぐっすり夢の中...';
-        innIcon.textContent = 'nights_stay';
+        flash.style.opacity = '0';
         
-        // Start spawning Zzz
-        if (!zzzInterval) {
-          zzzInterval = setInterval(spawnZzz, 300);
-        }
-      } else if (pct < 85) {
-        statusText.textContent = '✨ 体力と魔力を回復中...';
-        innIcon.textContent = 'local_hospital';
+        // Apply healing and re-render status
+        renderStatus();
         
-        // Stop spawning Zzz
-        if (zzzInterval) {
-          clearInterval(zzzInterval);
-          zzzInterval = null;
-        }
-      } else if (pct < 100) {
-        statusText.textContent = '☀️ 朝の光が差し込んできた...';
-        innIcon.textContent = 'wb_sunny';
-      } else {
-        statusText.textContent = '🎶 すっきり目覚めた！';
-        innIcon.textContent = 'check_circle';
-        
-        // Finalize
-        if (zzzInterval) clearInterval(zzzInterval);
-        onComplete();
-        return;
-      }
-
-      requestAnimationFrame(updateProgress);
-    };
-
-    const onComplete = () => {
-      // Create flash overlay
-      const flash = document.createElement('div');
-      flash.className = 'fixed inset-0 bg-white z-[10000] opacity-0 pointer-events-none animate-wakeup-flash';
-      document.body.appendChild(flash);
-
-      // Apply healing and re-render status
-      renderStatus();
-
-      // Clean up flash and fade out main overlay
-      setTimeout(() => {
-        flash.remove();
-        
-        // Fade out overlay
-        overlay.style.opacity = '0';
         setTimeout(() => {
-          overlay.remove();
-        }, 700);
-      }, 600);
-    };
-
-    // Start animation
-    requestAnimationFrame(updateProgress);
+          flash.remove();
+        }, 200);
+      }, 100);
+    });
   };
 
   // Initial render
