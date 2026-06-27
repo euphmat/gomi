@@ -18,11 +18,16 @@ import { formatNumber } from '../../utils/format.js';
  * @param {Function} onMedalUpdated - メダル更新時コールバック (updatedMedals, updatedGold) => void
  */
 export async function renderBattleMedalTab(tabContent, targetEntity, playerMedals, currentGold, onMedalUpdated) {
+  if (tabContent._medalSyncTimer) {
+    clearInterval(tabContent._medalSyncTimer);
+  }
+
   if (!targetEntity || !targetEntity.id) {
     tabContent.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が選択されていません</div>';
     return;
   }
 
+  let inventoryMap = {};
   const container = document.createElement('div');
   container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
@@ -111,7 +116,6 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
     // 素材チェック
     let canCraft = true;
-    const inventoryMap = {};
     const allInv = await GameDB.getAllInventory();
     (allInv || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
 
@@ -277,9 +281,6 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
   tabContent.appendChild(container);
 
   // --- リアルタイム反映 (ポーリング) ---
-  if (tabContent._medalSyncTimer) {
-    clearInterval(tabContent._medalSyncTimer);
-  }
   tabContent._medalSyncTimer = setInterval(async () => {
     if (!document.body.contains(container)) {
       clearInterval(tabContent._medalSyncTimer);
