@@ -230,10 +230,18 @@ export const atbMethods = {
           }
           this.activeEnemy = nextActor.entity;
           if (!document.hidden) this.updateEntities();
-          setTimeout(() => {
+          
+          const enemyDelay = 500 / this.speedMult;
+          const executeEnemy = () => {
             if (this.activeEnemy !== nextActor.entity) return;
             this.executeEnemyTurn(nextActor.entity);
-          }, 500 / this.speedMult);
+          };
+
+          if (this.speedMult >= 10) {
+            executeEnemy();
+          } else {
+            setTimeout(executeEnemy, enemyDelay);
+          }
         }
       }
     };

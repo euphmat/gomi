@@ -503,7 +503,9 @@ class BattleManager {
   processAutoBattle(character) {
     if (character.isDead) return;
     
-    setTimeout(() => {
+    const delay = 500 / this.speedMult;
+    
+    const executeAuto = () => {
       try {
         if (this.isStopped) return;
         if (!this.isAutoBattle || this.activeCharacter !== character) return;
@@ -581,7 +583,13 @@ class BattleManager {
         this.activeCharacter = null;
         character.atb = 0;
       }
-    }, 500 / this.speedMult);
+    };
+
+    if (this.speedMult >= 10) {
+      executeAuto();
+    } else {
+      setTimeout(executeAuto, delay);
+    }
   }
 
   updateTabStyles() {
