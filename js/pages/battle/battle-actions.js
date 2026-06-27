@@ -187,6 +187,28 @@ export const actionMethods = {
     }
     options.isHybrid = isHybrid;
 
+    // --- 攻撃者のアクションアニメーション ---
+    if (!this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
+      const attackerEl = document.getElementById(attacker.elementId);
+      if (attackerEl) {
+        if (isMagic) {
+          attackerEl.animate([
+            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
+            { transform: 'translateY(-10px) scale(1.05)', filter: 'brightness(1.5)', offset: 0.5 },
+            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
+          ], { duration: 400 / this.speedMult, easing: 'ease-in-out' });
+        } else {
+          const direction = isParty ? -20 : 20; 
+          attackerEl.animate([
+            { transform: 'translateY(0)' },
+            { transform: `translateY(${direction}px)`, offset: 0.2 },
+            { transform: `translateY(${direction}px)`, offset: 0.4 },
+            { transform: 'translateY(0)' }
+          ], { duration: 300 / this.speedMult, easing: 'ease-out' });
+        }
+      }
+    }
+
     // --- Passive: Auto Guard (オートガード) ---
     if (!isParty && !options.isAoEProcessed && defender.hp !== undefined) {
       const paladinsWithGuard = this.party.filter(p => !p.isDead && p !== defender && p.job === 'paladin');
