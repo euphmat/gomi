@@ -244,33 +244,14 @@ export async function calculateTotalRanchBonus() {
       const isLegendary = monsterId.endsWith('_legendary');
       const baseId = isLegendary ? monsterId.replace('_legendary', '') : monsterId;
       const monsterDef = MONSTERS.find(m => m.id === baseId);
-      if (monsterDef && monsterDef.stats) {
+      if (monsterDef) {
         const { level } = getRanchLevelInfo(data.fedMaterials || 0, isLegendary);
-        for (const key of Object.keys(totalBonus)) {
-          const originalBaseVal = monsterDef.stats[key] || 0;
-          let baseVal = originalBaseVal;
-          let growth = Math.max(level, Math.floor(originalBaseVal * level * 0.01));
-          
-          if (isLegendary) {
-            if (key === 'hp') {
-              baseVal *= 10;
-              growth *= 10;
-            } else if (key !== 'mp') {
-              baseVal *= 3;
-              growth *= 3;
-            }
-          }
-          const monsterCurrentStat = baseVal + growth;
-          const divisor = 100;
-          let bonus = Math.max(1, Math.floor(monsterCurrentStat / divisor));
-          
-          // 餌を与えてレベルが上がった分（level - 1）だけ固定で+1する恩恵を追加 (SPDは対象外)
-          if (key !== 'spd') {
-            const levelUpBonus = Math.max(0, level - 1);
-            bonus += levelUpBonus;
-          }
-          
-          totalBonus[key] += bonus;
+        // 通常モンスター: Lv ごとに +1 / 伝説モンスター: Lv ごとに +3
+        // 対象: HP, ATK, DEF, MATK, MDEF のみ（MP, SPD は対象外）
+        const bonusPerLevel = isLegendary ? 3 : 1;
+        const applicableStats = ['hp', 'atk', 'def', 'matk', 'mdef'];
+        for (const key of applicableStats) {
+          totalBonus[key] += level * bonusPerLevel;
         }
       }
     }
