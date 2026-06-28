@@ -971,9 +971,9 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
               <div class="flex-1 min-w-0">
                 <div class="text-[11px] font-black text-amber-400 mb-0.5">伝説モンスター</div>
                 <div class="text-[10px] text-slate-400 leading-relaxed">
-                  Lv ごとに <span class="text-white font-bold">+3</span> ずつボーナス
+                  Lv ごとに <span class="text-white font-bold">+2</span> ずつボーナス
                 </div>
-                <div class="text-[10px] text-slate-500 mt-0.5">例: Lv5 の伝説モンスター → 各ステータスに +15</div>
+                <div class="text-[10px] text-slate-500 mt-0.5">例: Lv5 の伝説モンスター → 各ステータスに +10</div>
               </div>
             </div>
           </div>

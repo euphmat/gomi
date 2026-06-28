@@ -246,9 +246,9 @@ export async function calculateTotalRanchBonus() {
       const monsterDef = MONSTERS.find(m => m.id === baseId);
       if (monsterDef) {
         const { level } = getRanchLevelInfo(data.fedMaterials || 0, isLegendary);
-        // 通常モンスター: Lv ごとに +1 / 伝説モンスター: Lv ごとに +3
+        // 通常モンスター: Lv ごとに +1 / 伝説モンスター: Lv ごとに +2
         // 対象: HP, ATK, DEF, MATK, MDEF のみ（MP, SPD は対象外）
-        const bonusPerLevel = isLegendary ? 3 : 1;
+        const bonusPerLevel = isLegendary ? 2 : 1;
         const applicableStats = ['hp', 'atk', 'def', 'matk', 'mdef'];
         for (const key of applicableStats) {
           totalBonus[key] += level * bonusPerLevel;

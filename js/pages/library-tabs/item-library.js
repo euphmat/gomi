@@ -314,12 +314,26 @@ export function renderItemLibraryTab() {
     renderPagination(totalPages);
   };
 
-  const showHelpModal = () => {
-    let currentAtk = 0, currentDef = 0, currentMdef = 0, currentMatk = 0;
-    WEAPONS.forEach(w => { if (acquiredBaseIds.has(w.id)) currentAtk++; });
-    ARMORS.forEach(a => { if (acquiredBaseIds.has(a.id)) currentDef++; });
-    SHIELDS.forEach(s => { if (acquiredBaseIds.has(s.id)) currentMdef++; });
-    ACCESSORIES.forEach(ac => { if (acquiredBaseIds.has(ac.id)) currentMatk++; });
+  const showHelpModal = async () => {
+    // 装備品の定義IDセット
+    const equipmentIds = new Set();
+    WEAPONS.forEach(w => equipmentIds.add(w.id));
+    ARMORS.forEach(a => equipmentIds.add(a.id));
+    SHIELDS.forEach(s => equipmentIds.add(s.id));
+    ACCESSORIES.forEach(ac => equipmentIds.add(ac.id));
+
+    // 総所持数を集計
+    const [allEq, allInv] = await Promise.all([
+      GameDB.getAllEquipment(),
+      GameDB.getAllInventory(),
+    ]);
+    let totalCount = allEq.length;
+    allInv.forEach(item => {
+      if (equipmentIds.has(item.id)) {
+        totalCount += (item.quantity || 0);
+      }
+    });
+    const currentBonus = totalCount > 0 ? 1 + Math.floor(totalCount / 5000) : 0;
 
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in px-4 py-8';
@@ -332,7 +346,7 @@ export function renderItemLibraryTab() {
     header.innerHTML = `
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-blue-400 text-lg">info</span>
-        <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">アイテム図鑑の恩恵</span>
+        <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">装備コレクション恩恵</span>
       </div>
       <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shrink-0" id="close-help-modal-btn">
         <span class="material-symbols-outlined text-lg">close</span>
@@ -342,40 +356,101 @@ export function renderItemLibraryTab() {
     const body = document.createElement('div');
     body.className = 'p-4 flex flex-col gap-4 overflow-y-auto flex-1 min-h-0 text-slate-300 text-sm leading-relaxed';
     body.innerHTML = `
-      <p>アイテム図鑑に登録された（一度でも入手したことがある）装備品の数に応じて、キャラクター全員の基礎ステータスにボーナスが付与されます。</p>
+      <p class="text-xs text-slate-400">装備品（武器・防具・盾・アクセサリ）の<span class="text-white font-bold">総所持数</span>に応じて、キャラクター全員のステータスにボーナスが付与されます。</p>
       
-      <div class="flex flex-col gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-        <div class="flex items-center justify-between border-b border-slate-800/50 pb-2 mb-1">
-          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-rose-400 text-[18px]">swords</span> <span class="font-bold text-gray-200">武器</span></div>
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] text-slate-500">1種につき ATK +1</span>
-            <span class="font-bold text-rose-400 font-mono text-[13px]">現在 ATK +${currentAtk}</span>
+      <!-- 計算式 -->
+      <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-3">
+        <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+          <span class="material-symbols-outlined text-[12px]">calculate</span> ボーナス計算式
+        </div>
+        <div class="bg-slate-900/80 rounded-lg p-2.5 border border-slate-800/50 text-center">
+          <span class="font-mono font-black text-blue-400 text-[13px]">1 + ⌊ 総所持数 ÷ 5000 ⌋</span>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-2">※ 上記の値が ATK, DEF, MDEF, MATK の全てに加算されます</div>
+      </div>
+
+      <!-- 具体例 -->
+      <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-3">
+        <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+          <span class="material-symbols-outlined text-[12px]">menu_book</span> 具体例
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
+              <span class="text-slate-400">1個 所持</span>
+            </div>
+            <span class="font-mono font-bold text-emerald-400">+1</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
+              <span class="text-slate-400">5,001個 所持</span>
+            </div>
+            <span class="font-mono font-bold text-emerald-400">+2</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
+              <span class="text-slate-400">10,001個 所持</span>
+            </div>
+            <span class="font-mono font-bold text-emerald-400">+3</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
+              <span class="text-slate-400">99,999個 所持</span>
+            </div>
+            <span class="font-mono font-bold text-emerald-400">+20</span>
           </div>
         </div>
-        <div class="flex items-center justify-between border-b border-slate-800/50 pb-2 mb-1">
-          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-indigo-400 text-[18px]">checkroom</span> <span class="font-bold text-gray-200">防具</span></div>
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] text-slate-500">1種につき DEF +1</span>
-            <span class="font-bold text-indigo-400 font-mono text-[13px]">現在 DEF +${currentDef}</span>
+      </div>
+
+      <!-- 対象ステータス -->
+      <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-3">
+        <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider">対象ステータス</div>
+        <div class="grid grid-cols-4 gap-1.5">
+          <div class="flex flex-col items-center gap-1 bg-red-900/20 border border-red-500/20 rounded-lg p-1.5">
+            <span class="material-symbols-outlined text-red-400 text-[16px]" style="font-variation-settings: 'FILL' 1">swords</span>
+            <span class="text-[9px] font-bold text-red-400">ATK</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 bg-blue-900/20 border border-blue-500/20 rounded-lg p-1.5">
+            <span class="material-symbols-outlined text-blue-400 text-[16px]" style="font-variation-settings: 'FILL' 1">shield</span>
+            <span class="text-[9px] font-bold text-blue-400">DEF</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 bg-cyan-900/20 border border-cyan-500/20 rounded-lg p-1.5">
+            <span class="material-symbols-outlined text-cyan-400 text-[16px]" style="font-variation-settings: 'FILL' 1">security</span>
+            <span class="text-[9px] font-bold text-cyan-400">MDEF</span>
+          </div>
+          <div class="flex flex-col items-center gap-1 bg-purple-900/20 border border-purple-500/20 rounded-lg p-1.5">
+            <span class="material-symbols-outlined text-purple-400 text-[16px]" style="font-variation-settings: 'FILL' 1">auto_fix_high</span>
+            <span class="text-[9px] font-bold text-purple-400">MATK</span>
           </div>
         </div>
-        <div class="flex items-center justify-between border-b border-slate-800/50 pb-2 mb-1">
-          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-blue-400 text-[18px]">shield</span> <span class="font-bold text-gray-200">盾</span></div>
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] text-slate-500">1種につき MDEF +1</span>
-            <span class="font-bold text-blue-400 font-mono text-[13px]">現在 MDEF +${currentMdef}</span>
-          </div>
+      </div>
+
+      <!-- 現在のボーナス -->
+      <div class="bg-gradient-to-r from-blue-950/40 to-indigo-950/40 rounded-xl border border-blue-500/20 p-3">
+        <div class="text-[10px] font-bold text-blue-400 mb-2 uppercase tracking-wider flex items-center gap-1">
+          <span class="material-symbols-outlined text-[12px]">monitoring</span> 現在のステータス
         </div>
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2"><span class="material-symbols-outlined text-amber-400 text-[18px]">diamond</span> <span class="font-bold text-gray-200">装飾品</span></div>
-          <div class="flex flex-col items-end">
-            <span class="text-[10px] text-slate-500">1種につき MATK +1</span>
-            <span class="font-bold text-amber-400 font-mono text-[13px]">現在 MATK +${currentMatk}</span>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex items-center justify-between bg-slate-900/60 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
+            <span class="text-[10px] text-slate-400 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">inventory_2</span> 総所持数
+            </span>
+            <span class="font-mono font-black text-white text-[13px]">${totalCount.toLocaleString()}</span>
+          </div>
+          <div class="flex items-center justify-between bg-slate-900/60 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
+            <span class="text-[10px] text-slate-400 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">add_circle</span> ボーナス
+            </span>
+            <span class="font-mono font-black text-emerald-400 text-[13px]">+${currentBonus}</span>
           </div>
         </div>
       </div>
       
-      <p class="text-[11px] text-slate-400 mt-1">※ このボーナスは転生時のステータス引き継ぎ計算（恩恵）には含まれません。<br>※ 素材アイテムによるボーナスはありません。</p>
+      <p class="text-[10px] text-slate-500">※ 同じ種類の装備でも数が多いほどボーナスが上がります。<br>※ 素材アイテムは対象外です。</p>
     `;
     
     modal.appendChild(header);
