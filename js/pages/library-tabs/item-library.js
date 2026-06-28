@@ -322,18 +322,31 @@ export function renderItemLibraryTab() {
     SHIELDS.forEach(s => equipmentIds.add(s.id));
     ACCESSORIES.forEach(ac => equipmentIds.add(ac.id));
 
-    // 総所持数を集計
+    // 種類ごとの所持数を集計
     const [allEq, allInv] = await Promise.all([
       GameDB.getAllEquipment(),
       GameDB.getAllInventory(),
     ]);
-    let totalCount = allEq.length;
-    allInv.forEach(item => {
-      if (equipmentIds.has(item.id)) {
-        totalCount += (item.quantity || 0);
+    const countMap = {};
+    allEq.forEach(item => {
+      const baseId = item.baseId || item.id;
+      if (equipmentIds.has(baseId)) {
+        countMap[baseId] = (countMap[baseId] || 0) + 1;
       }
     });
-    const currentBonus = totalCount > 0 ? 1 + Math.floor(totalCount / 5000) : 0;
+    allInv.forEach(item => {
+      if (equipmentIds.has(item.id)) {
+        countMap[item.id] = (countMap[item.id] || 0) + (item.quantity || 0);
+      }
+    });
+    let totalBonus = 0;
+    const typesOwned = Object.keys(countMap).filter(id => countMap[id] > 0).length;
+    for (const id of Object.keys(countMap)) {
+      const count = countMap[id];
+      if (count > 0) {
+        totalBonus += 1 + Math.floor(count / 5000);
+      }
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md animate-fade-in px-4 py-8';
@@ -356,17 +369,17 @@ export function renderItemLibraryTab() {
     const body = document.createElement('div');
     body.className = 'p-4 flex flex-col gap-4 overflow-y-auto flex-1 min-h-0 text-slate-300 text-sm leading-relaxed';
     body.innerHTML = `
-      <p class="text-xs text-slate-400">装備品（武器・防具・盾・アクセサリ）の<span class="text-white font-bold">総所持数</span>に応じて、キャラクター全員のステータスにボーナスが付与されます。</p>
+      <p class="text-xs text-slate-400">装備品の<span class="text-white font-bold">種類ごとの所持数</span>に応じて、キャラクター全員のステータスにボーナスが付与されます。各種類のボーナスが合算されます。</p>
       
       <!-- 計算式 -->
       <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-3">
         <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
-          <span class="material-symbols-outlined text-[12px]">calculate</span> ボーナス計算式
+          <span class="material-symbols-outlined text-[12px]">calculate</span> 1種類あたりのボーナス
         </div>
         <div class="bg-slate-900/80 rounded-lg p-2.5 border border-slate-800/50 text-center">
-          <span class="font-mono font-black text-blue-400 text-[13px]">1 + ⌊ 総所持数 ÷ 5000 ⌋</span>
+          <span class="font-mono font-black text-blue-400 text-[13px]">1 + ⌊ その種類の所持数 ÷ 5000 ⌋</span>
         </div>
-        <div class="text-[10px] text-slate-500 mt-2">※ 上記の値が ATK, DEF, MDEF, MATK の全てに加算されます</div>
+        <div class="text-[10px] text-slate-500 mt-2">※ 全種類のボーナスを合算して ATK, DEF, MDEF, MATK に加算</div>
       </div>
 
       <!-- 具体例 -->
@@ -375,32 +388,72 @@ export function renderItemLibraryTab() {
           <span class="material-symbols-outlined text-[12px]">menu_book</span> 具体例
         </div>
         <div class="flex flex-col gap-1.5">
-          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
-            <div class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
-              <span class="text-slate-400">1個 所持</span>
+          <!-- 1種類目 -->
+          <div class="bg-slate-900/40 rounded-lg px-2.5 py-2 border border-slate-800/30">
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-rose-400 text-[14px]">swords</span>
+                <span class="text-slate-300 font-bold">武器A</span>
+                <span class="text-slate-500">× 99,999</span>
+              </div>
+              <span class="font-mono font-bold text-emerald-400">+20</span>
             </div>
+          </div>
+          <!-- 2種類目 -->
+          <div class="bg-slate-900/40 rounded-lg px-2.5 py-2 border border-slate-800/30">
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-rose-400 text-[14px]">swords</span>
+                <span class="text-slate-300 font-bold">武器B</span>
+                <span class="text-slate-500">× 99,999</span>
+              </div>
+              <span class="font-mono font-bold text-emerald-400">+20</span>
+            </div>
+          </div>
+          <!-- 3種類目 -->
+          <div class="bg-slate-900/40 rounded-lg px-2.5 py-2 border border-slate-800/30">
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-blue-400 text-[14px]">shield</span>
+                <span class="text-slate-300 font-bold">盾C</span>
+                <span class="text-slate-500">× 1</span>
+              </div>
+              <span class="font-mono font-bold text-emerald-400">+1</span>
+            </div>
+          </div>
+          <!-- 合計 -->
+          <div class="bg-emerald-950/30 rounded-lg px-2.5 py-2 border border-emerald-500/20 mt-0.5">
+            <div class="flex items-center justify-between text-[11px]">
+              <div class="flex items-center gap-1.5">
+                <span class="material-symbols-outlined text-emerald-400 text-[14px]">functions</span>
+                <span class="text-emerald-300 font-bold">合計ボーナス</span>
+              </div>
+              <span class="font-mono font-black text-emerald-400 text-[13px]">+41</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1種類あたりの早見表 -->
+      <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-3">
+        <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+          <span class="material-symbols-outlined text-[12px]">table_chart</span> 1種類あたりの早見表
+        </div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <div class="flex items-center justify-between text-[10px] bg-slate-900/40 rounded px-2 py-1 border border-slate-800/30">
+            <span class="text-slate-400">1個</span>
             <span class="font-mono font-bold text-emerald-400">+1</span>
           </div>
-          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
-            <div class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
-              <span class="text-slate-400">5,001個 所持</span>
-            </div>
+          <div class="flex items-center justify-between text-[10px] bg-slate-900/40 rounded px-2 py-1 border border-slate-800/30">
+            <span class="text-slate-400">5,001個</span>
             <span class="font-mono font-bold text-emerald-400">+2</span>
           </div>
-          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
-            <div class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
-              <span class="text-slate-400">10,001個 所持</span>
-            </div>
+          <div class="flex items-center justify-between text-[10px] bg-slate-900/40 rounded px-2 py-1 border border-slate-800/30">
+            <span class="text-slate-400">10,001個</span>
             <span class="font-mono font-bold text-emerald-400">+3</span>
           </div>
-          <div class="flex items-center justify-between text-[11px] bg-slate-900/40 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
-            <div class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-slate-400 text-[14px]">inventory_2</span>
-              <span class="text-slate-400">99,999個 所持</span>
-            </div>
+          <div class="flex items-center justify-between text-[10px] bg-slate-900/40 rounded px-2 py-1 border border-slate-800/30">
+            <span class="text-slate-400">99,999個</span>
             <span class="font-mono font-bold text-emerald-400">+20</span>
           </div>
         </div>
@@ -437,20 +490,20 @@ export function renderItemLibraryTab() {
         <div class="grid grid-cols-2 gap-2">
           <div class="flex items-center justify-between bg-slate-900/60 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
             <span class="text-[10px] text-slate-400 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[12px]">inventory_2</span> 総所持数
+              <span class="material-symbols-outlined text-[12px]">category</span> 所持種類数
             </span>
-            <span class="font-mono font-black text-white text-[13px]">${totalCount.toLocaleString()}</span>
+            <span class="font-mono font-black text-white text-[13px]">${typesOwned}</span>
           </div>
           <div class="flex items-center justify-between bg-slate-900/60 rounded-lg px-2.5 py-1.5 border border-slate-800/30">
             <span class="text-[10px] text-slate-400 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[12px]">add_circle</span> ボーナス
+              <span class="material-symbols-outlined text-[12px]">add_circle</span> 合計ボーナス
             </span>
-            <span class="font-mono font-black text-emerald-400 text-[13px]">+${currentBonus}</span>
+            <span class="font-mono font-black text-emerald-400 text-[13px]">+${totalBonus}</span>
           </div>
         </div>
       </div>
       
-      <p class="text-[10px] text-slate-500">※ 同じ種類の装備でも数が多いほどボーナスが上がります。<br>※ 素材アイテムは対象外です。</p>
+      <p class="text-[10px] text-slate-500">※ 同じ種類を大量に持つほど、その種類のボーナスが上がります。<br>※ 異なる種類を集めるほど、合計ボーナスも上がります。<br>※ 素材アイテムは対象外です。</p>
     `;
     
     modal.appendChild(header);

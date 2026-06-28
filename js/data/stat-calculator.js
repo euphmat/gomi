@@ -261,9 +261,10 @@ export async function calculateTotalRanchBonus() {
 }
 
 /**
- * Calculate the total bonus from total equipment owned.
- * Bonus = 1 + floor(totalCount / 5000) applied to ATK, DEF, MDEF, MATK.
- * Example: 1 item → +1, 5001 items → +2, 99999 items → +20
+ * Calculate the total bonus from equipment owned, per item type.
+ * For each equipment type: bonus = 1 + floor(count / 5000)
+ * All per-type bonuses are summed and applied to ATK, DEF, MDEF, MATK.
+ * Example: Weapon A x99999 → +20, Weapon B x99999 → +20, total → +40
  * 
  * @returns {Promise<{ atk: number, def: number, mdef: number, matk: number }>}
  */
@@ -280,27 +281,34 @@ export async function calculateDictionaryBonus() {
   SHIELDS.forEach(s => equipmentIds.add(s.id));
   ACCESSORIES.forEach(ac => equipmentIds.add(ac.id));
 
-  // 総所持数を集計
-  let totalCount = 0;
+  // 種類ごとの所持数を集計
+  const countMap = {};
 
-  // equipment ストアの各エントリは1個ずつ
-  totalCount += eq.length;
+  // equipment ストアの各エントリは1個ずつ（baseIdで集計）
+  eq.forEach(item => {
+    const baseId = item.baseId || item.id;
+    if (equipmentIds.has(baseId)) {
+      countMap[baseId] = (countMap[baseId] || 0) + 1;
+    }
+  });
 
   // inventory ストアのうち装備品に該当するもののquantityを加算
   inv.forEach(item => {
     if (equipmentIds.has(item.id)) {
-      totalCount += (item.quantity || 0);
+      countMap[item.id] = (countMap[item.id] || 0) + (item.quantity || 0);
     }
   });
 
-  if (totalCount <= 0) {
-    return { atk: 0, def: 0, mdef: 0, matk: 0 };
+  // 各種類ごとに 1 + floor(count / 5000) を計算して合算
+  let totalBonus = 0;
+  for (const id of Object.keys(countMap)) {
+    const count = countMap[id];
+    if (count > 0) {
+      totalBonus += 1 + Math.floor(count / 5000);
+    }
   }
 
-  // 1つ所持で+1、5000本ごとにさらに+1
-  const bonus = 1 + Math.floor(totalCount / 5000);
-
-  return { atk: bonus, def: bonus, mdef: bonus, matk: bonus };
+  return { atk: totalBonus, def: totalBonus, mdef: totalBonus, matk: totalBonus };
 }
 
 /**
