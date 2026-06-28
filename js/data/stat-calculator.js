@@ -261,41 +261,46 @@ export async function calculateTotalRanchBonus() {
 }
 
 /**
- * Calculate the total bonus from acquired items in the item dictionary.
+ * Calculate the total bonus from total equipment owned.
+ * Bonus = 1 + floor(totalCount / 5000) applied to ATK, DEF, MDEF, MATK.
+ * Example: 1 item → +1, 5001 items → +2, 99999 items → +20
  * 
  * @returns {Promise<{ atk: number, def: number, mdef: number, matk: number }>}
  */
 export async function calculateDictionaryBonus() {
-  const [eq, inv, discovered] = await Promise.all([
+  const [eq, inv] = await Promise.all([
     GameDB.getAllEquipment(),
     GameDB.getAllInventory(),
-    GameDB.getGameState('discovered_items')
   ]);
 
-  const acquiredBaseIds = new Set();
-  const getBaseId = (id) => {
-    const lastUnderscore = id.lastIndexOf('_');
-    if (lastUnderscore > 0) {
-      const suffix = id.substring(lastUnderscore + 1);
-      if (suffix.length >= 4 && /^[a-z0-9]+$/.test(suffix) && suffix !== 'ring') {
-        return id.substring(0, lastUnderscore);
-      }
+  // 装備品の定義IDセット（武器・防具・盾・アクセサリ）
+  const equipmentIds = new Set();
+  WEAPONS.forEach(w => equipmentIds.add(w.id));
+  ARMORS.forEach(a => equipmentIds.add(a.id));
+  SHIELDS.forEach(s => equipmentIds.add(s.id));
+  ACCESSORIES.forEach(ac => equipmentIds.add(ac.id));
+
+  // 総所持数を集計
+  let totalCount = 0;
+
+  // equipment ストアの各エントリは1個ずつ
+  totalCount += eq.length;
+
+  // inventory ストアのうち装備品に該当するもののquantityを加算
+  inv.forEach(item => {
+    if (equipmentIds.has(item.id)) {
+      totalCount += (item.quantity || 0);
     }
-    return id;
-  };
+  });
 
-  eq.forEach(item => acquiredBaseIds.add(item.baseId || getBaseId(item.id)));
-  inv.forEach(item => acquiredBaseIds.add(item.id));
-  if (discovered) discovered.forEach(id => acquiredBaseIds.add(id));
+  if (totalCount <= 0) {
+    return { atk: 0, def: 0, mdef: 0, matk: 0 };
+  }
 
-  let atk = 0, def = 0, mdef = 0, matk = 0;
+  // 1つ所持で+1、5000本ごとにさらに+1
+  const bonus = 1 + Math.floor(totalCount / 5000);
 
-  WEAPONS.forEach(w => { if (acquiredBaseIds.has(w.id)) atk += 1; });
-  ARMORS.forEach(a => { if (acquiredBaseIds.has(a.id)) def += 1; });
-  SHIELDS.forEach(s => { if (acquiredBaseIds.has(s.id)) mdef += 1; });
-  ACCESSORIES.forEach(ac => { if (acquiredBaseIds.has(ac.id)) matk += 1; });
-
-  return { atk, def, mdef, matk };
+  return { atk: bonus, def: bonus, mdef: bonus, matk: bonus };
 }
 
 /**

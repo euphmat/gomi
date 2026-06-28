@@ -376,7 +376,24 @@ export function renderShopTab() {
 
       slot.onclick = () => {
         if (purchaseMode && canCraft) {
-          performCraft(item, 1);
+          // 最大合成可能数を計算
+          const pmIsMaterial = !item.slot;
+          const pmOwnedCount = pmIsMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
+          const pmPrice = item.recipe.price || 0;
+          let pmMaxCraft = 99999 - pmOwnedCount;
+          if (pmPrice > 0) {
+            pmMaxCraft = Math.min(pmMaxCraft, Math.floor(currentGold / pmPrice));
+          }
+          item.recipe.materials.forEach(mat => {
+            const owned = inventoryMap[mat.id] || 0;
+            if (mat.amount > 0) {
+              pmMaxCraft = Math.min(pmMaxCraft, Math.floor(owned / mat.amount));
+            }
+          });
+          pmMaxCraft = Math.max(0, pmMaxCraft);
+          if (pmMaxCraft > 0) {
+            performCraft(item, pmMaxCraft);
+          }
         } else {
           showCraftModal(item);
         }
