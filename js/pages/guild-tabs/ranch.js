@@ -931,7 +931,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
-      <div class="p-4 space-y-4 text-sm text-slate-300">
+      <div class="p-4 space-y-4 text-sm text-slate-300 max-h-[70vh] overflow-y-auto">
         <div>
           <h4 class="font-bold text-pink-300 mb-1 flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">trending_up</span> 成長について
@@ -941,14 +941,76 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
           </p>
         </div>
         <div>
-          <h4 class="font-bold text-pink-300 mb-1 flex items-center gap-1">
+          <h4 class="font-bold text-pink-300 mb-2 flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">group_add</span> ボーナスについて
           </h4>
-          <p class="text-xs leading-relaxed text-slate-400">
-            パーティ編成時、牧場で育てた全モンスターからパーティ全体にボーナスが加算されます。<br>
-            <span class="text-pink-200 font-bold">【基本恩恵】</span>各ステータスの <span class="text-white font-bold">1%</span>（最低保証+1）<br>
-            <span class="text-pink-200 font-bold">【レベル恩恵】</span>レベルが上がった分（Lv-1）だけ、SPD以外に <span class="text-white font-bold">+1</span> ずつ追加<br>
-            色々なモンスターを育てて冒険を有利に進めましょう！
+          <p class="text-xs leading-relaxed text-slate-400 mb-3">
+            牧場で育てた全モンスターのレベルに応じて、パーティ全員にステータスボーナスが付与されます。
+          </p>
+
+          <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-3 space-y-3">
+            <!-- 通常モンスター -->
+            <div class="flex items-start gap-2.5">
+              <div class="w-8 h-8 shrink-0 rounded-lg bg-emerald-900/40 border border-emerald-500/30 flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-400 text-[18px]">pets</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-black text-emerald-400 mb-0.5">通常モンスター</div>
+                <div class="text-[10px] text-slate-400 leading-relaxed">
+                  Lv ごとに <span class="text-white font-bold">+1</span> ずつボーナス
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">例: Lv5 のモンスター → 各ステータスに +5</div>
+              </div>
+            </div>
+
+            <!-- 伝説モンスター -->
+            <div class="flex items-start gap-2.5">
+              <div class="w-8 h-8 shrink-0 rounded-lg bg-amber-900/40 border border-amber-500/30 flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-400 text-[18px]">auto_awesome</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-black text-amber-400 mb-0.5">伝説モンスター</div>
+                <div class="text-[10px] text-slate-400 leading-relaxed">
+                  Lv ごとに <span class="text-white font-bold">+3</span> ずつボーナス
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">例: Lv5 の伝説モンスター → 各ステータスに +15</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 対象ステータス -->
+          <div class="mt-3 bg-slate-950/60 rounded-xl border border-slate-800/60 p-3">
+            <div class="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider">対象ステータス</div>
+            <div class="flex flex-wrap gap-1.5">
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-900/30 border border-green-500/20 rounded-lg text-[10px] font-bold text-green-400">
+                <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">favorite</span> HP
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-900/30 border border-red-500/20 rounded-lg text-[10px] font-bold text-red-400">
+                <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">swords</span> ATK
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-900/30 border border-blue-500/20 rounded-lg text-[10px] font-bold text-blue-400">
+                <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">shield</span> DEF
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-900/30 border border-purple-500/20 rounded-lg text-[10px] font-bold text-purple-400">
+                <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">auto_fix_high</span> MATK
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-cyan-900/30 border border-cyan-500/20 rounded-lg text-[10px] font-bold text-cyan-400">
+                <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">security</span> MDEF
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-slate-800/60 border border-slate-700/40 rounded-lg text-[10px] font-bold text-slate-500 line-through">
+                MP
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 bg-slate-800/60 border border-slate-700/40 rounded-lg text-[10px] font-bold text-slate-500 line-through">
+                SPD
+              </span>
+              <span class="text-[9px] text-slate-600 self-center ml-1">← 対象外</span>
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-500 mt-2">
+            ※ たくさんのモンスターを仲間にして育てるほど、冒険が有利になります！
           </p>
         </div>
       </div>
