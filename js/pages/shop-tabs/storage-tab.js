@@ -2,6 +2,7 @@ import { GameDB } from '../../data/database.js';
 import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
+import { showSettingsModal } from '../../components/settings-modal.js';
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
   water: { icon: 'water_drop', color: 'text-blue-500', label: 'Water' },
@@ -78,67 +79,33 @@ export function renderStorageTab() {
       };
       filterContainer.appendChild(btn);
     });
-
-    if (activeFilter === 'material') {
-      const toggleContainer = document.createElement('label');
-      toggleContainer.className = 'flex items-center gap-1.5 cursor-pointer ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0';
-      toggleContainer.innerHTML = `
-        <div class="relative flex items-center">
-          <input type="checkbox" class="sr-only" ${sellMode ? 'checked' : ''}>
-          <div class="block w-6 h-3 rounded-full transition-colors ${sellMode ? 'bg-rose-500' : 'bg-gray-600'}"></div>
-          <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-transform ${sellMode ? 'translate-x-3' : 'translate-x-0'}"></div>
-        </div>
-        <span class="text-[9px] font-bold ${sellMode ? 'text-rose-400' : 'text-gray-400'} whitespace-nowrap leading-none mt-px">売却モード</span>
-      `;
-      const input = toggleContainer.querySelector('input');
-      input.addEventListener('change', (e) => {
-        sellMode = e.target.checked;
-        renderFilters();
-        renderGrid();
-      });
-      filterContainer.appendChild(toggleContainer);
-    }
   };
 
   const rightControls = document.createElement('div');
   rightControls.className = 'flex items-center gap-2 shrink-0';
 
-  const viewModeContainer = document.createElement('div');
-  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-10';
-
-  const updateViewModeUI = () => {
-    viewModeContainer.innerHTML = '';
-    
-    const gridBtn = document.createElement('button');
-    gridBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
-    gridBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">grid_view</span>';
-    gridBtn.onclick = () => {
-      if (viewMode !== 'grid') {
-        viewMode = 'grid';
-        currentPage = 1;
-        updateViewModeUI();
-        renderGrid();
-      }
-    };
-
-    const listBtn = document.createElement('button');
-    listBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
-    listBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_list</span>';
-    listBtn.onclick = () => {
-      if (viewMode !== 'list') {
-        viewMode = 'list';
-        currentPage = 1;
-        updateViewModeUI();
-        renderGrid();
-      }
-    };
-
-    viewModeContainer.appendChild(gridBtn);
-    viewModeContainer.appendChild(listBtn);
+  const settingsBtn = document.createElement('button');
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
+  settingsBtn.onclick = () => {
+    showSettingsModal({
+      items: [
+        {
+          id: 'sellMode', label: '売却モード', type: 'toggle', icon: 'payments', activeColor: 'bg-rose-500',
+          condition: () => activeFilter === 'material',
+          getValue: () => sellMode,
+          onChange: (val) => { sellMode = val; renderGrid(); }
+        },
+        {
+          id: 'viewMode', label: '表示形式', type: 'radio', icon: 'grid_view', activeColor: 'bg-blue-600 text-white',
+          getValue: () => viewMode,
+          options: [{icon: 'grid_view', value: 'grid'}, {icon: 'view_list', value: 'list'}],
+          onChange: (val) => { viewMode = val; currentPage = 1; renderGrid(); }
+        }
+      ]
+    });
   };
-  updateViewModeUI();
-
-  rightControls.appendChild(viewModeContainer);
+  rightControls.appendChild(settingsBtn);
 
   topBar.appendChild(filterContainer);
   topBar.appendChild(rightControls);

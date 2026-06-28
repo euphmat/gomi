@@ -7,6 +7,7 @@ import { MATERIALS } from '../../definitions/materials.js';
 import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
+import { showSettingsModal } from '../../components/settings-modal.js';
 
 const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
@@ -94,99 +95,44 @@ export function renderShopTab() {
       };
       filterContainer.appendChild(btn);
     });
-
-    const toggleContainer = document.createElement('label');
-    toggleContainer.className = 'flex items-center gap-1.5 cursor-pointer ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0';
-    toggleContainer.innerHTML = `
-      <div class="relative flex items-center">
-        <input type="checkbox" class="sr-only" ${showUnownedOnly ? 'checked' : ''}>
-        <div class="block w-6 h-3 rounded-full transition-colors ${showUnownedOnly ? 'bg-emerald-500' : 'bg-gray-600'}"></div>
-        <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-transform ${showUnownedOnly ? 'translate-x-3' : 'translate-x-0'}"></div>
-      </div>
-      <span class="text-[9px] font-bold ${showUnownedOnly ? 'text-emerald-400' : 'text-gray-400'} whitespace-nowrap leading-none mt-px">未所持</span>
-    `;
-
-    const input = toggleContainer.querySelector('input');
-    input.addEventListener('change', (e) => {
-      showUnownedOnly = e.target.checked;
-      currentPage = 1;
-      renderFilters();
-      renderGrid();
-    });
-
-    filterContainer.appendChild(toggleContainer);
-
-    const purchaseModeContainer = document.createElement('label');
-    purchaseModeContainer.className = 'flex items-center gap-1.5 cursor-pointer ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0';
-    purchaseModeContainer.innerHTML = `
-      <div class="relative flex items-center">
-        <input type="checkbox" class="sr-only" ${purchaseMode ? 'checked' : ''}>
-        <div class="block w-6 h-3 rounded-full transition-colors ${purchaseMode ? 'bg-amber-500' : 'bg-gray-600'}"></div>
-        <div class="absolute left-0.5 top-0.5 bg-white w-2 h-2 rounded-full transition-transform ${purchaseMode ? 'translate-x-3' : 'translate-x-0'}"></div>
-      </div>
-      <span class="text-[9px] font-bold ${purchaseMode ? 'text-amber-400' : 'text-gray-400'} whitespace-nowrap leading-none mt-px">購入モード</span>
-    `;
-
-    const pmInput = purchaseModeContainer.querySelector('input');
-    pmInput.addEventListener('change', (e) => {
-      purchaseMode = e.target.checked;
-      renderFilters();
-    });
-
-    filterContainer.appendChild(purchaseModeContainer);
-
-    if (purchaseMode) {
-      const qtyBtn = document.createElement('button');
-      qtyBtn.className = 'flex items-center justify-center gap-1 ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0 font-bold text-[10px] text-amber-400 w-12 cursor-pointer';
-      qtyBtn.textContent = purchaseQuantity === 'max' ? 'MAX' : 'x1';
-      qtyBtn.onclick = () => {
-        purchaseQuantity = purchaseQuantity === 1 ? 'max' : 1;
-        renderFilters();
-      };
-      filterContainer.appendChild(qtyBtn);
-    }
   };
 
   const rightControls = document.createElement('div');
   rightControls.className = 'flex items-center gap-3 shrink-0';
 
-  // View Mode Toggles
-  const viewModeContainer = document.createElement('div');
-  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-10';
-
-  const updateViewModeUI = () => {
-    viewModeContainer.innerHTML = '';
-    
-    const gridBtn = document.createElement('button');
-    gridBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-gray-700 text-emerald-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
-    gridBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">grid_view</span>';
-    gridBtn.onclick = () => {
-      if (viewMode !== 'grid') {
-        viewMode = 'grid';
-        currentPage = 1;
-        updateViewModeUI();
-        renderGrid();
-      }
-    };
-
-    const listBtn = document.createElement('button');
-    listBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gray-700 text-emerald-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
-    listBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_list</span>';
-    listBtn.onclick = () => {
-      if (viewMode !== 'list') {
-        viewMode = 'list';
-        currentPage = 1;
-        updateViewModeUI();
-        renderGrid();
-      }
-    };
-
-    viewModeContainer.appendChild(gridBtn);
-    viewModeContainer.appendChild(listBtn);
+  const settingsBtn = document.createElement('button');
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
+  settingsBtn.onclick = () => {
+    showSettingsModal({
+      items: [
+        {
+          id: 'unowned', label: '未所持のみ表示', type: 'toggle', icon: 'inventory_2', activeColor: 'bg-emerald-500',
+          getValue: () => showUnownedOnly,
+          onChange: (val) => { showUnownedOnly = val; currentPage = 1; renderFilters(); renderGrid(); }
+        },
+        {
+          id: 'purchaseMode', label: '購入モード', type: 'toggle', icon: 'shopping_cart', activeColor: 'bg-amber-500',
+          getValue: () => purchaseMode,
+          onChange: (val) => { purchaseMode = val; renderFilters(); }
+        },
+        {
+          id: 'purchaseQty', label: '購入数', type: 'radio', icon: 'numbers', activeColor: 'bg-amber-600 text-white',
+          condition: () => purchaseMode,
+          getValue: () => purchaseQuantity,
+          options: [{label: 'x1', value: 1}, {label: 'MAX', value: 'max'}],
+          onChange: (val) => { purchaseQuantity = val; renderFilters(); }
+        },
+        {
+          id: 'viewMode', label: '表示形式', type: 'radio', icon: 'grid_view', activeColor: 'bg-emerald-600 text-white',
+          getValue: () => viewMode,
+          options: [{icon: 'grid_view', value: 'grid'}, {icon: 'view_list', value: 'list'}],
+          onChange: (val) => { viewMode = val; currentPage = 1; renderFilters(); renderGrid(); }
+        }
+      ]
+    });
   };
-  updateViewModeUI();
-
-  rightControls.appendChild(viewModeContainer);
+  rightControls.appendChild(settingsBtn);
 
   topBar.appendChild(filterContainer);
   topBar.appendChild(rightControls);

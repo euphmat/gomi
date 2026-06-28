@@ -7,6 +7,7 @@ import { MATERIALS } from '../../definitions/materials.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
+import { showSettingsModal } from '../../components/settings-modal.js';
 
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
@@ -107,42 +108,22 @@ export function renderItemLibraryTab() {
   };
   rightControls.appendChild(helpBtn);
 
-  const viewModeContainer = document.createElement('div');
-  viewModeContainer.className = 'flex items-center bg-gray-800/40 border border-gray-700/60 rounded-lg overflow-hidden shrink-0 h-9';
-
-  const updateViewModeUI = () => {
-    viewModeContainer.innerHTML = '';
-    
-    const gridBtn = document.createElement('button');
-    gridBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'grid' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
-    gridBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">grid_view</span>';
-    gridBtn.onclick = () => {
-      if (viewMode !== 'grid') {
-        viewMode = 'grid';
-        currentPage = 1;
-        updateViewModeUI();
-        renderGrid();
-      }
-    };
-
-    const listBtn = document.createElement('button');
-    listBtn.className = `flex items-center justify-center w-8 h-full transition-colors cursor-pointer ${viewMode === 'list' ? 'bg-gray-700 text-blue-400' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200'}`;
-    listBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">view_list</span>';
-    listBtn.onclick = () => {
-      if (viewMode !== 'list') {
-        viewMode = 'list';
-        currentPage = 1;
-        updateViewModeUI();
-        renderGrid();
-      }
-    };
-
-    viewModeContainer.appendChild(gridBtn);
-    viewModeContainer.appendChild(listBtn);
+  const settingsBtn = document.createElement('button');
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
+  settingsBtn.onclick = () => {
+    showSettingsModal({
+      items: [
+        {
+          id: 'viewMode', label: '表示形式', type: 'radio', icon: 'grid_view', activeColor: 'bg-blue-600 text-white',
+          getValue: () => viewMode,
+          options: [{icon: 'grid_view', value: 'grid'}, {icon: 'view_list', value: 'list'}],
+          onChange: (val) => { viewMode = val; currentPage = 1; renderGrid(); }
+        }
+      ]
+    });
   };
-  updateViewModeUI();
-
-  rightControls.appendChild(viewModeContainer);
+  rightControls.appendChild(settingsBtn);
 
   topBar.appendChild(filterContainer);
   topBar.appendChild(rightControls);
