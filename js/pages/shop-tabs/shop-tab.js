@@ -55,6 +55,7 @@ export function renderShopTab() {
   let currentPage = 1;
   let showUnownedOnly = false;
   let purchaseMode = false;
+  let purchaseQuantity = 1;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -133,6 +134,17 @@ export function renderShopTab() {
     });
 
     filterContainer.appendChild(purchaseModeContainer);
+
+    if (purchaseMode) {
+      const qtyBtn = document.createElement('button');
+      qtyBtn.className = 'flex items-center justify-center gap-1 ml-0.5 bg-gray-800/60 border border-gray-700/60 rounded-lg px-2 h-9 hover:bg-gray-700/50 transition-colors shrink-0 font-bold text-[10px] text-amber-400 w-12 cursor-pointer';
+      qtyBtn.textContent = purchaseQuantity === 'max' ? 'MAX' : 'x1';
+      qtyBtn.onclick = () => {
+        purchaseQuantity = purchaseQuantity === 1 ? 'max' : 1;
+        renderFilters();
+      };
+      filterContainer.appendChild(qtyBtn);
+    }
   };
 
   const rightControls = document.createElement('div');
@@ -391,8 +403,10 @@ export function renderShopTab() {
             }
           });
           pmMaxCraft = Math.max(0, pmMaxCraft);
-          if (pmMaxCraft > 0) {
-            performCraft(item, pmMaxCraft);
+          
+          const amountToCraft = purchaseQuantity === 'max' ? pmMaxCraft : Math.min(1, pmMaxCraft);
+          if (amountToCraft > 0) {
+            performCraft(item, amountToCraft);
           }
         } else {
           showCraftModal(item);
