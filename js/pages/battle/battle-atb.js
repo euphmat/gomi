@@ -121,7 +121,7 @@ export const atbMethods = {
       
       let loops = 0;
       // アニメ無効時はティックを待たずに次の行動者が決まるまで一気に時間を進める
-      const MAX_LOOPS = disableAnim ? 50 : 1;
+      const MAX_LOOPS = disableAnim ? 50 : (this.speedMult >= 10 ? 20 : (this.speedMult >= 5 ? 5 : 1));
       
       while (!nextActor && loops < MAX_LOOPS) {
         loops++;
@@ -140,7 +140,7 @@ export const atbMethods = {
           if (!document.hidden && loops === 1) { // 描画更新は最初のループのみ
             const atbEl = this.atbElements[p.elementId];
             if(atbEl) {
-               if (disableAnim) {
+               if (disableAnim || this.speedMult >= 5) {
                  if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
                } else {
                  if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
@@ -163,7 +163,7 @@ export const atbMethods = {
           if (!document.hidden && loops === 1) {
             const atbEl = this.atbElements[e.elementId];
             if(atbEl) {
-               if (disableAnim) {
+               if (disableAnim || this.speedMult >= 5) {
                  if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
                } else {
                  if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
@@ -236,7 +236,7 @@ export const atbMethods = {
             this.executeEnemyTurn(nextActor.entity);
           };
 
-          if (this.speedMult >= 10) {
+          if (this.speedMult >= 5) {
             executeEnemy();
           } else {
             setTimeout(executeEnemy, enemyDelay);

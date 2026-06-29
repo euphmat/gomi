@@ -82,6 +82,21 @@ export const popupMethods = {
   _showFloatingPopup(elementId, config) {
     if (this._cachedDisableAnim) return;
     if (document.hidden) return;
+
+    const speed = this.speedMult || 1;
+
+    // --- High-speed throttle: limit active floating popups ---
+    const maxActive = speed >= 10 ? 10 : speed >= 5 ? 30 : 150;
+    const activeCount = this._domPool ? this._domPool.filter(p => p.active && p.type === 'float').length : 0;
+    if (activeCount >= maxActive) {
+      // Release the oldest active float to make room
+      const oldest = this._domPool.find(p => p.active && p.type === 'float');
+      if (oldest) {
+        if (oldest.el.getAnimations) oldest.el.getAnimations().forEach(a => a.cancel());
+        this._releasePoolElement(oldest.el);
+      }
+    }
+
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
@@ -98,9 +113,8 @@ export const popupMethods = {
       this._rectCache.rects[elementId] = rect;
     }
 
-    const speed = this.speedMult || 1;
     // Limit popup animation speed at high game speeds so numbers remain readable
-    const effectiveSpeed = Math.min(speed, 2.0);
+    const effectiveSpeed = speed >= 10 ? speed : Math.min(speed, 2.0);
     const dur = (config.duration || 800) / effectiveSpeed;
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top;
@@ -188,6 +202,12 @@ export const popupMethods = {
   _showLabelPopup(elementId, config) {
     if (this._cachedDisableAnim) return;
     if (document.hidden) return;
+
+    const speed = this.speedMult || 1;
+
+    // At very high speed, skip label popups entirely to avoid DOM congestion
+    if (speed >= 10) return;
+
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;
 
@@ -196,17 +216,17 @@ export const popupMethods = {
 
     const stack = this._labelStacks[elementId];
     
-    // limit stack size to prevent infinite growth and severe layout thrashing
-    if (stack.length > 8) {
+    // limit stack size — tighter at high speed to prevent severe layout thrashing
+    const maxStack = speed >= 5 ? 3 : 8;
+    while (stack.length > maxStack) {
       const oldest = stack.shift();
       if (oldest.anim) oldest.anim.cancel();
       this._releasePoolElement(oldest.el); // wrapper contains popup
       clearTimeout(oldest.timeoutId);
     }
 
-    const speed = this.speedMult || 1;
     // Don't speed up popups too much at 5x speed so they remain readable and can stack up
-    const effectiveSpeed = Math.min(speed, 2.0);
+    const effectiveSpeed = speed >= 5 ? speed : Math.min(speed, 2.0);
     const dur = (config.duration || 1000) / effectiveSpeed;
     const itemHeight = config.height || 28;
     const stackGap = 4;

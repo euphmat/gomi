@@ -94,7 +94,7 @@ export const actionMethods = {
               this.renderEntities();
               this.checkBattleEnd();
             }
-          }, 600 / this.speedMult);
+          }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           return;
         }
       }
@@ -110,7 +110,7 @@ export const actionMethods = {
       caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + amount);
       setTimeout(() => {
         this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
-      }, 300 / this.speedMult);
+      }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
     }
     
     // --- Passive: Regen (HP) ---
@@ -123,7 +123,7 @@ export const actionMethods = {
       caster.hp.current = Math.min(caster.stats?.hp || caster.hp.max, caster.hp.current + amount);
       setTimeout(() => {
         this.showDamage(caster.elementId, `+${amount}`, 'text-green-400');
-      }, 300 / this.speedMult);
+      }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
     }
 
     // --- Passive: Healing Song (いやしの歌) ---
@@ -139,7 +139,7 @@ export const actionMethods = {
             p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
             setTimeout(() => {
               this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
-            }, 400 / this.speedMult);
+            }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
           }
         }
       });
@@ -158,7 +158,7 @@ export const actionMethods = {
           p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
           setTimeout(() => {
             this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
-          }, 600 / this.speedMult);
+          }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           applied = true;
         }
       });
@@ -188,7 +188,7 @@ export const actionMethods = {
     options.isHybrid = isHybrid;
 
     // --- 攻撃者のアクションアニメーション (モンスター側のみ) ---
-    if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
+    if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim && this.speedMult < 5) {
       const attackerEl = document.getElementById(attacker.elementId);
       if (attackerEl) {
         const animDuration = Math.max(150, 300 / this.speedMult);
@@ -495,7 +495,7 @@ export const actionMethods = {
 
     // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
     let delayDamageMs = 0;
-    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
+    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
         const rect = defenderEl.getBoundingClientRect();
@@ -523,7 +523,7 @@ export const actionMethods = {
 
         anim.onfinish = () => slash.remove();
       }
-    } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden) {
+    } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
       const attackerEl = document.getElementById(attacker.elementId);
       const defenderEl = document.getElementById(defender.elementId);
       if (attackerEl && defenderEl) {
@@ -648,7 +648,7 @@ export const actionMethods = {
             survivedBySlimeCore = true;
             setTimeout(() => {
               this.showActionName(defender.elementId, 'スライムコア', 'text-green-300', 'border-green-500/50');
-            }, 300 / this.speedMult);
+            }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
           }
         }
       }
@@ -675,7 +675,7 @@ export const actionMethods = {
                 this.showActionName(defender.elementId, 'カウンター', 'text-orange-400', 'border-orange-500/50');
                 this.executeAttack(defender, attacker, true, { actionName: 'カウンター', hideActionName: true });
               }
-            }, 500 / this.speedMult);
+            }, this.speedMult >= 5 ? 0 : 500 / this.speedMult);
           }
         }
       }
@@ -685,9 +685,6 @@ export const actionMethods = {
     if (newHp < prevHp && defender.activeAilment && defender.activeAilment.type === 'sleep') {
       if (Math.random() < 0.5) {
         defender.activeAilment = null;
-        // setTimeout(() => {
-        //   if (!defender.isDead) this.showActionName(defender.elementId, 'WAKE UP', 'text-blue-300', 'border-blue-500/50');
-        // }, 500 / this.speedMult);
       }
     }
 
@@ -714,7 +711,7 @@ export const actionMethods = {
                   skipAtbReset: true
                 });
               }
-            }, 300 / this.speedMult);
+            }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
           }
         }
         
@@ -741,12 +738,11 @@ export const actionMethods = {
                     skipAtbReset: true
                   });
                 }
-              }, (400 + i * 200) / this.speedMult);
+              }, this.speedMult >= 5 ? 0 : (400 + i * 200) / this.speedMult);
             }
           }
         }
         
-        // --- Passive: MP Absorb ---
         // --- Passive: MP Absorb ---
         if (!options.damageType && !isMagic) {
           const mpAbsorbSkill = this._findSkill(attacker, 'mp_absorb');
@@ -757,7 +753,7 @@ export const actionMethods = {
                  attacker.mp.current = Math.min((attacker.stats?.mp || attacker.mp.max), attacker.mp.current + mpRecover);
                  setTimeout(() => {
                    this.showDamage(attacker.elementId, `+${mpRecover} MP`, 'text-blue-400');
-                 }, 400 / this.speedMult);
+                 }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
              }
           }
         }
@@ -772,7 +768,7 @@ export const actionMethods = {
               attacker.hp.current = Math.min((attacker.stats?.hp || attacker.hp.max), attacker.hp.current + hpRecover);
               setTimeout(() => {
                 this.showDamage(attacker.elementId, `+${hpRecover}`, 'text-green-400');
-              }, 400 / this.speedMult);
+              }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
             }
           }
         }
@@ -788,7 +784,7 @@ export const actionMethods = {
             attacker.mp.current = Math.min(attacker.stats?.mp || attacker.mp.max, attacker.mp.current + amount);
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
-            }, 600 / this.speedMult);
+            }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           }
           
           const hpRegenSkill = this._findSkill(attacker, 'regen');
@@ -800,7 +796,7 @@ export const actionMethods = {
             attacker.hp.current = Math.min(attacker.stats?.hp || attacker.hp.max, attacker.hp.current + amount);
             setTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
-            }, 600 / this.speedMult);
+            }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           }
 
           // --- Passive: Energizing ---
@@ -813,7 +809,7 @@ export const actionMethods = {
                 p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
                 setTimeout(() => {
                   this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
-                }, 600 / this.speedMult);
+                }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
                 applied = true;
               }
             });
@@ -835,7 +831,7 @@ export const actionMethods = {
                   p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
                   setTimeout(() => {
                     this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
-                  }, 600 / this.speedMult);
+                  }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
                 }
               }
             });
@@ -927,7 +923,7 @@ export const actionMethods = {
         entity.hp.current = Math.min(entity.stats?.hp || entity.hp.max, entity.hp.current + entity._regenHp);
         this.showDamage(entity.elementId, `+${entity._regenHp}`, 'text-green-400');
         
-        if (localStorage.getItem('disableBattleAnimations') !== 'true' && !document.hidden) {
+        if (localStorage.getItem('disableBattleAnimations') !== 'true' && !document.hidden && this.speedMult < 5) {
           const el = document.getElementById(entity.elementId);
           if (el) {
             const rect = el.getBoundingClientRect();

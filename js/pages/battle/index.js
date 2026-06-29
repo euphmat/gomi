@@ -585,7 +585,7 @@ class BattleManager {
       }
     };
 
-    if (this.speedMult >= 10) {
+    if (this.speedMult >= 5) {
       executeAuto();
     } else {
       setTimeout(executeAuto, delay);

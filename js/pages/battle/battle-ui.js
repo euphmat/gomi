@@ -49,18 +49,20 @@ export function getActiveStateIconsHTML(entity) {
 
 export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   const isSelected = selectedEnemyTarget === e;
+  const fastMode = cachedBattleSpeed >= 5;
+  const transitionClass = fastMode ? '' : 'transition-transform';
   const deadStyle = e.isDead ? 'min-width: 0px; max-width: 0px; opacity: 0; margin: 0; pointer-events: none;' : '';
   return `
-    <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-0.5 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : 'cursor-pointer hover:scale-105 transition-transform'}" style="${deadStyle}" data-id="${e.uniqueId}">
-      <div class="relative w-full aspect-square ${isSelected ? 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]' : 'drop-shadow-md'} ${e.isDead ? 'opacity-0' : ''} transition-all duration-300">
+    <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-0.5 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : `cursor-pointer hover:scale-105 ${transitionClass}`}" style="${deadStyle}" data-id="${e.uniqueId}">
+      <div class="relative w-full aspect-square ${isSelected ? 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]' : 'drop-shadow-md'} ${e.isDead ? 'opacity-0' : ''}" style="${fastMode ? '' : 'transition: filter 0.3s ease;'}">
         <div class="state-icons-container absolute -top-1.5 -right-1.5 z-20 flex gap-0.5 pointer-events-auto">
           ${!e.isDead ? getActiveStateIconsHTML(e) : ''}
         </div>
         <img src="${e.image}" class="w-full h-full object-contain p-1 ${e.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
       <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
-        <div class="absolute bg-red-600 transition-all duration-300" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%;"></div>
-        <div class="hp-barrier-bar absolute transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100 - Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100), (e.currentHp / Math.max(1, e.maxHp)) * 100) : 0}%; width: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${e._barrierHp && e._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px);"></div>
+        <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%; ${fastMode ? '' : 'transition: width 0.3s ease;'}"></div>
+        <div class="hp-barrier-bar absolute shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100 - Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100), (e.currentHp / Math.max(1, e.maxHp)) * 100) : 0}%; width: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${e._barrierHp && e._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px); ${fastMode ? '' : 'transition: width 0.3s ease, left 0.3s ease, opacity 0.3s ease;'}"></div>
         <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
           ${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}
         </div>
@@ -73,8 +75,10 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
 }
 
 let cachedDisableAnimations = localStorage.getItem('disableBattleAnimations') === 'true';
+let cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
 window.addEventListener('settingsChanged', () => {
   cachedDisableAnimations = localStorage.getItem('disableBattleAnimations') === 'true';
+  cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
 });
 
 export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPartyMember) {
@@ -136,8 +140,15 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   const finalMdef = Math.floor(p.stats.mdef * (1 + mdefPassivePercent / 100)) + mdefActiveAmount;
   const finalSpd = Math.floor(p.stats.spd * (1 + spdTotalPercent / 100));
 
+  const fastMode = cachedBattleSpeed >= 5;
+  const transClass = fastMode ? '' : 'transition-transform';
+  const transColorClass = fastMode ? '' : 'transition-colors';
+  const hpTransStyle = fastMode ? '' : 'transition: width 0.3s ease;';
+  const barrierTransStyle = fastMode ? '' : 'transition: width 0.3s ease, left 0.3s ease, opacity 0.3s ease;';
+  const barTransStyle = fastMode ? '' : 'transition: transform 0.3s ease;';
+
   return `
-    <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : 'transition-all cursor-pointer hover:scale-[1.02]'}">
+    <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : `${transClass} cursor-pointer hover:scale-[1.02]`}">
       <div class="flex flex-col mb-1.5 w-full">
         <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
           <!-- ICON -->
@@ -169,8 +180,8 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="absolute bg-red-600 transition-all duration-300" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%;"></div>
-            <div class="hp-barrier-bar absolute transition-all duration-300 shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100 - Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100), (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; width: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${p._barrierHp && p._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px);"></div>
+            <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%; ${hpTransStyle}"></div>
+            <div class="hp-barrier-bar absolute shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100 - Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100), (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; width: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${p._barrierHp && p._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px); ${barrierTransStyle}"></div>
             <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
               ${formatNumber(Math.floor(p.hp.current))}/${formatNumber(p.stats.hp || p.hp.max)}
             </div>
@@ -179,44 +190,44 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="bg-blue-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.mp.current / (p.stats.mp || p.mp.max)})"></div>
+            <div class="bg-blue-600 h-full w-full origin-left" style="transform: scaleX(${p.mp.current / (p.stats.mp || p.mp.max)}); ${barTransStyle}"></div>
             <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.mp.current))}/${formatNumber(p.stats.mp || p.mp.max)}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="bg-green-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.exp.current / p.exp.max})"></div>
+            <div class="bg-green-600 h-full w-full origin-left" style="transform: scaleX(${p.exp.current / p.exp.max}); ${barTransStyle}"></div>
             <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.exp.current))}/${formatNumber(p.exp.max)}</div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">
           <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
           <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="bg-purple-600 h-full w-full transition-transform duration-300 origin-left" style="transform: scaleX(${p.jp.current / p.jp.max})"></div>
+            <div class="bg-purple-600 h-full w-full origin-left" style="transform: scaleX(${p.jp.current / p.jp.max}); ${barTransStyle}"></div>
             <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.jp.current))}/${formatNumber(p.jp.max)}</div>
           </div>
         </div>
       </div>
 
       <div class="battle-stats-container flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') !== 'false' ? 'hidden' : ''}">
-        <div class="stat-row-atk flex justify-between items-center ${atkTheme.bg} border rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-atk flex justify-between items-center ${atkTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-atk material-symbols-outlined ${atkTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="stat-label-atk font-bold tracking-wider ${atkTheme.text}">ATK</span></div>
           <span class="stat-val-atk ${atkTheme.val} font-black drop-shadow-md">${formatNumber(finalAtk)}</span>
         </div>
-        <div class="stat-row-def flex justify-between items-center ${defTheme.bg} border rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-def flex justify-between items-center ${defTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-def material-symbols-outlined ${defTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="stat-label-def font-bold tracking-wider ${defTheme.text}">DEF</span></div>
           <span class="stat-val-def ${defTheme.val} font-black drop-shadow-md">${formatNumber(finalDef)}</span>
         </div>
-        <div class="stat-row-mat flex justify-between items-center ${matkTheme.bg} border rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-mat flex justify-between items-center ${matkTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined ${matkTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider ${matkTheme.text}">MAT</span></div>
           <span class="stat-val-mat ${matkTheme.val} font-black drop-shadow-md">${formatNumber(finalMatk)}</span>
         </div>
-        <div class="stat-row-mdf flex justify-between items-center ${mdefTheme.bg} border rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-mdf flex justify-between items-center ${mdefTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${mdefTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${mdefTheme.text}">MDF</span></div>
           <span class="stat-val-mdf ${mdefTheme.val} font-black drop-shadow-md">${formatNumber(finalMdef)}</span>
         </div>
-        <div class="stat-row-spd flex justify-between items-center ${spdTheme.bg} border rounded px-1 py-0.5 transition-colors">
+        <div class="stat-row-spd flex justify-between items-center ${spdTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined ${spdTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider ${spdTheme.text}">SPD</span></div>
           <span class="stat-val-spd ${spdTheme.val} font-black drop-shadow-md">${formatNumber(finalSpd)}</span>
         </div>

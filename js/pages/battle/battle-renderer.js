@@ -72,6 +72,8 @@ export const rendererMethods = {
   _doUpdateEntities() {
     if (document.hidden) return;
     const disableAnim = this._cachedDisableAnim;
+    const speed = this.speedMult || 1;
+    const fastMode = speed >= 5;
     if (!this.domCache) return;
 
     const aliveEnemiesCount = this.enemies.filter(e => !e.isDead).length || 1;
@@ -91,7 +93,8 @@ export const rendererMethods = {
       }
 
       if (e.isDead) {
-        el.classList.remove('cursor-pointer', 'hover:scale-105', 'transition-transform');
+        el.classList.remove('cursor-pointer', 'hover:scale-105');
+        if (!fastMode) el.classList.remove('transition-transform');
         iconContainer.classList.add('opacity-0');
         hpContainer.classList.add('opacity-0');
         atbContainer.classList.add('opacity-0');
@@ -183,11 +186,11 @@ export const rendererMethods = {
       if (p.isDead) {
         el.classList.add('opacity-40', 'grayscale');
         el.classList.remove('cursor-pointer');
-        if (!disableAnim) el.classList.remove('transition-all', 'hover:scale-[1.02]');
+        if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'hover:scale-[1.02]');
       } else {
         el.classList.remove('opacity-40', 'grayscale');
         el.classList.add('cursor-pointer');
-        if (!disableAnim) el.classList.add('transition-all', 'hover:scale-[1.02]');
+        if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'hover:scale-[1.02]');
       }
 
       if (lvEl && lvEl.textContent !== String(p.level || 1)) lvEl.textContent = p.level || 1;
