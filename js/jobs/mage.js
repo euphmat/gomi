@@ -206,60 +206,20 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
         }
         case 'blizzard': {
           const numIcicles = options.hits || 6;
-          // 軽量化のため、描画する氷柱は最大3本にする
-          const visualIcicles = Math.min(numIcicles, 3);
           let completed = 0;
-          
           for (let i = 0; i < numIcicles; i++) {
             setTimeout(() => {
-              if (i >= visualIcicles) {
-                // エフェクトを省略し、アニメーション時間分だけ待ってからダメージ判定
-                setTimeout(() => {
-                  completed++;
-                  if (onImpact) onImpact(target, index, completed - 1);
-                }, 190 / speedMult);
-                return;
+              if (targetEl && !document.hidden && speedMult < 5) {
+                targetEl.animate([
+                  { transform: 'translateX(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0px #00bfff)' },
+                  { transform: 'translateX(-5px) scale(0.95)', filter: 'brightness(1.5) drop-shadow(0 0 10px #00bfff)', offset: 0.2 },
+                  { transform: 'translateX(5px) scale(0.95)', filter: 'brightness(1.5) drop-shadow(0 0 10px #e0ffff)', offset: 0.6 },
+                  { transform: 'translateX(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0px #00bfff)' }
+                ], { duration: 150 / speedMult, easing: 'ease-out' });
               }
-
-              const el = document.createElement('div');
-              el.style.position = 'fixed';
-              
-              // Start randomly near the caster
-              const startX = cx + (Math.random() - 0.5) * 80;
-              const startY = cy + (Math.random() - 0.5) * 80 - 40;
-              
-              // Target slightly spread around the center of the target
-              const targetX = tx + (Math.random() - 0.5) * 50;
-              const targetY = ty + (Math.random() - 0.5) * 50;
-
-              el.style.left = `${startX - 10}px`;
-              el.style.top = `${startY - 25}px`;
-              el.style.width = '20px';
-              el.style.height = '50px';
-              el.style.background = 'linear-gradient(to bottom, transparent, #e0ffff, #00bfff)';
-              el.style.boxShadow = '0 0 10px #e0ffff';
-              el.style.zIndex = '9999';
-              el.style.pointerEvents = 'none';
-              el.style.clipPath = 'polygon(50% 0%, 100% 100%, 50% 85%, 0% 100%)';
-              (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
-
-              const angle = Math.atan2(targetY - startY, targetX - startX) + Math.PI / 2;
-              const distance = Math.hypot(targetX - startX, targetY - startY);
-              
-              const anim = el.animate([
-                { transform: `rotate(${angle}rad) translateY(0px) scale(0)`, opacity: 0 },
-                { transform: `rotate(${angle}rad) translateY(0px) scale(0.8)`, opacity: 1, offset: 0.2 },
-                { transform: `rotate(${angle}rad) translateY(-${distance}px) scale(0.8)`, opacity: 1 }
-              ], { duration: (150 + Math.random() * 80) / speedMult, easing: 'ease-in' });
-
-              anim.onfinish = () => {
-                el.remove();
-                createIceShatter(targetX, targetY, false, 2); // 破片の数も3から2に減らして軽量化
-                completed++;
-                // Trigger impact damage for EACH icicle
-                if (onImpact) onImpact(target, index, completed - 1);
-              };
-            }, i * 35 / speedMult); // Stagger the icicles with a shorter delay
+              completed++;
+              if (onImpact) onImpact(target, index, completed - 1);
+            }, i * 45 / speedMult);
           }
           break;
         }
