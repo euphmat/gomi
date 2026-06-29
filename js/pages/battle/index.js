@@ -901,7 +901,7 @@ export function renderBattlePage() {
         100% { transform: translateY(0) scale(1); opacity: 1; }
       }
       .enemy-card {
-        transition: min-width 0.5s ease, max-width 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
+        transition: opacity 0.5s ease, transform 0.3s ease;
       }
       #enemy-area .enemy-card {
         min-width: 0px;
