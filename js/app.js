@@ -279,8 +279,8 @@ class App {
           </div>
 
           <!-- Battle Stats Toggle -->
-          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+          <div id="setting-row-battle-stats" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/20
@@ -299,8 +299,8 @@ class App {
           </div>
 
           <!-- Battle Animation Toggle -->
-          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+          <div id="setting-row-battle-anim" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/20
@@ -319,8 +319,8 @@ class App {
           </div>
 
           <!-- Continue on Death Toggle -->
-          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+          <div id="setting-row-continue" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/20
@@ -467,28 +467,27 @@ class App {
     });
 
     // ── Toggle Settings (Custom Div Toggles) ──
+    const rowBattleStats = document.getElementById('setting-row-battle-stats');
     const toggleBattleStats = document.getElementById('toggle-battle-stats');
-    if (toggleBattleStats) {
-      toggleBattleStats.addEventListener('click', () => {
+    if (rowBattleStats && toggleBattleStats) {
+      rowBattleStats.addEventListener('click', () => {
         const isActive = toggleBattleStats.classList.toggle('active');
         localStorage.setItem('hideBattleStats', !isActive);
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }
 
+    const rowBattleAnim = document.getElementById('setting-row-battle-anim');
     const toggleBattleAnim = document.getElementById('toggle-battle-anim');
-    if (toggleBattleAnim) {
+    if (rowBattleAnim && toggleBattleAnim) {
       const currentSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
       if (currentSpeed >= 10) {
         toggleBattleAnim.style.pointerEvents = 'none';
-        const section = toggleBattleAnim.closest('.settings-section');
-        if (section) {
-          section.style.opacity = '0.5';
-          section.style.pointerEvents = 'none';
-        }
+        rowBattleAnim.style.opacity = '0.5';
+        rowBattleAnim.style.pointerEvents = 'none';
       }
 
-      toggleBattleAnim.addEventListener('click', () => {
+      rowBattleAnim.addEventListener('click', () => {
         const speed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
         if (speed >= 10) return;
 
@@ -498,9 +497,10 @@ class App {
       });
     }
 
+    const rowContinue = document.getElementById('setting-row-continue');
     const toggleContinueOnDeath = document.getElementById('toggle-continue-on-death');
-    if (toggleContinueOnDeath) {
-      toggleContinueOnDeath.addEventListener('click', () => {
+    if (rowContinue && toggleContinueOnDeath) {
+      rowContinue.addEventListener('click', () => {
         const isActive = toggleContinueOnDeath.classList.toggle('active');
         localStorage.setItem('continueOnDeath', isActive);
       });
