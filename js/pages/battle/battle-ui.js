@@ -51,7 +51,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   const isSelected = selectedEnemyTarget === e;
   const fastMode = cachedBattleSpeed >= 5;
   const transitionClass = fastMode ? '' : 'transition-transform';
-  const deadStyle = e.isDead ? 'min-width: 0px; max-width: 0px; opacity: 0; margin: 0; pointer-events: none;' : '';
+  const deadStyle = e.isDead ? 'min-width: 0px; max-width: 0px; opacity: 0; margin: 0 -0.125rem; pointer-events: none;' : '';
   return `
     <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-0.5 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : `cursor-pointer hover:scale-105 ${transitionClass}`}" style="${deadStyle}" data-id="${e.uniqueId}">
       <div class="relative w-full aspect-square ${isSelected ? 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]' : 'drop-shadow-md'} ${e.isDead ? 'opacity-0' : ''}" style="${fastMode ? '' : 'transition: filter 0.3s ease;'}">

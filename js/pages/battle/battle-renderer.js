@@ -94,7 +94,19 @@ export const rendererMethods = {
 
       if (e.isDead) {
         el.classList.remove('cursor-pointer', 'hover:scale-105');
-        if (!fastMode) el.classList.remove('transition-transform');
+        if (!fastMode) {
+          el.classList.remove('transition-transform');
+          el.style.transition = 'opacity 0.3s ease, min-width 0.3s ease 0.6s, max-width 0.3s ease 0.6s, margin 0.3s ease 0.6s';
+          iconContainer.style.transition = 'opacity 0.3s ease';
+          hpContainer.style.transition = 'opacity 0.3s ease';
+          atbContainer.style.transition = 'opacity 0.3s ease';
+        } else {
+          el.style.transition = '';
+          iconContainer.style.transition = '';
+          hpContainer.style.transition = '';
+          atbContainer.style.transition = '';
+        }
+
         iconContainer.classList.add('opacity-0');
         hpContainer.classList.add('opacity-0');
         atbContainer.classList.add('opacity-0');
@@ -102,7 +114,7 @@ export const rendererMethods = {
           el.style.minWidth = '0px';
           el.style.maxWidth = '0px';
           el.style.opacity = '0';
-          el.style.margin = '0';
+          el.style.margin = '0 -0.125rem';
           el.style.pointerEvents = 'none';
         }
       }
