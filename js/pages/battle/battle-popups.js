@@ -119,41 +119,10 @@ export const popupMethods = {
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top;
     
-    // -- Repulsion logic --
-    if (!this._activeDamagePopups) this._activeDamagePopups = [];
-    const currentTime = Date.now();
-    this._activeDamagePopups = this._activeDamagePopups.filter(p => currentTime < p.endTime);
-
-    let finalX = centerX;
-    let finalY = baseY;
-    const R = 45; // Repulsion radius
-
-    for (let i = 0; i < 5; i++) {
-      let collided = false;
-      for (let other of this._activeDamagePopups) {
-        if (other.elementId !== elementId) continue;
-        let dx = finalX - other.x;
-        let dy = finalY - other.y;
-        let dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < R) {
-          collided = true;
-          if (dist === 0) {
-            dx = (Math.random() - 0.5) * 10;
-            dy = (Math.random() - 0.5) * 10;
-            dist = Math.sqrt(dx * dx + dy * dy);
-          }
-          let push = (R - dist) + 5;
-          finalX += (dx / dist) * push;
-          finalY += (dy / dist) * push;
-        }
-      }
-      if (!collided) break;
-    }
-
-    // Determine spread drift based on pushed position relative to center
-    let spreadX = (finalX - centerX) * 1.5;
-    if (Math.abs(spreadX) < 10) spreadX = (Math.random() - 0.5) * 60; // fallback drift
-    this._activeDamagePopups.push({ elementId, x: finalX, y: finalY, endTime: currentTime + dur });
+    // -- Simple random spread (Lightweight) --
+    let spreadX = (Math.random() - 0.5) * 80; 
+    let finalX = centerX + spreadX * 0.5;
+    let finalY = baseY + (Math.random() - 0.5) * 20;
     const popup = this._getPoolElement('float');
     if (!popup) return;
     

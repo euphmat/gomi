@@ -498,92 +498,26 @@ export const actionMethods = {
     if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
-        const rect = defenderEl.getBoundingClientRect();
-        const tx = rect.left + rect.width / 2;
-        const ty = rect.top + rect.height / 2;
-
-        const slash = document.createElement('div');
-        slash.style.position = 'fixed';
-        slash.style.left = `${tx}px`;
-        slash.style.top = `${ty}px`;
-        slash.style.width = '160px'; // Made slightly larger
-        slash.style.height = '8px';  // Made thicker
-        slash.style.background = 'linear-gradient(to right, transparent, rgba(255,255,255,0.9), #fff, rgba(255,255,255,0.9), transparent)';
-        slash.style.boxShadow = '0 0 12px rgba(255,255,255,0.8)'; // Stronger glow
-        slash.style.zIndex = '9998';
-        slash.style.pointerEvents = 'none';
-        (document.getElementById('battle-effects-layer') || document.body).appendChild(slash);
-
         const slashDuration = Math.max(120, 200 / this.speedMult);
-        const anim = slash.animate([
-          { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(0.1) scaleY(0.2)', opacity: 0 },
-          { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.0) scaleY(1.0)', opacity: 1, offset: 0.3 },
-          { transform: 'translate(-50%, -50%) rotate(45deg) scaleX(1.5) scaleY(0.1)', opacity: 0 }
+        defenderEl.animate([
+          { transform: 'translateX(0)', filter: 'brightness(1)' },
+          { transform: 'translateX(10px)', filter: 'brightness(1.5)', offset: 0.2 },
+          { transform: 'translateX(-10px)', filter: 'brightness(1.5)', offset: 0.4 },
+          { transform: 'translateX(8px)', filter: 'brightness(1)', offset: 0.6 },
+          { transform: 'translateX(-8px)', filter: 'brightness(1)', offset: 0.8 },
+          { transform: 'translateX(0)', filter: 'brightness(1)' }
         ], { duration: slashDuration, easing: 'ease-out' });
-
-        anim.onfinish = () => slash.remove();
       }
     } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
-      const attackerEl = document.getElementById(attacker.elementId);
       const defenderEl = document.getElementById(defender.elementId);
-      if (attackerEl && defenderEl) {
-        const attackerRect = attackerEl.getBoundingClientRect();
-        const defenderRect = defenderEl.getBoundingClientRect();
-        const startX = attackerRect.left + attackerRect.width / 2;
-        const startY = attackerRect.top + attackerRect.height / 2;
-        const endX = defenderRect.left + defenderRect.width / 2;
-        const endY = defenderRect.top + defenderRect.height / 2;
-        
-        const missile = document.createElement('div');
-        missile.style.position = 'fixed';
-        missile.style.left = `${startX}px`;
-        missile.style.top = `${startY}px`;
-        missile.style.width = '35px';
-        missile.style.height = '8px';
-        missile.style.background = 'linear-gradient(to right, transparent, #d946ef, #fdf4ff)';
-        missile.style.borderRadius = '50%';
-        missile.style.boxShadow = '0 0 15px #e879f9, 0 0 5px #fff';
-        missile.style.zIndex = '9998';
-        missile.style.pointerEvents = 'none';
-        (document.getElementById('battle-effects-layer') || document.body).appendChild(missile);
-
-        const dx = endX - startX;
-        const dy = endY - startY;
-        const angle = Math.atan2(dy, dx);
-        
-        delayDamageMs = -1; // -1 means damage is handled manually in anim.onfinish
-
-        const duration = Math.max(200, 300 / this.speedMult);
-        const anim = missile.animate([
-          { transform: `translate(-50%, -50%) rotate(${angle}rad) scale(0.5)` },
-          { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${angle}rad) scale(1.5)` }
-        ], { duration, easing: 'cubic-bezier(0.5, 0, 1, 1)' });
-        
-        anim.onfinish = () => {
-          missile.remove();
-          
-          this.showDamage(defender.elementId, damage, dmgColor);
-          
-          const explode = document.createElement('div');
-          explode.style.position = 'fixed';
-          explode.style.left = `${endX}px`;
-          explode.style.top = `${endY}px`;
-          explode.style.width = '40px';
-          explode.style.height = '40px';
-          explode.style.background = 'radial-gradient(circle, #fff, #f0abfc, transparent)';
-          explode.style.borderRadius = '50%';
-          explode.style.transform = 'translate(-50%, -50%)';
-          explode.style.zIndex = '9998';
-          explode.style.pointerEvents = 'none';
-          explode.style.mixBlendMode = 'screen';
-          (document.getElementById('battle-effects-layer') || document.body).appendChild(explode);
-          
-          const expAnim = explode.animate([
-            { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 1 },
-            { transform: 'translate(-50%, -50%) scale(2.5)', opacity: 0 }
-          ], { duration: 150, easing: 'ease-out' });
-          expAnim.onfinish = () => explode.remove();
-        };
+      if (defenderEl) {
+        const animDuration = Math.max(150, 300 / this.speedMult);
+        delayDamageMs = animDuration;
+        defenderEl.animate([
+          { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' },
+          { transform: 'scale(0.9)', filter: 'brightness(2) hue-rotate(270deg)', offset: 0.5 },
+          { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' }
+        ], { duration: animDuration, easing: 'ease-in-out' });
       }
     }
 
