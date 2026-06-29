@@ -206,9 +206,35 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
         }
         case 'blizzard': {
           const numIcicles = options.hits || 6;
+          const visualIcicles = Math.min(numIcicles, 3);
           let completed = 0;
           for (let i = 0; i < numIcicles; i++) {
             setTimeout(() => {
+              if (i < visualIcicles && !document.hidden && speedMult < 5) {
+                const el = document.createElement('div');
+                el.style.position = 'fixed';
+                const targetX = tx + (Math.random() - 0.5) * 60;
+                const dropHeight = 200; // 上空からの高さ
+                el.style.left = `${targetX - 5}px`;
+                el.style.top = `${ty - dropHeight}px`;
+                el.style.width = '12px';
+                el.style.height = '45px';
+                el.style.background = 'linear-gradient(to bottom, transparent, #e0ffff, #00bfff)';
+                el.style.boxShadow = '0 0 10px #e0ffff';
+                el.style.zIndex = '9999';
+                el.style.pointerEvents = 'none';
+                el.style.clipPath = 'polygon(50% 0%, 100% 100%, 50% 85%, 0% 100%)';
+                (document.getElementById('battle-effects-layer') || document.body).appendChild(el);
+
+                const anim = el.animate([
+                  { transform: 'translateY(0px) scale(0.8)', opacity: 0 },
+                  { transform: 'translateY(50px) scale(1)', opacity: 1, offset: 0.2 },
+                  { transform: `translateY(${dropHeight}px) scale(1)`, opacity: 1 }
+                ], { duration: 180 / speedMult, easing: 'ease-in' });
+
+                anim.onfinish = () => el.remove();
+              }
+
               if (targetEl && !document.hidden && speedMult < 5) {
                 targetEl.animate([
                   { transform: 'translateX(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0px #00bfff)' },
