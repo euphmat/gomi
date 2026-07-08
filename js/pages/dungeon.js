@@ -25,9 +25,10 @@ window.openSkipModal = async (dungeonId, isSpecial) => {
   overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm px-4';
   
     const updateModal = (numSkips) => {
+    const maxSkips = Math.min(1000, Math.floor(currentGold / skipCost));
     const totalCost = skipCost * numSkips;
-    const canAfford = currentGold >= totalCost && numSkips > 0;
-    const isMax = numSkips === Math.floor(currentGold / skipCost);
+    const canAfford = currentGold >= totalCost && numSkips > 0 && numSkips <= 1000;
+    const isMax = numSkips === maxSkips;
     
     overlay.innerHTML = `
       <div class="bg-[#11111a]/95 backdrop-blur-xl border border-gray-700/80 rounded-[24px] w-full max-w-sm overflow-hidden shadow-[0_16px_40px_-10px_rgba(0,0,0,0.8)] flex flex-col relative transition-all">
@@ -53,10 +54,10 @@ window.openSkipModal = async (dungeonId, isSpecial) => {
           <div>
             <p class="text-[10px] text-gray-400 font-bold mb-2 ml-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">repeat</span> 実行回数を選択</p>
             <div class="flex items-center bg-[#050505] p-1 rounded-[14px] border border-gray-800/80 shadow-inner">
-              ${[1, 10, 100, 1000].map(n => `
+              ${[1, 10, 100, 500].map(n => `
                 <button onclick="window.updateSkipModalAmount(${n})" class="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 ${numSkips === n && !isMax ? 'bg-gray-800 text-white shadow-md border border-gray-600' : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/40 border border-transparent'}">x${n}</button>
               `).join('')}
-              <button onclick="window.updateSkipModalAmount(Math.floor(${currentGold} / ${skipCost}))" class="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 ${isMax ? 'bg-yellow-600/20 text-yellow-400 shadow-md border border-yellow-600/30' : 'text-gray-500 hover:text-yellow-400/60 hover:bg-yellow-900/20 border border-transparent'}">MAX</button>
+              <button onclick="window.updateSkipModalAmount(${maxSkips})" class="flex-1 py-2 rounded-xl font-bold text-xs transition-all duration-200 ${isMax ? 'bg-yellow-600/20 text-yellow-400 shadow-md border border-yellow-600/30' : 'text-gray-500 hover:text-yellow-400/60 hover:bg-yellow-900/20 border border-transparent'}">MAX</button>
             </div>
           </div>
 
