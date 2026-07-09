@@ -133,7 +133,7 @@ class App {
 
     // ── 2. Render the app shell ──
     this.appEl.innerHTML = `
-      <div class="fixed top-0 left-0 w-full h-[100dvh] flex flex-col bg-[#0b0b19]">
+      <div class="fixed inset-0 flex flex-col bg-[#0b0b19]">
         <!-- Header (fixed) -->
         <div id="header-container"></div>
 
