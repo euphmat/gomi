@@ -1,23 +1,24 @@
+import { renderDailyQuestTab } from './quest-tabs/daily-quest.js';
+import { renderSpecialQuestTab } from './quest-tabs/special-quest.js';
 import { renderItemLibraryTab } from './library-tabs/item-library.js';
 import { renderMonsterLibraryTab } from './library-tabs/monster-library.js';
-import { renderBookLibraryTab } from './library-tabs/book-library.js';
 
 /**
- * このファイルは「図鑑（ライブラリ）」画面のメインコンテナです。
- * 内部で3つのタブ（アイテム図鑑、モンスター図鑑、書物）を切り替えて表示します。
+ * クエスト画面のメインコンテナ
+ * 内部で4つのタブ（デイリー、スペシャル、アイテム図鑑、モンスター図鑑）を切り替えて表示します。
  */
-export function renderLibraryPage() {
+export function renderQuestPage() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full bg-[#0b0b19]';
 
-  // タブの定義
   const TABS = [
-    { id: 'item', label: 'アイテム図鑑', icon: 'auto_stories' },
-    { id: 'monster', label: 'モンスター図鑑', icon: 'pets' },
-    { id: 'book', label: '書物', icon: 'menu_book' }
+    { id: 'daily', label: 'デイリー', icon: 'today' },
+    { id: 'special', label: 'スペシャル', icon: 'stars' },
+    { id: 'item_lib', label: 'アイテム図鑑', icon: 'auto_stories' },
+    { id: 'monster_lib', label: 'モンスター図鑑', icon: 'pets' }
   ];
   
-  let activeTabId = 'item';
+  let activeTabId = 'daily';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');
@@ -66,14 +67,17 @@ export function renderLibraryPage() {
     let tabContent;
 
     switch (currentTabId) {
-      case 'item':
+      case 'daily':
+        tabContent = renderDailyQuestTab();
+        break;
+      case 'special':
+        tabContent = renderSpecialQuestTab();
+        break;
+      case 'item_lib':
         tabContent = renderItemLibraryTab();
         break;
-      case 'monster':
+      case 'monster_lib':
         tabContent = renderMonsterLibraryTab();
-        break;
-      case 'book':
-        tabContent = renderBookLibraryTab();
         break;
     }
 

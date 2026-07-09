@@ -696,6 +696,13 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             // Add to fed materials
             monsterData.fedMaterials = oldExp + expGain;
             
+            // Quest tracking: monster level up
+            const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials, isLegendary);
+            const levelsGained = newLevelInfo.level - oldLevel;
+            if (levelsGained > 0) {
+              window.dispatchEvent(new CustomEvent('quest:monster-feed-level', { detail: { monsterId, levelsGained } }));
+            }
+            
             // Save ranch data
             let ranchData = await GameDB.getGameState('ranch_data');
             ranchData[dungeonId][monsterId] = monsterData;

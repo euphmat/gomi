@@ -48,7 +48,9 @@ export const resultMethods = {
 
     if (this.monsterKills) {
       const medalBonus = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex].killBonus : 0;
-      this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + 1 + medalBonus;
+      const countToAdd = 1 + medalBonus;
+      this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + countToAdd;
+      window.dispatchEvent(new CustomEvent('quest:monster-kill', { detail: { monsterId: enemy.id, count: countToAdd } }));
       this._needsSave = true;
     }
 

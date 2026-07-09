@@ -49,8 +49,9 @@ import { renderStatusPage }  from './pages/status.js';
 import { renderGuildPage }   from './pages/guild.js';
 import { renderDungeonPage } from './pages/dungeon.js';
 import { renderShopPage }    from './pages/shop.js';
-import { renderLibraryPage } from './pages/library.js';
+import { renderQuestPage }   from './pages/quest.js';
 import { renderBattlePage }  from './pages/battle/index.js';
+import { QuestManager }      from './data/quest-manager.js';
 
 class App {
   constructor() {
@@ -64,6 +65,9 @@ class App {
     try {
       await GameDB.open();
       console.log('[App] Database initialized.');
+
+      await QuestManager.init();
+      console.log('[App] QuestManager initialized.');
 
       // ── SP Correction Logic (Global) ──
       const chars = await GameDB.getAllCharacters();
@@ -155,7 +159,7 @@ class App {
       .register('/guild',   renderGuildPage)
       .register('/dungeon', renderDungeonPage)
       .register('/shop',    renderShopPage)
-      .register('/library', renderLibraryPage)
+      .register('/quest',   renderQuestPage)
       .register('/battle',  renderBattlePage);
 
     // ── 5. Navigation ──
@@ -259,7 +263,7 @@ class App {
               </div>
               <div>
                 <span class="text-sm font-bold text-gray-100 tracking-wide">設定</span>
-                <span class="text-[11px] text-blue-300 ml-2 font-mono bg-blue-900/50 border border-blue-700/50 px-2 py-0.5 rounded-md">v0045</span>
+                <span class="text-[11px] text-blue-300 ml-2 font-mono bg-blue-900/50 border border-blue-700/50 px-2 py-0.5 rounded-md">v0046</span>
               </div>
             </div>
             <button id="settings-close"

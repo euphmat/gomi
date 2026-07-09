@@ -415,6 +415,9 @@ export function renderShopTab() {
       equipmentCountMap[item.id] = (equipmentCountMap[item.id] || 0) + craftCount;
     }
 
+    // 合成イベント発火
+    window.dispatchEvent(new CustomEvent('quest:equipment-craft', { detail: { itemId: item.id, count: craftCount } }));
+
     // 合成成功エフェクト
     showCraftSuccessEffect(item, craftCount);
 
