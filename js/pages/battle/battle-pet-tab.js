@@ -412,8 +412,17 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           }
 
           // EXP 加算
+          const oldExp = monsterData.fedMaterials || 0;
+          const oldLevelInfo = getRanchLevelInfo(oldExp, variant.isLeg);
+          
           const expGain = amount * expMultiplier;
-          monsterData.fedMaterials = (monsterData.fedMaterials || 0) + expGain;
+          monsterData.fedMaterials = oldExp + expGain;
+
+          const newInfo = getRanchLevelInfo(monsterData.fedMaterials, variant.isLeg);
+          const levelsGained = newInfo.level - oldLevelInfo.level;
+          if (levelsGained > 0) {
+            window.dispatchEvent(new CustomEvent('quest:monster-feed-level', { detail: { monsterId: variant.key, levelsGained } }));
+          }
 
           // ranch_data 保存
           let freshRanch = await GameDB.getGameState('ranch_data');
@@ -424,8 +433,6 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           if (onRanchDataUpdated) {
             onRanchDataUpdated(freshRanch);
           }
-
-          const newInfo = getRanchLevelInfo(monsterData.fedMaterials, variant.isLeg);
 
           // 再描画 (親タブ全体を更新)
           const latestInv = await GameDB.getAllInventory();

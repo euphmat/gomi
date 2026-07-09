@@ -687,18 +687,17 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             await GameDB.putInventoryItem(currentInv);
           }
             
-            const oldLevel = currentLevel;
-            const oldMStats = getMonsterStats(oldLevel);
-            
             const expGain = amount * expMultiplier;
             const oldExp = monsterData.fedMaterials || 0;
+            const oldLevelInfo = getRanchLevelInfo(oldExp, isLegendary);
+            const oldMStats = getMonsterStats(oldLevelInfo.level);
             
             // Add to fed materials
             monsterData.fedMaterials = oldExp + expGain;
             
             // Quest tracking: monster level up
             const newLevelInfo = getRanchLevelInfo(monsterData.fedMaterials, isLegendary);
-            const levelsGained = newLevelInfo.level - oldLevel;
+            const levelsGained = newLevelInfo.level - oldLevelInfo.level;
             if (levelsGained > 0) {
               window.dispatchEvent(new CustomEvent('quest:monster-feed-level', { detail: { monsterId, levelsGained } }));
             }

@@ -211,6 +211,8 @@ class BattleManager {
         baseStats.spd *= 3;
       }
       
+      baseStats.spd = Math.max(1, baseStats.spd);
+      
       return {
         ...monsterDef,
         name: isLegendary ? `伝説の${monsterDef.name}` : monsterDef.name,
