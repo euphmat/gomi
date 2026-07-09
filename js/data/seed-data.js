@@ -14,6 +14,7 @@ export const SEED_GAME_STATE = [
   { key: 'gold',     value: 100 },
   { key: 'location', value: 'はじまりの街' },
   { key: 'version',  value: '0.1.0' },
+  { key: 'prism',    value: 0 },
 ];
 
 import { SEED_CHARACTERS, SEED_EQUIPMENT } from './initial-characters.js';
