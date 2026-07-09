@@ -164,6 +164,11 @@ export function calcFinalStats(character, equipmentMap) {
     }
   }
 
+  // Ensure SPD is at least 1
+  if (result.spd < 1) {
+    result.spd = 1;
+  }
+
   return result;
 }
 
