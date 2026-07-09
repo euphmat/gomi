@@ -148,14 +148,21 @@ window.executeSkipFromModal = async (dungeonId, isSpecial, numSkips) => {
   const startTime = Date.now();
   
   setTimeout(async () => {
-    const result = await executeSkip(dungeonId, isSpecial, numSkips);
+    let result;
+    try {
+      result = await executeSkip(dungeonId, isSpecial, numSkips);
+    } catch (err) {
+      console.error('Skip execution error:', err);
+      result = null;
+    } finally {
+      clearInterval(progressInterval);
+    }
     
     const elapsed = Date.now() - startTime;
     if (elapsed < 1500) {
       await new Promise(r => setTimeout(r, 1500 - elapsed));
     }
     
-    clearInterval(progressInterval);
     const bar = document.getElementById('skip-progress-bar');
     const text = document.getElementById('skip-progress-text');
     if (bar) bar.style.width = `100%`;

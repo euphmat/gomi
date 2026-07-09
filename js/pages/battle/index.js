@@ -328,12 +328,38 @@ class BattleManager {
   resetBattleState(keepParty = false) {
     if (!keepParty) {
       this.party = [];
+      this.obtainedItems = [];
+      this.obtainedGold = 0;
+      this.obtainedExp = 0;
+      this.obtainedItemsMap = new Map();
     }
     this.enemies = [];
     this.activeCharacter = null;
     this.activeEnemy = null;
     this.selectedEnemyTarget = null;
     this.lastKilledBy = null;
+  }
+
+  _scheduleBattleTimeout(fn, delay) {
+    if (!this._pendingTimers) this._pendingTimers = [];
+    const id = setTimeout(() => {
+      const idx = this._pendingTimers.indexOf(id);
+      if (idx !== -1) this._pendingTimers.splice(idx, 1);
+      if (!this.isStopped) fn();
+    }, delay);
+    this._pendingTimers.push(id);
+    return id;
+  }
+
+  cleanupBattleDOM() {
+    if (this._popupLayer) {
+      this._popupLayer.remove();
+      this._popupLayer = null;
+      this._domPool = null;
+      this._labelStacks = null;
+    }
+    const effectsLayer = document.getElementById('battle-effects-layer');
+    if (effectsLayer) effectsLayer.remove();
   }
 
   _findSkill(character, skillId) {
@@ -588,7 +614,7 @@ class BattleManager {
     if (this.speedMult >= 5) {
       executeAuto();
     } else {
-      setTimeout(executeAuto, delay);
+      this._scheduleBattleTimeout(executeAuto, delay);
     }
   }
 

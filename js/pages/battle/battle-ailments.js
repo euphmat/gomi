@@ -31,7 +31,7 @@ export const ailmentMethods = {
     if (entity.activeAilment && entity.activeAilment.duration <= 0 && !skipTurn) {
       entity.activeAilment = null;
     } else if (entity.activeAilment && entity.activeAilment.duration <= 0 && skipTurn) {
-      setTimeout(() => {
+      this._scheduleBattleTimeout(() => {
         entity.activeAilment = null;
         if (!document.hidden) this.renderEntities();
       }, 1000 / this.speedMult);
@@ -93,7 +93,7 @@ export const ailmentMethods = {
     
     const target = allAlive[Math.floor(Math.random() * allAlive.length)];
     
-    setTimeout(() => {
+    this._scheduleBattleTimeout(() => {
       let skillUsed = false;
       if (isParty) {
         const usableSkills = [];

@@ -33,9 +33,12 @@ if (parseInt(localStorage.getItem('autoBattleSpeed') || 1) > 5) {
 
 // --- SetTimeout Patch for High Speed ---
 const originalSetTimeout = window.setTimeout;
+let _cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
+window.addEventListener('settingsChanged', () => {
+  _cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
+});
 window.setTimeout = function(fn, delay, ...args) {
-  const speed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
-  if (speed >= 10 && delay > 0 && typeof delay === 'number' && delay <= 2000) {
+  if (_cachedBattleSpeed >= 10 && delay > 0 && typeof delay === 'number' && delay <= 2000) {
     delay = 0; // 開発者モード中はアニメーション用の遅延を強制0msにする
   }
   return originalSetTimeout(fn, delay, ...args);
@@ -255,7 +258,7 @@ class App {
               </div>
               <div>
                 <span class="text-sm font-bold text-gray-100 tracking-wide">設定</span>
-                <span class="text-[11px] text-blue-300 ml-2 font-mono bg-blue-900/50 border border-blue-700/50 px-2 py-0.5 rounded-md">v0044</span>
+                <span class="text-[11px] text-blue-300 ml-2 font-mono bg-blue-900/50 border border-blue-700/50 px-2 py-0.5 rounded-md">v0045</span>
               </div>
             </div>
             <button id="settings-close"
@@ -582,16 +585,19 @@ class App {
       });
     });
 
-    window.addEventListener('settingsChanged', () => {
-      const hideStats = localStorage.getItem('hideBattleStats') !== 'false';
-      document.querySelectorAll('.battle-stats-container').forEach(el => {
-        if (hideStats) {
-          el.classList.add('hidden');
-        } else {
-          el.classList.remove('hidden');
-        }
-      });
-    });
+    if (!window._battleStatsSettingsHandler) {
+      window._battleStatsSettingsHandler = () => {
+        const hideStats = localStorage.getItem('hideBattleStats') !== 'false';
+        document.querySelectorAll('.battle-stats-container').forEach(el => {
+          if (hideStats) {
+            el.classList.add('hidden');
+          } else {
+            el.classList.remove('hidden');
+          }
+        });
+      };
+      window.addEventListener('settingsChanged', window._battleStatsSettingsHandler);
+    }
 
     // ── Export / Import buttons ──
     const btnExport = document.getElementById('settings-export');

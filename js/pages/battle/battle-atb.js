@@ -6,6 +6,10 @@
 export const atbMethods = {
   stopAtbLoop() {
     this.isStopped = true;
+    if (this._pendingTimers) {
+      this._pendingTimers.forEach(id => clearTimeout(id));
+      this._pendingTimers = [];
+    }
     if (this.autoNextTimer) {
       clearTimeout(this.autoNextTimer);
       this.autoNextTimer = null;
@@ -38,6 +42,9 @@ export const atbMethods = {
       window.removeEventListener('settingsChanged', this._settingsHandler);
       this._settingsHandler = null;
     }
+    // Clean up effects layer children (sparkle particles etc.)
+    const effectsLayer = document.getElementById('battle-effects-layer');
+    if (effectsLayer) effectsLayer.innerHTML = '';
   },
 
   startAtbLoop() {
@@ -239,7 +246,7 @@ export const atbMethods = {
           if (this.speedMult >= 5) {
             executeEnemy();
           } else {
-            setTimeout(executeEnemy, enemyDelay);
+            this._scheduleBattleTimeout(executeEnemy, enemyDelay);
           }
         }
       }

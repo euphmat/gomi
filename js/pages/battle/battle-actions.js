@@ -84,7 +84,7 @@ export const actionMethods = {
       const doubleActSkill = this._findSkill(caster, 'double_act');
       if (doubleActSkill && doubleActSkill.level > 0 && doubleActSkill.levelConfig) {
         if (Math.random() * 100 < doubleActSkill.levelConfig.chance) {
-          setTimeout(() => {
+          this._scheduleBattleTimeout(() => {
             if (caster.hp !== undefined && !caster.isDead) {
               this.showActionName(caster.elementId, 'ダブルアクト', 'text-cyan-300', 'border-cyan-500/50');
               this.executeSkill(caster, skillDef, levelConfig, { isDoubleAct: true });
@@ -108,7 +108,7 @@ export const actionMethods = {
         this.showActionName(caster.elementId, 'マナリジェネ', 'text-blue-300', 'border-blue-500/50');
       }
       caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + amount);
-      setTimeout(() => {
+      this._scheduleBattleTimeout(() => {
         this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
       }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
     }
@@ -121,7 +121,7 @@ export const actionMethods = {
         this.showActionName(caster.elementId, 'リジェネ', 'text-green-300', 'border-green-500/50');
       }
       caster.hp.current = Math.min(caster.stats?.hp || caster.hp.max, caster.hp.current + amount);
-      setTimeout(() => {
+      this._scheduleBattleTimeout(() => {
         this.showDamage(caster.elementId, `+${amount}`, 'text-green-400');
       }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
     }
@@ -137,7 +137,7 @@ export const actionMethods = {
           if (healAmount > 0) {
             triggered = true;
             p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
-            setTimeout(() => {
+            this._scheduleBattleTimeout(() => {
               this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
             }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
           }
@@ -156,7 +156,7 @@ export const actionMethods = {
       this.party.forEach(p => {
         if (!p.isDead && p.mp && (p.mp.current < (p.stats?.mp || p.mp.max))) {
           p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
-          setTimeout(() => {
+          this._scheduleBattleTimeout(() => {
             this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
           }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           applied = true;
@@ -522,7 +522,7 @@ export const actionMethods = {
     }
 
     if (delayDamageMs > 0) {
-      setTimeout(() => {
+      this._scheduleBattleTimeout(() => {
         this.showDamage(defender.elementId, damage, dmgColor);
       }, delayDamageMs);
     } else if (delayDamageMs === 0) {
@@ -580,7 +580,7 @@ export const actionMethods = {
           if (currentPercent >= thresholdPercent) {
             damage = prevHp - 1;
             survivedBySlimeCore = true;
-            setTimeout(() => {
+            this._scheduleBattleTimeout(() => {
               this.showActionName(defender.elementId, 'スライムコア', 'text-green-300', 'border-green-500/50');
             }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
           }
@@ -604,7 +604,7 @@ export const actionMethods = {
         if (counterSkill && counterSkill.level > 0 && counterSkill.def && counterSkill.levelConfig) {
           const levelConfig = counterSkill.levelConfig;
           if (Math.random() * 100 < levelConfig.chance) {
-            setTimeout(() => {
+            this._scheduleBattleTimeout(() => {
               if (!defender.isDead && !attacker.isDead) {
                 this.showActionName(defender.elementId, 'カウンター', 'text-orange-400', 'border-orange-500/50');
                 this.executeAttack(defender, attacker, true, { actionName: 'カウンター', hideActionName: true });
@@ -633,7 +633,7 @@ export const actionMethods = {
         if (!options.damageType && !isMagic && !defender.isDead) {
           const missileSkill = this._findSkill(attacker, 'magic_missile');
           if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
-            setTimeout(() => {
+            this._scheduleBattleTimeout(() => {
               if (!defender.isDead && !attacker.isDead) {
                 this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
                 this.executeAttack(attacker, defender, true, { 
@@ -655,7 +655,7 @@ export const actionMethods = {
           if (plusOneSkill && plusOneSkill.level > 0 && plusOneSkill.levelConfig) {
             const hits = plusOneSkill.levelConfig.hits || 1;
             for (let i = 0; i < hits; i++) {
-              setTimeout(() => {
+              this._scheduleBattleTimeout(() => {
                 let currentTarget = defender;
                 if (currentTarget.isDead) {
                   currentTarget = this.enemies.find(e => !e.isDead);
@@ -685,7 +685,7 @@ export const actionMethods = {
              if (mpRecover > 0) {
                  this.showActionName(attacker.elementId, 'MP吸収', 'text-indigo-300', 'border-indigo-500/50');
                  attacker.mp.current = Math.min((attacker.stats?.mp || attacker.mp.max), attacker.mp.current + mpRecover);
-                 setTimeout(() => {
+                 this._scheduleBattleTimeout(() => {
                    this.showDamage(attacker.elementId, `+${mpRecover} MP`, 'text-blue-400');
                  }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
              }
@@ -700,7 +700,7 @@ export const actionMethods = {
             if (hpRecover > 0) {
               this.showActionName(attacker.elementId, '血の渇望', 'text-red-300', 'border-red-500/50');
               attacker.hp.current = Math.min((attacker.stats?.hp || attacker.hp.max), attacker.hp.current + hpRecover);
-              setTimeout(() => {
+              this._scheduleBattleTimeout(() => {
                 this.showDamage(attacker.elementId, `+${hpRecover}`, 'text-green-400');
               }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
             }
@@ -716,7 +716,7 @@ export const actionMethods = {
               this.showActionName(attacker.elementId, 'マナリジェネ', 'text-blue-300', 'border-blue-500/50');
             }
             attacker.mp.current = Math.min(attacker.stats?.mp || attacker.mp.max, attacker.mp.current + amount);
-            setTimeout(() => {
+            this._scheduleBattleTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
             }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           }
@@ -728,7 +728,7 @@ export const actionMethods = {
               this.showActionName(attacker.elementId, 'リジェネ', 'text-green-300', 'border-green-500/50');
             }
             attacker.hp.current = Math.min(attacker.stats?.hp || attacker.hp.max, attacker.hp.current + amount);
-            setTimeout(() => {
+            this._scheduleBattleTimeout(() => {
               this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
             }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           }
@@ -741,7 +741,7 @@ export const actionMethods = {
             this.party.forEach(p => {
               if (!p.isDead && p.mp && (p.mp.current < (p.stats?.mp || p.mp.max))) {
                 p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
-                setTimeout(() => {
+                this._scheduleBattleTimeout(() => {
                   this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
                 }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
                 applied = true;
@@ -763,7 +763,7 @@ export const actionMethods = {
                 if (healAmount > 0) {
                   triggered = true;
                   p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
-                  setTimeout(() => {
+                  this._scheduleBattleTimeout(() => {
                     this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
                   }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
                 }
