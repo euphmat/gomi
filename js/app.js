@@ -115,11 +115,11 @@ class App {
     }
 
     // ── 1. Read game state from DB ──
-    let gameState = { location: 'はじまりの街', version: '0.1.0', gold: 0 };
+    let gameState = { location: 'はじまりの街', version: '0.1.1', gold: 0 };
     try {
       if (GameDB.db) {
         gameState.location = await GameDB.getGameState('location') || 'はじまりの街';
-        gameState.version  = await GameDB.getGameState('version')  || '0.1.0';
+        gameState.version  = await GameDB.getGameState('version')  || '0.1.1';
         gameState.gold     = await GameDB.getGameState('gold')      ?? 0;
       }
     } catch (e) {

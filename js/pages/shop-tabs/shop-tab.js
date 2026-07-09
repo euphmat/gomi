@@ -378,7 +378,7 @@ export function renderShopTab() {
     // ヘッダーのゴールド表示を更新
     const headerGoldEl = document.getElementById('header-gold-display');
     if (headerGoldEl) {
-      headerGoldEl.textContent = ` Gold : ${formatNumber(currentGold)} `;
+      headerGoldEl.textContent = `${formatNumber(currentGold)}`;
     }
 
     // 素材を消費

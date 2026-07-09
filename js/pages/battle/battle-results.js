@@ -59,7 +59,7 @@ export const resultMethods = {
       this.obtainedGold += gold;
       this._needsSave = true;
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(this.currentGold)} `;
+      if (goldDisplay) goldDisplay.textContent = `${formatNumber(this.currentGold)}`;
       drops.push({ text: `+${gold}`, icon: 'paid', color: 'text-yellow-400' });
     }
 
@@ -310,7 +310,7 @@ export const resultMethods = {
         this.currentGold += autoSellGold;
         await GameDB.setGameState('gold', this.currentGold);
         const goldDisplay = document.getElementById('header-gold-display');
-        if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(this.currentGold)} `;
+        if (goldDisplay) goldDisplay.textContent = `${formatNumber(this.currentGold)}`;
       }
     }
     this._needsSave = false;
@@ -415,7 +415,7 @@ export const resultMethods = {
       await this.savePartyState(); // Save healed state
       
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(newGold)} `;
+      if (goldDisplay) goldDisplay.textContent = `${formatNumber(newGold)}`;
 
       this.isDungeonClear = false;
 

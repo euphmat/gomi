@@ -174,7 +174,7 @@ window.executeSkipFromModal = async (dungeonId, isSpecial, numSkips) => {
         const currentGold = await GameDB.getGameState('gold') || 0;
         const goldDisplay = document.getElementById('header-gold-display');
         if (goldDisplay) {
-          goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
+          goldDisplay.textContent = `${formatNumber(currentGold)}`;
         }
         window.showSkipResultModal(result, numSkips);
       } else {

@@ -295,7 +295,7 @@ export function renderStorageTab() {
           
           const headerGoldEl = document.getElementById('header-gold-display');
           if (headerGoldEl) {
-            headerGoldEl.textContent = ` Gold : ${formatNumber(newGold)} `;
+            headerGoldEl.textContent = `${formatNumber(newGold)}`;
           }
 
           await GameDB.deleteInventoryItem(item.id);
@@ -557,7 +557,7 @@ export function renderStorageTab() {
       
       const headerGoldEl = document.getElementById('header-gold-display');
       if (headerGoldEl) {
-        headerGoldEl.textContent = ` Gold : ${formatNumber(newGold)} `;
+        headerGoldEl.textContent = `${formatNumber(newGold)}`;
       }
       
       if (item.slot) {

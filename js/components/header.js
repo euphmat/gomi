@@ -24,7 +24,7 @@ export function createHeader(gameState) {
       </div>
 
       <!-- Gold -->
-      <div class="flex items-center bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.15)] rounded-md px-2.5 py-1 shrink-0"> <span id="header-gold-display" class="text-xs text-amber-200 font-mono font-bold tracking-tight"> Gold : ${formatNumber(gameState.gold)} </span> </div>
+      <div class="flex items-center gap-1 bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.15)] rounded-md px-2.5 py-1 shrink-0"> <span class="material-symbols-outlined text-[14px] text-amber-200 leading-none">toll</span> <span id="header-gold-display" class="text-xs text-amber-200 font-mono font-bold tracking-tight">${formatNumber(gameState.gold)}</span> </div>
 
       <!-- Refresh -->
       <button id="btn-hard-refresh" class="shrink-0 bg-emerald-800/80 border border-emerald-700/50 rounded-md px-2.5 py-1 text-xs text-emerald-100 font-medium hover:bg-emerald-700 active:bg-emerald-900 transition-colors duration-150" title="最新版に更新"> <span class="material-symbols-outlined text-base leading-none align-middle">refresh</span> </button>

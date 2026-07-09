@@ -242,7 +242,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
       // ヘッダーのゴールド表示更新
       const goldDisplay = document.getElementById('header-gold-display');
-      if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(updatedGold)} `;
+      if (goldDisplay) goldDisplay.textContent = `${formatNumber(updatedGold)}`;
 
       // 成功演出
       showMedalCraftAnimation(nextRank, targetEntity);

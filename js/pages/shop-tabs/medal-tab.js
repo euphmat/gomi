@@ -415,7 +415,7 @@ export function renderMedalTab() {
 
             // ヘッダーのゴールド表示も更新
             const goldDisplay = document.getElementById('header-gold-display');
-            if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
+            if (goldDisplay) goldDisplay.textContent = `${formatNumber(currentGold)}`;
 
             // 成功演出
             showCraftSuccessAnimation(container, nextRank, monster);

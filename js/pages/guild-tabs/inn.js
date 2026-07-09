@@ -107,7 +107,7 @@ export function renderInnTab() {
     
     // Update header gold display
     const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(newGold)} `;
+    if (goldDisplay) goldDisplay.textContent = `${formatNumber(newGold)}`;
 
     const rawEquip = await GameDB.getAllEquipment();
     const equipMap = buildEquipmentMap(rawEquip);

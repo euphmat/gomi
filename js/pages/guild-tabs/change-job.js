@@ -77,7 +77,7 @@ export function renderChangeJobTab() {
       currentGold = gold - cost;
       await GameDB.setGameState('gold', currentGold);
       const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
+    if (goldDisplay) goldDisplay.textContent = `${formatNumber(currentGold)}`;
       
       if (!char.unlockedJobs) char.unlockedJobs = ['norvice'];
       char.unlockedJobs.push(jobDef.id);
@@ -185,7 +185,7 @@ export function renderChangeJobTab() {
     currentGold = gold - cost;
     await GameDB.setGameState('gold', currentGold);
     const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
+    if (goldDisplay) goldDisplay.textContent = `${formatNumber(currentGold)}`;
 
     const oldBase = char.baseStats;
     const oldHp = char.hp.max;
@@ -239,7 +239,7 @@ export function renderChangeJobTab() {
     currentGold = gold - cost;
     await GameDB.setGameState('gold', currentGold);
     const goldDisplay = document.getElementById('header-gold-display');
-    if (goldDisplay) goldDisplay.textContent = ` Gold : ${formatNumber(currentGold)} `;
+    if (goldDisplay) goldDisplay.textContent = `${formatNumber(currentGold)}`;
 
     // 対象の職業のスキルをクリア
     if (char.jobSkills && char.jobSkills[targetJobId]) {
