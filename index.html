@@ -150,7 +150,9 @@
 
     body {
       font-family: 'DotGothic16', system-ui, sans-serif;
-      background-color: #0b0b19;
+      /* Match the footer so Safari can never reveal a differently coloured
+         strip while its visual viewport is resizing. */
+      background-color: #020617;
       color: #e5e7eb;
       margin: 0;
       padding: 0;
@@ -193,6 +195,9 @@
         max(0px, calc(100lvh - 100dvh))
       );
       background-color: rgb(2 6 23);
+      /* Cover sub-pixel rounding and the transient area exposed while the
+         iOS Safari toolbar animates. This is paint-only and changes no layout. */
+      box-shadow: 0 100px 0 100px rgb(2 6 23);
     }
 
     /* ─── Custom Scrollbar ──────────────────────────── */
