@@ -24,25 +24,11 @@ import { createNavBar, initNavBar } from './components/nav-bar.js';
 import { GameDB } from './data/database.js';
 import { JOBS } from './jobs/index.js';
 
-// --- Dev Mode Reset on Reload ---
+// Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
 if (parseInt(localStorage.getItem('autoBattleSpeed') || 1) > 5) {
   localStorage.setItem('autoBattleSpeed', 5);
 }
-
-
-// --- SetTimeout Patch for High Speed ---
-const originalSetTimeout = window.setTimeout;
-let _cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
-window.addEventListener('settingsChanged', () => {
-  _cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
-});
-window.setTimeout = function(fn, delay, ...args) {
-  if (_cachedBattleSpeed >= 10 && delay > 0 && typeof delay === 'number' && delay <= 2000) {
-    delay = 0; // 開発者モード中はアニメーション用の遅延を強制0msにする
-  }
-  return originalSetTimeout(fn, delay, ...args);
-};
 
 // ─── Page Imports ────────────────────────────────────────
 import { renderStatusPage }  from './pages/status.js';
@@ -187,25 +173,6 @@ class App {
    * Bind the settings button to open a settings modal.
    */
   initSettingsButton() {
-    const headerLoc = document.getElementById('header-location');
-    if (headerLoc) {
-      headerLoc.style.cursor = 'default';
-      let clickCount = 0;
-      let clickTimer = null;
-      headerLoc.addEventListener('click', () => {
-        clickCount++;
-        clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => { clickCount = 0; }, 500);
-        if (clickCount >= 10) {
-          clickCount = 0;
-          if (localStorage.getItem('devModeEnabled') !== 'true') {
-            localStorage.setItem('devModeEnabled', 'true');
-            alert('【開発者モード解放】\n速度設定に10〜50倍速が追加されました。\n設定を開き直してください。');
-          }
-        }
-      });
-    }
-
     const btn = document.getElementById('btn-setting');
     if (btn) {
       btn.addEventListener('click', () => this.showSettingsModal());
@@ -366,8 +333,7 @@ class App {
             </div>
             <div class="px-1">
               ${(() => {
-                const devMode = localStorage.getItem('devModeEnabled') === 'true';
-                const speeds = devMode ? [1, 2, 3, 4, 5, 10, 20, 30, 40, 50] : [1, 2, 3, 4, 5];
+                const speeds = [1, 2, 3, 4, 5];
                 const current = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
                 let idx = speeds.indexOf(current);
                 if (idx === -1) idx = speeds.length - 1;
@@ -382,8 +348,7 @@ class App {
                     ${speeds.map((v, i) => `
                       <div class="speed-step ${current >= v ? 'active' : ''}"
                            data-speed="${v}" data-idx="${i}">
-                        <span class="text-[9px] ${current >= v ? 'text-yellow-400 font-bold' : 'text-gray-600'} transition-colors"
-                              style="${speeds.length > 5 ? 'transform: scale(0.85); transform-origin: center; white-space: nowrap;' : ''}">${v === 1 ? '等倍' : v + 'x'}</span>
+                        <span class="text-[9px] ${current >= v ? 'text-yellow-400 font-bold' : 'text-gray-600'} transition-colors">${v === 1 ? '等倍' : v + 'x'}</span>
                       </div>
                     `).join('')}
                   </div>
@@ -488,17 +453,7 @@ class App {
     const rowBattleAnim = document.getElementById('setting-row-battle-anim');
     const toggleBattleAnim = document.getElementById('toggle-battle-anim');
     if (rowBattleAnim && toggleBattleAnim) {
-      const currentSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
-      if (currentSpeed >= 10) {
-        toggleBattleAnim.style.pointerEvents = 'none';
-        rowBattleAnim.style.opacity = '0.5';
-        rowBattleAnim.style.pointerEvents = 'none';
-      }
-
       rowBattleAnim.addEventListener('click', () => {
-        const speed = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
-        if (speed >= 10) return;
-
         const isActive = toggleBattleAnim.classList.toggle('active');
         localStorage.setItem('disableBattleAnimations', isActive);
         window.dispatchEvent(new Event('settingsChanged'));
@@ -543,32 +498,6 @@ class App {
     const applySpeedSetting = (val) => {
       updateSpeedUI(val);
       localStorage.setItem('autoBattleSpeed', val);
-      
-      const toggleAnim = document.getElementById('toggle-battle-anim');
-      const section = toggleAnim ? toggleAnim.closest('.settings-section') : null;
-      
-      // 10倍速以上ならアニメーションを強制無効化し、トグルを操作不可に
-      if (val >= 10) {
-        localStorage.setItem('disableBattleAnimations', 'true');
-        if (toggleAnim) {
-          toggleAnim.classList.add('active');
-          toggleAnim.style.pointerEvents = 'none';
-          if (section) {
-            section.style.opacity = '0.5';
-            section.style.pointerEvents = 'none';
-          }
-        }
-      } else {
-        // 5倍速以下に戻した場合は操作可能に
-        if (toggleAnim) {
-          toggleAnim.style.pointerEvents = '';
-          if (section) {
-            section.style.opacity = '';
-            section.style.pointerEvents = '';
-          }
-        }
-      }
-      
       window.dispatchEvent(new Event('settingsChanged'));
     };
 

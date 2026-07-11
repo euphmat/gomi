@@ -104,12 +104,9 @@ export const atbMethods = {
       this.atbWorkerUrl = null;
     }
 
-    // speedMultが高い場合はtick間隔を極限まで短くする
+    // Adjust the tick interval for the highest supported speed.
     let tickInterval = 100;
-    if (this.speedMult >= 50) tickInterval = 5;
-    else if (this.speedMult >= 20) tickInterval = 15;
-    else if (this.speedMult >= 10) tickInterval = 30;
-    else if (this.speedMult >= 5) tickInterval = 50;
+    if (this.speedMult >= 5) tickInterval = 50;
 
     const workerCode = `
       let timer = null;
@@ -150,7 +147,7 @@ export const atbMethods = {
       
       let loops = 0;
       // アニメ無効時はティックを待たずに次の行動者が決まるまで一気に時間を進める
-      const MAX_LOOPS = disableAnim ? 50 : (this.speedMult >= 10 ? 20 : (this.speedMult >= 5 ? 5 : 1));
+      const MAX_LOOPS = disableAnim ? 50 : (this.speedMult >= 5 ? 5 : 1);
       
       while (!nextActor && loops < MAX_LOOPS) {
         loops++;

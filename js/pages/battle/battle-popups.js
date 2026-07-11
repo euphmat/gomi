@@ -85,8 +85,8 @@ export const popupMethods = {
 
     const speed = this.speedMult || 1;
 
-    // --- High-speed throttle: limit active floating popups ---
-    const maxActive = speed >= 10 ? 10 : speed >= 5 ? 30 : 150;
+    // Limit active floating popups at the highest supported speed.
+    const maxActive = speed >= 5 ? 30 : 150;
     const activeCount = this._domPool ? this._domPool.filter(p => p.active && p.type === 'float').length : 0;
     if (activeCount >= maxActive) {
       // Release the oldest active float to make room
@@ -114,7 +114,7 @@ export const popupMethods = {
     }
 
     // Limit popup animation speed at high game speeds so numbers remain readable
-    const effectiveSpeed = speed >= 10 ? speed : Math.min(speed, 2.0);
+    const effectiveSpeed = Math.min(speed, 2.0);
     const dur = (config.duration || 800) / effectiveSpeed;
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top;
@@ -173,9 +173,6 @@ export const popupMethods = {
     if (document.hidden) return;
 
     const speed = this.speedMult || 1;
-
-    // At very high speed, skip label popups entirely to avoid DOM congestion
-    if (speed >= 10) return;
 
     const el = this.container.querySelector(`#${elementId}`);
     if (!el) return;

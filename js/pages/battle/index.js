@@ -694,14 +694,17 @@ class BattleManager {
   renderTabContent(force = false) {
     // Polling belongs only to its visible tab. Stop it immediately on a tab
     // change instead of retaining detached containers until the next tick.
-    if (this.currentTab !== 'pet' && this.elements.tabContent._petSyncTimer) {
-      clearInterval(this.elements.tabContent._petSyncTimer);
-      this.elements.tabContent._petSyncTimer = null;
-    }
-    if (this.currentTab !== 'medal' && this.elements.tabContent._medalSyncTimer) {
-      clearInterval(this.elements.tabContent._medalSyncTimer);
-      this.elements.tabContent._medalSyncTimer = null;
-    }
+    const tabBodies = [this.elements.tabContent, ...this.elements.tabContent.querySelectorAll('.sub-tab-body')];
+    tabBodies.forEach(body => {
+      if (this.currentTab !== 'pet' && body._petSyncTimer) {
+        clearInterval(body._petSyncTimer);
+        body._petSyncTimer = null;
+      }
+      if (this.currentTab !== 'medal' && body._medalSyncTimer) {
+        clearInterval(body._medalSyncTimer);
+        body._medalSyncTimer = null;
+      }
+    });
 
     if (this.currentTab === 'skill') {
       this.elements.tabContent.dataset.renderedTab = 'skill';
@@ -755,7 +758,19 @@ class BattleManager {
       wrapper = this.elements.tabContent.querySelector('.sub-tab-wrapper');
     }
     const header = wrapper.querySelector('.sub-tab-header');
-    const body = wrapper.querySelector('.sub-tab-body');
+    const previousBody = wrapper.querySelector('.sub-tab-body');
+
+    // Pet / Medal render asynchronously. Give every render its own body so a
+    // slower, older render can only update a detached node after a tab change.
+    if (previousBody?._petSyncTimer) clearInterval(previousBody._petSyncTimer);
+    if (previousBody?._medalSyncTimer) clearInterval(previousBody._medalSyncTimer);
+    const body = document.createElement('div');
+    body.className = 'sub-tab-body flex-1 min-h-0 overflow-y-auto custom-scrollbar relative bg-transparent pr-1';
+    // The Pet / Medal renderers receive this inner body and use its marker to
+    // discard stale async results. Keep the marker on the actual render target,
+    // not only on the outer #tab-content element.
+    body.dataset.renderedTab = this.currentTab;
+    previousBody.replaceWith(body);
 
     const monsterDefs = (this.floorUniqueMonsterIds || []).map(mId => MONSTERS.find(m => m.id === mId)).filter(Boolean);
     
