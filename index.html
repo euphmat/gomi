@@ -143,7 +143,9 @@
     html, body {
       width: 100%;
       height: 100%;
+      height: 100lvh;
       overflow: hidden;
+      background-color: #020617;
     }
 
     body {
@@ -163,11 +165,34 @@
     #app {
       width: 100%;
       height: 100vh;
-      height: 100dvh;
+      /*
+       * iOS Safari exposes the area behind its collapsing bottom toolbar in
+       * screenshots, while 100dvh stops above that area.  Size the painted
+       * app shell to the large viewport and let #game-nav absorb the part
+       * which is temporarily covered by browser chrome (see below).
+       */
+      height: 100lvh;
       background-image:
         linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
       background-size: 20px 20px;
+    }
+
+    /*
+     * Keep the buttons in the dynamic (actually usable) viewport, but extend
+     * the footer's own background to the physical bottom edge.  This removes
+     * the body-coloured strip seen below the footer on iPhone Safari.  The
+     * max() guard makes the rule harmless when the toolbar is collapsed or on
+     * browsers where the large and dynamic viewports are identical.
+     */
+    #game-nav {
+      box-sizing: border-box;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-bottom: calc(
+        env(safe-area-inset-bottom, 0px) +
+        max(0px, calc(100lvh - 100dvh))
+      );
+      background-color: rgb(2 6 23);
     }
 
     /* ─── Custom Scrollbar ──────────────────────────── */

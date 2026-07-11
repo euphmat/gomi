@@ -53,6 +53,12 @@ class BattleManager {
     this._lastRenderedAutoBattle = false;
     this._visibilityHandler = null;
     this._skillCache = new Map();
+    this._initGeneration = 0;
+
+    // Register lifecycle cleanup before any asynchronous initialization starts.
+    // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
+    // and the detached battle page would start a Worker after it has been removed.
+    this._attachRouteChangeHandler();
 
     this.elements = {
       enemyArea: container.querySelector('#enemy-area'),
@@ -83,8 +89,17 @@ class BattleManager {
   }
   
   async init() {
+    if (!this.container.isConnected || window.location.hash !== '#/battle') {
+      this.stopAtbLoop();
+      this.cleanupBattleDOM();
+      return;
+    }
+    // endBattle() removes the previous handler while the result/transition is
+    // pending, so automatic retries and floor changes must attach it again.
+    this._attachRouteChangeHandler();
     // Stop existing ATB loop before re-initializing
-    this.stopAtbLoop();
+    this.stopAtbLoop(false, false);
+    const initGeneration = ++this._initGeneration;
 
     let effectsLayer = document.getElementById('battle-effects-layer');
     if (!effectsLayer) {
@@ -109,6 +124,16 @@ class BattleManager {
     this.currentGold = await GameDB.getGameState('gold') || 0;
     this.ranchData = await GameDB.getGameState('ranch_data') || {};
     this._needsSave = false;
+
+    // The page may have been replaced while the database reads above were in
+    // flight. Never attach listeners or start a Worker for detached content.
+    if (initGeneration !== this._initGeneration ||
+        !this.container.isConnected ||
+        window.location.hash !== '#/battle') {
+      this.stopAtbLoop();
+      this.cleanupBattleDOM();
+      return;
+    }
 
     const isReinit = this.elements.enemyArea.children.length > 0;
 
@@ -173,7 +198,15 @@ class BattleManager {
       this.selectedPartyMember = this.party[0];
     }
 
-    const monsterIds = this.resolveMonsters(this.floorDef.monsters);
+    const maxMonstersPerType = 4;
+    const resolvedMonsterIds = this.resolveMonsters(this.floorDef.monsters);
+    const initialMonsterCounts = new Map();
+    const monsterIds = resolvedMonsterIds.filter(monsterId => {
+      const count = initialMonsterCounts.get(monsterId) || 0;
+      if (count >= maxMonstersPerType) return false;
+      initialMonsterCounts.set(monsterId, count + 1);
+      return true;
+    });
 
     const allFloorMonsterIds = this.getAllPossibleMonsters(this.floorDef.monsters);
     this.floorUniqueMonsterIds = allFloorMonsterIds;
@@ -186,7 +219,9 @@ class BattleManager {
     for (const mId of uniqueMonsterIds) {
       const medalRankIndex = this.playerMedals[mId] !== undefined ? this.playerMedals[mId] : -1;
       const spawnBonus = calcMedalSpawnBonus(medalRankIndex);
-      for (let j = 0; j < spawnBonus; j++) {
+      const currentCount = initialMonsterCounts.get(mId) || 0;
+      const bonusToAdd = Math.min(spawnBonus, maxMonstersPerType - currentCount);
+      for (let j = 0; j < bonusToAdd; j++) {
         monsterIds.push(mId);
       }
     }
@@ -246,6 +281,17 @@ class BattleManager {
     }
     
     this.startAtbLoop();
+  }
+
+  _attachRouteChangeHandler() {
+    if (this._routeChangeHandler) return;
+    this._routeChangeHandler = () => {
+      if (window.location.hash !== '#/battle') {
+        this.stopAtbLoop();
+        this.cleanupBattleDOM();
+      }
+    };
+    window.addEventListener('hashchange', this._routeChangeHandler);
   }
 
   getAllPossibleMonsters(monsterDefs) {

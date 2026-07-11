@@ -4,8 +4,11 @@
  */
 
 export const atbMethods = {
-  stopAtbLoop() {
+  stopAtbLoop(invalidateInit = true, removeRouteHandler = true) {
     this.isStopped = true;
+    if (invalidateInit) {
+      this._initGeneration = (this._initGeneration || 0) + 1;
+    }
     this._updateEntitiesPending = false;
     if (this.elements?.tabContent) {
       if (this.elements.tabContent._petSyncTimer) {
@@ -45,7 +48,7 @@ export const atbMethods = {
       document.removeEventListener('visibilitychange', this._visibilityHandler);
       this._visibilityHandler = null;
     }
-    if (this._routeChangeHandler) {
+    if (removeRouteHandler && this._routeChangeHandler) {
       window.removeEventListener('hashchange', this._routeChangeHandler);
       this._routeChangeHandler = null;
     }
@@ -59,6 +62,12 @@ export const atbMethods = {
   },
 
   startAtbLoop() {
+    // Guard every restart, including automatic floor/dungeon loops, against a
+    // route change that happened during asynchronous battle initialization.
+    if (!this.container?.isConnected || window.location.hash !== '#/battle') {
+      this.stopAtbLoop();
+      return;
+    }
     this.isStopped = false;
     // Cache localStorage reads to avoid I/O on every tick
     this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
@@ -279,11 +288,5 @@ export const atbMethods = {
     };
     document.addEventListener('visibilitychange', this._visibilityHandler);
 
-    this._routeChangeHandler = () => {
-      if (window.location.hash !== '#/battle') {
-        this.stopAtbLoop();
-      }
-    };
-    window.addEventListener('hashchange', this._routeChangeHandler);
   }
 };
