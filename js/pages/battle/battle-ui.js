@@ -1,4 +1,5 @@
 import { MEDAL_RANKS } from '../../definitions/medal-definitions.js';
+import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definitions/equipment-drops.js';
 import { formatNumber } from '../../utils/format.js';
 
 export function getActiveStateIconsHTML(entity) {
@@ -366,8 +367,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
 
   // 3. Drops (List)
   let dropsHtml = '';
-  if (targetEntity.drops && targetEntity.drops.length > 0) {
-    dropsHtml = targetEntity.drops.map(d => {
+  const materialDropRows = (targetEntity.drops || []).map(d => {
       const mat = materials.find(m => m.id === d.itemId);
       const itemName = mat ? mat.name : d.itemId;
       const itemImg = mat && mat.image 
@@ -390,7 +390,21 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           <span class="text-[10px] font-black ${rateColor} px-1.5 py-[1px] rounded border shrink-0">${rate.toFixed(2).replace(/\.?0+$/, '')}%</span>
         </div>
       `;
-    }).join('');
+    });
+  const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
+    <div class="flex items-center justify-between bg-slate-950/50 border border-amber-800/50 rounded-lg px-1.5 py-0.5 hover:bg-slate-900/80 transition-colors gap-1">
+      <div class="flex items-center gap-1.5 flex-1 min-w-0">
+        <div class="w-5 h-5 rounded bg-slate-900 flex items-center justify-center border border-amber-800/50 shrink-0">
+          <img src="${equipment.image}" class="w-4 h-4 object-contain drop-shadow-sm" onerror="this.style.display='none'">
+        </div>
+        <span class="text-[11px] font-bold text-amber-100 break-words leading-tight pr-1 flex-1">${equipment.name}</span>
+      </div>
+      <span class="text-[10px] font-black text-amber-400 bg-amber-950/80 border-amber-800/50 px-1.5 py-[1px] rounded border shrink-0">${EQUIPMENT_DROP_RATE}%</span>
+    </div>
+  `);
+  const dropRows = [...materialDropRows, ...equipmentDropRows];
+  if (dropRows.length > 0) {
+    dropsHtml = dropRows.join('');
   } else {
     dropsHtml = '<div class="text-[10px] text-slate-500 italic p-2 text-center bg-slate-950/30 rounded border border-slate-800/50">ドロップ情報なし</div>';
   }

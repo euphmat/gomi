@@ -7,6 +7,7 @@ import { GameDB } from '../../data/database.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS } from '../../definitions/medal-definitions.js';
+import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definitions/equipment-drops.js';
 import { calcFinalStats } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
@@ -221,6 +222,19 @@ export const resultMethods = {
       }
     }
 
+    // Equipment uses its own fixed roll and is never affected by kill-count bonuses.
+    const equipmentCandidates = getEquipmentDropsForMonster(enemy);
+    for (const equipment of equipmentCandidates) {
+      if (Math.random() * 100 >= EQUIPMENT_DROP_RATE) continue;
+      const uniqueId = `${equipment.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+
+      if (!this._pendingEquipmentDrops) this._pendingEquipmentDrops = [];
+      this._pendingEquipmentDrops.push({ id: uniqueId, baseId: equipment.id });
+      this._needsSave = true;
+
+      drops.push({ text: equipment.name, image: equipment.image, color: 'text-amber-300' });
+    }
+
     if (hasNewDrops && this.currentTab === 'item' && !document.hidden) {
       this.renderItemTab();
     }
@@ -319,6 +333,12 @@ export const resultMethods = {
         const goldDisplay = document.getElementById('header-gold-display');
         if (goldDisplay) goldDisplay.textContent = `${formatNumber(this.currentGold)}`;
       }
+    }
+    if (this._pendingEquipmentDrops) {
+      for (const equipment of this._pendingEquipmentDrops) {
+        await GameDB.putEquipment(equipment);
+      }
+      this._pendingEquipmentDrops = [];
     }
     this._needsSave = false;
   },

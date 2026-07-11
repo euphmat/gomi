@@ -5,6 +5,7 @@ import { ARMORS } from '../../definitions/armors.js';
 import { SHIELDS } from '../../definitions/shields.js';
 import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
+import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definitions/equipment-drops.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
 
@@ -293,8 +294,7 @@ export function renderMonsterLibraryTab() {
 
     // Drops Section
     let dropsSection = '';
-    if (monster.drops && monster.drops.length > 0) {
-      const dropHtml = monster.drops.map(drop => {
+    const materialDropRows = (monster.drops || []).map(drop => {
         const itemDef = ALL_DEFINITIONS.find(d => d.id === drop.itemId);
         const itemName = itemDef ? itemDef.name : drop.itemId;
         const baseId = itemDef ? (itemDef.baseId || itemDef.id) : drop.itemId;
@@ -313,7 +313,17 @@ export function renderMonsterLibraryTab() {
         const rateColor = isDefeated ? 'text-blue-400' : 'text-gray-600';
         
         return createRow(iconSrc, itemName, 'ドロップ率', rateValue, rateColor);
-      }).join('');
+      });
+    const equipmentDropRows = getEquipmentDropsForMonster(monster).map(itemDef => {
+      const isItemAcquired = acquiredBaseIds.has(itemDef.id);
+      const imgClass = isItemAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+      const iconSrc = `<div class="w-8 h-8 bg-gray-900 rounded border border-amber-700/60 flex items-center justify-center overflow-hidden shrink-0"><img src="${itemDef.image}" class="${imgClass}" onerror="this.style.display='none'"></div>`;
+      const rateValue = isDefeated ? `${EQUIPMENT_DROP_RATE}%` : '???%';
+      return createRow(iconSrc, itemDef.name, '装備ドロップ率', rateValue, isDefeated ? 'text-amber-400' : 'text-gray-600');
+    });
+    const dropRows = [...materialDropRows, ...equipmentDropRows];
+    if (dropRows.length > 0) {
+      const dropHtml = dropRows.join('');
       
       dropsSection = renderListSection('ドロップアイテム', 'redeem', dropHtml);
     } else {
