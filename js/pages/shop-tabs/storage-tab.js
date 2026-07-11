@@ -3,6 +3,12 @@ import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
+
+const STORAGE_SETTINGS_KEYS = {
+  sellMode: 'shop.storage.sellMode',
+  viewMode: 'shop.storage.viewMode',
+};
+
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
   water: { icon: 'water_drop', color: 'text-blue-500', label: 'Water' },
@@ -36,9 +42,10 @@ export function renderStorageTab() {
   // 状態管理
   let items = [];
   let activeFilter = 'all';
-  let viewMode = 'grid'; // 'grid' | 'list'
+  const storedViewMode = localStorage.getItem(STORAGE_SETTINGS_KEYS.viewMode);
+  let viewMode = storedViewMode === 'list' ? 'list' : 'grid'; // 'grid' | 'list'
   let currentPage = 1;
-  let sellMode = false;
+  let sellMode = localStorage.getItem(STORAGE_SETTINGS_KEYS.sellMode) === 'true';
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -72,7 +79,10 @@ export function renderStorageTab() {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
           currentPage = 1;
-          if (activeFilter !== 'material') sellMode = false;
+          if (activeFilter !== 'material') {
+            sellMode = false;
+            localStorage.setItem(STORAGE_SETTINGS_KEYS.sellMode, 'false');
+          }
           renderFilters();
           renderGrid();
         }
@@ -94,13 +104,13 @@ export function renderStorageTab() {
           id: 'sellMode', label: '売却モード', type: 'toggle', icon: 'payments', activeColor: 'bg-rose-500',
           condition: () => activeFilter === 'material',
           getValue: () => sellMode,
-          onChange: (val) => { sellMode = val; renderGrid(); }
+          onChange: (val) => { sellMode = val; localStorage.setItem(STORAGE_SETTINGS_KEYS.sellMode, String(val)); renderGrid(); }
         },
         {
           id: 'viewMode', label: '表示形式', type: 'radio', icon: 'grid_view', activeColor: 'bg-blue-600 text-white',
           getValue: () => viewMode,
           options: [{icon: 'grid_view', value: 'grid'}, {icon: 'view_list', value: 'list'}],
-          onChange: (val) => { viewMode = val; currentPage = 1; renderGrid(); }
+          onChange: (val) => { viewMode = val; localStorage.setItem(STORAGE_SETTINGS_KEYS.viewMode, val); currentPage = 1; renderGrid(); }
         }
       ]
     });

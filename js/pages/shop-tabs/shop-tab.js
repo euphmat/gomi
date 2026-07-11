@@ -11,6 +11,18 @@ import { showSettingsModal } from '../../components/settings-modal.js';
 
 const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
+const SHOP_SETTINGS_KEYS = {
+  showUnownedOnly: 'shop.showUnownedOnly',
+  purchaseMode: 'shop.purchaseMode',
+  purchaseQuantity: 'shop.purchaseQuantity',
+  viewMode: 'shop.viewMode',
+};
+
+const getStoredBoolean = (key, defaultValue = false) => {
+  const value = localStorage.getItem(key);
+  return value === null ? defaultValue : value === 'true';
+};
+
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
   water: { icon: 'water_drop', color: 'text-blue-500', label: 'Water' },
@@ -52,11 +64,13 @@ export function renderShopTab() {
   let currentEquipmentCount = 0;
   let equipmentCountMap = {};
   let activeFilter = 'all';
-  let viewMode = 'grid'; // 'grid' | 'list'
+  const storedViewMode = localStorage.getItem(SHOP_SETTINGS_KEYS.viewMode);
+  const storedPurchaseQuantity = localStorage.getItem(SHOP_SETTINGS_KEYS.purchaseQuantity);
+  let viewMode = storedViewMode === 'list' ? 'list' : 'grid'; // 'grid' | 'list'
   let currentPage = 1;
-  let showUnownedOnly = false;
-  let purchaseMode = false;
-  let purchaseQuantity = 1;
+  let showUnownedOnly = getStoredBoolean(SHOP_SETTINGS_KEYS.showUnownedOnly);
+  let purchaseMode = getStoredBoolean(SHOP_SETTINGS_KEYS.purchaseMode);
+  let purchaseQuantity = storedPurchaseQuantity === 'max' ? 'max' : 1;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -109,25 +123,25 @@ export function renderShopTab() {
         {
           id: 'unowned', label: '未所持のみ表示', type: 'toggle', icon: 'inventory_2', activeColor: 'bg-emerald-500',
           getValue: () => showUnownedOnly,
-          onChange: (val) => { showUnownedOnly = val; currentPage = 1; renderFilters(); renderGrid(); }
+          onChange: (val) => { showUnownedOnly = val; localStorage.setItem(SHOP_SETTINGS_KEYS.showUnownedOnly, String(val)); currentPage = 1; renderFilters(); renderGrid(); }
         },
         {
           id: 'purchaseMode', label: '購入モード', type: 'toggle', icon: 'shopping_cart', activeColor: 'bg-amber-500',
           getValue: () => purchaseMode,
-          onChange: (val) => { purchaseMode = val; renderFilters(); }
+          onChange: (val) => { purchaseMode = val; localStorage.setItem(SHOP_SETTINGS_KEYS.purchaseMode, String(val)); renderFilters(); }
         },
         {
           id: 'purchaseQty', label: '購入数', type: 'radio', icon: 'numbers', activeColor: 'bg-amber-600 text-white',
           condition: () => purchaseMode,
           getValue: () => purchaseQuantity,
           options: [{label: 'x1', value: 1}, {label: 'MAX', value: 'max'}],
-          onChange: (val) => { purchaseQuantity = val; renderFilters(); }
+          onChange: (val) => { purchaseQuantity = val; localStorage.setItem(SHOP_SETTINGS_KEYS.purchaseQuantity, String(val)); renderFilters(); }
         },
         {
           id: 'viewMode', label: '表示形式', type: 'radio', icon: 'grid_view', activeColor: 'bg-emerald-600 text-white',
           getValue: () => viewMode,
           options: [{icon: 'grid_view', value: 'grid'}, {icon: 'view_list', value: 'list'}],
-          onChange: (val) => { viewMode = val; currentPage = 1; renderFilters(); renderGrid(); }
+          onChange: (val) => { viewMode = val; localStorage.setItem(SHOP_SETTINGS_KEYS.viewMode, val); currentPage = 1; renderFilters(); renderGrid(); }
         }
       ]
     });
