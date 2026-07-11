@@ -6,6 +6,11 @@
 export const atbMethods = {
   stopAtbLoop() {
     this.isStopped = true;
+    if (this._entityPaintTimer) {
+      clearTimeout(this._entityPaintTimer);
+      this._entityPaintTimer = null;
+    }
+    this._updateEntitiesPending = false;
     if (this._pendingTimers) {
       this._pendingTimers.forEach(id => clearTimeout(id));
       this._pendingTimers = [];
@@ -51,8 +56,10 @@ export const atbMethods = {
     this.isStopped = false;
     // Cache localStorage reads to avoid I/O on every tick
     this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+    this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
     this._settingsHandler = () => {
       this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+      this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
     };
     window.addEventListener('settingsChanged', this._settingsHandler);
     let totalSpd = 0;
@@ -110,6 +117,12 @@ export const atbMethods = {
       if (this.isStopped) return;
 
       const disableAnim = this._cachedDisableAnim;
+      const now = performance.now();
+      // ATB bars are cosmetic. During auto battle, updating them more than ten
+      // times a second only creates extra style/layout work and device heat.
+      const shouldPaintAtb = !document.hidden &&
+        (!this.isAutoBattle || now - (this._lastAtbPaintAt || 0) >= 100);
+      if (shouldPaintAtb) this._lastAtbPaintAt = now;
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();
         if (this.currentTab === 'skill' || this.currentTab === 'item' || this.currentTab === 'info') {
@@ -144,7 +157,7 @@ export const atbMethods = {
             candidates.push({ type: 'party', entity: p, atb: p.atb });
           }
           
-          if (!document.hidden && loops === 1) { // 描画更新は最初のループのみ
+          if (shouldPaintAtb && loops === 1) { // 描画更新は最初のループのみ
             const atbEl = this.atbElements[p.elementId];
             if(atbEl) {
                if (disableAnim || this.speedMult >= 5) {
@@ -167,7 +180,7 @@ export const atbMethods = {
             candidates.push({ type: 'enemy', entity: e, atb: e.atb });
           }
 
-          if (!document.hidden && loops === 1) {
+          if (shouldPaintAtb && loops === 1) {
             const atbEl = this.atbElements[e.elementId];
             if(atbEl) {
                if (disableAnim || this.speedMult >= 5) {

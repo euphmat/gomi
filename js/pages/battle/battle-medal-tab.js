@@ -28,6 +28,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
   }
 
   let inventoryMap = {};
+  let currentPrism = await GameDB.getGameState('prism') || 0;
   const container = document.createElement('div');
   container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
@@ -202,9 +203,9 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     `;
     craftBtn.disabled = !canCraft;
     craftBtn.innerHTML = `
-      <div class="flex items-center justify-center gap-1.5">
+      <div class="flex items-center justify-center gap-1">
         <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
-        <span>${currentRank ? `${nextRank.name}へランクアップ` : `${nextRank.name}を鋳造`}</span>
+        <span>${currentRank ? '素材・Goldでアップ' : `${nextRank.name}を鋳造`}</span>
       </div>
     `;
 
@@ -258,7 +259,66 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       }, 500);
     };
 
-    craftPanel.appendChild(craftBtn);
+    const actionButtons = document.createElement('div');
+    actionButtons.className = currentRank ? 'grid grid-cols-2 gap-2' : 'w-full';
+    actionButtons.appendChild(craftBtn);
+
+    if (currentRank) {
+      const prismBtn = document.createElement('button');
+      prismBtn.id = 'battle-medal-prism-btn';
+      const canPrismUpgrade = currentPrism >= 1;
+      prismBtn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:from-fuchsia-500 hover:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      prismBtn.disabled = !canPrismUpgrade;
+      prismBtn.innerHTML = `
+        <div class="flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-[14px]">diamond</span>
+          <span>Prism 1個でアップ</span>
+          <span class="text-[9px] opacity-75">(<span data-prism-owned>${formatNumber(currentPrism)}</span>)</span>
+        </div>
+      `;
+
+      prismBtn.onclick = async () => {
+        if (prismBtn.disabled) return;
+        prismBtn.disabled = true;
+        prismBtn.dataset.processing = 'true';
+        const targetMonsterId = targetEntity.id;
+
+        const [latestPrismValue, latestMedalsValue] = await Promise.all([
+          GameDB.getGameState('prism'),
+          GameDB.getGameState('player_medals')
+        ]);
+        const latestPrism = latestPrismValue || 0;
+        const latestMedals = latestMedalsValue || {};
+        const latestRankIndex = latestMedals[targetMonsterId] !== undefined ? latestMedals[targetMonsterId] : -1;
+        if (latestPrism < 1 || latestRankIndex < 0 || latestRankIndex >= MEDAL_RANKS.length - 1) {
+          renderBattleMedalTab(tabContent, targetEntity, latestMedals, currentGold, onMedalUpdated);
+          return;
+        }
+
+        const upgradedRankIndex = latestRankIndex + 1;
+        const upgradedRank = MEDAL_RANKS[upgradedRankIndex];
+        currentPrism = latestPrism - 1;
+        latestMedals[targetMonsterId] = upgradedRankIndex;
+        playerMedals = latestMedals;
+
+        await GameDB.setGameState('prism', currentPrism);
+        await GameDB.setGameState('player_medals', playerMedals);
+
+        const prismDisplay = document.getElementById('header-prism-display');
+        if (prismDisplay) prismDisplay.textContent = formatNumber(currentPrism);
+
+        showMedalCraftAnimation(upgradedRank, targetEntity);
+        if (onMedalUpdated) onMedalUpdated(playerMedals, currentGold);
+
+        setTimeout(() => {
+          renderBattleMedalTab(tabContent, targetEntity, playerMedals, currentGold, onMedalUpdated);
+        }, 500);
+      };
+
+      actionButtons.appendChild(prismBtn);
+    }
+
+    craftPanel.appendChild(actionButtons);
     container.appendChild(craftPanel);
   } else if (isMaxRank) {
     // 最高ランク到達
@@ -289,13 +349,15 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     
     if (isMaxRank || !nextRank) return;
 
-    const [gold, allInv] = await Promise.all([
+    const [gold, prism, allInv] = await Promise.all([
       GameDB.getGameState('gold'),
+      GameDB.getGameState('prism'),
       GameDB.getAllInventory()
     ]);
     
     let currentGoldSync = gold || 0;
     currentGold = currentGoldSync; // Update upper scope
+    currentPrism = prism || 0;
 
     const newInvMap = {};
     (allInv || []).forEach(item => { newInvMap[item.id] = item.quantity || 0; });
@@ -336,6 +398,15 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       // update style
       btn.disabled = !canCraftSync;
       btn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+    }
+
+    const prismBtn = container.querySelector('#battle-medal-prism-btn');
+    if (prismBtn && prismBtn.dataset.processing !== 'true') {
+      const canPrismUpgrade = currentPrism >= 1;
+      prismBtn.disabled = !canPrismUpgrade;
+      prismBtn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:from-fuchsia-500 hover:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      const ownedEl = prismBtn.querySelector('[data-prism-owned]');
+      if (ownedEl) ownedEl.textContent = formatNumber(currentPrism);
     }
   }, 200);
 }

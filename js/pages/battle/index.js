@@ -320,7 +320,12 @@ class BattleManager {
   }
 
   get speedMult() {
-    return parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
+    // Battle code reads this value many times per tick. Keep the storage read
+    // out of the hot path; startAtbLoop refreshes it when settings change.
+    if (this._cachedBattleSpeed == null) {
+      this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
+    }
+    return this._cachedBattleSpeed;
   }
 
   get isAutoBattle() {

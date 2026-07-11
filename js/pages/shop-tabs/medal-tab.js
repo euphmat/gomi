@@ -20,6 +20,7 @@ export function renderMedalTab() {
   // --- 状態管理 ---
   let playerMedals = {};
   let currentGold = 0;
+  let currentPrism = 0;
   let inventoryMap = {};
   let discoveredMonsters = [];
   let unlockedDungeons = [];
@@ -177,6 +178,15 @@ export function renderMedalTab() {
     if (btn) {
       btn.disabled = !canCraft;
       btn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canCraft ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+    }
+
+    const prismBtn = detailContainer.querySelector('#medal-prism-btn');
+    if (prismBtn && prismBtn.dataset.processing !== 'true') {
+      const canPrismUpgrade = currentRankIndex >= 0 && currentPrism >= 1;
+      prismBtn.disabled = !canPrismUpgrade;
+      prismBtn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:from-fuchsia-500 hover:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      const ownedEl = prismBtn.querySelector('[data-prism-owned]');
+      if (ownedEl) ownedEl.textContent = formatNumber(currentPrism);
     }
   };
 
@@ -377,9 +387,9 @@ export function renderMedalTab() {
           `;
           craftBtn.disabled = !canCraft;
           craftBtn.innerHTML = `
-            <div class="flex items-center justify-center gap-1.5">
+            <div class="flex items-center justify-center gap-1">
               <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
-              <span>${currentRank ? `${nextRank.name}へランクアップ` : `${nextRank.name}を鋳造`}</span>
+              <span>${currentRank ? '素材・Goldでアップ' : `${nextRank.name}を鋳造`}</span>
             </div>
           `;
 
@@ -425,7 +435,65 @@ export function renderMedalTab() {
             render();
           };
 
-          craftSection.appendChild(craftBtn);
+          const actionButtons = document.createElement('div');
+          actionButtons.className = currentRank ? 'grid grid-cols-2 gap-2' : 'w-full';
+          actionButtons.appendChild(craftBtn);
+
+          if (currentRank) {
+            const prismBtn = document.createElement('button');
+            prismBtn.id = 'medal-prism-btn';
+            const canPrismUpgrade = currentPrism >= 1;
+            prismBtn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:from-fuchsia-500 hover:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+            prismBtn.disabled = !canPrismUpgrade;
+            prismBtn.innerHTML = `
+              <div class="flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">diamond</span>
+                <span>Prism 1個でアップ</span>
+                <span class="text-[9px] opacity-75">(<span data-prism-owned>${formatNumber(currentPrism)}</span>)</span>
+              </div>
+            `;
+
+            prismBtn.onclick = async () => {
+              if (prismBtn.disabled) return;
+              prismBtn.disabled = true;
+              prismBtn.dataset.processing = 'true';
+              const targetMonsterId = selectedMonsterId;
+
+              // 保存直前に最新値を読み直し、連打や別画面からの更新による二重消費を防ぐ
+              const [latestPrismValue, latestMedalsValue] = await Promise.all([
+                GameDB.getGameState('prism'),
+                GameDB.getGameState('player_medals')
+              ]);
+              const latestPrism = latestPrismValue || 0;
+              const latestMedals = latestMedalsValue || {};
+              const latestRankIndex = latestMedals[targetMonsterId] !== undefined ? latestMedals[targetMonsterId] : -1;
+              if (latestPrism < 1 || latestRankIndex < 0 || latestRankIndex >= MEDAL_RANKS.length - 1) {
+                currentPrism = latestPrism;
+                playerMedals = latestMedals;
+                render();
+                return;
+              }
+
+              const upgradedRankIndex = latestRankIndex + 1;
+              const upgradedRank = MEDAL_RANKS[upgradedRankIndex];
+              currentPrism = latestPrism - 1;
+              latestMedals[targetMonsterId] = upgradedRankIndex;
+              playerMedals = latestMedals;
+
+              await GameDB.setGameState('prism', currentPrism);
+              await GameDB.setGameState('player_medals', playerMedals);
+
+              const prismDisplay = document.getElementById('header-prism-display');
+              if (prismDisplay) prismDisplay.textContent = formatNumber(currentPrism);
+
+              showCraftSuccessAnimation(container, upgradedRank, monster);
+              updateHeader();
+              render();
+            };
+
+            actionButtons.appendChild(prismBtn);
+          }
+          craftSection.appendChild(actionButtons);
           detailPanel.appendChild(craftSection);
         } else if (isMaxRank) {
           // 最大ランク到達
@@ -531,12 +599,14 @@ export function renderMedalTab() {
   Promise.all([
     GameDB.getGameState('player_medals'),
     GameDB.getGameState('gold'),
+    GameDB.getGameState('prism'),
     GameDB.getAllInventory(),
     GameDB.getGameState('discovered_monsters'),
     GameDB.getGameState('unlockedDungeons')
-  ]).then(([pMedals, gold, invItems, dMonsters, uDungeons]) => {
+  ]).then(([pMedals, gold, prism, invItems, dMonsters, uDungeons]) => {
     playerMedals = pMedals || {};
     currentGold = gold || 0;
+    currentPrism = prism || 0;
     
     (invItems || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
     discoveredMonsters = dMonsters || [];
@@ -582,8 +652,9 @@ export function renderMedalTab() {
       clearInterval(syncTimer);
       return;
     }
-    const [gold, invItems, pMedals] = await Promise.all([
+    const [gold, prism, invItems, pMedals] = await Promise.all([
       GameDB.getGameState('gold'),
+      GameDB.getGameState('prism'),
       GameDB.getAllInventory(),
       GameDB.getGameState('player_medals')
     ]);
@@ -591,6 +662,11 @@ export function renderMedalTab() {
     let changed = false;
     if (currentGold !== (gold || 0)) {
       currentGold = gold || 0;
+      changed = true;
+    }
+
+    if (currentPrism !== (prism || 0)) {
+      currentPrism = prism || 0;
       changed = true;
     }
     
@@ -691,6 +767,11 @@ function showMedalHelpModal() {
   content.className = 'p-5 overflow-y-auto flex flex-col gap-5 text-sm text-slate-300 leading-relaxed';
   content.innerHTML = `
     <p>メダルは、特定のモンスター専用の証です。素材とゴールドを消費してメダルを「鋳造」または「ランクアップ」することができます。</p>
+
+    <div class="bg-gradient-to-r from-fuchsia-950/40 to-cyan-950/40 border border-fuchsia-700/40 p-3 rounded-xl flex items-start gap-2">
+      <span class="material-symbols-outlined text-fuchsia-300 text-lg">diamond</span>
+      <p class="text-xs"><strong class="text-fuchsia-200">Prismを1個</strong>消費すると、素材とゴールドを使わず、所持している任意のモンスターメダルを1段階ランクアップできます。未所持メダルの鋳造には使用できません。</p>
+    </div>
     
     <div class="bg-slate-950/40 border border-slate-800/60 p-4 rounded-xl flex flex-col gap-2 shadow-inner">
       <div class="flex items-center gap-2 mb-1">
