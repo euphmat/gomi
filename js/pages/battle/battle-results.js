@@ -54,7 +54,8 @@ export const resultMethods = {
       const medalBonus = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex].killBonus : 0;
       const countToAdd = 1 + medalBonus;
       this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + countToAdd;
-      window.dispatchEvent(new CustomEvent('quest:monster-kill', { detail: { monsterId: enemy.id, count: countToAdd } }));
+      // Daily quest progress counts actual defeats, not the medal kill bonus.
+      window.dispatchEvent(new CustomEvent('quest:monster-kill', { detail: { monsterId: enemy.id, count: 1 } }));
       this._needsSave = true;
     }
 
