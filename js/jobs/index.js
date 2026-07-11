@@ -11,17 +11,17 @@ import { black_knight } from './black_knight.js';
 import { paladin } from './paladin.js';
 
 export const JOB_STAT_GROWTH = {
-  [norvice.id]:      { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
-  [knight.id]:       { hp: [2, 4], mp: [0, 1], atk: [0, 2], def: [1, 2], matk: [0, 0], mdef: [0, 2], spd: [0, 1] },
-  [mage.id]:         { hp: [1, 2], mp: [2, 4], atk: [0, 0], def: [0, 1], matk: [2, 4], mdef: [1, 3], spd: [0, 1] },
-  [priest.id]:       { hp: [1, 2], mp: [3, 5], atk: [0, 0], def: [0, 1], matk: [1, 2], mdef: [2, 4], spd: [0, 1] },
-  [ranger.id]:       { hp: [1, 3], mp: [1, 2], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [1, 2], spd: [1, 3] },
-  [magic_knight.id]: { hp: [2, 3], mp: [1, 3], atk: [1, 2], def: [1, 2], matk: [1, 2], mdef: [1, 2], spd: [0, 1] },
-  [slime_master.id]: { hp: [2, 4], mp: [2, 4], atk: [1, 2], def: [1, 2], matk: [1, 3], mdef: [1, 3], spd: [1, 2] },
-  [dancer.id]:       { hp: [1, 2], mp: [1, 3], atk: [1, 2], def: [0, 1], matk: [1, 2], mdef: [1, 2], spd: [2, 4] },
-  [bird.id]:         { hp: [1, 2], mp: [2, 4], atk: [1, 2], def: [0, 2], matk: [0, 2], mdef: [1, 3], spd: [0, 2] },
-  [black_knight.id]: { hp: [3, 5], mp: [0, 1], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [0, 1], spd: [0, 1] },
-  [paladin.id]:      { hp: [3, 5], mp: [1, 3], atk: [0, 2], def: [1, 2], matk: [0, 2], mdef: [2, 4], spd: [0, 1] }
+  [norvice.id]:      { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [1, 1] },
+  [knight.id]:       { hp: [2, 4], mp: [0, 1], atk: [0, 2], def: [1, 2], matk: [0, 0], mdef: [0, 2], spd: [1, 1] },
+  [mage.id]:         { hp: [1, 2], mp: [2, 4], atk: [0, 0], def: [0, 1], matk: [2, 4], mdef: [1, 3], spd: [1, 1] },
+  [priest.id]:       { hp: [1, 2], mp: [3, 5], atk: [0, 0], def: [0, 1], matk: [1, 2], mdef: [2, 4], spd: [1, 1] },
+  [ranger.id]:       { hp: [1, 3], mp: [1, 2], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [1, 2], spd: [1, 1] },
+  [magic_knight.id]: { hp: [2, 3], mp: [1, 3], atk: [1, 2], def: [1, 2], matk: [1, 2], mdef: [1, 2], spd: [1, 1] },
+  [slime_master.id]: { hp: [2, 4], mp: [2, 4], atk: [1, 2], def: [1, 2], matk: [1, 3], mdef: [1, 3], spd: [1, 1] },
+  [dancer.id]:       { hp: [1, 2], mp: [1, 3], atk: [1, 2], def: [0, 1], matk: [1, 2], mdef: [1, 2], spd: [1, 1] },
+  [bird.id]:         { hp: [1, 2], mp: [2, 4], atk: [1, 2], def: [0, 2], matk: [0, 2], mdef: [1, 3], spd: [1, 1] },
+  [black_knight.id]: { hp: [3, 5], mp: [0, 1], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [0, 1], spd: [1, 1] },
+  [paladin.id]:      { hp: [3, 5], mp: [1, 3], atk: [0, 2], def: [1, 2], matk: [0, 2], mdef: [2, 4], spd: [1, 1] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
