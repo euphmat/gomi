@@ -390,27 +390,27 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       const mat = materials.find(m => m.id === d.itemId);
       const itemName = mat ? mat.name : d.itemId;
       const itemImg = mat && mat.image 
-        ? `<img src="${mat.image}" class="w-7 h-7 object-contain drop-shadow-sm">`
+        ? `<img src="${mat.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm">`
         : `<div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-slate-500" style="font-size: 18px; transform: scale(0.65);">category</span></div>`;
       
       const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus;
       const rateStyle = getDropRateStyle(rate);
 
       return `
-        <div class="h-[60px] flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 hover:brightness-125 transition-all gap-1 shadow-inner" title="${itemName}：ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
-          <div class="w-8 h-8 rounded-md bg-slate-900/90 flex items-center justify-center border border-slate-700/70 shrink-0 shadow-sm">
+        <div class="h-[60px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 hover:brightness-125 transition-all gap-1 shadow-inner" title="${itemName}：ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
+          <div class="w-full max-w-8 h-8 rounded-md bg-slate-900/90 flex items-center justify-center border border-slate-700/70 shrink-0 shadow-sm">
             ${itemImg}
           </div>
-          <span class="text-[9px] leading-none font-black ${rateStyle.rate} px-1.5 py-0.5 rounded border tabular-nums">${rate.toFixed(3).replace(/\.?0+$/, '')}%</span>
+          <span class="max-w-full overflow-hidden text-[9px] leading-none font-black ${rateStyle.rate} px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${rate.toFixed(3).replace(/\.?0+$/, '')}%</span>
         </div>
       `;
     });
   const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
-    <div class="h-[60px] flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-1 shadow-inner" title="${equipment.name}：ドロップ率 ${EQUIPMENT_DROP_RATE}%" aria-label="${equipment.name}、ドロップ率 ${EQUIPMENT_DROP_RATE}%">
-      <div class="w-8 h-8 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
-        <img src="${equipment.image}" class="w-7 h-7 object-contain drop-shadow-sm" onerror="this.style.display='none'">
+    <div class="h-[60px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-1 shadow-inner" title="${equipment.name}：ドロップ率 ${EQUIPMENT_DROP_RATE}%" aria-label="${equipment.name}、ドロップ率 ${EQUIPMENT_DROP_RATE}%">
+      <div class="w-full max-w-8 h-8 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
+        <img src="${equipment.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm" onerror="this.style.display='none'">
       </div>
-      <span class="text-[9px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1.5 py-0.5 rounded border tabular-nums">${EQUIPMENT_DROP_RATE}%</span>
+      <span class="max-w-full overflow-hidden text-[9px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${EQUIPMENT_DROP_RATE}%</span>
     </div>
   `);
   const dropRows = [...materialDropRows, ...equipmentDropRows];
@@ -486,7 +486,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
                 <span class="text-[9px] font-black text-emerald-200">素材</span>
                 <span class="text-[8px] text-slate-500">${materialDropRows.length}種</span>
               </div>
-              <div class="grid grid-cols-[repeat(auto-fill,minmax(58px,1fr))] gap-1">
+              <div class="grid gap-1" style="grid-template-columns: repeat(${materialDropRows.length}, minmax(0, 1fr));">
                 ${materialDropRows.join('')}
               </div>
             </section>
@@ -498,7 +498,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
                 <span class="text-[9px] font-black text-amber-200">装備</span>
                 <span class="text-[8px] text-slate-500">${equipmentDropRows.length}種</span>
               </div>
-              <div class="grid grid-cols-[repeat(auto-fill,minmax(58px,1fr))] gap-1">
+              <div class="grid gap-1" style="grid-template-columns: repeat(${equipmentDropRows.length}, minmax(0, 1fr));">
                 ${equipmentDropRows.join('')}
               </div>
             </section>
