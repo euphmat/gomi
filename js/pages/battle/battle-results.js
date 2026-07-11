@@ -20,12 +20,16 @@ export const resultMethods = {
 
     const allEnemiesDead = this.enemies.every(e => e.isDead);
     if (allEnemiesDead) {
+      this._updateEntitiesPending = false;
+      this._doUpdateEntities();
       this.endBattle(true, '勝利！');
       return;
     }
     
     const allPartyDead = this.party.every(p => p.isDead);
     if (allPartyDead) {
+      this._updateEntitiesPending = false;
+      this._doUpdateEntities();
       this.endBattle(false, '全滅した...');
       return;
     }

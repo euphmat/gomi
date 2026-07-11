@@ -63,20 +63,10 @@ export const rendererMethods = {
     if (document.hidden) return;
     if (this._updateEntitiesPending) return;
     this._updateEntitiesPending = true;
-
-    // Auto battle can request several complete entity refreshes during one
-    // action. Coalesce them to at most 10fps; combat calculation is untouched.
-    const minInterval = this.isAutoBattle ? 100 : 0;
-    const elapsed = performance.now() - (this._lastEntityPaintAt || 0);
-    const delay = Math.max(0, minInterval - elapsed);
-    this._entityPaintTimer = setTimeout(() => {
-      this._entityPaintTimer = null;
-      requestAnimationFrame(() => {
-        this._updateEntitiesPending = false;
-        this._lastEntityPaintAt = performance.now();
-        this._doUpdateEntities();
-      });
-    }, delay);
+    requestAnimationFrame(() => {
+      this._updateEntitiesPending = false;
+      this._doUpdateEntities();
+    });
   },
 
   _doUpdateEntities() {

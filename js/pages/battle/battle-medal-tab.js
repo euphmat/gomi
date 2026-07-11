@@ -337,23 +337,29 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
 
 
+  if (tabContent.dataset.renderedTab !== 'medal') return;
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
 
   // --- リアルタイム反映 (ポーリング) ---
-  tabContent._medalSyncTimer = setInterval(async () => {
+  let syncInProgress = false;
+  const medalSyncTimer = setInterval(async () => {
     if (!document.body.contains(container)) {
-      clearInterval(tabContent._medalSyncTimer);
+      clearInterval(medalSyncTimer);
+      if (tabContent._medalSyncTimer === medalSyncTimer) tabContent._medalSyncTimer = null;
       return;
     }
     
     if (isMaxRank || !nextRank) return;
+    if (syncInProgress) return;
+    syncInProgress = true;
 
-    const [gold, prism, allInv] = await Promise.all([
-      GameDB.getGameState('gold'),
-      GameDB.getGameState('prism'),
-      GameDB.getAllInventory()
-    ]);
+    try {
+      const [gold, prism, allInv] = await Promise.all([
+        GameDB.getGameState('gold'),
+        GameDB.getGameState('prism'),
+        GameDB.getAllInventory()
+      ]);
     
     let currentGoldSync = gold || 0;
     currentGold = currentGoldSync; // Update upper scope
@@ -408,7 +414,11 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       const ownedEl = prismBtn.querySelector('[data-prism-owned]');
       if (ownedEl) ownedEl.textContent = formatNumber(currentPrism);
     }
-  }, 200);
+    } finally {
+      syncInProgress = false;
+    }
+  }, 500);
+  tabContent._medalSyncTimer = medalSyncTimer;
 }
 
 /**

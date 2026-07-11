@@ -194,6 +194,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   }
 
   // 同期的に DOM を置換 (ちらつき防止)
+  if (tabContent.dataset.renderedTab !== 'pet') return;
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
 
@@ -201,17 +202,22 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   if (tabContent._petSyncTimer) {
     clearInterval(tabContent._petSyncTimer);
   }
-  tabContent._petSyncTimer = setInterval(async () => {
+  let syncInProgress = false;
+  const petSyncTimer = setInterval(async () => {
     if (!document.body.contains(container)) {
-      clearInterval(tabContent._petSyncTimer);
+      clearInterval(petSyncTimer);
+      if (tabContent._petSyncTimer === petSyncTimer) tabContent._petSyncTimer = null;
       return;
     }
+    if (syncInProgress) return;
+    syncInProgress = true;
 
-    const allInvSync = await GameDB.getAllInventory();
-    const newInvMap = {};
-    if (allInvSync) {
-      allInvSync.forEach(item => newInvMap[item.id] = item.quantity);
-    }
+    try {
+      const allInvSync = await GameDB.getAllInventory();
+      const newInvMap = {};
+      if (allInvSync) {
+        allInvSync.forEach(item => newInvMap[item.id] = item.quantity);
+      }
     
     // update inventoryMap reference for click handlers
     Object.keys(newInvMap).forEach(k => inventoryMap[k] = newInvMap[k]);
@@ -271,7 +277,11 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
         }
       }
     }
-  }, 200);
+    } finally {
+      syncInProgress = false;
+    }
+  }, 500);
+  tabContent._petSyncTimer = petSyncTimer;
 }
 
 /**

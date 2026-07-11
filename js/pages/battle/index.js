@@ -646,6 +646,17 @@ class BattleManager {
   }
 
   renderTabContent(force = false) {
+    // Polling belongs only to its visible tab. Stop it immediately on a tab
+    // change instead of retaining detached containers until the next tick.
+    if (this.currentTab !== 'pet' && this.elements.tabContent._petSyncTimer) {
+      clearInterval(this.elements.tabContent._petSyncTimer);
+      this.elements.tabContent._petSyncTimer = null;
+    }
+    if (this.currentTab !== 'medal' && this.elements.tabContent._medalSyncTimer) {
+      clearInterval(this.elements.tabContent._medalSyncTimer);
+      this.elements.tabContent._medalSyncTimer = null;
+    }
+
     if (this.currentTab === 'skill') {
       this.elements.tabContent.dataset.renderedTab = 'skill';
       this.renderSkillTab();
