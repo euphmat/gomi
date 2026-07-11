@@ -210,6 +210,9 @@ class BattleManager {
 
     const allFloorMonsterIds = this.getAllPossibleMonsters(this.floorDef.monsters);
     this.floorUniqueMonsterIds = allFloorMonsterIds;
+    this.dungeonUniqueMonsterIds = [...new Set(
+      this.dungeonDef.floors.flatMap(floor => this.getAllPossibleMonsters(floor.monsters))
+    )];
     if (!this.subTabSelectedMonsterId || !allFloorMonsterIds.includes(this.subTabSelectedMonsterId)) {
       this.subTabSelectedMonsterId = allFloorMonsterIds[0];
     }
@@ -751,7 +754,7 @@ class BattleManager {
     if (!wrapper) {
       this.elements.tabContent.innerHTML = `
         <div class="sub-tab-wrapper flex flex-col h-full w-full bg-transparent">
-          <div class="sub-tab-header flex gap-1.5 px-1.5 pt-1.5 pb-1 shrink-0 border-b border-slate-700/50 mb-1 w-full overflow-hidden"></div>
+          <div class="sub-tab-header flex gap-1.5 px-1.5 pt-1.5 pb-1 shrink-0 border-b border-slate-700/50 mb-1 w-full overflow-x-auto custom-scrollbar"></div>
           <div class="sub-tab-body flex-1 min-h-0 overflow-y-auto custom-scrollbar relative bg-transparent pr-1"></div>
         </div>
       `;
@@ -772,7 +775,17 @@ class BattleManager {
     body.dataset.renderedTab = this.currentTab;
     previousBody.replaceWith(body);
 
-    const monsterDefs = (this.floorUniqueMonsterIds || []).map(mId => MONSTERS.find(m => m.id === mId)).filter(Boolean);
+    // Pet では現在階層だけでなく、ダンジョン内の全モンスターを選択可能にする。
+    // Info / Medal は従来どおり現在階層のモンスターのみを表示する。
+    const availableMonsterIds = this.currentTab === 'pet'
+      ? (this.dungeonUniqueMonsterIds || [])
+      : (this.floorUniqueMonsterIds || []);
+
+    if (!availableMonsterIds.includes(this.subTabSelectedMonsterId)) {
+      this.subTabSelectedMonsterId = availableMonsterIds[0] || null;
+    }
+
+    const monsterDefs = availableMonsterIds.map(mId => MONSTERS.find(m => m.id === mId)).filter(Boolean);
     
     header.innerHTML = monsterDefs.map(m => {
       const isSelected = this.subTabSelectedMonsterId === m.id;
