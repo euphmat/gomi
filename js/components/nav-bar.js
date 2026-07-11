@@ -51,8 +51,7 @@ export function createNavBar(router) {
   }).join('');
 
   return `
-    <nav id="game-nav" class="shrink-0 flex border-t border-slate-900 bg-slate-950/95 backdrop-blur-md"
-         style="padding-bottom: env(safe-area-inset-bottom, 0px);">
+    <nav id="game-nav" class="shrink-0 flex border-t border-slate-900 bg-slate-950/95 backdrop-blur-md">
       ${tabsHTML}
     </nav>
   `;
