@@ -518,6 +518,7 @@ export const resultMethods = {
       if (willAutoRetry) {
         // Show countdown on the button
         let remaining = 5;
+        const countdownInterval = 1000 / Math.max(1, this.speedMult);
         okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
         this.autoRetryTimer = setInterval(() => {
           remaining--;
@@ -530,7 +531,7 @@ export const resultMethods = {
           } else {
             okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
           }
-        }, 1000);
+        }, countdownInterval);
       }
 
       if (okBtn) {
