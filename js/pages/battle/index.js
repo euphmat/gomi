@@ -213,8 +213,15 @@ class BattleManager {
     this.dungeonUniqueMonsterIds = [...new Set(
       this.dungeonDef.floors.flatMap(floor => this.getAllPossibleMonsters(floor.monsters))
     )];
-    if (!this.subTabSelectedMonsterId || !allFloorMonsterIds.includes(this.subTabSelectedMonsterId)) {
-      this.subTabSelectedMonsterId = allFloorMonsterIds[0];
+    const companionsInDungeon = this.ranchData[this.currentDungeonId] || {};
+    this.dungeonCompanionMonsterIds = this.dungeonUniqueMonsterIds.filter(monsterId =>
+      companionsInDungeon[monsterId] || companionsInDungeon[`${monsterId}_legendary`]
+    );
+    const selectableMonsterIds = this.currentTab === 'pet'
+      ? this.dungeonCompanionMonsterIds
+      : allFloorMonsterIds;
+    if (!this.subTabSelectedMonsterId || !selectableMonsterIds.includes(this.subTabSelectedMonsterId)) {
+      this.subTabSelectedMonsterId = selectableMonsterIds[0];
     }
 
     const uniqueMonsterIds = [...new Set(monsterIds)];
@@ -775,10 +782,10 @@ class BattleManager {
     body.dataset.renderedTab = this.currentTab;
     previousBody.replaceWith(body);
 
-    // Pet では現在階層だけでなく、ダンジョン内の全モンスターを選択可能にする。
+    // Pet では現在のダンジョンで仲間になっているモンスターのみ選択可能にする。
     // Info / Medal は従来どおり現在階層のモンスターのみを表示する。
     const availableMonsterIds = this.currentTab === 'pet'
-      ? (this.dungeonUniqueMonsterIds || [])
+      ? (this.dungeonCompanionMonsterIds || [])
       : (this.floorUniqueMonsterIds || []);
 
     if (!availableMonsterIds.includes(this.subTabSelectedMonsterId)) {
