@@ -728,17 +728,18 @@ class BattleManager {
       this.renderInfoTab();
     } else if (this.currentTab === 'pet') {
       const targetId = this.subTabSelectedMonsterId || 'none';
-      const now = Date.now();
-      const lastRendered = parseInt(this.elements.tabContent.dataset.lastPetRenderTime || '0');
-      
+
+      // Pet の内容は行動中のキャラクターには依存しない。自動戦闘中は
+      // renderEntities() から頻繁に呼ばれるため、同じモンスターを表示中に
+      // タブ全体を作り直すとスクロール領域が置換されてちらついてしまう。
+      // 所持素材は Pet 側のポーリングで差分更新されるので、明示的な更新
+      // (モンスター切替・餌やり等) があるまでは現在の DOM を維持する。
       if (!force && this.elements.tabContent.dataset.renderedTab === 'pet' && this.elements.tabContent.dataset.petTargetId === targetId) {
-        if (this.isTabHovered) return;
-        if (now - lastRendered < 1000) return;
+        return;
       }
       
       this.elements.tabContent.dataset.renderedTab = 'pet';
       this.elements.tabContent.dataset.petTargetId = targetId;
-      this.elements.tabContent.dataset.lastPetRenderTime = now;
       this.renderPetTab();
     } else if (this.currentTab === 'medal') {
       const targetId = this.subTabSelectedMonsterId || 'none';

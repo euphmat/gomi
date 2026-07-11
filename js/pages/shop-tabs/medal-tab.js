@@ -39,9 +39,8 @@ export function renderMedalTab() {
     const dungeonOptions = ['<option value="all">全てのダンジョン</option>'];
     const allDungeons = [...DUNGEONS, ...SPECIAL_DUNGEONS];
     allDungeons.forEach(d => {
-      let isUnlocked = d.unlockCondition 
-        ? Object.keys(playerMedals).length >= (d.unlockCondition.medals || 0)
-        : (d.isUnlocked || unlockedDungeons.includes(d.id));
+      let isUnlocked = d.isUnlocked || unlockedDungeons.includes(d.id) ||
+        (d.unlockCondition?.medals != null && Object.keys(playerMedals).length >= d.unlockCondition.medals);
       if (isUnlocked) {
         dungeonOptions.push(`<option value="${d.id}" ${selectedDungeonId === d.id ? 'selected' : ''}>${d.name}</option>`);
       }

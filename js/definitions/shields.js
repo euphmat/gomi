@@ -106,6 +106,23 @@ export const SHIELDS = [
   { id: 'swan_song_tower_shield'     , name: '絶唱のタワーシールド'  , stats: { def: 450, hp: 225 }, elements:    { dark: 20 }, recipe: { price: 275000, materials: [{ id: 'mat_spirit_knight_armor', amount: 40 }, { id: 'mat_swan_song_blade', amount: 10 }] } },
   { id: 'eternal_aegis'              , name: 'エターナルイージス'    , stats: { def: 460, hp: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'origin_guard'               , name: 'オリジンガード'        , stats: { def: 470, hp: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
+  // スペシャルダンジョン: 鉱山
+  { id: 'copper_ore_shield', name: '銅鉱石の盾', stats: { def: 8, hp: 4 }, elements: { earth: 10 }, recipe: { price: 100, materials: [{ id: 'mat_copper_ore', amount: 40 }, { id: 'mat_cuprite', amount: 10 }] } },
+  { id: 'tin_buckler', name: '錫鉱バックラー', stats: { def: 25, hp: 12 }, elements: { earth: 10 }, recipe: { price: 500, materials: [{ id: 'mat_tin_ore', amount: 40 }, { id: 'mat_cassiterite', amount: 10 }] } },
+  { id: 'magnetite_guard', name: '磁鉄鉱ガード', stats: { def: 60, hp: 30 }, elements: { earth: 15 }, recipe: { price: 1800, materials: [{ id: 'mat_iron_ore', amount: 40 }, { id: 'mat_magnetite', amount: 10 }] } },
+  { id: 'anthracite_shield', name: '無煙炭の黒盾', stats: { def: 85, hp: 42 }, elements: { dark: 15 }, recipe: { price: 5000, materials: [{ id: 'mat_coal_ore', amount: 40 }, { id: 'mat_anthracite', amount: 10 }] } },
+  { id: 'argentite_shield', name: '輝銀鉱の盾', stats: { def: 125, hp: 62 }, elements: { light: 15 }, recipe: { price: 12000, materials: [{ id: 'mat_silver_ore', amount: 40 }, { id: 'mat_argentite', amount: 10 }] } },
+  { id: 'gold_scorpion_shield', name: '黄金蠍の盾', stats: { def: 180, hp: 90 }, elements: { light: 20 }, recipe: { price: 25000, materials: [{ id: 'mat_gold_ore', amount: 40 }, { id: 'mat_calaverite', amount: 10 }] } },
+  { id: 'quartz_prism_shield', name: '石英プリズムシールド', stats: { def: 245, hp: 122 }, elements: { light: 20 }, recipe: { price: 48000, materials: [{ id: 'mat_quartz_ore', amount: 40 }, { id: 'mat_smoky_quartz', amount: 10 }] } },
+  { id: 'jade_tortoise_shield', name: '翡翠甲の大盾', stats: { def: 290, hp: 145 }, elements: { grass: 20 }, recipe: { price: 80000, materials: [{ id: 'mat_jade_ore', amount: 40 }, { id: 'mat_nephrite', amount: 10 }] } },
+  { id: 'cobalt_drake_shield', name: '蒼鉱竜の盾', stats: { def: 335, hp: 167 }, elements: { water: 20 }, recipe: { price: 120000, materials: [{ id: 'mat_cobalt_ore', amount: 40 }, { id: 'mat_cobaltite', amount: 10 }] } },
+  { id: 'mithril_knight_shield', name: 'ミスリル騎士盾', stats: { def: 395, hp: 197 }, elements: { light: 20 }, recipe: { price: 165000, materials: [{ id: 'mat_mithril_ore', amount: 40 }, { id: 'mat_mithril_ingot', amount: 10 }] } },
+  { id: 'orichalcum_gigas_shield', name: '神鋼巨人の盾', stats: { def: 440, hp: 220 }, elements: { earth: 20 }, recipe: { price: 210000, materials: [{ id: 'mat_orichalcum_ore', amount: 40 }, { id: 'mat_orichalcum_ingot', amount: 10 }] } },
+  { id: 'adamantite_wall', name: 'アダマンタイトの城壁', stats: { def: 475, hp: 237 }, elements: { earth: 20 }, recipe: { price: 250000, materials: [{ id: 'mat_adamantite_ore', amount: 40 }, { id: 'mat_adamantite_plate', amount: 10 }] } },
+  { id: 'uranium_barrier', name: '輝放鉱バリア', stats: { def: 495, hp: 247 }, elements: { thunder: 20 }, recipe: { price: 280000, materials: [{ id: 'mat_uranium_ore', amount: 40 }, { id: 'mat_pitchblende', amount: 10 }] } },
+  { id: 'star_metal_aegis', name: '星鉄竜のイージス', stats: { def: 510, hp: 255 }, elements: { light: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_star_metal_ore', amount: 40 }, { id: 'mat_meteoric_iron', amount: 10 }] } },
+  { id: 'motherlode_bulwark', name: '大鉱脈の絶壁盾', stats: { def: 525, hp: 262 }, elements: { earth: 25 }, recipe: { price: 315000, materials: [{ id: 'mat_motherlode_ore', amount: 40 }, { id: 'mat_rainbow_ore', amount: 10 }] } },
+
   // 神秘の神殿
   { id: 'aether_shield'              , name: 'エーテルシールド'      , stats: { def: 480, hp: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_aether_ore', amount: 40 }, { id: 'mat_translucent_marble', amount: 10 }] } },
   { id: 'aegis_shield'               , name: 'アイギスの大盾'        , stats: { def: 485, hp: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_mossy_stone', amount: 40 }, { id: 'mat_aegis_shield_piece', amount: 10 }] } },
@@ -117,4 +134,3 @@ export const SHIELDS = [
   { id: 'sanctum_tower_shield'       , name: 'サンクトゥムタワーシールド', stats: { def: 530, hp: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
 
 ].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));
-

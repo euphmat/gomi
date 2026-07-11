@@ -11,6 +11,28 @@ window.enterDungeon = async (dungeonId) => {
   window.location.hash = '/battle';
 };
 
+window.unlockSpecialDungeon = async (dungeonId) => {
+  const dungeon = SPECIAL_DUNGEONS.find(d => d.id === dungeonId);
+  const cost = dungeon?.unlockCondition?.prism;
+  if (!dungeon || !cost) return;
+
+  const unlocked = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
+  if (unlocked.includes(dungeonId)) return;
+
+  const prism = await GameDB.getGameState('prism') || 0;
+  if (prism < cost) return;
+
+  unlocked.push(dungeonId);
+  await Promise.all([
+    GameDB.setGameState('prism', prism - cost),
+    GameDB.setGameState('unlockedDungeons', unlocked)
+  ]);
+  const prismDisplay = document.getElementById('header-prism-display');
+  if (prismDisplay) prismDisplay.textContent = formatNumber(prism - cost);
+  const contentEl = document.getElementById('content');
+  if (contentEl) contentEl.innerHTML = await renderDungeonPage();
+};
+
 
 
 let currentDungeonPage = 1;
@@ -76,6 +98,7 @@ export async function renderDungeonPage() {
   const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
   const playerMedals = await GameDB.getGameState('player_medals') || {};
   const medalCount = Object.keys(playerMedals).length;
+  const prism = await GameDB.getGameState('prism') || 0;
   
   const filteredDungeons = currentDungeonTab === 'special' ? SPECIAL_DUNGEONS : DUNGEONS;
 
@@ -93,9 +116,8 @@ export async function renderDungeonPage() {
     const theme = d.theme || { color: '107, 114, 128', icon: 'swords' };
     const themeRgb = theme.color;
 
-    let isUnlocked = d.unlockCondition 
-      ? medalCount >= (d.unlockCondition.medals || 0)
-      : (d.isUnlocked || unlockedDungeons.includes(d.id));
+    let isUnlocked = d.isUnlocked || unlockedDungeons.includes(d.id) ||
+      (d.unlockCondition?.medals != null && medalCount >= d.unlockCondition.medals);
       
 
     if (isUnlocked) {
@@ -163,11 +185,29 @@ export async function renderDungeonPage() {
             <span class="material-symbols-outlined text-gray-400 text-lg sm:text-xl">lock</span>
             <span class="text-xs sm:text-sm tracking-widest text-gray-300 font-bold uppercase">Locked</span>
           </div>
-          ${d.id === 'golden_slime_island' 
+          ${d.unlockCondition?.medals != null
             ? `<div class="bg-amber-900/40 border border-amber-500/50 text-amber-400 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold shadow-lg flex items-center gap-1.5 sm:gap-2">
                  <span class="material-symbols-outlined text-[12px] sm:text-sm">stars</span>
-                 解放条件: メダルを18種類以上獲得 (現在: ${medalCount}種類)
+                 解放条件: メダルを${d.unlockCondition.medals}種類以上獲得 (現在: ${medalCount}種類)
                </div>`
+            : d.unlockCondition?.prism != null
+              ? `<button onclick="window.unlockSpecialDungeon('${d.id}')"
+                   ${prism < d.unlockCondition.prism ? 'disabled' : ''}
+                   aria-label="${d.name}を${d.unlockCondition.prism}プリズムで解放"
+                   class="group/unlock relative min-w-[190px] overflow-hidden rounded-xl border px-4 py-2 text-white transition-all duration-200
+                          ${prism >= d.unlockCondition.prism
+                            ? 'cursor-pointer border-fuchsia-300/80 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 shadow-[0_0_20px_rgba(217,70,239,0.45)] hover:scale-[1.03] hover:brightness-110 active:scale-[0.98]'
+                            : 'cursor-not-allowed border-slate-600/60 bg-slate-800/90 text-slate-500 shadow-inner'}">
+                   <span class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover/unlock:translate-x-full"></span>
+                   <span class="relative flex items-center justify-center gap-2">
+                     <span class="material-symbols-outlined text-[21px] ${prism >= d.unlockCondition.prism ? 'text-fuchsia-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]' : 'text-slate-600'}">diamond</span>
+                     <span class="whitespace-nowrap text-xs sm:text-sm font-black tracking-wide">
+                       ${prism >= d.unlockCondition.prism
+                         ? `${formatNumber(d.unlockCondition.prism)}プリズムで解放`
+                         : 'プリズム不足'}
+                     </span>
+                   </span>
+                 </button>`
             : `<div class="text-[9px] sm:text-[10px] text-gray-400 font-bold bg-black/60 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-gray-700 shadow-lg text-center leading-tight">
                  条件を満たすと<br class="sm:hidden" />挑戦可能になります
                </div>`

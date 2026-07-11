@@ -106,6 +106,23 @@ export const ARMORS = [
   { id: 'echo_dragon_sovereign_armor', name: '響竜の覇鎧'              , stats: { def: 460, mdef: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'genesis_divine_robe'        , name: '創世の神衣'              , stats: { def: 470, mdef: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
 
+  // スペシャルダンジョン: 鉱山
+  { id: 'copper_miner_armor', name: '銅鉱夫の鎧', stats: { def: 8, mdef: 4 }, elements: { earth: 10 }, recipe: { price: 100, materials: [{ id: 'mat_copper_ore', amount: 40 }, { id: 'mat_native_copper', amount: 10 }] } },
+  { id: 'tin_mole_coat', name: '錫鉱モールコート', stats: { def: 25, mdef: 12 }, elements: { earth: 10 }, recipe: { price: 500, materials: [{ id: 'mat_tin_ore', amount: 40 }, { id: 'mat_pure_tin', amount: 10 }] } },
+  { id: 'iron_carapace', name: '鉄殻プレート', stats: { def: 60, mdef: 25 }, elements: { earth: 15 }, recipe: { price: 1800, materials: [{ id: 'mat_iron_ore', amount: 40 }, { id: 'mat_pure_iron', amount: 10 }] } },
+  { id: 'black_diamond_robe', name: '黒金剛のローブ', stats: { def: 55, mdef: 85 }, elements: { dark: 15 }, recipe: { price: 5000, materials: [{ id: 'mat_coal_ore', amount: 40 }, { id: 'mat_black_diamond', amount: 10 }] } },
+  { id: 'pure_silver_mail', name: '純銀鉱の鎖帷子', stats: { def: 125, mdef: 115 }, elements: { light: 15 }, recipe: { price: 12000, materials: [{ id: 'mat_silver_ore', amount: 40 }, { id: 'mat_pure_silver', amount: 10 }] } },
+  { id: 'pure_gold_scale', name: '純金鉱の鱗鎧', stats: { def: 180, mdef: 150 }, elements: { light: 20 }, recipe: { price: 25000, materials: [{ id: 'mat_gold_ore', amount: 40 }, { id: 'mat_pure_gold_nugget', amount: 10 }] } },
+  { id: 'phantom_quartz_robe', name: '幻影石英の法衣', stats: { def: 200, mdef: 245 }, elements: { light: 20 }, recipe: { price: 48000, materials: [{ id: 'mat_quartz_ore', amount: 40 }, { id: 'mat_phantom_quartz', amount: 10 }] } },
+  { id: 'imperial_jade_shell', name: '帝王翡翠の甲冑', stats: { def: 290, mdef: 260 }, elements: { grass: 20 }, recipe: { price: 80000, materials: [{ id: 'mat_jade_ore', amount: 40 }, { id: 'mat_imperial_jade', amount: 10 }] } },
+  { id: 'cobalt_drake_mail', name: '蒼鉱竜の鎧', stats: { def: 335, mdef: 315 }, elements: { water: 20 }, recipe: { price: 120000, materials: [{ id: 'mat_cobalt_ore', amount: 40 }, { id: 'mat_cobalt_crystal', amount: 10 }] } },
+  { id: 'true_mithril_armor', name: '真ミスリルアーマー', stats: { def: 395, mdef: 380 }, elements: { light: 20 }, recipe: { price: 165000, materials: [{ id: 'mat_mithril_ore', amount: 40 }, { id: 'mat_true_mithril', amount: 10 }] } },
+  { id: 'orichalcum_gigas_plate', name: '神鋼巨人の鎧', stats: { def: 440, mdef: 410 }, elements: { earth: 20 }, recipe: { price: 210000, materials: [{ id: 'mat_orichalcum_ore', amount: 40 }, { id: 'mat_orichalcum_core', amount: 10 }] } },
+  { id: 'adamantite_behemoth_plate', name: '不壊獣の重鎧', stats: { def: 475, mdef: 440 }, elements: { earth: 20 }, recipe: { price: 250000, materials: [{ id: 'mat_adamantite_ore', amount: 40 }, { id: 'mat_adamantite_heart', amount: 10 }] } },
+  { id: 'radiant_uranium_suit', name: '輝放鉱スーツ', stats: { def: 480, mdef: 495 }, elements: { thunder: 20 }, recipe: { price: 280000, materials: [{ id: 'mat_uranium_ore', amount: 40 }, { id: 'mat_radiant_uranium', amount: 10 }] } },
+  { id: 'cosmic_alloy_mail', name: '天宙合金の竜鎧', stats: { def: 510, mdef: 505 }, elements: { light: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_star_metal_ore', amount: 40 }, { id: 'mat_cosmic_alloy', amount: 10 }] } },
+  { id: 'primordial_ore_armor', name: '始原鉱核の神鎧', stats: { def: 525, mdef: 525 }, elements: { earth: 25 }, recipe: { price: 315000, materials: [{ id: 'mat_motherlode_ore', amount: 40 }, { id: 'mat_primordial_ore_core', amount: 10 }] } },
+
   // 神秘の神殿
   { id: 'colossus_mail'        , name: 'コロッサスメイル'    , stats: { def: 480, mdef: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_translucent_marble', amount: 40 }, { id: 'mat_colossus_core', amount: 10 }] } },
   { id: 'aegis_armor'          , name: 'アイギスアーマー'    , stats: { def: 485, mdef: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_monolith_fragment', amount: 40 }, { id: 'mat_aegis_shield_piece', amount: 10 }] } },
@@ -117,4 +134,3 @@ export const ARMORS = [
   { id: 'sanctum_plate'        , name: 'サンクトゥムプレート', stats: { def: 530, mdef: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
 
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));
-

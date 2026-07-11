@@ -104,6 +104,23 @@ export const WEAPONS = [
   { id: 'eternal_echo_sword'   , name: '悠久の響剣'          , stats: { atk: 460, spd: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'genesis_wand'         , name: 'ジェネシスワンド'    , stats: { atk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
 
+  // スペシャルダンジョン: 鉱山
+  { id: 'copper_pickaxe', name: '銅鉱のつるはし', stats: { atk: 8, spd: 2 }, elements: { earth: 10 }, recipe: { price: 100, materials: [{ id: 'mat_copper_ore', amount: 40 }, { id: 'mat_cuprite', amount: 10 }] } },
+  { id: 'tin_drill_lance', name: '錫鉱ドリルランス', stats: { atk: 25, spd: 8 }, elements: { earth: 10 }, recipe: { price: 500, materials: [{ id: 'mat_tin_ore', amount: 40 }, { id: 'mat_cassiterite', amount: 10 }] } },
+  { id: 'iron_beetle_axe', name: '鉄殻の戦斧', stats: { atk: 55, spd: 15 }, elements: { earth: 15 }, recipe: { price: 1800, materials: [{ id: 'mat_iron_ore', amount: 40 }, { id: 'mat_magnetite', amount: 10 }] } },
+  { id: 'anthracite_staff', name: '無煙炭の杖', stats: { atk: 45, matk: 80, spd: 20 }, elements: { dark: 15 }, recipe: { price: 5000, materials: [{ id: 'mat_coal_ore', amount: 40 }, { id: 'mat_anthracite', amount: 10 }] } },
+  { id: 'argent_fang', name: '輝銀の牙剣', stats: { atk: 120, spd: 45 }, elements: { light: 15 }, recipe: { price: 12000, materials: [{ id: 'mat_silver_ore', amount: 40 }, { id: 'mat_argentite', amount: 10 }] } },
+  { id: 'calaverite_stinger', name: '金鉱の蠍槍', stats: { atk: 175, spd: 65 }, elements: { light: 20 }, recipe: { price: 25000, materials: [{ id: 'mat_gold_ore', amount: 40 }, { id: 'mat_calaverite', amount: 10 }] } },
+  { id: 'quartz_prism_wand', name: '石英プリズムワンド', stats: { atk: 100, matk: 230, spd: 85 }, elements: { light: 20 }, recipe: { price: 48000, materials: [{ id: 'mat_quartz_ore', amount: 40 }, { id: 'mat_smoky_quartz', amount: 10 }] } },
+  { id: 'imperial_jade_hammer', name: '帝翡翠の大槌', stats: { atk: 285, spd: 95 }, elements: { grass: 20 }, recipe: { price: 80000, materials: [{ id: 'mat_jade_ore', amount: 40 }, { id: 'mat_nephrite', amount: 10 }] } },
+  { id: 'cobalt_drake_saber', name: '蒼鉱竜の曲剣', stats: { atk: 330, matk: 180, spd: 120 }, elements: { water: 20 }, recipe: { price: 120000, materials: [{ id: 'mat_cobalt_ore', amount: 40 }, { id: 'mat_cobaltite', amount: 10 }] } },
+  { id: 'true_mithril_blade', name: '真ミスリルブレード', stats: { atk: 390, matk: 230, spd: 155 }, elements: { light: 20 }, recipe: { price: 165000, materials: [{ id: 'mat_mithril_ore', amount: 40 }, { id: 'mat_mithril_ingot', amount: 10 }] } },
+  { id: 'orichalcum_knuckle', name: '神鋼鉱拳', stats: { atk: 435, spd: 180 }, elements: { earth: 20 }, recipe: { price: 210000, materials: [{ id: 'mat_orichalcum_ore', amount: 40 }, { id: 'mat_orichalcum_ingot', amount: 10 }] } },
+  { id: 'adamantite_breaker', name: '金剛不壊ブレイカー', stats: { atk: 470, spd: 195 }, elements: { earth: 20 }, recipe: { price: 250000, materials: [{ id: 'mat_adamantite_ore', amount: 40 }, { id: 'mat_adamantite_plate', amount: 10 }] } },
+  { id: 'radiant_uranium_cannon', name: '輝放鉱キャノン', stats: { atk: 360, matk: 490, spd: 210 }, elements: { thunder: 20 }, recipe: { price: 280000, materials: [{ id: 'mat_uranium_ore', amount: 40 }, { id: 'mat_pitchblende', amount: 10 }] } },
+  { id: 'star_metal_dragonslayer', name: '星鉄の竜断剣', stats: { atk: 510, matk: 300, spd: 240 }, elements: { light: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_star_metal_ore', amount: 40 }, { id: 'mat_meteoric_iron', amount: 10 }] } },
+  { id: 'motherlode_gaia_axe', name: '大鉱脈ガイアアックス', stats: { atk: 525, matk: 350, spd: 260 }, elements: { earth: 25 }, recipe: { price: 315000, materials: [{ id: 'mat_motherlode_ore', amount: 40 }, { id: 'mat_rainbow_ore', amount: 10 }] } },
+
   // 神秘の神殿
   { id: 'aether_blade'         , name: 'エーテルブレード'    , stats: { atk: 480, spd: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_aether_ore', amount: 40 }, { id: 'mat_translucent_marble', amount: 10 }] } },
   { id: 'aegis_mace'           , name: 'アイギスメイス'      , stats: { atk: 485, spd: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_mossy_stone', amount: 40 }, { id: 'mat_monolith_fragment', amount: 10 }] } },

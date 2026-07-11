@@ -105,6 +105,23 @@ export const ACCESSORIES = [
   { id: 'eternal_dragon_scale'     , name: '悠久の竜鱗'            , stats: { matk: 460, spd: 230 }, recipe: { price: 280000, materials: [{ id: 'mat_echo_dragon_scale', amount: 40 }, { id: 'mat_eternal_fang', amount: 10 }] } },
   { id: 'genesis_crown'            , name: '創世の宝冠'            , stats: { matk: 470, spd: 235 }, recipe: { price: 285000, materials: [{ id: 'mat_genesis_song_fragment', amount: 40 }, { id: 'mat_creation_tear', amount: 10 }] } },
 
+  // スペシャルダンジョン: 鉱山
+  { id: 'native_copper_ring', name: '自然銅の指輪', stats: { matk: 8, spd: 4 }, elements: { earth: 10 }, recipe: { price: 100, materials: [{ id: 'mat_copper_ore', amount: 40 }, { id: 'mat_native_copper', amount: 10 }] } },
+  { id: 'pure_tin_charm', name: '純錫鉱のお守り', stats: { matk: 25, spd: 12 }, elements: { earth: 10 }, recipe: { price: 500, materials: [{ id: 'mat_tin_ore', amount: 40 }, { id: 'mat_pure_tin', amount: 10 }] } },
+  { id: 'pure_iron_talisman', name: '純鉄鉱の護符', stats: { matk: 60, spd: 30 }, elements: { earth: 15 }, recipe: { price: 1800, materials: [{ id: 'mat_iron_ore', amount: 40 }, { id: 'mat_pure_iron', amount: 10 }] } },
+  { id: 'black_diamond_pendant', name: '黒金剛のペンダント', stats: { matk: 85, spd: 42 }, elements: { dark: 15 }, recipe: { price: 5000, materials: [{ id: 'mat_coal_ore', amount: 40 }, { id: 'mat_black_diamond', amount: 10 }] } },
+  { id: 'pure_silver_fang', name: '純銀鉱の牙飾り', stats: { matk: 125, spd: 62 }, elements: { light: 15 }, recipe: { price: 12000, materials: [{ id: 'mat_silver_ore', amount: 40 }, { id: 'mat_pure_silver', amount: 10 }] } },
+  { id: 'pure_gold_stinger', name: '純金鉱の蠍針', stats: { matk: 180, spd: 90 }, elements: { light: 20 }, recipe: { price: 25000, materials: [{ id: 'mat_gold_ore', amount: 40 }, { id: 'mat_pure_gold_nugget', amount: 10 }] } },
+  { id: 'phantom_quartz_lens', name: '幻影石英のレンズ', stats: { matk: 245, spd: 122 }, elements: { light: 20 }, recipe: { price: 48000, materials: [{ id: 'mat_quartz_ore', amount: 40 }, { id: 'mat_phantom_quartz', amount: 10 }] } },
+  { id: 'imperial_jade_amulet', name: '帝王翡翠の護玉', stats: { matk: 290, spd: 145 }, elements: { grass: 20 }, recipe: { price: 80000, materials: [{ id: 'mat_jade_ore', amount: 40 }, { id: 'mat_imperial_jade', amount: 10 }] } },
+  { id: 'cobalt_crystal_horn', name: '蒼晶竜の角飾り', stats: { matk: 335, spd: 167 }, elements: { water: 20 }, recipe: { price: 120000, materials: [{ id: 'mat_cobalt_ore', amount: 40 }, { id: 'mat_cobalt_crystal', amount: 10 }] } },
+  { id: 'true_mithril_emblem', name: '真ミスリルの紋章', stats: { matk: 395, spd: 197 }, elements: { light: 20 }, recipe: { price: 165000, materials: [{ id: 'mat_mithril_ore', amount: 40 }, { id: 'mat_true_mithril', amount: 10 }] } },
+  { id: 'orichalcum_core_charm', name: '神鋼鉱核の護石', stats: { matk: 440, spd: 220 }, elements: { earth: 20 }, recipe: { price: 210000, materials: [{ id: 'mat_orichalcum_ore', amount: 40 }, { id: 'mat_orichalcum_core', amount: 10 }] } },
+  { id: 'adamantite_heart_charm', name: '不壊鉱心の首飾り', stats: { matk: 475, spd: 237 }, elements: { earth: 20 }, recipe: { price: 250000, materials: [{ id: 'mat_adamantite_ore', amount: 40 }, { id: 'mat_adamantite_heart', amount: 10 }] } },
+  { id: 'radiant_uranium_orb', name: '輝放鉱の魔珠', stats: { matk: 495, spd: 247 }, elements: { thunder: 20 }, recipe: { price: 280000, materials: [{ id: 'mat_uranium_ore', amount: 40 }, { id: 'mat_radiant_uranium', amount: 10 }] } },
+  { id: 'cosmic_alloy_scale', name: '天宙合金の竜鱗', stats: { matk: 510, spd: 255 }, elements: { light: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_star_metal_ore', amount: 40 }, { id: 'mat_cosmic_alloy', amount: 10 }] } },
+  { id: 'primordial_ore_crown', name: '始原鉱核の宝冠', stats: { matk: 525, spd: 262 }, elements: { earth: 25 }, recipe: { price: 315000, materials: [{ id: 'mat_motherlode_ore', amount: 40 }, { id: 'mat_primordial_ore_core', amount: 10 }] } },
+
   // 神秘の神殿
   { id: 'aether_ring'          , name: 'エーテルリング'      , stats: { matk: 480, spd: 240 }, elements:   { light: 20 }, recipe: { price: 290000, materials: [{ id: 'mat_aether_ore', amount: 40 }, { id: 'mat_translucent_marble', amount: 10 }] } },
   { id: 'aegis_charm'          , name: 'アイギスチャーム'    , stats: { matk: 485, spd: 242 }, elements:   { earth: 20 }, recipe: { price: 292500, materials: [{ id: 'mat_mossy_stone', amount: 40 }, { id: 'mat_aegis_shield_piece', amount: 10 }] } },
