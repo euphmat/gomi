@@ -217,7 +217,8 @@ class BattleManager {
     this.dungeonCompanionMonsterIds = this.dungeonUniqueMonsterIds.filter(monsterId =>
       companionsInDungeon[monsterId] || companionsInDungeon[`${monsterId}_legendary`]
     );
-    const selectableMonsterIds = this.currentTab === 'pet'
+    const usesDungeonCompanionList = this.currentTab === 'pet' || this.currentTab === 'medal';
+    const selectableMonsterIds = usesDungeonCompanionList
       ? this.dungeonCompanionMonsterIds
       : allFloorMonsterIds;
     if (!this.subTabSelectedMonsterId || !selectableMonsterIds.includes(this.subTabSelectedMonsterId)) {
@@ -782,9 +783,10 @@ class BattleManager {
     body.dataset.renderedTab = this.currentTab;
     previousBody.replaceWith(body);
 
-    // Pet では現在のダンジョンで仲間になっているモンスターのみ選択可能にする。
-    // Info / Medal は従来どおり現在階層のモンスターのみを表示する。
-    const availableMonsterIds = this.currentTab === 'pet'
+    // Pet / Medal では現在のダンジョンで仲間になっているモンスターのみ選択可能にする。
+    // Info は従来どおり現在階層のモンスターのみを表示する。
+    const usesDungeonCompanionList = this.currentTab === 'pet' || this.currentTab === 'medal';
+    const availableMonsterIds = usesDungeonCompanionList
       ? (this.dungeonCompanionMonsterIds || [])
       : (this.floorUniqueMonsterIds || []);
 
