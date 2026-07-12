@@ -12,16 +12,18 @@ export function renderShopPage() {
 
   // タブの定義
   const TABS = [
-    { id: 'shop', label: 'ショップ', icon: 'storefront' },
-    { id: 'storage', label: '倉庫', icon: 'inventory_2' },
-    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech' }
+    { id: 'shop', label: 'ショップ', icon: 'storefront', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'hover:border-cyan-500/35 hover:bg-cyan-950/30 hover:text-cyan-300' },
+    { id: 'storage', label: '倉庫', icon: 'inventory_2', activeClass: 'border-sky-400/45 bg-sky-950/55 text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(56,189,248,0.18)]', idleClass: 'hover:border-sky-500/35 hover:bg-sky-950/30 hover:text-sky-300' },
+    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech', activeClass: 'border-yellow-400/45 bg-yellow-950/55 text-yellow-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(250,204,21,0.18)]', idleClass: 'hover:border-yellow-500/35 hover:bg-yellow-950/30 hover:text-yellow-300' }
   ];
   
   let activeTabId = 'shop';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');
-  tabHeader.className = 'flex items-center gap-2 p-3 bg-slate-950/70 border-b border-slate-900 shrink-0 overflow-x-auto no-scrollbar backdrop-blur-md z-10';
+  tabHeader.className = 'flex items-center gap-1.5 p-2 bg-slate-950/70 border-b border-slate-900 shrink-0 overflow-x-auto no-scrollbar backdrop-blur-md z-10';
+  tabHeader.setAttribute('role', 'tablist');
+  tabHeader.setAttribute('aria-label', 'ショップ機能');
   
   // コンテンツ領域
   const contentArea = document.createElement('div');
@@ -34,14 +36,18 @@ export function renderShopPage() {
       const isActive = tab.id === activeTabId;
       
       btn.className = `
-        flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer active:scale-95
+        flex h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer active:scale-95
         ${isActive 
-          ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),_0_0_12px_rgba(16,185,129,0.25)]' 
-          : 'bg-slate-900/40 text-slate-400 border border-slate-800/50 hover:bg-slate-800/30 hover:text-slate-200 hover:border-slate-700/60'}
+          ? `gap-1.5 px-3 ${tab.activeClass}`
+          : `px-2 border-slate-800/70 bg-slate-900/45 text-slate-500 ${tab.idleClass}`}
       `;
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', String(isActive));
+      btn.setAttribute('aria-label', tab.label);
+      btn.title = tab.label;
       btn.innerHTML = `
-        <span class="material-symbols-outlined text-[15px] leading-none ${isActive ? 'text-emerald-400' : 'text-slate-400'}">${tab.icon}</span>
-        <span class="leading-none">${tab.label}</span>
+        <span class="material-symbols-outlined text-[18px] leading-none">${tab.icon}</span>
+        ${isActive ? `<span class="leading-none">${tab.label}</span>` : ''}
       `;
       btn.onclick = () => {
         if (activeTabId !== tab.id) {
@@ -105,4 +111,3 @@ export function renderShopPage() {
 
   return container;
 }
-
