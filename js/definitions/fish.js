@@ -4,7 +4,7 @@ export const FISHING_SPOTS = [
     name: '月影の湖',
     description: '森の奥にある静かな湖。淡水魚から幻想魚まで、さまざまな魚が棲んでいる。',
     background: 'assets/dungeon/bg_fishing_spot.webp',
-    baitCost: 100,
+    baitCost: 300,
     minCatchMs: 3000,
     maxCatchMs: 7000,
   },

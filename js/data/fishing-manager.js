@@ -16,6 +16,7 @@ const LEGACY_RANCH_FISH_STATE_KEY = 'ranch_fish_data';
 const ALL_EQUIPMENT = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
 const MATERIAL_MAP = new Map(MATERIALS.map(item => [item.id, item]));
 const FISH_MAP = new Map(FISH.map(item => [item.id, item]));
+const MATERIAL_CATCH_AMOUNT = 100;
 
 function createFishingState() {
   return {
@@ -115,9 +116,9 @@ async function catchMonsterMaterial(state) {
   if (!candidates.length) return catchFish(state);
   const material = candidates[Math.floor(Math.random() * candidates.length)];
   const current = await GameDB.getInventoryItem(material.id) || { ...material, type: 'material', quantity: 0 };
-  current.quantity = (current.quantity || 0) + 1;
+  current.quantity = (current.quantity || 0) + MATERIAL_CATCH_AMOUNT;
   await GameDB.putInventoryItem(current);
-  const result = { type: 'material', name: material.name, image: material.image, itemId: material.id };
+  const result = { type: 'material', name: `${material.name} ×${MATERIAL_CATCH_AMOUNT}`, image: material.image, itemId: material.id, amount: MATERIAL_CATCH_AMOUNT };
   addRecentBonus(state, result);
   return result;
 }
