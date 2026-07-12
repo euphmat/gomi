@@ -198,12 +198,11 @@ export function renderMedalTab() {
       drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
     );
     const canCraft = Boolean(nextRank && hasMaterials && currentGold >= goldCost);
-    const canUsePrism = Boolean(nextRank && currentRankIndex >= 0 && currentPrism >= 1);
 
     return {
       currentRankIndex,
       isMaxRank,
-      canAcquireOrUpgrade: canCraft || canUsePrism
+      canAcquireOrUpgrade: canCraft
     };
   };
 

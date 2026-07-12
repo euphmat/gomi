@@ -1039,10 +1039,9 @@ class BattleManager {
   }
 
   async renderMedalTab() {
-    const [allInventory, latestGold, currentPrism] = await Promise.all([
+    const [allInventory, latestGold] = await Promise.all([
       GameDB.getAllInventory(),
-      GameDB.getGameState('gold'),
-      GameDB.getGameState('prism')
+      GameDB.getGameState('gold')
     ]);
     if (this.currentTab !== 'medal' || !this.container.isConnected) return;
 
@@ -1063,11 +1062,10 @@ class BattleManager {
         drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
       );
       const canCraft = Boolean(nextRank && hasMaterials && this.currentGold >= goldCost);
-      const canUsePrism = Boolean(nextRank && currentRankIndex >= 0 && (currentPrism || 0) >= 1);
 
       medalAvailability[monsterId] = {
         isMaxRank,
-        canAcquireOrUpgrade: canCraft || canUsePrism
+        canAcquireOrUpgrade: canCraft
       };
     });
 
