@@ -1157,6 +1157,16 @@ export function renderBattlePage() {
         border-color: rgb(var(--battle-palette-3) / .5);
         box-shadow: inset 0 1px 0 rgb(var(--battle-palette-4) / .18), 0 10px 28px rgb(0 0 0 / .35);
       }
+      @media (max-width: 540px), (max-height: 760px) {
+        #tab-content { padding: .3rem; }
+        .sub-tab-header { padding: .2rem .2rem .1rem; margin-bottom: .15rem; }
+        .battle-info-stat { min-height: 18px; }
+        .battle-info-action-desc { display: none; }
+        .battle-info-actions > div:last-child { max-height: 48px; }
+        .battle-info-drop-card { height: 44px; padding: 2px; }
+        .battle-info-drop-image { width: 23px; height: 23px; }
+        .battle-info-drop-image img { width: 21px; height: 21px; }
+      }
       #command-area {
         background: linear-gradient(135deg, rgb(42 58 76 / .92), rgb(54 78 102 / .84));
         border-color: rgb(112 154 184 / .55);

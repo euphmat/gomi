@@ -259,7 +259,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   ];
 
   const renderStatBadge = (p) => `
-    <div class="flex items-center justify-between px-1 py-0.5 rounded border ${p.bg} shadow-inner shrink-0 min-w-0">
+    <div class="battle-info-stat flex items-center justify-between px-1 py-0.5 rounded border ${p.bg} shadow-inner shrink-0 min-w-0">
       <div class="flex items-center gap-1 min-w-0 shrink-0">
         <div class="flex items-center justify-center w-[12px] h-[12px] shrink-0"><span class="material-symbols-outlined ${p.color}" style="font-size: 16px; font-variation-settings: 'FILL' 1; transform: scale(0.75);">${p.icon}</span></div>
         <span class="text-[11px] font-bold text-slate-300 drop-shadow truncate">${p.label}</span>
@@ -357,7 +357,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             </div>
             <span class="text-[10px] font-black text-blue-300 bg-blue-950/80 px-1.5 rounded border border-blue-800/50 shrink-0 ml-1 py-[1px]">${a.chance}%</span>
           </div>
-          <div class="text-[10px] text-slate-400 pl-[20px] leading-tight break-words">${desc}</div>
+          <div class="battle-info-action-desc text-[10px] text-slate-400 pl-[20px] leading-tight break-words">${desc}</div>
         </div>
       `;
     }).join('');
@@ -397,8 +397,8 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       const rateStyle = getDropRateStyle(rate);
 
       return `
-        <div class="h-[60px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 hover:brightness-125 transition-all gap-1 shadow-inner" title="${itemName}：ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
-          <div class="w-full max-w-8 h-8 rounded-md bg-slate-900/90 flex items-center justify-center border border-slate-700/70 shrink-0 shadow-sm">
+        <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 hover:brightness-125 transition-all gap-0.5 shadow-inner" title="${itemName}：ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
+          <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-slate-700/70 shrink-0 shadow-sm">
             ${itemImg}
           </div>
           <span class="max-w-full overflow-hidden text-[9px] leading-none font-black ${rateStyle.rate} px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${rate.toFixed(3).replace(/\.?0+$/, '')}%</span>
@@ -406,8 +406,8 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       `;
     });
   const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
-    <div class="h-[60px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-1 shadow-inner" title="${equipment.name}：ドロップ率 ${EQUIPMENT_DROP_RATE}%" aria-label="${equipment.name}、ドロップ率 ${EQUIPMENT_DROP_RATE}%">
-      <div class="w-full max-w-8 h-8 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
+    <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-0.5 shadow-inner" title="${equipment.name}：ドロップ率 ${EQUIPMENT_DROP_RATE}%" aria-label="${equipment.name}、ドロップ率 ${EQUIPMENT_DROP_RATE}%">
+      <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
         <img src="${equipment.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm" onerror="this.style.display='none'">
       </div>
       <span class="max-w-full overflow-hidden text-[9px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${EQUIPMENT_DROP_RATE}%</span>
@@ -422,19 +422,19 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
 
   // Master Layout Assembly
   let html = `
-    <div class="w-full h-full min-h-0 flex flex-col gap-1.5 p-1 text-slate-200">
+    <div class="battle-info-root w-full h-full min-h-0 flex flex-col gap-1 p-0.5 text-slate-200">
       
       <!-- 1. Top Panel (Header + Stats/Rewards) -->
-      <div class="flex gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0 backdrop-blur-sm relative overflow-hidden">
+      <div class="battle-info-summary flex gap-1.5 bg-slate-900/60 border border-slate-700/60 rounded-lg p-1 shadow-inner shrink-0 backdrop-blur-sm relative overflow-hidden">
         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
         
         <!-- Left: Avatar & Resists -->
-        <div class="flex flex-col items-center w-[112px] shrink-0 relative z-10 justify-start pt-0.5">
-          <div class="w-12 h-12 rounded-xl bg-slate-950 border border-slate-600 shadow-[0_4px_12px_rgba(0,0,0,0.5)] relative flex items-center justify-center p-1">
+        <div class="battle-info-portrait-column flex flex-col items-center w-[76px] shrink-0 relative z-10 justify-start">
+          <div class="battle-info-portrait w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-[0_4px_12px_rgba(0,0,0,0.5)] relative flex items-center justify-center p-0.5">
             ${targetEntity.isLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-xl"></div>' : ''}
             <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${targetEntity.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
           </div>
-          <div class="flex flex-col w-full mt-1.5">
+          <div class="flex flex-col w-full mt-0.5">
             ${resistHtml}
             ${weakHtml}
           </div>
@@ -442,8 +442,8 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         
         <!-- Right: Name & Stats Grid -->
         <div class="flex-1 flex flex-col justify-start relative z-10 min-w-0">
-          <div class="flex items-center px-1 mb-1.5 shrink-0 min-w-0">
-            <span class="font-black text-[14px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
+          <div class="flex items-center px-0.5 mb-0.5 shrink-0 min-w-0">
+            <span class="font-black text-[12px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
           </div>
           <div class="grid grid-cols-3 gap-1 content-start flex-1">
             ${statPillsHtml}
@@ -453,7 +453,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       </div>
 
       <!-- 2. Actions: compact, independently scrollable -->
-      <div class="flex flex-col bg-slate-900/50 border border-slate-700/50 rounded-xl p-1.5 overflow-hidden shadow-inner shrink-0">
+      <div class="battle-info-actions flex flex-col bg-slate-900/50 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner shrink-0">
         <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1 shrink-0">
           <div class="flex items-center gap-1">
             <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-blue-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">psychology</span></div>
@@ -461,13 +461,13 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           </div>
           <span class="text-[9px] text-slate-500">発動率</span>
         </div>
-        <div class="grid grid-cols-1 min-[420px]:grid-cols-2 gap-0.5 max-h-[86px] overflow-y-auto custom-scrollbar pr-1">
+        <div class="grid grid-cols-2 gap-0.5 max-h-[68px] overflow-y-auto custom-scrollbar">
           ${actionsHtml}
         </div>
       </div>
 
       <!-- 3. Drop inventory: materials and equipment stay visually separate -->
-      <div class="flex-1 min-h-0 flex flex-col bg-slate-900/55 border border-slate-700/50 rounded-xl p-1.5 overflow-hidden shadow-inner">
+      <div class="battle-info-drops flex-1 min-h-0 flex flex-col bg-slate-900/55 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner">
         <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1 shrink-0 gap-2">
           <div class="flex items-center gap-1 min-w-0 shrink-0">
             <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-emerald-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">shopping_bag</span></div>
@@ -478,27 +478,27 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             ${bonus > 0 ? `<span class="text-[8px] text-blue-300 bg-blue-950/50 border border-blue-900/50 rounded px-1 py-0.5 whitespace-nowrap">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
           </div>
         </div>
-        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar pr-1 pb-1">
+        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar">
           ${materialDropRows.length > 0 ? `
-            <section class="mb-1.5" aria-label="素材ドロップ">
-              <div class="sticky top-0 z-10 flex items-center gap-1 py-1 px-1 mb-1 bg-slate-900/95 border-b border-emerald-900/50 backdrop-blur-sm">
+            <section class="mb-1" aria-label="素材ドロップ">
+              <div class="sticky top-0 z-10 flex items-center gap-1 py-0.5 px-1 mb-0.5 bg-slate-900/95 border-b border-emerald-900/50 backdrop-blur-sm">
                 <span class="material-symbols-outlined text-emerald-400" style="font-size: 13px; font-variation-settings: 'FILL' 1;">category</span>
                 <span class="text-[9px] font-black text-emerald-200">素材</span>
                 <span class="text-[8px] text-slate-500">${materialDropRows.length}種</span>
               </div>
-              <div class="grid gap-1" style="grid-template-columns: repeat(${materialDropRows.length}, minmax(0, 1fr));">
+              <div class="grid gap-0.5" style="grid-template-columns: repeat(${materialDropRows.length}, minmax(0, 1fr));">
                 ${materialDropRows.join('')}
               </div>
             </section>
           ` : ''}
           ${equipmentDropRows.length > 0 ? `
             <section aria-label="装備ドロップ">
-              <div class="sticky top-0 z-10 flex items-center gap-1 py-1 px-1 mb-1 bg-slate-900/95 border-b border-amber-900/50 backdrop-blur-sm">
+              <div class="sticky top-0 z-10 flex items-center gap-1 py-0.5 px-1 mb-0.5 bg-slate-900/95 border-b border-amber-900/50 backdrop-blur-sm">
                 <span class="material-symbols-outlined text-amber-400" style="font-size: 13px; font-variation-settings: 'FILL' 1;">swords</span>
                 <span class="text-[9px] font-black text-amber-200">装備</span>
                 <span class="text-[8px] text-slate-500">${equipmentDropRows.length}種</span>
               </div>
-              <div class="grid gap-1" style="grid-template-columns: repeat(${equipmentDropRows.length}, minmax(0, 1fr));">
+              <div class="grid gap-0.5" style="grid-template-columns: repeat(${equipmentDropRows.length}, minmax(0, 1fr));">
                 ${equipmentDropRows.join('')}
               </div>
             </section>
