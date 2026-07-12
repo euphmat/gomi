@@ -25,7 +25,7 @@ const MINE_UNLOCK_PRISM_COSTS = [1, 2, 3, 4, 5, 7, 9, 12, 15, 19, 24, 30, 36, 43
 
 export const MINE_MAX_UPGRADE_LEVEL = 9999;
 export const MINE_MAX_MATERIAL_COST = 99999;
-const MINE_REWARD_MULTIPLIER = 1.5;
+const MINE_REWARD_MULTIPLIER = 3;
 
 export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   id,
@@ -56,7 +56,7 @@ export function getMineStats(mine, state) {
 
   // 速度はLv.9999で30秒まで短縮する。最短の鉱山でも1レベルにつき1秒以上短くなる。
   const intervalMs = Math.round((mine.baseIntervalSeconds - (mine.baseIntervalSeconds - 30) * intervalProgress) * 1000);
-  // 長くなった初期採掘周期に合わせ、強化費用は変えずに全鉱山の報酬だけ1.5倍にする。
+  // 長くなった初期採掘周期に合わせ、強化費用は変えずに全鉱山の報酬だけ3倍にする。
   const goldPerCycle = Math.floor(mine.baseGoldPerCycle * (1 + yieldProgress * 199) * MINE_REWARD_MULTIPLIER) + (yieldLevel - 1);
   const capacityCycles = mine.baseCapacityCycles + (capacityLevel - 1);
   return { intervalMs, goldPerCycle, capacityCycles, maxStoredGold: goldPerCycle * capacityCycles };
