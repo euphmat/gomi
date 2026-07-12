@@ -12,7 +12,7 @@
 // ─── Initial Game State ──────────────────────────────────
 export const SEED_GAME_STATE = [
   { key: 'gold',     value: 100 },
-  { key: 'location', value: 'はじまりの街' },
+  { key: 'location', value: 'ホームタウン' },
   { key: 'version',  value: '0.1.0' },
   { key: 'prism',    value: 0 },
 ];

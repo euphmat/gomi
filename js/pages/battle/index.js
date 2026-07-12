@@ -28,6 +28,64 @@ import { resultMethods } from './battle-results.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
+const DEFAULT_BATTLE_PALETTE = ['42 58 76', '54 78 102', '76 112 142', '112 154 184'];
+
+function extractBattlePalette(imageUrl) {
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 48;
+        canvas.height = 48;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        const buckets = new Map();
+        for (let i = 0; i < pixels.length; i += 16) {
+          if (pixels[i + 3] < 128) continue;
+          const rgb = [pixels[i], pixels[i + 1], pixels[i + 2]];
+          const max = Math.max(...rgb);
+          const min = Math.min(...rgb);
+          const saturation = max ? (max - min) / max : 0;
+          const luminance = (rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722) / 255;
+          // Near-black and near-white pixels add little useful dungeon identity.
+          if (luminance < 0.06 || luminance > 0.94) continue;
+          const key = rgb.map(value => Math.round(value / 32) * 32).join('-');
+          const bucket = buckets.get(key) || { count: 0, score: 0, rgb: [0, 0, 0] };
+          bucket.count += 1;
+          bucket.score += 0.35 + saturation + (1 - Math.abs(luminance - 0.5));
+          rgb.forEach((value, channel) => { bucket.rgb[channel] += value; });
+          buckets.set(key, bucket);
+        }
+
+        const colors = [...buckets.values()]
+          .filter(bucket => bucket.count > 1)
+          .sort((a, b) => b.score - a.score)
+          .map(bucket => bucket.rgb.map(value => Math.round(value / bucket.count)))
+          .filter((color, index, list) => list.slice(0, index).every(other =>
+            Math.hypot(...color.map((value, channel) => value - other[channel])) > 54
+          ))
+          .slice(0, 4);
+
+        if (!colors.length) return resolve(DEFAULT_BATTLE_PALETTE);
+        while (colors.length < 4) {
+          const source = colors[0];
+          const factor = 0.78 + colors.length * 0.12;
+          colors.push(source.map(value => Math.min(255, Math.round(value * factor))));
+        }
+        resolve(colors.map(color => color.join(' ')));
+      } catch (error) {
+        console.warn('Battle palette extraction failed:', error);
+        resolve(DEFAULT_BATTLE_PALETTE);
+      }
+    };
+    image.onerror = () => resolve(DEFAULT_BATTLE_PALETTE);
+    image.src = imageUrl;
+  });
+}
+
 class BattleManager {
   constructor(container) {
     this.container = container;
@@ -144,8 +202,13 @@ class BattleManager {
 
     // Update Header Location
     const headerLoc = document.getElementById('header-location');
-    if (headerLoc && this.dungeonDef) {
-      headerLoc.textContent = `${this.dungeonDef.name} ${this.currentFloorNum}F`;
+    const headerLocName = document.getElementById('header-location-name');
+    const headerLocFloor = document.getElementById('header-location-floor');
+    if (headerLoc && headerLocName && headerLocFloor && this.dungeonDef) {
+      headerLocName.textContent = this.dungeonDef.name;
+      headerLocFloor.textContent = `${this.currentFloorNum}F`;
+      headerLocFloor.classList.remove('hidden');
+      headerLoc.title = `${this.dungeonDef.name} ${this.currentFloorNum}F`;
     }
 
     // Update Background Image
@@ -155,6 +218,7 @@ class BattleManager {
       sceneBg.style.backgroundImage = `linear-gradient(rgba(11, 11, 25, 0.5), rgba(11, 11, 25, 0.7)), url('${this.dungeonDef.bgImage}')`;
       sceneBg.style.backgroundSize = 'cover';
       sceneBg.style.backgroundPosition = 'center top';
+      this.applyBattleTheme(this.dungeonDef.bgImage);
     } else if (sceneBg) {
       sceneBg.style.backgroundImage = 'radial-gradient(circle at top, #1a202c 0%, #0b0b19 100%)';
     }
@@ -292,6 +356,14 @@ class BattleManager {
     }
     
     this.startAtbLoop();
+  }
+
+  async applyBattleTheme(imageUrl) {
+    const palette = await extractBattlePalette(imageUrl);
+    if (!this.container.isConnected || this.dungeonDef?.bgImage !== imageUrl) return;
+    palette.forEach((color, index) => {
+      this.container.style.setProperty(`--battle-palette-${index + 1}`, color);
+    });
   }
 
   _attachRouteChangeHandler() {
@@ -684,20 +756,21 @@ class BattleManager {
 
   updateTabStyles() {
     const tabs = [
-      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', color: 'cyan', label: 'Skill' },
-      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', color: 'emerald', label: 'Item' },
-      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', color: 'blue', label: 'Info' },
-      { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', color: 'pink', label: 'Pet' },
-      { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', color: 'amber', label: 'Medal' }
+      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'Skill' },
+      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', palette: 2, label: 'Item' },
+      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', palette: 3, label: 'Info' },
+      { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: 'Pet' },
+      { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'Medal' }
     ];
 
-    tabs.forEach(({btn, id, icon, color, label}) => {
+    tabs.forEach(({btn, id, icon, palette, label}) => {
+      btn.style.setProperty('--tab-color', `var(--battle-palette-${palette})`);
       if (this.currentTab === id) {
-        btn.className = `flex-1 py-1.5 bg-slate-800 border-t-[3px] border-t-${color}-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-lg text-[10px] font-bold shadow-[0_-5px_20px_rgba(var(--color-${color}-400),0.25)] relative z-10 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer`;
-        btn.innerHTML = `<span class="material-symbols-outlined text-${color}-400 drop-shadow-[0_0_8px_rgba(var(--color-${color}-400),0.8)] pointer-events-none" style="font-size: 13px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none">${label}</span>`;
+        btn.className = 'battle-tab battle-tab--active flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold relative z-10 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 13px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none">${label}</span>`;
       } else {
-        btn.className = 'flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100';
-        btn.innerHTML = `<span class="material-symbols-outlined text-${color}-400/70 pointer-events-none" style="font-size: 13px;">${icon}</span><span class="pointer-events-none">${label}</span>`;
+        btn.className = 'battle-tab flex-1 py-1.5 backdrop-blur-sm border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">${icon}</span><span class="pointer-events-none">${label}</span>`;
       }
     });
   }
@@ -1012,7 +1085,7 @@ Object.assign(BattleManager.prototype,
 
 export function renderBattlePage() {
   const container = document.createElement('div');
-  container.className = 'flex flex-col h-full bg-[#0b0b19] relative z-20 text-white font-sans overflow-hidden';
+  container.className = 'battle-page flex flex-col h-full bg-[#0b0b19] relative z-20 text-white font-sans overflow-hidden';
   
   // Basic structure
   container.innerHTML = `
@@ -1047,6 +1120,49 @@ export function renderBattlePage() {
         width: 100%;
         gap: 0.25rem;
       }
+      .battle-page {
+        --battle-palette-1: ${DEFAULT_BATTLE_PALETTE[0]};
+        --battle-palette-2: ${DEFAULT_BATTLE_PALETTE[1]};
+        --battle-palette-3: ${DEFAULT_BATTLE_PALETTE[2]};
+        --battle-palette-4: ${DEFAULT_BATTLE_PALETTE[3]};
+      }
+      .battle-tab,
+      #tab-content,
+      #command-area,
+      #command-blocker {
+        transition: color .3s ease, background-color .3s ease, border-color .3s ease, box-shadow .3s ease, transform .15s ease;
+      }
+      .battle-tab {
+        color: rgb(255 255 255 / .78);
+        background-color: rgb(4 10 18 / .72);
+        border-color: rgb(255 255 255 / .16);
+        border-top-color: transparent;
+        text-shadow: 0 1px 3px rgb(0 0 0 / .9);
+      }
+      .battle-tab:hover { background-color: rgb(8 16 26 / .9); color: white; }
+      .battle-tab--active {
+        color: white;
+        background-color: rgb(8 16 26 / .94);
+        border-color: rgb(255 255 255 / .28);
+        border-top-color: rgb(255 255 255 / .88);
+        box-shadow: 0 -5px 20px rgb(var(--tab-color) / .42), inset 0 1px 0 rgb(255 255 255 / .08);
+      }
+      .battle-tab .material-symbols-outlined {
+        color: rgb(255 255 255 / .88);
+        filter: drop-shadow(0 0 6px rgb(var(--tab-color) / .8));
+      }
+      #tab-content {
+        color: white;
+        background-color: rgb(var(--battle-palette-1) / .76);
+        border-color: rgb(var(--battle-palette-3) / .5);
+        box-shadow: inset 0 1px 0 rgb(var(--battle-palette-4) / .18), 0 10px 28px rgb(0 0 0 / .35);
+      }
+      #command-area {
+        background: linear-gradient(135deg, rgb(var(--battle-palette-1) / .92), rgb(var(--battle-palette-2) / .84));
+        border-color: rgb(var(--battle-palette-4) / .55);
+        box-shadow: 0 -5px 18px rgb(var(--battle-palette-1) / .5);
+      }
+      #command-blocker { background-color: rgb(var(--battle-palette-1) / .8); }
     </style>
 
     <!-- Fixed Battle Area (Enemies, Party, Tabs) -->
@@ -1066,14 +1182,14 @@ export function renderBattlePage() {
       <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10 min-h-0">
         <!-- Tabs -->
         <div class="flex px-0.5 gap-0.5 items-end shrink-0">
-          <button id="tab-btn-skill" class="flex-1 py-1.5 bg-slate-800 border-t-[3px] border-t-cyan-400 border-x border-x-slate-600/50 border-b border-b-slate-800 rounded-t-lg text-[10px] font-bold shadow-[0_-5px_20px_rgba(var(--color-cyan-400),0.25)] relative z-10 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer"><span class="material-symbols-outlined text-cyan-400 drop-shadow-[0_0_8px_rgba(var(--color-cyan-400),0.8)] pointer-events-none" style="font-size: 13px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none">Skill</span></button>
-          <button id="tab-btn-item" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-emerald-400/70 pointer-events-none" style="font-size: 13px;">backpack</span><span class="pointer-events-none">Item</span></button>
-          <button id="tab-btn-info" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-blue-400/70 pointer-events-none" style="font-size: 13px;">info</span><span class="pointer-events-none">Info</span></button>
-          <button id="tab-btn-pet" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-pink-400/70 pointer-events-none" style="font-size: 13px;">pets</span><span class="pointer-events-none">Pet</span></button>
-          <button id="tab-btn-medal" class="flex-1 py-1.5 bg-slate-900/60 backdrop-blur-sm text-slate-400 border-t-[3px] border-t-transparent border-x border-x-slate-700/50 border-b border-b-slate-600/50 rounded-t-lg text-[10px] font-bold hover:bg-slate-800/70 hover:text-slate-300 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer opacity-80 hover:opacity-100"><span class="material-symbols-outlined text-amber-400/70 pointer-events-none" style="font-size: 13px;">military_tech</span><span class="pointer-events-none">Medal</span></button>
+          <button id="tab-btn-skill" class="battle-tab battle-tab--active flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold relative z-10 flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none">Skill</span></button>
+          <button id="tab-btn-item" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">backpack</span><span class="pointer-events-none">Item</span></button>
+          <button id="tab-btn-info" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">info</span><span class="pointer-events-none">Info</span></button>
+          <button id="tab-btn-pet" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">pets</span><span class="pointer-events-none">Pet</span></button>
+          <button id="tab-btn-medal" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">military_tech</span><span class="pointer-events-none">Medal</span></button>
         </div>
         <!-- Tab Content -->
-        <div id="tab-content" class="flex-1 bg-slate-800 border border-slate-600/50 rounded-b-xl p-2.5 min-h-[120px] overflow-y-auto shadow-xl mb-2 relative z-0">
+        <div id="tab-content" class="flex-1 border rounded-b-xl p-2.5 min-h-[120px] overflow-y-auto shadow-xl mb-2 relative z-0">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）
@@ -1084,10 +1200,10 @@ export function renderBattlePage() {
     </div>
 
     <!-- Command Area (Fixed at bottom of main, above footer) -->
-    <div id="command-area" class="bg-slate-900/85 backdrop-blur-[2px] border-t border-slate-700/80 p-2 flex gap-2 shrink-0 h-[72px] relative shadow-[0_-4px_10px_rgba(0,0,0,0.5)]">
+    <div id="command-area" class="backdrop-blur-[2px] border-t p-2 flex gap-2 shrink-0 h-[72px] relative">
       <!-- Overlay block when no active character -->
-      <div id="command-blocker" class="absolute inset-0 bg-gray-900/70 z-10 flex items-center justify-center backdrop-blur-[2px]">
-        <span class="text-sm font-bold text-gray-300 animate-pulse tracking-wide">行動順を待っています...</span>
+      <div id="command-blocker" class="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[2px]">
+        <span class="text-sm font-bold text-white/80 animate-pulse tracking-wide">行動順を待っています...</span>
       </div>
 
       <!-- Actions -->

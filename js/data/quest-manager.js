@@ -31,6 +31,14 @@ export const DAILY_QUESTS = [
     target: 5,
     progressKey: 'crafts',
   },
+  {
+    id: 'daily_mine_upgrade_5',
+    label: '任意の鉱山のアップグレードを5回行う',
+    icon: 'landscape',
+    eventType: 'quest:mine-upgrade',
+    target: 5,
+    progressKey: 'mineUpgrades',
+  },
 ];
 
 class QuestManagerClass {
@@ -40,6 +48,7 @@ class QuestManagerClass {
       kills: 0,
       feedLevels: 0,
       crafts: 0,
+      mineUpgrades: 0,
       claimed: false,
     };
   }
@@ -57,6 +66,7 @@ class QuestManagerClass {
         kills: 0,
         feedLevels: 0,
         crafts: 0,
+        mineUpgrades: 0,
         claimed: false,
       };
       await this.saveProgress();
@@ -79,6 +89,11 @@ class QuestManagerClass {
     window.addEventListener('quest:equipment-craft', (e) => {
       const { count } = e.detail;
       this.addProgress('crafts', count);
+    });
+
+    window.addEventListener('quest:mine-upgrade', (e) => {
+      const { count } = e.detail;
+      this.addProgress('mineUpgrades', count);
     });
   }
 

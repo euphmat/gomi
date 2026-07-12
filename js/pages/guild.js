@@ -2,6 +2,7 @@ import { renderInnTab } from './guild-tabs/inn.js';
 import { renderChangeJobTab } from './guild-tabs/change-job.js';
 import { renderAcquireSkillTab } from './guild-tabs/acquire-skill.js';
 import { renderRanchTab } from './guild-tabs/ranch.js';
+import { renderMineTab } from './guild-tabs/mine.js';
 
 /**
  * このファイルは「ギルド」画面のメインコンテナです。
@@ -16,7 +17,8 @@ export function renderGuildPage() {
     { id: 'inn', label: '宿屋', icon: 'hotel' },
     { id: 'skill', label: '修練場', icon: 'sports_martial_arts' },
     { id: 'job', label: '神殿', icon: 'church' },
-    { id: 'ranch', label: '牧場', icon: 'pets' }
+    { id: 'ranch', label: '牧場', icon: 'pets' },
+    { id: 'mine', label: '鉱山', icon: 'landscape' }
   ];
   let activeTabId = 'inn';
 
@@ -71,6 +73,7 @@ export function renderGuildPage() {
       case 'skill': tabContent = renderAcquireSkillTab(); break;
       case 'job': tabContent = renderChangeJobTab(); break;
       case 'ranch': tabContent = renderRanchTab(); break;
+      case 'mine': tabContent = renderMineTab(); break;
     }
 
     if (tabContent instanceof Promise) {

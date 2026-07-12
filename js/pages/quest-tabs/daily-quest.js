@@ -76,7 +76,7 @@ export function renderDailyQuestTab() {
             </span>
             <h2 class="text-base sm:text-lg font-black text-white tracking-wide">今日のクエスト</h2>
           </div>
-          <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">3つのミッションを達成して、プリズムを獲得しよう</p>
+          <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">${DAILY_QUESTS.length}つのミッションを達成して、プリズムを獲得しよう</p>
         </div>
         <div class="shrink-0 rounded-xl bg-slate-950/70 border border-slate-700/70 px-3 py-2 text-right" aria-label="クエスト更新までの時間">
           <div class="flex items-center justify-end gap-1 text-[9px] text-slate-500 font-bold tracking-wider">

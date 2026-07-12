@@ -23,6 +23,8 @@ import { createHeader } from './components/header.js';
 import { createNavBar, initNavBar } from './components/nav-bar.js';
 import { GameDB } from './data/database.js';
 import { JOBS } from './jobs/index.js';
+import { syncMineOfflineProgress } from './data/mine-manager.js';
+import { SpecialQuestManager } from './data/special-quest-manager.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -54,6 +56,14 @@ class App {
 
       await QuestManager.init();
       console.log('[App] QuestManager initialized.');
+
+      // アプリを閉じていた間の鉱山採掘を未回収Goldへ反映する。
+      // 所持Goldへの加算は鉱山画面の回収ボタンでのみ行う。
+      await syncMineOfflineProgress();
+      console.log('[App] Mine offline progress synchronized.');
+
+      await SpecialQuestManager.init();
+      console.log('[App] SpecialQuestManager initialized.');
 
       // ── SP Correction Logic (Global) ──
       const chars = await GameDB.getAllCharacters();
@@ -105,10 +115,10 @@ class App {
     }
 
     // ── 1. Read game state from DB ──
-    let gameState = { location: 'はじまりの街', version: '0.1.1', gold: 0, prism: 0 };
+    let gameState = { location: 'ホームタウン', version: '0.1.1', gold: 0, prism: 0 };
     try {
       if (GameDB.db) {
-        gameState.location = await GameDB.getGameState('location') || 'はじまりの街';
+        gameState.location = 'ホームタウン';
         gameState.version  = await GameDB.getGameState('version')  || '0.1.1';
         gameState.gold     = await GameDB.getGameState('gold')      ?? 0;
         gameState.prism    = await GameDB.getGameState('prism')     ?? 0;
@@ -156,8 +166,13 @@ class App {
       // Reset location text if we leave battle
       if (window.location.hash !== '#/battle') {
         const headerLoc = document.getElementById('header-location');
-        if (headerLoc) {
-          headerLoc.textContent = 'はじまりの街';
+        const headerLocName = document.getElementById('header-location-name');
+        const headerLocFloor = document.getElementById('header-location-floor');
+        if (headerLoc && headerLocName && headerLocFloor) {
+          headerLocName.textContent = 'ホームタウン';
+          headerLocFloor.textContent = '';
+          headerLocFloor.classList.add('hidden');
+          headerLoc.title = 'ホームタウン';
         }
       }
     });
