@@ -1,6 +1,7 @@
 import { GameDB } from './database.js';
 import { MINES, MINE_MAX_UPGRADE_LEVEL, getMineStats, getMineUpgradeCost } from '../definitions/mines.js';
 import { notifyGameEvent } from '../utils/game-notifications.js';
+import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
 
 const STATE_KEY = 'mine_data';
 
@@ -31,6 +32,7 @@ export function accrueMine(mine, state, now = Date.now()) {
 }
 
 export async function loadMineData(now = Date.now()) {
+  await loadTreasureLevels();
   const saved = await GameDB.getGameState(STATE_KEY) || {};
   const data = {};
   let changed = false;
@@ -94,11 +96,12 @@ export async function claimMineGold(mineId) {
   if (!mine) throw new Error('鉱山が見つかりません。');
   const data = await loadMineData();
   const state = data[mineId];
-  const amount = Math.floor(state.storedGold || 0);
-  if (!state.unlocked || amount <= 0) throw new Error('回収できるGoldがありません。');
+  const storedAmount = Math.floor(state.storedGold || 0);
+  if (!state.unlocked || storedAmount <= 0) throw new Error('回収できるGoldがありません。');
+  const amount = Math.floor(storedAmount * (1 + getTreasureEffect('mineGoldPercent') / 100));
   const gold = await GameDB.getGameState('gold') || 0;
   // 1 Gold未満の端数は鉱山に残し、所持Goldを常に整数に保つ。
-  state.storedGold -= amount;
+  state.storedGold -= storedAmount;
   state.maxNotified = false;
   state.lastAccruedAt = Date.now();
   await GameDB.setGameState('gold', gold + amount);

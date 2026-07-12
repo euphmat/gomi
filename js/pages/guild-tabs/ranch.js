@@ -4,6 +4,7 @@ import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { getRanchLevelInfo, calculateTotalRanchBonus } from '../../data/stat-calculator.js';
+import { getTreasureEffect, loadTreasureLevels } from '../../data/treasure-manager.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
@@ -12,6 +13,7 @@ export async function renderRanchTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full bg-[#0b0b19] overflow-hidden relative';
 
+  await loadTreasureLevels();
   let ranchData = await GameDB.getGameState('ranch_data') || {};
   let currentDungeonId = Object.keys(ranchData).length > 0 ? Object.keys(ranchData)[0] : null;
 
@@ -687,7 +689,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
             await GameDB.putInventoryItem(currentInv);
           }
             
-            const expGain = amount * expMultiplier;
+            const expGain = Math.floor(amount * expMultiplier * (1 + getTreasureEffect('ranchExpPercent') / 100));
             const oldExp = monsterData.fedMaterials || 0;
             const oldLevelInfo = getRanchLevelInfo(oldExp, isLegendary);
             const oldMStats = getMonsterStats(oldLevelInfo.level);

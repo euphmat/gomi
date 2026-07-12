@@ -384,7 +384,9 @@ export async function renderMineTab() {
           <div class="mb-2 grid grid-cols-2 gap-1.5 text-left">
             <div class="rounded-lg border ${hasUnlockPrism ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} px-2 py-1.5">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-fuchsia-400/30 bg-fuchsia-950/50 text-xl text-fuchsia-300">diamond</span>
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-fuchsia-400/30 bg-fuchsia-950/50">
+                  <span class="material-symbols-outlined block text-xl leading-none text-fuchsia-300">diamond</span>
+                </div>
                 <div class="min-w-0">
                   <div class="truncate text-[10px] font-bold text-slate-300">Prism</div>
                   <div class="text-xs font-black tabular-nums ${hasUnlockPrism ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentPrism)} <span class="text-slate-600">/</span> ${formatNumber(mine.unlockPrism)}</div>

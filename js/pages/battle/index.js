@@ -16,6 +16,7 @@ import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItem
 import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
 import { formatNumber } from '../../utils/format.js';
+import { loadTreasureLevels } from '../../data/treasure-manager.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -175,6 +176,7 @@ class BattleManager {
       this.elements.tabContent.dataset.hoverListenerAdded = 'true';
     }
 
+    await loadTreasureLevels();
     this.autoSkillStates = await GameDB.getGameState('autoSkillStates') || {};
     this.monsterKills = await GameDB.getGameState('monster_kills') || {};
     this.playerMedals = await GameDB.getGameState('player_medals') || {};

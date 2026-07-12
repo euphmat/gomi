@@ -24,6 +24,7 @@ import { createNavBar, initNavBar } from './components/nav-bar.js';
 import { GameDB } from './data/database.js';
 import { JOBS } from './jobs/index.js';
 import { syncMineOfflineProgress } from './data/mine-manager.js';
+import { loadTreasureLevels } from './data/treasure-manager.js';
 import { SpecialQuestManager } from './data/special-quest-manager.js';
 import { DailyLoginManager } from './data/daily-login-manager.js';
 import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotificationsEnabled } from './utils/game-notifications.js';
@@ -66,6 +67,10 @@ class App {
 
       await QuestManager.init();
       console.log('[App] QuestManager initialized.');
+
+      // 常時発動する秘宝効果を、放置報酬などの計算より先に読み込む。
+      await loadTreasureLevels(true);
+      console.log('[App] Treasure effects initialized.');
 
       // アプリを閉じていた間の鉱山採掘を未回収Goldへ反映する。
       // 所持Goldへの加算は鉱山画面の回収ボタンでのみ行う。

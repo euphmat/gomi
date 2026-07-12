@@ -8,6 +8,7 @@ import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
+import { getMaterialCapacity, getTreasureEffect, loadTreasureLevels } from '../../data/treasure-manager.js';
 
 const ALL_DEFINITIONS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
@@ -62,6 +63,7 @@ export function renderShopTab() {
   let inventoryMap = {};
   let currentGold = 0;
   let currentEquipmentCount = 0;
+  let materialCapacity = 99999;
   let equipmentCountMap = {};
   let activeFilter = 'all';
   const storedViewMode = localStorage.getItem(SHOP_SETTINGS_KEYS.viewMode);
@@ -79,6 +81,19 @@ export function renderShopTab() {
     { id: 'armor', icon: 'checkroom' },
     { id: 'accessory', icon: 'diamond' },
   ];
+
+  const getCraftPrice = item => {
+    const price = item.recipe?.price || 0;
+    if (!item.slot || price <= 0) return price;
+    return Math.max(1, Math.ceil(price * (1 - getTreasureEffect('craftGoldDiscountPercent') / 100)));
+  };
+
+  const getCraftMaterialAmount = (item, material) => {
+    if (!item.slot || material.amount <= 0) return material.amount;
+    return Math.max(1, Math.ceil(material.amount * (1 - getTreasureEffect('craftMaterialDiscountPercent') / 100)));
+  };
+
+  const getItemCapacity = item => item.slot ? 99999 : materialCapacity;
 
   // トップバー領域
   const topBar = document.createElement('div');
@@ -338,7 +353,7 @@ export function renderShopTab() {
             <div class="flex items-center gap-1.5">
               <span class="text-slate-500 font-bold uppercase tracking-widest" style="font-size: 8px;">合成</span>
               <div class="flex items-baseline gap-0.5 leading-none">
-                 <span class="text-amber-400 font-mono font-bold drop-shadow-sm" style="font-size: 11px;">${item.recipe?.price ? formatNumber(item.recipe.price) : 0}</span>
+                 <span class="text-amber-400 font-mono font-bold drop-shadow-sm" style="font-size: 11px;">${formatNumber(getCraftPrice(item))}</span>
                  <span class="text-amber-500/80 font-bold" style="font-size: 8px;">G</span>
               </div>
             </div>
@@ -351,15 +366,16 @@ export function renderShopTab() {
           // 最大合成可能数を計算
           const pmIsMaterial = !item.slot;
           const pmOwnedCount = pmIsMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
-          const pmPrice = item.recipe.price || 0;
-          let pmMaxCraft = 99999 - pmOwnedCount;
+          const pmPrice = getCraftPrice(item);
+          let pmMaxCraft = getItemCapacity(item) - pmOwnedCount;
           if (pmPrice > 0) {
             pmMaxCraft = Math.min(pmMaxCraft, Math.floor(currentGold / pmPrice));
           }
           item.recipe.materials.forEach(mat => {
             const owned = inventoryMap[mat.id] || 0;
-            if (mat.amount > 0) {
-              pmMaxCraft = Math.min(pmMaxCraft, Math.floor(owned / mat.amount));
+            const materialAmount = getCraftMaterialAmount(item, mat);
+            if (materialAmount > 0) {
+              pmMaxCraft = Math.min(pmMaxCraft, Math.floor(owned / materialAmount));
             }
           });
           pmMaxCraft = Math.max(0, pmMaxCraft);
@@ -382,7 +398,7 @@ export function renderShopTab() {
   const performCraft = async (item, craftCount) => {
     if (craftCount <= 0) return;
     const isMaterial = !item.slot;
-    const price = item.recipe.price || 0;
+    const price = getCraftPrice(item);
     const totalCost = price * craftCount;
 
     // ゴールドを減らす
@@ -399,7 +415,7 @@ export function renderShopTab() {
     for (const mat of item.recipe.materials) {
       const invItem = await GameDB.getInventoryItem(mat.id);
       if (invItem) {
-        const totalMatCost = mat.amount * craftCount;
+        const totalMatCost = getCraftMaterialAmount(item, mat) * craftCount;
         const newQty = (invItem.quantity || 0) - totalMatCost;
         if (newQty <= 0) {
           await GameDB.deleteInventoryItem(mat.id);
@@ -442,11 +458,11 @@ export function renderShopTab() {
   /** 合成可能かチェック */
   const checkCanCraft = (item) => {
     if (!item.recipe) return false;
-    if (currentGold < (item.recipe.price || 0)) return false;
+    if (currentGold < getCraftPrice(item)) return false;
     const isMaterial = !item.slot;
     const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
-    if (ownedCount >= 99999) return false;
-    return item.recipe.materials.every(mat => (inventoryMap[mat.id] || 0) >= mat.amount);
+    if (ownedCount >= getItemCapacity(item)) return false;
+    return item.recipe.materials.every(mat => (inventoryMap[mat.id] || 0) >= getCraftMaterialAmount(item, mat));
   };
 
   /** 合成モーダルを表示 */
@@ -455,15 +471,17 @@ export function renderShopTab() {
     const ownedCount = isMaterial ? (inventoryMap[item.id] || 0) : (equipmentCountMap[item.id] || 0);
     
     // 計算: 最大合成可能数
-    const price = item.recipe.price || 0;
-    let maxCraft = 99999 - ownedCount;
+    const price = getCraftPrice(item);
+    const itemCapacity = getItemCapacity(item);
+    let maxCraft = itemCapacity - ownedCount;
     if (price > 0) {
       maxCraft = Math.min(maxCraft, Math.floor(currentGold / price));
     }
     item.recipe.materials.forEach(mat => {
       const owned = inventoryMap[mat.id] || 0;
-      if (mat.amount > 0) {
-        maxCraft = Math.min(maxCraft, Math.floor(owned / mat.amount));
+      const materialAmount = getCraftMaterialAmount(item, mat);
+      if (materialAmount > 0) {
+        maxCraft = Math.min(maxCraft, Math.floor(owned / materialAmount));
       }
     });
     maxCraft = Math.max(0, maxCraft);
@@ -621,7 +639,7 @@ export function renderShopTab() {
     middleSection.innerHTML = `
       <div class="flex justify-between items-center mb-2">
         <span class="text-xs font-bold text-slate-400">合成数</span>
-        <span class="text-[10px] text-slate-500 font-mono tracking-wider">最大: ${maxCraft} / 99999</span>
+        <span class="text-[10px] text-slate-500 font-mono tracking-wider">最大: ${maxCraft} / ${formatNumber(itemCapacity)}</span>
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
@@ -650,7 +668,7 @@ export function renderShopTab() {
       item.recipe.materials.forEach(mat => {
         const matDef = ALL_DEFINITIONS.find(d => d.id === mat.id);
         const owned = inventoryMap[mat.id] || 0;
-        const requiredAmount = mat.amount * currentCraft;
+        const requiredAmount = getCraftMaterialAmount(item, mat) * currentCraft;
         const enough = owned >= requiredAmount;
         const matAcquired = acquiredIds.has(mat.id);
         const showMatSilhouette = !matAcquired;
@@ -697,10 +715,10 @@ export function renderShopTab() {
       `;
       materialsSection.innerHTML = materialsHtml;
 
-      if (ownedCount >= 99999) {
+      if (ownedCount >= itemCapacity) {
         craftBtn.disabled = true;
         craftBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';
-        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>所持上限（99999個）に達しています`;
+        craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>所持上限（${formatNumber(itemCapacity)}個）に達しています`;
       } else if (craftCount > 0) {
         craftBtn.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.25)] hover:shadow-[0_4px_25px_rgba(16,185,129,0.4)] border border-emerald-400/20 cursor-pointer shrink-0';
         craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">construction</span>合成する（${craftCount}個）`;
@@ -777,8 +795,10 @@ export function renderShopTab() {
   Promise.all([
     GameDB.getAllInventory(),
     GameDB.getGameState('gold'),
-    GameDB.getAllEquipment()
+    GameDB.getAllEquipment(),
+    loadTreasureLevels()
   ]).then(([inventory, gold, equipment]) => {
+    materialCapacity = getMaterialCapacity();
     inventoryMap = {};
     inventory.forEach(item => inventoryMap[item.id] = item.quantity || 0);
     currentGold = gold || 0;

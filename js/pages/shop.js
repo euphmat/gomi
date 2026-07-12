@@ -1,6 +1,7 @@
 import { renderShopTab } from './shop-tabs/shop-tab.js';
 import { renderStorageTab } from './shop-tabs/storage-tab.js';
 import { renderMedalTab } from './shop-tabs/medal-tab.js';
+import { renderGachaTab } from './shop-tabs/gacha-tab.js';
 
 /**
  * このファイルは「ショップ」画面のメインコンテナです。
@@ -14,7 +15,8 @@ export function renderShopPage() {
   const TABS = [
     { id: 'shop', label: 'ショップ', icon: 'storefront', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'hover:border-cyan-500/35 hover:bg-cyan-950/30 hover:text-cyan-300' },
     { id: 'storage', label: '倉庫', icon: 'inventory_2', activeClass: 'border-sky-400/45 bg-sky-950/55 text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(56,189,248,0.18)]', idleClass: 'hover:border-sky-500/35 hover:bg-sky-950/30 hover:text-sky-300' },
-    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech', activeClass: 'border-yellow-400/45 bg-yellow-950/55 text-yellow-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(250,204,21,0.18)]', idleClass: 'hover:border-yellow-500/35 hover:bg-yellow-950/30 hover:text-yellow-300' }
+    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech', activeClass: 'border-yellow-400/45 bg-yellow-950/55 text-yellow-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(250,204,21,0.18)]', idleClass: 'hover:border-yellow-500/35 hover:bg-yellow-950/30 hover:text-yellow-300' },
+    { id: 'gacha', label: '秘宝ガチャ', icon: 'auto_awesome', activeClass: 'border-fuchsia-400/45 bg-fuchsia-950/55 text-fuchsia-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(217,70,239,0.18)]', idleClass: 'hover:border-fuchsia-500/35 hover:bg-fuchsia-950/30 hover:text-fuchsia-300' }
   ];
   
   let activeTabId = 'shop';
@@ -80,6 +82,9 @@ export function renderShopPage() {
         break;
       case 'medal':
         tabContent = renderMedalTab();
+        break;
+      case 'gacha':
+        tabContent = renderGachaTab();
         break;
     }
 

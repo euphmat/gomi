@@ -9,6 +9,7 @@ import { MATERIALS } from '../../definitions/materials.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { getRanchLevelInfo } from '../../data/stat-calculator.js';
 import { formatNumber } from '../../utils/format.js';
+import { getTreasureEffect, loadTreasureLevels } from '../../data/treasure-manager.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -28,6 +29,7 @@ let currentTargetEntityId = null;
  * @param {Function} onRanchDataUpdated - ranch_data 更新時コールバック
  */
 export async function renderBattlePetTab(tabContent, targetEntity, monsterKills, ranchData, currentDungeonId, onRanchDataUpdated) {
+  await loadTreasureLevels();
   if (!targetEntity || !targetEntity.id) {
     tabContent.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が選択されていません</div>';
     return;
@@ -67,9 +69,10 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   }
 
   // --- 捕獲率計算 ---
-  const captureRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
+  const captureRate = Math.min(1.0, (0.0001 + Math.floor(kills / 100) * 0.0001) * getTreasureEffect('captureMultiplier'));
   const legAppRate = Math.min(1.0, 0.00001 + Math.floor(kills / 100) * 0.00001);
-  const legCapRate = Math.min(1.0, 0.0001 + Math.floor(kills / 100) * 0.0001);
+  const legCapRate = Math.min(1.0, (0.0001 + Math.floor(kills / 100) * 0.0001)
+    * getTreasureEffect('captureMultiplier') * getTreasureEffect('legendaryCaptureMultiplier'));
 
   const getCapBadge = (captured, rate) => captured
     ? `<span class="text-pink-400 text-[9px] font-black shrink-0">捕獲済</span>`
@@ -427,7 +430,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
           const oldExp = monsterData.fedMaterials || 0;
           const oldLevelInfo = getRanchLevelInfo(oldExp, variant.isLeg);
           
-          const expGain = amount * expMultiplier;
+          const expGain = Math.floor(amount * expMultiplier * (1 + getTreasureEffect('ranchExpPercent') / 100));
           monsterData.fedMaterials = oldExp + expGain;
 
           const newInfo = getRanchLevelInfo(monsterData.fedMaterials, variant.isLeg);

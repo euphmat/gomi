@@ -22,6 +22,7 @@ import { WEAPONS } from '../definitions/weapons.js';
 import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
+import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
 
 /**
  * Calculate the final stats for a character.
@@ -241,6 +242,7 @@ export function getRanchLevelInfo(totalFed, isLegendary = false) {
  * @returns {Promise<{ hp: number, mp: number, atk: number, def: number, matk: number, mdef: number, spd: number }>}
  */
 export async function calculateTotalRanchBonus() {
+  await loadTreasureLevels();
   const ranchData = await GameDB.getGameState('ranch_data') || {};
   const totalBonus = { hp: 0, mp: 0, atk: 0, def: 0, matk: 0, mdef: 0, spd: 0 };
   
@@ -267,6 +269,10 @@ export async function calculateTotalRanchBonus() {
     }
   }
   
+  const petMultiplier = 1 + getTreasureEffect('petStatsPercent') / 100;
+  for (const key of Object.keys(totalBonus)) {
+    totalBonus[key] = Math.floor(totalBonus[key] * petMultiplier);
+  }
   return totalBonus;
 }
 

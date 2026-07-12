@@ -1,5 +1,6 @@
 import { MEDAL_RANKS } from '../../definitions/medal-definitions.js';
 import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definitions/equipment-drops.js';
+import { getTreasureEffect } from '../../data/treasure-manager.js';
 import { formatNumber } from '../../utils/format.js';
 
 export function getActiveStateIconsHTML(entity) {
@@ -393,7 +394,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         ? `<img src="${mat.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm">`
         : `<div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-slate-500" style="font-size: 18px; transform: scale(0.65);">category</span></div>`;
       
-      const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus;
+      const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus + getTreasureEffect('materialDropPercent');
       const rateStyle = getDropRateStyle(rate);
 
       return `
@@ -405,12 +406,13 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         </div>
       `;
     });
+  const equipmentDropRate = EQUIPMENT_DROP_RATE * getTreasureEffect('equipmentDropMultiplier');
   const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
-    <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-0.5 shadow-inner" title="${equipment.name}：ドロップ率 ${EQUIPMENT_DROP_RATE}%" aria-label="${equipment.name}、ドロップ率 ${EQUIPMENT_DROP_RATE}%">
+    <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-0.5 shadow-inner" title="${equipment.name}：ドロップ率 ${equipmentDropRate}%" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
       <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
         <img src="${equipment.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm" onerror="this.style.display='none'">
       </div>
-      <span class="max-w-full overflow-hidden text-[9px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${EQUIPMENT_DROP_RATE}%</span>
+      <span class="max-w-full overflow-hidden text-[9px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${equipmentDropRate}%</span>
     </div>
   `);
   const dropRows = [...materialDropRows, ...equipmentDropRows];

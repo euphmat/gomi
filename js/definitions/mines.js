@@ -1,3 +1,5 @@
+import { getTreasureEffect } from '../data/treasure-manager.js';
+
 /**
  * 鉱山の定義。バランス調整値はこのファイルだけで変更できる。
  * upgradeMaterials は [採掘機, 秒間採掘量, 蓄積上限] の順。
@@ -61,8 +63,11 @@ export function getMineStats(mine, state) {
   const capacityProgress = Math.min(1, Math.max(0, capacityLevel - 1) / maxLevelSteps);
 
   // 初期値は旧仕様と同じ時間あたり収益。採掘量100倍 × 採掘機効率10倍で最大1,000倍に抑える。
-  const baseGoldPerSecond = mine.baseGoldPerSecond * (1 + yieldProgress * 99);
-  const machineEfficiency = 1 + machineProgress * 9;
+  const treasureYieldMultiplier = getTreasureEffect('mineYieldMultiplier');
+  const machineTreasureMultiplier = 1 + getTreasureEffect('mineMachineEffectPercent') / 100;
+  const baseGoldPerSecond = mine.baseGoldPerSecond * (1 + yieldProgress * 99) * treasureYieldMultiplier;
+  // 秘宝は採掘機レベルによる増加分だけを強化し、Lv.1の基礎効率は変えない。
+  const machineEfficiency = 1 + machineProgress * 9 * machineTreasureMultiplier;
   const goldPerSecond = baseGoldPerSecond * machineEfficiency;
   const storageHours = MINE_BASE_STORAGE_HOURS + (MINE_MAX_STORAGE_HOURS - MINE_BASE_STORAGE_HOURS) * capacityProgress;
   const maxStoredGold = goldPerSecond * storageHours * 60 * 60;
@@ -80,9 +85,10 @@ export function getMineUpgradeCost(mine, type, currentLevel) {
   const initialGold = mine.upgradeGoldBase * (10 + mineIndex * 5);
   // 最大蓄積量は放置効率への影響が大きいため、貯蔵庫だけGoldコストを大幅に上げる。
   const typeGoldMultiplier = type === 'capacity' ? 25 : 1;
+  const materialDiscount = getTreasureEffect('mineMaterialDiscountPercent') / 100;
   return {
     materialId: mine.upgradeMaterials[typeIndex],
-    materialAmount: currentLevel + Math.round(materialCurveRange * Math.pow(costProgress, 2)),
+    materialAmount: Math.max(1, Math.ceil((currentLevel + Math.round(materialCurveRange * Math.pow(costProgress, 2))) * (1 - materialDiscount))),
     gold: Math.floor((initialGold * (1 + 999 * Math.pow(costProgress, 2)) + (currentLevel - 1) * mine.upgradeGoldBase) * typeGoldMultiplier)
   };
 }

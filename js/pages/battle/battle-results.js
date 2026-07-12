@@ -13,6 +13,7 @@ import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
 import { renderItemTabHtml } from './battle-ui.js';
 import { notifyGameEvent } from '../../utils/game-notifications.js';
+import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -54,7 +55,7 @@ export const resultMethods = {
 
     if (this.monsterKills) {
       const medalBonus = medalRankIndex >= 0 ? MEDAL_RANKS[medalRankIndex].killBonus : 0;
-      const countToAdd = 1 + medalBonus;
+      const countToAdd = 1 + medalBonus + getTreasureEffect('extraKillCount');
       this.monsterKills[enemy.id] = (this.monsterKills[enemy.id] || 0) + countToAdd;
       // Daily quest progress counts actual defeats, not the medal kill bonus.
       window.dispatchEvent(new CustomEvent('quest:monster-kill', { detail: { monsterId: enemy.id, count: 1 } }));
@@ -62,7 +63,7 @@ export const resultMethods = {
     }
 
     // Add Gold
-    let gold = enemy.rewards.gold || 0;
+    let gold = Math.floor((enemy.rewards.gold || 0) * (1 + getTreasureEffect('monsterGoldPercent') / 100));
     if (gold > 0) {
       this.currentGold += gold;
       this.obtainedGold += gold;
@@ -73,8 +74,8 @@ export const resultMethods = {
     }
 
     // Add EXP / JP to party members
-    let exp = enemy.rewards.exp || 0;
-    let jp = enemy.rewards.jp || 0;
+    let exp = Math.floor((enemy.rewards.exp || 0) * (1 + getTreasureEffect('battleExpPercent') / 100));
+    let jp = Math.floor((enemy.rewards.jp || 0) * (1 + getTreasureEffect('battleJpPercent') / 100));
 
     if (exp > 0) this.obtainedExp += exp;
     
@@ -149,7 +150,10 @@ export const resultMethods = {
     // --- 牧場 (Ranch) コンパニオン化抽選 ---
     const enemyKills = this.monsterKills[enemy.id] || 0;
     // 基本確率は0.01%。100体討伐ごとに0.01%上昇する
-    const captureRate = Math.min(1.0, 0.0001 + Math.floor(enemyKills / 100) * 0.0001);
+    const baseCaptureRate = 0.0001 + Math.floor(enemyKills / 100) * 0.0001;
+    const captureMultiplier = getTreasureEffect('captureMultiplier')
+      * (enemy.isLegendary ? getTreasureEffect('legendaryCaptureMultiplier') : 1);
+    const captureRate = Math.min(1.0, baseCaptureRate * captureMultiplier);
     
     if (Math.random() < captureRate) {
       const dungeonId = this.currentDungeonId;
@@ -189,7 +193,7 @@ export const resultMethods = {
       const kills = this.monsterKills[enemy.id] || 0;
       const bonus = Math.floor(kills / 100) * 0.1;
       for (const drop of enemy.drops) {
-        const adjustedRate = drop.rate + bonus;
+        const adjustedRate = drop.rate + bonus + getTreasureEffect('materialDropPercent');
         
         let dropCount = 0;
         if (enemy.isLegendary) {
@@ -228,7 +232,8 @@ export const resultMethods = {
     // Equipment uses its own fixed roll and is never affected by kill-count bonuses.
     const equipmentCandidates = getEquipmentDropsForMonster(enemy);
     for (const equipment of equipmentCandidates) {
-      if (Math.random() * 100 >= EQUIPMENT_DROP_RATE) continue;
+      const equipmentDropRate = EQUIPMENT_DROP_RATE * getTreasureEffect('equipmentDropMultiplier');
+      if (Math.random() * 100 >= equipmentDropRate) continue;
       const uniqueId = `${equipment.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
       if (!this._pendingEquipmentDrops) this._pendingEquipmentDrops = [];
@@ -329,14 +334,15 @@ export const resultMethods = {
     if (this.currentGold !== undefined) await GameDB.setGameState('gold', this.currentGold);
     if (this._pendingItemDrops) {
       let autoSellGold = 0;
+      const materialCapacity = getMaterialCapacity();
       for (const [itemId, qty] of Object.entries(this._pendingItemDrops)) {
         const mat = MATERIALS_MAP.get(itemId);
         if (mat) {
           const currentItem = await GameDB.getInventoryItem(itemId) || { id: itemId, quantity: 0, type: 'material', ...mat };
           const newQuantity = currentItem.quantity + qty;
-          if (newQuantity > 99999) {
-            autoSellGold += (newQuantity - 99999);
-            currentItem.quantity = 99999;
+          if (newQuantity > materialCapacity) {
+            autoSellGold += (newQuantity - materialCapacity);
+            currentItem.quantity = materialCapacity;
           } else {
             currentItem.quantity = newQuantity;
           }
