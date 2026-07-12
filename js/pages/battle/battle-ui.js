@@ -498,23 +498,39 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
   if (!obtainedItems || obtainedItems.length === 0) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">獲得したアイテムはありません</div>';
   }
-  let html = `<div class="grid ${gridClass} gap-1.5 p-1 content-start w-full">`;
-  obtainedItems.forEach(item => {
-    html += `
-      <div class="item-card relative w-full h-full bg-gray-800 border border-gray-600 rounded flex flex-col group overflow-hidden" data-item-id="${item.id}">
-        <div class="relative w-full aspect-square p-1 shrink-0">
-          <img src="${item.image}" class="w-full h-full object-contain drop-shadow-md pointer-events-none" onerror="this.style.display='none'">
-          <div class="absolute bottom-0 right-0 bg-black/80 text-[8px] text-white font-bold px-1 rounded-tl shadow-sm z-10 pointer-events-none">x${formatNumber(item.quantity)}</div>
+
+  const renderGroup = (label, icon, items, equipment = false) => {
+    if (items.length === 0) return '';
+    const accent = equipment
+      ? 'text-amber-300 border-amber-800/60 bg-amber-950/25'
+      : 'text-cyan-300 border-cyan-900/60 bg-cyan-950/20';
+    const cards = items.map(item => `
+      <div class="item-card relative w-10 h-10 bg-slate-900/85 border ${equipment ? 'border-amber-800/50' : 'border-slate-700/70'} rounded-md flex items-center justify-center p-1 group" data-item-id="${item.id}" title="${item.name}" aria-label="${item.name} x${formatNumber(item.quantity)}">
+        <div class="w-7 h-7 rounded bg-slate-950/80 border border-slate-700/60 p-0.5 flex items-center justify-center">
+          <img src="${item.image}" class="w-full h-full object-contain drop-shadow-sm pointer-events-none" onerror="this.style.display='none'">
         </div>
-        <div class="w-full bg-gray-900 border-t border-gray-700 text-[8px] text-gray-300 text-center break-all px-0.5 py-1 leading-tight flex-1 flex items-center justify-center pointer-events-none">
-          ${item.name}
-        </div>
-        <div class="absolute inset-x-0 bottom-full mb-1 hidden group-hover:block bg-black/90 text-white text-[9px] p-1 rounded z-20 text-center whitespace-nowrap border border-gray-700 pointer-events-none z-30">${item.name}</div>
+        <span class="absolute right-0 bottom-0 max-w-full overflow-hidden bg-black/85 rounded-tl px-0.5 text-[8px] leading-[11px] font-black ${equipment ? 'text-amber-300' : 'text-white'} tabular-nums whitespace-nowrap pointer-events-none">x${formatNumber(item.quantity)}</span>
       </div>
+    `).join('');
+
+    return `
+      <section class="flex flex-col gap-1" aria-label="${label}">
+        <div class="h-6 px-1.5 rounded border flex items-center gap-1 ${accent}">
+          <span class="material-symbols-outlined" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span>
+          <span class="text-[10px] font-black tracking-wider">${label}</span>
+          <span class="ml-auto text-[9px] opacity-70">${items.length}種</span>
+        </div>
+        <div class="flex flex-wrap gap-1">${cards}</div>
+      </section>
     `;
-  });
-  html += '</div>';
-  return html;
+  };
+
+  const equipmentItems = obtainedItems.filter(item => item.type === 'equipment');
+  const materialItems = obtainedItems.filter(item => item.type !== 'equipment');
+  return `<div class="flex flex-col gap-2 p-1 content-start w-full">
+    ${renderGroup('素材', 'category', materialItems)}
+    ${renderGroup('装備', 'swords', equipmentItems, true)}
+  </div>`;
 }
 
 export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {

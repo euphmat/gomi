@@ -1,10 +1,11 @@
 import { GameDB } from './database.js';
 import { MINES, MINE_MAX_UPGRADE_LEVEL, getMineStats, getMineUpgradeCost } from '../definitions/mines.js';
+import { notifyGameEvent } from '../utils/game-notifications.js';
 
 const STATE_KEY = 'mine_data';
 
 export function createMineState(now = Date.now()) {
-  return { unlocked: false, intervalLevel: 1, yieldLevel: 1, capacityLevel: 1, storedGold: 0, lastAccruedAt: now };
+  return { unlocked: false, intervalLevel: 1, yieldLevel: 1, capacityLevel: 1, storedGold: 0, lastAccruedAt: now, maxNotified: false };
 }
 
 export function accrueMine(mine, state, now = Date.now()) {
@@ -18,6 +19,10 @@ export function accrueMine(mine, state, now = Date.now()) {
   const cycles = Math.floor(elapsed / stats.intervalMs);
   if (cycles <= 0) return state;
   state.storedGold = Math.min(stats.maxStoredGold, (state.storedGold || 0) + cycles * stats.goldPerCycle);
+  if (state.storedGold >= stats.maxStoredGold && !state.maxNotified) {
+    state.maxNotified = true;
+    notifyGameEvent('鉱山の蓄積完了', `${mine.name}の蓄積量がMAXになりました！`, `mine-max-${mine.id}`);
+  }
   state.lastAccruedAt = state.storedGold >= stats.maxStoredGold
     ? now
     : (state.lastAccruedAt || now) + cycles * stats.intervalMs;
@@ -73,6 +78,7 @@ export async function claimMineGold(mineId) {
   const amount = state.storedGold;
   const gold = await GameDB.getGameState('gold') || 0;
   state.storedGold = 0;
+  state.maxNotified = false;
   state.lastAccruedAt = Date.now();
   await GameDB.setGameState('gold', gold + amount);
   await GameDB.setGameState(STATE_KEY, data);
@@ -99,6 +105,7 @@ export async function upgradeMine(mineId, type) {
   state[levelKey] += 1;
   // 産出量強化で上限も増えるため、既存蓄積を新しい上限内に収める。
   state.storedGold = Math.min(state.storedGold, getMineStats(mine, state).maxStoredGold);
+  if (state.storedGold < getMineStats(mine, state).maxStoredGold) state.maxNotified = false;
   await GameDB.setGameState(STATE_KEY, data);
   window.dispatchEvent(new CustomEvent('quest:mine-upgrade', {
     detail: { mineId, upgradeType: type, count: 1 }

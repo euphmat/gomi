@@ -102,6 +102,12 @@ function formatEffectDuration(ms) {
   return minutes > 0 ? `${minutes}分 ${seconds.toFixed(2)}秒` : `${seconds.toFixed(2)}秒`;
 }
 
+function getStorageProgress(state, stats) {
+  if (stats.goldPerCycle <= 0 || stats.capacityCycles <= 0) return 0;
+  const storedCycles = (state.storedGold || 0) / stats.goldPerCycle;
+  return Math.min(100, Math.max(0, storedCycles / stats.capacityCycles * 100));
+}
+
 function showMineMessage(container, message, isError = false) {
   const toast = document.createElement('div');
   toast.className = `fixed left-1/2 top-20 z-[10000] -translate-x-1/2 rounded-xl border px-4 py-2 text-xs font-bold shadow-xl ${isError ? 'border-red-500/60 bg-red-950/95 text-red-200' : 'border-emerald-500/60 bg-emerald-950/95 text-emerald-200'}`;
@@ -327,7 +333,7 @@ export async function renderMineTab() {
     const card = document.createElement('section');
     card.dataset.mineId = mine.id;
     card.className = 'overflow-hidden rounded-2xl border shadow-lg';
-    const progress = Math.min(100, (state.storedGold / stats.maxStoredGold) * 100);
+    const storageProgress = getStorageProgress(state, stats);
     const elapsedInCycle = Math.max(0, Date.now() - state.lastAccruedAt);
     const cycleProgress = state.storedGold >= stats.maxStoredGold ? 100 : Math.min(100, elapsedInCycle / stats.intervalMs * 100);
     card.innerHTML = `
@@ -341,7 +347,7 @@ export async function renderMineTab() {
         <div class="space-y-3 p-3">
           <div data-theme-panel class="rounded-xl border p-2.5">
             <div class="mb-1.5 flex items-center justify-between"><span class="text-[10px] font-bold text-stone-400">蓄積Gold</span><span data-theme-text class="font-mono text-sm font-black" data-stored>${formatNumber(state.storedGold)} / ${formatNumber(stats.maxStoredGold)}</span></div>
-            <div data-theme-track class="h-2 overflow-hidden rounded-full border"><div data-theme-bar data-progress class="h-full transition-all" style="width:${progress}%"></div></div>
+            <div data-theme-track class="h-2 overflow-hidden rounded-full border" role="progressbar" aria-label="貯蔵庫の使用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${storageProgress.toFixed(1)}"><div data-theme-bar data-storage-progress class="h-full transition-all" style="width:${storageProgress}%"></div></div>
             <div class="mt-2 flex items-center justify-between text-[9px] text-stone-500"><span>${formatNumber(stats.goldPerCycle)} G / ${formatDuration(stats.intervalMs)}</span><span data-next>次回 --:--</span></div>
             <div data-theme-track class="mt-1.5 h-1.5 overflow-hidden rounded-full border" title="次のGold蓄積まで">
               <div data-theme-cycle data-cycle-progress class="h-full transition-[width] duration-1000 ease-linear" style="width:${cycleProgress}%"></div>
@@ -434,20 +440,27 @@ export async function renderMineTab() {
   const tick = () => {
     if (!container.isConnected && timer) { clearInterval(timer); timer = null; return; }
     const now = Date.now();
+    let notificationStateChanged = false;
     for (const mine of MINES) {
       const state = mineData[mine.id];
       if (!state?.unlocked) continue;
+      const wasMaxNotified = state.maxNotified;
       accrueMine(mine, state, now);
+      if (!wasMaxNotified && state.maxNotified) notificationStateChanged = true;
       const stats = getMineStats(mine, state);
       const card = container.querySelector(`[data-mine-id="${mine.id}"]`);
       if (!card) continue;
       const stored = card.querySelector('[data-stored]');
-      const progress = card.querySelector('[data-progress]');
+      const storageProgress = card.querySelector('[data-storage-progress]');
       const cycleProgress = card.querySelector('[data-cycle-progress]');
       const next = card.querySelector('[data-next]');
       const claim = card.querySelector('[data-claim]');
       if (stored) stored.textContent = `${formatNumber(state.storedGold)} / ${formatNumber(stats.maxStoredGold)}`;
-      if (progress) progress.style.width = `${Math.min(100, state.storedGold / stats.maxStoredGold * 100)}%`;
+      if (storageProgress) {
+        const percentage = getStorageProgress(state, stats);
+        storageProgress.style.width = `${percentage}%`;
+        storageProgress.parentElement?.setAttribute('aria-valuenow', percentage.toFixed(1));
+      }
       if (cycleProgress) {
         const percentage = state.storedGold >= stats.maxStoredGold
           ? 100
@@ -456,6 +469,9 @@ export async function renderMineTab() {
       }
       updateClaimButtonAppearance(claim, state.storedGold > 0);
       if (next) next.textContent = state.storedGold >= stats.maxStoredGold ? '満杯' : `次回 ${formatDuration(stats.intervalMs - (now - state.lastAccruedAt))}`;
+    }
+    if (notificationStateChanged) {
+      GameDB.setGameState('mine_data', mineData).catch(error => console.warn('[Mine] Failed to save notification state:', error));
     }
   };
 

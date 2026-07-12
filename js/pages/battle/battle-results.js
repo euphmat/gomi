@@ -12,6 +12,7 @@ import { calcFinalStats } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
 import { renderItemTabHtml } from './battle-ui.js';
+import { notifyGameEvent } from '../../utils/game-notifications.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -164,6 +165,8 @@ export const resultMethods = {
         this._pendingRanchSave = this.ranchData; // Deferred saving like other properties
         this._needsSave = true;
 
+        notifyGameEvent('モンスター捕獲', `${enemy.name}を牧場に迎え入れました！`, `monster-captured-${saveId}`);
+
         const overlay = document.createElement('div');
         overlay.className = 'fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none bg-black/50 transition-opacity duration-300';
         overlay.innerHTML = `
@@ -212,7 +215,7 @@ export const resultMethods = {
             if (existingDrop) {
               existingDrop.quantity += dropCount;
             } else {
-              const newDrop = { id: mat.id, name: mat.name, image: mat.image, quantity: dropCount };
+              const newDrop = { id: mat.id, name: mat.name, image: mat.image, quantity: dropCount, type: 'material' };
               this.obtainedItems.push(newDrop);
               this.obtainedItemsMap.set(mat.id, newDrop);
             }
@@ -233,6 +236,24 @@ export const resultMethods = {
       this._needsSave = true;
 
       drops.push({ text: equipment.name, image: equipment.image, color: 'text-amber-300' });
+      notifyGameEvent('装備アイテム獲得', `${equipment.name}がドロップしました！`, `equipment-drop-${uniqueId}`);
+
+      const obtainedKey = `equipment:${equipment.id}`;
+      const existingEquipment = this.obtainedItemsMap.get(obtainedKey);
+      if (existingEquipment) {
+        existingEquipment.quantity += 1;
+      } else {
+        const newEquipment = {
+          id: equipment.id,
+          name: equipment.name,
+          image: equipment.image,
+          quantity: 1,
+          type: 'equipment'
+        };
+        this.obtainedItems.push(newEquipment);
+        this.obtainedItemsMap.set(obtainedKey, newEquipment);
+      }
+      hasNewDrops = true;
     }
 
     if (hasNewDrops && this.currentTab === 'item' && !document.hidden) {

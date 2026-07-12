@@ -26,6 +26,7 @@ import { JOBS } from './jobs/index.js';
 import { syncMineOfflineProgress } from './data/mine-manager.js';
 import { SpecialQuestManager } from './data/special-quest-manager.js';
 import { DailyLoginManager } from './data/daily-login-manager.js';
+import { areGameNotificationsEnabled, setGameNotificationsEnabled } from './utils/game-notifications.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -342,6 +343,24 @@ class App {
           </div>
 
           <!-- Auto Battle Speed -->
+          <div id="setting-row-notifications" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base text-cyan-400">notifications</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-gray-200 leading-tight">イベント通知</div>
+                  <div id="setting-notifications-help" class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">捕獲・装備ドロップ・鉱山MAXを通知</div>
+                </div>
+              </div>
+              <div id="toggle-notifications" class="setting-toggle ${areGameNotificationsEnabled() && 'Notification' in window && Notification.permission === 'granted' ? 'active' : ''}"
+                   style="--toggle-color: #06b6d4; --toggle-glow: rgba(6,182,212,0.4)"></div>
+            </div>
+          </div>
+
+          <!-- Auto Battle Speed -->
           <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
                       hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
             <div class="flex items-center gap-3 mb-3">
@@ -494,6 +513,20 @@ class App {
       rowContinue.addEventListener('click', () => {
         const isActive = toggleContinueOnDeath.classList.toggle('active');
         localStorage.setItem('continueOnDeath', isActive);
+      });
+    }
+
+    const rowNotifications = document.getElementById('setting-row-notifications');
+    const toggleNotifications = document.getElementById('toggle-notifications');
+    if (rowNotifications && toggleNotifications) {
+      rowNotifications.addEventListener('click', async () => {
+        const enabled = await setGameNotificationsEnabled(!areGameNotificationsEnabled());
+        toggleNotifications.classList.toggle('active', enabled);
+        const help = document.getElementById('setting-notifications-help');
+        if (help && !enabled && 'Notification' in window && Notification.permission === 'denied') {
+          help.textContent = 'ブラウザの設定から通知を許可してください';
+          help.classList.add('text-rose-400');
+        }
       });
     }
 
