@@ -467,7 +467,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       </div>
 
       <!-- 3. Drop inventory: materials and equipment stay visually separate -->
-      <div class="battle-info-drops flex-1 min-h-0 flex flex-col bg-slate-900/55 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner">
+      <div class="battle-info-drops shrink-0 flex flex-col bg-slate-900/55 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner">
         <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1 shrink-0 gap-2">
           <div class="flex items-center gap-1 min-w-0 shrink-0">
             <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-emerald-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">shopping_bag</span></div>
@@ -478,30 +478,11 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             ${bonus > 0 ? `<span class="text-[8px] text-blue-300 bg-blue-950/50 border border-blue-900/50 rounded px-1 py-0.5 whitespace-nowrap">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
           </div>
         </div>
-        <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar">
-          ${materialDropRows.length > 0 ? `
-            <section class="mb-1" aria-label="素材ドロップ">
-              <div class="sticky top-0 z-10 flex items-center gap-1 py-0.5 px-1 mb-0.5 bg-slate-900/95 border-b border-emerald-900/50 backdrop-blur-sm">
-                <span class="material-symbols-outlined text-emerald-400" style="font-size: 13px; font-variation-settings: 'FILL' 1;">category</span>
-                <span class="text-[9px] font-black text-emerald-200">素材</span>
-                <span class="text-[8px] text-slate-500">${materialDropRows.length}種</span>
-              </div>
-              <div class="grid gap-0.5" style="grid-template-columns: repeat(${materialDropRows.length}, minmax(0, 1fr));">
-                ${materialDropRows.join('')}
-              </div>
-            </section>
-          ` : ''}
-          ${equipmentDropRows.length > 0 ? `
-            <section aria-label="装備ドロップ">
-              <div class="sticky top-0 z-10 flex items-center gap-1 py-0.5 px-1 mb-0.5 bg-slate-900/95 border-b border-amber-900/50 backdrop-blur-sm">
-                <span class="material-symbols-outlined text-amber-400" style="font-size: 13px; font-variation-settings: 'FILL' 1;">swords</span>
-                <span class="text-[9px] font-black text-amber-200">装備</span>
-                <span class="text-[8px] text-slate-500">${equipmentDropRows.length}種</span>
-              </div>
-              <div class="grid gap-0.5" style="grid-template-columns: repeat(${equipmentDropRows.length}, minmax(0, 1fr));">
-                ${equipmentDropRows.join('')}
-              </div>
-            </section>
+        <div class="overflow-x-hidden">
+          ${dropRows.length > 0 ? `
+            <div class="grid gap-0.5 w-full shrink-0" style="grid-template-columns: repeat(${dropRows.length}, minmax(0, 1fr));" aria-label="ドロップ一覧">
+              ${dropsHtml}
+            </div>
           ` : ''}
           ${dropRows.length === 0 ? dropsHtml : ''}
         </div>
