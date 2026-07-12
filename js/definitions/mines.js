@@ -27,6 +27,9 @@ export const MINE_MAX_UPGRADE_LEVEL = 9999;
 export const MINE_MAX_MATERIAL_COST = 99999;
 const MINE_BASE_STORAGE_HOURS = 24;
 const MINE_MAX_STORAGE_HOURS = 24 * 7;
+// 序盤は秒単位で増加を実感できる360倍。上位鉱山は指数報酬の暴騰を防ぐため段階的に倍率を抑える。
+const MINE_INITIAL_REWARD_MULTIPLIER = 360;
+const MINE_REWARD_MULTIPLIER_DECAY = 0.8;
 
 export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   id,
@@ -34,8 +37,9 @@ export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   image: `./assets/mine/${id}.webp`,
   upgradeMaterials,
   unlockPrism: MINE_UNLOCK_PRISM_COSTS[index],
-  // 旧仕様の初期日次収益だけを秒単位へ換算し、改修直後の収益インフレを防ぐ。
-  baseGoldPerSecond: 30 * Math.pow(3, index) / (10800 + index * 600),
+  // 赤銅鉱山は1 G/秒、以降は約2.4倍ずつ成長。最終鉱山も旧報酬の約16倍になる。
+  baseGoldPerSecond: 30 * Math.pow(3, index) / (10800 + index * 600)
+    * MINE_INITIAL_REWARD_MULTIPLIER * Math.pow(MINE_REWARD_MULTIPLIER_DECAY, index),
   upgradeGoldBase: 10 * Math.pow(3, index),
 }));
 
