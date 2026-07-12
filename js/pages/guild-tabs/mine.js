@@ -321,6 +321,8 @@ export async function renderMineTab() {
 
   const createMineCard = (mine) => {
     const state = mineData[mine.id];
+    const mineIndex = MINES.indexOf(mine);
+    const lockedLowerMine = MINES.slice(0, mineIndex).find(item => !mineData[item.id]?.unlocked);
     const stats = getMineStats(mine, state);
     const card = document.createElement('section');
     card.dataset.mineId = mine.id;
@@ -348,7 +350,7 @@ export async function renderMineTab() {
           </div>
           <div class="space-y-2">${MINE_UPGRADE_TYPES.map(type => createUpgradeRow(mine, state, type)).join('')}</div>
         </div>` : `
-        <div class="p-4 text-center"><p class="mb-3 text-[10px] leading-relaxed text-slate-500">Prismを使って鉱脈を開発すると、放置採掘が始まります。</p><button data-theme-action data-unlock class="w-full rounded-xl border py-2.5 text-xs font-black text-white shadow active:scale-[0.98]"><span class="material-symbols-outlined mr-1 align-middle text-sm">diamond</span>${formatNumber(mine.unlockPrism)} Prismで解放</button></div>`}
+        <div class="p-4 text-center"><p class="mb-3 text-[10px] leading-relaxed ${lockedLowerMine ? 'text-amber-400' : 'text-slate-500'}">${lockedLowerMine ? `解放条件：${lockedLowerMine.name}を先に解放` : 'Prismを使って鉱脈を開発すると、放置採掘が始まります。'}</p><button data-theme-action data-unlock class="w-full rounded-xl border py-2.5 text-xs font-black text-white shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35" ${lockedLowerMine ? 'disabled' : ''}><span class="material-symbols-outlined mr-1 align-middle text-sm">${lockedLowerMine ? 'lock' : 'diamond'}</span>${lockedLowerMine ? '下位鉱山の解放が必要' : `${formatNumber(mine.unlockPrism)} Prismで解放`}</button></div>`}
     `;
     const claimButton = card.querySelector('[data-claim]');
     updateClaimButtonAppearance(claimButton, state.storedGold > 0);

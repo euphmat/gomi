@@ -47,11 +47,14 @@ export async function syncMineOfflineProgress(now = Date.now()) {
 }
 
 export async function unlockMine(mineId) {
-  const mine = MINES.find(item => item.id === mineId);
+  const mineIndex = MINES.findIndex(item => item.id === mineId);
+  const mine = MINES[mineIndex];
   if (!mine) throw new Error('鉱山が見つかりません。');
   const data = await loadMineData();
   const prism = await GameDB.getGameState('prism') || 0;
   if (data[mineId].unlocked) return { data, prism };
+  const lockedLowerMine = MINES.slice(0, mineIndex).find(item => !data[item.id]?.unlocked);
+  if (lockedLowerMine) throw new Error(`先に${lockedLowerMine.name}を解放してください。`);
   if (prism < mine.unlockPrism) throw new Error('Prismが足りません。');
   data[mineId].unlocked = true;
   data[mineId].lastAccruedAt = Date.now();
