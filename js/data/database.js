@@ -97,6 +97,11 @@ class GameDatabase {
   constructor() {
     /** @type {IDBDatabase|null} */
     this.db = null;
+    // Keep read-write transactions ordered. A request can report success before
+    // its transaction has committed, so starting the next battle save from the
+    // request callback can leave some browser implementations with overlapping
+    // transaction bookkeeping.
+    this._writeQueue = Promise.resolve();
   }
 
   // ─── Connection ──────────────────────────────────────────
@@ -128,7 +133,14 @@ class GameDatabase {
         }
       };
 
-      request.onsuccess = (event) => resolve(event.target.result);
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        db.onversionchange = () => {
+          db.close();
+          if (this.db === db) this.db = null;
+        };
+        resolve(db);
+      };
       request.onerror = (event) => reject(event.target.error);
     });
 
@@ -185,13 +197,49 @@ class GameDatabase {
    * @returns {Promise<any>}
    */
   _write(storeName, fn) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(storeName, 'readwrite');
-      const store = tx.objectStore(storeName);
-      const request = fn(store);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+    const run = () => new Promise((resolve, reject) => {
+      let tx;
+      let request;
+      let result;
+      let requestError;
+      let settled = false;
+
+      const fail = (error) => {
+        if (settled) return;
+        settled = true;
+        reject(error || new Error(`IndexedDB write failed for ${storeName}.`));
+      };
+
+      try {
+        if (!this.db) throw new Error('Database is not open.');
+        tx = this.db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        request = fn(store);
+
+        request.onsuccess = () => {
+          result = request.result;
+        };
+        // Let the transaction finish aborting before the next queued write is
+        // allowed to start.
+        request.onerror = () => {
+          requestError = request.error;
+        };
+        tx.oncomplete = () => {
+          if (settled) return;
+          settled = true;
+          resolve(result);
+        };
+        tx.onerror = () => fail(tx.error || requestError || request?.error);
+        tx.onabort = () => fail(tx.error || requestError || request?.error || new Error(`IndexedDB write aborted for ${storeName}.`));
+      } catch (error) {
+        fail(error);
+      }
     });
+
+    const queuedWrite = this._writeQueue.then(run, run);
+    // A failed write must not permanently block later saves.
+    this._writeQueue = queuedWrite.catch(() => undefined);
+    return queuedWrite;
   }
 
   // ─── Game State ──────────────────────────────────────────

@@ -3,10 +3,8 @@ import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
-import { getMaterialCapacity, loadTreasureLevels } from '../../data/treasure-manager.js';
 
 const STORAGE_SETTINGS_KEYS = {
-  sellMode: 'shop.storage.sellMode',
   viewMode: 'shop.storage.viewMode',
 };
 
@@ -46,8 +44,6 @@ export function renderStorageTab() {
   const storedViewMode = localStorage.getItem(STORAGE_SETTINGS_KEYS.viewMode);
   let viewMode = storedViewMode === 'list' ? 'list' : 'grid'; // 'grid' | 'list'
   let currentPage = 1;
-  let sellMode = localStorage.getItem(STORAGE_SETTINGS_KEYS.sellMode) === 'true';
-  let materialCapacity = 99999;
 
   const FILTERS = [
     { id: 'all', icon: 'apps' },
@@ -81,10 +77,6 @@ export function renderStorageTab() {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
           currentPage = 1;
-          if (activeFilter !== 'material') {
-            sellMode = false;
-            localStorage.setItem(STORAGE_SETTINGS_KEYS.sellMode, 'false');
-          }
           renderFilters();
           renderGrid();
         }
@@ -102,12 +94,6 @@ export function renderStorageTab() {
   settingsBtn.onclick = () => {
     showSettingsModal({
       items: [
-        {
-          id: 'sellMode', label: '売却モード', type: 'toggle', icon: 'payments', activeColor: 'bg-rose-500',
-          condition: () => activeFilter === 'material',
-          getValue: () => sellMode,
-          onChange: (val) => { sellMode = val; localStorage.setItem(STORAGE_SETTINGS_KEYS.sellMode, String(val)); renderGrid(); }
-        },
         {
           id: 'viewMode', label: '表示形式', type: 'radio', icon: 'grid_view', activeColor: 'bg-blue-600 text-white',
           getValue: () => viewMode,
@@ -208,9 +194,7 @@ export function renderStorageTab() {
       const slot = document.createElement('div');
       
       if (viewMode === 'grid') {
-        const isSellTarget = sellMode && !item.slot && (item.sellPrice || 0) > 0;
-        const borderClass = isSellTarget ? 'border-rose-500/60 hover:border-rose-400 bg-rose-950/40 hover:bg-rose-900/40' : 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 bg-gray-900/60';
-        slot.className = `relative w-full aspect-square flex items-center justify-center rounded-md border ${borderClass} overflow-hidden cursor-pointer transition-all shadow-sm`;
+        slot.className = 'relative w-full aspect-square flex items-center justify-center rounded-md border border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 bg-gray-900/60 overflow-hidden cursor-pointer transition-all shadow-sm';
         
         if (item.image) {
           slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
@@ -223,10 +207,7 @@ export function renderStorageTab() {
         }
       } else {
         // list view
-        const isSellTarget = sellMode && !item.slot && (item.sellPrice || 0) > 0;
-        const borderStyle = isSellTarget ? 'border-rose-500/80 hover:border-rose-400/80 hover:shadow-[0_0_10px_rgba(244,63,94,0.2)]' : 'border-slate-700/80 hover:border-blue-500/50 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)]';
-        const bgStyle = isSellTarget ? 'bg-gradient-to-r from-rose-950/80 to-slate-800/50' : 'bg-gradient-to-r from-slate-900/90 to-slate-800/50';
-        slot.className = `group relative w-full flex items-center gap-2.5 p-2 ${bgStyle} rounded-lg border ${borderStyle} transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm`;
+        slot.className = 'group relative w-full flex items-center gap-2.5 p-2 bg-gradient-to-r from-slate-900/90 to-slate-800/50 rounded-lg border border-slate-700/80 hover:border-blue-500/50 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)] transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm';
         
         const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
         const statsHtml = activeStats.map(stat => {
@@ -298,28 +279,7 @@ export function renderStorageTab() {
         `;
       }
       
-      slot.onclick = async () => {
-        if (sellMode && !item.slot && (item.sellPrice || 0) > 0) {
-          const maxSell = item.quantity || 1;
-          const price = item.sellPrice || 0;
-          
-          const currentGold = await GameDB.getGameState('gold') || 0;
-          const newGold = currentGold + price * maxSell;
-          await GameDB.setGameState('gold', newGold);
-          
-          const headerGoldEl = document.getElementById('header-gold-display');
-          if (headerGoldEl) {
-            headerGoldEl.textContent = `${formatNumber(newGold)}`;
-          }
-
-          await GameDB.deleteInventoryItem(item.id);
-          
-          showSellSuccessEffect(item, maxSell, price * maxSell);
-          loadData();
-        } else {
-          showItemModal(item);
-        }
-      };
+      slot.onclick = () => showItemModal(item);
       gridContainer.appendChild(slot);
     });
     
@@ -327,29 +287,11 @@ export function renderStorageTab() {
     if (!measuredItemContainer) requestAnimationFrame(renderGrid);
   };
 
-  const showSellSuccessEffect = (item, count, totalGold) => {
-    const toast = document.createElement('div');
-    toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 bg-rose-900/90 border border-rose-500/50 rounded-xl shadow-2xl text-sm font-bold text-rose-200 animate-[slide-up_0.3s_ease-out] backdrop-blur-sm';
-    toast.innerHTML = `
-      <span class="material-symbols-outlined text-amber-400" style="font-variation-settings: 'FILL' 1">payments</span>
-      <span>${item.name} x${formatNumber(count)} を ${formatNumber(totalGold)} G で売却しました</span>
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
-      toast.style.opacity = '0';
-      toast.style.transform = 'translate(-50%, -20px)';
-      setTimeout(() => toast.remove(), 300);
-    }, 2000);
-  };
-
   const loadData = () => {
     Promise.all([
       GameDB.getWarehouseEquipment(),
-      GameDB.getAllInventory(),
-      loadTreasureLevels()
+      GameDB.getAllInventory()
     ]).then(([eq, inv]) => {
-      materialCapacity = getMaterialCapacity();
       const groupedEquipment = {};
       eq.forEach(item => {
         if (!groupedEquipment[item.name]) {
@@ -495,47 +437,7 @@ export function renderStorageTab() {
       ${abilityHtml}
     `;
     
-    // Sell logic – 素材アイテムのみ売却可能
-    let sellCount = 1;
-    const maxSell = item.quantity || 1;
-    const isMaterial = !item.slot;
-    const price = isMaterial ? (item.sellPrice || 0) : 0; 
-    
-    // Middle: Sell quantity
-    const middleSection = document.createElement('div');
-    middleSection.className = 'bg-slate-950/40 border border-slate-800/80 rounded-xl p-3 shrink-0';
-    middleSection.innerHTML = `
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-xs font-bold text-slate-400">売却数</span>
-        <span class="text-[10px] text-slate-500 font-mono tracking-wider">所持: ${maxSell} / ${formatNumber(isMaterial ? materialCapacity : 99999)}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
-        <div class="flex-1 text-center font-mono text-base font-black text-rose-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="sell-count-disp">${formatNumber(sellCount)}</div>
-        <button id="btn-plus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">+</button>
-        <button id="btn-max" class="px-3 h-8 flex items-center justify-center bg-rose-950/60 border border-rose-800/80 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-900/60 active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(244,63,94,0.05)]">MAX</button>
-      </div>
-    `;
-    
-    // Bottom: Sell Action
-    const bottomSection = document.createElement('button');
-    
-    const updateBottomText = () => {
-      if (price === 0) {
-        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>売却不可`;
-        bottomSection.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800 text-slate-550 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';
-      } else {
-        bottomSection.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">payments</span>売却する（${formatNumber(price * sellCount)} G）`;
-        bottomSection.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(239,68,68,0.25)] hover:shadow-[0_4px_25px_rgba(239,68,68,0.4)] border border-rose-400/20 cursor-pointer shrink-0';
-      }
-    };
-    updateBottomText();
-    
     body.innerHTML = topSection;
-    if (price > 0) {
-      body.appendChild(middleSection);
-    }
-    body.appendChild(bottomSection);
     
     modal.appendChild(header);
     modal.appendChild(body);
@@ -547,55 +449,6 @@ export function renderStorageTab() {
     overlay.addEventListener('click', (e) => { if(e.target === overlay) closeModal(); });
     modal.querySelector('#close-modal-btn').onclick = closeModal;
     
-    const updateCountDisp = () => {
-      const disp = modal.querySelector('#sell-count-disp');
-      if (disp) disp.textContent = formatNumber(sellCount);
-      updateBottomText();
-    };
-    
-    if (price > 0) {
-      modal.querySelector('#btn-minus').onclick = () => {
-        if (sellCount > 1) { sellCount--; updateCountDisp(); }
-      };
-      modal.querySelector('#btn-plus').onclick = () => {
-        if (sellCount < maxSell) { sellCount++; updateCountDisp(); }
-      };
-      modal.querySelector('#btn-max').onclick = () => {
-        sellCount = maxSell; updateCountDisp();
-      };
-    }
-    
-    bottomSection.onclick = async () => {
-      if (price === 0) return;
-      
-      const currentGold = await GameDB.getGameState('gold') || 0;
-      const newGold = currentGold + price * sellCount;
-      await GameDB.setGameState('gold', newGold);
-      
-      const headerGoldEl = document.getElementById('header-gold-display');
-      if (headerGoldEl) {
-        headerGoldEl.textContent = `${formatNumber(newGold)}`;
-      }
-      
-      if (item.slot) {
-        // Equipment deletion
-        const ids = item._ids || [item.id];
-        for (let i = 0; i < sellCount; i++) {
-          await GameDB.deleteEquipment(ids[i]);
-        }
-      } else {
-        // Inventory update
-        const newQuantity = maxSell - sellCount;
-        if (newQuantity <= 0) {
-          await GameDB.deleteInventoryItem(item.id);
-        } else {
-          await GameDB.putInventoryItem({ ...item, quantity: newQuantity });
-        }
-      }
-      
-      closeModal();
-      loadData(); // reload
-    };
   };
 
   container.appendChild(topBar);

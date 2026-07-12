@@ -2,6 +2,7 @@ import { GameDB } from '../../data/database.js';
 import { createStatusBar, BAR_COLORS } from '../../components/status-bar.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { formatNumber } from '../../utils/format.js';
+import { calculateInnFee } from '../../utils/inn-cost.js';
 export function renderInnTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full p-4 animate-fade-in overflow-y-auto items-center';
@@ -43,7 +44,7 @@ export function renderInnTab() {
       const needsHeal = char.hp.current < trueMaxHp || char.mp.current < trueMaxMp || isDead;
       
       if (needsHeal) {
-        currentCost += (char.level || 1);
+        currentCost += calculateInnFee(char.level);
       }
 
       const isLowHp = char.hp.current / trueMaxHp < 0.3;
@@ -81,7 +82,7 @@ export function renderInnTab() {
       btnRest.disabled = false;
       btnRest.innerHTML = `
         <span class="material-symbols-outlined text-xl drop-shadow-md" style="font-variation-settings: 'FILL' 1">hotel</span>
-        <span class="relative z-10 tracking-widest text-sm">休む (${currentCost} G)</span>
+        <span class="relative z-10 tracking-widest text-sm">休む (${currentCost.toLocaleString()} G)</span>
       `;
     } else {
       btnRest.disabled = true;

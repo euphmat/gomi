@@ -11,6 +11,7 @@ import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definiti
 import { calcFinalStats } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
+import { calculatePartyInnFee } from '../../utils/inn-cost.js';
 import { renderItemTabHtml } from './battle-ui.js';
 import { notifyGameEvent } from '../../utils/game-notifications.js';
 import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
@@ -333,33 +334,17 @@ export const resultMethods = {
     }
     if (this.currentGold !== undefined) await GameDB.setGameState('gold', this.currentGold);
     if (this._pendingItemDrops) {
-      let autoSellGold = 0;
       const materialCapacity = getMaterialCapacity();
       for (const [itemId, qty] of Object.entries(this._pendingItemDrops)) {
         const mat = MATERIALS_MAP.get(itemId);
         if (mat) {
           const currentItem = await GameDB.getInventoryItem(itemId) || { id: itemId, quantity: 0, type: 'material', ...mat };
           const newQuantity = currentItem.quantity + qty;
-          if (newQuantity > materialCapacity) {
-            autoSellGold += (newQuantity - materialCapacity);
-            currentItem.quantity = materialCapacity;
-          } else {
-            currentItem.quantity = newQuantity;
-          }
+          currentItem.quantity = Math.min(newQuantity, materialCapacity);
           await GameDB.putInventoryItem(currentItem);
         }
       }
       this._pendingItemDrops = {};
-
-      if (autoSellGold > 0) {
-        if (this.currentGold === undefined) {
-          this.currentGold = await GameDB.getGameState('gold') || 0;
-        }
-        this.currentGold += autoSellGold;
-        await GameDB.setGameState('gold', this.currentGold);
-        const goldDisplay = document.getElementById('header-gold-display');
-        if (goldDisplay) goldDisplay.textContent = `${formatNumber(this.currentGold)}`;
-      }
     }
     if (this._pendingEquipmentDrops) {
       for (const equipment of this._pendingEquipmentDrops) {
@@ -450,9 +435,8 @@ export const resultMethods = {
       }, 1500 / this.speedMult);
       return;
     } else {
-      let innFee = 0;
+      const innFee = calculatePartyInnFee(this.party);
       for (const p of this.party) {
-        innFee += (p.level || 1);
         const stats = calcFinalStats(p, this.equipMap);
         p.hp.current = stats.hp || p.hp.max;
         p.mp.current = stats.mp || p.mp.max;
@@ -549,7 +533,7 @@ export const resultMethods = {
             <p class="text-[10px] text-gray-400 leading-relaxed">
               パーティーは救出され、治療を受けました。<br>
               <span class="text-gray-300 font-bold bg-slate-950/60 border border-slate-850 px-2 py-0.5 rounded inline-block mt-1">
-                救出・治療費: <span class="text-red-400 font-black">-${actualFee} G</span>
+                救出・治療費: <span class="text-red-400 font-black">-${actualFee.toLocaleString()} G</span>
               </span>
             </p>
           </div>
