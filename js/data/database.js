@@ -216,6 +216,50 @@ class GameDatabase {
     await this._write('gameState', (store) => store.put({ key, value }));
   }
 
+  /**
+   * Award the daily login bonus once for the supplied local calendar date.
+   * The date check and updates share one transaction so simultaneous launches
+   * in multiple tabs cannot award the bonus twice.
+   * @param {string} dateKey - Local calendar date in YYYY-MM-DD format
+   * @param {number} amount
+   * @returns {Promise<{awarded: boolean, prism: number}>}
+   */
+  claimDailyLoginBonus(dateKey, amount = 1) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+      return Promise.reject(new Error('Invalid daily login date key.'));
+    }
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return Promise.reject(new Error('Invalid daily login bonus amount.'));
+    }
+
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let result;
+
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Daily login transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Daily login transaction was aborted.'));
+
+      const lastClaimRequest = store.get('lastDailyLoginBonusDate');
+      lastClaimRequest.onsuccess = () => {
+        const prismRequest = store.get('prism');
+        prismRequest.onsuccess = () => {
+          const currentPrism = Number(prismRequest.result?.value) || 0;
+          if (lastClaimRequest.result?.value === dateKey) {
+            result = { awarded: false, prism: currentPrism };
+            return;
+          }
+
+          const prism = currentPrism + amount;
+          store.put({ key: 'prism', value: prism });
+          store.put({ key: 'lastDailyLoginBonusDate', value: dateKey });
+          result = { awarded: true, prism };
+        };
+      };
+    });
+  }
+
   // ─── Characters ──────────────────────────────────────────
 
   /**

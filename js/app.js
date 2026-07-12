@@ -25,6 +25,7 @@ import { GameDB } from './data/database.js';
 import { JOBS } from './jobs/index.js';
 import { syncMineOfflineProgress } from './data/mine-manager.js';
 import { SpecialQuestManager } from './data/special-quest-manager.js';
+import { DailyLoginManager } from './data/daily-login-manager.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -49,10 +50,18 @@ class App {
   }
 
   async init() {
+    let dailyLoginAwarded = false;
+
     // ── 0. Initialize Database ──
     try {
       await GameDB.open();
       console.log('[App] Database initialized.');
+
+      const dailyLogin = await DailyLoginManager.claim();
+      dailyLoginAwarded = dailyLogin.awarded;
+      if (dailyLoginAwarded) {
+        console.log('[App] Daily login bonus awarded.');
+      }
 
       await QuestManager.init();
       console.log('[App] QuestManager initialized.');
@@ -182,6 +191,10 @@ class App {
 
     // ── 7. Start ──
     this.router.start();
+
+    if (dailyLoginAwarded) {
+      DailyLoginManager.showReward();
+    }
   }
 
   /**
