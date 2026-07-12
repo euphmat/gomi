@@ -2,11 +2,13 @@ import { GameDB } from './database.js';
 import { MINES, MINE_MAX_UPGRADE_LEVEL, getMineStats, getMineUpgradeCost } from '../definitions/mines.js';
 import { notifyGameEvent } from '../utils/game-notifications.js';
 import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
+import { FISH_OIL_BOOST_MS, FISH_OIL_SPEED_MULTIPLIER } from '../definitions/fish.js';
+import { FISHING_STATE_KEY, loadFishingData } from './fishing-manager.js';
 
 const STATE_KEY = 'mine_data';
 
 export function createMineState(now = Date.now()) {
-  return { unlocked: false, machineLevel: 1, yieldLevel: 1, capacityLevel: 1, storedGold: 0, lastAccruedAt: now, maxNotified: false };
+  return { unlocked: false, machineLevel: 1, yieldLevel: 1, capacityLevel: 1, storedGold: 0, lastAccruedAt: now, maxNotified: false, fuelUntil: 0 };
 }
 
 export function accrueMine(mine, state, now = Date.now()) {
@@ -18,11 +20,14 @@ export function accrueMine(mine, state, now = Date.now()) {
   const stats = getMineStats(mine, state);
   const elapsedSeconds = (now - state.lastAccruedAt) / 1000;
   if (elapsedSeconds <= 0) return state;
+  const boostedUntil = Math.min(now, Number(state.fuelUntil) || 0);
+  const boostedSeconds = Math.max(0, (boostedUntil - state.lastAccruedAt) / 1000);
+  const effectiveSeconds = elapsedSeconds + boostedSeconds * (FISH_OIL_SPEED_MULTIPLIER - 1);
   const storedGold = Math.max(0, state.storedGold || 0);
   // 旧仕様で新上限を超えていた蓄積Goldは失わせず、回収されるまでそのまま保持する。
   state.storedGold = storedGold >= stats.maxStoredGold
     ? storedGold
-    : Math.min(stats.maxStoredGold, storedGold + elapsedSeconds * stats.goldPerSecond);
+    : Math.min(stats.maxStoredGold, storedGold + effectiveSeconds * stats.goldPerSecond);
   if (state.storedGold >= stats.maxStoredGold && !state.maxNotified) {
     state.maxNotified = true;
     notifyGameEvent('鉱山の蓄積完了', `${mine.name}の蓄積量がMAXになりました！`, `mine-max-${mine.id}`);
@@ -134,4 +139,21 @@ export async function upgradeMine(mineId, type) {
     detail: { mineId, upgradeType: type, count: 1 }
   }));
   return { data, gold: (gold || 0) - cost.gold };
+}
+
+export async function useFishOilFuel(mineId, amount = 1) {
+  const mine = MINES.find(item => item.id === mineId);
+  if (!mine) throw new Error('鉱山が見つかりません。');
+  const quantity = Math.max(1, Math.floor(amount));
+  const [data, fishing] = await Promise.all([loadMineData(), loadFishingData()]);
+  const state = data[mineId];
+  if (!state.unlocked) throw new Error('鉱山が未解放です。');
+  if ((fishing.fishOil || 0) < quantity) throw new Error('魚油が足りません。');
+  fishing.fishOil -= quantity;
+  state.fuelUntil = Math.max(Date.now(), Number(state.fuelUntil) || 0) + FISH_OIL_BOOST_MS * quantity;
+  await Promise.all([
+    GameDB.setGameState(FISHING_STATE_KEY, fishing),
+    GameDB.setGameState(STATE_KEY, data),
+  ]);
+  return { data, fishOil: fishing.fishOil, fuelUntil: state.fuelUntil };
 }

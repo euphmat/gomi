@@ -42,7 +42,9 @@ import { renderDungeonPage } from './pages/dungeon.js';
 import { renderShopPage }    from './pages/shop.js';
 import { renderQuestPage }   from './pages/quest.js';
 import { renderBattlePage }  from './pages/battle/index.js';
+import { renderFishingPage } from './pages/fishing.js';
 import { QuestManager }      from './data/quest-manager.js';
+import { settleLegacyFishFeed } from './data/fishing-manager.js';
 
 class App {
   constructor() {
@@ -76,6 +78,9 @@ class App {
       // 所持Goldへの加算は鉱山画面の回収ボタンでのみ行う。
       await syncMineOfflineProgress();
       console.log('[App] Mine offline progress synchronized.');
+
+      await settleLegacyFishFeed();
+      console.log('[App] Legacy ranch fish feed settled.');
 
       await SpecialQuestManager.init();
       console.log('[App] SpecialQuestManager initialized.');
@@ -171,7 +176,8 @@ class App {
       .register('/dungeon', renderDungeonPage)
       .register('/shop',    renderShopPage)
       .register('/quest',   renderQuestPage)
-      .register('/battle',  renderBattlePage);
+      .register('/battle',  renderBattlePage)
+      .register('/fishing', renderFishingPage);
 
     // ── 5. Navigation ──
     this.renderNav();

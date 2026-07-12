@@ -5,16 +5,26 @@ import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { getRanchLevelInfo, calculateTotalRanchBonus } from '../../data/stat-calculator.js';
 import { getTreasureEffect, loadTreasureLevels } from '../../data/treasure-manager.js';
+import { FISH } from '../../definitions/fish.js';
+import { convertFishToFeed, loadFishingData, settleLegacyFishFeed } from '../../data/fishing-manager.js';
+import { formatNumber } from '../../utils/format.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
+
+function getRanchCompanionEntries(ranchData) {
+  return Object.entries(ranchData || {}).flatMap(([dungeonId, monsters]) =>
+    Object.entries(monsters || {}).map(([monsterId, data]) => ({ dungeonId, monsterId, data }))
+  );
+}
 
 export async function renderRanchTab() {
   const container = document.createElement('div');
   container.className = 'flex flex-col h-full bg-[#0b0b19] overflow-hidden relative';
 
   await loadTreasureLevels();
-  let ranchData = await GameDB.getGameState('ranch_data') || {};
+  const growth = await settleLegacyFishFeed();
+  let ranchData = growth.ranchData || {};
   let currentDungeonId = Object.keys(ranchData).length > 0 ? Object.keys(ranchData)[0] : null;
 
   const render = async () => {
@@ -70,6 +80,14 @@ export async function renderRanchTab() {
               ただし、<span class="text-pink-300 font-bold">同じモンスターを100体討伐するごとに仲間になる確率が上昇</span>していきます！根気よく討伐を繰り返しましょう。
             </p>
           </div>
+          <div>
+            <h4 class="font-bold text-emerald-300 mb-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">food_bank</span> 魚餌の一斉育成
+            </h4>
+            <p class="text-xs leading-relaxed text-slate-400">
+              魚餌は作成した瞬間に効果を発揮します。使用した魚のEXPが現在の仲間全員へ入り、待ち時間なく一斉に育成できます。
+            </p>
+          </div>
         </div>
       `;
       
@@ -116,11 +134,28 @@ export async function renderRanchTab() {
       selectWrapper.appendChild(select);
       selectWrapper.appendChild(selectIcon);
       header.appendChild(selectWrapper);
+
+      const fishing = await loadFishingData();
+      const fishCount = FISH.reduce((sum, fish) => sum + (fishing.inventory[fish.id] || 0), 0);
+      const companionCount = getRanchCompanionEntries(ranchData).length;
+      const fishPanel = document.createElement('button');
+      fishPanel.className = 'mt-2 flex w-full items-center gap-2 rounded-xl border border-emerald-400/25 bg-gradient-to-r from-emerald-950/35 to-cyan-950/20 px-3 py-2.5 text-left transition-colors hover:border-emerald-400/40';
+      fishPanel.innerHTML = `<span class="material-symbols-outlined text-emerald-300">bolt</span><div class="min-w-0 flex-1"><div class="text-[11px] font-black text-emerald-100">魚餌工房</div><div class="text-[9px] text-slate-400">数量を選び、仲間${formatNumber(companionCount)}体へ今すぐEXP</div></div><div class="shrink-0 text-right"><div class="text-[8px] text-slate-500">所持魚</div><div class="text-xs font-black text-cyan-300">${formatNumber(fishCount)}匹</div></div><span class="material-symbols-outlined text-base text-slate-500">chevron_right</span>`;
+      fishPanel.onclick = () => showRanchFishModal(async result => {
+        ranchData = result.ranchData || ranchData;
+        await render();
+      });
+      header.appendChild(fishPanel);
     } else {
       const noCompanions = document.createElement('div');
       noCompanions.className = 'bg-slate-900/50 rounded-xl p-4 text-center border border-slate-800';
       noCompanions.innerHTML = `<p class="text-slate-400 text-sm font-bold">まだ仲間になったモンスターはいません。<br>ダンジョンでモンスターを討伐して仲間にしましょう！</p>`;
       header.appendChild(noCompanions);
+      const fishPanel = document.createElement('button');
+      fishPanel.disabled = true;
+      fishPanel.className = 'mt-2 flex w-full items-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/50 px-3 py-2.5 text-left opacity-60';
+      fishPanel.innerHTML = `<span class="material-symbols-outlined text-slate-500">food_bank</span><div class="min-w-0 flex-1"><div class="text-[11px] font-black text-slate-300">魚餌工房</div><div class="text-[9px] text-slate-500">仲間を迎えると即時一斉育成を利用できます</div></div><span class="material-symbols-outlined text-base text-slate-600">lock</span>`;
+      header.appendChild(fishPanel);
       container.appendChild(header);
       return;
     }
@@ -308,6 +343,162 @@ export async function renderRanchTab() {
   await render();
   return container;
 }
+
+async function showRanchFishModal(onUpdate) {
+  const overlay = document.createElement('div');
+  overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm';
+  const modal = document.createElement('div');
+  modal.className = 'flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-emerald-300/25 bg-[#0c1317] shadow-[0_24px_90px_rgba(0,0,0,.8)]';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  let busy = false;
+  let lastResult = null;
+  const close = () => overlay.remove();
+  overlay.onclick = event => { if (event.target === overlay) close(); };
+
+  const render = async () => {
+    const legacy = await settleLegacyFishFeed();
+    const [fishing, savedRanchData] = await Promise.all([
+      loadFishingData(),
+      GameDB.getGameState('ranch_data').then(value => value || legacy.ranchData || {}),
+    ]);
+    const companions = getRanchCompanionEntries(savedRanchData);
+    const available = FISH.filter(fish => (fishing.inventory[fish.id] || 0) > 0);
+    const totalFish = FISH.reduce((sum, fish) => sum + (fishing.inventory[fish.id] || 0), 0);
+    modal.innerHTML = `
+      <header class="border-b border-emerald-400/15 bg-gradient-to-br from-emerald-950/80 via-slate-950 to-cyan-950/55 p-4">
+        <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2"><span class="material-symbols-outlined rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-2 text-emerald-300">bolt</span><div><h3 class="text-base font-black text-emerald-100">魚餌工房</h3><p class="text-[8px] font-black tracking-widest text-emerald-300/60">INSTANT FEED LAB</p></div></div><p class="mt-2 text-[10px] leading-relaxed text-slate-400">作成した魚餌はその場で消費され、<span class="font-black text-white">現在の仲間全員</span>へ即座にEXPが入ります。</p></div><button data-close class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-slate-400"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="mt-3 grid grid-cols-2 gap-2 text-center"><div class="rounded-xl border border-cyan-400/15 bg-black/25 p-2.5"><div class="text-[8px] text-slate-500">所持している魚</div><div class="mt-0.5 text-sm font-black text-cyan-300">${formatNumber(totalFish)}匹</div></div><div class="rounded-xl border border-pink-400/20 bg-pink-950/20 p-2.5"><div class="text-[8px] text-pink-200/60">一斉育成対象</div><div class="mt-0.5 text-sm font-black text-pink-300">${formatNumber(companions.length)}体</div></div></div>
+      </header>
+      ${lastResult ? `<div class="border-b border-emerald-400/20 bg-emerald-950/45 px-4 py-2.5 text-[10px] text-emerald-100"><span class="material-symbols-outlined mr-1 align-middle text-base text-emerald-300">task_alt</span>全${formatNumber(lastResult.companionCount)}体に <span class="font-black">+${formatNumber(lastResult.expPerCompanion)} EXP</span>${lastResult.levelsGained ? ` ・ 合計 <span class="font-black">+${formatNumber(lastResult.levelsGained)} Lv</span>` : ''}</div>` : ''}
+      <div class="no-scrollbar flex-1 space-y-2 overflow-y-auto p-3">${available.length ? available.map(fish => {
+        const owned = fishing.inventory[fish.id] || 0;
+        return `<article data-feed-card="${fish.id}" class="rounded-2xl border border-slate-700/70 bg-slate-950/65 p-3"><div class="flex items-center gap-3"><div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-cyan-400/15 bg-cyan-950/20 p-1"><img src="${fish.image}" class="h-full w-full object-contain" alt=""></div><div class="min-w-0 flex-1"><div class="flex items-center justify-between gap-2"><div class="truncate text-xs font-black text-slate-100">${fish.name}</div><span class="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[9px] font-black text-cyan-300">${formatNumber(owned)}匹</span></div><div class="mt-1 text-[9px] text-slate-500">1個 → 全員に <span class="font-black text-pink-300">${formatNumber(fish.ranchExp)} EXP</span></div><div class="mt-1.5 rounded-lg border border-emerald-400/10 bg-emerald-950/20 px-2 py-1.5 text-[9px]"><span data-preview-exp class="font-black text-emerald-300"></span><span class="mx-1 text-slate-700">・</span><span data-preview-levels class="text-slate-400"></span></div></div></div>
+          <div class="mt-3 grid grid-cols-[38px_1fr_38px_60px] gap-1.5"><button data-step="-1" class="h-10 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-slate-300 active:scale-95">−</button><input data-amount type="number" inputmode="numeric" min="1" max="${owned}" value="1" class="h-10 min-w-0 rounded-xl border border-emerald-400/25 bg-slate-900 px-2 text-center text-sm font-black text-white outline-none focus:border-emerald-400"><button data-step="1" class="h-10 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-slate-300 active:scale-95">＋</button><button data-max class="h-10 rounded-xl border border-cyan-400/25 bg-cyan-950/40 text-[10px] font-black text-cyan-300 active:scale-95">MAX</button></div>
+          <button data-feed="${fish.id}" class="mt-2.5 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-300/35 bg-gradient-to-r from-emerald-600 to-teal-600 text-[11px] font-black text-white shadow-[0_0_18px_rgba(16,185,129,.18)] active:scale-[.99]"><span class="material-symbols-outlined text-base">bolt</span><span data-action-label></span></button></article>`;
+      }).join('') : '<div class="py-12 text-center"><span class="material-symbols-outlined text-4xl text-slate-700">set_meal</span><p class="mt-2 text-xs font-bold text-slate-500">魚を所持していません</p><p class="mt-1 text-[9px] text-slate-600">釣り場で魚を入手してください</p></div>'}</div>`;
+    modal.querySelector('[data-close]').onclick = close;
+
+    const updateCard = card => {
+      const fish = FISH.find(item => item.id === card.dataset.feedCard);
+      const owned = fishing.inventory[fish.id] || 0;
+      const input = card.querySelector('[data-amount]');
+      const amount = Math.max(1, Math.min(owned, Math.floor(Number(input.value) || 1)));
+      input.value = amount;
+      const exp = fish.ranchExp * amount;
+      let levels = 0;
+      for (const companion of companions) {
+        const legendary = companion.monsterId.endsWith('_legendary');
+        const before = getRanchLevelInfo(companion.data.fedMaterials || 0, legendary).level;
+        const after = getRanchLevelInfo((companion.data.fedMaterials || 0) + exp, legendary).level;
+        levels += Math.max(0, after - before);
+      }
+      card.querySelector('[data-preview-exp]').textContent = `+${formatNumber(exp)} EXP / 体`;
+      card.querySelector('[data-preview-levels]').textContent = levels ? `合計 +${formatNumber(levels)} Lv見込み` : '次のLvへEXP蓄積';
+      card.querySelector('[data-action-label]').textContent = `${formatNumber(amount)}個作って全員へ即時給餌`;
+    };
+    modal.querySelectorAll('[data-feed-card]').forEach(card => {
+      const input = card.querySelector('[data-amount]');
+      input.addEventListener('input', () => updateCard(card));
+      card.querySelectorAll('[data-step]').forEach(button => button.onclick = () => {
+        input.value = (Number(input.value) || 1) + Number(button.dataset.step);
+        updateCard(card);
+      });
+      card.querySelector('[data-max]').onclick = () => { input.value = input.max; updateCard(card); };
+      updateCard(card);
+    });
+    modal.querySelectorAll('[data-feed]').forEach(button => button.onclick = async () => {
+      if (busy) return;
+      busy = true;
+      const input = button.closest('[data-feed-card]').querySelector('[data-amount]');
+      try {
+        const fish = FISH.find(item => item.id === button.dataset.feed);
+        const amount = Number(input.value) || 1;
+        const result = await convertFishToFeed(button.dataset.feed, amount);
+        await playFishFeedAnimation(fish, result, modal);
+        lastResult = result;
+        await onUpdate?.(result);
+        if (overlay.isConnected) await render();
+      } catch (error) { alert(error.message || '魚餌の作成に失敗しました。'); }
+      finally { busy = false; }
+    });
+  };
+  await render();
+}
+
+function playFishFeedAnimation(fish, result, sourceModal) {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = reducedMotion ? 620 : 1500;
+  const layer = document.createElement('div');
+  layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/45 pointer-events-none backdrop-blur-[1px]';
+  const rect = sourceModal.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = Math.min(innerHeight - 150, Math.max(150, rect.top + rect.height / 2));
+  layer.innerHTML = `
+    <div data-feed-core class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300/60 bg-emerald-950/95 shadow-[0_0_55px_rgba(52,211,153,.65)]" style="left:${centerX}px;top:${centerY}px"><img src="${fish.image}" class="h-20 w-20 object-contain" alt=""></div>
+    <div data-feed-burst class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX}px;top:${centerY}px"><span class="material-symbols-outlined text-7xl text-emerald-300 drop-shadow-[0_0_25px_rgba(52,211,153,.95)]">food_bank</span><div class="mt-1 rounded-full border border-emerald-300/40 bg-slate-950/90 px-4 py-1.5 text-sm font-black text-emerald-100">全員 +${formatNumber(result.expPerCompanion)} EXP</div><div class="mt-1 text-[9px] font-black tracking-widest text-emerald-300/70">PARTY FEED</div></div>
+    <div data-feed-title class="absolute left-1/2 top-10 -translate-x-1/2 text-center opacity-0"><div class="text-[10px] font-black text-pink-300">${formatNumber(result.companionCount)}体${result.levelsGained ? `・合計 ${formatNumber(result.levelsGained)} Lv UP` : ''}</div></div>`;
+  document.body.appendChild(layer);
+  const core = layer.querySelector('[data-feed-core]');
+  const burst = layer.querySelector('[data-feed-burst]');
+  const title = layer.querySelector('[data-feed-title]');
+  core.animate(
+    [{ transform: 'translate(-50%,-50%) scale(.55) rotate(-12deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.12) rotate(5deg)', opacity: 1, offset: .42 }, { transform: 'translate(-50%,-50%) scale(.15) rotate(180deg)', filter: 'brightness(3)', opacity: 0 }],
+    { duration: reducedMotion ? 300 : 700, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
+  );
+  burst.animate(
+    [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.15)', opacity: 1, offset: .55 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }],
+    { duration: reducedMotion ? 350 : 700, delay: reducedMotion ? 180 : 480, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
+  );
+  title.animate(
+    [{ transform: 'translate(-50%,-15px) scale(.8)', opacity: 0 }, { transform: 'translate(-50%,0) scale(1.08)', opacity: 1, offset: .65 }, { transform: 'translate(-50%,0) scale(1)', opacity: 1 }],
+    { duration: reducedMotion ? 300 : 620, delay: reducedMotion ? 180 : 520, fill: 'forwards' }
+  );
+
+  const companions = getRanchCompanionEntries(result.ranchData);
+  const visibleCompanions = companions.slice(0, reducedMotion ? 4 : 8);
+  visibleCompanions.forEach((companion, index) => {
+    const baseId = companion.monsterId.endsWith('_legendary') ? companion.monsterId.replace('_legendary', '') : companion.monsterId;
+    const monster = MONSTERS_MAP.get(baseId);
+    const angle = (Math.PI * 2 * index / Math.max(1, visibleCompanions.length)) - Math.PI / 2;
+    const radiusX = Math.min(145, innerWidth * .34);
+    const radiusY = Math.min(210, innerHeight * .27);
+    const targetX = centerX + Math.cos(angle) * radiusX;
+    const targetY = centerY + Math.sin(angle) * radiusY;
+    const pet = document.createElement('div');
+    pet.className = 'absolute flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-pink-300/40 bg-slate-950/90 p-1 opacity-0 shadow-[0_0_18px_rgba(244,114,182,.45)]';
+    pet.style.left = `${centerX}px`;
+    pet.style.top = `${centerY}px`;
+    pet.innerHTML = monster?.image ? `<img src="${monster.image}" class="h-full w-full object-contain" alt="">` : '<span class="material-symbols-outlined text-3xl text-pink-300">pets</span>';
+    const exp = document.createElement('span');
+    exp.className = 'absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-300/30 bg-emerald-950/95 px-1.5 py-0.5 text-[8px] font-black text-emerald-200';
+    exp.textContent = `+${formatNumber(result.expPerCompanion)}`;
+    pet.appendChild(exp);
+    layer.appendChild(pet);
+    pet.animate(
+      [{ transform: 'translate(-50%,-50%) scale(.1)', opacity: 0 }, { transform: `translate(${targetX - centerX - 28}px,${targetY - centerY - 28}px) scale(1.16)`, opacity: 1, offset: .75 }, { transform: `translate(${targetX - centerX - 28}px,${targetY - centerY - 28}px) scale(1)`, opacity: 1 }],
+      { duration: reducedMotion ? 350 : 650 + index * 45, delay: reducedMotion ? 220 : 560, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
+    );
+  });
+  for (let i = 0; i < (reducedMotion ? 6 : 24); i++) {
+    const particle = document.createElement('span');
+    particle.className = 'absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full bg-emerald-200 shadow-[0_0_8px_rgba(110,231,183,.9)]';
+    particle.style.left = `${centerX}px`;
+    particle.style.top = `${centerY}px`;
+    layer.appendChild(particle);
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 60 + Math.random() * 180;
+    particle.animate(
+      [{ transform: 'translate(-50%,-50%) scale(0)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px),calc(-50% + ${Math.sin(angle) * distance}px)) scale(0)`, opacity: 0 }],
+      { duration: reducedMotion ? 300 : 520 + Math.random() * 450, delay: reducedMotion ? 180 : 480 + Math.random() * 220, easing: 'ease-out', fill: 'forwards' }
+    );
+  }
+  return new Promise(resolve => setTimeout(() => {
+    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' }).onfinish = () => layer.remove();
+    resolve();
+  }, duration));
+}
+
 
 function showNotification(container, text, type = 'info') {
   const el = document.createElement('div');

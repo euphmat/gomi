@@ -54,6 +54,13 @@ export class Router {
     const path = this.getCurrentRoute();
     if (path === this.currentRoute) return;
 
+    const cleanupPromise = Promise.all(Array.from(this.contentEl.children).map(element => {
+      if (typeof element.cleanup !== 'function') return Promise.resolve();
+      return Promise.resolve(element.cleanup()).catch(error => {
+        console.error('[Router] Error cleaning up outgoing route:', error);
+      });
+    }));
+
     this.currentRoute = path;
     const renderFn = this.routes.get(path);
 
@@ -63,13 +70,16 @@ export class Router {
       this.contentEl.style.opacity = '0';
       this.contentEl.style.transform = 'translateY(4px) scale(0.99)';
 
-      setTimeout(() => {
+      setTimeout(async () => {
+        await cleanupPromise;
+        if (this.currentRoute !== path) return;
         this.contentEl.innerHTML = '';
         let content = renderFn();
 
         // Handle async render functions (Promise)
         if (content instanceof Promise) {
           content.then(resolvedContent => {
+            if (this.currentRoute !== path) return;
             if (typeof resolvedContent === 'string') {
               this.contentEl.innerHTML = resolvedContent;
             } else if (resolvedContent instanceof HTMLElement) {

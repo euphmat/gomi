@@ -39,6 +39,14 @@ export const DAILY_QUESTS = [
     target: 5,
     progressKey: 'mineUpgrades',
   },
+  {
+    id: 'daily_fish_5',
+    label: '魚を5匹釣る',
+    icon: 'phishing',
+    eventType: 'quest:fish-caught',
+    target: 5,
+    progressKey: 'fishCaught',
+  },
 ];
 
 class QuestManagerClass {
@@ -49,6 +57,7 @@ class QuestManagerClass {
       feedLevels: 0,
       crafts: 0,
       mineUpgrades: 0,
+      fishCaught: 0,
       claimed: false,
     };
   }
@@ -67,6 +76,7 @@ class QuestManagerClass {
         feedLevels: 0,
         crafts: 0,
         mineUpgrades: 0,
+        fishCaught: 0,
         claimed: false,
       };
       await this.saveProgress();
@@ -94,6 +104,11 @@ class QuestManagerClass {
     window.addEventListener('quest:mine-upgrade', (e) => {
       const { count } = e.detail;
       this.addProgress('mineUpgrades', count);
+    });
+
+    window.addEventListener('quest:fish-caught', (e) => {
+      const { count } = e.detail;
+      this.addProgress('fishCaught', count);
     });
   }
 

@@ -36,7 +36,7 @@ window.unlockSpecialDungeon = async (dungeonId) => {
 
 
 let currentDungeonPage = 1;
-let currentDungeonTab = 'normal'; // 'normal' | 'special'
+let currentDungeonTab = 'normal'; // 'normal' | 'special' | 'fishing'
 let dungeonItemsPerPage = 3;
 let observedDungeonList = null;
 let disconnectDungeonObserver = null;
@@ -128,8 +128,38 @@ export async function renderDungeonPage() {
         <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
         スペシャル
       </button>
+      <button onclick="window.switchDungeonTab('fishing')"
+              class="flex-1 py-1.5 px-2 rounded-md font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
+                currentDungeonTab === 'fishing'
+                  ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(34,211,238,0.14)]'
+                  : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-950/30 border border-transparent'
+              }">
+        <span class="material-symbols-outlined text-[14px]">phishing</span>
+        フィッシング
+      </button>
     </div>
   `;
+
+  if (currentDungeonTab === 'fishing') {
+    return `
+      <div data-dungeon-page class="flex h-full min-h-0 flex-col gap-4 overflow-hidden bg-[#0b0b19] p-4 pb-24">
+        ${tabsHtml}
+        <div class="relative min-h-0 flex-1 overflow-hidden rounded-3xl border border-cyan-300/40 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,.45)]">
+          <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('assets/dungeon/bg_fishing_spot.webp')"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-slate-950/25 via-slate-950/20 to-slate-950/95"></div>
+          <div class="relative flex h-full flex-col items-center justify-end p-5 text-center">
+            <div class="mb-auto mt-4 rounded-full border border-cyan-200/30 bg-slate-950/65 px-3 py-1 text-[10px] font-black tracking-[.2em] text-cyan-200 backdrop-blur-md">FISHING AREA</div>
+            <div class="w-full rounded-2xl border border-white/15 bg-slate-950/75 p-4 backdrop-blur-md">
+              <div class="mb-2 flex items-center justify-center gap-2"><span class="material-symbols-outlined text-2xl text-cyan-300">water</span><h2 class="text-xl font-black tracking-wider text-white">月影の湖</h2></div>
+              <p class="text-[11px] leading-relaxed text-slate-300">Goldで釣り餌を用意して、魚や珍しいお宝を釣り上げよう。</p>
+              <button onclick="window.location.hash='/fishing'" class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-200/60 bg-gradient-to-r from-cyan-600 to-blue-600 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(6,182,212,.35)] active:scale-[.99]">
+                <span class="material-symbols-outlined">phishing</span>釣り場へ向かう<span class="material-symbols-outlined text-base">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
 
   const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
   const playerMedals = await GameDB.getGameState('player_medals') || {};

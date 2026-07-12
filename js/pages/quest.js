@@ -2,10 +2,11 @@ import { renderDailyQuestTab } from './quest-tabs/daily-quest.js';
 import { renderSpecialQuestTab } from './quest-tabs/special-quest.js';
 import { renderItemLibraryTab } from './library-tabs/item-library.js';
 import { renderMonsterLibraryTab } from './library-tabs/monster-library.js';
+import { renderFishLibraryTab } from './library-tabs/fish-library.js';
 
 /**
  * クエスト画面のメインコンテナ
- * 内部で4つのタブ（デイリー、スペシャル、アイテム図鑑、モンスター図鑑）を切り替えて表示します。
+ * 内部でクエストと各種図鑑のタブを切り替えて表示します。
  */
 export function renderQuestPage() {
   const container = document.createElement('div');
@@ -15,7 +16,8 @@ export function renderQuestPage() {
     { id: 'daily', label: 'デイリー', icon: 'today', activeClass: 'border-sky-400/45 bg-sky-950/55 text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(56,189,248,0.18)]', idleClass: 'hover:border-sky-500/35 hover:bg-sky-950/30 hover:text-sky-300' },
     { id: 'special', label: 'スペシャル', icon: 'stars', activeClass: 'border-fuchsia-400/45 bg-fuchsia-950/55 text-fuchsia-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(232,121,249,0.18)]', idleClass: 'hover:border-fuchsia-500/35 hover:bg-fuchsia-950/30 hover:text-fuchsia-300' },
     { id: 'item_lib', label: 'アイテム図鑑', icon: 'auto_stories', activeClass: 'border-indigo-400/45 bg-indigo-950/55 text-indigo-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(129,140,248,0.18)]', idleClass: 'hover:border-indigo-500/35 hover:bg-indigo-950/30 hover:text-indigo-300' },
-    { id: 'monster_lib', label: 'モンスター図鑑', icon: 'pets', activeClass: 'border-emerald-400/45 bg-emerald-950/55 text-emerald-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(52,211,153,0.18)]', idleClass: 'hover:border-emerald-500/35 hover:bg-emerald-950/30 hover:text-emerald-300' }
+    { id: 'monster_lib', label: 'モンスター図鑑', icon: 'pets', activeClass: 'border-emerald-400/45 bg-emerald-950/55 text-emerald-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(52,211,153,0.18)]', idleClass: 'hover:border-emerald-500/35 hover:bg-emerald-950/30 hover:text-emerald-300' },
+    { id: 'fish_lib', label: '魚図鑑', icon: 'phishing', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'hover:border-cyan-500/35 hover:bg-cyan-950/30 hover:text-cyan-300' }
   ];
   
   let activeTabId = 'daily';
@@ -84,6 +86,9 @@ export function renderQuestPage() {
         break;
       case 'monster_lib':
         tabContent = renderMonsterLibraryTab();
+        break;
+      case 'fish_lib':
+        tabContent = renderFishLibraryTab();
         break;
     }
 

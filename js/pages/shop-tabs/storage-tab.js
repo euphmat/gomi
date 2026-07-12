@@ -3,6 +3,8 @@ import { STAT_KEYS } from '../../data/constants.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
+import { FISH } from '../../definitions/fish.js';
+import { loadFishingData } from '../../data/fishing-manager.js';
 
 const STORAGE_SETTINGS_KEYS = {
   viewMode: 'shop.storage.viewMode',
@@ -46,12 +48,13 @@ export function renderStorageTab() {
   let currentPage = 1;
 
   const FILTERS = [
-    { id: 'all', icon: 'apps' },
-    { id: 'weapon', icon: 'swords' },
-    { id: 'shield', icon: 'shield' },
-    { id: 'armor', icon: 'checkroom' },
-    { id: 'accessory', icon: 'diamond' },
-    { id: 'material', icon: 'category' }
+    { id: 'all', icon: 'apps', label: 'すべて' },
+    { id: 'fish', icon: 'set_meal', label: '魚' },
+    { id: 'weapon', icon: 'swords', label: '武器' },
+    { id: 'shield', icon: 'shield', label: '盾' },
+    { id: 'armor', icon: 'checkroom', label: '防具' },
+    { id: 'accessory', icon: 'diamond', label: '装飾品' },
+    { id: 'material', icon: 'category', label: '素材' }
   ];
 
   // トップバー領域
@@ -73,6 +76,8 @@ export function renderStorageTab() {
           : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'}
       `;
       btn.innerHTML = `<span class="material-symbols-outlined text-[20px]">${f.icon}</span>`;
+      btn.title = f.label;
+      btn.setAttribute('aria-label', f.label);
       btn.onclick = () => {
         if (activeFilter !== f.id) {
           activeFilter = f.id;
@@ -172,7 +177,8 @@ export function renderStorageTab() {
           if (activeFilter === 'shield') return item.slot === 'leftHand';
           if (activeFilter === 'armor') return item.slot === 'armor';
           if (activeFilter === 'accessory') return item.slot === 'accessory';
-          if (activeFilter === 'material') return !item.slot;
+          if (activeFilter === 'material') return !item.slot && item.itemType !== 'fish';
+          if (activeFilter === 'fish') return item.itemType === 'fish';
           return true;
         });
 
@@ -197,7 +203,7 @@ export function renderStorageTab() {
         slot.className = 'relative w-full aspect-square flex items-center justify-center rounded-md border border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 bg-gray-900/60 overflow-hidden cursor-pointer transition-all shadow-sm';
         
         if (item.image) {
-          slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
+          slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full ${item.itemType === 'fish' ? 'object-contain p-1' : 'object-cover'}" onerror="this.style.display='none'">`;
         } else {
           slot.innerHTML = `<span class="material-symbols-outlined text-gray-600 text-lg">category</span>`;
         }
@@ -237,16 +243,17 @@ export function renderStorageTab() {
         const performanceParts = [statsHtml, elHtml, ailHtml].filter(Boolean);
         const performanceHtml = performanceParts.join('<div class="w-px h-2 bg-slate-700/60 mx-1 shrink-0"></div>');
 
-        let slotLabel = '素材';
+        let slotLabel = item.itemType === 'fish' ? '魚' : '素材';
         let slotColor = 'text-slate-400';
         if (item.slot === 'rightHand') { slotLabel = '武器'; slotColor = 'text-rose-400'; }
         else if (item.slot === 'leftHand') { slotLabel = '盾'; slotColor = 'text-blue-400'; }
         else if (item.slot === 'armor') { slotLabel = '防具'; slotColor = 'text-indigo-400'; }
         else if (item.slot === 'accessory') { slotLabel = '装飾品'; slotColor = 'text-amber-400'; }
+        else if (item.itemType === 'fish') { slotColor = 'text-cyan-300'; }
 
         let imgHtml = '';
         if (item.image) {
-          imgHtml = `<img src="${item.image}" alt="" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" onerror="this.style.display='none'">`;
+          imgHtml = `<img src="${item.image}" alt="" class="w-full h-full ${item.itemType === 'fish' ? 'object-contain p-0.5' : 'object-cover'} transition-transform duration-300 group-hover:scale-110" onerror="this.style.display='none'">`;
         } else {
           imgHtml = `<span class="material-symbols-outlined text-slate-500 text-2xl">category</span>`;
         }
@@ -290,8 +297,9 @@ export function renderStorageTab() {
   const loadData = () => {
     Promise.all([
       GameDB.getWarehouseEquipment(),
-      GameDB.getAllInventory()
-    ]).then(([eq, inv]) => {
+      GameDB.getAllInventory(),
+      loadFishingData()
+    ]).then(([eq, inv, fishing]) => {
       const groupedEquipment = {};
       eq.forEach(item => {
         if (!groupedEquipment[item.name]) {
@@ -302,7 +310,10 @@ export function renderStorageTab() {
         }
       });
       
-      items = [...Object.values(groupedEquipment), ...inv];
+      const fishItems = FISH
+        .filter(fish => (fishing.inventory[fish.id] || 0) > 0)
+        .map(fish => ({ ...fish, itemType: 'fish', quantity: fishing.inventory[fish.id] }));
+      items = [...Object.values(groupedEquipment), ...inv, ...fishItems];
       renderGrid();
     });
   };
@@ -395,13 +406,13 @@ export function renderStorageTab() {
             </div>
           `;
         }).join('') + `</div>`
-      : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : '素材アイテム<br>特殊な効果はありません。'}</div>`;
+      : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : item.itemType === 'fish' ? '釣りで獲得した魚です。<br>鉱山・牧場で加工できます。' : '素材アイテム<br>特殊な効果はありません。'}</div>`;
 
     const abilityHtml = '';
 
-    const itemImgClass = 'w-full h-full object-cover';
+    const itemImgClass = `w-full h-full ${item.itemType === 'fish' ? 'object-contain p-1' : 'object-cover'}`;
 
-    let slotLabel = '素材';
+    let slotLabel = item.itemType === 'fish' ? '魚' : '素材';
     let slotColor = 'bg-slate-800/80 text-slate-400 border-slate-700/50';
     if (item.slot === 'rightHand') {
       slotLabel = '武器';
@@ -415,6 +426,8 @@ export function renderStorageTab() {
     } else if (item.slot === 'accessory') {
       slotLabel = '装飾品';
       slotColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+    } else if (item.itemType === 'fish') {
+      slotColor = 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20';
     }
 
     const topSection = `
