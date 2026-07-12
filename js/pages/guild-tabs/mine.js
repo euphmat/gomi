@@ -95,6 +95,33 @@ function formatMineAmount(value, maximumFractionDigits = 3) {
   return value.toLocaleString('ja-JP', { maximumFractionDigits });
 }
 
+function formatMineRateUpgrade(current, next) {
+  let fractionDigits = Math.abs(current) >= 1000 ? 2 : 3;
+  while (fractionDigits < 8 && current.toFixed(fractionDigits) === next.toFixed(fractionDigits)) {
+    fractionDigits += 1;
+  }
+  const format = value => value.toLocaleString('ja-JP', {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits
+  });
+  const increase = next - current;
+  let increaseFractionDigits = fractionDigits;
+  while (increaseFractionDigits < 8 && increase.toFixed(increaseFractionDigits) === (0).toFixed(increaseFractionDigits)) {
+    increaseFractionDigits += 1;
+  }
+  const formatIncrease = value => value.toLocaleString('ja-JP', {
+    minimumFractionDigits: increaseFractionDigits,
+    maximumFractionDigits: increaseFractionDigits
+  });
+  const increasePercent = current > 0 ? increase / current * 100 : 0;
+  return {
+    current: format(current),
+    next: format(next),
+    increase: formatIncrease(increase),
+    increasePercent: increasePercent.toFixed(2)
+  };
+}
+
 function getStorageProgress(state, stats) {
   if (stats.maxStoredGold <= 0) return 0;
   return Math.min(100, Math.max(0, (state.storedGold || 0) / stats.maxStoredGold * 100));
@@ -371,7 +398,10 @@ export async function renderMineTab() {
       currentGold = result.gold;
       updateHeader('header-gold-display', result.gold);
       showMineUpgradeAnimation(mine, upgradeType, mineData[mine.id][`${upgradeType}Level`], originRect);
-      showMineMessage(container, `${mine.name}を強化しました。`);
+      const upgradedStats = getMineStats(mine, mineData[mine.id]);
+      showMineMessage(container, upgradeType === 'yield'
+        ? `採掘量が ${formatMineAmount(upgradedStats.baseGoldPerSecond, 6)} G/秒に上昇しました。`
+        : `${mine.name}を強化しました。`);
     })));
     return card;
   };
@@ -385,10 +415,13 @@ export async function renderMineTab() {
     const currentStats = getMineStats(mine, state);
     const nextState = isMax ? state : { ...state, [`${type.id}Level`]: level + 1 };
     const nextStats = getMineStats(mine, nextState);
+    const yieldUpgrade = type.id === 'yield' && !isMax
+      ? formatMineRateUpgrade(currentStats.baseGoldPerSecond, nextStats.baseGoldPerSecond)
+      : null;
     const effects = type.id === 'machine'
       ? { current: `効率 ${(currentStats.machineEfficiency * 100).toFixed(2)}%`, next: `効率 ${(nextStats.machineEfficiency * 100).toFixed(2)}%` }
       : type.id === 'yield'
-        ? { current: `${formatMineAmount(currentStats.baseGoldPerSecond)} G/秒`, next: `${formatMineAmount(nextStats.baseGoldPerSecond)} G/秒` }
+        ? { current: `${yieldUpgrade?.current || formatMineAmount(currentStats.baseGoldPerSecond, 6)} G/秒`, next: `${yieldUpgrade?.next || formatMineAmount(nextStats.baseGoldPerSecond, 6)} G/秒` }
         : { current: `${formatMineAmount(currentStats.storageHours, 2)}時間 / ${formatMineAmount(currentStats.maxStoredGold, 2)} G`, next: `${formatMineAmount(nextStats.storageHours, 2)}時間 / ${formatMineAmount(nextStats.maxStoredGold, 2)} G` };
     const hasMaterial = isMax || owned >= cost.materialAmount;
     const hasGold = isMax || currentGold >= cost.gold;
@@ -402,6 +435,7 @@ export async function renderMineTab() {
         <span data-theme-text class="text-sm font-black tabular-nums">${effects.current}</span>
         ${isMax ? '<span class="ml-auto rounded-md bg-white/5 px-2 py-1 text-[11px] font-black text-slate-400">MAX</span>' : `<span class="material-symbols-outlined mx-1 text-xl text-slate-500">arrow_forward</span><span class="text-[11px] font-black text-slate-400">次</span><span data-theme-text class="text-sm font-black tabular-nums">${effects.next}</span>`}
       </div>
+      ${yieldUpgrade ? `<div class="mt-2 flex items-center justify-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-2 py-1.5 text-[11px] font-black text-emerald-300"><span class="material-symbols-outlined text-sm">trending_up</span>強化効果 +${yieldUpgrade.increase} G/秒（+${yieldUpgrade.increasePercent}%）</div>` : ''}
       ${isMax ? '' : `<div class="mt-2.5 grid grid-cols-2 gap-2">
         <div class="rounded-lg border ${hasMaterial ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} p-2">
           <div class="mb-1 text-[10px] font-black tracking-wider text-slate-400">必要素材</div>
