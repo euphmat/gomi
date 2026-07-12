@@ -38,6 +38,52 @@ function normalizeFishCount(entry) {
   return Math.max(0, Number(entry) || 0);
 }
 
+function bonusGroupKey(item) {
+  if (item?.type === 'gold') return 'gold';
+  if (item?.type === 'material' && item.itemId) return `material:${item.itemId}`;
+  return null;
+}
+
+function materialCatchAmount(item) {
+  const savedAmount = Number(item?.amount);
+  if (Number.isFinite(savedAmount) && savedAmount > 0) return savedAmount;
+  const nameAmount = String(item?.name || '').match(/×([\d,]+)\s*$/)?.[1];
+  return nameAmount ? Number(nameAmount.replaceAll(',', '')) : 1;
+}
+
+function groupRecentBonuses(items) {
+  const grouped = [];
+  for (const savedItem of items) {
+    if (!savedItem || typeof savedItem !== 'object') continue;
+    const item = { ...savedItem, catchCount: Math.max(1, Number(savedItem.catchCount) || 1) };
+    const key = bonusGroupKey(item);
+    if (!key) {
+      grouped.push(item);
+      continue;
+    }
+
+    const existing = grouped.find(entry => bonusGroupKey(entry) === key);
+    const amount = item.type === 'material' ? materialCatchAmount(item) : Math.max(0, Number(item.amount) || 0);
+    if (existing) {
+      existing.amount += amount;
+      existing.catchCount += item.catchCount;
+      continue;
+    }
+
+    item.amount = amount;
+    if (item.type === 'material') {
+      item.baseName = item.baseName || String(item.name || '素材').replace(/\s*×[\d,]+\s*$/, '');
+    }
+    grouped.push(item);
+  }
+
+  for (const item of grouped) {
+    if (item.type === 'gold') item.name = `Gold袋（${item.amount.toLocaleString()} G）`;
+    if (item.type === 'material') item.name = `${item.baseName} ×${item.amount.toLocaleString()}`;
+  }
+  return grouped;
+}
+
 export async function loadFishingData() {
   const saved = await GameDB.getGameState(FISHING_STATE_KEY) || {};
   const state = { ...createFishingState(), ...saved };
@@ -48,7 +94,7 @@ export async function loadFishingData() {
   const savedBonuses = Array.isArray(saved.recentBonusCatches)
     ? saved.recentBonusCatches
     : (Array.isArray(saved.recentCatches) ? saved.recentCatches.filter(item => item?.type !== 'fish') : []);
-  state.recentBonusCatches = savedBonuses.slice(0, 12);
+  state.recentBonusCatches = groupRecentBonuses(savedBonuses).slice(0, 12);
   delete state.recentCatches;
   for (const fish of FISH) {
     state.inventory[fish.id] = normalizeFishCount(state.inventory[fish.id]);
@@ -86,8 +132,10 @@ function dungeonForMonster(monsterId) {
 }
 
 function addRecentBonus(state, result) {
-  state.recentBonusCatches.unshift({ ...result, caughtAt: Date.now() });
-  state.recentBonusCatches = state.recentBonusCatches.slice(0, 12);
+  state.recentBonusCatches = groupRecentBonuses([
+    { ...result, caughtAt: Date.now(), catchCount: 1 },
+    ...state.recentBonusCatches,
+  ]).slice(0, 12);
 }
 
 async function catchFish(state) {
@@ -118,7 +166,7 @@ async function catchMonsterMaterial(state) {
   const current = await GameDB.getInventoryItem(material.id) || { ...material, type: 'material', quantity: 0 };
   current.quantity = (current.quantity || 0) + MATERIAL_CATCH_AMOUNT;
   await GameDB.putInventoryItem(current);
-  const result = { type: 'material', name: `${material.name} ×${MATERIAL_CATCH_AMOUNT}`, image: material.image, itemId: material.id, amount: MATERIAL_CATCH_AMOUNT };
+  const result = { type: 'material', name: `${material.name} ×${MATERIAL_CATCH_AMOUNT}`, baseName: material.name, image: material.image, itemId: material.id, amount: MATERIAL_CATCH_AMOUNT };
   addRecentBonus(state, result);
   return result;
 }

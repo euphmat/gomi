@@ -50,7 +50,7 @@ export async function renderFishingPage() {
         <div class="flex items-center justify-between gap-2 rounded-2xl border border-cyan-300/25 bg-slate-950/70 px-3 py-2.5 shadow-xl backdrop-blur-md">
           <div class="min-w-0">
             <div class="flex items-center gap-2"><span class="material-symbols-outlined text-cyan-300">phishing</span><h1 class="truncate text-lg font-black text-cyan-100">${spot.name}</h1></div>
-            <p class="mt-0.5 text-[10px] text-slate-400">餌 ${formatNumber(spot.baitCost)} G / 1匹 ・ 自動で3〜7秒</p>
+            <p class="mt-0.5 text-[10px] text-slate-400">餌 ${formatNumber(spot.baitCost)} G / 1匹</p>
           </div>
           <button data-back class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/35 text-slate-200"><span class="material-symbols-outlined">arrow_back</span></button>
         </div>
@@ -122,6 +122,7 @@ export async function renderFishingPage() {
     recent.innerHTML = bonusCatches.length ? bonusCatches.map(item => {
       const meta = BONUS_CATCH_META[item.type] || { label: 'BONUS', icon: 'redeem', color: 'text-amber-300', tile: 'border-amber-400/30 from-amber-500/15 via-amber-950/30 to-slate-950' };
       return `<article class="relative flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${meta.tile} p-1.5 text-center shadow-md">
+        ${item.catchCount > 1 ? `<div class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">${formatNumber(item.catchCount)}回</div>` : ''}
         <div class="flex min-h-0 flex-1 items-center justify-center pt-1">
           ${item.image ? `<img src="${item.image}" class="h-11 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)]" alt="${item.name}">` : `<span class="material-symbols-outlined text-4xl drop-shadow ${meta.color}">${item.icon || meta.icon}</span>`}
         </div>
