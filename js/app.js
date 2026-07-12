@@ -26,7 +26,7 @@ import { JOBS } from './jobs/index.js';
 import { syncMineOfflineProgress } from './data/mine-manager.js';
 import { SpecialQuestManager } from './data/special-quest-manager.js';
 import { DailyLoginManager } from './data/daily-login-manager.js';
-import { areGameNotificationsEnabled, setGameNotificationsEnabled } from './utils/game-notifications.js';
+import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotificationsEnabled } from './utils/game-notifications.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -202,6 +202,7 @@ class App {
    * Bind the settings button to open a settings modal.
    */
   initSettingsButton() {
+    initGameNotificationSound();
     const btn = document.getElementById('btn-setting');
     if (btn) {
       btn.addEventListener('click', () => this.showSettingsModal());
