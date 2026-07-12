@@ -3,6 +3,7 @@ import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
+import { calculateRebirthCost } from '../../utils/rebirth-cost.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 
 /**
@@ -173,9 +174,9 @@ export function renderChangeJobTab() {
 
   // ─── 転生処理 ─────────────────────────────────────────
   const executeRebirth = async (char) => {
-    if (char.level < 40) return;
+    if (char.level < 50) return;
 
-    const cost = 10000;
+    const cost = calculateRebirthCost(char);
     const gold = await GameDB.getGameState('gold') || 0;
     if (gold < cost) {
       showNotification(container, 'ゴールドが足りません！', 'error');
@@ -505,7 +506,7 @@ export function renderChangeJobTab() {
     const container = document.createElement('div');
     container.className = 'flex-1 overflow-y-auto space-y-4 pb-6 px-1';
 
-    const cost = 10000;
+    const cost = calculateRebirthCost(char);
     const canRebirthLevel = char.level >= 50;
     const canRebirthGold = currentGold >= cost;
     const canRebirth = canRebirthLevel && canRebirthGold;
@@ -529,7 +530,7 @@ export function renderChangeJobTab() {
     container.innerHTML = `
       <div class="bg-indigo-950/30 border border-indigo-500/20 rounded-xl p-4">
         <h3 class="text-indigo-300 font-bold mb-2 flex items-center gap-2"><span class="material-symbols-outlined">auto_awesome</span>転生とは</h3>
-        <p class="text-sm text-gray-300 leading-relaxed">ベースレベル50以上で実行可能な儀式です。現在の装備を除いた基礎能力の10%を永続ボーナスとして引き継ぎ、レベル1から再度育成することができます。ジョブレベルや習得スキルは失われません。</p>
+        <p class="text-sm text-gray-300 leading-relaxed">ベースレベル50以上で実行可能な儀式です。現在の装備を除いた基礎能力の10%を永続ボーナスとして引き継ぎ、レベル1から再度育成することができます。ジョブレベルや習得スキルは失われません。費用は基礎能力と累積転生ボーナスが高いほど増加します。</p>
       </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
