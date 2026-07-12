@@ -1158,11 +1158,11 @@ export function renderBattlePage() {
         box-shadow: inset 0 1px 0 rgb(var(--battle-palette-4) / .18), 0 10px 28px rgb(0 0 0 / .35);
       }
       #command-area {
-        background: linear-gradient(135deg, rgb(var(--battle-palette-1) / .92), rgb(var(--battle-palette-2) / .84));
-        border-color: rgb(var(--battle-palette-4) / .55);
-        box-shadow: 0 -5px 18px rgb(var(--battle-palette-1) / .5);
+        background: linear-gradient(135deg, rgb(42 58 76 / .92), rgb(54 78 102 / .84));
+        border-color: rgb(112 154 184 / .55);
+        box-shadow: 0 -5px 18px rgb(42 58 76 / .5);
       }
-      #command-blocker { background-color: rgb(var(--battle-palette-1) / .8); }
+      #command-blocker { background-color: rgb(42 58 76 / .8); }
     </style>
 
     <!-- Fixed Battle Area (Enemies, Party, Tabs) -->
