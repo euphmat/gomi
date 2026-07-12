@@ -32,8 +32,8 @@ export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   image: `./assets/mine/${id}.webp`,
   upgradeMaterials,
   unlockPrism: MINE_UNLOCK_PRISM_COSTS[index],
-  // 上位鉱山ほど1回の産出量が大きい代わりに、採掘周期も長くなる（10分〜80分）。
-  baseIntervalSeconds: 600 + index * 300,
+  // 全速度レベルで1回の強化につき1秒以上短縮できるよう、採掘周期は3時間〜5時間20分にする。
+  baseIntervalSeconds: 10800 + index * 600,
   baseGoldPerCycle: 10 * Math.pow(3, index),
   baseCapacityCycles: 12
 }));
@@ -53,8 +53,8 @@ export function getMineStats(mine, state) {
   const yieldProgress = Math.min(1, Math.max(0, yieldLevel - 1) / maxLevelSteps);
   const capacityProgress = Math.min(1, Math.max(0, capacityLevel - 1) / maxLevelSteps);
 
-  // 速度はLv.9999で基本周期の10%まで短縮し、採掘量は約200倍まで強化する。
-  const intervalMs = Math.round(Math.max(30, mine.baseIntervalSeconds * (1 - intervalProgress * 0.9)) * 1000);
+  // 速度はLv.9999で30秒まで短縮する。最短の鉱山でも1レベルにつき1秒以上短くなる。
+  const intervalMs = Math.round((mine.baseIntervalSeconds - (mine.baseIntervalSeconds - 30) * intervalProgress) * 1000);
   const goldPerCycle = Math.floor(mine.baseGoldPerCycle * (1 + yieldProgress * 199)) + (yieldLevel - 1);
   const capacityCycles = mine.baseCapacityCycles + (capacityLevel - 1);
   return { intervalMs, goldPerCycle, capacityCycles, maxStoredGold: goldPerCycle * capacityCycles };
