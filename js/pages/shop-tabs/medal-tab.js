@@ -189,6 +189,63 @@ export function renderMedalTab() {
     }
   };
 
+  const getMedalGridStatus = monster => {
+    const currentRankIndex = playerMedals[monster.id] !== undefined ? playerMedals[monster.id] : -1;
+    const isMaxRank = currentRankIndex >= MEDAL_RANKS.length - 1;
+    const nextRank = !isMaxRank ? MEDAL_RANKS[currentRankIndex + 1] : null;
+    const goldCost = nextRank ? (monster.rewards?.gold || 0) * nextRank.goldMultiplier : 0;
+    const hasMaterials = nextRank && (monster.drops || []).every(
+      drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
+    );
+    const canCraft = Boolean(nextRank && hasMaterials && currentGold >= goldCost);
+    const canUsePrism = Boolean(nextRank && currentRankIndex >= 0 && currentPrism >= 1);
+
+    return {
+      currentRankIndex,
+      isMaxRank,
+      canAcquireOrUpgrade: canCraft || canUsePrism
+    };
+  };
+
+  const getMedalGridButtonClass = (status, isSelected) => {
+    if (status.isMaxRank) {
+      return isSelected
+        ? 'bg-yellow-500/40 border-yellow-200 shadow-[0_0_14px_rgba(250,204,21,0.45)]'
+        : 'bg-yellow-900/70 border-yellow-500/70 shadow-[inset_0_0_8px_rgba(250,204,21,0.18)] hover:bg-yellow-800/80 hover:border-yellow-300';
+    }
+    if (status.canAcquireOrUpgrade) {
+      return isSelected
+        ? 'bg-emerald-500/35 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.45)]'
+        : 'bg-emerald-900/70 border-emerald-500/70 shadow-[inset_0_0_8px_rgba(52,211,153,0.18)] hover:bg-emerald-800/80 hover:border-emerald-300';
+    }
+    return isSelected
+      ? 'bg-amber-950/60 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+      : 'bg-slate-900/60 border-slate-800/50 hover:bg-slate-800/40 hover:border-slate-700/60';
+  };
+
+  const getMedalGridNameClass = (status, isSelected, hasMedal) => {
+    if (status.isMaxRank) return 'text-yellow-100';
+    if (status.canAcquireOrUpgrade) return 'text-emerald-100';
+    if (isSelected) return 'text-amber-300';
+    return hasMedal ? 'text-slate-300' : 'text-slate-500';
+  };
+
+  const updateMedalGridStyles = () => {
+    scrollContainer.querySelectorAll('[data-medal-monster-id]').forEach(btn => {
+      const monster = MONSTERS.find(m => m.id === btn.dataset.medalMonsterId);
+      if (!monster) return;
+
+      const status = getMedalGridStatus(monster);
+      const isSelected = monster.id === selectedMonsterId;
+      const hasMedal = status.currentRankIndex >= 0;
+      btn.className = `relative flex flex-col items-center justify-center p-1 rounded-lg transition-all duration-200 cursor-pointer active:scale-95 border ${getMedalGridButtonClass(status, isSelected)}`;
+      const nameEl = btn.querySelector('[data-medal-monster-name]');
+      if (nameEl) {
+        nameEl.className = `text-[7px] font-bold ${getMedalGridNameClass(status, isSelected, hasMedal)} break-words line-clamp-2 w-full text-center leading-tight mt-0.5`;
+      }
+    });
+  };
+
   // --- 描画関数 ---
   const render = () => {
     const measuredMonsterGrid = scrollContainer.querySelector('[data-medal-grid]');
@@ -528,16 +585,15 @@ export function renderMedalTab() {
 
     pageMonsters.forEach(monster => {
       const isSelected = monster.id === selectedMonsterId;
-      const currentRankIndex = playerMedals[monster.id] !== undefined ? playerMedals[monster.id] : -1;
+      const medalStatus = getMedalGridStatus(monster);
+      const currentRankIndex = medalStatus.currentRankIndex;
       const hasMedal = currentRankIndex >= 0;
-      const isMaxRank = currentRankIndex >= MEDAL_RANKS.length - 1;
 
       const btn = document.createElement('button');
+      btn.dataset.medalMonsterId = monster.id;
       btn.className = `
         relative flex flex-col items-center justify-center p-1 rounded-lg transition-all duration-200 cursor-pointer active:scale-95 border
-        ${isSelected
-          ? 'bg-amber-950/60 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-          : 'bg-slate-900/60 border-slate-800/50 hover:bg-slate-800/40 hover:border-slate-700/60'}
+        ${getMedalGridButtonClass(medalStatus, isSelected)}
       `;
 
       // メダルビジュアル or 未所持の薄い画像
@@ -582,7 +638,7 @@ export function renderMedalTab() {
 
       btn.innerHTML = `
         ${gridVisualHtml}
-        <span class="text-[7px] font-bold ${isSelected ? 'text-amber-300' : hasMedal ? 'text-slate-300' : 'text-slate-500'} break-words line-clamp-2 w-full text-center leading-tight mt-0.5">${monster.name}</span>
+        <span data-medal-monster-name class="text-[7px] font-bold ${getMedalGridNameClass(medalStatus, isSelected, hasMedal)} break-words line-clamp-2 w-full text-center leading-tight mt-0.5">${monster.name}</span>
       `;
 
       btn.onclick = () => {
@@ -688,6 +744,7 @@ export function renderMedalTab() {
 
     if (changed) {
       updateDynamicValues();
+      updateMedalGridStyles();
       updateHeader(); // ゴールドなどの更新も含めてヘッダー再描画
     }
   }, 1000);
