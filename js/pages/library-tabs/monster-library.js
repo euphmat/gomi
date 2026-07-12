@@ -6,7 +6,7 @@ import { SHIELDS } from '../../definitions/shields.js';
 import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definitions/equipment-drops.js';
-import { calcItemsPerPage } from '../../data/page-utils.js';
+import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
 
 const ALL_DEFINITIONS = [
@@ -111,14 +111,16 @@ export function renderMonsterLibraryTab() {
   };
 
   const renderGrid = () => {
+    const measuredItemContainer = gridContainer.dataset.viewMode === viewMode ? gridContainer : null;
     gridContainer.innerHTML = '';
     if (viewMode === 'grid') {
       gridContainer.className = 'grid grid-cols-5 gap-1.5 content-start';
     } else {
       gridContainer.className = 'flex flex-col gap-2 content-start';
     }
+    gridContainer.dataset.viewMode = viewMode;
 
-    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, itemContainer: measuredItemContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(MONSTERS.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -211,6 +213,7 @@ export function renderMonsterLibraryTab() {
     });
 
     renderPagination(totalPages);
+    if (!measuredItemContainer) requestAnimationFrame(renderGrid);
   };
 
   const showMonsterModal = (monster, isDefeated) => {
@@ -382,6 +385,8 @@ export function renderMonsterLibraryTab() {
   container.appendChild(topBar);
   container.appendChild(scrollContainer);
   container.appendChild(paginationContainer);
+
+  observePageSize(scrollContainer, renderGrid);
 
   return container;
 }

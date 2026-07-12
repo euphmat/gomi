@@ -3,7 +3,7 @@ import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
-import { calcItemsPerPage } from '../../data/page-utils.js';
+import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 
 /**
  * 「神殿」タブの画面 — 転職・転生・SPリセット
@@ -344,12 +344,14 @@ export function renderChangeJobTab() {
     };
 
     const renderList = () => {
+      const measuredItemContainer = listContainer.children.length > 0 ? listContainer : null;
       listContainer.innerHTML = '';
       const allJobs = Object.values(JOBS);
       
       const ITEMS_PER_PAGE = calcItemsPerPage({
         viewMode: 'list',
         scrollContainer: listContainer,
+        itemContainer: measuredItemContainer,
         listItemHeight: 76
       });
       
@@ -466,6 +468,7 @@ export function renderChangeJobTab() {
       });
 
       renderPagination(totalPages);
+      if (!measuredItemContainer) requestAnimationFrame(renderList);
     };
 
     listContainer.addEventListener('click', async (e) => {
@@ -492,9 +495,7 @@ export function renderChangeJobTab() {
     wrapperContainer.appendChild(listContainer);
     wrapperContainer.appendChild(paginationContainer);
 
-    requestAnimationFrame(() => {
-      renderList();
-    });
+    observePageSize(listContainer, renderList);
 
     return wrapperContainer;
   };
@@ -680,6 +681,7 @@ export function renderChangeJobTab() {
     };
 
     const renderList = () => {
+      const measuredItemContainer = listContainer.children.length > 0 ? listContainer : null;
       listContainer.innerHTML = '';
 
       // 獲得SPがあるジョブ (レベル > 1) を抽出
@@ -706,6 +708,7 @@ export function renderChangeJobTab() {
       const ITEMS_PER_PAGE = calcItemsPerPage({
         viewMode: 'list',
         scrollContainer: listContainer,
+        itemContainer: measuredItemContainer,
         listItemHeight: 76
       });
 
@@ -772,6 +775,7 @@ export function renderChangeJobTab() {
       });
 
       renderPagination(totalPages);
+      if (!measuredItemContainer) requestAnimationFrame(renderList);
     };
 
     listContainer.addEventListener('click', (e) => {
@@ -794,9 +798,7 @@ export function renderChangeJobTab() {
     wrapperContainer.appendChild(listContainer);
     wrapperContainer.appendChild(paginationContainer);
 
-    requestAnimationFrame(() => {
-      renderList();
-    });
+    observePageSize(listContainer, renderList);
 
     return wrapperContainer;
   };

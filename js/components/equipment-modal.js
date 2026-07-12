@@ -6,9 +6,8 @@
 import { GameDB } from '../data/database.js';
 import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
+import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
 import { formatNumber } from '../utils/format.js';
-
-const ITEMS_PER_PAGE = 30;
 
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
@@ -102,7 +101,8 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   let currentPage = 1;
   let sortKey = null;
   let sortOrder = 'desc';
-  const totalPages = Math.max(1, Math.ceil(groupedItems.length / ITEMS_PER_PAGE));
+  let itemsPerPage = 30;
+  let totalPages = Math.max(1, Math.ceil(groupedItems.length / itemsPerPage));
   
   // Initially select the first available group, or null
   let selectedGroup = groupedItems.length > 0 ? groupedItems[0] : null;
@@ -193,6 +193,19 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   };
 
   const renderContent = () => {
+    const previousScrollContainer = modalContainer.querySelector('[data-equipment-grid-scroll]');
+    const previousGridContainer = modalContainer.querySelector('[data-equipment-grid]');
+    itemsPerPage = calcItemsPerPage({
+      viewMode: 'grid',
+      scrollContainer: previousScrollContainer,
+      itemContainer: previousGridContainer,
+      gridItemHeight: 64,
+      gridCols: 5,
+      minItems: 5,
+    });
+    totalPages = Math.max(1, Math.ceil(groupedItems.length / itemsPerPage));
+    currentPage = Math.min(currentPage, totalPages);
+
     // --- Sort groupedItems ---
     groupedItems.sort((a, b) => {
       if (sortKey) {
@@ -206,12 +219,12 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       return a.baseId.localeCompare(b.baseId);
     });
 
-    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-    const pageItems = groupedItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const pageItems = groupedItems.slice(startIdx, startIdx + itemsPerPage);
     
     // Fill empty slots for grid consistency
     const gridItems = [...pageItems];
-    while (gridItems.length < ITEMS_PER_PAGE) {
+    while (gridItems.length < itemsPerPage) {
       gridItems.push(null);
     }
 
@@ -347,8 +360,8 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
         </div>
 
         <!-- Grid (Bottom Area) -->
-        <div class="flex-1 p-3 overflow-y-auto custom-scrollbar bg-[#0b0b19]">
-          <div class="grid grid-cols-5 gap-2">
+        <div data-equipment-grid-scroll class="flex-1 min-h-0 p-3 overflow-hidden custom-scrollbar bg-[#0b0b19]">
+          <div data-equipment-grid class="grid grid-cols-5 gap-2 content-start">
             ${gridHtml}
           </div>
         </div>
@@ -458,4 +471,5 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
 
   document.body.appendChild(overlay);
   renderContent();
+  observePageSize(modalContainer, renderContent);
 }

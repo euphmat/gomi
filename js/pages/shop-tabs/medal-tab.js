@@ -4,7 +4,7 @@ import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS, getMedalImageFilter } from '../../definitions/medal-definitions.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
-import { calcItemsPerPage } from '../../data/page-utils.js';
+import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 
 /**
@@ -191,6 +191,7 @@ export function renderMedalTab() {
 
   // --- 描画関数 ---
   const render = () => {
+    const measuredMonsterGrid = scrollContainer.querySelector('[data-medal-grid]');
     detailContainer.innerHTML = '';
     scrollContainer.innerHTML = '';
     paginationContainer.innerHTML = '';
@@ -516,9 +517,10 @@ export function renderMedalTab() {
     // --- モンスター選択グリッド (Bottom) ---
     const monsterGrid = document.createElement('div');
     monsterGrid.className = 'grid grid-cols-5 gap-1.5 content-start';
+    monsterGrid.dataset.medalGrid = '';
 
     // Tailwind .w-11 .h-11 corresponds to 44px + text = roughly 66px cell height. gap-1.5 is 6px.
-    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode: 'grid', scrollContainer, gridItemHeight: 76, gridCols: 5 });
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode: 'grid', scrollContainer, itemContainer: measuredMonsterGrid, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(availableMonsters.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
     
@@ -593,6 +595,7 @@ export function renderMedalTab() {
 
     scrollContainer.appendChild(monsterGrid);
     renderPagination(totalPages);
+    if (!measuredMonsterGrid) requestAnimationFrame(render);
   };
 
   Promise.all([
@@ -644,6 +647,8 @@ export function renderMedalTab() {
   container.appendChild(detailContainer);
   container.appendChild(scrollContainer);
   container.appendChild(paginationContainer);
+
+  observePageSize(scrollContainer, render);
 
   // --- リアルタイム反映 (ポーリング) ---
   const syncTimer = setInterval(async () => {

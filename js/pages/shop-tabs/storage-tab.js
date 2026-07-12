@@ -1,6 +1,6 @@
 import { GameDB } from '../../data/database.js';
 import { STAT_KEYS } from '../../data/constants.js';
-import { calcItemsPerPage } from '../../data/page-utils.js';
+import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
 import { getMaterialCapacity, loadTreasureLevels } from '../../data/treasure-manager.js';
@@ -169,6 +169,7 @@ export function renderStorageTab() {
   };
 
   const renderGrid = () => {
+    const measuredItemContainer = gridContainer.dataset.viewMode === viewMode ? gridContainer : null;
     gridContainer.innerHTML = '';
     
     if (viewMode === 'grid') {
@@ -176,6 +177,7 @@ export function renderStorageTab() {
     } else {
       gridContainer.className = 'flex flex-col gap-2 content-start';
     }
+    gridContainer.dataset.viewMode = viewMode;
     
     const filteredItems = activeFilter === 'all' 
       ? items 
@@ -188,7 +190,7 @@ export function renderStorageTab() {
           return true;
         });
 
-    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, itemContainer: measuredItemContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -322,6 +324,7 @@ export function renderStorageTab() {
     });
     
     renderPagination(totalPages);
+    if (!measuredItemContainer) requestAnimationFrame(renderGrid);
   };
 
   const showSellSuccessEffect = (item, count, totalGold) => {
@@ -598,6 +601,8 @@ export function renderStorageTab() {
   container.appendChild(topBar);
   container.appendChild(scrollContainer);
   container.appendChild(paginationContainer);
+
+  observePageSize(scrollContainer, renderGrid);
 
   renderFilters();
   loadData();

@@ -1,68 +1,113 @@
 /**
- * 画面の高さに基づいて、1ページに表示するアイテム数を動的に計算するユーティリティ。
- * 
- * ショップ、倉庫、図鑑、ダンジョン選択などのページ送り機能で使用します。
+ * ページング表示を、実際に画面上で使える領域へ合わせるためのユーティリティ。
  */
 
+const toPixels = value => Number.parseFloat(value) || 0;
+
+function getContentSize(element) {
+  if (!element || element.clientHeight <= 0) return null;
+  const style = window.getComputedStyle(element);
+  return {
+    height: Math.max(0, element.clientHeight - toPixels(style.paddingTop) - toPixels(style.paddingBottom)),
+    width: Math.max(0, element.clientWidth - toPixels(style.paddingLeft) - toPixels(style.paddingRight)),
+  };
+}
+
+function getGridColumnCount(itemContainer, fallback) {
+  if (!itemContainer) return fallback;
+  const columns = window.getComputedStyle(itemContainer).gridTemplateColumns;
+  if (!columns || columns === 'none') return fallback;
+  return Math.max(1, columns.split(/\s+/).filter(Boolean).length);
+}
+
+function getMeasuredItemHeight(itemContainer, fallback) {
+  if (!itemContainer) return fallback;
+  const heights = [...itemContainer.children]
+    .filter(element => !element.hidden)
+    .map(element => element.getBoundingClientRect().height)
+    .filter(height => height > 0);
+  return heights.length > 0 ? Math.max(...heights) : fallback;
+}
+
 /**
- * scrollContainer の実際の高さから、ページに収まるアイテム数を計算する。
- * scrollContainer が未マウントの場合は window.innerHeight からの推定にフォールバックする。
- * 
- * @param {Object} options
- * @param {'list'|'grid'} options.viewMode - 表示モード
- * @param {HTMLElement} [options.scrollContainer] - アイテムが描画されるスクロール可能コンテナ
- * @param {number} [options.listItemHeight=64]  - リスト表示時の1行の高さ(px) gap込み
- * @param {number} [options.gridItemHeight=76]  - グリッド表示時の1セルの高さ(px) gap込み
- * @param {number} [options.gridCols=5]         - グリッド表示時の列数
- * @param {number} [options.minItems=3]         - 最低表示数
- * @param {number} [options.maxItems=100]       - 最大表示数
- * @returns {number} 1ページに表示するアイテム数
+ * コンテナの実測縦幅と、描画済みカードの実寸から1ページの件数を求める。
+ * 初回描画前だけ、引数の高さをフォールバックとして使用する。
  */
 export function calcItemsPerPage({
   viewMode = 'list',
   scrollContainer = null,
+  itemContainer = null,
   listItemHeight = 64,
   gridItemHeight = 76,
   gridCols = 5,
-  minItems = 3,
+  minItems = 1,
   maxItems = 100,
 } = {}) {
-  // scrollContainer が DOM にマウント済みなら実測値を使う
-  let availableHeight;
-  let currentGridItemHeight = gridItemHeight;
-
-  if (scrollContainer && scrollContainer.clientHeight > 0) {
-    // clientHeight から上下の padding を引いた「正味の高さ」を算出
-    const style = window.getComputedStyle(scrollContainer);
-    const paddingTop = parseFloat(style.paddingTop) || 0;
-    const paddingBottom = parseFloat(style.paddingBottom) || 0;
-    availableHeight = scrollContainer.clientHeight - paddingTop - paddingBottom;
-    
-    // グリッド表示の場合、コンテナ幅からアイテムの実高さを正確に計算する (aspect-square想定)
-    if (viewMode === 'grid') {
-      const paddingLeft = parseFloat(style.paddingLeft) || 0;
-      const paddingRight = parseFloat(style.paddingRight) || 0;
-      const availableWidth = scrollContainer.clientWidth - paddingLeft - paddingRight;
-      
-      // Tailwind gap-1.5 は 6px
-      const gap = 6; 
-      const itemWidth = (availableWidth - (gap * (gridCols - 1))) / gridCols;
-      // セルは正方形 + 下のgap
-      currentGridItemHeight = itemWidth + gap;
-    }
-  } else {
-    // フォールバック: window 高さからヘッダー+ナビ+タブ+フィルター+ページネーションを概算で引く
-    availableHeight = window.innerHeight - 280;
-  }
-
-  if (availableHeight <= 0) availableHeight = 300; // 安全策
+  const contentSize = getContentSize(scrollContainer);
+  const availableHeight = contentSize?.height || Math.max(1, window.innerHeight - 280);
+  const itemStyle = itemContainer ? window.getComputedStyle(itemContainer) : null;
+  const rowGap = toPixels(itemStyle?.rowGap || itemStyle?.gap);
+  const fallbackHeight = viewMode === 'grid' ? gridItemHeight : listItemHeight;
+  let itemHeight = getMeasuredItemHeight(itemContainer, fallbackHeight);
+  let columns = 1;
 
   if (viewMode === 'grid') {
-    const rows = Math.max(1, Math.floor(availableHeight / currentGridItemHeight));
-    const count = rows * gridCols;
-    return Math.max(minItems, Math.min(maxItems, count));
-  } else {
-    const count = Math.max(1, Math.floor(availableHeight / listItemHeight));
-    return Math.max(minItems, Math.min(maxItems, count));
+    columns = getGridColumnCount(itemContainer, gridCols);
+
+    // aspect-square のグリッドは、利用可能な横幅から初回でも正確に算出できる。
+    if ((!itemContainer?.firstElementChild || itemHeight <= 0) && contentSize?.width) {
+      const columnGap = toPixels(itemStyle?.columnGap || itemStyle?.gap) || 6;
+      itemHeight = (contentSize.width - columnGap * (columns - 1)) / columns;
+    }
   }
+
+  const rows = Math.max(1, Math.floor((availableHeight + rowGap) / Math.max(1, itemHeight + rowGap)));
+  const count = rows * columns;
+  return Math.max(minItems, Math.min(maxItems, count));
+}
+
+/**
+ * 画面回転、ウインドウ変更、親レイアウト変更時にページ件数を再計算する。
+ * callback は実際の表示領域が変化した時だけ呼ばれる。
+ */
+export function observePageSize(element, callback) {
+  if (!element || typeof callback !== 'function') return () => {};
+
+  let frameId = 0;
+  let lastWidth = -1;
+  let lastHeight = -1;
+  let wasConnected = false;
+
+  const update = () => {
+    cancelAnimationFrame(frameId);
+    frameId = requestAnimationFrame(() => {
+      if (!element.isConnected) {
+        if (wasConnected) disconnect();
+        return;
+      }
+      wasConnected = true;
+      const width = Math.round(element.getBoundingClientRect().width);
+      const height = Math.round(element.getBoundingClientRect().height);
+      if (width === lastWidth && height === lastHeight) return;
+      lastWidth = width;
+      lastHeight = height;
+      callback();
+    });
+  };
+
+  const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+  observer?.observe(element);
+  window.addEventListener('resize', update, { passive: true });
+  window.visualViewport?.addEventListener('resize', update, { passive: true });
+
+  const disconnect = () => {
+    cancelAnimationFrame(frameId);
+    observer?.disconnect();
+    window.removeEventListener('resize', update);
+    window.visualViewport?.removeEventListener('resize', update);
+  };
+
+  // DOMへ追加された後の初回実測。
+  requestAnimationFrame(() => requestAnimationFrame(update));
+  return disconnect;
 }

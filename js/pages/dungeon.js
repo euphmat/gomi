@@ -1,7 +1,7 @@
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
 import { GameDB } from '../data/database.js';
-import { calcItemsPerPage } from '../data/page-utils.js';
+import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
 
 import { formatNumber } from '../utils/format.js';
 
@@ -37,9 +37,45 @@ window.unlockSpecialDungeon = async (dungeonId) => {
 
 let currentDungeonPage = 1;
 let currentDungeonTab = 'normal'; // 'normal' | 'special'
+let dungeonItemsPerPage = 3;
+let observedDungeonList = null;
+let disconnectDungeonObserver = null;
 
 function getItemsPerPage() {
-  return calcItemsPerPage({ viewMode: 'list', listItemHeight: 104, minItems: 2 });
+  return dungeonItemsPerPage;
+}
+
+function scheduleDungeonPageMeasurement() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const listContainer = document.querySelector('[data-dungeon-list]');
+    if (!listContainer) return;
+
+    const update = async () => {
+      if (!listContainer.isConnected) return;
+      const nextItemsPerPage = calcItemsPerPage({
+        viewMode: 'list',
+        scrollContainer: listContainer,
+        itemContainer: listContainer,
+        listItemHeight: 104,
+      });
+      if (nextItemsPerPage === dungeonItemsPerPage) return;
+
+      dungeonItemsPerPage = nextItemsPerPage;
+      const currentList = currentDungeonTab === 'special' ? SPECIAL_DUNGEONS : DUNGEONS;
+      currentDungeonPage = Math.min(currentDungeonPage, Math.max(1, Math.ceil(currentList.length / dungeonItemsPerPage)));
+      const contentEl = document.getElementById('content');
+      if (contentEl?.querySelector('[data-dungeon-page]')) {
+        contentEl.innerHTML = await renderDungeonPage();
+      }
+    };
+
+    if (observedDungeonList !== listContainer) {
+      disconnectDungeonObserver?.();
+      observedDungeonList = listContainer;
+      disconnectDungeonObserver = observePageSize(listContainer, update);
+    }
+    update();
+  }));
 }
 
 window.changeDungeonPage = async (delta) => {
@@ -103,10 +139,10 @@ export async function renderDungeonPage() {
   const filteredDungeons = currentDungeonTab === 'special' ? SPECIAL_DUNGEONS : DUNGEONS;
 
   const totalItems = filteredDungeons.length;
-  const maxPage = Math.ceil(totalItems / getItemsPerPage());
+  const itemsPerPage = getItemsPerPage();
+  const maxPage = Math.ceil(totalItems / itemsPerPage);
   if (currentDungeonPage > maxPage) currentDungeonPage = maxPage || 1;
 
-  const itemsPerPage = getItemsPerPage();
   const startIndex = (currentDungeonPage - 1) * itemsPerPage;
   const pageDungeons = filteredDungeons.slice(startIndex, startIndex + itemsPerPage);
 
@@ -199,7 +235,7 @@ export async function renderDungeonPage() {
   }).join('');
 
   const paginationHtml = maxPage > 1 ? `
-    <div class="flex items-center justify-between mt-2 px-2">
+    <div class="flex shrink-0 items-center justify-between px-2">
       <button onclick="window.changeDungeonPage(-1)" 
               class="w-12 h-12 flex items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               ${currentDungeonPage === 1 ? 'disabled' : ''}>
@@ -216,10 +252,13 @@ export async function renderDungeonPage() {
     </div>
   ` : '';
 
+  scheduleDungeonPageMeasurement();
   return `
-    <div class="flex flex-col h-full bg-[#0b0b19] p-4 gap-4 pb-24 overflow-y-auto">
+    <div data-dungeon-page class="flex flex-col h-full min-h-0 bg-[#0b0b19] p-4 gap-4 pb-24 overflow-hidden">
       ${tabsHtml}
-      ${cardsHtml}
+      <div data-dungeon-list class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+        ${cardsHtml}
+      </div>
       ${paginationHtml}
     </div>
   `;

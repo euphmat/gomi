@@ -6,7 +6,7 @@ import { ACCESSORIES } from '../../definitions/accessories.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { STAT_KEYS } from '../../data/constants.js';
-import { calcItemsPerPage } from '../../data/page-utils.js';
+import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { showSettingsModal } from '../../components/settings-modal.js';
 
 const ELEMENT_ICONS = {
@@ -174,6 +174,7 @@ export function renderItemLibraryTab() {
   };
 
   const renderGrid = () => {
+    const measuredItemContainer = gridContainer.dataset.viewMode === viewMode ? gridContainer : null;
     gridContainer.innerHTML = '';
     
     if (viewMode === 'grid') {
@@ -181,6 +182,7 @@ export function renderItemLibraryTab() {
     } else {
       gridContainer.className = 'flex flex-col gap-2 content-start';
     }
+    gridContainer.dataset.viewMode = viewMode;
     
     const filteredItems = activeFilter === 'all' 
       ? ALL_DEFINITIONS 
@@ -193,7 +195,7 @@ export function renderItemLibraryTab() {
           return true;
         });
 
-    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
+    const ITEMS_PER_PAGE = calcItemsPerPage({ viewMode, scrollContainer, itemContainer: measuredItemContainer, listItemHeight: 64, gridItemHeight: 76, gridCols: 5 });
     const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
@@ -293,6 +295,7 @@ export function renderItemLibraryTab() {
     });
     
     renderPagination(totalPages);
+    if (!measuredItemContainer) requestAnimationFrame(renderGrid);
   };
 
   const showHelpModal = async () => {
@@ -773,6 +776,7 @@ export function renderItemLibraryTab() {
   container.appendChild(topBar);
   container.appendChild(scrollContainer);
   container.appendChild(paginationContainer);
+  observePageSize(scrollContainer, renderGrid);
   
   renderFilters();
   loadData();
