@@ -872,15 +872,31 @@ class BattleManager {
     
     header.innerHTML = monsterDefs.map(m => {
       const isSelected = this.subTabSelectedMonsterId === m.id;
-      const bgClass = isSelected ? 'bg-blue-600/20 border-blue-400' : 'bg-slate-900/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-slate-600';
-      const shadowClass = isSelected ? 'shadow-[0_0_12px_rgba(96,165,250,0.25)]' : 'shadow-inner';
+      const hasLegendaryCompanion = this.currentTab === 'pet' && Object.values(this.ranchData || {}).some(
+        dungeonRanch => dungeonRanch?.[`${m.id}_legendary`]
+      );
+      const bgClass = hasLegendaryCompanion
+        ? (isSelected
+          ? 'bg-yellow-600/30 border-yellow-300'
+          : 'bg-yellow-900/70 border-yellow-500/70 hover:bg-yellow-800/80 hover:border-yellow-300')
+        : (isSelected
+          ? 'bg-blue-600/20 border-blue-400'
+          : 'bg-slate-900/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-slate-600');
+      const shadowClass = hasLegendaryCompanion
+        ? (isSelected
+          ? 'shadow-[0_0_14px_rgba(250,204,21,0.45)]'
+          : 'shadow-[inset_0_0_8px_rgba(250,204,21,0.18)]')
+        : (isSelected ? 'shadow-[0_0_12px_rgba(96,165,250,0.25)]' : 'shadow-inner');
       const opacity = isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-80';
+      const selectedTextClass = hasLegendaryCompanion
+        ? 'text-yellow-100 drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]'
+        : 'text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]';
       
       if (isSelected) {
         return `
           <div class="sub-tab-item flex items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" title="${m.name}">
             <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
-            <span class="text-[11px] font-bold tracking-wide whitespace-nowrap pointer-events-none text-blue-100 drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]">${m.name}</span>
+            <span class="text-[11px] font-bold tracking-wide whitespace-nowrap pointer-events-none ${selectedTextClass}">${m.name}</span>
           </div>
         `;
       } else {
