@@ -383,10 +383,27 @@ export async function renderMineTab() {
           <p class="mb-2 text-[10px] leading-relaxed ${lockedLowerMine ? 'text-amber-400' : 'text-slate-400'}">${lockedLowerMine ? `解放条件：${lockedLowerMine.name}を先に解放` : 'Prismと3種類の素材を消費して解放します。'}</p>
           <div class="mb-2 grid grid-cols-2 gap-1.5 text-left">
             <div class="rounded-lg border ${hasUnlockPrism ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} px-2 py-1.5">
-              <div class="truncate text-[10px] font-bold text-slate-300">Prism</div>
-              <div class="text-xs font-black tabular-nums ${hasUnlockPrism ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentPrism)} <span class="text-slate-600">/</span> ${formatNumber(mine.unlockPrism)}</div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-fuchsia-400/30 bg-fuchsia-950/50 text-xl text-fuchsia-300">diamond</span>
+                <div class="min-w-0">
+                  <div class="truncate text-[10px] font-bold text-slate-300">Prism</div>
+                  <div class="text-xs font-black tabular-nums ${hasUnlockPrism ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentPrism)} <span class="text-slate-600">/</span> ${formatNumber(mine.unlockPrism)}</div>
+                </div>
+              </div>
             </div>
-            ${unlockRequirements.map(cost => `<div class="rounded-lg border ${cost.sufficient ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} px-2 py-1.5"><div class="truncate text-[10px] font-bold text-slate-300">${cost.material?.name || cost.materialId}</div><div class="text-xs font-black tabular-nums ${cost.sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(cost.owned)} <span class="text-slate-600">/</span> ${formatNumber(cost.amount)}</div></div>`).join('')}
+            ${unlockRequirements.map(cost => `
+              <div class="rounded-lg border ${cost.sufficient ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} px-2 py-1.5">
+                <div class="flex items-center gap-2">
+                  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/25">
+                    <img src="${cost.material?.image || ''}" alt="" class="h-7 w-7 object-contain drop-shadow" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                    <span class="material-symbols-outlined hidden text-xl text-slate-500">category</span>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="truncate text-[10px] font-bold text-slate-300">${cost.material?.name || cost.materialId}</div>
+                    <div class="text-xs font-black tabular-nums ${cost.sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(cost.owned)} <span class="text-slate-600">/</span> ${formatNumber(cost.amount)}</div>
+                  </div>
+                </div>
+              </div>`).join('')}
           </div>
           <button data-theme-action data-unlock class="w-full rounded-xl border py-2.5 text-xs font-black text-white shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35" ${canUnlock ? '' : 'disabled'}><span class="material-symbols-outlined mr-1 align-middle text-sm">${lockedLowerMine ? 'lock' : 'diamond'}</span>${lockedLowerMine ? '下位鉱山の解放が必要' : canUnlock ? '鉱山を解放' : '解放条件が不足'}</button>
         </div>`}
