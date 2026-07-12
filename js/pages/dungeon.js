@@ -39,7 +39,7 @@ let currentDungeonPage = 1;
 let currentDungeonTab = 'normal'; // 'normal' | 'special'
 
 function getItemsPerPage() {
-  return calcItemsPerPage({ viewMode: 'list', listItemHeight: 88, minItems: 2 });
+  return calcItemsPerPage({ viewMode: 'list', listItemHeight: 104, minItems: 2 });
 }
 
 window.changeDungeonPage = async (delta) => {
@@ -112,7 +112,7 @@ export async function renderDungeonPage() {
 
 
 
-  const cardsHtml = pageDungeons.map(d => {
+  const cardsHtml = pageDungeons.map((d, index) => {
     const theme = d.theme || { color: '107, 114, 128', icon: 'swords' };
     const themeRgb = theme.color;
 
@@ -123,65 +123,46 @@ export async function renderDungeonPage() {
     if (isUnlocked) {
       return `
       <!-- ダンジョン: ${d.name} -->
-      <div class="relative overflow-hidden flex items-center bg-[#11111a] border rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-lg gap-2.5 sm:gap-4 transition-all duration-300 hover:-translate-y-1 group" 
-           style="border-color: rgba(${themeRgb}, 0.3); box-shadow: 0 8px 24px -4px rgba(${themeRgb}, 0.15);">
-        
-        <!-- 背景のぼかしグラデーション -->
-        <div class="absolute inset-0 opacity-20 transition-opacity duration-500 group-hover:opacity-40" 
-             style="background: radial-gradient(circle at 15% 50%, rgba(${themeRgb}, 0.8) 0%, transparent 60%); pointer-events: none;"></div>
+      <button onclick="window.enterDungeon('${d.id}')"
+              aria-label="${d.name}を探索する"
+              class="group relative isolate min-h-[92px] sm:min-h-[108px] w-full cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] active:translate-y-0 active:scale-[0.985]"
+              style="border-color: rgba(${themeRgb}, .65); background-color: rgb(8, 10, 18); box-shadow: 0 12px 32px -16px rgba(${themeRgb}, .8), inset 0 0 0 1px rgba(255,255,255,.04); animation-delay: ${index * 45}ms;">
+        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+             style="background-image: url('${d.bgImage}');"></div>
+        <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,12,.96)_0%,rgba(3,5,12,.82)_43%,rgba(3,5,12,.35)_72%,rgba(3,5,12,.68)_100%)]"></div>
+        <div class="absolute inset-0 opacity-50 transition-opacity duration-300 group-hover:opacity-80"
+             style="background: radial-gradient(circle at 88% 50%, rgba(${themeRgb}, .55), transparent 31%);"></div>
+        <div class="absolute inset-x-0 bottom-0 h-px opacity-80" style="background: linear-gradient(90deg, transparent, rgba(${themeRgb}, 1), transparent);"></div>
 
-        <!-- 画像コンテナ -->
-        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0 bg-[#050505] border-2 relative z-10 transition-transform duration-500 group-hover:scale-105" 
-             style="border-color: rgba(${themeRgb}, 0.4); box-shadow: 0 0 15px rgba(${themeRgb}, 0.2);">
-          <img src="${d.image}" alt="" class="w-full h-full object-cover mix-blend-lighten opacity-80 group-hover:opacity-100 transition-opacity duration-300" onerror="this.style.display='none'">
+        <div class="relative z-10 flex min-h-[92px] sm:min-h-[108px] items-center gap-3 px-4 py-3 sm:px-5">
+          <div class="min-w-0 flex-1">
+            <div class="mb-1 flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.24em] text-white/55">
+              <span class="h-px w-5" style="background-color: rgba(${themeRgb}, 1);"></span>
+              Destination
+            </div>
+            <h3 class="truncate text-base font-black tracking-[0.12em] text-white sm:text-xl"
+                style="text-shadow: 0 2px 12px #000, 0 0 18px rgba(${themeRgb}, .55);">${d.name}</h3>
+            <p class="mt-1 line-clamp-1 text-[10px] font-medium leading-relaxed text-slate-300/80 sm:text-xs">${d.description}</p>
+          </div>
+
+          <div class="flex shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-black/45 py-2 pl-3 pr-2 text-white shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:border-white/55 group-hover:bg-black/60 sm:gap-2 sm:py-2.5 sm:pl-4 sm:pr-3">
+            <span class="material-symbols-outlined text-lg sm:text-xl" style="font-variation-settings: 'FILL' 1; color: rgba(${themeRgb}, 1);">${theme.icon}</span>
+            <span class="text-[10px] font-black tracking-[0.16em] sm:text-xs">探索する</span>
+            <span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+          </div>
         </div>
-
-        <div class="flex-1 min-w-0 relative z-10">
-          <h3 class="text-sm sm:text-lg font-black tracking-widest flex items-center gap-1 sm:gap-2 truncate" 
-              style="color: rgba(${themeRgb}, 1); text-shadow: 0 0 12px rgba(${themeRgb}, 0.6);">
-            ${d.name}
-          </h3>
-          <p class="text-[9px] sm:text-[11px] text-gray-400 mt-0.5 sm:mt-1 leading-tight sm:leading-relaxed font-medium opacity-90 line-clamp-2 sm:line-clamp-none">${d.description}</p>
-        </div>
-
-        <!-- アクションボタン領域 -->
-        <div class="flex gap-1.5 sm:gap-2 relative z-10 flex-shrink-0">
-
-          <!-- 探索ボタン -->
-          <button onclick="window.enterDungeon('${d.id}')" 
-                  class="relative flex flex-col items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl text-white font-bold transition-all duration-200 active:scale-95 cursor-pointer overflow-hidden group/btn hover:brightness-110" 
-                  style="background: linear-gradient(135deg, rgba(${themeRgb}, 0.8), rgba(${themeRgb}, 0.4)); box-shadow: 0 4px 15px rgba(${themeRgb}, 0.3); border: 1px solid rgba(${themeRgb}, 0.5);">
-            <div class="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300" 
-                 style="background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 50%); pointer-events: none;"></div>
-            <span class="material-symbols-outlined text-xl sm:text-2xl mb-0.5 sm:mb-1 drop-shadow-md relative z-10 pointer-events-none">${theme.icon}</span>
-            <span class="text-[8px] sm:text-[9px] tracking-widest drop-shadow-md uppercase relative z-10 pointer-events-none">Explore</span>
-          </button>
-        </div>
-      </div>`;
+      </button>`;
     } else {
       return `
       <!-- 未解放ダンジョン: ${d.name} -->
-      <div class="relative overflow-hidden flex items-center justify-center bg-[#0a0a10] border border-gray-800/60 rounded-xl sm:rounded-2xl h-20 sm:h-24 gap-2.5 sm:gap-4 transition-all">
-        
-        <!-- 背景としてぼかした中身 -->
-        <div class="absolute inset-0 flex items-center p-2.5 sm:p-4 gap-2.5 sm:gap-4 blur-md opacity-30 select-none">
-          <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl flex-shrink-0 bg-black/60 border border-gray-800 flex items-center justify-center">
-            <span class="material-symbols-outlined text-gray-700 text-2xl sm:text-3xl">question_mark</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h3 class="text-sm sm:text-lg font-bold text-gray-600 tracking-widest truncate">${d.name}</h3>
-            <p class="text-[9px] sm:text-[11px] text-gray-600 mt-0.5 sm:mt-1 line-clamp-1">${d.description}</p>
-          </div>
-          <div class="flex flex-col items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-[#050508] rounded-lg sm:rounded-xl flex-shrink-0 border border-gray-800/80"></div>
-        </div>
-
-        <!-- 斜め線のパターン (LOCKED感) -->
-        <div class="absolute inset-0 opacity-[0.05]" 
-             style="background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 1px, transparent 8px); pointer-events: none;"></div>
+      <div class="relative isolate min-h-[92px] sm:min-h-[108px] overflow-hidden rounded-2xl border border-slate-700/60 bg-[#080a11] shadow-lg">
+        <div class="absolute inset-0 scale-105 bg-cover bg-center grayscale" style="background-image: url('${d.bgImage}');"></div>
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px]"></div>
+        <div class="absolute inset-0 opacity-[0.08]" style="background-image: repeating-linear-gradient(135deg, #fff 0, #fff 1px, transparent 1px, transparent 9px);"></div>
 
         <!-- 前面にハッキリ表示するロック情報と解放条件 -->
-        <div class="relative z-10 flex flex-col items-center justify-center w-full h-full p-2">
-          <div class="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+        <div class="relative z-10 flex min-h-[92px] sm:min-h-[108px] flex-col items-center justify-center p-2.5">
+          <div class="mb-1.5 flex items-center justify-center gap-1.5 sm:gap-2">
             <span class="material-symbols-outlined text-gray-400 text-lg sm:text-xl">lock</span>
             <span class="text-xs sm:text-sm tracking-widest text-gray-300 font-bold uppercase">Locked</span>
           </div>
