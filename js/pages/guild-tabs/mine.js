@@ -396,7 +396,7 @@ export async function renderMineTab() {
                 <div class="flex items-center gap-2">
                   <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/25">
                     <img src="${cost.material?.image || ''}" alt="" class="h-7 w-7 object-contain drop-shadow" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                    <span class="material-symbols-outlined hidden text-xl text-slate-500">category</span>
+                    <span class="material-symbols-outlined text-xl text-slate-500" style="display:none">category</span>
                   </div>
                   <div class="min-w-0">
                     <div class="truncate text-[10px] font-bold text-slate-300">${cost.material?.name || cost.materialId}</div>
