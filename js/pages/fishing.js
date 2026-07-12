@@ -210,7 +210,7 @@ export async function renderFishingPage() {
       ? `<img data-reveal src="${result.image}" class="h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt="">`
       : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`}
       <p data-reveal-name class="mt-1 text-sm font-black text-white">${result.name}</p>
-      <p class="text-[9px] font-bold uppercase tracking-widest text-cyan-200/70">${result.type === 'fish' ? 'FISH CAUGHT' : 'BONUS CATCH'}</p>`;
+      <p class="text-[9px] font-bold uppercase tracking-widest text-cyan-200/70">${result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;
     display.querySelector('[data-reveal]').animate(
       [{ transform: 'scale(.25) rotate(-18deg)', filter: 'brightness(3)', opacity: 0 }, { transform: 'scale(1.18) rotate(5deg)', filter: 'brightness(1.7)', opacity: 1, offset: .55 }, { transform: 'scale(1) rotate(0)', filter: 'brightness(1)', opacity: 1 }],
       { duration: reducedMotion ? 260 : 620, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
