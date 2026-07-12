@@ -5,7 +5,7 @@ import { notifyGameEvent } from '../utils/game-notifications.js';
 const STATE_KEY = 'mine_data';
 
 export function createMineState(now = Date.now()) {
-  return { unlocked: false, intervalLevel: 1, yieldLevel: 1, capacityLevel: 1, storedGold: 0, lastAccruedAt: now, maxNotified: false };
+  return { unlocked: false, machineLevel: 1, yieldLevel: 1, capacityLevel: 1, storedGold: 0, lastAccruedAt: now, maxNotified: false };
 }
 
 export function accrueMine(mine, state, now = Date.now()) {
@@ -15,17 +15,18 @@ export function accrueMine(mine, state, now = Date.now()) {
     return state;
   }
   const stats = getMineStats(mine, state);
-  const elapsed = now - state.lastAccruedAt;
-  const cycles = Math.floor(elapsed / stats.intervalMs);
-  if (cycles <= 0) return state;
-  state.storedGold = Math.min(stats.maxStoredGold, (state.storedGold || 0) + cycles * stats.goldPerCycle);
+  const elapsedSeconds = (now - state.lastAccruedAt) / 1000;
+  if (elapsedSeconds <= 0) return state;
+  const storedGold = Math.max(0, state.storedGold || 0);
+  // 旧仕様で新上限を超えていた蓄積Goldは失わせず、回収されるまでそのまま保持する。
+  state.storedGold = storedGold >= stats.maxStoredGold
+    ? storedGold
+    : Math.min(stats.maxStoredGold, storedGold + elapsedSeconds * stats.goldPerSecond);
   if (state.storedGold >= stats.maxStoredGold && !state.maxNotified) {
     state.maxNotified = true;
     notifyGameEvent('鉱山の蓄積完了', `${mine.name}の蓄積量がMAXになりました！`, `mine-max-${mine.id}`);
   }
-  state.lastAccruedAt = state.storedGold >= stats.maxStoredGold
-    ? now
-    : (state.lastAccruedAt || now) + cycles * stats.intervalMs;
+  state.lastAccruedAt = now;
   return state;
 }
 
@@ -36,6 +37,11 @@ export async function loadMineData(now = Date.now()) {
   for (const mine of MINES) {
     const original = saved[mine.id];
     data[mine.id] = { ...createMineState(now), ...(original || {}) };
+    // 旧「採掘速度」レベルを同値の「採掘機」レベルへ一度だけ移行する。
+    if (!Number.isFinite(original?.machineLevel) && Number.isFinite(original?.intervalLevel)) {
+      data[mine.id].machineLevel = original.intervalLevel;
+    }
+    delete data[mine.id].intervalLevel;
     accrueMine(mine, data[mine.id], now);
     if (!original || JSON.stringify(original) !== JSON.stringify(data[mine.id])) changed = true;
   }
@@ -74,10 +80,11 @@ export async function claimMineGold(mineId) {
   if (!mine) throw new Error('鉱山が見つかりません。');
   const data = await loadMineData();
   const state = data[mineId];
-  if (!state.unlocked || state.storedGold <= 0) throw new Error('回収できるGoldがありません。');
-  const amount = state.storedGold;
+  const amount = Math.floor(state.storedGold || 0);
+  if (!state.unlocked || amount <= 0) throw new Error('回収できるGoldがありません。');
   const gold = await GameDB.getGameState('gold') || 0;
-  state.storedGold = 0;
+  // 1 Gold未満の端数は鉱山に残し、所持Goldを常に整数に保つ。
+  state.storedGold -= amount;
   state.maxNotified = false;
   state.lastAccruedAt = Date.now();
   await GameDB.setGameState('gold', gold + amount);
@@ -87,7 +94,7 @@ export async function claimMineGold(mineId) {
 
 export async function upgradeMine(mineId, type) {
   const mine = MINES.find(item => item.id === mineId);
-  if (!mine || !['interval', 'yield', 'capacity'].includes(type)) throw new Error('強化対象が不正です。');
+  if (!mine || !['machine', 'yield', 'capacity'].includes(type)) throw new Error('強化対象が不正です。');
   const data = await loadMineData();
   const state = data[mineId];
   if (!state.unlocked) throw new Error('鉱山が未解放です。');
@@ -103,8 +110,7 @@ export async function upgradeMine(mineId, type) {
   else await GameDB.putInventoryItem(inventoryItem);
   await GameDB.setGameState('gold', (gold || 0) - cost.gold);
   state[levelKey] += 1;
-  // 産出量強化で上限も増えるため、既存蓄積を新しい上限内に収める。
-  state.storedGold = Math.min(state.storedGold, getMineStats(mine, state).maxStoredGold);
+  // すべての強化で上限は維持または増加するため、既存蓄積Goldはそのまま保持する。
   if (state.storedGold < getMineStats(mine, state).maxStoredGold) state.maxNotified = false;
   await GameDB.setGameState(STATE_KEY, data);
   window.dispatchEvent(new CustomEvent('quest:mine-upgrade', {

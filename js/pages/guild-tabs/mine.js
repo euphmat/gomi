@@ -89,23 +89,15 @@ function updateHeader(id, value) {
   if (el) el.textContent = formatNumber(value);
 }
 
-function formatDuration(ms) {
-  const seconds = Math.max(0, Math.ceil(ms / 1000));
-  const minutes = Math.floor(seconds / 60);
-  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-}
-
-function formatEffectDuration(ms) {
-  const totalSeconds = Math.max(0, ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds - minutes * 60;
-  return minutes > 0 ? `${minutes}分 ${seconds.toFixed(2)}秒` : `${seconds.toFixed(2)}秒`;
+function formatMineAmount(value, maximumFractionDigits = 3) {
+  if (!Number.isFinite(value)) return '0';
+  if (Math.abs(value) >= 1000) return formatNumber(value);
+  return value.toLocaleString('ja-JP', { maximumFractionDigits });
 }
 
 function getStorageProgress(state, stats) {
-  if (stats.goldPerCycle <= 0 || stats.capacityCycles <= 0) return 0;
-  const storedCycles = (state.storedGold || 0) / stats.goldPerCycle;
-  return Math.min(100, Math.max(0, storedCycles / stats.capacityCycles * 100));
+  if (stats.maxStoredGold <= 0) return 0;
+  return Math.min(100, Math.max(0, (state.storedGold || 0) / stats.maxStoredGold * 100));
 }
 
 function showMineMessage(container, message, isError = false) {
@@ -334,8 +326,6 @@ export async function renderMineTab() {
     card.dataset.mineId = mine.id;
     card.className = 'overflow-hidden rounded-2xl border shadow-lg';
     const storageProgress = getStorageProgress(state, stats);
-    const elapsedInCycle = Math.max(0, Date.now() - state.lastAccruedAt);
-    const cycleProgress = state.storedGold >= stats.maxStoredGold ? 100 : Math.min(100, elapsedInCycle / stats.intervalMs * 100);
     card.innerHTML = `
       <div class="relative h-28 overflow-hidden bg-gradient-to-br from-stone-900 to-slate-950">
         <img src="${mine.image}" alt="${mine.name}" class="h-full w-full object-cover ${state.unlocked ? '' : 'grayscale opacity-35'}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -346,12 +336,9 @@ export async function renderMineTab() {
       ${state.unlocked ? `
         <div class="space-y-3 p-3">
           <div data-theme-panel class="rounded-xl border p-2.5">
-            <div class="mb-1.5 flex items-center justify-between"><span class="text-[10px] font-bold text-stone-400">蓄積Gold</span><span data-theme-text class="font-mono text-sm font-black" data-stored>${formatNumber(state.storedGold)} / ${formatNumber(stats.maxStoredGold)}</span></div>
+            <div class="mb-1.5 flex items-center justify-between"><span class="text-[10px] font-bold text-stone-400">蓄積Gold</span><span data-theme-text class="font-mono text-sm font-black" data-stored>${formatMineAmount(state.storedGold, 2)} / ${formatMineAmount(stats.maxStoredGold, 2)}</span></div>
             <div data-theme-track class="h-2 overflow-hidden rounded-full border" role="progressbar" aria-label="貯蔵庫の使用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${storageProgress.toFixed(1)}"><div data-theme-bar data-storage-progress class="h-full transition-all" style="width:${storageProgress}%"></div></div>
-            <div class="mt-2 flex items-center justify-between text-[9px] text-stone-500"><span>${formatNumber(stats.goldPerCycle)} G / ${formatDuration(stats.intervalMs)}</span><span data-next>次回 --:--</span></div>
-            <div data-theme-track class="mt-1.5 h-1.5 overflow-hidden rounded-full border" title="次のGold蓄積まで">
-              <div data-theme-cycle data-cycle-progress class="h-full transition-[width] duration-1000 ease-linear" style="width:${cycleProgress}%"></div>
-            </div>
+            <div class="mt-2 flex items-center justify-between text-[9px] text-stone-500"><span>${formatMineAmount(stats.goldPerSecond)} G / 秒</span><span>満杯まで約 ${formatMineAmount(stats.storageHours, 2)}時間</span></div>
             <button data-claim></button>
           </div>
           <div class="space-y-2">${MINE_UPGRADE_TYPES.map(type => createUpgradeRow(mine, state, type)).join('')}</div>
@@ -359,7 +346,7 @@ export async function renderMineTab() {
         <div class="p-4 text-center"><p class="mb-3 text-[10px] leading-relaxed ${lockedLowerMine ? 'text-amber-400' : 'text-slate-500'}">${lockedLowerMine ? `解放条件：${lockedLowerMine.name}を先に解放` : 'Prismを使って鉱脈を開発すると、放置採掘が始まります。'}</p><button data-theme-action data-unlock class="w-full rounded-xl border py-2.5 text-xs font-black text-white shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35" ${lockedLowerMine ? 'disabled' : ''}><span class="material-symbols-outlined mr-1 align-middle text-sm">${lockedLowerMine ? 'lock' : 'diamond'}</span>${lockedLowerMine ? '下位鉱山の解放が必要' : `${formatNumber(mine.unlockPrism)} Prismで解放`}</button></div>`}
     `;
     const claimButton = card.querySelector('[data-claim]');
-    updateClaimButtonAppearance(claimButton, state.storedGold > 0);
+    updateClaimButtonAppearance(claimButton, state.storedGold >= 1);
     card.querySelector('[data-unlock]')?.addEventListener('click', () => runAction(async () => {
       const result = await unlockMine(mine.id);
       mineData = result.data;
@@ -398,11 +385,11 @@ export async function renderMineTab() {
     const currentStats = getMineStats(mine, state);
     const nextState = isMax ? state : { ...state, [`${type.id}Level`]: level + 1 };
     const nextStats = getMineStats(mine, nextState);
-    const effects = type.id === 'interval'
-      ? { current: formatEffectDuration(currentStats.intervalMs), next: formatEffectDuration(nextStats.intervalMs) }
+    const effects = type.id === 'machine'
+      ? { current: `効率 ${(currentStats.machineEfficiency * 100).toFixed(2)}%`, next: `効率 ${(nextStats.machineEfficiency * 100).toFixed(2)}%` }
       : type.id === 'yield'
-        ? { current: `${formatNumber(currentStats.goldPerCycle)} G/回`, next: `${formatNumber(nextStats.goldPerCycle)} G/回` }
-        : { current: `${formatNumber(currentStats.capacityCycles)}回 / ${formatNumber(currentStats.maxStoredGold)} G`, next: `${formatNumber(nextStats.capacityCycles)}回 / ${formatNumber(nextStats.maxStoredGold)} G` };
+        ? { current: `${formatMineAmount(currentStats.baseGoldPerSecond)} G/秒`, next: `${formatMineAmount(nextStats.baseGoldPerSecond)} G/秒` }
+        : { current: `${formatMineAmount(currentStats.storageHours, 2)}時間 / ${formatMineAmount(currentStats.maxStoredGold, 2)} G`, next: `${formatMineAmount(nextStats.storageHours, 2)}時間 / ${formatMineAmount(nextStats.maxStoredGold, 2)} G` };
     const hasMaterial = isMax || owned >= cost.materialAmount;
     const hasGold = isMax || currentGold >= cost.gold;
     return `<div data-theme-panel class="rounded-xl border p-3 shadow-inner">
@@ -452,23 +439,14 @@ export async function renderMineTab() {
       if (!card) continue;
       const stored = card.querySelector('[data-stored]');
       const storageProgress = card.querySelector('[data-storage-progress]');
-      const cycleProgress = card.querySelector('[data-cycle-progress]');
-      const next = card.querySelector('[data-next]');
       const claim = card.querySelector('[data-claim]');
-      if (stored) stored.textContent = `${formatNumber(state.storedGold)} / ${formatNumber(stats.maxStoredGold)}`;
+      if (stored) stored.textContent = `${formatMineAmount(state.storedGold, 2)} / ${formatMineAmount(stats.maxStoredGold, 2)}`;
       if (storageProgress) {
         const percentage = getStorageProgress(state, stats);
         storageProgress.style.width = `${percentage}%`;
         storageProgress.parentElement?.setAttribute('aria-valuenow', percentage.toFixed(1));
       }
-      if (cycleProgress) {
-        const percentage = state.storedGold >= stats.maxStoredGold
-          ? 100
-          : Math.min(100, Math.max(0, now - state.lastAccruedAt) / stats.intervalMs * 100);
-        cycleProgress.style.width = `${percentage}%`;
-      }
-      updateClaimButtonAppearance(claim, state.storedGold > 0);
-      if (next) next.textContent = state.storedGold >= stats.maxStoredGold ? '満杯' : `次回 ${formatDuration(stats.intervalMs - (now - state.lastAccruedAt))}`;
+      updateClaimButtonAppearance(claim, state.storedGold >= 1);
     }
     if (notificationStateChanged) {
       GameDB.setGameState('mine_data', mineData).catch(error => console.warn('[Mine] Failed to save notification state:', error));

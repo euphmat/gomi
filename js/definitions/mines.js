@@ -1,6 +1,6 @@
 /**
  * 鉱山の定義。バランス調整値はこのファイルだけで変更できる。
- * upgradeMaterials は [周期短縮, 産出量, 蓄積上限] の順。
+ * upgradeMaterials は [採掘機, 秒間採掘量, 蓄積上限] の順。
  */
 const MINE_ROWS = [
   ['copper_mine', '赤銅の坑道', ['mat_copper_ore', 'mat_cuprite', 'mat_native_copper']],
@@ -25,7 +25,8 @@ const MINE_UNLOCK_PRISM_COSTS = [1, 2, 3, 4, 5, 7, 9, 12, 15, 19, 24, 30, 36, 43
 
 export const MINE_MAX_UPGRADE_LEVEL = 9999;
 export const MINE_MAX_MATERIAL_COST = 99999;
-const MINE_REWARD_MULTIPLIER = 3;
+const MINE_BASE_STORAGE_HOURS = 24;
+const MINE_MAX_STORAGE_HOURS = 24 * 7;
 
 export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   id,
@@ -33,33 +34,33 @@ export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   image: `./assets/mine/${id}.webp`,
   upgradeMaterials,
   unlockPrism: MINE_UNLOCK_PRISM_COSTS[index],
-  // 全速度レベルで1回の強化につき1秒以上短縮できるよう、採掘周期は3時間〜5時間20分にする。
-  baseIntervalSeconds: 10800 + index * 600,
-  baseGoldPerCycle: 10 * Math.pow(3, index),
-  baseCapacityCycles: 12
+  // 旧仕様の初期日次収益だけを秒単位へ換算し、改修直後の収益インフレを防ぐ。
+  baseGoldPerSecond: 30 * Math.pow(3, index) / (10800 + index * 600),
+  upgradeGoldBase: 10 * Math.pow(3, index),
 }));
 
 export const MINE_UPGRADE_TYPES = [
-  { id: 'interval', label: '採掘速度', icon: 'speed', description: '獲得までの時間を短縮' },
-  { id: 'yield', label: '採掘量', icon: 'paid', description: '1回の獲得Goldを増加' },
-  { id: 'capacity', label: '貯蔵庫', icon: 'inventory_2', description: '最大蓄積量を増加' }
+  { id: 'machine', label: '採掘機', icon: 'precision_manufacturing', description: '採掘量にかかる稼働効率を上昇' },
+  { id: 'yield', label: '採掘量', icon: 'paid', description: '1秒あたりの基礎採掘量を増加' },
+  { id: 'capacity', label: '貯蔵庫', icon: 'inventory_2', description: 'Goldを貯められる時間を延長' }
 ];
 
 export function getMineStats(mine, state) {
-  const intervalLevel = state.intervalLevel || 1;
+  const machineLevel = state.machineLevel || 1;
   const yieldLevel = state.yieldLevel || 1;
   const capacityLevel = state.capacityLevel || 1;
   const maxLevelSteps = MINE_MAX_UPGRADE_LEVEL - 1;
-  const intervalProgress = Math.min(1, Math.max(0, intervalLevel - 1) / maxLevelSteps);
+  const machineProgress = Math.min(1, Math.max(0, machineLevel - 1) / maxLevelSteps);
   const yieldProgress = Math.min(1, Math.max(0, yieldLevel - 1) / maxLevelSteps);
   const capacityProgress = Math.min(1, Math.max(0, capacityLevel - 1) / maxLevelSteps);
 
-  // 速度はLv.9999で30秒まで短縮する。最短の鉱山でも1レベルにつき1秒以上短くなる。
-  const intervalMs = Math.round((mine.baseIntervalSeconds - (mine.baseIntervalSeconds - 30) * intervalProgress) * 1000);
-  // 長くなった初期採掘周期に合わせ、強化費用は変えずに全鉱山の報酬だけ3倍にする。
-  const goldPerCycle = Math.floor(mine.baseGoldPerCycle * (1 + yieldProgress * 199) * MINE_REWARD_MULTIPLIER) + (yieldLevel - 1);
-  const capacityCycles = mine.baseCapacityCycles + (capacityLevel - 1);
-  return { intervalMs, goldPerCycle, capacityCycles, maxStoredGold: goldPerCycle * capacityCycles };
+  // 初期値は旧仕様と同じ時間あたり収益。採掘量100倍 × 採掘機効率10倍で最大1,000倍に抑える。
+  const baseGoldPerSecond = mine.baseGoldPerSecond * (1 + yieldProgress * 99);
+  const machineEfficiency = 1 + machineProgress * 9;
+  const goldPerSecond = baseGoldPerSecond * machineEfficiency;
+  const storageHours = MINE_BASE_STORAGE_HOURS + (MINE_MAX_STORAGE_HOURS - MINE_BASE_STORAGE_HOURS) * capacityProgress;
+  const maxStoredGold = goldPerSecond * storageHours * 60 * 60;
+  return { baseGoldPerSecond, machineEfficiency, goldPerSecond, storageHours, maxStoredGold };
 }
 
 export function getMineUpgradeCost(mine, type, currentLevel) {
@@ -70,12 +71,12 @@ export function getMineUpgradeCost(mine, type, currentLevel) {
   const maxUpgradeCount = MINE_MAX_UPGRADE_LEVEL - 1;
   // レベル分の線形成長で毎回の増加を保証し、残りを二次曲線で後半ほど大きくする。
   const materialCurveRange = MINE_MAX_MATERIAL_COST - maxUpgradeCount;
-  const initialGold = mine.baseGoldPerCycle * (10 + mineIndex * 5);
+  const initialGold = mine.upgradeGoldBase * (10 + mineIndex * 5);
   // 最大蓄積量は放置効率への影響が大きいため、貯蔵庫だけGoldコストを大幅に上げる。
   const typeGoldMultiplier = type === 'capacity' ? 25 : 1;
   return {
     materialId: mine.upgradeMaterials[typeIndex],
     materialAmount: currentLevel + Math.round(materialCurveRange * Math.pow(costProgress, 2)),
-    gold: Math.floor((initialGold * (1 + 999 * Math.pow(costProgress, 2)) + (currentLevel - 1) * mine.baseGoldPerCycle) * typeGoldMultiplier)
+    gold: Math.floor((initialGold * (1 + 999 * Math.pow(costProgress, 2)) + (currentLevel - 1) * mine.upgradeGoldBase) * typeGoldMultiplier)
   };
 }
