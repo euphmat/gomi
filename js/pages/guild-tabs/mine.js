@@ -306,6 +306,7 @@ export async function renderMineTab() {
   let mineData = await loadMineData();
   let inventory = new Map((await GameDB.getAllInventory()).map(item => [item.id, item.quantity || 0]));
   let currentGold = await GameDB.getGameState('gold') || 0;
+  let currentPrism = await GameDB.getGameState('prism') || 0;
   let busy = false;
   let timer = null;
   let currentPage = 0;
@@ -353,6 +354,14 @@ export async function renderMineTab() {
     card.dataset.mineId = mine.id;
     card.className = 'overflow-hidden rounded-2xl border shadow-lg';
     const storageProgress = getStorageProgress(state, stats);
+    const unlockRequirements = mine.unlockMaterials.map(cost => {
+      const material = MATERIAL_MAP.get(cost.materialId);
+      const owned = inventory.get(cost.materialId) || 0;
+      return { ...cost, material, owned, sufficient: owned >= cost.amount };
+    });
+    const hasUnlockPrism = currentPrism >= mine.unlockPrism;
+    const hasUnlockMaterials = unlockRequirements.every(cost => cost.sufficient);
+    const canUnlock = !lockedLowerMine && hasUnlockPrism && hasUnlockMaterials;
     card.innerHTML = `
       <div class="relative h-28 overflow-hidden bg-gradient-to-br from-stone-900 to-slate-950">
         <img src="${mine.image}" alt="${mine.name}" class="h-full w-full object-cover ${state.unlocked ? '' : 'grayscale opacity-35'}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -370,13 +379,25 @@ export async function renderMineTab() {
           </div>
           <div class="space-y-2">${MINE_UPGRADE_TYPES.map(type => createUpgradeRow(mine, state, type)).join('')}</div>
         </div>` : `
-        <div class="p-4 text-center"><p class="mb-3 text-[10px] leading-relaxed ${lockedLowerMine ? 'text-amber-400' : 'text-slate-500'}">${lockedLowerMine ? `解放条件：${lockedLowerMine.name}を先に解放` : 'Prismを使って鉱脈を開発すると、放置採掘が始まります。'}</p><button data-theme-action data-unlock class="w-full rounded-xl border py-2.5 text-xs font-black text-white shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35" ${lockedLowerMine ? 'disabled' : ''}><span class="material-symbols-outlined mr-1 align-middle text-sm">${lockedLowerMine ? 'lock' : 'diamond'}</span>${lockedLowerMine ? '下位鉱山の解放が必要' : `${formatNumber(mine.unlockPrism)} Prismで解放`}</button></div>`}
+        <div class="p-3 text-center">
+          <p class="mb-2 text-[10px] leading-relaxed ${lockedLowerMine ? 'text-amber-400' : 'text-slate-400'}">${lockedLowerMine ? `解放条件：${lockedLowerMine.name}を先に解放` : 'Prismと3種類の素材を消費して解放します。'}</p>
+          <div class="mb-2 grid grid-cols-2 gap-1.5 text-left">
+            <div class="rounded-lg border ${hasUnlockPrism ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} px-2 py-1.5">
+              <div class="truncate text-[10px] font-bold text-slate-300">Prism</div>
+              <div class="text-xs font-black tabular-nums ${hasUnlockPrism ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(currentPrism)} <span class="text-slate-600">/</span> ${formatNumber(mine.unlockPrism)}</div>
+            </div>
+            ${unlockRequirements.map(cost => `<div class="rounded-lg border ${cost.sufficient ? 'border-emerald-700/40 bg-emerald-950/20' : 'border-red-700/50 bg-red-950/20'} px-2 py-1.5"><div class="truncate text-[10px] font-bold text-slate-300">${cost.material?.name || cost.materialId}</div><div class="text-xs font-black tabular-nums ${cost.sufficient ? 'text-emerald-400' : 'text-red-400'}">${formatNumber(cost.owned)} <span class="text-slate-600">/</span> ${formatNumber(cost.amount)}</div></div>`).join('')}
+          </div>
+          <button data-theme-action data-unlock class="w-full rounded-xl border py-2.5 text-xs font-black text-white shadow active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-35" ${canUnlock ? '' : 'disabled'}><span class="material-symbols-outlined mr-1 align-middle text-sm">${lockedLowerMine ? 'lock' : 'diamond'}</span>${lockedLowerMine ? '下位鉱山の解放が必要' : canUnlock ? '鉱山を解放' : '解放条件が不足'}</button>
+        </div>`}
     `;
     const claimButton = card.querySelector('[data-claim]');
     updateClaimButtonAppearance(claimButton, state.storedGold >= 1);
     card.querySelector('[data-unlock]')?.addEventListener('click', () => runAction(async () => {
       const result = await unlockMine(mine.id);
       mineData = result.data;
+      inventory = new Map((await GameDB.getAllInventory()).map(item => [item.id, item.quantity || 0]));
+      currentPrism = result.prism;
       updateHeader('header-prism-display', result.prism);
       showMineUnlockAnimation(mine);
       showMineMessage(container, `${mine.name}を解放しました。`);

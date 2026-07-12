@@ -67,6 +67,20 @@ export async function unlockMine(mineId) {
   const lockedLowerMine = MINES.slice(0, mineIndex).find(item => !data[item.id]?.unlocked);
   if (lockedLowerMine) throw new Error(`先に${lockedLowerMine.name}を解放してください。`);
   if (prism < mine.unlockPrism) throw new Error('Prismが足りません。');
+  const unlockInventory = await Promise.all(
+    mine.unlockMaterials.map(cost => GameDB.getInventoryItem(cost.materialId))
+  );
+  const missingMaterial = mine.unlockMaterials.find((cost, index) =>
+    (unlockInventory[index]?.quantity || 0) < cost.amount
+  );
+  if (missingMaterial) throw new Error('解放素材が足りません。');
+
+  await Promise.all(unlockInventory.map((item, index) => {
+    item.quantity -= mine.unlockMaterials[index].amount;
+    return item.quantity <= 0
+      ? GameDB.deleteInventoryItem(item.id)
+      : GameDB.putInventoryItem(item);
+  }));
   data[mineId].unlocked = true;
   data[mineId].lastAccruedAt = Date.now();
   await GameDB.setGameState('prism', prism - mine.unlockPrism);

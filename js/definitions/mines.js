@@ -22,6 +22,7 @@ const MINE_ROWS = [
 
 // Prismは1日1個程度の入手を想定。序盤は軽く、最終鉱山でも50に収める。
 const MINE_UNLOCK_PRISM_COSTS = [1, 2, 3, 4, 5, 7, 9, 12, 15, 19, 24, 30, 36, 43, 50];
+export const MINE_UNLOCK_MATERIAL_AMOUNT = 30;
 
 export const MINE_MAX_UPGRADE_LEVEL = 9999;
 export const MINE_MAX_MATERIAL_COST = 99999;
@@ -36,6 +37,7 @@ export const MINES = MINE_ROWS.map(([id, name, upgradeMaterials], index) => ({
   name,
   image: `./assets/mine/${id}.webp`,
   upgradeMaterials,
+  unlockMaterials: upgradeMaterials.map(materialId => ({ materialId, amount: MINE_UNLOCK_MATERIAL_AMOUNT })),
   unlockPrism: MINE_UNLOCK_PRISM_COSTS[index],
   // 赤銅鉱山は1 G/秒、以降は約2.4倍ずつ成長。最終鉱山も旧報酬の約16倍になる。
   baseGoldPerSecond: 30 * Math.pow(3, index) / (10800 + index * 600)
