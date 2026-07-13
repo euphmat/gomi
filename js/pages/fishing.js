@@ -165,9 +165,12 @@ export async function renderFishingPage() {
     const stage = display.closest('section');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-    const visual = result.image
-      ? `<img data-catch-visual src="${result.image}" class="h-24 w-24 object-contain" alt="">`
-      : `<span data-catch-visual class="material-symbols-outlined text-6xl">${result.icon || 'redeem'}</span>`;
+    const fishCatches = result.type === 'fish' && Array.isArray(result.catches) ? result.catches : [];
+    const visual = fishCatches.length > 1
+      ? `<div data-catch-visual class="flex h-24 items-center justify-center -space-x-9">${fishCatches.map((fish, index) => `<img src="${fish.image}" class="h-20 w-20 object-contain drop-shadow-[0_5px_7px_rgba(0,0,0,.7)]" style="z-index:${index}" alt="">`).join('')}</div>`
+      : result.image
+        ? `<img data-catch-visual src="${result.image}" class="h-24 w-24 object-contain" alt="">`
+        : `<span data-catch-visual class="material-symbols-outlined text-6xl">${result.icon || 'redeem'}</span>`;
 
     // 1. 釣れた物の正体を隠した魚影を先に見せる。
     display.innerHTML = `<div class="relative">${visual}<div class="absolute inset-x-2 bottom-1 h-2 rounded-full bg-black/50 blur-sm"></div></div><p class="mt-1 text-xs font-black tracking-widest text-cyan-100">魚影が浮かんだ…</p>`;
@@ -207,9 +210,12 @@ export async function renderFishingPage() {
     if (!display.isConnected || leaving) return;
 
     // 3. 黒い魚影を解除し、取得アイテムを正式に公開する。
-    display.innerHTML = `${result.image
-      ? `<img data-reveal src="${result.image}" class="h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt="">`
-      : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`}
+    const revealedVisual = fishCatches.length > 1
+      ? `<div data-reveal class="flex h-24 items-center justify-center -space-x-9">${fishCatches.map((fish, index) => `<img src="${fish.image}" class="h-20 w-20 object-contain drop-shadow-[0_0_14px_rgba(103,232,249,.65)]" style="z-index:${index}" alt="${fish.name}">`).join('')}</div>`
+      : result.image
+        ? `<img data-reveal src="${result.image}" class="h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt="">`
+        : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`;
+    display.innerHTML = `${revealedVisual}
       <p data-reveal-name class="mt-1 text-sm font-black text-white">${result.name}</p>
       <p class="text-[9px] font-bold uppercase tracking-widest text-cyan-200/70">${result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;
     display.querySelector('[data-reveal]').animate(

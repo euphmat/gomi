@@ -1,26 +1,20 @@
 import { GameDB } from '../../data/database.js';
 import { MINES, MINE_UPGRADE_TYPES, MINE_MAX_UPGRADE_LEVEL, getMineStats, getMineUpgradeCost } from '../../definitions/mines.js';
 import { MATERIALS } from '../../definitions/materials.js';
-import { FISH, FISH_OIL_BOOST_MS } from '../../definitions/fish.js';
+import { FISH, FISH_OIL_BOOST_MS, FISH_OIL_SPEED_MULTIPLIER } from '../../definitions/fish.js';
 import { accrueMine, claimMineGold, loadMineData, unlockMine, upgradeMine, useFishOilFuel } from '../../data/mine-manager.js';
 import { convertFishToOil, loadFishingData } from '../../data/fishing-manager.js';
 import { formatNumber } from '../../utils/format.js';
 
 const MATERIAL_MAP = new Map(MATERIALS.map(item => [item.id, item]));
-const MINE_THEME_CACHE = new Map();
-
-function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const lightness = (max + min) / 2;
-  if (max === min) return { hue: 210, saturation: 20, lightness: lightness * 100 };
-  const delta = max - min;
-  const saturation = delta / (1 - Math.abs(2 * lightness - 1));
-  let hue = max === r ? ((g - b) / delta) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
-  hue = (hue * 60 + 360) % 360;
-  return { hue, saturation: saturation * 100, lightness: lightness * 100 };
-}
+const MINE_THEME = Object.freeze({
+  accent: '#a68a64',
+  bright: '#d9c6a5',
+  deep: '#090806',
+  panel: 'rgba(35, 31, 25, 0.9)',
+  border: 'rgba(166, 138, 100, 0.42)',
+  secondary: '#89907b'
+});
 
 async function showFishOilWorkshop(onUpdate) {
   const overlay = document.createElement('div');
@@ -208,57 +202,12 @@ async function showFishOilFuelModal(mine, initialState, initialFishOil, onUpdate
   render();
 }
 
-function extractMineTheme(imageSrc) {
-  if (MINE_THEME_CACHE.has(imageSrc)) return MINE_THEME_CACHE.get(imageSrc);
-  const promise = new Promise(resolve => {
-    const image = new Image();
-    image.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 48;
-        canvas.height = 16;
-        const context = canvas.getContext('2d', { willReadFrequently: true });
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-        const hueBins = Array.from({ length: 24 }, () => ({ weight: 0, hue: 0, saturation: 0 }));
-        for (let i = 0; i < pixels.length; i += 4) {
-          const hsl = rgbToHsl(pixels[i], pixels[i + 1], pixels[i + 2]);
-          if (hsl.lightness < 8 || hsl.lightness > 92 || hsl.saturation < 18) continue;
-          const weight = (hsl.saturation / 100) * (1 - Math.abs(hsl.lightness - 52) / 52);
-          const bin = hueBins[Math.floor(hsl.hue / 15) % hueBins.length];
-          bin.weight += weight;
-          bin.hue += hsl.hue * weight;
-          bin.saturation += hsl.saturation * weight;
-        }
-        const dominant = hueBins.reduce((best, bin) => bin.weight > best.weight ? bin : best, hueBins[0]);
-        const hue = dominant.weight ? dominant.hue / dominant.weight : 210;
-        const saturation = dominant.weight ? Math.max(45, Math.min(90, dominant.saturation / dominant.weight)) : 45;
-        resolve({ hue, saturation });
-      } catch (_) {
-        resolve({ hue: 210, saturation: 45 });
-      }
-    };
-    image.onerror = () => resolve({ hue: 210, saturation: 45 });
-    image.src = imageSrc;
-  });
-  MINE_THEME_CACHE.set(imageSrc, promise);
-  return promise;
-}
-
-async function applyMineTheme(container, card, mine) {
-  const { hue, saturation } = await extractMineTheme(mine.image);
-  if (!card.isConnected || !container.querySelector(`[data-mine-id="${mine.id}"]`)) return;
-  const secondaryHue = (hue + 32) % 360;
-  const accent = `hsl(${hue.toFixed(0)} ${saturation.toFixed(0)}% 55%)`;
-  const bright = `hsl(${hue.toFixed(0)} ${Math.min(100, saturation + 8).toFixed(0)}% 72%)`;
-  const deep = `hsl(${hue.toFixed(0)} ${Math.max(35, saturation - 15).toFixed(0)}% 10%)`;
-  const panel = `hsl(${hue.toFixed(0)} ${Math.max(30, saturation - 20).toFixed(0)}% 16% / 0.72)`;
-  const border = `hsl(${hue.toFixed(0)} ${saturation.toFixed(0)}% 55% / 0.48)`;
-  const secondary = `hsl(${secondaryHue.toFixed(0)} ${saturation.toFixed(0)}% 62%)`;
-  container.style.background = `radial-gradient(circle at 50% 8%, hsl(${hue} ${saturation}% 18% / .55), transparent 42%), ${deep}`;
-  card.style.background = `linear-gradient(160deg, ${panel}, hsl(${hue} 25% 6% / .96))`;
+function applyMineTheme(container, card) {
+  const { accent, bright, deep, panel, border, secondary } = MINE_THEME;
+  container.style.background = 'radial-gradient(circle at 50% 6%, rgba(91, 74, 51, .34), transparent 42%), linear-gradient(180deg, #0f0d0a 0%, #070706 100%)';
+  card.style.background = `linear-gradient(160deg, ${panel}, rgba(10, 9, 7, .98))`;
   card.style.borderColor = border;
-  card.style.boxShadow = `0 14px 36px hsl(${hue} ${saturation}% 4% / .65), 0 0 20px hsl(${hue} ${saturation}% 48% / .12)`;
+  card.style.boxShadow = '0 14px 36px rgba(0, 0, 0, .72), 0 0 20px rgba(166, 138, 100, .1)';
   container.querySelectorAll('[data-theme-panel]').forEach(el => { el.style.background = panel; el.style.borderColor = border; });
   container.querySelectorAll('[data-theme-text]').forEach(el => { el.style.color = bright; });
   container.querySelectorAll('[data-theme-icon]').forEach(el => { el.style.color = accent; });
@@ -266,9 +215,9 @@ async function applyMineTheme(container, card, mine) {
   container.querySelectorAll('[data-theme-cycle]').forEach(el => { el.style.background = `linear-gradient(90deg, ${secondary}, ${bright})`; });
   container.querySelectorAll('[data-theme-track]').forEach(el => { el.style.background = deep; el.style.borderColor = border; });
   container.querySelectorAll('[data-theme-action]').forEach(el => {
-    el.style.background = `linear-gradient(90deg, hsl(${hue} ${saturation}% 38%), ${accent})`;
+    el.style.background = `linear-gradient(90deg, #594831, ${accent})`;
     el.style.borderColor = border;
-    el.style.boxShadow = `0 0 14px hsl(${hue} ${saturation}% 50% / .22)`;
+    el.style.boxShadow = '0 0 14px rgba(166, 138, 100, .2)';
   });
 }
 
@@ -315,6 +264,26 @@ function getStorageProgress(state, stats) {
   return Math.min(100, Math.max(0, (state.storedGold || 0) / stats.maxStoredGold * 100));
 }
 
+function getStorageRemainingMs(state, stats, now = Date.now()) {
+  const remainingGold = Math.max(0, stats.maxStoredGold - (state.storedGold || 0));
+  if (remainingGold <= 0 || stats.goldPerSecond <= 0) return 0;
+  const boostedMs = Math.max(0, (Number(state.fuelUntil) || 0) - now);
+  const boostedGold = stats.goldPerSecond * FISH_OIL_SPEED_MULTIPLIER * boostedMs / 1000;
+  if (remainingGold <= boostedGold) {
+    return remainingGold / (stats.goldPerSecond * FISH_OIL_SPEED_MULTIPLIER) * 1000;
+  }
+  return boostedMs + (remainingGold - boostedGold) / stats.goldPerSecond * 1000;
+}
+
+function formatStorageRemaining(state, stats, now = Date.now()) {
+  const remainingMs = getStorageRemainingMs(state, stats, now);
+  if (remainingMs <= 0) return '満杯';
+  const seconds = Math.ceil(remainingMs / 1000);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor(seconds % 3600 / 60);
+  return `満杯まで ${formatNumber(hours)}:${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
 function formatFuelTime(fuelUntil, now = Date.now()) {
   const seconds = Math.max(0, Math.ceil(((Number(fuelUntil) || 0) - now) / 1000));
   const minutes = Math.floor(seconds / 60);
@@ -344,7 +313,6 @@ function updateClaimButtonAppearance(button, canClaim) {
 
 async function showMineUnlockAnimation(mine) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const { hue, saturation } = await extractMineTheme(mine.image);
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 z-[12000] overflow-hidden bg-black pointer-events-none';
   overlay.innerHTML = `
@@ -358,7 +326,7 @@ async function showMineUnlockAnimation(mine) {
       <div class="mt-4 rounded-full border border-white/30 bg-black/45 px-5 py-2 text-sm font-black text-white backdrop-blur-md">鉱山解放！</div>
     </div>`;
   document.body.appendChild(overlay);
-  const accent = `hsl(${hue} ${saturation}% 62%)`;
+  const accent = MINE_THEME.bright;
   const ring = overlay.querySelector('[data-unlock-ring]');
   ring.style.borderColor = accent;
   ring.style.boxShadow = `0 0 35px ${accent}, inset 0 0 35px ${accent}`;
@@ -437,9 +405,8 @@ function showGoldClaimAnimation(amount, originRect) {
 
 async function showMineUpgradeAnimation(mine, type, newLevel, originRect) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const { hue, saturation } = await extractMineTheme(mine.image);
   const typeInfo = MINE_UPGRADE_TYPES.find(item => item.id === type);
-  const accent = `hsl(${hue} ${saturation}% 64%)`;
+  const accent = MINE_THEME.bright;
   const layer = document.createElement('div');
   layer.className = 'fixed inset-0 z-[11500] overflow-hidden pointer-events-none';
   document.body.appendChild(layer);
@@ -453,8 +420,8 @@ async function showMineUpgradeAnimation(mine, type, newLevel, originRect) {
   flash.style.width = `${originRect.width}px`;
   flash.style.height = `${Math.min(originRect.height, innerHeight)}px`;
   flash.style.borderColor = accent;
-  flash.style.background = `radial-gradient(circle at center, hsl(${hue} ${saturation}% 55% / .28), transparent 68%)`;
-  flash.style.boxShadow = `0 0 35px ${accent}, inset 0 0 24px hsl(${hue} ${saturation}% 55% / .35)`;
+  flash.style.background = 'radial-gradient(circle at center, rgba(166, 138, 100, .28), transparent 68%)';
+  flash.style.boxShadow = `0 0 35px ${accent}, inset 0 0 24px rgba(166, 138, 100, .35)`;
   layer.appendChild(flash);
   flash.animate(
     [{ transform: 'scale(.96)', opacity: 0 }, { transform: 'scale(1.025)', opacity: 1, offset: .32 }, { transform: 'scale(1)', opacity: 0 }],
@@ -466,7 +433,7 @@ async function showMineUpgradeAnimation(mine, type, newLevel, originRect) {
   badge.style.left = `${centerX}px`;
   badge.style.top = `${centerY}px`;
   badge.style.color = accent;
-  badge.style.boxShadow = `0 0 32px hsl(${hue} ${saturation}% 50% / .45)`;
+  badge.style.boxShadow = '0 0 32px rgba(166, 138, 100, .45)';
   badge.innerHTML = `<div class="flex items-center gap-2"><span class="material-symbols-outlined text-3xl">${typeInfo?.icon || 'upgrade'}</span><span class="text-xs font-black tracking-[.22em] text-white/60">LEVEL UP</span></div><div class="mt-1 text-base font-black text-white">${typeInfo?.label || '鉱山強化'}</div><div class="mt-0.5 text-xl font-black tabular-nums">Lv.${formatNumber(newLevel)}</div>`;
   layer.appendChild(badge);
   badge.animate(
@@ -537,7 +504,7 @@ export async function renderMineTab() {
     const currentMine = MINES[currentPage];
     const card = createMineCard(currentMine);
     list.appendChild(card);
-    applyMineTheme(container, card, currentMine);
+    applyMineTheme(container, card);
 
     const changePage = (page) => {
       if (page < 0 || page >= MINES.length || page === currentPage) return;
@@ -578,7 +545,7 @@ export async function renderMineTab() {
           <div data-theme-panel class="rounded-xl border p-2.5">
             <div class="mb-1.5 flex items-center justify-between"><span class="text-[10px] font-bold text-stone-400">蓄積Gold</span><span data-theme-text class="font-mono text-sm font-black" data-stored>${formatMineAmount(state.storedGold, 2)} / ${formatMineAmount(stats.maxStoredGold, 2)}</span></div>
             <div data-theme-track class="h-2 overflow-hidden rounded-full border" role="progressbar" aria-label="貯蔵庫の使用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${storageProgress.toFixed(1)}"><div data-theme-bar data-storage-progress class="h-full transition-all" style="width:${storageProgress}%"></div></div>
-            <div class="mt-2 flex items-center justify-between text-[9px] text-stone-500"><span>${formatMineAmount(stats.goldPerSecond)} G / 秒</span><span>満杯まで約 ${formatMineAmount(stats.storageHours, 2)}時間</span></div>
+            <div class="mt-2 flex items-center justify-between gap-2 text-[9px] text-stone-500"><span>${formatMineAmount(stats.goldPerSecond)} G / 秒</span><span data-storage-time class="font-mono tabular-nums">${formatStorageRemaining(state, stats)}</span></div>
             <button data-claim></button>
           </div>
           <div data-theme-panel class="rounded-xl border p-2.5">
@@ -726,6 +693,7 @@ export async function renderMineTab() {
       if (!card) continue;
       const stored = card.querySelector('[data-stored]');
       const storageProgress = card.querySelector('[data-storage-progress]');
+      const storageTime = card.querySelector('[data-storage-time]');
       const claim = card.querySelector('[data-claim]');
       const fuelTime = card.querySelector('[data-fuel-time]');
       if (stored) stored.textContent = `${formatMineAmount(state.storedGold, 2)} / ${formatMineAmount(stats.maxStoredGold, 2)}`;
@@ -734,6 +702,7 @@ export async function renderMineTab() {
         storageProgress.style.width = `${percentage}%`;
         storageProgress.parentElement?.setAttribute('aria-valuenow', percentage.toFixed(1));
       }
+      if (storageTime) storageTime.textContent = formatStorageRemaining(state, stats, now);
       updateClaimButtonAppearance(claim, state.storedGold >= 1);
       if (fuelTime) {
         fuelTime.textContent = formatFuelTime(state.fuelUntil, now);

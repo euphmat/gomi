@@ -6,6 +6,15 @@ export const PRISM_GACHA_COST = 5;
 export const TREASURE_STATE_KEY = 'treasure_levels';
 export const BASE_MATERIAL_CAPACITY = 99999;
 
+function displayMultiCatchEffect(progressPercent) {
+  const guaranteedCount = 1 + Math.floor(progressPercent / 100);
+  const nextCatchChance = progressPercent % 100;
+  if (guaranteedCount >= 5) return '1度の釣りで魚を5匹同時取得';
+  if (nextCatchChance === 0) return `1度の釣りで魚を${guaranteedCount}匹同時取得（最大5匹）`;
+  if (guaranteedCount === 1) return `${nextCatchChance}%の確率で魚を2匹同時取得（最大5匹）`;
+  return `魚を${guaranteedCount}匹同時取得し、${nextCatchChance}%の確率で${guaranteedCount + 1}匹目も取得（最大5匹）`;
+}
+
 export const TREASURES = [
   { id: 'pocket_watch', name: '懐中時計', effect: 'mineYieldMultiplier', perLevel: 0.1, display: v => `すべての鉱山の採掘量が x${v.toFixed(1)}` },
   { id: 'golden_pickaxe', name: '黄金のつるはし', effect: 'mineGoldPercent', perLevel: 5, display: v => `鉱山から獲得するGoldが +${v}%` },
@@ -25,6 +34,8 @@ export const TREASURES = [
   { id: 'divine_smith_hammer', name: '神匠の金槌', effect: 'craftGoldDiscountPercent', perLevel: 2, cap: 80, display: v => `装備作成に必要なGoldが ${v}%割引` },
   { id: 'alchemist_crucible', name: '錬金術師の坩堝', effect: 'craftMaterialDiscountPercent', perLevel: 2, cap: 80, display: v => `装備作成に必要な素材が ${v}%減少` },
   { id: 'rainbow_piggy_bank', name: '虹の貯金箱', effect: 'prismRefundPercent', perLevel: 2, cap: 10, display: v => `ガチャ時に ${v}%の確率で5 Prism返却` },
+  { id: 'water_god_golden_lure', name: '水神の黄金ルアー', effect: 'fishingDelayReductionMs', perLevel: 500, cap: 2900, display: v => `魚を釣るまでの時間が ${(v / 1000).toFixed(1)}秒短縮（最大2.9秒）` },
+  { id: 'thousand_hand_bountiful_hook', name: '千手の大漁針', effect: 'fishingMultiCatchProgressPercent', perLevel: 10, cap: 400, display: displayMultiCatchEffect },
 ].map(treasure => ({
   ...treasure,
   image: `./assets/treasure/${treasure.id}.webp`,
