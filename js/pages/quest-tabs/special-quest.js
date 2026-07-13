@@ -8,6 +8,7 @@ const CATEGORIES = [
   { id: 'medal', label: 'メダル', icon: 'military_tech' },
   { id: 'other', label: 'その他', icon: 'stars' },
 ];
+const QUESTS_PER_PAGE = 6;
 
 function showPrismEffect() {
   const effect = document.createElement('div');
@@ -24,10 +25,15 @@ export async function renderSpecialQuestTab() {
   container.className = 'h-full overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(217,70,239,.09),transparent_38%)] pb-[calc(env(safe-area-inset-bottom,0px)+72px)]';
   let disposed = false;
   let activeCategory = 'all';
+  let currentPage = 1;
 
   const render = () => {
     const summary = SpecialQuestManager.getSummary();
     const quests = SpecialQuestManager.getQuests(activeCategory);
+    const totalPages = Math.max(1, Math.ceil(quests.length / QUESTS_PER_PAGE));
+    currentPage = Math.min(Math.max(1, currentPage), totalPages);
+    const pageStart = (currentPage - 1) * QUESTS_PER_PAGE;
+    const pageQuests = quests.slice(pageStart, pageStart + QUESTS_PER_PAGE);
     const percentage = summary.total ? Math.round((summary.completed / summary.total) * 100) : 0;
 
     container.innerHTML = `
@@ -50,8 +56,8 @@ export async function renderSpecialQuestTab() {
           }).join('')}
         </nav>
 
-        <div class="flex flex-col gap-2.5">
-          ${quests.map(quest => {
+        <div data-quest-list class="flex flex-col gap-2.5">
+          ${pageQuests.map(quest => {
             const state = SpecialQuestManager.getState(quest.id);
             const current = Math.min(SpecialQuestManager.getCurrentValue(quest), quest.target);
             const progress = quest.target ? Math.min(100, (current / quest.target) * 100) : 0;
@@ -76,13 +82,29 @@ export async function renderSpecialQuestTab() {
               </article>`;
           }).join('')}
         </div>
+
+        <nav class="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/75 p-2" aria-label="スペシャルクエストのページ">
+          <button data-page="prev" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition ${currentPage > 1 ? 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200 active:scale-95' : 'cursor-not-allowed border-slate-800 bg-slate-950/50 text-slate-700'}" ${currentPage <= 1 ? 'disabled' : ''} aria-label="前のページ"><span class="material-symbols-outlined">chevron_left</span></button>
+          <div class="min-w-0 flex-1 text-center"><div class="font-mono text-xs font-black text-slate-200">${currentPage} / ${totalPages}</div><div class="mt-0.5 text-[9px] font-bold text-slate-500">${quests.length ? `${pageStart + 1}〜${Math.min(pageStart + QUESTS_PER_PAGE, quests.length)}件目` : '0件'} / 全${quests.length}件</div></div>
+          <button data-page="next" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition ${currentPage < totalPages ? 'border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200 active:scale-95' : 'cursor-not-allowed border-slate-800 bg-slate-950/50 text-slate-700'}" ${currentPage >= totalPages ? 'disabled' : ''} aria-label="次のページ"><span class="material-symbols-outlined">chevron_right</span></button>
+        </nav>
       </div>`;
 
     container.querySelectorAll('[data-category]').forEach(button => {
       button.onclick = () => {
         activeCategory = button.dataset.category;
+        currentPage = 1;
         render();
         container.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+    });
+
+    container.querySelectorAll('[data-page]').forEach(button => {
+      button.onclick = () => {
+        currentPage += button.dataset.page === 'next' ? 1 : -1;
+        render();
+        const list = container.querySelector('[data-quest-list]');
+        container.scrollTo({ top: Math.max(0, (list?.offsetTop || 0) - 12), behavior: 'smooth' });
       };
     });
 
