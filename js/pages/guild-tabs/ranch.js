@@ -415,7 +415,7 @@ async function showRanchFishModal(onUpdate) {
         const fish = FISH.find(item => item.id === button.dataset.feed);
         const amount = Number(input.value) || 1;
         const result = await convertFishToFeed(button.dataset.feed, amount);
-        await playFishFeedAnimation(fish, result, modal);
+        await playFishFeedAnimation(fish, result);
         lastResult = result;
         await onUpdate?.(result);
         if (overlay.isConnected) await render();
@@ -426,14 +426,13 @@ async function showRanchFishModal(onUpdate) {
   await render();
 }
 
-function playFishFeedAnimation(fish, result, sourceModal) {
+function playFishFeedAnimation(fish, result) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const duration = reducedMotion ? 1100 : 2000;
   const layer = document.createElement('div');
   layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/45 pointer-events-none backdrop-blur-[1px]';
-  const rect = sourceModal.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = Math.min(innerHeight - 150, Math.max(150, rect.top + rect.height / 2));
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
   layer.innerHTML = `
     <div data-feed-core class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300/60 bg-emerald-950/95 shadow-[0_0_55px_rgba(52,211,153,.65)]" style="left:${centerX}px;top:${centerY}px"><img src="${fish.image}" class="h-20 w-20 object-contain" alt=""></div>
     <div data-feed-burst class="absolute z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX}px;top:${centerY}px">

@@ -71,7 +71,7 @@ async function showFishOilWorkshop(onUpdate) {
         const fish = FISH.find(item => item.id === button.dataset.convert);
         const amount = Number(input.value) || 1;
         const result = await convertFishToOil(button.dataset.convert, amount);
-        await playFishOilCraftAnimation(fish, amount, result.oilGained, modal);
+        await playFishOilCraftAnimation(fish, amount, result.oilGained);
         lastResult = result;
         await onUpdate?.(result);
         await renderWorkshop();
@@ -82,33 +82,39 @@ async function showFishOilWorkshop(onUpdate) {
   await renderWorkshop();
 }
 
-function playFishOilCraftAnimation(fish, amount, oilGained, sourceModal) {
+function playFishOilCraftAnimation(fish, amount, oilGained) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const duration = reducedMotion ? 520 : 1250;
+  const duration = reducedMotion ? 900 : 2200;
   const layer = document.createElement('div');
-  layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/35 pointer-events-none backdrop-blur-[1px]';
-  const rect = sourceModal.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = Math.min(innerHeight - 110, Math.max(120, rect.top + rect.height / 2));
+  layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/75 pointer-events-none backdrop-blur-sm';
+  layer.setAttribute('role', 'status');
+  layer.setAttribute('aria-live', 'polite');
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const travel = Math.min(132, Math.max(82, (window.innerWidth - 104) / 2));
   layer.innerHTML = `
-    <div data-oil-reactor class="absolute flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-orange-300/70 bg-orange-950/95 text-orange-200 shadow-[0_0_45px_rgba(249,115,22,.65)]" style="left:${centerX}px;top:${centerY}px"><span class="material-symbols-outlined text-5xl">precision_manufacturing</span></div>
-    <img data-oil-fish src="${fish.image}" class="absolute h-20 w-20 object-contain drop-shadow-[0_0_14px_rgba(34,211,238,.65)]" style="left:${centerX - 145}px;top:${centerY - 40}px" alt="">
-    <div data-oil-result class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX}px;top:${centerY}px"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_24px_rgba(249,115,22,.9)]">oil_barrel</span><div class="mt-1 rounded-full border border-orange-300/40 bg-slate-950/90 px-4 py-1.5 text-sm font-black text-orange-100">魚油 +${formatNumber(oilGained)}</div><div class="mt-1 text-[9px] font-black text-slate-300">${fish.name} × ${formatNumber(amount)}</div><div class="mt-1 text-[9px] font-black tracking-widest text-orange-300/70">REFINING COMPLETE</div></div>`;
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,.24),transparent_48%)]"></div>
+    <div class="absolute left-1/2 top-[14%] -translate-x-1/2 text-center"><div class="text-[10px] font-black tracking-[.38em] text-orange-300/65">FISH OIL REFINERY</div><div class="mt-1 text-lg font-black text-orange-50">魚油を精製中</div><div data-oil-stage class="mt-2 rounded-full border border-orange-300/25 bg-orange-950/55 px-4 py-1 text-[10px] font-black text-orange-200">STEP 1　原料を投入</div></div>
+    <div data-oil-source class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center" style="left:${centerX - travel}px;top:${centerY}px"><div class="flex h-24 w-24 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-950/55 p-2 shadow-[0_0_30px_rgba(34,211,238,.2)]"><img src="${fish.image}" class="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(34,211,238,.65)]" alt=""></div><div class="mt-2 rounded-full bg-slate-950/90 px-3 py-1 text-[10px] font-black text-cyan-100">${fish.name} × ${formatNumber(amount)}</div></div>
+    <div data-oil-reactor class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-orange-300/70 bg-orange-950/95 text-orange-200 shadow-[0_0_55px_rgba(249,115,22,.75)]" style="left:${centerX}px;top:${centerY}px"><div class="absolute inset-2 rounded-full border border-dashed border-amber-200/50"></div><span class="material-symbols-outlined text-5xl">precision_manufacturing</span></div>
+    <div data-oil-result class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX + travel}px;top:${centerY}px"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_24px_rgba(249,115,22,.95)]">oil_barrel</span><div class="mt-1 whitespace-nowrap rounded-full border border-orange-300/45 bg-slate-950/95 px-4 py-1.5 text-sm font-black text-orange-100">魚油 +${formatNumber(oilGained)}</div></div>
+    <div data-oil-complete class="absolute bottom-[14%] left-1/2 -translate-x-1/2 translate-y-4 whitespace-nowrap text-center opacity-0"><div class="flex items-center justify-center gap-2 text-xl font-black text-white"><span class="material-symbols-outlined text-orange-300">task_alt</span>精製完了</div><div class="mt-1 text-[10px] font-black tracking-[.22em] text-orange-300/75">REFINING COMPLETE</div></div>`;
   document.body.appendChild(layer);
   const reactor = layer.querySelector('[data-oil-reactor]');
-  const fishImage = layer.querySelector('[data-oil-fish]');
+  const source = layer.querySelector('[data-oil-source]');
   const result = layer.querySelector('[data-oil-result]');
-  fishImage.animate(
-    [{ transform: 'translateX(0) rotate(0deg) scale(1)', opacity: 1 }, { transform: 'translateX(105px) rotate(180deg) scale(.7)', opacity: 1, offset: .65 }, { transform: 'translateX(105px) rotate(360deg) scale(0)', opacity: 0 }],
-    { duration: reducedMotion ? 230 : 620, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
+  const stage = layer.querySelector('[data-oil-stage]');
+  source.animate(
+    [{ transform: 'translate(-50%,-50%) scale(.8)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .2 }, { transform: `translate(calc(-50% + ${travel}px),-50%) scale(.15) rotate(18deg)`, opacity: 0 }],
+    { duration: reducedMotion ? 360 : 820, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }
   );
   reactor.animate(
-    [{ transform: 'translate(-50%,-50%) scale(.7) rotate(0deg)', filter: 'brightness(.8)' }, { transform: 'translate(-50%,-50%) scale(1.12) rotate(180deg)', filter: 'brightness(2)', offset: .62 }, { transform: 'translate(-50%,-50%) scale(.25) rotate(360deg)', filter: 'brightness(4)', opacity: 0 }],
-    { duration: reducedMotion ? 300 : 760, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
+    [{ transform: 'translate(-50%,-50%) scale(.82) rotate(0deg)', filter: 'brightness(.75)' }, { transform: 'translate(-50%,-50%) scale(1.08) rotate(240deg)', filter: 'brightness(2.3)', offset: .65 }, { transform: 'translate(-50%,-50%) scale(1) rotate(480deg)', filter: 'brightness(1.2)' }],
+    { duration: reducedMotion ? 520 : 1450, delay: reducedMotion ? 120 : 420, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
   );
-  for (let i = 0; i < (reducedMotion ? 5 : 20); i++) {
+  for (let i = 0; i < (reducedMotion ? 6 : 28); i++) {
     const spark = document.createElement('span');
-    spark.className = 'absolute h-1.5 w-1.5 rounded-full bg-orange-300 shadow-[0_0_8px_rgba(251,146,60,.9)]';
+    spark.className = `absolute rounded-full ${i % 4 === 0 ? 'h-2.5 w-2.5 bg-amber-100' : 'h-1.5 w-1.5 bg-orange-300'} shadow-[0_0_8px_rgba(251,146,60,.9)]`;
     spark.style.left = `${centerX}px`;
     spark.style.top = `${centerY}px`;
     layer.appendChild(spark);
@@ -116,15 +122,21 @@ function playFishOilCraftAnimation(fish, amount, oilGained, sourceModal) {
     const distance = 45 + Math.random() * 100;
     spark.animate(
       [{ transform: 'translate(-50%,-50%) scale(0)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px),calc(-50% + ${Math.sin(angle) * distance}px)) scale(0)`, opacity: 0 }],
-      { duration: reducedMotion ? 280 : 520 + Math.random() * 380, delay: reducedMotion ? 120 : 380 + Math.random() * 180, easing: 'ease-out', fill: 'forwards' }
+      { duration: reducedMotion ? 330 : 620 + Math.random() * 500, delay: reducedMotion ? 200 : 650 + Math.random() * 350, easing: 'ease-out', fill: 'forwards' }
     );
   }
   result.animate(
-    [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.14)', opacity: 1, offset: .58 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }],
-    { duration: reducedMotion ? 360 : 720, delay: reducedMotion ? 170 : 520, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
+    [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.16)', opacity: 1, offset: .62 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }],
+    { duration: reducedMotion ? 380 : 760, delay: reducedMotion ? 400 : 1260, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
   );
+  layer.querySelector('[data-oil-complete]').animate(
+    [{ transform: 'translate(-50%,16px)', opacity: 0 }, { transform: 'translate(-50%,0)', opacity: 1 }],
+    { duration: reducedMotion ? 300 : 520, delay: reducedMotion ? 520 : 1550, easing: 'ease-out', fill: 'forwards' }
+  );
+  setTimeout(() => { if (stage.isConnected) stage.textContent = 'STEP 2　高圧精製'; }, reducedMotion ? 220 : 620);
+  setTimeout(() => { if (stage.isConnected) stage.textContent = 'STEP 3　魚油を抽出'; }, reducedMotion ? 470 : 1380);
   return new Promise(resolve => setTimeout(() => {
-    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' }).onfinish = () => layer.remove();
+    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMotion ? 140 : 260, fill: 'forwards' }).onfinish = () => layer.remove();
     resolve();
   }, duration));
 }
@@ -136,6 +148,68 @@ function formatFuelDuration(amount) {
   if (!hours) return `${formatNumber(rest)}分`;
   if (!rest) return `${formatNumber(hours)}時間`;
   return `${formatNumber(hours)}時間 ${formatNumber(rest)}分`;
+}
+
+function playFishOilFuelAnimation(mine, amount, fuelUntil) {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = reducedMotion ? 950 : 2300;
+  const layer = document.createElement('div');
+  layer.className = 'fixed inset-0 z-[150] overflow-hidden bg-black/80 pointer-events-none backdrop-blur-sm';
+  layer.setAttribute('role', 'status');
+  layer.setAttribute('aria-live', 'polite');
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  layer.innerHTML = `
+    <img src="${mine.image}" class="absolute inset-0 h-full w-full object-cover opacity-20" alt="">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,.3),transparent_52%)]"></div>
+    <div class="absolute left-1/2 top-[12%] -translate-x-1/2 whitespace-nowrap text-center"><div class="text-[10px] font-black tracking-[.35em] text-orange-300/65">FUEL INJECTION</div><div class="mt-1 text-lg font-black text-orange-50">${mine.name}</div></div>
+    <div data-fuel-barrel class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center" style="left:${centerX}px;top:${centerY - 125}px"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_28px_rgba(249,115,22,.9)]">oil_barrel</span><span class="mt-1 rounded-full border border-orange-300/35 bg-slate-950/95 px-4 py-1 text-xs font-black text-orange-100">魚油 × ${formatNumber(amount)}</span></div>
+    <div data-fuel-machine class="absolute flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-slate-500/60 bg-slate-950/95 text-slate-500 shadow-[0_0_30px_rgba(0,0,0,.8)]" style="left:${centerX}px;top:${centerY + 35}px"><div class="absolute inset-3 rounded-full border border-dashed border-slate-500/40"></div><span class="material-symbols-outlined text-6xl">precision_manufacturing</span></div>
+    <div data-fuel-ignition class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-center opacity-0" style="top:${centerY + 125}px"><div class="inline-flex items-center gap-2 rounded-full border border-orange-300/50 bg-orange-950/90 px-5 py-2 text-xl font-black text-white shadow-[0_0_38px_rgba(249,115,22,.55)]"><span class="material-symbols-outlined text-orange-300">bolt</span>採掘速度 <span class="text-3xl text-orange-300">×2</span></div><div class="mt-3 text-sm font-black text-orange-100">2倍速を ${formatFuelDuration(amount)} 追加</div><div class="mt-1 font-mono text-xs font-black text-slate-300">BOOST 残り ${formatFuelTime(fuelUntil)}</div></div>`;
+  document.body.appendChild(layer);
+  const barrel = layer.querySelector('[data-fuel-barrel]');
+  const machine = layer.querySelector('[data-fuel-machine]');
+  const ignition = layer.querySelector('[data-fuel-ignition]');
+  barrel.animate(
+    [{ transform: 'translate(-50%,-70%) scale(.75)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: .22 }, { transform: 'translate(-50%,42px) scale(.45)', opacity: 0 }],
+    { duration: reducedMotion ? 420 : 900, easing: 'cubic-bezier(.25,.8,.25,1)', fill: 'forwards' }
+  );
+  machine.animate(
+    [{ transform: 'translate(-50%,-50%) scale(.88) rotate(0deg)', color: '#64748b', borderColor: 'rgba(100,116,139,.6)' }, { transform: 'translate(-50%,-50%) scale(1.14) rotate(240deg)', color: '#fdba74', borderColor: 'rgba(253,186,116,.95)', filter: 'brightness(2.2)', offset: .58 }, { transform: 'translate(-50%,-50%) scale(1) rotate(720deg)', color: '#fb923c', borderColor: 'rgba(251,146,60,.9)', filter: 'brightness(1.35)' }],
+    { duration: reducedMotion ? 650 : 1450, delay: reducedMotion ? 180 : 520, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
+  );
+  for (let i = 0; i < (reducedMotion ? 4 : 14); i++) {
+    const drop = document.createElement('span');
+    drop.className = 'absolute h-4 w-2 rounded-full bg-orange-300 shadow-[0_0_12px_rgba(251,146,60,.95)]';
+    drop.style.left = `${centerX + (Math.random() - .5) * 32}px`;
+    drop.style.top = `${centerY - 82}px`;
+    layer.appendChild(drop);
+    drop.animate(
+      [{ transform: 'translateY(-18px) scale(.3)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: 'translateY(92px) scale(.75)', opacity: 0 }],
+      { duration: reducedMotion ? 260 : 460 + Math.random() * 240, delay: reducedMotion ? 170 : 350 + i * 42, easing: 'cubic-bezier(.4,0,.8,.4)', fill: 'forwards' }
+    );
+  }
+  for (let i = 0; i < (reducedMotion ? 6 : 24); i++) {
+    const speedLine = document.createElement('span');
+    speedLine.className = 'absolute h-0.5 rounded-full bg-gradient-to-r from-transparent via-orange-300 to-transparent opacity-0';
+    speedLine.style.width = `${45 + Math.random() * 95}px`;
+    speedLine.style.left = `${centerX}px`;
+    speedLine.style.top = `${centerY + 35 + (Math.random() - .5) * 135}px`;
+    layer.appendChild(speedLine);
+    const direction = i % 2 ? 1 : -1;
+    speedLine.animate(
+      [{ transform: `translateX(${direction * -35}px) scaleX(.2)`, opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translateX(${direction * 190}px) scaleX(1.3)`, opacity: 0 }],
+      { duration: reducedMotion ? 280 : 430 + Math.random() * 300, delay: reducedMotion ? 480 : 950 + Math.random() * 500, easing: 'ease-out', fill: 'forwards' }
+    );
+  }
+  ignition.animate(
+    [{ transform: 'translate(-50%,18px) scale(.55)', opacity: 0 }, { transform: 'translate(-50%,-8px) scale(1.08)', opacity: 1, offset: .7 }, { transform: 'translate(-50%,0) scale(1)', opacity: 1 }],
+    { duration: reducedMotion ? 420 : 760, delay: reducedMotion ? 480 : 1300, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
+  );
+  return new Promise(resolve => setTimeout(() => {
+    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMotion ? 150 : 280, fill: 'forwards' }).onfinish = () => layer.remove();
+    resolve();
+  }, duration));
 }
 
 async function showFishOilFuelModal(mine, initialState, initialFishOil, onUpdate) {
@@ -162,8 +236,8 @@ async function showFishOilFuelModal(mine, initialState, initialFishOil, onUpdate
       ${lastAdded ? `<div class="border-b border-orange-400/20 bg-orange-950/45 px-4 py-2.5 text-[10px] text-orange-100"><span class="material-symbols-outlined mr-1 align-middle text-base text-orange-300">task_alt</span>燃料時間を <span class="font-black">${formatFuelDuration(lastAdded)}</span> 追加しました</div>` : ''}
       <div class="space-y-3 p-4"><div class="grid grid-cols-2 gap-2 text-center"><div class="rounded-xl border border-orange-400/15 bg-orange-950/20 p-2.5"><div class="text-[8px] text-slate-500">所持魚油</div><div class="mt-0.5 text-sm font-black text-orange-300">${formatNumber(fishOil)}個</div></div><div class="rounded-xl border border-white/10 bg-black/20 p-2.5"><div class="text-[8px] text-slate-500">現在の稼働残り</div><div class="mt-0.5 font-mono text-sm font-black text-white">${formatFuelTime(fuelUntil)}</div></div></div>
         <div class="rounded-2xl border border-slate-700/70 bg-slate-950/55 p-3"><div class="mb-2 flex items-center justify-between"><span class="text-[10px] font-black text-slate-300">投入する魚油</span><span class="text-[9px] text-slate-500">1個 = 1分</span></div><div class="grid grid-cols-[42px_1fr_42px_64px] gap-1.5"><button data-step="-1" ${fishOil < 1 ? 'disabled' : ''} class="h-11 rounded-xl border border-slate-700 bg-slate-800 text-xl font-black text-slate-300 disabled:opacity-30">−</button><input data-amount type="number" inputmode="numeric" min="1" max="${Math.max(1, fishOil)}" value="${safeAmount || 1}" ${fishOil < 1 ? 'disabled' : ''} class="h-11 min-w-0 rounded-xl border border-orange-400/30 bg-slate-900 px-2 text-center text-base font-black text-white outline-none disabled:opacity-30"><button data-step="1" ${fishOil < 1 ? 'disabled' : ''} class="h-11 rounded-xl border border-slate-700 bg-slate-800 text-xl font-black text-slate-300 disabled:opacity-30">＋</button><button data-max ${fishOil < 1 ? 'disabled' : ''} class="h-11 rounded-xl border border-orange-400/25 bg-orange-950/40 text-[10px] font-black text-orange-300 disabled:opacity-30">MAX</button></div><div class="mt-2 grid grid-cols-3 gap-1.5">${[1, 10, 60].map(value => `<button data-preset="${value}" ${fishOil < 1 ? 'disabled' : ''} class="rounded-lg border border-slate-700 bg-slate-900 py-1.5 text-[9px] font-black text-slate-400 disabled:opacity-30">${value === 60 ? '1時間' : `${value}個`}</button>`).join('')}</div></div>
-        <div class="rounded-2xl border border-orange-400/20 bg-gradient-to-r from-orange-950/35 to-amber-950/20 p-3"><div class="flex items-center justify-between text-[10px]"><span class="text-slate-400">追加される時間</span><span data-added-time class="font-black text-orange-300">+${formatFuelDuration(safeAmount)}</span></div><div class="mt-2 flex items-center justify-between border-t border-white/5 pt-2 text-[10px]"><span class="text-slate-400">投入後の稼働残り</span><span data-after-time class="font-mono font-black text-white">${formatFuelTime(projectedUntil)}</span></div></div>
-        <button data-submit ${fishOil < 1 ? 'disabled' : ''} class="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-orange-300/35 bg-gradient-to-r from-orange-700 to-amber-600 text-xs font-black text-white shadow-[0_0_20px_rgba(249,115,22,.2)] disabled:cursor-not-allowed disabled:opacity-35"><span class="material-symbols-outlined">local_fire_department</span><span data-submit-label>${fishOil < 1 ? '魚油がありません' : `${formatNumber(safeAmount)}個の燃料を投入`}</span></button></div>`;
+        <div class="overflow-hidden rounded-2xl border border-orange-300/35 bg-gradient-to-r from-orange-950/55 to-amber-950/35"><div class="flex items-center justify-between border-b border-orange-300/15 px-3 py-2"><div><div class="text-[8px] font-black tracking-wider text-orange-300/65">投入後の採掘速度</div><div class="mt-0.5 text-[10px] font-black text-orange-100">採掘機が高速モードへ移行</div></div><div class="flex items-center gap-1 rounded-full border border-orange-300/50 bg-orange-500/20 px-3 py-1 text-sm font-black text-white"><span class="material-symbols-outlined text-base text-orange-300">bolt</span>速度 <span class="text-xl text-orange-300">×2</span></div></div><div class="p-3"><div class="flex items-center justify-between text-[10px]"><span class="text-slate-400">2倍速になる時間</span><span data-added-time class="font-black text-orange-300">+${formatFuelDuration(safeAmount)}</span></div><div class="mt-2 flex items-center justify-between border-t border-white/5 pt-2 text-[10px]"><span class="text-slate-400">投入後のBOOST残り</span><span data-after-time class="font-mono font-black text-white">${formatFuelTime(projectedUntil)}</span></div></div></div>
+        <button data-submit ${fishOil < 1 ? 'disabled' : ''} class="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-orange-300/45 bg-gradient-to-r from-orange-700 to-amber-500 text-xs font-black text-white shadow-[0_0_24px_rgba(249,115,22,.28)] disabled:cursor-not-allowed disabled:opacity-35"><span class="material-symbols-outlined">local_fire_department</span><span data-submit-label>${fishOil < 1 ? '魚油がありません' : `${formatNumber(safeAmount)}個を投入して2倍速にする`}</span></button></div>`;
     modal.querySelector('[data-close]').onclick = close;
     const input = modal.querySelector('[data-amount]');
     const clampAmount = value => Math.max(1, Math.min(fishOil, Math.floor(Number(value) || 1)));
@@ -175,7 +249,7 @@ async function showFishOilFuelModal(mine, initialState, initialFishOil, onUpdate
       const label = modal.querySelector('[data-submit-label]');
       if (added) added.textContent = `+${formatFuelDuration(amount)}`;
       if (afterTime) afterTime.textContent = formatFuelTime(after);
-      if (label) label.textContent = `${formatNumber(amount)}個の燃料を投入`;
+      if (label) label.textContent = `${formatNumber(amount)}個を投入して2倍速にする`;
     };
     const updateAmount = value => { amount = clampAmount(value); render(); };
     input?.addEventListener('input', () => updatePreview(input.value));
@@ -193,8 +267,9 @@ async function showFishOilFuelModal(mine, initialState, initialFishOil, onUpdate
         fuelUntil = result.fuelUntil;
         amount = Math.min(used, fishOil);
         lastAdded = used;
+        await playFishOilFuelAnimation(mine, used, result.fuelUntil);
         await onUpdate?.(result);
-        render();
+        if (overlay.isConnected) render();
       } catch (error) { alert(error.message || '燃料投入に失敗しました。'); }
       finally { busy = false; }
     });
@@ -281,13 +356,53 @@ function formatStorageRemaining(state, stats, now = Date.now()) {
   const seconds = Math.ceil(remainingMs / 1000);
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor(seconds % 3600 / 60);
-  return `満杯まで ${formatNumber(hours)}:${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  return `${formatNumber(hours)}:${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 function formatFuelTime(fuelUntil, now = Date.now()) {
   const seconds = Math.max(0, Math.ceil(((Number(fuelUntil) || 0) - now) / 1000));
   const minutes = Math.floor(seconds / 60);
   return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function updateMineBoostPresentation(card, state, stats, now = Date.now()) {
+  const boosted = (Number(state.fuelUntil) || 0) > now;
+  const panel = card.querySelector('[data-fuel-panel]');
+  const badge = card.querySelector('[data-boost-badge]');
+  const fuelTime = card.querySelector('[data-fuel-time]');
+  const rate = card.querySelector('[data-current-rate]');
+  const rateLabel = card.querySelector('[data-current-rate-label]');
+  const boostCopy = card.querySelector('[data-boost-copy]');
+  const storageNote = card.querySelector('[data-storage-speed-note]');
+  const flow = card.querySelector('[data-turbo-flow]');
+  if (panel) {
+    panel.style.borderColor = boosted ? 'rgba(251, 146, 60, .82)' : MINE_THEME.border;
+    panel.style.background = boosted
+      ? 'radial-gradient(circle at 20% 0%, rgba(249,115,22,.24), transparent 48%), linear-gradient(135deg, rgba(67,28,7,.92), rgba(18,18,16,.96))'
+      : MINE_THEME.panel;
+    panel.style.boxShadow = boosted ? '0 0 28px rgba(249,115,22,.3), inset 0 0 22px rgba(249,115,22,.08)' : '';
+  }
+  if (badge) {
+    badge.className = `inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-black ${boosted ? 'border-orange-300/60 bg-orange-500/20 text-orange-200' : 'border-slate-600 bg-slate-900/70 text-slate-500'}`;
+    badge.innerHTML = boosted
+      ? '<span class="material-symbols-outlined text-sm">bolt</span>2倍速 稼働中'
+      : '<span class="material-symbols-outlined text-sm">speed</span>通常速度';
+  }
+  if (fuelTime) {
+    fuelTime.textContent = formatFuelTime(state.fuelUntil, now);
+    fuelTime.className = `font-mono text-lg font-black tabular-nums ${boosted ? 'text-orange-200' : 'text-slate-500'}`;
+  }
+  if (rate) {
+    rate.textContent = `${formatMineAmount(stats.goldPerSecond * (boosted ? FISH_OIL_SPEED_MULTIPLIER : 1))} G / 秒`;
+    rate.className = `text-sm font-black tabular-nums ${boosted ? 'text-orange-200' : 'text-stone-300'}`;
+  }
+  if (rateLabel) rateLabel.textContent = boosted ? `通常 ${formatMineAmount(stats.goldPerSecond)} → 2倍` : '現在の採掘速度';
+  if (boostCopy) boostCopy.textContent = boosted ? '魚油ブーストで採掘機が高速回転しています' : '魚油を投入すると、採掘速度が2倍になります';
+  if (storageNote) storageNote.textContent = boosted ? '2倍速を反映した予測時間' : '現在の速度から計算した予測時間';
+  if (flow) {
+    flow.style.opacity = boosted ? '1' : '0.16';
+    flow.querySelectorAll('[data-turbo-line]').forEach(line => { line.style.animationPlayState = boosted ? 'running' : 'paused'; });
+  }
 }
 
 function showMineMessage(container, message, isError = false) {
@@ -476,6 +591,13 @@ export async function renderMineTab() {
 
   const render = () => {
     container.innerHTML = `
+      <style>
+        @keyframes mine-turbo-flow { from { transform: translateX(-140%); opacity: 0; } 25% { opacity: 1; } to { transform: translateX(320%); opacity: 0; } }
+        [data-turbo-line] { animation: mine-turbo-flow .85s linear infinite; }
+        [data-turbo-line]:nth-child(2) { animation-delay: -.28s; }
+        [data-turbo-line]:nth-child(3) { animation-delay: -.56s; }
+        @media (prefers-reduced-motion: reduce) { [data-turbo-line] { animation: none !important; } }
+      </style>
       <div class="mx-auto flex min-h-full max-w-xl flex-col">
         <div data-theme-panel class="mb-3 overflow-hidden rounded-2xl border p-4 shadow-xl">
           <div class="flex items-center gap-3">
@@ -505,6 +627,7 @@ export async function renderMineTab() {
     const card = createMineCard(currentMine);
     list.appendChild(card);
     applyMineTheme(container, card);
+    if (mineData[currentMine.id]?.unlocked) updateMineBoostPresentation(card, mineData[currentMine.id], getMineStats(currentMine, mineData[currentMine.id]));
 
     const changePage = (page) => {
       if (page < 0 || page >= MINES.length || page === currentPage) return;
@@ -542,15 +665,23 @@ export async function renderMineTab() {
       </div>
       ${state.unlocked ? `
         <div class="space-y-3 p-3">
-          <div data-theme-panel class="rounded-xl border p-2.5">
+          <div data-theme-panel class="rounded-xl border p-3">
             <div class="mb-1.5 flex items-center justify-between"><span class="text-[10px] font-bold text-stone-400">蓄積Gold</span><span data-theme-text class="font-mono text-sm font-black" data-stored>${formatMineAmount(state.storedGold, 2)} / ${formatMineAmount(stats.maxStoredGold, 2)}</span></div>
             <div data-theme-track class="h-2 overflow-hidden rounded-full border" role="progressbar" aria-label="貯蔵庫の使用量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${storageProgress.toFixed(1)}"><div data-theme-bar data-storage-progress class="h-full transition-all" style="width:${storageProgress}%"></div></div>
-            <div class="mt-2 flex items-center justify-between gap-2 text-[9px] text-stone-500"><span>${formatMineAmount(stats.goldPerSecond)} G / 秒</span><span data-storage-time class="font-mono tabular-nums">${formatStorageRemaining(state, stats)}</span></div>
+            <div class="mt-3 grid grid-cols-[1fr_auto] items-stretch gap-2">
+              <div class="flex min-w-0 flex-col justify-center rounded-xl border border-white/10 bg-black/25 px-3 py-2"><span data-current-rate-label class="text-[8px] font-black tracking-wider text-stone-500">現在の採掘速度</span><span data-current-rate class="mt-0.5 text-sm font-black tabular-nums text-stone-300">${formatMineAmount(stats.goldPerSecond)} G / 秒</span></div>
+              <div data-storage-countdown class="min-w-[138px] rounded-xl border border-amber-300/25 bg-gradient-to-br from-amber-950/55 to-black/35 px-3 py-2 text-right shadow-[inset_0_0_18px_rgba(245,158,11,.08)]"><div class="flex items-center justify-end gap-1 text-[9px] font-black tracking-wider text-amber-200/75"><span class="material-symbols-outlined text-sm">hourglass_top</span><span data-storage-label>${storageProgress >= 100 ? '貯蔵状態' : '満杯まで'}</span></div><div data-storage-time class="mt-0.5 font-mono text-lg font-black leading-none tabular-nums text-amber-100">${formatStorageRemaining(state, stats)}</div></div>
+            </div>
+            <div data-storage-speed-note class="mt-1.5 text-right text-[8px] font-bold text-stone-500">現在の速度から計算した予測時間</div>
             <button data-claim></button>
           </div>
-          <div data-theme-panel class="rounded-xl border p-2.5">
-            <div class="flex items-center gap-2"><span class="material-symbols-outlined text-orange-300">oil_barrel</span><div class="min-w-0 flex-1"><div class="text-[10px] font-black text-orange-200">魚油燃料</div><div class="text-[9px] text-slate-400">1個で1分間、採掘スピード2倍</div></div><span class="text-xs font-black text-orange-300">所持 ${formatNumber(currentFishOil)}</span></div>
-            <div class="mt-2 flex items-center gap-2"><div class="flex-1 rounded-lg border border-orange-500/20 bg-orange-950/20 px-2 py-2 text-[10px] text-slate-300">稼働残り <span data-fuel-time class="font-mono font-black ${state.fuelUntil > Date.now() ? 'text-orange-300' : 'text-slate-500'}">${formatFuelTime(state.fuelUntil)}</span></div><button data-fuel-open class="flex items-center gap-1 rounded-lg border border-orange-400/40 bg-gradient-to-r from-orange-700 to-amber-600 px-3 py-2 text-[10px] font-black text-white"><span class="material-symbols-outlined text-sm">tune</span>数量を選んで投入</button></div>
+          <div data-theme-panel data-fuel-panel class="overflow-hidden rounded-xl border p-3 transition-all">
+            <div class="flex items-start gap-2"><span class="material-symbols-outlined mt-0.5 text-2xl text-orange-300">oil_barrel</span><div class="min-w-0 flex-1"><div class="text-[11px] font-black text-orange-100">魚油ブースト</div><div class="mt-0.5 text-[9px] text-slate-400">魚油1個で、1分間だけ採掘速度が2倍</div></div><span class="shrink-0 text-xs font-black text-orange-300">所持 ${formatNumber(currentFishOil)}</span></div>
+            <div class="relative mt-3 overflow-hidden rounded-xl border border-orange-400/20 bg-black/35 p-3">
+              <div data-turbo-flow class="pointer-events-none absolute inset-0 overflow-hidden transition-opacity"><span data-turbo-line class="absolute left-0 top-[28%] h-px w-1/2 bg-gradient-to-r from-transparent via-orange-300 to-transparent"></span><span data-turbo-line class="absolute left-0 top-1/2 h-px w-2/3 bg-gradient-to-r from-transparent via-amber-100 to-transparent"></span><span data-turbo-line class="absolute left-0 top-[72%] h-px w-1/2 bg-gradient-to-r from-transparent via-orange-300 to-transparent"></span></div>
+              <div class="relative flex items-center justify-between gap-3"><div><span data-boost-badge></span><div data-boost-copy class="mt-1.5 text-[9px] font-bold text-slate-400">魚油を投入すると、採掘速度が2倍になります</div></div><div class="shrink-0 text-right"><div class="text-[8px] font-black tracking-wider text-slate-500">BOOST 残り</div><div data-fuel-time class="font-mono text-lg font-black tabular-nums">${formatFuelTime(state.fuelUntil)}</div></div></div>
+            </div>
+            <button data-fuel-open class="mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-orange-300/45 bg-gradient-to-r from-orange-700 to-amber-500 text-[11px] font-black text-white shadow-[0_0_18px_rgba(249,115,22,.18)] active:scale-[.99]"><span class="material-symbols-outlined text-lg">local_fire_department</span>魚油を投入して2倍速にする</button>
           </div>
           <div class="space-y-2">${MINE_UPGRADE_TYPES.map(type => createUpgradeRow(mine, state, type)).join('')}</div>
         </div>` : `
@@ -694,8 +825,8 @@ export async function renderMineTab() {
       const stored = card.querySelector('[data-stored]');
       const storageProgress = card.querySelector('[data-storage-progress]');
       const storageTime = card.querySelector('[data-storage-time]');
+      const storageLabel = card.querySelector('[data-storage-label]');
       const claim = card.querySelector('[data-claim]');
-      const fuelTime = card.querySelector('[data-fuel-time]');
       if (stored) stored.textContent = `${formatMineAmount(state.storedGold, 2)} / ${formatMineAmount(stats.maxStoredGold, 2)}`;
       if (storageProgress) {
         const percentage = getStorageProgress(state, stats);
@@ -703,11 +834,9 @@ export async function renderMineTab() {
         storageProgress.parentElement?.setAttribute('aria-valuenow', percentage.toFixed(1));
       }
       if (storageTime) storageTime.textContent = formatStorageRemaining(state, stats, now);
+      if (storageLabel) storageLabel.textContent = getStorageProgress(state, stats) >= 100 ? '貯蔵状態' : '満杯まで';
       updateClaimButtonAppearance(claim, state.storedGold >= 1);
-      if (fuelTime) {
-        fuelTime.textContent = formatFuelTime(state.fuelUntil, now);
-        fuelTime.className = `font-mono font-black ${state.fuelUntil > now ? 'text-orange-300' : 'text-slate-500'}`;
-      }
+      updateMineBoostPresentation(card, state, stats, now);
     }
     if (notificationStateChanged) {
       GameDB.setGameState('mine_data', mineData).catch(error => console.warn('[Mine] Failed to save notification state:', error));
