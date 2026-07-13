@@ -56,28 +56,26 @@ export async function renderSpecialQuestTab() {
           }).join('')}
         </nav>
 
-        <div data-quest-list class="flex flex-col gap-2.5">
+        <div data-quest-list class="flex flex-col gap-1.5">
           ${pageQuests.length ? pageQuests.map(quest => {
             const state = SpecialQuestManager.getState(quest.id);
             const current = Math.min(SpecialQuestManager.getCurrentValue(quest), quest.target);
             const progress = quest.target ? Math.min(100, (current / quest.target) * 100) : 0;
-            const status = state.claimed ? '受取済み' : state.completed ? '達成' : '進行中';
             return `
-              <article class="rounded-2xl border ${state.completed ? 'border-fuchsia-400/30 bg-fuchsia-950/15' : 'border-slate-800 bg-slate-900/75'} p-3">
-                <div class="flex items-start gap-3">
-                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${state.completed ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-800 text-slate-400'}"><span class="material-symbols-outlined text-xl">${state.completed ? 'check' : quest.icon}</span></div>
+              <article title="${quest.description}" class="rounded-xl border ${state.completed ? 'border-fuchsia-400/30 bg-fuchsia-950/15' : 'border-slate-800 bg-slate-900/75'} p-2">
+                <div class="flex items-center gap-2">
+                  <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${state.completed ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-800 text-slate-400'}"><span class="material-symbols-outlined text-[17px]">${state.completed ? 'check' : quest.icon}</span></div>
                   <div class="min-w-0 flex-1">
-                    <div class="flex items-start justify-between gap-2"><h3 class="text-xs font-black leading-relaxed text-slate-100">${quest.title}</h3><span class="shrink-0 rounded-full px-2 py-1 text-[9px] font-black ${state.claimed ? 'bg-slate-800 text-slate-500' : state.completed ? 'bg-emerald-400/15 text-emerald-300' : 'bg-slate-800 text-slate-500'}">${status}</span></div>
-                    <p class="mt-0.5 text-[10px] leading-relaxed text-slate-500">${quest.description}</p>
-                    <div class="mt-2 flex items-center gap-2">
+                    <h3 class="truncate text-[11px] font-black leading-tight ${state.completed ? 'text-emerald-100' : 'text-slate-100'}">${quest.title}</h3>
+                    <div class="mt-1.5 flex items-center gap-1.5">
                       <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-950"><div class="h-full rounded-full ${state.completed ? 'bg-emerald-400' : 'bg-fuchsia-500'}" style="width:${progress}%"></div></div>
-                      <span class="min-w-[54px] text-right font-mono text-[9px] font-bold tabular-nums ${state.completed ? 'text-emerald-300' : 'text-slate-500'}">${current} / ${quest.target}</span>
+                      <span class="min-w-[42px] text-right font-mono text-[8px] font-bold tabular-nums ${state.completed ? 'text-emerald-300' : 'text-slate-500'}">${current}/${quest.target}</span>
                     </div>
                   </div>
-                </div>
-                <div class="mt-3 flex items-center gap-2 border-t border-white/[.06] pt-2.5">
-                  <div class="flex min-w-0 flex-1 items-center gap-1.5 text-[10px] font-black text-fuchsia-200"><span class="material-symbols-outlined text-base">diamond</span>Prism × ${quest.reward}</div>
-                  <button data-claim-special="${quest.id}" class="rounded-lg border px-3 py-2 text-[10px] font-black transition ${state.claimed ? 'cursor-default border-slate-800 bg-slate-950/50 text-slate-600' : state.completed ? 'border-fuchsia-300/30 bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white active:scale-[.97]' : 'cursor-not-allowed border-slate-800 bg-slate-950/60 text-slate-600'}" ${!state.completed || state.claimed ? 'disabled' : ''}>${state.claimed ? '受取済み' : state.completed ? '受け取る' : '未達成'}</button>
+                  <div class="flex w-[66px] shrink-0 flex-col items-stretch gap-1">
+                    <div class="flex items-center justify-center gap-0.5 text-[8px] font-black text-fuchsia-200"><span class="material-symbols-outlined text-[12px]">diamond</span>Prism × ${quest.reward}</div>
+                    <button data-claim-special="${quest.id}" class="h-7 rounded-md border px-1 text-[9px] font-black transition ${state.completed ? 'border-fuchsia-300/30 bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white active:scale-[.97]' : 'cursor-not-allowed border-slate-800 bg-slate-950/60 text-slate-600'}" ${!state.completed ? 'disabled' : ''}>${state.completed ? '受け取る' : '進行中'}</button>
+                  </div>
                 </div>
               </article>`;
           }).join('') : `<div class="flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/45 px-4 text-center"><span class="material-symbols-outlined text-3xl text-slate-600">task_alt</span><p class="mt-2 text-xs font-black text-slate-400">表示するクエストはありません</p><p class="mt-1 text-[10px] text-slate-600">新しい目標が解放されるとここに表示されます</p></div>`}
