@@ -28,6 +28,8 @@ import { loadTreasureLevels } from './data/treasure-manager.js';
 import { SpecialQuestManager } from './data/special-quest-manager.js';
 import { DailyLoginManager } from './data/daily-login-manager.js';
 import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotificationsEnabled } from './utils/game-notifications.js';
+import { APP_VERSION } from './definitions/update-log.js';
+import { checkForAvailableUpdate, showUpdateLogModal } from './components/update-log-modal.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -60,6 +62,9 @@ class App {
     try {
       await GameDB.open();
       console.log('[App] Database initialized.');
+
+      // セーブ内の表示用バージョンも、現在実行中のアプリと同期する。
+      await GameDB.setGameState('version', APP_VERSION);
 
       const dailyLogin = await DailyLoginManager.claim();
       dailyLoginAwarded = dailyLogin.awarded;
@@ -135,11 +140,11 @@ class App {
     }
 
     // ── 1. Read game state from DB ──
-    let gameState = { location: 'ホームタウン', version: '0.1.1', gold: 0, prism: 0 };
+    let gameState = { location: 'ホームタウン', version: APP_VERSION, gold: 0, prism: 0 };
     try {
       if (GameDB.db) {
         gameState.location = 'ホームタウン';
-        gameState.version  = await GameDB.getGameState('version')  || '0.1.1';
+        gameState.version  = APP_VERSION;
         gameState.gold     = await GameDB.getGameState('gold')      ?? 0;
         gameState.prism    = await GameDB.getGameState('prism')     ?? 0;
       }
@@ -198,8 +203,8 @@ class App {
       }
     });
 
-    // ── 6. Settings Button (Data Reset) ──
-    this.initSettingsButton();
+    // ── 6. Header Buttons ──
+    this.initHeaderButtons();
 
     // ── 7. Start ──
     this.router.start();
@@ -210,18 +215,30 @@ class App {
   }
 
   /**
-   * Bind the settings button to open a settings modal.
+   * Bind the settings, Update log, and refresh controls in the global header.
    */
-  initSettingsButton() {
+  initHeaderButtons() {
     initGameNotificationSound();
     const btn = document.getElementById('btn-setting');
     if (btn) {
       btn.addEventListener('click', () => this.showSettingsModal());
     }
 
+    const updateLogBtn = document.getElementById('btn-update-log');
+    if (updateLogBtn) {
+      updateLogBtn.addEventListener('click', showUpdateLogModal);
+    }
+
     const refreshBtn = document.getElementById('btn-hard-refresh');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true;
+        refreshBtn.setAttribute('aria-busy', 'true');
+        const icon = refreshBtn.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.textContent = 'progress_activity';
+          icon.classList.add('animate-spin');
+        }
         if ('caches' in window) {
           const keys = await caches.keys();
           await Promise.all(keys.map(key => caches.delete(key)));
@@ -232,7 +249,23 @@ class App {
             await reg.unregister();
           }
         }
-        window.location.reload();
+        const updateUrl = new URL(window.location.href);
+        updateUrl.searchParams.set('updatedAt', Date.now().toString());
+        window.location.replace(updateUrl.toString());
+      });
+
+      const updateRefreshState = async () => {
+        const result = await checkForAvailableUpdate();
+        if (!refreshBtn.isConnected) return;
+        refreshBtn.classList.toggle('is-update-available', result.available);
+        refreshBtn.dataset.latestVersion = result.latestVersion;
+        refreshBtn.title = result.available ? `v${result.latestVersion}へ更新できます` : `最新版です（v${APP_VERSION}）`;
+        refreshBtn.setAttribute('aria-label', result.available ? `新しいUpdate v${result.latestVersion}を適用` : `最新版です。現在のバージョンはv${APP_VERSION}`);
+      };
+      updateRefreshState();
+      window.setInterval(updateRefreshState, 5 * 60 * 1000);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) updateRefreshState();
       });
     }
   }
@@ -271,7 +304,6 @@ class App {
               </div>
               <div>
                 <span class="text-sm font-bold text-gray-100 tracking-wide">設定</span>
-                <span class="text-[11px] text-blue-300 ml-2 font-mono bg-blue-900/50 border border-blue-700/50 px-2 py-0.5 rounded-md">v0048</span>
               </div>
             </div>
             <button id="settings-close"

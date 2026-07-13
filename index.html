@@ -135,6 +135,30 @@
       animation: rainbow-hue 2s linear infinite;
     }
 
+    @keyframes update-ready-glow {
+      0%, 100% { box-shadow: 0 0 8px rgba(250, 204, 21, .45), 0 0 18px rgba(34, 211, 238, .18); filter: brightness(1); }
+      50% { box-shadow: 0 0 14px rgba(250, 204, 21, .9), 0 0 28px rgba(34, 211, 238, .45); filter: brightness(1.28); }
+    }
+    #btn-hard-refresh.is-update-available {
+      position: relative;
+      border-color: rgba(253, 224, 71, .9);
+      background: linear-gradient(135deg, rgba(5, 150, 105, .95), rgba(8, 145, 178, .95));
+      color: white;
+      animation: update-ready-glow 1.35s ease-in-out infinite;
+    }
+    #btn-hard-refresh.is-update-available::after {
+      content: '';
+      position: absolute;
+      right: -3px;
+      top: -3px;
+      width: 7px;
+      height: 7px;
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 999px;
+      background: #fde047;
+      box-shadow: 0 0 8px #fde047;
+    }
+
     /* ─── Base Styles ───────────────────────────────── */
     * {
       -webkit-tap-highlight-color: transparent;
@@ -541,6 +565,7 @@
       .animate-zzz { animation: none !important; }
       .animate-wakeup-flash { animation: none !important; }
       .settings-section { animation: none !important; }
+      #btn-hard-refresh.is-update-available { animation: none !important; }
     }
   </style>
 
