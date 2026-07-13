@@ -260,9 +260,12 @@ class SpecialQuestManagerClass {
 
   getQuests(category = 'all') {
     return SPECIAL_QUESTS.filter(quest => {
+      const state = this.getState(quest.id);
       const matchesCategory = category === 'all' || quest.category === category;
       const prerequisiteCompleted = !quest.prerequisiteId || this.getState(quest.prerequisiteId).completed;
-      return matchesCategory && prerequisiteCompleted;
+      // Keep achieved quests visible until their Prism has been received, then
+      // remove them from every list and page count.
+      return matchesCategory && prerequisiteCompleted && !state.claimed;
     });
   }
 

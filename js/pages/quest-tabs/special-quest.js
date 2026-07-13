@@ -57,7 +57,7 @@ export async function renderSpecialQuestTab() {
         </nav>
 
         <div data-quest-list class="flex flex-col gap-2.5">
-          ${pageQuests.map(quest => {
+          ${pageQuests.length ? pageQuests.map(quest => {
             const state = SpecialQuestManager.getState(quest.id);
             const current = Math.min(SpecialQuestManager.getCurrentValue(quest), quest.target);
             const progress = quest.target ? Math.min(100, (current / quest.target) * 100) : 0;
@@ -80,7 +80,7 @@ export async function renderSpecialQuestTab() {
                   <button data-claim-special="${quest.id}" class="rounded-lg border px-3 py-2 text-[10px] font-black transition ${state.claimed ? 'cursor-default border-slate-800 bg-slate-950/50 text-slate-600' : state.completed ? 'border-fuchsia-300/30 bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white active:scale-[.97]' : 'cursor-not-allowed border-slate-800 bg-slate-950/60 text-slate-600'}" ${!state.completed || state.claimed ? 'disabled' : ''}>${state.claimed ? '受取済み' : state.completed ? '受け取る' : '未達成'}</button>
                 </div>
               </article>`;
-          }).join('')}
+          }).join('') : `<div class="flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/45 px-4 text-center"><span class="material-symbols-outlined text-3xl text-slate-600">task_alt</span><p class="mt-2 text-xs font-black text-slate-400">表示するクエストはありません</p><p class="mt-1 text-[10px] text-slate-600">新しい目標が解放されるとここに表示されます</p></div>`}
         </div>
 
         <nav class="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/75 p-2" aria-label="スペシャルクエストのページ">
