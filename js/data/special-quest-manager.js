@@ -17,11 +17,12 @@ const MONSTER_LIBRARY_TARGETS = [30, 50, 75, 100];
 const ITEM_LIBRARY_TARGETS = [50, 100, 150, 200, 300, 400, 500, 600, 700];
 const MEDAL_TARGETS = [10, 20, 30, 50, 75, 100];
 
-const makeMilestoneQuests = (type, targets, options) => targets.map(target => ({
+const makeMilestoneQuests = (type, targets, options) => targets.map((target, index) => ({
   id: `${type}_${target}`,
   category: type,
   target,
   reward: 1,
+  prerequisiteId: index > 0 ? `${type}_${targets[index - 1]}` : null,
   ...options,
   title: `${options.titlePrefix} ${target}種類達成`,
   description: `${options.descriptionPrefix}${target}種類集める`,
@@ -37,10 +38,24 @@ export const SPECIAL_QUESTS = [
     reward: 1,
     target: 1,
   },
-  ...ALL_DUNGEONS.map(dungeon => ({
+  ...DUNGEONS.map((dungeon, index) => ({
     id: `dungeon_${dungeon.id}`,
     category: 'dungeon',
     dungeonId: dungeon.id,
+    prerequisiteId: index > 0 ? `dungeon_${DUNGEONS[index - 1].id}` : null,
+    title: `${dungeon.name}を踏破`,
+    description: `${dungeon.floors.length}Fの最深部を突破する`,
+    icon: dungeon.theme?.icon || 'swords',
+    reward: 1,
+    target: 1,
+  })),
+  // Special dungeons use independent unlock conditions, so they do not block
+  // each other or the main-dungeon progression chain.
+  ...SPECIAL_DUNGEONS.map(dungeon => ({
+    id: `dungeon_${dungeon.id}`,
+    category: 'dungeon',
+    dungeonId: dungeon.id,
+    prerequisiteId: null,
     title: `${dungeon.name}を踏破`,
     description: `${dungeon.floors.length}Fの最深部を突破する`,
     icon: dungeon.theme?.icon || 'swords',
@@ -244,7 +259,11 @@ class SpecialQuestManagerClass {
   }
 
   getQuests(category = 'all') {
-    return SPECIAL_QUESTS.filter(quest => category === 'all' || quest.category === category);
+    return SPECIAL_QUESTS.filter(quest => {
+      const matchesCategory = category === 'all' || quest.category === category;
+      const prerequisiteCompleted = !quest.prerequisiteId || this.getState(quest.prerequisiteId).completed;
+      return matchesCategory && prerequisiteCompleted;
+    });
   }
 
   getState(questId) {

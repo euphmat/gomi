@@ -1,4 +1,4 @@
-import { SpecialQuestManager, SPECIAL_QUESTS } from '../../data/special-quest-manager.js';
+import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 
 const CATEGORIES = [
   { id: 'all', label: 'すべて', icon: 'apps' },
@@ -51,7 +51,7 @@ export async function renderSpecialQuestTab() {
         <nav class="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar" aria-label="スペシャルクエストの分類">
           ${CATEGORIES.map(category => {
             const isActive = activeCategory === category.id;
-            const count = category.id === 'all' ? SPECIAL_QUESTS.length : SPECIAL_QUESTS.filter(quest => quest.category === category.id).length;
+            const count = SpecialQuestManager.getQuests(category.id).length;
             return `<button data-category="${category.id}" class="flex shrink-0 items-center gap-1 rounded-xl border px-2.5 py-2 text-[10px] font-black transition ${isActive ? 'border-fuchsia-300/40 bg-fuchsia-500/15 text-fuchsia-200' : 'border-slate-800 bg-slate-900/70 text-slate-500'}"><span class="material-symbols-outlined text-[15px]">${category.icon}</span>${category.label}<span class="font-mono text-[9px] opacity-60">${count}</span></button>`;
           }).join('')}
         </nav>
