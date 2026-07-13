@@ -445,7 +445,7 @@ export function renderMedalTab() {
           craftBtn.innerHTML = `
             <div class="flex items-center justify-center gap-1">
               <span class="material-symbols-outlined text-[14px]">${currentRank ? 'upgrade' : 'auto_awesome'}</span>
-              <span>${currentRank ? '素材・Goldでアップ' : `${nextRank.name}を鋳造`}</span>
+              <span>${currentRank ? 'メダルをアップグレード' : `${nextRank.name}を鋳造`}</span>
             </div>
           `;
 
