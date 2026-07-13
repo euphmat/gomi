@@ -13,7 +13,7 @@
 export const SEED_GAME_STATE = [
   { key: 'gold',     value: 100 },
   { key: 'location', value: 'ホームタウン' },
-  { key: 'version',  value: '0.1.2' },
+  { key: 'version',  value: '0.1.3' },
   { key: 'prism',    value: 0 },
 ];
 

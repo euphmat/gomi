@@ -1,11 +1,5 @@
 import { APP_RELEASE_DATE, APP_VERSION, UPDATE_LOG } from '../definitions/update-log.js';
 
-const SECTION_THEME = [
-  { border: 'border-cyan-400/25', icon: 'text-cyan-300', badge: 'border-cyan-400/30 bg-cyan-950/60 text-cyan-300' },
-  { border: 'border-amber-400/25', icon: 'text-amber-300', badge: 'border-amber-400/30 bg-amber-950/60 text-amber-300' },
-  { border: 'border-emerald-400/25', icon: 'text-emerald-300', badge: 'border-emerald-400/30 bg-emerald-950/60 text-emerald-300' },
-];
-
 export function compareVersions(left, right) {
   const leftParts = String(left || '').split('.').map(part => Number.parseInt(part, 10) || 0);
   const rightParts = String(right || '').split('.').map(part => Number.parseInt(part, 10) || 0);
@@ -47,47 +41,75 @@ export function showUpdateLogModal() {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'update-log-title');
   overlay.innerHTML = `
-    <div data-update-panel class="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-violet-300/30 bg-[#090b16] shadow-[0_28px_90px_rgba(0,0,0,.75)]">
-      <header class="relative overflow-hidden border-b border-white/10 bg-gradient-to-br from-violet-950 via-slate-950 to-cyan-950 px-4 pb-4 pt-5">
-        <div class="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-cyan-400/15 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-20 -left-12 h-40 w-40 rounded-full bg-fuchsia-500/15 blur-3xl"></div>
-        <button data-update-close class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/25 text-slate-400 transition hover:bg-white/10 hover:text-white" aria-label="Updateログを閉じる"><span class="material-symbols-outlined text-lg">close</span></button>
-        <div class="relative">
-          <div class="flex items-center gap-2 text-cyan-300"><span class="material-symbols-outlined text-2xl">rocket_launch</span><span class="text-[9px] font-black tracking-[.26em]">UPDATE LOG</span></div>
-          <div class="mt-2 flex items-end justify-between gap-3">
-            <div><h2 id="update-log-title" class="text-xl font-black tracking-wide text-white">アップデート情報</h2><p class="mt-1 text-[10px] text-slate-400">新しい冒険と改善内容をお知らせします</p></div>
-            <div class="shrink-0 rounded-xl border border-cyan-300/30 bg-cyan-950/50 px-3 py-2 text-right"><div class="text-[8px] font-black tracking-widest text-cyan-500">CURRENT VERSION</div><div class="mt-0.5 font-mono text-sm font-black text-cyan-100">v${APP_VERSION}</div></div>
-          </div>
-          <div class="mt-3 flex items-center gap-1.5 text-[9px] font-bold text-slate-500"><span class="material-symbols-outlined text-sm">calendar_month</span>${APP_RELEASE_DATE} RELEASE</div>
-        </div>
+    <div data-update-panel class="flex max-h-[86vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#0b0d16] shadow-[0_24px_80px_rgba(0,0,0,.72)]">
+      <header class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
+        <span class="material-symbols-outlined text-xl text-violet-300">rocket_launch</span>
+        <div class="min-w-0 flex-1"><h2 id="update-log-title" class="text-sm font-black text-white">Update履歴</h2><p class="text-[9px] text-slate-500">v${APP_VERSION} ・ ${APP_RELEASE_DATE}</p></div>
+        <button data-update-close class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white/10 hover:text-white" aria-label="Update履歴を閉じる"><span class="material-symbols-outlined text-lg">close</span></button>
       </header>
-      <div class="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-3">
-        ${UPDATE_LOG.map((section, index) => {
-          const theme = SECTION_THEME[index % SECTION_THEME.length];
-          return `<section class="rounded-2xl border ${theme.border} bg-slate-950/65 p-3">
-            <div class="flex items-start gap-2.5">
-              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[.04] ${theme.icon}"><span class="material-symbols-outlined text-xl">${section.icon}</span></div>
-              <div class="min-w-0 flex-1"><span class="inline-flex rounded-md border px-1.5 py-0.5 text-[7px] font-black tracking-widest ${theme.badge}">${section.label}</span><h3 class="mt-1 text-xs font-black text-white">${section.title}</h3><p class="mt-1 text-[9px] leading-relaxed text-slate-400">${section.description}</p></div>
-            </div>
-            <ul class="mt-2.5 space-y-1.5 border-t border-white/[.06] pt-2.5">${section.items.map(item => `<li class="flex gap-1.5 text-[9px] leading-relaxed text-slate-300"><span class="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-slate-500"></span><span>${item}</span></li>`).join('')}</ul>
-          </section>`;
-        }).join('')}
-        <div class="flex items-start gap-2 rounded-xl border border-violet-400/20 bg-violet-950/25 px-3 py-2.5 text-[9px] leading-relaxed text-violet-200/75"><span class="material-symbols-outlined text-base text-violet-300">tips_and_updates</span><span>新しいUpdateが利用できる場合は、ヘッダーの更新ボタンが光ってお知らせします。</span></div>
-      </div>
-      <footer class="border-t border-white/10 bg-slate-950/90 p-3"><button data-update-close class="w-full rounded-xl border border-cyan-300/35 bg-gradient-to-r from-violet-700 via-indigo-700 to-cyan-700 py-2.5 text-xs font-black text-white shadow-[0_0_18px_rgba(34,211,238,.12)] active:scale-[.99]">確認しました</button></footer>
+      <div data-update-page class="min-h-0 flex-1 overflow-y-auto p-4"></div>
+      <footer class="flex items-center gap-2 border-t border-white/10 bg-slate-950/70 p-3">
+        <button data-page-prev class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 disabled:cursor-not-allowed disabled:opacity-30" aria-label="新しい日付へ"><span class="material-symbols-outlined text-lg">chevron_left</span></button>
+        <div data-page-indicator class="flex-1 text-center font-mono text-[10px] font-bold text-slate-500"></div>
+        <button data-page-next class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 disabled:cursor-not-allowed disabled:opacity-30" aria-label="古い日付へ"><span class="material-symbols-outlined text-lg">chevron_right</span></button>
+      </footer>
     </div>`;
   document.body.appendChild(overlay);
 
   const panel = overlay.querySelector('[data-update-panel]');
-  overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMotion ? 1 : 180, easing: 'ease-out' });
+  const page = overlay.querySelector('[data-update-page]');
+  const indicator = overlay.querySelector('[data-page-indicator]');
+  const prev = overlay.querySelector('[data-page-prev]');
+  const next = overlay.querySelector('[data-page-next]');
+  let pageIndex = 0;
+
+  const renderPage = () => {
+    const entry = UPDATE_LOG[pageIndex];
+    if (!entry) {
+      page.innerHTML = '<p class="py-8 text-center text-xs text-slate-500">履歴はありません</p>';
+      indicator.textContent = '0 / 0';
+      prev.disabled = true;
+      next.disabled = true;
+      return;
+    }
+    page.innerHTML = `
+      <div class="flex items-center justify-between gap-3 border-b border-white/[.07] pb-3">
+        <div class="flex items-center gap-2 text-sm font-black text-slate-100"><span class="material-symbols-outlined text-lg text-violet-300">calendar_month</span>${entry.date}</div>
+        <span class="rounded-md bg-violet-500/10 px-2 py-1 font-mono text-[9px] font-bold text-violet-300">v${entry.version}</span>
+      </div>
+      <ul class="mt-3 space-y-2.5">${entry.items.map(item => `<li class="flex items-start gap-2 text-[11px] leading-relaxed text-slate-300"><span class="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400"></span><span>${item}</span></li>`).join('')}</ul>`;
+    indicator.textContent = `${pageIndex + 1} / ${UPDATE_LOG.length}`;
+    prev.disabled = pageIndex === 0;
+    next.disabled = pageIndex >= UPDATE_LOG.length - 1;
+    page.scrollTop = 0;
+  };
+
+  prev.addEventListener('click', () => {
+    if (pageIndex > 0) {
+      pageIndex -= 1;
+      renderPage();
+    }
+  });
+  next.addEventListener('click', () => {
+    if (pageIndex < UPDATE_LOG.length - 1) {
+      pageIndex += 1;
+      renderPage();
+    }
+  });
+  renderPage();
+
+  overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMotion ? 1 : 150, easing: 'ease-out' });
   panel.animate(
-    [{ opacity: 0, transform: 'translateY(16px) scale(.97)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
-    { duration: reducedMotion ? 1 : 260, easing: 'cubic-bezier(.16,1,.3,1)' }
+    [{ opacity: 0, transform: 'translateY(10px) scale(.98)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+    { duration: reducedMotion ? 1 : 210, easing: 'cubic-bezier(.16,1,.3,1)' }
   );
 
+  let closing = false;
   const close = () => {
+    if (closing) return;
+    closing = true;
     document.removeEventListener('keydown', onKeyDown);
-    const animation = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMotion ? 1 : 140, easing: 'ease-out' });
+    const animation = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: reducedMotion ? 1 : 120, easing: 'ease-out' });
     animation.onfinish = () => overlay.remove();
   };
   const onKeyDown = event => { if (event.key === 'Escape') close(); };

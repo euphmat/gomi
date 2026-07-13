@@ -15,6 +15,7 @@ import { calculatePartyInnFee } from '../../utils/inn-cost.js';
 import { renderItemTabHtml } from './battle-ui.js';
 import { notifyGameEvent } from '../../utils/game-notifications.js';
 import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
+import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -373,6 +374,10 @@ export const resultMethods = {
       this.isDungeonClear = this.currentFloorNum >= this.dungeonDef.floors.length;
       
       if (this.isDungeonClear) {
+
+        // Store a durable clear marker before moving floors or starting another
+        // automatic lap. This also completes the matching special quest.
+        await SpecialQuestManager.completeDungeon(this.currentDungeonId);
 
         // 解放済みのダンジョンIDのリストを取得
         let unlocked = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
