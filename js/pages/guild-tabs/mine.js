@@ -89,16 +89,14 @@ function playFishOilCraftAnimation(fish, amount, oilGained) {
   layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/75 pointer-events-none backdrop-blur-sm';
   layer.setAttribute('role', 'status');
   layer.setAttribute('aria-live', 'polite');
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
   const travel = Math.min(132, Math.max(82, (window.innerWidth - 104) / 2));
   layer.innerHTML = `
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,.24),transparent_48%)]"></div>
     <div class="absolute left-1/2 top-[14%] -translate-x-1/2 text-center"><div class="text-[10px] font-black tracking-[.38em] text-orange-300/65">FISH OIL REFINERY</div><div class="mt-1 text-lg font-black text-orange-50">魚油を精製中</div><div data-oil-stage class="mt-2 rounded-full border border-orange-300/25 bg-orange-950/55 px-4 py-1 text-[10px] font-black text-orange-200">STEP 1　原料を投入</div></div>
-    <div data-oil-source class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center" style="left:${centerX - travel}px;top:${centerY}px"><div class="flex h-24 w-24 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-950/55 p-2 shadow-[0_0_30px_rgba(34,211,238,.2)]"><img src="${fish.image}" class="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(34,211,238,.65)]" alt=""></div><div class="mt-2 rounded-full bg-slate-950/90 px-3 py-1 text-[10px] font-black text-cyan-100">${fish.name} × ${formatNumber(amount)}</div></div>
-    <div data-oil-reactor class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-orange-300/70 bg-orange-950/95 text-orange-200 shadow-[0_0_55px_rgba(249,115,22,.75)]" style="left:${centerX}px;top:${centerY}px"><div class="absolute inset-2 rounded-full border border-dashed border-amber-200/50"></div><span class="material-symbols-outlined text-5xl">precision_manufacturing</span></div>
-    <div data-oil-result class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX + travel}px;top:${centerY}px"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_24px_rgba(249,115,22,.95)]">oil_barrel</span><div class="mt-1 whitespace-nowrap rounded-full border border-orange-300/45 bg-slate-950/95 px-4 py-1.5 text-sm font-black text-orange-100">魚油 +${formatNumber(oilGained)}</div></div>
-    <div data-oil-complete class="absolute bottom-[14%] left-1/2 -translate-x-1/2 translate-y-4 whitespace-nowrap text-center opacity-0"><div class="flex items-center justify-center gap-2 text-xl font-black text-white"><span class="material-symbols-outlined text-orange-300">task_alt</span>精製完了</div><div class="mt-1 text-[10px] font-black tracking-[.22em] text-orange-300/75">REFINING COMPLETE</div></div>`;
+    <div data-oil-source class="absolute flex flex-col items-center" style="left:calc(50% - ${travel}px);top:50%"><div class="flex h-24 w-24 items-center justify-center rounded-2xl border border-cyan-300/30 bg-cyan-950/55 p-2 shadow-[0_0_30px_rgba(34,211,238,.2)]"><img src="${fish.image}" class="h-full w-full object-contain drop-shadow-[0_0_14px_rgba(34,211,238,.65)]" alt=""></div><div class="mt-2 rounded-full bg-slate-950/90 px-3 py-1 text-[10px] font-black text-cyan-100">${fish.name} × ${formatNumber(amount)}</div></div>
+    <div data-oil-reactor class="absolute left-1/2 top-1/2 flex h-28 w-28 items-center justify-center rounded-full border-2 border-orange-300/70 bg-orange-950/95 text-orange-200 shadow-[0_0_55px_rgba(249,115,22,.75)]"><div class="absolute inset-2 rounded-full border border-dashed border-amber-200/50"></div><span class="material-symbols-outlined text-5xl">precision_manufacturing</span></div>
+    <div data-oil-result class="absolute top-1/2 flex flex-col items-center opacity-0" style="left:calc(50% + ${travel}px)"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_24px_rgba(249,115,22,.95)]">oil_barrel</span><div class="mt-1 whitespace-nowrap rounded-full border border-orange-300/45 bg-slate-950/95 px-4 py-1.5 text-sm font-black text-orange-100">魚油 +${formatNumber(oilGained)}</div></div>
+    <div data-oil-complete class="absolute bottom-[14%] left-1/2 whitespace-nowrap text-center opacity-0"><div class="flex items-center justify-center gap-2 text-xl font-black text-white"><span class="material-symbols-outlined text-orange-300">task_alt</span>精製完了</div><div class="mt-1 text-[10px] font-black tracking-[.22em] text-orange-300/75">REFINING COMPLETE</div></div>`;
   document.body.appendChild(layer);
   const reactor = layer.querySelector('[data-oil-reactor]');
   const source = layer.querySelector('[data-oil-source]');
@@ -110,13 +108,13 @@ function playFishOilCraftAnimation(fish, amount, oilGained) {
   );
   reactor.animate(
     [{ transform: 'translate(-50%,-50%) scale(.82) rotate(0deg)', filter: 'brightness(.75)' }, { transform: 'translate(-50%,-50%) scale(1.08) rotate(240deg)', filter: 'brightness(2.3)', offset: .65 }, { transform: 'translate(-50%,-50%) scale(1) rotate(480deg)', filter: 'brightness(1.2)' }],
-    { duration: reducedMotion ? 520 : 1450, delay: reducedMotion ? 120 : 420, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
+    { duration: reducedMotion ? 520 : 1450, delay: reducedMotion ? 120 : 420, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
   );
   for (let i = 0; i < (reducedMotion ? 6 : 28); i++) {
     const spark = document.createElement('span');
     spark.className = `absolute rounded-full ${i % 4 === 0 ? 'h-2.5 w-2.5 bg-amber-100' : 'h-1.5 w-1.5 bg-orange-300'} shadow-[0_0_8px_rgba(251,146,60,.9)]`;
-    spark.style.left = `${centerX}px`;
-    spark.style.top = `${centerY}px`;
+    spark.style.left = '50%';
+    spark.style.top = '50%';
     layer.appendChild(spark);
     const angle = Math.random() * Math.PI * 2;
     const distance = 45 + Math.random() * 100;
@@ -163,9 +161,9 @@ function playFishOilFuelAnimation(mine, amount, fuelUntil) {
     <img src="${mine.image}" class="absolute inset-0 h-full w-full object-cover opacity-20" alt="">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(249,115,22,.3),transparent_52%)]"></div>
     <div class="absolute left-1/2 top-[12%] -translate-x-1/2 whitespace-nowrap text-center"><div class="text-[10px] font-black tracking-[.35em] text-orange-300/65">FUEL INJECTION</div><div class="mt-1 text-lg font-black text-orange-50">${mine.name}</div></div>
-    <div data-fuel-barrel class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center" style="left:${centerX}px;top:${centerY - 125}px"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_28px_rgba(249,115,22,.9)]">oil_barrel</span><span class="mt-1 rounded-full border border-orange-300/35 bg-slate-950/95 px-4 py-1 text-xs font-black text-orange-100">魚油 × ${formatNumber(amount)}</span></div>
-    <div data-fuel-machine class="absolute flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-slate-500/60 bg-slate-950/95 text-slate-500 shadow-[0_0_30px_rgba(0,0,0,.8)]" style="left:${centerX}px;top:${centerY + 35}px"><div class="absolute inset-3 rounded-full border border-dashed border-slate-500/40"></div><span class="material-symbols-outlined text-6xl">precision_manufacturing</span></div>
-    <div data-fuel-ignition class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-center opacity-0" style="top:${centerY + 125}px"><div class="inline-flex items-center gap-2 rounded-full border border-orange-300/50 bg-orange-950/90 px-5 py-2 text-xl font-black text-white shadow-[0_0_38px_rgba(249,115,22,.55)]"><span class="material-symbols-outlined text-orange-300">bolt</span>採掘速度 <span class="text-3xl text-orange-300">×2</span></div><div class="mt-3 text-sm font-black text-orange-100">2倍速を ${formatFuelDuration(amount)} 追加</div><div class="mt-1 font-mono text-xs font-black text-slate-300">BOOST 残り ${formatFuelTime(fuelUntil)}</div></div>`;
+    <div data-fuel-barrel class="absolute flex flex-col items-center" style="left:${centerX}px;top:${centerY - 125}px"><span class="material-symbols-outlined text-7xl text-orange-300 drop-shadow-[0_0_28px_rgba(249,115,22,.9)]">oil_barrel</span><span class="mt-1 rounded-full border border-orange-300/35 bg-slate-950/95 px-4 py-1 text-xs font-black text-orange-100">魚油 × ${formatNumber(amount)}</span></div>
+    <div data-fuel-machine class="absolute flex h-32 w-32 items-center justify-center rounded-full border-2 border-slate-500/60 bg-slate-950/95 text-slate-500 shadow-[0_0_30px_rgba(0,0,0,.8)]" style="left:${centerX}px;top:${centerY + 35}px"><div class="absolute inset-3 rounded-full border border-dashed border-slate-500/40"></div><span class="material-symbols-outlined text-6xl">precision_manufacturing</span></div>
+    <div data-fuel-ignition class="absolute left-1/2 whitespace-nowrap text-center opacity-0" style="top:${centerY + 125}px"><div class="inline-flex items-center gap-2 rounded-full border border-orange-300/50 bg-orange-950/90 px-5 py-2 text-xl font-black text-white shadow-[0_0_38px_rgba(249,115,22,.55)]"><span class="material-symbols-outlined text-orange-300">bolt</span>採掘速度 <span class="text-3xl text-orange-300">×2</span></div><div class="mt-3 text-sm font-black text-orange-100">2倍速を ${formatFuelDuration(amount)} 追加</div><div class="mt-1 font-mono text-xs font-black text-slate-300">BOOST 残り ${formatFuelTime(fuelUntil)}</div></div>`;
   document.body.appendChild(layer);
   const barrel = layer.querySelector('[data-fuel-barrel]');
   const machine = layer.querySelector('[data-fuel-machine]');
@@ -176,7 +174,7 @@ function playFishOilFuelAnimation(mine, amount, fuelUntil) {
   );
   machine.animate(
     [{ transform: 'translate(-50%,-50%) scale(.88) rotate(0deg)', color: '#64748b', borderColor: 'rgba(100,116,139,.6)' }, { transform: 'translate(-50%,-50%) scale(1.14) rotate(240deg)', color: '#fdba74', borderColor: 'rgba(253,186,116,.95)', filter: 'brightness(2.2)', offset: .58 }, { transform: 'translate(-50%,-50%) scale(1) rotate(720deg)', color: '#fb923c', borderColor: 'rgba(251,146,60,.9)', filter: 'brightness(1.35)' }],
-    { duration: reducedMotion ? 650 : 1450, delay: reducedMotion ? 180 : 520, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
+    { duration: reducedMotion ? 650 : 1450, delay: reducedMotion ? 180 : 520, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }
   );
   for (let i = 0; i < (reducedMotion ? 4 : 14); i++) {
     const drop = document.createElement('span');
