@@ -428,7 +428,7 @@ async function showRanchFishModal(onUpdate) {
 
 function playFishFeedAnimation(fish, result, sourceModal) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const duration = reducedMotion ? 620 : 1500;
+  const duration = reducedMotion ? 1100 : 2000;
   const layer = document.createElement('div');
   layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/45 pointer-events-none backdrop-blur-[1px]';
   const rect = sourceModal.getBoundingClientRect();
@@ -436,12 +436,21 @@ function playFishFeedAnimation(fish, result, sourceModal) {
   const centerY = Math.min(innerHeight - 150, Math.max(150, rect.top + rect.height / 2));
   layer.innerHTML = `
     <div data-feed-core class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300/60 bg-emerald-950/95 shadow-[0_0_55px_rgba(52,211,153,.65)]" style="left:${centerX}px;top:${centerY}px"><img src="${fish.image}" class="h-20 w-20 object-contain" alt=""></div>
-    <div data-feed-burst class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX}px;top:${centerY}px"><span class="material-symbols-outlined text-7xl text-emerald-300 drop-shadow-[0_0_25px_rgba(52,211,153,.95)]">food_bank</span><div class="mt-1 rounded-full border border-emerald-300/40 bg-slate-950/90 px-4 py-1.5 text-sm font-black text-emerald-100">全員 +${formatNumber(result.expPerCompanion)} EXP</div><div class="mt-1 text-[9px] font-black tracking-widest text-emerald-300/70">PARTY FEED</div></div>
-    <div data-feed-title class="absolute left-1/2 top-10 -translate-x-1/2 text-center opacity-0"><div class="text-[10px] font-black text-pink-300">${formatNumber(result.companionCount)}体${result.levelsGained ? `・合計 ${formatNumber(result.levelsGained)} Lv UP` : ''}</div></div>`;
+    <div data-feed-burst class="absolute z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center opacity-0" style="left:${centerX}px;top:${centerY}px">
+      <span class="material-symbols-outlined text-6xl text-emerald-300 drop-shadow-[0_0_25px_rgba(52,211,153,.95)]">food_bank</span>
+      <div class="mt-1 w-[min(82vw,19rem)] rounded-2xl border border-emerald-300/50 bg-slate-950/95 px-4 py-3 text-center shadow-[0_0_35px_rgba(52,211,153,.4)]">
+        <div class="text-xs font-black tracking-[0.18em] text-emerald-200">合計レベルアップ</div>
+        <div class="mt-0.5 flex items-baseline justify-center gap-1 whitespace-nowrap font-black text-white drop-shadow-[0_0_16px_rgba(244,114,182,.8)]">
+          <span class="text-[clamp(2.25rem,12vw,3.5rem)] leading-none text-pink-300">${result.levelsGained > 0 ? '+' : ''}${formatNumber(result.levelsGained)}</span>
+          <span class="text-xl text-pink-200">Lv UP</span>
+        </div>
+        <div class="mt-2 border-t border-white/10 pt-2 text-sm font-black text-emerald-100">1体あたり +${formatNumber(result.expPerCompanion)} EXP</div>
+        <div class="mt-0.5 text-[10px] font-bold text-slate-400">${formatNumber(result.companionCount)}体に反映</div>
+      </div>
+    </div>`;
   document.body.appendChild(layer);
   const core = layer.querySelector('[data-feed-core]');
   const burst = layer.querySelector('[data-feed-burst]');
-  const title = layer.querySelector('[data-feed-title]');
   core.animate(
     [{ transform: 'translate(-50%,-50%) scale(.55) rotate(-12deg)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.12) rotate(5deg)', opacity: 1, offset: .42 }, { transform: 'translate(-50%,-50%) scale(.15) rotate(180deg)', filter: 'brightness(3)', opacity: 0 }],
     { duration: reducedMotion ? 300 : 700, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' }
@@ -450,11 +459,6 @@ function playFishFeedAnimation(fish, result, sourceModal) {
     [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.15)', opacity: 1, offset: .55 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }],
     { duration: reducedMotion ? 350 : 700, delay: reducedMotion ? 180 : 480, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
   );
-  title.animate(
-    [{ transform: 'translate(-50%,-15px) scale(.8)', opacity: 0 }, { transform: 'translate(-50%,0) scale(1.08)', opacity: 1, offset: .65 }, { transform: 'translate(-50%,0) scale(1)', opacity: 1 }],
-    { duration: reducedMotion ? 300 : 620, delay: reducedMotion ? 180 : 520, fill: 'forwards' }
-  );
-
   const companions = getRanchCompanionEntries(result.ranchData);
   const visibleCompanions = companions.slice(0, reducedMotion ? 4 : 8);
   visibleCompanions.forEach((companion, index) => {

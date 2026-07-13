@@ -1,16 +1,17 @@
-export const APP_VERSION = '0.1.3';
+export const APP_VERSION = '0.1.4';
 export const APP_RELEASE_DATE = '2026.07.14';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
   {
     date: '2026.07.14',
-    version: '0.1.3',
+    version: '0.1.4',
     items: [
       'スペシャルクエストに、各ダンジョン踏破・モンスター図鑑・アイテム図鑑・メダル収集の達成報酬を追加しました。',
       'アップデート前に達成していた記録も、保存済みの図鑑・メダル・踏破状況から自動反映します。',
       'Update履歴を簡略化し、日付ごとに切り替えられるようにしました。',
       '釣り専用の伝説の秘宝2種、鉱山画面の残り時間表示、セーブ処理の安定化を追加しました。',
+      'モンスター牧場の魚餌アニメーションを改善し、合計レベルアップ・獲得EXP・対象数を中央に大きく表示するようにしました。',
     ],
   },
   {
