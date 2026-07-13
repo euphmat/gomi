@@ -735,10 +735,7 @@ class App {
   async performDataReset() {
     try {
       // 1. Close DB connection
-      if (GameDB.db) {
-        GameDB.db.close();
-        GameDB.db = null;
-      }
+      GameDB.close();
 
       // 2. Delete IndexedDB
       await new Promise(resolve => setTimeout(resolve, 100)); // wait for close

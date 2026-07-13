@@ -51,6 +51,21 @@ const DB_NAME = 'rpg_game_db';
 const DB_VERSION = 1;
 const SAVE_SECRET_KEY = 'gomi_rpg_salt';
 
+function _getIndexedDBError(source) {
+  try {
+    return source?.error || null;
+  } catch (_) {
+    // Some WebKit versions throw while reading error from a request whose
+    // backing transaction has already disappeared.
+    return null;
+  }
+}
+
+function _isRecoverableConnectionError(error) {
+  const message = String(error?.message || error || '');
+  return /without an in-progress transaction|connection to indexed database server lost|database connection is closing/i.test(message);
+}
+
 async function encodeSaveData(dataObj) {
   const jsonStr = JSON.stringify(dataObj);
   
@@ -97,6 +112,9 @@ class GameDatabase {
   constructor() {
     /** @type {IDBDatabase|null} */
     this.db = null;
+    this._connectionPromise = null;
+    this._seedPromise = null;
+    this._isClosing = false;
     // Keep read-write transactions ordered. A request can report success before
     // its transaction has committed, so starting the next battle save from the
     // request callback can leave some browser implementations with overlapping
@@ -112,9 +130,25 @@ class GameDatabase {
    * @returns {Promise<void>}
    */
   async open() {
-    if (this.db) return;
+    this._isClosing = false;
+    await this._ensureConnection();
 
-    this.db = await new Promise((resolve, reject) => {
+    if (this._seedPromise) return this._seedPromise;
+
+    const seedPromise = this._seedIfEmpty();
+    this._seedPromise = seedPromise;
+    try {
+      await seedPromise;
+    } finally {
+      if (this._seedPromise === seedPromise) this._seedPromise = null;
+    }
+  }
+
+  async _ensureConnection() {
+    if (this.db) return this.db;
+    if (this._connectionPromise) return this._connectionPromise;
+
+    const connectionPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onupgradeneeded = (event) => {
@@ -139,13 +173,55 @@ class GameDatabase {
           db.close();
           if (this.db === db) this.db = null;
         };
+        db.onclose = () => {
+          if (this.db === db) this.db = null;
+        };
         resolve(db);
       };
-      request.onerror = (event) => reject(event.target.error);
+      request.onerror = (event) => reject(_getIndexedDBError(event.target) || new Error('Failed to open IndexedDB.'));
     });
 
-    // Seed initial data if DB is fresh
-    await this._seedIfEmpty();
+    this._connectionPromise = connectionPromise;
+    try {
+      const db = await connectionPromise;
+      if (this._isClosing) {
+        db.close();
+        throw new Error('Database was closed intentionally.');
+      }
+      this.db = db;
+      return db;
+    } finally {
+      if (this._connectionPromise === connectionPromise) this._connectionPromise = null;
+    }
+  }
+
+  async _runWithConnectionRetry(storeName, operation) {
+    if (this._isClosing) throw new Error('Database is closed.');
+    const db = await this._ensureConnection();
+
+    try {
+      return await operation(db);
+    } catch (error) {
+      if (this._isClosing || !_isRecoverableConnectionError(error)) throw error;
+
+      console.warn(`[GameDB] Recovering IndexedDB connection after ${storeName} transaction failure.`, error);
+      if (this.db === db) {
+        try { db.close(); } catch (_) { /* The connection may already be gone. */ }
+        this.db = null;
+      }
+
+      const recoveredDb = await this._ensureConnection();
+      return operation(recoveredDb);
+    }
+  }
+
+  close() {
+    this._isClosing = true;
+    if (!this.db) return;
+
+    const db = this.db;
+    this.db = null;
+    try { db.close(); } catch (_) { /* The connection may already be gone. */ }
   }
 
   /**
@@ -180,14 +256,35 @@ class GameDatabase {
    * @param {(store: IDBObjectStore) => IDBRequest} fn
    * @returns {Promise<any>}
    */
-  _read(storeName, fn) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(storeName, 'readonly');
-      const store = tx.objectStore(storeName);
-      const request = fn(store);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+  async _read(storeName, fn) {
+    return this._runWithConnectionRetry(storeName, (db) => new Promise((resolve, reject) => {
+      let settled = false;
+      const fail = (error) => {
+        if (settled) return;
+        settled = true;
+        reject(error || new Error(`IndexedDB read failed for ${storeName}.`));
+      };
+
+      try {
+        const tx = db.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const request = fn(store);
+        request.onsuccess = () => {
+          try {
+            const result = request.result;
+            if (settled) return;
+            settled = true;
+            resolve(result);
+          } catch (error) {
+            fail(error);
+          }
+        };
+        request.onerror = (event) => fail(_getIndexedDBError(event.target));
+        tx.onabort = (event) => fail(_getIndexedDBError(event.target));
+      } catch (error) {
+        fail(error);
+      }
+    }));
   }
 
   /**
@@ -197,11 +294,10 @@ class GameDatabase {
    * @returns {Promise<any>}
    */
   _write(storeName, fn) {
-    const run = () => new Promise((resolve, reject) => {
+    const run = () => this._runWithConnectionRetry(storeName, (db) => new Promise((resolve, reject) => {
       let tx;
-      let request;
       let result;
-      let requestError;
+      let transactionError;
       let settled = false;
 
       const fail = (error) => {
@@ -211,30 +307,50 @@ class GameDatabase {
       };
 
       try {
-        if (!this.db) throw new Error('Database is not open.');
-        tx = this.db.transaction(storeName, 'readwrite');
+        tx = db.transaction(storeName, 'readwrite');
         const store = tx.objectStore(storeName);
-        request = fn(store);
 
-        request.onsuccess = () => {
-          result = request.result;
-        };
-        // Let the transaction finish aborting before the next queued write is
-        // allowed to start.
-        request.onerror = () => {
-          requestError = request.error;
-        };
         tx.oncomplete = () => {
           if (settled) return;
           settled = true;
           resolve(result);
         };
-        tx.onerror = () => fail(tx.error || requestError || request?.error);
-        tx.onabort = () => fail(tx.error || requestError || request?.error || new Error(`IndexedDB write aborted for ${storeName}.`));
+        // The transaction's error event occurs before abort. Keep the queue
+        // blocked until abort has finished, then reconnect/retry if necessary.
+        tx.onerror = (event) => {
+          transactionError = _getIndexedDBError(event.target) || transactionError;
+        };
+        tx.onabort = (event) => fail(
+          transactionError
+          || _getIndexedDBError(event.target)
+          || new Error(`IndexedDB write aborted for ${storeName}.`)
+        );
+
+        const request = fn(store);
+        request.onsuccess = () => {
+          try {
+            result = request.result;
+          } catch (error) {
+            transactionError = error;
+            try { tx.abort(); } catch (_) { fail(error); }
+          }
+        };
+        request.onerror = (event) => {
+          transactionError = _getIndexedDBError(event.target) || transactionError;
+        };
       } catch (error) {
-        fail(error);
+        transactionError = error;
+        if (!tx) {
+          fail(error);
+          return;
+        }
+        try {
+          tx.abort();
+        } catch (_) {
+          fail(error);
+        }
       }
-    });
+    }));
 
     const queuedWrite = this._writeQueue.then(run, run);
     // A failed write must not permanently block later saves.
