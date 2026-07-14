@@ -7,6 +7,7 @@ import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
 import { MATERIALS } from '../definitions/materials.js';
+import { FISH } from '../definitions/fish.js';
 
 const STATE_KEY = 'quest_special_progress';
 const COMPLETED_DUNGEONS_KEY = 'completed_dungeons';
@@ -14,6 +15,7 @@ const ALL_DUNGEONS = [...DUNGEONS, ...SPECIAL_DUNGEONS];
 const ALL_ITEMS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
 const MONSTER_LIBRARY_TARGETS = [30, 50, 75, 100];
+const FISH_LIBRARY_TARGETS = [10, 20, 30, 40];
 const ITEM_LIBRARY_TARGETS = [50, 100, 150, 200, 300, 400, 500, 600, 700];
 const MEDAL_TARGETS = [10, 20, 30, 50, 75, 100];
 
@@ -67,6 +69,11 @@ export const SPECIAL_QUESTS = [
     descriptionPrefix: 'モンスター図鑑に',
     icon: 'pets',
   }),
+  ...makeMilestoneQuests('fish', FISH_LIBRARY_TARGETS, {
+    titlePrefix: '魚図鑑',
+    descriptionPrefix: '魚図鑑に',
+    icon: 'phishing',
+  }),
   ...makeMilestoneQuests('item', ITEM_LIBRARY_TARGETS, {
     titlePrefix: 'アイテム図鑑',
     descriptionPrefix: 'アイテム図鑑に',
@@ -110,7 +117,7 @@ function getFinalFloorMonsterIds(dungeon) {
 class SpecialQuestManagerClass {
   constructor() {
     this.progress = structuredClone(DEFAULT_PROGRESS);
-    this.metrics = { monster: 0, item: 0, medal: 0, completedDungeons: new Set() };
+    this.metrics = { monster: 0, fish: 0, item: 0, medal: 0, completedDungeons: new Set() };
     this.listenersReady = false;
     this.claimQueue = Promise.resolve();
   }
@@ -143,6 +150,7 @@ class SpecialQuestManagerClass {
       monsterKillsValue,
       discoveredMonstersValue,
       playerMedalsValue,
+      fishingDataValue,
       discoveredItemsValue,
       equipment,
       inventory,
@@ -153,6 +161,7 @@ class SpecialQuestManagerClass {
       GameDB.getGameState('monster_kills'),
       GameDB.getGameState('discovered_monsters'),
       GameDB.getGameState('player_medals'),
+      GameDB.getGameState('fishing_data'),
       GameDB.getGameState('discovered_items'),
       GameDB.getAllEquipment(),
       GameDB.getAllInventory(),
@@ -187,6 +196,12 @@ class SpecialQuestManagerClass {
     );
     const medalCount = Object.keys(playerMedalsValue || {}).filter(id => monsterIds.has(id)).length;
 
+    const discoveredFish = fishingDataValue?.discovered || {};
+    const fishCount = FISH.filter(fish => {
+      const value = discoveredFish[fish.id];
+      return value && typeof value === 'object' ? Object.values(value).some(Boolean) : Boolean(value);
+    }).length;
+
     const itemIds = new Set(ALL_ITEMS.map(item => item.id));
     const acquiredItemIds = new Set(
       (Array.isArray(discoveredItemsValue) ? discoveredItemsValue : []).filter(id => itemIds.has(id))
@@ -205,6 +220,7 @@ class SpecialQuestManagerClass {
 
     this.metrics = {
       monster: discoveredMonsters.size,
+      fish: fishCount,
       item: acquiredItemIds.size,
       medal: medalCount,
       completedDungeons,
@@ -217,7 +233,7 @@ class SpecialQuestManagerClass {
     for (const quest of SPECIAL_QUESTS) {
       if (quest.category === 'dungeon' && completedDungeons.has(quest.dungeonId)) {
         changed = this.markCompleted(quest.id) || changed;
-      } else if (['monster', 'item', 'medal'].includes(quest.category) && this.metrics[quest.category] >= quest.target) {
+      } else if (['monster', 'fish', 'item', 'medal'].includes(quest.category) && this.metrics[quest.category] >= quest.target) {
         changed = this.markCompleted(quest.id) || changed;
       }
     }
@@ -275,7 +291,7 @@ class SpecialQuestManagerClass {
 
   getCurrentValue(quest) {
     if (quest.category === 'dungeon') return this.metrics.completedDungeons.has(quest.dungeonId) ? 1 : 0;
-    if (['monster', 'item', 'medal'].includes(quest.category)) return this.metrics[quest.category] || 0;
+    if (['monster', 'fish', 'item', 'medal'].includes(quest.category)) return this.metrics[quest.category] || 0;
     return this.getState(quest.id).completed ? 1 : 0;
   }
 

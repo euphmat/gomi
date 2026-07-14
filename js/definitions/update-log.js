@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.5';
-export const APP_RELEASE_DATE = '2026.07.14';
+export const APP_VERSION = '0.1.6';
+export const APP_RELEASE_DATE = '2026.07.15';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.07.15',
+    version: '0.1.6',
+    items: [
+      'スペシャルクエストに、魚図鑑10・20・30・40種類達成の報酬を追加しました。各段階でPrism 1を獲得できます。',
+      'アップデート前に発見していた魚も、保存済みの魚図鑑から達成状況へ自動反映します。',
+    ],
+  },
   {
     date: '2026.07.14',
     version: '0.1.5',

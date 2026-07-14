@@ -4,6 +4,7 @@ const CATEGORIES = [
   { id: 'all', label: 'すべて', icon: 'apps' },
   { id: 'dungeon', label: '踏破', icon: 'swords' },
   { id: 'monster', label: 'モンスター', icon: 'pets' },
+  { id: 'fish', label: '魚図鑑', icon: 'phishing' },
   { id: 'item', label: 'アイテム', icon: 'auto_stories' },
   { id: 'medal', label: 'メダル', icon: 'military_tech' },
   { id: 'other', label: 'その他', icon: 'stars' },
