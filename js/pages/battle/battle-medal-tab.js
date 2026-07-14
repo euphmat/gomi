@@ -293,7 +293,8 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       if (tabContent._medalSyncTimer === medalSyncTimer) tabContent._medalSyncTimer = null;
       return;
     }
-    
+
+    if (document.hidden) return;
     if (isMaxRank || !nextRank) return;
     if (syncInProgress) return;
     syncInProgress = true;

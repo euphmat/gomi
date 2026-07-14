@@ -393,12 +393,12 @@ export const resultMethods = {
       
       if (this.isDungeonClear && this.autoBattleMode !== 'floor') {
         if (this.autoBattleMode === 'dungeon') {
-          this.autoNextTimer = setTimeout(async () => {
+          this.autoNextTimer = this._scheduleBattleTimeout(async () => {
             await GameDB.setGameState('currentFloor', 1);
             this.isDungeonClear = false;
             this.resetBattleState(true);
             this.init();
-          }, 1500 / this.speedMult);
+          }, 1500 / this.speedMult, true);
           return;
         }
 
@@ -425,19 +425,19 @@ export const resultMethods = {
       }
 
       if (this.autoBattleMode === 'floor') {
-        this.autoNextTimer = setTimeout(async () => {
+        this.autoNextTimer = this._scheduleBattleTimeout(async () => {
           this.resetBattleState(true);
           this.init();
-        }, 1500 / this.speedMult);
+        }, 1500 / this.speedMult, true);
         return;
       }
 
       // dungeon mode or manual: advance to next floor
-      this.autoNextTimer = setTimeout(async () => {
+      this.autoNextTimer = this._scheduleBattleTimeout(async () => {
         await GameDB.setGameState('currentFloor', this.currentFloorNum + 1);
         this.resetBattleState(true);
         this.init();
-      }, 1500 / this.speedMult);
+      }, 1500 / this.speedMult, true);
       return;
     } else {
       const innFee = calculatePartyInnFee(this.party);
@@ -557,24 +557,25 @@ export const resultMethods = {
         let remaining = 5;
         const countdownInterval = 1000 / Math.max(1, this.speedMult);
         okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
-        this.autoRetryTimer = setInterval(() => {
+        const tickAutoRetry = () => {
           remaining--;
           if (remaining <= 0) {
-            clearInterval(this.autoRetryTimer);
             this.autoRetryTimer = null;
             this.elements.resultOverlay.classList.add('hidden');
             this.resetBattleState(true);
             this.init();
           } else {
             okBtn.textContent = `再突入まで ${remaining} 秒... (タップで中止)`;
+            this.autoRetryTimer = this._scheduleBattleTimeout(tickAutoRetry, countdownInterval, true);
           }
-        }, countdownInterval);
+        };
+        this.autoRetryTimer = this._scheduleBattleTimeout(tickAutoRetry, countdownInterval, true);
       }
 
       if (okBtn) {
         okBtn.onclick = () => {
           if (this.autoRetryTimer) {
-            clearInterval(this.autoRetryTimer);
+            clearTimeout(this.autoRetryTimer);
             this.autoRetryTimer = null;
           }
           this.elements.resultOverlay.classList.add('hidden');

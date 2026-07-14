@@ -66,6 +66,21 @@ function _isRecoverableConnectionError(error) {
   return /without an in-progress transaction|connection to indexed database server lost|database connection is closing/i.test(message);
 }
 
+function _waitUntilDocumentVisible() {
+  if (typeof document === 'undefined' || !document.hidden) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) return;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      resolve();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  });
+}
+
 async function encodeSaveData(dataObj) {
   const jsonStr = JSON.stringify(dataObj);
   
@@ -196,6 +211,9 @@ class GameDatabase {
   }
 
   async _runWithConnectionRetry(storeName, operation) {
+    // iOS may suspend WebKit's IndexedDB process while the app is in the
+    // background. Do not start another transaction until the page is active.
+    await _waitUntilDocumentVisible();
     if (this._isClosing) throw new Error('Database is closed.');
     const db = await this._ensureConnection();
 
@@ -203,6 +221,11 @@ class GameDatabase {
       return await operation(db);
     } catch (error) {
       if (this._isClosing || !_isRecoverableConnectionError(error)) throw error;
+
+      // A transaction already in progress can fail while the app is being
+      // backgrounded. Wait for WebKit to resume before reopening the database.
+      await _waitUntilDocumentVisible();
+      if (this._isClosing) throw error;
 
       console.warn(`[GameDB] Recovering IndexedDB connection after ${storeName} transaction failure.`, error);
       if (this.db === db) {

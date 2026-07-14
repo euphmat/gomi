@@ -214,6 +214,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
       if (tabContent._petSyncTimer === petSyncTimer) tabContent._petSyncTimer = null;
       return;
     }
+    if (document.hidden) return;
     if (syncInProgress) return;
     syncInProgress = true;
 

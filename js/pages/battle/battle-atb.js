@@ -24,12 +24,18 @@ export const atbMethods = {
       this._pendingTimers.forEach(id => clearTimeout(id));
       this._pendingTimers = [];
     }
+    if (this._pendingVisibilityHandlers) {
+      this._pendingVisibilityHandlers.forEach(handler => {
+        document.removeEventListener('visibilitychange', handler);
+      });
+      this._pendingVisibilityHandlers = [];
+    }
     if (this.autoNextTimer) {
       clearTimeout(this.autoNextTimer);
       this.autoNextTimer = null;
     }
     if (this.autoRetryTimer) {
-      clearInterval(this.autoRetryTimer);
+      clearTimeout(this.autoRetryTimer);
       this.autoRetryTimer = null;
     }
     if (this.atbWorker) {
@@ -126,7 +132,9 @@ export const atbMethods = {
     this.atbWorker = new Worker(this.atbWorkerUrl);
 
     this.atbWorker.onmessage = () => {
-      if (this.isStopped) return;
+      // A tick can already be queued when visibilitychange stops the Worker.
+      // Never advance combat from such a stale background message.
+      if (this.isStopped || document.hidden) return;
 
       const disableAnim = this._cachedDisableAnim;
       if (!document.hidden && !this.wasVisible) {

@@ -478,12 +478,32 @@ class BattleManager {
     this.lastKilledBy = null;
   }
 
-  _scheduleBattleTimeout(fn, delay) {
+  _scheduleBattleTimeout(fn, delay, allowWhenStopped = false) {
     if (!this._pendingTimers) this._pendingTimers = [];
+    if (!this._pendingVisibilityHandlers) this._pendingVisibilityHandlers = [];
+
     const id = setTimeout(() => {
       const idx = this._pendingTimers.indexOf(id);
       if (idx !== -1) this._pendingTimers.splice(idx, 1);
-      if (!this.isStopped) fn();
+
+      if (!allowWhenStopped && this.isStopped) return;
+      if (!document.hidden) {
+        fn();
+        return;
+      }
+
+      // Timers that became due while the app was backgrounded must resume only
+      // after WebKit and IndexedDB are active again.
+      const handleVisibilityChange = () => {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        const handlerIdx = this._pendingVisibilityHandlers.indexOf(handleVisibilityChange);
+        if (handlerIdx !== -1) this._pendingVisibilityHandlers.splice(handlerIdx, 1);
+        if (!allowWhenStopped && this.isStopped) return;
+        fn();
+      };
+      this._pendingVisibilityHandlers.push(handleVisibilityChange);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
     }, delay);
     this._pendingTimers.push(id);
     return id;
