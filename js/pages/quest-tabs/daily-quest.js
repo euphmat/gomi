@@ -48,6 +48,9 @@ export function renderDailyQuestTab() {
     if (timerValue) {
       timerValue.textContent = formatTimeLeft(getJSTNextMidnight().getTime() - Date.now());
     }
+    QuestManager.refreshForNewDay().catch(error => {
+      console.error('[DailyQuest] Failed to refresh daily progress:', error);
+    });
   };
 
   const timerInterval = setInterval(updateTimer, 1000);

@@ -51,8 +51,12 @@ export const DAILY_QUESTS = [
 
 class QuestManagerClass {
   constructor() {
-    this.dailyProgress = {
-      date: getJSTDateString(),
+    this.dailyProgress = this._createDailyProgress(getJSTDateString());
+  }
+
+  _createDailyProgress(date) {
+    return {
+      date,
       kills: 0,
       feedLevels: 0,
       crafts: 0,
@@ -70,15 +74,7 @@ class QuestManagerClass {
       this.dailyProgress = { ...this.dailyProgress, ...saved };
     } else {
       // Reset for a new day (or first time)
-      this.dailyProgress = {
-        date: today,
-        kills: 0,
-        feedLevels: 0,
-        crafts: 0,
-        mineUpgrades: 0,
-        fishCaught: 0,
-        claimed: false,
-      };
+      this.dailyProgress = this._createDailyProgress(today);
       await this.saveProgress();
     }
 
@@ -87,7 +83,7 @@ class QuestManagerClass {
 
   _setupEventListeners() {
     window.addEventListener('quest:monster-kill', (e) => {
-      const { count } = e.detail;
+      const { count } = e.detail || {};
       this.addProgress('kills', count);
     });
 
@@ -112,9 +108,21 @@ class QuestManagerClass {
     });
   }
 
+  async refreshForNewDay() {
+    const today = getJSTDateString();
+    if (this.dailyProgress.date === today) return false;
+
+    this.dailyProgress = this._createDailyProgress(today);
+    await this.saveProgress();
+    window.dispatchEvent(new CustomEvent('quest:progress-updated'));
+    return true;
+  }
+
   async addProgress(key, amount) {
+    await this.refreshForNewDay();
     if (this.dailyProgress.claimed) return; // Already claimed, no need to track
     if (typeof this.dailyProgress[key] !== 'number') return;
+    if (!Number.isFinite(amount) || amount <= 0) return;
 
     this.dailyProgress[key] += amount;
     await this.saveProgress();
@@ -148,6 +156,7 @@ class QuestManagerClass {
   }
 
   async claimDailyReward() {
+    await this.refreshForNewDay();
     if (!this.isAllDailyCompleted() || this.isClaimed()) {
       return false;
     }
