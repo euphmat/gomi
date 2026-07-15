@@ -1,14 +1,20 @@
-export const APP_VERSION = '0.1.6';
-export const APP_RELEASE_DATE = '2026.07.15';
+export const APP_VERSION = '0.1.7';
+export const APP_RELEASE_DATE = '2026.07.16';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.07.16',
+    version: '0.1.7',
+    items: [
+      'ブラックナイトのHP吸収・HP消費・呪い反動を実際のHP増減に合わせ、連撃・全体攻撃や蘇生時も各スキルが正しく動作するように修正しました。',
+    ],
+  },
   {
     date: '2026.07.15',
     version: '0.1.6',
     items: [
       '日付をまたいでプレイを続けた際も、デイリークエストの討伐数が正しい日付へ加算されるように修正しました。',
-      'ブラックナイトのHP吸収・HP消費・呪い反動を実際のHP増減に合わせ、連撃・全体攻撃や蘇生時も各スキルが正しく動作するように修正しました。',
       'スペシャルクエストに、魚図鑑10・20・30・40種類達成の報酬を追加しました。各段階でPrism 1を獲得できます。',
       'アップデート前に発見していた魚も、保存済みの魚図鑑から達成状況へ自動反映します。',
     ],
