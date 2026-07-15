@@ -411,12 +411,14 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 // ─── HP 消費ヘルパー ──────────────────────────────────────────
 const consumeHp = (caster, percent, battle) => {
   const maxHp = caster.stats?.hp || caster.hp.max;
-  const cost = Math.max(1, Math.floor(maxHp * percent / 100));
-  caster.hp.current -= cost;
-  if (caster.hp.current < 1) caster.hp.current = 1; // HP消費で死なない
-  battle.showDamage(caster.elementId, `-${cost} HP`, 'text-red-400');
+  const requestedCost = Math.max(1, Math.floor(maxHp * percent / 100));
+  const actualCost = Math.min(requestedCost, Math.max(0, caster.hp.current - 1));
+  caster.hp.current -= actualCost; // HP消費では戦闘不能にならない
+  if (actualCost > 0) {
+    battle.showDamage(caster.elementId, `-${actualCost} HP`, 'text-red-400');
+  }
   battle.renderEntities();
-  return cost;
+  return actualCost;
 };
 
 export const black_knight = {
@@ -453,7 +455,7 @@ export const black_knight = {
         if (!target) return;
 
         playSkillAnimation(caster, [target], 'blood_saber', () => {
-          if (target.isDead) return;
+          if (caster.isDead || target.isDead) return;
           battle.executeAttack(caster, target, true, {
             statDependency: this.statDependency,
             actionName: 'ブラッドセイバー',
@@ -511,7 +513,7 @@ export const black_knight = {
             if (aliveEnemies.length > 0) {
               const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
               playSkillAnimation(caster, [target], 'shadow_lance', () => {
-                if (target.isDead) return;
+                if (caster.isDead || target.isDead) return;
                 battle.executeAttack(caster, target, true, {
                   statDependency: this.statDependency,
                   actionName: '',
@@ -567,7 +569,7 @@ export const black_knight = {
         if (targets.length === 0) return;
 
         playSkillAnimation(caster, targets, 'curse_blade', (target, index) => {
-          if (target.isDead) return;
+          if (caster.isDead || target.isDead) return;
 
           // ダメージ処理を追加
           battle.executeAttack(caster, target, true, {
@@ -580,6 +582,9 @@ export const black_knight = {
             skipAtbReset: index > 0,
             isAoEProcessed: true
           });
+
+          // 攻撃で倒した対象へ、戦闘不能後にデバフや呪いを再付与しない
+          if (target.isDead) return;
 
           // ATK debuff
           if (!target.originalAtk) target.originalAtk = target.stats.atk;
@@ -652,7 +657,7 @@ export const black_knight = {
         consumeHp(caster, levelConfig.hpPercent, battle);
 
         playSkillAnimation(caster, targets, 'hell_gate', (target, index) => {
-          if (target.isDead) return;
+          if (caster.isDead || target.isDead) return;
           battle.executeAttack(caster, target, true, {
             statDependency: this.statDependency,
             actionName: '',

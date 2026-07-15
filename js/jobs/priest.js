@@ -310,6 +310,10 @@ export const priest = {
             target.currentHp = Math.max(1, Math.floor(maxHp * (levelConfig.revivePercent / 100)));
           }
           target.atb = 0; // Reset ATB on revive just in case
+          const stigmaSkill = battle._findSkill?.(target, 'stigma_of_atonement');
+          if (stigmaSkill && stigmaSkill.level > 0 && stigmaSkill.levelConfig) {
+            target.activeAilment = { type: 'curse', duration: 9999 };
+          }
           battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');
           battle.renderEntities(); // This handles reviving UI
         });

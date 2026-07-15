@@ -616,6 +616,26 @@ export const actionMethods = {
     }
     
     const newHp = isDefenderParty ? defender.hp.current : defender.currentHp;
+    const damageDealt = Math.max(0, prevHp - newHp);
+
+    // --- Passive: Blood Thirst (血の渇望) ---
+    // 連撃・全体攻撃の後続ヒットでも毎回処理し、オーバーキル分は吸収量に含めない。
+    if (attacker.hp !== undefined && (options.damageType === 'skill' || !options.damageType)) {
+      const bloodThirstSkill = this._findSkill(attacker, 'blood_thirst');
+      if (bloodThirstSkill && bloodThirstSkill.level > 0 && bloodThirstSkill.levelConfig) {
+        const maxHp = attacker.stats?.hp || attacker.hp.max;
+        const requestedRecovery = Math.floor(damageDealt * (bloodThirstSkill.levelConfig.drainPercent / 100));
+        const actualRecovery = Math.min(requestedRecovery, Math.max(0, maxHp - attacker.hp.current));
+        if (actualRecovery > 0) {
+          this.showActionName(attacker.elementId, '血の渇望', 'text-red-300', 'border-red-500/50');
+          attacker.hp.current += actualRecovery;
+          this._scheduleBattleTimeout(() => {
+            this.showDamage(attacker.elementId, `+${actualRecovery}`, 'text-green-400');
+          }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
+        }
+      }
+    }
+
     if (newHp < prevHp && defender.activeAilment && defender.activeAilment.type === 'sleep') {
       if (Math.random() < 0.5) {
         defender.activeAilment = null;
@@ -689,21 +709,6 @@ export const actionMethods = {
                    this.showDamage(attacker.elementId, `+${mpRecover} MP`, 'text-blue-400');
                  }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
              }
-          }
-        }
-
-        // --- Passive: Blood Thirst (血の渇望) ---
-        if (options.damageType === 'skill' || !options.damageType) {
-          const bloodThirstSkill = this._findSkill(attacker, 'blood_thirst');
-          if (bloodThirstSkill && bloodThirstSkill.level > 0 && bloodThirstSkill.levelConfig) {
-            const hpRecover = Math.floor(damage * (bloodThirstSkill.levelConfig.drainPercent / 100));
-            if (hpRecover > 0) {
-              this.showActionName(attacker.elementId, '血の渇望', 'text-red-300', 'border-red-500/50');
-              attacker.hp.current = Math.min((attacker.stats?.hp || attacker.hp.max), attacker.hp.current + hpRecover);
-              this._scheduleBattleTimeout(() => {
-                this.showDamage(attacker.elementId, `+${hpRecover}`, 'text-green-400');
-              }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
-            }
           }
         }
 
@@ -788,7 +793,9 @@ export const actionMethods = {
           recoilMultiplier = stigmaSkill.levelConfig.curseRecoilMultiplier;
         }
       }
-      const recoil = Math.max(1, Math.floor(damage * recoilMultiplier));
+      const recoil = damageDealt > 0
+        ? Math.max(1, Math.floor(damageDealt * recoilMultiplier))
+        : 0;
       if (recoil > 0) {
         this.takeAilmentDamage(attacker, recoil, 'CURSE');
       }
