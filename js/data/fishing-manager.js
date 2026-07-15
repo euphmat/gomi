@@ -302,16 +302,17 @@ export async function convertFishToOil(fishId, amount = 1) {
   return { state, oilGained };
 }
 
-export async function convertFishToFeed(fishId, amount = 1) {
+export async function convertFishToFeed(fishId, amount = 1, dungeonId) {
   const fish = FISH_MAP.get(fishId);
   if (!fish) throw new Error('魚の指定が不正です。');
+  if (!dungeonId) throw new Error('魚餌を与えるダンジョンを選択してください。');
   await settleLegacyFishFeed();
   const [state, ranchData] = await Promise.all([
     loadFishingData(),
     GameDB.getGameState('ranch_data').then(value => value || {}),
   ]);
-  const companions = getRanchCompanions(ranchData);
-  if (!companions.length) throw new Error('魚餌を与える仲間がまだいません。');
+  const companions = getRanchCompanions(ranchData, dungeonId);
+  if (!companions.length) throw new Error('選択中のダンジョンに魚餌を与える仲間がいません。');
   const quantity = Math.max(1, Math.floor(amount));
   if ((state.inventory[fishId] || 0) < quantity) throw new Error('魚が足りません。');
 
@@ -330,14 +331,18 @@ export async function convertFishToFeed(fishId, amount = 1) {
     expPerCompanion,
     companionCount: companions.length,
     levelsGained,
+    targetDungeonId: dungeonId,
   };
 }
 
-function getRanchCompanions(ranchData) {
+function getRanchCompanions(ranchData, dungeonId = null) {
   const companions = [];
-  for (const [dungeonId, monsters] of Object.entries(ranchData || {})) {
+  const dungeonEntries = dungeonId
+    ? [[dungeonId, ranchData?.[dungeonId] || {}]]
+    : Object.entries(ranchData || {});
+  for (const [targetDungeonId, monsters] of dungeonEntries) {
     for (const [monsterId, data] of Object.entries(monsters || {})) {
-      companions.push({ dungeonId, monsterId, data });
+      companions.push({ dungeonId: targetDungeonId, monsterId, data });
     }
   }
   return companions;

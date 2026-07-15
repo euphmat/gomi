@@ -12,8 +12,11 @@ import { formatNumber } from '../../utils/format.js';
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
 
-function getRanchCompanionEntries(ranchData) {
-  return Object.entries(ranchData || {}).flatMap(([dungeonId, monsters]) =>
+function getRanchCompanionEntries(ranchData, dungeonId = null) {
+  const dungeonEntries = dungeonId
+    ? [[dungeonId, ranchData?.[dungeonId] || {}]]
+    : Object.entries(ranchData || {});
+  return dungeonEntries.flatMap(([dungeonId, monsters]) =>
     Object.entries(monsters || {}).map(([monsterId, data]) => ({ dungeonId, monsterId, data }))
   );
 }
@@ -82,10 +85,10 @@ export async function renderRanchTab() {
           </div>
           <div>
             <h4 class="font-bold text-emerald-300 mb-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[16px]">food_bank</span> 魚餌の一斉育成
+              <span class="material-symbols-outlined text-[16px]">food_bank</span> 魚餌のダンジョン育成
             </h4>
             <p class="text-xs leading-relaxed text-slate-400">
-              魚餌は作成した瞬間に効果を発揮します。使用した魚のEXPが現在の仲間全員へ入り、待ち時間なく一斉に育成できます。
+              魚餌は作成した瞬間に効果を発揮します。使用した魚のEXPが、セレクトボックスで選択中のダンジョンにいる仲間だけに入ります。
             </p>
           </div>
         </div>
@@ -137,11 +140,11 @@ export async function renderRanchTab() {
 
       const fishing = await loadFishingData();
       const fishCount = FISH.reduce((sum, fish) => sum + (fishing.inventory[fish.id] || 0), 0);
-      const companionCount = getRanchCompanionEntries(ranchData).length;
+      const companionCount = getRanchCompanionEntries(ranchData, currentDungeonId).length;
       const fishPanel = document.createElement('button');
       fishPanel.className = 'mt-2 flex w-full items-center gap-2 rounded-xl border border-emerald-400/25 bg-gradient-to-r from-emerald-950/35 to-cyan-950/20 px-3 py-2.5 text-left transition-colors hover:border-emerald-400/40';
-      fishPanel.innerHTML = `<span class="material-symbols-outlined text-emerald-300">bolt</span><div class="min-w-0 flex-1"><div class="text-[11px] font-black text-emerald-100">魚餌工房</div><div class="text-[9px] text-slate-400">数量を選び、仲間${formatNumber(companionCount)}体へ今すぐEXP</div></div><div class="shrink-0 text-right"><div class="text-[8px] text-slate-500">所持魚</div><div class="text-xs font-black text-cyan-300">${formatNumber(fishCount)}匹</div></div><span class="material-symbols-outlined text-base text-slate-500">chevron_right</span>`;
-      fishPanel.onclick = () => showRanchFishModal(async result => {
+      fishPanel.innerHTML = `<span class="material-symbols-outlined text-emerald-300">bolt</span><div class="min-w-0 flex-1"><div class="text-[11px] font-black text-emerald-100">魚餌工房</div><div class="text-[9px] text-slate-400">選択中の仲間${formatNumber(companionCount)}体へ今すぐEXP</div></div><div class="shrink-0 text-right"><div class="text-[8px] text-slate-500">所持魚</div><div class="text-xs font-black text-cyan-300">${formatNumber(fishCount)}匹</div></div><span class="material-symbols-outlined text-base text-slate-500">chevron_right</span>`;
+      fishPanel.onclick = () => showRanchFishModal(currentDungeonId, async result => {
         ranchData = result.ranchData || ranchData;
         await render();
       });
@@ -344,7 +347,7 @@ export async function renderRanchTab() {
   return container;
 }
 
-async function showRanchFishModal(onUpdate) {
+async function showRanchFishModal(dungeonId, onUpdate) {
   const overlay = document.createElement('div');
   overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm';
   const modal = document.createElement('div');
@@ -362,18 +365,20 @@ async function showRanchFishModal(onUpdate) {
       loadFishingData(),
       GameDB.getGameState('ranch_data').then(value => value || legacy.ranchData || {}),
     ]);
-    const companions = getRanchCompanionEntries(savedRanchData);
+    const companions = getRanchCompanionEntries(savedRanchData, dungeonId);
+    const dungeon = DUNGEONS.find(item => item.id === dungeonId) || SPECIAL_DUNGEONS.find(item => item.id === dungeonId);
+    const dungeonName = dungeon?.name || dungeonId;
     const available = FISH.filter(fish => (fishing.inventory[fish.id] || 0) > 0);
     const totalFish = FISH.reduce((sum, fish) => sum + (fishing.inventory[fish.id] || 0), 0);
     modal.innerHTML = `
       <header class="border-b border-emerald-400/15 bg-gradient-to-br from-emerald-950/80 via-slate-950 to-cyan-950/55 p-4">
-        <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2"><span class="material-symbols-outlined rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-2 text-emerald-300">bolt</span><div><h3 class="text-base font-black text-emerald-100">魚餌工房</h3><p class="text-[8px] font-black tracking-widest text-emerald-300/60">INSTANT FEED LAB</p></div></div><p class="mt-2 text-[10px] leading-relaxed text-slate-400">作成した魚餌はその場で消費され、<span class="font-black text-white">現在の仲間全員</span>へ即座にEXPが入ります。</p></div><button data-close class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-slate-400"><span class="material-symbols-outlined text-lg">close</span></button></div>
-        <div class="mt-3 grid grid-cols-2 gap-2 text-center"><div class="rounded-xl border border-cyan-400/15 bg-black/25 p-2.5"><div class="text-[8px] text-slate-500">所持している魚</div><div class="mt-0.5 text-sm font-black text-cyan-300">${formatNumber(totalFish)}匹</div></div><div class="rounded-xl border border-pink-400/20 bg-pink-950/20 p-2.5"><div class="text-[8px] text-pink-200/60">一斉育成対象</div><div class="mt-0.5 text-sm font-black text-pink-300">${formatNumber(companions.length)}体</div></div></div>
+        <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2"><span class="material-symbols-outlined rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-2 text-emerald-300">bolt</span><div><h3 class="text-base font-black text-emerald-100">魚餌工房</h3><p class="text-[8px] font-black tracking-widest text-emerald-300/60">INSTANT FEED LAB</p></div></div><p class="mt-2 text-[10px] leading-relaxed text-slate-400">作成した魚餌はその場で消費され、<span class="font-black text-white">${dungeonName}</span>の仲間だけに即座にEXPが入ります。</p></div><button data-close class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-slate-400"><span class="material-symbols-outlined text-lg">close</span></button></div>
+        <div class="mt-3 grid grid-cols-2 gap-2 text-center"><div class="rounded-xl border border-cyan-400/15 bg-black/25 p-2.5"><div class="text-[8px] text-slate-500">所持している魚</div><div class="mt-0.5 text-sm font-black text-cyan-300">${formatNumber(totalFish)}匹</div></div><div class="rounded-xl border border-pink-400/20 bg-pink-950/20 p-2.5"><div class="text-[8px] text-pink-200/60">選択中の育成対象</div><div class="mt-0.5 text-sm font-black text-pink-300">${formatNumber(companions.length)}体</div></div></div>
       </header>
-      ${lastResult ? `<div class="border-b border-emerald-400/20 bg-emerald-950/45 px-4 py-2.5 text-[10px] text-emerald-100"><span class="material-symbols-outlined mr-1 align-middle text-base text-emerald-300">task_alt</span>全${formatNumber(lastResult.companionCount)}体に <span class="font-black">+${formatNumber(lastResult.expPerCompanion)} EXP</span>${lastResult.levelsGained ? ` ・ 合計 <span class="font-black">+${formatNumber(lastResult.levelsGained)} Lv</span>` : ''}</div>` : ''}
+      ${lastResult ? `<div class="border-b border-emerald-400/20 bg-emerald-950/45 px-4 py-2.5 text-[10px] text-emerald-100"><span class="material-symbols-outlined mr-1 align-middle text-base text-emerald-300">task_alt</span>${dungeonName}の${formatNumber(lastResult.companionCount)}体に <span class="font-black">+${formatNumber(lastResult.expPerCompanion)} EXP</span>${lastResult.levelsGained ? ` ・ 合計 <span class="font-black">+${formatNumber(lastResult.levelsGained)} Lv</span>` : ''}</div>` : ''}
       <div class="no-scrollbar flex-1 space-y-2 overflow-y-auto p-3">${available.length ? available.map(fish => {
         const owned = fishing.inventory[fish.id] || 0;
-        return `<article data-feed-card="${fish.id}" class="rounded-2xl border border-slate-700/70 bg-slate-950/65 p-3"><div class="flex items-center gap-3"><div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-cyan-400/15 bg-cyan-950/20 p-1"><img src="${fish.image}" class="h-full w-full object-contain" alt=""></div><div class="min-w-0 flex-1"><div class="flex items-center justify-between gap-2"><div class="truncate text-xs font-black text-slate-100">${fish.name}</div><span class="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[9px] font-black text-cyan-300">${formatNumber(owned)}匹</span></div><div class="mt-1 text-[9px] text-slate-500">1個 → 全員に <span class="font-black text-pink-300">${formatNumber(fish.ranchExp)} EXP</span></div><div class="mt-1.5 rounded-lg border border-emerald-400/10 bg-emerald-950/20 px-2 py-1.5 text-[9px]"><span data-preview-exp class="font-black text-emerald-300"></span><span class="mx-1 text-slate-700">・</span><span data-preview-levels class="text-slate-400"></span></div></div></div>
+        return `<article data-feed-card="${fish.id}" class="rounded-2xl border border-slate-700/70 bg-slate-950/65 p-3"><div class="flex items-center gap-3"><div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-cyan-400/15 bg-cyan-950/20 p-1"><img src="${fish.image}" class="h-full w-full object-contain" alt=""></div><div class="min-w-0 flex-1"><div class="flex items-center justify-between gap-2"><div class="truncate text-xs font-black text-slate-100">${fish.name}</div><span class="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[9px] font-black text-cyan-300">${formatNumber(owned)}匹</span></div><div class="mt-1 text-[9px] text-slate-500">1個 → 選択中の仲間に <span class="font-black text-pink-300">${formatNumber(fish.ranchExp)} EXP</span></div><div class="mt-1.5 rounded-lg border border-emerald-400/10 bg-emerald-950/20 px-2 py-1.5 text-[9px]"><span data-preview-exp class="font-black text-emerald-300"></span><span class="mx-1 text-slate-700">・</span><span data-preview-levels class="text-slate-400"></span></div></div></div>
           <div class="mt-3 grid grid-cols-[38px_1fr_38px_60px] gap-1.5"><button data-step="-1" class="h-10 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-slate-300 active:scale-95">−</button><input data-amount type="number" inputmode="numeric" min="1" max="${owned}" value="1" class="h-10 min-w-0 rounded-xl border border-emerald-400/25 bg-slate-900 px-2 text-center text-sm font-black text-white outline-none focus:border-emerald-400"><button data-step="1" class="h-10 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-slate-300 active:scale-95">＋</button><button data-max class="h-10 rounded-xl border border-cyan-400/25 bg-cyan-950/40 text-[10px] font-black text-cyan-300 active:scale-95">MAX</button></div>
           <button data-feed="${fish.id}" class="mt-2.5 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-300/35 bg-gradient-to-r from-emerald-600 to-teal-600 text-[11px] font-black text-white shadow-[0_0_18px_rgba(16,185,129,.18)] active:scale-[.99]"><span class="material-symbols-outlined text-base">bolt</span><span data-action-label></span></button></article>`;
       }).join('') : '<div class="py-12 text-center"><span class="material-symbols-outlined text-4xl text-slate-700">set_meal</span><p class="mt-2 text-xs font-bold text-slate-500">魚を所持していません</p><p class="mt-1 text-[9px] text-slate-600">釣り場で魚を入手してください</p></div>'}</div>`;
@@ -395,7 +400,7 @@ async function showRanchFishModal(onUpdate) {
       }
       card.querySelector('[data-preview-exp]').textContent = `+${formatNumber(exp)} EXP / 体`;
       card.querySelector('[data-preview-levels]').textContent = levels ? `合計 +${formatNumber(levels)} Lv見込み` : '次のLvへEXP蓄積';
-      card.querySelector('[data-action-label]').textContent = `${formatNumber(amount)}個作って全員へ即時給餌`;
+      card.querySelector('[data-action-label]').textContent = `${formatNumber(amount)}個作って選択中の仲間へ給餌`;
     };
     modal.querySelectorAll('[data-feed-card]').forEach(card => {
       const input = card.querySelector('[data-amount]');
@@ -414,7 +419,7 @@ async function showRanchFishModal(onUpdate) {
       try {
         const fish = FISH.find(item => item.id === button.dataset.feed);
         const amount = Number(input.value) || 1;
-        const result = await convertFishToFeed(button.dataset.feed, amount);
+        const result = await convertFishToFeed(button.dataset.feed, amount, dungeonId);
         await playFishFeedAnimation(fish, result);
         lastResult = result;
         await onUpdate?.(result);
@@ -458,7 +463,7 @@ function playFishFeedAnimation(fish, result) {
     [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.15)', opacity: 1, offset: .55 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }],
     { duration: reducedMotion ? 350 : 700, delay: reducedMotion ? 180 : 480, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
   );
-  const companions = getRanchCompanionEntries(result.ranchData);
+  const companions = getRanchCompanionEntries(result.ranchData, result.targetDungeonId);
   const visibleCompanions = companions.slice(0, reducedMotion ? 4 : 8);
   visibleCompanions.forEach((companion, index) => {
     const baseId = companion.monsterId.endsWith('_legendary') ? companion.monsterId.replace('_legendary', '') : companion.monsterId;
