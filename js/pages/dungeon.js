@@ -2,6 +2,7 @@ import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
 import { FISHING_SPOTS, getFishForSpot } from '../definitions/fish.js';
 import { GameDB } from '../data/database.js';
+import { getFishingSpotUnlockStatus, loadFishingData } from '../data/fishing-manager.js';
 import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
 
 import { formatNumber } from '../utils/format.js';
@@ -14,6 +15,8 @@ window.enterDungeon = async (dungeonId) => {
 
 window.enterFishingSpot = async (spotId) => {
   if (!FISHING_SPOTS.some(spot => spot.id === spotId)) return;
+  const fishingData = await loadFishingData();
+  if (!getFishingSpotUnlockStatus(fishingData, spotId).unlocked) return;
   await GameDB.setGameState('currentFishingSpot', spotId);
   window.location.hash = '/fishing';
 };
@@ -148,16 +151,21 @@ export async function renderDungeonPage() {
   `;
 
   if (currentDungeonTab === 'fishing') {
+    const fishingData = await loadFishingData();
     const fishingSpotCards = FISHING_SPOTS.map((spot, index) => {
       const theme = spot.theme || { color: '34, 211, 238', icon: 'water' };
       const fishCount = getFishForSpot(spot.id).length;
+      const unlockStatus = getFishingSpotUnlockStatus(fishingData, spot.id);
+      const isUnlocked = unlockStatus.unlocked;
+      const unlockLabel = `${unlockStatus.prerequisiteSpot?.name || '前の釣り堀'}の魚図鑑`;
       return `
-        <button onclick="window.enterFishingSpot('${spot.id}')"
-                aria-label="${spot.name}で釣りをする"
-                class="group relative isolate min-h-[150px] w-full shrink-0 cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] active:scale-[.985]"
-                style="border-color:rgba(${theme.color},.62);background-color:#080a12;box-shadow:0 16px 38px -18px rgba(${theme.color},.9),inset 0 0 0 1px rgba(255,255,255,.04);animation-delay:${index * 55}ms">
-          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image:url('${spot.background}')"></div>
+        <button ${isUnlocked ? `onclick="window.enterFishingSpot('${spot.id}')"` : 'disabled'}
+                aria-label="${isUnlocked ? `${spot.name}で釣りをする` : `${spot.name}は未解放。${unlockLabel}を${unlockStatus.required}種類発見すると解放`}"
+                class="group relative isolate min-h-[150px] w-full shrink-0 overflow-hidden rounded-2xl border text-left transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] ${isUnlocked ? 'cursor-pointer hover:-translate-y-0.5 hover:brightness-110 active:scale-[.985]' : 'cursor-not-allowed saturate-[.55]'}"
+                style="border-color:rgba(${theme.color},${isUnlocked ? '.62' : '.24'});background-color:#080a12;box-shadow:${isUnlocked ? `0 16px 38px -18px rgba(${theme.color},.9)` : '0 12px 28px -20px rgba(0,0,0,.9)'},inset 0 0 0 1px rgba(255,255,255,.04);animation-delay:${index * 55}ms">
+          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ${isUnlocked ? 'group-hover:scale-105' : 'grayscale opacity-45'}" style="background-image:url('${spot.background}')"></div>
           <div class="absolute inset-0" style="background:linear-gradient(90deg,rgba(3,5,14,.96) 0%,rgba(3,5,14,.82) 52%,rgba(3,5,14,.35) 100%),radial-gradient(circle at 88% 25%,rgba(${theme.color},.68),transparent 36%)"></div>
+          ${isUnlocked ? '' : '<div class="absolute inset-0 z-[1] bg-slate-950/35"></div>'}
           <div class="absolute inset-x-0 bottom-0 h-px" style="background:linear-gradient(90deg,transparent,rgba(${theme.color},1),transparent)"></div>
           <div class="relative z-10 flex min-h-[150px] flex-col justify-between gap-3 p-4">
             <div class="flex items-start justify-between gap-3">
@@ -168,8 +176,18 @@ export async function renderDungeonPage() {
                 </div>
                 <h2 class="truncate text-xl font-black tracking-wider text-white" style="text-shadow:0 2px 12px #000,0 0 18px rgba(${theme.color},.55)">${spot.name}</h2>
                 <p class="mt-1 line-clamp-2 max-w-md text-[10px] font-medium leading-relaxed text-slate-300/85 sm:text-xs">${spot.description}</p>
+                ${isUnlocked ? '' : `
+                  <div class="mt-2 max-w-xs rounded-lg border border-slate-500/30 bg-slate-950/75 px-2.5 py-2">
+                    <div class="flex items-center justify-between gap-3 text-[9px] font-black text-slate-300">
+                      <span>${unlockLabel}</span>
+                      <span class="tabular-nums text-white">${unlockStatus.current} / ${unlockStatus.required}種類</span>
+                    </div>
+                    <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                      <div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-400" style="width:${Math.min(100, (unlockStatus.current / unlockStatus.required) * 100)}%"></div>
+                    </div>
+                  </div>`}
               </div>
-              <span class="material-symbols-outlined shrink-0 text-4xl" style="color:rgba(${theme.color},.85);filter:drop-shadow(0 0 14px rgba(${theme.color},.7))">${theme.icon}</span>
+              <span class="material-symbols-outlined shrink-0 text-4xl" style="color:rgba(${theme.color},.85);filter:drop-shadow(0 0 14px rgba(${theme.color},.7))">${isUnlocked ? theme.icon : 'lock'}</span>
             </div>
             <div class="flex items-end justify-between gap-3">
               <div class="flex flex-wrap gap-1.5 text-[9px] font-black text-slate-200">
@@ -177,8 +195,8 @@ export async function renderDungeonPage() {
                 <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">固有魚 ${fishCount}種</span>
                 <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">${(spot.minCatchMs / 1000).toFixed(0)}〜${(spot.maxCatchMs / 1000).toFixed(0)}秒</span>
               </div>
-              <span class="flex shrink-0 items-center gap-1 rounded-full border border-white/25 bg-black/50 py-2 pl-3 pr-2 text-[10px] font-black tracking-wider text-white backdrop-blur-sm transition-colors group-hover:border-white/60">
-                釣りをする<span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+              <span class="flex shrink-0 items-center gap-1 rounded-full border ${isUnlocked ? 'border-white/25 text-white group-hover:border-white/60' : 'border-slate-600/40 text-slate-400'} bg-black/50 py-2 pl-3 pr-2 text-[10px] font-black tracking-wider backdrop-blur-sm transition-colors">
+                ${isUnlocked ? '釣りをする' : '未解放'}<span class="material-symbols-outlined text-base transition-transform ${isUnlocked ? 'group-hover:translate-x-1' : ''}">${isUnlocked ? 'arrow_forward' : 'lock'}</span>
               </span>
             </div>
           </div>

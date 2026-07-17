@@ -46,6 +46,27 @@ function normalizeFishDiscovery(entry) {
   );
 }
 
+export function getFishingSpotUnlockStatus(state, spotId) {
+  const spot = FISHING_SPOTS.find(item => item.id === spotId);
+  if (!spot) return { unlocked: false, current: 0, required: 0, prerequisiteSpot: null };
+
+  const condition = spot.unlockCondition;
+  if (!condition) return { unlocked: true, current: 0, required: 0, prerequisiteSpot: null };
+
+  const prerequisiteSpot = FISHING_SPOTS.find(item => item.id === condition.spotId) || null;
+  const required = Math.max(1, Number(condition.discoveredSpecies) || 1);
+  const current = FISH
+    .filter(fish => fish.spotId === condition.spotId)
+    .reduce((count, fish) => count + (normalizeFishDiscovery(state?.discovered?.[fish.id]) ? 1 : 0), 0);
+
+  return {
+    unlocked: current >= required,
+    current,
+    required,
+    prerequisiteSpot,
+  };
+}
+
 function bonusGroupKey(item) {
   if (item?.type === 'gold') return 'gold';
   if (item?.type === 'material' && item.itemId) return `material:${item.itemId}`;
@@ -236,11 +257,15 @@ async function catchPrismShard(state) {
 export async function performFishingCatch(spotId = FISHING_SPOTS[0].id) {
   const spot = FISHING_SPOTS.find(item => item.id === spotId);
   if (!spot) throw new Error('釣り場が見つかりません。');
+  const state = await loadFishingData();
+  const unlockStatus = getFishingSpotUnlockStatus(state, spot.id);
+  if (!unlockStatus.unlocked) {
+    throw new Error(`${unlockStatus.prerequisiteSpot?.name || '前の釣り堀'}の魚を${unlockStatus.required}種類発見すると解放されます。`);
+  }
   const gold = Number(await GameDB.getGameState('gold')) || 0;
   if (gold < spot.baitCost) throw new Error('釣り餌を買うGoldが足りません。');
   await GameDB.setGameState('gold', gold - spot.baitCost);
 
-  const state = await loadFishingData();
   const roll = Math.random();
   let result;
   if (roll < 0.00005) result = await catchPrismShard(state);

@@ -1,5 +1,5 @@
 import { FISHING_SPOTS, FISH_RARITY, getFishForSpot } from '../definitions/fish.js';
-import { getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
+import { getFishingSpotUnlockStatus, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
 
@@ -26,15 +26,21 @@ const BONUS_CATCH_META = {
 };
 
 export async function renderFishingPage() {
-  const selectedSpotId = await GameDB.getGameState('currentFishingSpot');
-  const spot = FISHING_SPOTS.find(item => item.id === selectedSpotId) || FISHING_SPOTS[0];
+  const [selectedSpotId, initialState] = await Promise.all([
+    GameDB.getGameState('currentFishingSpot'),
+    loadFishingData(),
+  ]);
+  const selectedSpot = FISHING_SPOTS.find(item => item.id === selectedSpotId) || FISHING_SPOTS[0];
+  const spot = getFishingSpotUnlockStatus(initialState, selectedSpot.id).unlocked
+    ? selectedSpot
+    : FISHING_SPOTS[0];
   const spotFish = getFishForSpot(spot.id);
   const themeColor = spot.theme?.color || '34, 211, 238';
   const container = document.createElement('div');
   // スクロールはアプリ共通の #content に一本化し、入れ子スクロールによる操作不能を防ぐ。
   container.className = 'relative min-h-full overflow-hidden bg-[#07101c] text-white';
   container.dataset.fishingPage = spot.id;
-  let state = await loadFishingData();
+  let state = initialState;
   let gold = Number(await GameDB.getGameState('gold')) || 0;
   let running = false;
   let catchTimer = null;

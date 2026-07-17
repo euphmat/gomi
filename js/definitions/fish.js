@@ -19,6 +19,7 @@ export const FISHING_SPOTS = [
     minCatchMs: 6000,
     maxCatchMs: 12000,
     tier: '中級',
+    unlockCondition: { spotId: 'moonlit_lake', discoveredSpecies: 30 },
     theme: { color: '167, 139, 250', icon: 'auto_awesome' },
   },
   {
@@ -30,6 +31,7 @@ export const FISHING_SPOTS = [
     minCatchMs: 10000,
     maxCatchMs: 20000,
     tier: '上級',
+    unlockCondition: { spotId: 'astral_lake', discoveredSpecies: 30 },
     theme: { color: '45, 212, 191', icon: 'waves' },
   },
 ];
