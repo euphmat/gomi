@@ -1,4 +1,4 @@
-import { FISH, FISHING_SPOTS, FISH_RARITY } from '../definitions/fish.js';
+import { FISHING_SPOTS, FISH_RARITY, getFishForSpot } from '../definitions/fish.js';
 import { getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
@@ -26,7 +26,10 @@ const BONUS_CATCH_META = {
 };
 
 export async function renderFishingPage() {
-  const spot = FISHING_SPOTS[0];
+  const selectedSpotId = await GameDB.getGameState('currentFishingSpot');
+  const spot = FISHING_SPOTS.find(item => item.id === selectedSpotId) || FISHING_SPOTS[0];
+  const spotFish = getFishForSpot(spot.id);
+  const themeColor = spot.theme?.color || '34, 211, 238';
   const container = document.createElement('div');
   // スクロールはアプリ共通の #content に一本化し、入れ子スクロールによる操作不能を防ぐ。
   container.className = 'relative min-h-full overflow-hidden bg-[#07101c] text-white';
@@ -44,13 +47,13 @@ export async function renderFishingPage() {
 
   container.innerHTML = `
     <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${spot.background}')"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/30 to-slate-950/95"></div>
+    <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(2,6,23,.88),rgba(2,6,23,.32),rgba(2,6,23,.96)),radial-gradient(circle at 82% 12%,rgba(${themeColor},.36),transparent 35%)"></div>
     <div class="relative z-10 pb-4">
       <header class="p-2.5">
-        <div class="flex items-center justify-between gap-2 rounded-2xl border border-cyan-300/25 bg-slate-950/70 px-3 py-2.5 shadow-xl backdrop-blur-md">
+        <div class="flex items-center justify-between gap-2 rounded-2xl border bg-slate-950/70 px-3 py-2.5 shadow-xl backdrop-blur-md" style="border-color:rgba(${themeColor},.3)">
           <div class="min-w-0">
-            <div class="flex items-center gap-2"><span class="material-symbols-outlined text-cyan-300">phishing</span><h1 class="truncate text-lg font-black text-cyan-100">${spot.name}</h1></div>
-            <p class="mt-0.5 text-[10px] text-slate-400">餌 ${formatNumber(spot.baitCost)} G / 1匹</p>
+            <div class="flex items-center gap-2"><span class="material-symbols-outlined" style="color:rgba(${themeColor},1)">phishing</span><h1 class="truncate text-lg font-black text-white">${spot.name}</h1><span class="rounded-full border border-white/15 bg-black/30 px-1.5 py-0.5 text-[8px] font-black text-slate-300">${spot.tier}</span></div>
+            <p class="mt-0.5 text-[10px] text-slate-400">餌 ${formatNumber(spot.baitCost)} G / 1匹 ・ 固有魚 ${spotFish.length}種</p>
           </div>
           <button data-back class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/35 text-slate-200"><span class="material-symbols-outlined">arrow_back</span></button>
         </div>
@@ -101,7 +104,7 @@ export async function renderFishingPage() {
     container.querySelector('[data-total]').textContent = formatNumber(state.totalCaught);
     container.querySelector('[data-shards]').textContent = `${state.prismShards}/10`;
     const inventory = container.querySelector('[data-inventory]');
-    const ownedFish = FISH.filter(fish => (state.sessionInventory[fish.id] || 0) > 0);
+    const ownedFish = spotFish.filter(fish => (state.sessionInventory[fish.id] || 0) > 0);
     container.querySelector('[data-owned-species]').textContent = formatNumber(ownedFish.length);
     inventory.innerHTML = ownedFish.length ? ownedFish.map(fish => {
       const count = state.sessionInventory[fish.id];
@@ -109,8 +112,9 @@ export async function renderFishingPage() {
       const tileTheme = FISH_TILE_THEME[fish.rarity] || FISH_TILE_THEME.common;
       return `<article class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${tileTheme} p-1.5 text-center shadow-md">
         <div class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">×${formatNumber(count)}</div>
-        <div class="flex min-h-0 flex-1 items-center justify-center pt-1">
-          <img src="${fish.image}" class="h-10 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110" alt="${fish.name}">
+        <div class="relative flex min-h-0 flex-1 items-center justify-center pt-1">
+          <span class="material-symbols-outlined absolute text-3xl ${rarity.text}">set_meal</span>
+          <img src="${fish.image}" onerror="this.remove()" class="relative h-10 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110" alt="${fish.name}">
         </div>
         <div class="truncate rounded-lg bg-black/30 px-1 py-1 text-[9px] font-black leading-tight ${rarity.text}">${fish.name}</div>
       </article>`;
@@ -165,12 +169,11 @@ export async function renderFishingPage() {
     const stage = display.closest('section');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-    const fishCatches = result.type === 'fish' && Array.isArray(result.catches) ? result.catches : [];
-    const visual = fishCatches.length > 1
-      ? `<div data-catch-visual class="flex h-24 items-center justify-center -space-x-9">${fishCatches.map((fish, index) => `<img src="${fish.image}" class="h-20 w-20 object-contain drop-shadow-[0_5px_7px_rgba(0,0,0,.7)]" style="z-index:${index}" alt="">`).join('')}</div>`
-      : result.image
-        ? `<img data-catch-visual src="${result.image}" class="h-24 w-24 object-contain" alt="">`
-        : `<span data-catch-visual class="material-symbols-outlined text-6xl">${result.icon || 'redeem'}</span>`;
+    const visual = result.image
+      ? result.type === 'fish'
+        ? `<div data-catch-visual class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain" alt=""></div>`
+        : `<img data-catch-visual src="${result.image}" class="h-24 w-24 object-contain" alt="">`
+      : `<span data-catch-visual class="material-symbols-outlined text-6xl">${result.icon || 'redeem'}</span>`;
 
     // 1. 釣れた物の正体を隠した魚影を先に見せる。
     display.innerHTML = `<div class="relative">${visual}<div class="absolute inset-x-2 bottom-1 h-2 rounded-full bg-black/50 blur-sm"></div></div><p class="mt-1 text-xs font-black tracking-widest text-cyan-100">魚影が浮かんだ…</p>`;
@@ -210,11 +213,11 @@ export async function renderFishingPage() {
     if (!display.isConnected || leaving) return;
 
     // 3. 黒い魚影を解除し、取得アイテムを正式に公開する。
-    const revealedVisual = fishCatches.length > 1
-      ? `<div data-reveal class="flex h-24 items-center justify-center -space-x-9">${fishCatches.map((fish, index) => `<img src="${fish.image}" class="h-20 w-20 object-contain drop-shadow-[0_0_14px_rgba(103,232,249,.65)]" style="z-index:${index}" alt="${fish.name}">`).join('')}</div>`
-      : result.image
-        ? `<img data-reveal src="${result.image}" class="h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt="">`
-        : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`;
+    const revealedVisual = result.image
+      ? result.type === 'fish'
+        ? `<div data-reveal class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt=""></div>`
+        : `<img data-reveal src="${result.image}" class="h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt="">`
+      : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`;
     display.innerHTML = `${revealedVisual}
       <p data-reveal-name class="mt-1 text-sm font-black text-white">${result.name}</p>
       <p class="text-[9px] font-bold uppercase tracking-widest text-cyan-200/70">${result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;

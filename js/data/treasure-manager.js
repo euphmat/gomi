@@ -24,7 +24,20 @@ function normalizeLevels(value) {
 
 export async function loadTreasureLevels(force = false) {
   if (!loaded || force) {
-    cachedLevels = normalizeLevels(await GameDB.getGameState(TREASURE_STATE_KEY));
+    const savedLevels = await GameDB.getGameState(TREASURE_STATE_KEY);
+    cachedLevels = normalizeLevels(savedLevels);
+    const isStoredRecord = savedLevels && typeof savedLevels === 'object' && !Array.isArray(savedLevels);
+    const savedEntries = isStoredRecord
+      ? Object.entries(savedLevels)
+      : [];
+    const needsCleanup = savedLevels != null && (
+      !isStoredRecord
+      || savedEntries.length !== Object.keys(cachedLevels).length
+      || savedEntries.some(([id, level]) => cachedLevels[id] !== Math.floor(Number(level) || 0))
+    );
+    if (needsCleanup) {
+      await GameDB.setGameState(TREASURE_STATE_KEY, { ...cachedLevels });
+    }
     loaded = true;
   }
   return { ...cachedLevels };

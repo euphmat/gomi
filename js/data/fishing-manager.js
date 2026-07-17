@@ -9,7 +9,6 @@ import { ACCESSORIES } from '../definitions/accessories.js';
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
-import { getTreasureEffect } from './treasure-manager.js';
 
 export const FISHING_STATE_KEY = 'fishing_data';
 const LEGACY_RANCH_FISH_STATE_KEY = 'ranch_fish_data';
@@ -37,6 +36,14 @@ function normalizeFishCount(entry) {
     return Math.max(0, Object.values(entry).reduce((sum, value) => sum + (Number(value) || 0), 0));
   }
   return Math.max(0, Number(entry) || 0);
+}
+
+function normalizeFishDiscovery(entry) {
+  return Boolean(
+    entry && typeof entry === 'object'
+      ? Object.values(entry).some(Boolean)
+      : entry
+  );
 }
 
 function bonusGroupKey(item) {
@@ -101,11 +108,7 @@ export async function loadFishingData() {
     state.inventory[fish.id] = normalizeFishCount(state.inventory[fish.id]);
     state.sessionInventory[fish.id] = normalizeFishCount(state.sessionInventory[fish.id]);
     state.fishFeed[fish.id] = normalizeFishCount(state.fishFeed[fish.id]);
-    state.discovered[fish.id] = Boolean(
-      typeof state.discovered[fish.id] === 'object'
-        ? Object.values(state.discovered[fish.id]).some(Boolean)
-        : state.discovered[fish.id]
-    );
+    state.discovered[fish.id] = normalizeFishDiscovery(state.discovered[fish.id]);
   }
   return state;
 }
@@ -115,14 +118,16 @@ async function saveFishingData(state) {
   return state;
 }
 
-function weightedFish() {
-  const total = FISH.reduce((sum, fish) => sum + fish.weight, 0);
+function weightedFish(spotId) {
+  const candidates = FISH.filter(fish => fish.spotId === spotId);
+  const pool = candidates.length ? candidates : FISH.filter(fish => fish.spotId === FISHING_SPOTS[0].id);
+  const total = pool.reduce((sum, fish) => sum + fish.weight, 0);
   let roll = Math.random() * total;
-  for (const fish of FISH) {
+  for (const fish of pool) {
     roll -= fish.weight;
     if (roll <= 0) return fish;
   }
-  return FISH[0];
+  return pool[0];
 }
 
 function dungeonForMonster(monsterId) {
@@ -139,24 +144,18 @@ function addRecentBonus(state, result) {
   ]).slice(0, 12);
 }
 
-async function catchFish(state, catchCount = 1) {
-  const count = Math.min(5, Math.max(1, Math.floor(catchCount)));
-  const catches = Array.from({ length: count }, () => weightedFish());
-  for (const fish of catches) {
-    state.sessionInventory[fish.id] = normalizeFishCount(state.sessionInventory[fish.id]) + 1;
-    state.discovered[fish.id] = true;
-  }
-  state.totalCaught += count;
-  const [firstFish] = catches;
+async function catchFish(state, spotId) {
+  const fish = weightedFish(spotId);
+  state.sessionInventory[fish.id] = normalizeFishCount(state.sessionInventory[fish.id]) + 1;
+  state.discovered[fish.id] = true;
+  state.totalCaught += 1;
   const result = {
     type: 'fish',
-    fishId: firstFish.id,
-    name: count > 1 ? `${count}匹同時に釣れた！` : firstFish.name,
-    image: firstFish.image,
-    count,
-    catches: catches.map(fish => ({ fishId: fish.id, name: fish.name, image: fish.image })),
+    fishId: fish.id,
+    name: fish.name,
+    image: fish.image,
   };
-  window.dispatchEvent(new CustomEvent('quest:fish-caught', { detail: { count, fishId: firstFish.id } }));
+  window.dispatchEvent(new CustomEvent('quest:fish-caught', { detail: { count: 1, fishId: fish.id } }));
   return result;
 }
 
@@ -169,11 +168,11 @@ async function catchGoldBag(state) {
   return result;
 }
 
-async function catchMonsterMaterial(state) {
+async function catchMonsterMaterial(state, spotId) {
   const discovered = new Set(await GameDB.getGameState('discovered_monsters') || []);
   const candidates = MONSTERS.filter(monster => discovered.has(monster.id))
     .flatMap(monster => (monster.drops || []).map(drop => MATERIAL_MAP.get(drop.itemId)).filter(Boolean));
-  if (!candidates.length) return catchFish(state, getFishingCatchCount());
+  if (!candidates.length) return catchFish(state, spotId);
   const material = candidates[Math.floor(Math.random() * candidates.length)];
   const current = await GameDB.getInventoryItem(material.id) || { ...material, type: 'material', quantity: 0 };
   current.quantity = (current.quantity || 0) + MATERIAL_CATCH_AMOUNT;
@@ -183,7 +182,7 @@ async function catchMonsterMaterial(state) {
   return result;
 }
 
-async function catchEquipment(state) {
+async function catchEquipment(state, spotId) {
   const [ownedEquipment, discoveredItems] = await Promise.all([
     GameDB.getAllEquipment(),
     GameDB.getGameState('discovered_items'),
@@ -195,7 +194,7 @@ async function catchEquipment(state) {
     if (definition) acquiredBaseIds.add(definition.id);
   });
   const candidates = ALL_EQUIPMENT.filter(item => acquiredBaseIds.has(item.id));
-  if (!candidates.length) return catchFish(state, getFishingCatchCount());
+  if (!candidates.length) return catchFish(state, spotId);
   const equipment = candidates[Math.floor(Math.random() * candidates.length)];
   const uniqueId = `${equipment.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   await GameDB.putEquipment({ id: uniqueId, baseId: equipment.id });
@@ -204,10 +203,10 @@ async function catchEquipment(state) {
   return result;
 }
 
-async function catchPet(state) {
+async function catchPet(state, spotId) {
   const discovered = new Set(await GameDB.getGameState('discovered_monsters') || []);
   const candidates = MONSTERS.filter(monster => discovered.has(monster.id));
-  if (!candidates.length) return catchFish(state, getFishingCatchCount());
+  if (!candidates.length) return catchFish(state, spotId);
   const monster = candidates[Math.floor(Math.random() * candidates.length)];
   const ranchData = await GameDB.getGameState('ranch_data') || {};
   const dungeonId = dungeonForMonster(monster.id);
@@ -245,11 +244,11 @@ export async function performFishingCatch(spotId = FISHING_SPOTS[0].id) {
   const roll = Math.random();
   let result;
   if (roll < 0.00005) result = await catchPrismShard(state);
-  else if (roll < 0.00025) result = await catchPet(state);
-  else if (roll < 0.00105) result = await catchEquipment(state);
-  else if (roll < 0.00805) result = await catchMonsterMaterial(state);
+  else if (roll < 0.00025) result = await catchPet(state, spot.id);
+  else if (roll < 0.00105) result = await catchEquipment(state, spot.id);
+  else if (roll < 0.00805) result = await catchMonsterMaterial(state, spot.id);
   else if (roll < 0.02805) result = await catchGoldBag(state);
-  else result = await catchFish(state, getFishingCatchCount());
+  else result = await catchFish(state, spot.id);
   await saveFishingData(state);
   return { state, result, gold: (Number(await GameDB.getGameState('gold')) || 0) };
 }
@@ -276,16 +275,7 @@ export async function settleFishingSession() {
 
 export function getRandomCatchDelay(spotId = FISHING_SPOTS[0].id) {
   const spot = FISHING_SPOTS.find(item => item.id === spotId) || FISHING_SPOTS[0];
-  const baseDelay = Math.floor(spot.minCatchMs + Math.random() * (spot.maxCatchMs - spot.minCatchMs + 1));
-  return Math.max(100, baseDelay - getTreasureEffect('fishingDelayReductionMs'));
-}
-
-export function getFishingCatchCount(random = Math.random) {
-  const progressPercent = Math.max(0, Math.min(400, getTreasureEffect('fishingMultiCatchProgressPercent')));
-  const guaranteedExtra = Math.floor(progressPercent / 100);
-  const chanceForNext = progressPercent % 100;
-  const randomExtra = chanceForNext > 0 && random() < chanceForNext / 100 ? 1 : 0;
-  return Math.min(5, 1 + guaranteedExtra + randomExtra);
+  return Math.floor(spot.minCatchMs + Math.random() * (spot.maxCatchMs - spot.minCatchMs + 1));
 }
 
 export async function convertFishToOil(fishId, amount = 1) {

@@ -1,5 +1,6 @@
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
+import { FISHING_SPOTS, getFishForSpot } from '../definitions/fish.js';
 import { GameDB } from '../data/database.js';
 import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
 
@@ -9,6 +10,12 @@ window.enterDungeon = async (dungeonId) => {
   await GameDB.setGameState('currentDungeon', dungeonId);
   await GameDB.setGameState('currentFloor', 1);
   window.location.hash = '/battle';
+};
+
+window.enterFishingSpot = async (spotId) => {
+  if (!FISHING_SPOTS.some(spot => spot.id === spotId)) return;
+  await GameDB.setGameState('currentFishingSpot', spotId);
+  window.location.hash = '/fishing';
 };
 
 window.unlockSpecialDungeon = async (dungeonId) => {
@@ -141,21 +148,53 @@ export async function renderDungeonPage() {
   `;
 
   if (currentDungeonTab === 'fishing') {
+    const fishingSpotCards = FISHING_SPOTS.map((spot, index) => {
+      const theme = spot.theme || { color: '34, 211, 238', icon: 'water' };
+      const fishCount = getFishForSpot(spot.id).length;
+      return `
+        <button onclick="window.enterFishingSpot('${spot.id}')"
+                aria-label="${spot.name}で釣りをする"
+                class="group relative isolate min-h-[150px] w-full shrink-0 cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] active:scale-[.985]"
+                style="border-color:rgba(${theme.color},.62);background-color:#080a12;box-shadow:0 16px 38px -18px rgba(${theme.color},.9),inset 0 0 0 1px rgba(255,255,255,.04);animation-delay:${index * 55}ms">
+          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image:url('${spot.background}')"></div>
+          <div class="absolute inset-0" style="background:linear-gradient(90deg,rgba(3,5,14,.96) 0%,rgba(3,5,14,.82) 52%,rgba(3,5,14,.35) 100%),radial-gradient(circle at 88% 25%,rgba(${theme.color},.68),transparent 36%)"></div>
+          <div class="absolute inset-x-0 bottom-0 h-px" style="background:linear-gradient(90deg,transparent,rgba(${theme.color},1),transparent)"></div>
+          <div class="relative z-10 flex min-h-[150px] flex-col justify-between gap-3 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="mb-1 flex items-center gap-2 text-[9px] font-black uppercase tracking-[.22em]" style="color:rgba(${theme.color},1)">
+                  <span class="material-symbols-outlined text-base">${theme.icon}</span>
+                  ${spot.tier || '釣り場'} FISHING AREA
+                </div>
+                <h2 class="truncate text-xl font-black tracking-wider text-white" style="text-shadow:0 2px 12px #000,0 0 18px rgba(${theme.color},.55)">${spot.name}</h2>
+                <p class="mt-1 line-clamp-2 max-w-md text-[10px] font-medium leading-relaxed text-slate-300/85 sm:text-xs">${spot.description}</p>
+              </div>
+              <span class="material-symbols-outlined shrink-0 text-4xl" style="color:rgba(${theme.color},.85);filter:drop-shadow(0 0 14px rgba(${theme.color},.7))">${theme.icon}</span>
+            </div>
+            <div class="flex items-end justify-between gap-3">
+              <div class="flex flex-wrap gap-1.5 text-[9px] font-black text-slate-200">
+                <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">餌 ${formatNumber(spot.baitCost)} G</span>
+                <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">固有魚 ${fishCount}種</span>
+                <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">${(spot.minCatchMs / 1000).toFixed(0)}〜${(spot.maxCatchMs / 1000).toFixed(0)}秒</span>
+              </div>
+              <span class="flex shrink-0 items-center gap-1 rounded-full border border-white/25 bg-black/50 py-2 pl-3 pr-2 text-[10px] font-black tracking-wider text-white backdrop-blur-sm transition-colors group-hover:border-white/60">
+                釣りをする<span class="material-symbols-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+              </span>
+            </div>
+          </div>
+        </button>`;
+    }).join('');
+
     return `
       <div data-dungeon-page class="flex h-full min-h-0 flex-col gap-4 overflow-hidden bg-[#0b0b19] p-4 pb-24">
         ${tabsHtml}
-        <div class="relative min-h-0 flex-1 overflow-hidden rounded-3xl border border-cyan-300/40 bg-slate-950 shadow-[0_20px_60px_rgba(0,0,0,.45)]">
-          <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('assets/dungeon/bg_fishing_spot.webp')"></div>
-          <div class="absolute inset-0 bg-gradient-to-b from-slate-950/25 via-slate-950/20 to-slate-950/95"></div>
-          <div class="relative flex h-full flex-col items-center justify-end p-5 text-center">
-            <div class="mb-auto mt-4 rounded-full border border-cyan-200/30 bg-slate-950/65 px-3 py-1 text-[10px] font-black tracking-[.2em] text-cyan-200 backdrop-blur-md">FISHING AREA</div>
-            <div class="w-full rounded-2xl border border-white/15 bg-slate-950/75 p-4 backdrop-blur-md">
-              <div class="mb-2 flex items-center justify-center gap-2"><span class="material-symbols-outlined text-2xl text-cyan-300">water</span><h2 class="text-xl font-black tracking-wider text-white">月影の湖</h2></div>
-              <p class="text-[11px] leading-relaxed text-slate-300">Goldで釣り餌を用意して、魚や珍しいお宝を釣り上げよう。</p>
-              <button onclick="window.location.hash='/fishing'" class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-200/60 bg-gradient-to-r from-cyan-600 to-blue-600 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(6,182,212,.35)] active:scale-[.99]">
-                <span class="material-symbols-outlined">phishing</span>釣り場へ向かう<span class="material-symbols-outlined text-base">arrow_forward</span>
-              </button>
-            </div>
+        <div class="min-h-0 flex-1 overflow-y-auto no-scrollbar">
+          <div class="mb-3 flex items-end justify-between gap-3 px-1">
+            <div><h1 class="text-base font-black text-white">釣り堀を選択</h1><p class="mt-0.5 text-[10px] text-slate-500">釣り堀ごとに釣れる魚と餌代が異なります</p></div>
+            <div class="shrink-0 rounded-full border border-cyan-400/20 bg-cyan-950/30 px-2.5 py-1 text-[9px] font-black text-cyan-300">${FISHING_SPOTS.length} AREAS</div>
+          </div>
+          <div class="flex flex-col gap-3">
+            ${fishingSpotCards}
           </div>
         </div>
       </div>`;
