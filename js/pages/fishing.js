@@ -1,5 +1,6 @@
 import { FISHING_SPOTS, FISH_RARITY, getFishForSpot } from '../definitions/fish.js';
-import { getFishingSpotUnlockStatus, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
+import { FISHING_TACKLE, FISHING_TACKLE_ORDER, getFishingTackleEffect, getFishingTackleVisual } from '../definitions/fishing-tackle.js';
+import { getFishingSpotUnlockStatus, getFishingTackleLevel, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
 
@@ -83,6 +84,20 @@ export async function renderFishingPage() {
           <span class="material-symbols-outlined mr-1 align-middle">play_arrow</span><span data-toggle-label>自動釣りを開始</span>
         </button>
 
+        <section class="grid grid-cols-3 gap-1.5 rounded-xl border border-white/10 bg-slate-950/75 p-2 backdrop-blur-md">
+          ${FISHING_TACKLE_ORDER.map(type => {
+            const definition = FISHING_TACKLE[type];
+            const level = getFishingTackleLevel(state, type);
+            const visual = getFishingTackleVisual(type, level);
+            return `<div class="min-w-0 rounded-lg border border-white/10 bg-black/20 p-1.5 text-center">
+              <div class="relative mx-auto flex h-9 w-9 items-center justify-center"><span class="material-symbols-outlined absolute text-2xl text-white/15">${definition.icon}</span>${visual ? `<img src="${visual.image}" onerror="this.remove()" class="relative h-full w-full object-contain" alt="${visual.name}">` : ''}</div>
+              <div class="mt-0.5 truncate text-[8px] font-black text-slate-400">${visual?.name || definition.shortName}</div>
+              <div class="text-[9px] font-black text-white">Lv.${level}</div>
+              <div class="mt-0.5 truncate text-[7px] font-bold text-cyan-300/75">${getFishingTackleEffect(type, level)}</div>
+            </div>`;
+          }).join('')}
+        </section>
+
         <section class="grid grid-cols-3 gap-1 rounded-xl border border-white/10 bg-slate-950/75 p-2 backdrop-blur-md">
           <div class="text-center"><div class="text-[9px] text-slate-500">所持G</div><div data-gold class="mt-1 text-xs font-black text-amber-300">${formatNumber(gold)}</div></div>
           <div class="text-center"><div class="text-[9px] text-slate-500">累計釣果</div><div data-total class="mt-1 text-xs font-black text-cyan-300">${formatNumber(state.totalCaught)}</div></div>
@@ -96,7 +111,7 @@ export async function renderFishingPage() {
           </div>
           <div data-catch-panel="fish" role="tabpanel" class="p-2">
             <p class="mb-1.5 px-0.5 text-[8px] text-slate-500">今回の釣果です。釣り場を離れると倉庫へ移動します</p>
-            <div data-inventory class="grid grid-cols-4 gap-1.5 sm:grid-cols-5"></div>
+            <div data-inventory class="grid gap-1.5" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
           </div>
           <div data-catch-panel="bonus" role="tabpanel" class="hidden p-2">
             <div data-recent class="grid grid-cols-3 gap-1.5 sm:grid-cols-4"></div>
@@ -119,7 +134,6 @@ export async function renderFishingPage() {
       return `<article class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${tileTheme} p-1.5 text-center shadow-md">
         <div class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">×${formatNumber(count)}</div>
         <div class="relative flex min-h-0 flex-1 items-center justify-center pt-1">
-          <span class="material-symbols-outlined absolute text-3xl ${rarity.text}">set_meal</span>
           <img src="${fish.image}" onerror="this.remove()" class="relative h-10 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110" alt="${fish.name}">
         </div>
         <div class="truncate rounded-lg bg-black/30 px-1 py-1 text-[9px] font-black leading-tight ${rarity.text}">${fish.name}</div>
@@ -175,6 +189,11 @@ export async function renderFishingPage() {
     const stage = display.closest('section');
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const caughtFishes = result.type === 'fish' && Array.isArray(result.fishes) && result.fishes.length
+      ? result.fishes.slice(0, 3)
+      : result.type === 'fish'
+        ? [{ fishId: result.fishId, name: result.name, image: result.image }]
+        : [];
     const visual = result.image
       ? result.type === 'fish'
         ? `<div data-catch-visual class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain" alt=""></div>`
@@ -218,29 +237,117 @@ export async function renderFishingPage() {
     await wait(reducedMotion ? 190 : 390);
     if (!display.isConnected || leaving) return;
 
-    // 3. 黒い魚影を解除し、取得アイテムを正式に公開する。
+    // 3. 複数釣果時だけ、ルアーが魚群を引き分ける専用演出を挟む。
+    const isMultiCatch = caughtFishes.length > 1;
+    if (isMultiCatch) {
+      const lureVisual = getFishingTackleVisual('lure', getFishingTackleLevel(state, 'lure'));
+      const shadowPositions = caughtFishes.length === 2
+        ? [{ x: -58, y: -4, rotate: -12 }, { x: 58, y: -4, rotate: 12 }]
+        : [{ x: -72, y: 2, rotate: -14 }, { x: 0, y: -22, rotate: 0 }, { x: 72, y: 2, rotate: 14 }];
+      display.innerHTML = `
+        <div data-multi-stage class="relative h-20 w-[230px] overflow-visible">
+          <div data-multi-flash class="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/40 blur-xl"></div>
+          <span data-multi-ring class="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-200/80"></span>
+          <span data-multi-ring class="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-300/70"></span>
+          ${shadowPositions.map((_, index) => `
+            <div data-multi-shadow="${index}" class="absolute left-1/2 top-1/2 flex h-11 w-14 items-center justify-center text-cyan-950 opacity-0 drop-shadow-[0_0_8px_rgba(167,139,250,.95)]">
+              <span class="material-symbols-outlined text-5xl">set_meal</span>
+            </div>
+          `).join('')}
+          <div data-multi-lure class="absolute left-1/2 top-1/2 z-10 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-violet-200/70 bg-slate-950/90 shadow-[0_0_24px_rgba(167,139,250,.95)]">
+            <span class="material-symbols-outlined absolute text-3xl text-violet-200">waves</span>
+            ${lureVisual?.image ? `<img src="${lureVisual.image}" onerror="this.remove()" class="relative h-10 w-10 object-contain drop-shadow-[0_0_10px_rgba(103,232,249,.9)]" alt="">` : ''}
+          </div>
+        </div>
+        <p data-multi-copy class="-mt-1 text-xs font-black tracking-wide text-white">集魚ルアーが魚群を捉えた！</p>
+        <p class="text-[9px] font-black tracking-[.24em] text-violet-300">FISH SHADOW ×${caughtFishes.length}</p>`;
+
+      const multiStage = display.querySelector('[data-multi-stage]');
+      const multiLure = display.querySelector('[data-multi-lure]');
+      const multiFlash = display.querySelector('[data-multi-flash]');
+      multiLure.animate(
+        [{ transform: 'translate(-50%,-50%) scale(.35) rotate(-24deg)', filter: 'brightness(2.8)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.28) rotate(9deg)', filter: 'brightness(2)', opacity: 1, offset: .55 }, { transform: 'translate(-50%,-50%) scale(1) rotate(0)', filter: 'brightness(1)', opacity: 1 }],
+        { duration: reducedMotion ? 180 : 480, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
+      );
+      multiFlash.animate(
+        [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1.8)', opacity: 1, offset: .38 }, { transform: 'translate(-50%,-50%) scale(2.5)', opacity: .15 }],
+        { duration: reducedMotion ? 190 : 600, easing: 'ease-out', fill: 'forwards' }
+      );
+      display.querySelectorAll('[data-multi-ring]').forEach((ring, index) => ring.animate(
+        [{ transform: 'translate(-50%,-50%) scale(.2)', opacity: 0 }, { opacity: .95, offset: .2 }, { transform: 'translate(-50%,-50%) scale(3.7)', opacity: 0 }],
+        { duration: reducedMotion ? 220 : 620, delay: index * (reducedMotion ? 35 : 90), easing: 'ease-out', fill: 'both' }
+      ));
+      display.querySelectorAll('[data-multi-shadow]').forEach((fishShadow, index) => {
+        const position = shadowPositions[index];
+        fishShadow.animate(
+          [
+            { transform: 'translate(-50%,-50%) scale(.15) rotate(0)', filter: 'brightness(0) blur(3px)', opacity: 0 },
+            { transform: 'translate(-50%,-50%) scale(.72) rotate(0)', filter: 'brightness(0) blur(0)', opacity: .9, offset: .28 },
+            { transform: `translate(calc(-50% + ${position.x * 1.12}px), calc(-50% + ${position.y}px)) scale(1.12) rotate(${position.rotate * 1.2}deg)`, filter: 'brightness(0) blur(0)', opacity: 1, offset: .72 },
+            { transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px)) scale(1) rotate(${position.rotate}deg)`, filter: 'brightness(0) blur(0)', opacity: 1 },
+          ],
+          { duration: reducedMotion ? 210 : 590, delay: index * (reducedMotion ? 20 : 45), easing: 'cubic-bezier(.18,.82,.25,1)', fill: 'forwards' }
+        );
+      });
+      for (let i = 0; i < (reducedMotion ? 4 : 12); i++) {
+        const spark = document.createElement('span');
+        spark.className = `absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full ${i % 2 ? 'bg-violet-200' : 'bg-cyan-100'} shadow-[0_0_7px_currentColor]`;
+        multiStage.appendChild(spark);
+        const angle = (Math.PI * 2 * i) / (reducedMotion ? 4 : 12) + Math.random() * .18;
+        const distance = 40 + Math.random() * 62;
+        spark.animate(
+          [{ transform: 'translate(-50%,-50%) scale(0)', opacity: 0 }, { opacity: 1, offset: .22 }, { transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance * .55}px)) scale(0)`, opacity: 0 }],
+          { duration: reducedMotion ? 220 : 440 + Math.random() * 230, delay: reducedMotion ? 0 : 70, easing: 'ease-out', fill: 'forwards' }
+        ).onfinish = () => spark.remove();
+      }
+      stage?.animate(
+        [{ boxShadow: '0 0 0 rgba(139,92,246,0)' }, { boxShadow: 'inset 0 0 38px rgba(139,92,246,.34)', offset: .42 }, { boxShadow: '0 0 0 rgba(139,92,246,0)' }],
+        { duration: reducedMotion ? 220 : 650, easing: 'ease-out' }
+      );
+      await wait(reducedMotion ? 230 : 650);
+      if (!display.isConnected || leaving) return;
+    }
+
+    // 4. 黒い魚影を解除し、取得アイテムを正式に公開する。
     const revealedVisual = result.image
       ? result.type === 'fish'
-        ? `<div data-reveal class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt=""></div>`
+        ? caughtFishes.length > 1
+          ? `<div data-reveal class="flex items-start justify-center gap-1.5">${caughtFishes.map((fish, index) => `<div data-multi-card class="relative w-[72px] min-w-0 overflow-hidden rounded-xl border border-violet-300/40 bg-gradient-to-b from-violet-950/80 to-cyan-950/70 p-1 shadow-[0_0_18px_rgba(103,232,249,.22)]"><span class="absolute left-1 top-0.5 text-[7px] font-black text-violet-200/70">0${index + 1}</span><div class="relative flex h-14 items-center justify-center"><span class="material-symbols-outlined absolute text-4xl text-cyan-800">set_meal</span><img src="${fish.image}" onerror="this.remove()" class="relative h-14 w-full object-contain drop-shadow-[0_0_15px_rgba(103,232,249,.75)]" alt=""></div><div class="truncate rounded-md bg-black/25 px-0.5 py-0.5 text-[8px] font-black text-cyan-50">${fish.name}</div></div>`).join('')}</div>`
+          : `<div data-reveal class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt=""></div>`
         : `<img data-reveal src="${result.image}" class="h-24 w-24 object-contain drop-shadow-[0_0_20px_rgba(103,232,249,.7)]" alt="">`
       : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`;
     display.innerHTML = `${revealedVisual}
-      <p data-reveal-name class="mt-1 text-sm font-black text-white">${result.name}</p>
-      <p class="text-[9px] font-bold uppercase tracking-widest text-cyan-200/70">${result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;
-    display.querySelector('[data-reveal]').animate(
-      [{ transform: 'scale(.25) rotate(-18deg)', filter: 'brightness(3)', opacity: 0 }, { transform: 'scale(1.18) rotate(5deg)', filter: 'brightness(1.7)', opacity: 1, offset: .55 }, { transform: 'scale(1) rotate(0)', filter: 'brightness(1)', opacity: 1 }],
-      { duration: reducedMotion ? 260 : 620, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
-    );
+      <p data-reveal-name class="mt-1 text-sm font-black text-white">${caughtFishes.length > 1 ? `同時釣果 ×${caughtFishes.length}` : result.name}</p>
+      <p class="text-[9px] font-bold uppercase tracking-widest ${caughtFishes.length > 1 ? 'text-violet-300' : 'text-cyan-200/70'}">${caughtFishes.length > 1 ? 'LURE MULTI CATCH' : result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;
+    if (isMultiCatch) {
+      const fanAngles = caughtFishes.length === 2 ? [-5, 5] : [-7, 0, 7];
+      display.querySelectorAll('[data-multi-card]').forEach((card, index) => {
+        const angle = fanAngles[index];
+        card.animate(
+          [
+            { transform: `translateY(20px) scale(.45) rotate(${angle * -1.6}deg)`, filter: 'brightness(3) blur(2px)', opacity: 0 },
+            { transform: `translateY(-4px) scale(1.13) rotate(${angle * 1.4}deg)`, filter: 'brightness(1.7) blur(0)', opacity: 1, offset: .62 },
+            { transform: `translateY(0) scale(1) rotate(${angle}deg)`, filter: 'brightness(1) blur(0)', opacity: 1 },
+          ],
+          { duration: reducedMotion ? 220 : 520, delay: index * (reducedMotion ? 45 : 115), easing: 'cubic-bezier(.16,.86,.25,1)', fill: 'both' }
+        );
+      });
+    } else {
+      display.querySelector('[data-reveal]').animate(
+        [{ transform: 'scale(.25) rotate(-18deg)', filter: 'brightness(3)', opacity: 0 }, { transform: 'scale(1.18) rotate(5deg)', filter: 'brightness(1.7)', opacity: 1, offset: .55 }, { transform: 'scale(1) rotate(0)', filter: 'brightness(1)', opacity: 1 }],
+        { duration: reducedMotion ? 260 : 620, easing: 'cubic-bezier(.2,.85,.25,1)', fill: 'forwards' }
+      );
+    }
     display.querySelector('[data-reveal-name]').animate(
       [{ transform: 'translateY(10px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
-      { duration: reducedMotion ? 180 : 420, delay: reducedMotion ? 0 : 160, fill: 'both' }
+      { duration: reducedMotion ? 180 : 420, delay: isMultiCatch ? (reducedMotion ? 100 : 300) : (reducedMotion ? 0 : 160), fill: 'both' }
     );
-    await wait(reducedMotion ? 230 : 520);
+    await wait(isMultiCatch ? (reducedMotion ? 330 : 820) : (reducedMotion ? 230 : 520));
   };
 
   const schedule = () => {
     if (!running || !container.isConnected || window.location.hash !== '#/fishing') return stop();
-    const delay = getRandomCatchDelay(spot.id);
+    const delay = getRandomCatchDelay(spot.id, getFishingTackleLevel(state, 'rod'));
     const startedAt = Date.now();
     nextCatchAt = startedAt + delay;
     container.querySelector('[data-status]').textContent = 'アタリを待っています…';

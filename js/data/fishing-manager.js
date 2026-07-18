@@ -8,6 +8,17 @@ import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
+import {
+  FISHING_BAIT_WEIGHT_PER_LEVEL,
+  FISHING_LURE_CHANCE_PER_LEVEL,
+  FISHING_LURE_MAX_CATCH,
+  FISHING_ROD_SPEED_PER_LEVEL,
+  FISHING_TACKLE,
+  FISHING_TACKLE_MAX_LEVEL,
+  FISHING_TACKLE_MIN_LEVEL,
+  FISHING_TACKLE_RARITIES,
+  getFishingTackleRecipe,
+} from '../definitions/fishing-tackle.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
 
 export const FISHING_STATE_KEY = 'fishing_data';
@@ -17,6 +28,14 @@ const ALL_EQUIPMENT = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
 const MATERIAL_MAP = new Map(MATERIALS.map(item => [item.id, item]));
 const FISH_MAP = new Map(FISH.map(item => [item.id, item]));
 const MATERIAL_CATCH_AMOUNT = 100;
+const FISH_RARITY_INDEX = {
+  common: 0,
+  uncommon: 1,
+  rare: 2,
+  epic: 3,
+  legendary: 4,
+  mythic: 5,
+};
 
 function createFishingState() {
   return {
@@ -28,6 +47,11 @@ function createFishingState() {
     fishOil: 0,
     fishFeed: {},
     recentBonusCatches: [],
+    tackle: {
+      rodLevel: FISHING_TACKLE_MIN_LEVEL,
+      baitLevel: FISHING_TACKLE_MIN_LEVEL,
+      lureLevel: FISHING_TACKLE_MIN_LEVEL,
+    },
   };
 }
 
@@ -44,6 +68,26 @@ function normalizeFishDiscovery(entry) {
       ? Object.values(entry).some(Boolean)
       : entry
   );
+}
+
+function normalizeTackleLevel(level) {
+  return Math.max(
+    FISHING_TACKLE_MIN_LEVEL,
+    Math.min(FISHING_TACKLE_MAX_LEVEL, Math.floor(Number(level) || FISHING_TACKLE_MIN_LEVEL))
+  );
+}
+
+function normalizeFishingTackle(tackle) {
+  return {
+    rodLevel: normalizeTackleLevel(tackle?.rodLevel),
+    baitLevel: normalizeTackleLevel(tackle?.baitLevel),
+    lureLevel: normalizeTackleLevel(tackle?.lureLevel),
+  };
+}
+
+export function getFishingTackleLevel(state, type) {
+  const definition = FISHING_TACKLE[type];
+  return definition ? normalizeTackleLevel(state?.tackle?.[definition.levelKey]) : 0;
 }
 
 export function getFishingSpotUnlockStatus(state, spotId) {
@@ -120,6 +164,7 @@ export async function loadFishingData() {
   state.sessionInventory = { ...(saved.sessionInventory || {}) };
   state.fishFeed = { ...(saved.fishFeed || {}) };
   state.discovered = { ...(saved.discovered || {}) };
+  state.tackle = normalizeFishingTackle(saved.tackle);
   const savedBonuses = Array.isArray(saved.recentBonusCatches)
     ? saved.recentBonusCatches
     : (Array.isArray(saved.recentCatches) ? saved.recentCatches.filter(item => item?.type !== 'fish') : []);
@@ -139,14 +184,21 @@ async function saveFishingData(state) {
   return state;
 }
 
-function weightedFish(spotId) {
+function weightedFish(spotId, baitLevel = 0) {
   const candidates = FISH.filter(fish => fish.spotId === spotId);
   const pool = candidates.length ? candidates : FISH.filter(fish => fish.spotId === FISHING_SPOTS[0].id);
-  const total = pool.reduce((sum, fish) => sum + fish.weight, 0);
+  const normalizedBaitLevel = normalizeTackleLevel(baitLevel);
+  const weightedPool = pool.map(fish => ({
+    fish,
+    effectiveWeight: fish.weight * (
+      1 + FISHING_BAIT_WEIGHT_PER_LEVEL * normalizedBaitLevel * (FISH_RARITY_INDEX[fish.rarity] || 0)
+    ),
+  }));
+  const total = weightedPool.reduce((sum, entry) => sum + entry.effectiveWeight, 0);
   let roll = Math.random() * total;
-  for (const fish of pool) {
-    roll -= fish.weight;
-    if (roll <= 0) return fish;
+  for (const entry of weightedPool) {
+    roll -= entry.effectiveWeight;
+    if (roll <= 0) return entry.fish;
   }
   return pool[0];
 }
@@ -166,17 +218,39 @@ function addRecentBonus(state, result) {
 }
 
 async function catchFish(state, spotId) {
-  const fish = weightedFish(spotId);
-  state.sessionInventory[fish.id] = normalizeFishCount(state.sessionInventory[fish.id]) + 1;
-  state.discovered[fish.id] = true;
-  state.totalCaught += 1;
+  const baitLevel = getFishingTackleLevel(state, 'bait');
+  const lureLevel = getFishingTackleLevel(state, 'lure');
+  const lureChance = FISHING_LURE_CHANCE_PER_LEVEL * lureLevel;
+  const fishes = [weightedFish(spotId, baitLevel)];
+  while (fishes.length < FISHING_LURE_MAX_CATCH && Math.random() < lureChance) {
+    fishes.push(weightedFish(spotId, baitLevel));
+  }
+  for (const fish of fishes) {
+    state.sessionInventory[fish.id] = normalizeFishCount(state.sessionInventory[fish.id]) + 1;
+    state.discovered[fish.id] = true;
+  }
+  state.totalCaught += fishes.length;
+  const fish = fishes[0];
   const result = {
     type: 'fish',
     fishId: fish.id,
     name: fish.name,
     image: fish.image,
+    fishes: fishes.map(item => ({
+      fishId: item.id,
+      name: item.name,
+      image: item.image,
+      rarity: item.rarity,
+    })),
+    catchCount: fishes.length,
   };
-  window.dispatchEvent(new CustomEvent('quest:fish-caught', { detail: { count: 1, fishId: fish.id } }));
+  window.dispatchEvent(new CustomEvent('quest:fish-caught', {
+    detail: {
+      count: fishes.length,
+      fishId: fish.id,
+      fishIds: fishes.map(item => item.id),
+    },
+  }));
   return result;
 }
 
@@ -298,9 +372,91 @@ export async function settleFishingSession() {
   return { state, movedCount };
 }
 
-export function getRandomCatchDelay(spotId = FISHING_SPOTS[0].id) {
+export function getRandomCatchDelay(spotId = FISHING_SPOTS[0].id, rodLevel = 0) {
   const spot = FISHING_SPOTS.find(item => item.id === spotId) || FISHING_SPOTS[0];
-  return Math.floor(spot.minCatchMs + Math.random() * (spot.maxCatchMs - spot.minCatchMs + 1));
+  const baseDelay = spot.minCatchMs + Math.random() * (spot.maxCatchMs - spot.minCatchMs + 1);
+  const speedMultiplier = Math.max(
+    1 - FISHING_ROD_SPEED_PER_LEVEL * FISHING_TACKLE_MAX_LEVEL,
+    1 - FISHING_ROD_SPEED_PER_LEVEL * normalizeTackleLevel(rodLevel)
+  );
+  return Math.floor(baseDelay * speedMultiplier);
+}
+
+export function getFishingTackleUpgradeStatus(state, type) {
+  const definition = FISHING_TACKLE[type];
+  if (!definition) return null;
+  const currentLevel = getFishingTackleLevel(state, type);
+  const targetLevel = currentLevel + 1;
+  const recipe = getFishingTackleRecipe(targetLevel);
+  if (!recipe) {
+    return {
+      type,
+      definition,
+      currentLevel,
+      targetLevel: null,
+      recipe: null,
+      requirements: [],
+      canUpgrade: false,
+      maxed: true,
+    };
+  }
+
+  const requirements = FISHING_TACKLE_RARITIES
+    .filter(rarity => Number(recipe.requirements[rarity]) > 0)
+    .map(rarity => {
+      const owned = FISH
+        .filter(fish => fish.spotId === recipe.spotId && fish.rarity === rarity)
+        .reduce((sum, fish) => sum + normalizeFishCount(state?.inventory?.[fish.id]), 0);
+      const required = Number(recipe.requirements[rarity]) || 0;
+      return { rarity, owned, required, enough: owned >= required };
+    });
+
+  return {
+    type,
+    definition,
+    currentLevel,
+    targetLevel,
+    recipe,
+    requirements,
+    canUpgrade: requirements.every(entry => entry.enough),
+    maxed: false,
+  };
+}
+
+export async function upgradeFishingTackle(type) {
+  const state = await loadFishingData();
+  const status = getFishingTackleUpgradeStatus(state, type);
+  if (!status) throw new Error('強化する釣具が見つかりません。');
+  if (status.maxed) throw new Error('この釣具は最大レベルです。');
+  const missing = status.requirements.filter(entry => !entry.enough);
+  if (missing.length) throw new Error('交換に必要な魚が足りません。');
+
+  const consumed = [];
+  for (const requirement of status.requirements) {
+    let remaining = requirement.required;
+    const candidates = FISH
+      .filter(fish => fish.spotId === status.recipe.spotId && fish.rarity === requirement.rarity)
+      .sort((a, b) => a.ranchExp - b.ranchExp || a.oilYield - b.oilYield || a.id.localeCompare(b.id));
+    for (const fish of candidates) {
+      if (remaining <= 0) break;
+      const owned = normalizeFishCount(state.inventory[fish.id]);
+      if (!owned) continue;
+      const amount = Math.min(owned, remaining);
+      state.inventory[fish.id] = owned - amount;
+      remaining -= amount;
+      consumed.push({ fishId: fish.id, name: fish.name, rarity: fish.rarity, amount });
+    }
+    if (remaining > 0) throw new Error('魚の納品処理に失敗しました。もう一度お試しください。');
+  }
+
+  state.tackle[status.definition.levelKey] = status.targetLevel;
+  await saveFishingData(state);
+  return {
+    state,
+    type,
+    level: status.targetLevel,
+    consumed,
+  };
 }
 
 export async function convertFishToOil(fishId, amount = 1) {

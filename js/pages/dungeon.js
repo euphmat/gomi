@@ -4,6 +4,7 @@ import { FISHING_SPOTS, getFishForSpot } from '../definitions/fish.js';
 import { GameDB } from '../data/database.js';
 import { getFishingSpotUnlockStatus, loadFishingData } from '../data/fishing-manager.js';
 import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
+import { renderFishingTackleSummary, showFishingTackleWorkshop } from './fishing-tackle.js';
 
 import { formatNumber } from '../utils/format.js';
 
@@ -20,6 +21,13 @@ window.enterFishingSpot = async (spotId) => {
   await GameDB.setGameState('currentFishingSpot', spotId);
   window.location.hash = '/fishing';
 };
+
+window.openFishingTackleWorkshop = () => showFishingTackleWorkshop(async () => {
+  const contentEl = document.getElementById('content');
+  if (contentEl?.querySelector('[data-dungeon-page]') && currentDungeonTab === 'fishing') {
+    contentEl.innerHTML = await renderDungeonPage();
+  }
+});
 
 window.unlockSpecialDungeon = async (dungeonId) => {
   const dungeon = SPECIAL_DUNGEONS.find(d => d.id === dungeonId);
@@ -212,6 +220,7 @@ export async function renderDungeonPage() {
             <div class="shrink-0 rounded-full border border-cyan-400/20 bg-cyan-950/30 px-2.5 py-1 text-[9px] font-black text-cyan-300">${FISHING_SPOTS.length} AREAS</div>
           </div>
           <div class="flex flex-col gap-3">
+            ${renderFishingTackleSummary(fishingData)}
             ${fishingSpotCards}
           </div>
         </div>
