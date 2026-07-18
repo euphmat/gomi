@@ -74,14 +74,6 @@ export async function renderFishingPage() {
             <p class="mt-1 text-xs font-black text-cyan-50">釣りを開始してください</p>
             <p class="mt-1 text-[10px] text-cyan-100/60">魚以外のお宝が釣れることもあります</p>
           </div>
-          <div data-catch-bucket class="absolute right-2 top-2 z-20 hidden w-12 text-center" aria-live="polite">
-            <div class="relative mx-auto h-10 w-11">
-              <div class="absolute left-1/2 top-0 h-7 w-9 -translate-x-1/2 rounded-t-full border-2 border-b-0 border-cyan-200/55"></div>
-              <div data-bucket-body class="absolute bottom-0 left-1/2 h-7 w-10 -translate-x-1/2 rounded-b-xl border border-cyan-200/60 bg-gradient-to-b from-sky-600 to-cyan-950 shadow-[0_0_14px_rgba(34,211,238,.45)]" style="clip-path:polygon(7% 0,93% 0,82% 100%,18% 100%)"></div>
-              <span data-bucket-count class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-cyan-200/50 bg-slate-950 px-1 text-[7px] font-black text-cyan-100">0</span>
-            </div>
-            <div class="mt-0.5 text-[7px] font-black tracking-wide text-cyan-200/75">バケツ</div>
-          </div>
           <div class="absolute inset-x-3 bottom-3">
             <div class="mb-1 flex justify-between text-[10px] font-bold text-cyan-100/70"><span data-status>待機中</span><span data-countdown>--</span></div>
             <div class="h-1.5 overflow-hidden rounded-full bg-slate-950/70"><div data-progress class="h-full w-0 rounded-full bg-gradient-to-r from-cyan-500 to-sky-300"></div></div>
@@ -128,22 +120,10 @@ export async function renderFishingPage() {
       </main>
     </div>`;
 
-  const getSessionFishTotal = () => Object.values(state.sessionInventory || {}).reduce((sum, count) => sum + (Number(count) || 0), 0);
-  const updateCatchBucket = count => {
-    const bucket = container.querySelector('[data-catch-bucket]');
-    const countDisplay = bucket?.querySelector('[data-bucket-count]');
-    if (!bucket || !countDisplay) return;
-    const normalizedCount = Math.max(0, Number(count) || 0);
-    bucket.classList.toggle('hidden', normalizedCount < 1);
-    countDisplay.textContent = formatNumber(normalizedCount);
-    bucket.setAttribute('aria-label', `今回の釣果を入れたバケツ ${formatNumber(normalizedCount)}匹`);
-  };
-
   const renderState = () => {
     container.querySelector('[data-gold]').textContent = formatNumber(gold);
     container.querySelector('[data-total]').textContent = formatNumber(state.totalCaught);
     container.querySelector('[data-shards]').textContent = `${state.prismShards}/10`;
-    updateCatchBucket(getSessionFishTotal());
     const inventory = container.querySelector('[data-inventory]');
     const ownedFish = spotFish.filter(fish => (state.sessionInventory[fish.id] || 0) > 0);
     container.querySelector('[data-owned-species]').textContent = formatNumber(ownedFish.length);
@@ -151,8 +131,8 @@ export async function renderFishingPage() {
       const count = state.sessionInventory[fish.id];
       const rarity = FISH_RARITY[fish.rarity];
       const tileTheme = FISH_TILE_THEME[fish.rarity] || FISH_TILE_THEME.common;
-      return `<article class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${tileTheme} p-1.5 text-center shadow-md">
-        <div class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">×${formatNumber(count)}</div>
+      return `<article data-fish-card="${fish.id}" class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${tileTheme} p-1.5 text-center shadow-md">
+        <div data-fish-count class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">×${formatNumber(count)}</div>
         <div class="relative flex min-h-0 flex-1 items-center justify-center pt-1">
           <img src="${fish.image}" onerror="this.remove()" class="relative h-14 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110 sm:h-16 md:h-20" alt="${fish.name}">
         </div>
@@ -214,13 +194,6 @@ export async function renderFishingPage() {
       : result.type === 'fish'
         ? [{ fishId: result.fishId, name: result.name, image: result.image }]
         : [];
-    const bucket = container.querySelector('[data-catch-bucket]');
-    const sessionFishTotal = getSessionFishTotal();
-    const bucketCountBeforeCatch = Math.max(0, sessionFishTotal - caughtFishes.length);
-    if (caughtFishes.length && bucket) {
-      updateCatchBucket(bucketCountBeforeCatch);
-      bucket.classList.remove('hidden');
-    }
     const visual = result.image
       ? result.type === 'fish'
         ? `<div data-catch-visual class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain" alt=""></div>`
@@ -371,51 +344,82 @@ export async function renderFishingPage() {
     );
     await wait(isMultiCatch ? (reducedMotion ? 330 : 820) : (reducedMotion ? 230 : 520));
 
-    // 5. 魚だけを1匹ずつバケツへ飛ばし、今回の釣果数を蓄積する。
-    if (caughtFishes.length && bucket?.isConnected && !leaving) {
-      const bucketBody = bucket.querySelector('[data-bucket-body]');
-      const bucketCount = bucket.querySelector('[data-bucket-count]');
+    // 5. 魚だけを1匹ずつ、画面下の「今回の釣果」にある該当カードへ移す。
+    if (caughtFishes.length && !leaving) {
       const cards = isMultiCatch
         ? Array.from(display.querySelectorAll('[data-multi-card]'))
         : [display.querySelector('[data-reveal]')].filter(Boolean);
-      const catchItems = cards.map(card => ({
-        card,
-        source: card.querySelector('img') || card,
-      }));
-      const revealName = display.querySelector('[data-reveal-name]');
-      if (revealName) revealName.textContent = caughtFishes.length > 1 ? '1匹ずつバケツへ！' : 'バケツへ保管！';
-      let storedCount = bucketCountBeforeCatch;
+      const caughtByFishId = caughtFishes.reduce((counts, fish) => {
+        counts[fish.fishId] = (counts[fish.fishId] || 0) + 1;
+        return counts;
+      }, {});
 
-      const playBucketImpact = () => {
-        bucket.animate(
-          [
-            { transform: 'translateY(0) rotate(0)' },
-            { transform: 'translateY(3px) rotate(-7deg)', offset: .35 },
-            { transform: 'translateY(-2px) rotate(5deg)', offset: .7 },
-            { transform: 'translateY(0) rotate(0)' },
-          ],
-          { duration: reducedMotion ? 140 : 260, easing: 'ease-out' }
-        );
-        bucketCount?.animate(
-          [{ transform: 'scale(.65)', filter: 'brightness(2.5)' }, { transform: 'scale(1.35)', filter: 'brightness(1.6)', offset: .5 }, { transform: 'scale(1)', filter: 'brightness(1)' }],
-          { duration: reducedMotion ? 140 : 280, easing: 'ease-out' }
-        );
-        for (let i = 0; i < (reducedMotion ? 2 : 6); i++) {
-          const drop = document.createElement('span');
-          drop.className = 'absolute left-1/2 top-3 h-1.5 w-1.5 rounded-full bg-cyan-100 shadow-[0_0_6px_rgba(103,232,249,.9)]';
-          bucket.appendChild(drop);
-          const direction = i % 2 ? 1 : -1;
-          const distance = 10 + Math.random() * 17;
-          drop.animate(
-            [{ transform: 'translate(-50%,0) scale(.4)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(calc(-50% + ${direction * distance}px), ${-10 - Math.random() * 18}px) scale(0)`, opacity: 0 }],
-            { duration: reducedMotion ? 160 : 260 + Math.random() * 120, easing: 'ease-out', fill: 'forwards' }
-          ).onfinish = () => drop.remove();
+      // 新しく釣れた魚のカードを着地点として先に用意し、表示数だけを釣る前へ戻す。
+      renderState();
+      switchCatchTab('fish');
+      const inventoryCards = new Map(
+        Array.from(container.querySelectorAll('[data-fish-card]')).map(card => [card.dataset.fishCard, card])
+      );
+      const displayedCounts = {};
+      Object.entries(caughtByFishId).forEach(([fishId, catchCount]) => {
+        const targetCard = inventoryCards.get(fishId);
+        const finalCount = Number(state.sessionInventory[fishId]) || 0;
+        displayedCounts[fishId] = Math.max(0, finalCount - catchCount);
+        const countDisplay = targetCard?.querySelector('[data-fish-count]');
+        if (countDisplay) countDisplay.textContent = `×${formatNumber(displayedCounts[fishId])}`;
+        if (targetCard && displayedCounts[fishId] < 1) {
+          targetCard.style.opacity = '.28';
+          targetCard.style.transform = 'scale(.94)';
         }
+      });
+
+      const catchItems = cards.map((card, index) => ({
+        card,
+        fish: caughtFishes[index],
+        source: card.querySelector('img') || card,
+      })).filter(item => item.fish);
+      const revealName = display.querySelector('[data-reveal-name]');
+      if (revealName) revealName.textContent = caughtFishes.length > 1 ? '釣果へ1匹ずつ追加！' : '今回の釣果へ追加！';
+
+      const playInventoryImpact = (targetCard, fishId) => {
+        if (!targetCard) return;
+        targetCard.style.opacity = '1';
+        targetCard.style.transform = '';
+        targetCard.animate(
+          [
+            { transform: 'scale(.94)', filter: 'brightness(1)' },
+            { transform: 'scale(1.08)', filter: 'brightness(1.8)', boxShadow: '0 0 28px rgba(52,211,153,.7)', offset: .48 },
+            { transform: 'scale(1)', filter: 'brightness(1)', boxShadow: '0 0 0 rgba(52,211,153,0)' },
+          ],
+          { duration: reducedMotion ? 160 : 360, easing: 'cubic-bezier(.2,.8,.2,1)' }
+        );
+        const countDisplay = targetCard.querySelector('[data-fish-count]');
+        displayedCounts[fishId] = (displayedCounts[fishId] || 0) + 1;
+        if (countDisplay) {
+          countDisplay.textContent = `×${formatNumber(displayedCounts[fishId])}`;
+          countDisplay.animate(
+            [{ transform: 'scale(.65)', backgroundColor: 'rgba(16,185,129,.9)' }, { transform: 'scale(1.4)', offset: .5 }, { transform: 'scale(1)' }],
+            { duration: reducedMotion ? 140 : 300, easing: 'ease-out' }
+          );
+        }
+        const flash = document.createElement('span');
+        flash.className = 'pointer-events-none absolute inset-0 rounded-xl bg-emerald-300/25';
+        targetCard.appendChild(flash);
+        flash.animate(
+          [{ opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: 0 }],
+          { duration: reducedMotion ? 150 : 330, easing: 'ease-out' }
+        ).onfinish = () => flash.remove();
       };
 
-      await Promise.all(catchItems.map(({ card, source }, index) => new Promise(resolve => {
+      await Promise.all(catchItems.map(({ card, fish, source }, index) => new Promise(resolve => {
+        const targetCard = inventoryCards.get(fish.fishId);
+        const target = targetCard || container.querySelector('[data-inventory]');
+        if (!target) {
+          resolve();
+          return;
+        }
         const sourceRect = source.getBoundingClientRect();
-        const targetRect = (bucketBody || bucket).getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
         const clone = source.cloneNode(true);
         clone.removeAttribute('data-reveal');
         clone.style.position = 'fixed';
@@ -433,21 +437,18 @@ export async function renderFishingPage() {
         const deltaY = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
         const animation = clone.animate(
           reducedMotion
-            ? [{ opacity: 1 }, { transform: `translate(${deltaX}px, ${deltaY}px) scale(.2)`, opacity: 0 }]
+            ? [{ opacity: 1 }, { transform: `translate(${deltaX}px, ${deltaY}px) scale(.25)`, opacity: 0 }]
             : [
                 { transform: 'translate(0,0) scale(1) rotate(0)', opacity: 1 },
-                { transform: `translate(${deltaX * .52}px, ${deltaY * .42 - 34}px) scale(.82) rotate(${index % 2 ? -12 : 12}deg)`, opacity: 1, offset: .5 },
-                { transform: `translate(${deltaX}px, ${deltaY}px) scale(.16) rotate(${index % 2 ? -28 : 28}deg)`, opacity: .15 },
+                { transform: `translate(${deltaX * .48}px, ${deltaY * .42 - 38}px) scale(.84) rotate(${index % 2 ? -11 : 11}deg)`, opacity: 1, offset: .48 },
+                { transform: `translate(${deltaX}px, ${deltaY}px) scale(.22) rotate(${index % 2 ? -24 : 24}deg)`, opacity: .2 },
               ],
-          { duration: reducedMotion ? 180 : 390, delay: index * (reducedMotion ? 55 : 145), easing: 'cubic-bezier(.35,.05,.55,1)', fill: 'forwards' }
+          { duration: reducedMotion ? 180 : 430, delay: index * (reducedMotion ? 55 : 145), easing: 'cubic-bezier(.35,.05,.55,1)', fill: 'forwards' }
         );
         animation.onfinish = () => {
           clone.remove();
           card.style.opacity = '0';
-          storedCount += 1;
-          if (bucketCount) bucketCount.textContent = formatNumber(storedCount);
-          bucket.setAttribute('aria-label', `今回の釣果を入れたバケツ ${formatNumber(storedCount)}匹`);
-          playBucketImpact();
+          playInventoryImpact(targetCard, fish.fishId);
           resolve();
         };
         animation.oncancel = () => {
@@ -456,15 +457,14 @@ export async function renderFishingPage() {
         };
       })));
       if (!display.isConnected || leaving) return;
-      updateCatchBucket(sessionFishTotal);
       display.innerHTML = `<span class="material-symbols-outlined text-4xl text-cyan-100/80 drop-shadow-[0_0_15px_rgba(103,232,249,.7)]">water</span>
         <p class="mt-1 text-xs font-black text-cyan-50">次のアタリを待っています</p>
-        <p class="mt-1 text-[9px] font-black text-cyan-200/60">バケツの中：${formatNumber(sessionFishTotal)}匹</p>`;
+        <p class="mt-1 text-[9px] font-black text-cyan-200/60">魚は下の「今回の釣果」に追加されました</p>`;
       display.animate(
         [{ transform: 'translateY(5px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
         { duration: reducedMotion ? 120 : 260, easing: 'ease-out' }
       );
-      await wait(reducedMotion ? 100 : 220);
+      await wait(reducedMotion ? 170 : 380);
     }
   };
 
