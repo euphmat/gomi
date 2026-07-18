@@ -74,6 +74,14 @@ export async function renderFishingPage() {
             <p class="mt-1 text-xs font-black text-cyan-50">釣りを開始してください</p>
             <p class="mt-1 text-[10px] text-cyan-100/60">魚以外のお宝が釣れることもあります</p>
           </div>
+          <div data-catch-bucket class="absolute right-2 top-2 z-20 hidden w-12 text-center" aria-live="polite">
+            <div class="relative mx-auto h-10 w-11">
+              <div class="absolute left-1/2 top-0 h-7 w-9 -translate-x-1/2 rounded-t-full border-2 border-b-0 border-cyan-200/55"></div>
+              <div data-bucket-body class="absolute bottom-0 left-1/2 h-7 w-10 -translate-x-1/2 rounded-b-xl border border-cyan-200/60 bg-gradient-to-b from-sky-600 to-cyan-950 shadow-[0_0_14px_rgba(34,211,238,.45)]" style="clip-path:polygon(7% 0,93% 0,82% 100%,18% 100%)"></div>
+              <span data-bucket-count class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-cyan-200/50 bg-slate-950 px-1 text-[7px] font-black text-cyan-100">0</span>
+            </div>
+            <div class="mt-0.5 text-[7px] font-black tracking-wide text-cyan-200/75">バケツ</div>
+          </div>
           <div class="absolute inset-x-3 bottom-3">
             <div class="mb-1 flex justify-between text-[10px] font-bold text-cyan-100/70"><span data-status>待機中</span><span data-countdown>--</span></div>
             <div class="h-1.5 overflow-hidden rounded-full bg-slate-950/70"><div data-progress class="h-full w-0 rounded-full bg-gradient-to-r from-cyan-500 to-sky-300"></div></div>
@@ -120,10 +128,22 @@ export async function renderFishingPage() {
       </main>
     </div>`;
 
+  const getSessionFishTotal = () => Object.values(state.sessionInventory || {}).reduce((sum, count) => sum + (Number(count) || 0), 0);
+  const updateCatchBucket = count => {
+    const bucket = container.querySelector('[data-catch-bucket]');
+    const countDisplay = bucket?.querySelector('[data-bucket-count]');
+    if (!bucket || !countDisplay) return;
+    const normalizedCount = Math.max(0, Number(count) || 0);
+    bucket.classList.toggle('hidden', normalizedCount < 1);
+    countDisplay.textContent = formatNumber(normalizedCount);
+    bucket.setAttribute('aria-label', `今回の釣果を入れたバケツ ${formatNumber(normalizedCount)}匹`);
+  };
+
   const renderState = () => {
     container.querySelector('[data-gold]').textContent = formatNumber(gold);
     container.querySelector('[data-total]').textContent = formatNumber(state.totalCaught);
     container.querySelector('[data-shards]').textContent = `${state.prismShards}/10`;
+    updateCatchBucket(getSessionFishTotal());
     const inventory = container.querySelector('[data-inventory]');
     const ownedFish = spotFish.filter(fish => (state.sessionInventory[fish.id] || 0) > 0);
     container.querySelector('[data-owned-species]').textContent = formatNumber(ownedFish.length);
@@ -134,7 +154,7 @@ export async function renderFishingPage() {
       return `<article class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${tileTheme} p-1.5 text-center shadow-md">
         <div class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">×${formatNumber(count)}</div>
         <div class="relative flex min-h-0 flex-1 items-center justify-center pt-1">
-          <img src="${fish.image}" onerror="this.remove()" class="relative h-10 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110" alt="${fish.name}">
+          <img src="${fish.image}" onerror="this.remove()" class="relative h-14 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110 sm:h-16 md:h-20" alt="${fish.name}">
         </div>
         <div class="truncate rounded-lg bg-black/30 px-1 py-1 text-[9px] font-black leading-tight ${rarity.text}">${fish.name}</div>
       </article>`;
@@ -194,6 +214,13 @@ export async function renderFishingPage() {
       : result.type === 'fish'
         ? [{ fishId: result.fishId, name: result.name, image: result.image }]
         : [];
+    const bucket = container.querySelector('[data-catch-bucket]');
+    const sessionFishTotal = getSessionFishTotal();
+    const bucketCountBeforeCatch = Math.max(0, sessionFishTotal - caughtFishes.length);
+    if (caughtFishes.length && bucket) {
+      updateCatchBucket(bucketCountBeforeCatch);
+      bucket.classList.remove('hidden');
+    }
     const visual = result.image
       ? result.type === 'fish'
         ? `<div data-catch-visual class="relative flex h-24 w-24 items-center justify-center"><span class="material-symbols-outlined absolute text-6xl text-cyan-200">set_meal</span><img src="${result.image}" onerror="this.remove()" class="relative h-24 w-24 object-contain" alt=""></div>`
@@ -343,6 +370,102 @@ export async function renderFishingPage() {
       { duration: reducedMotion ? 180 : 420, delay: isMultiCatch ? (reducedMotion ? 100 : 300) : (reducedMotion ? 0 : 160), fill: 'both' }
     );
     await wait(isMultiCatch ? (reducedMotion ? 330 : 820) : (reducedMotion ? 230 : 520));
+
+    // 5. 魚だけを1匹ずつバケツへ飛ばし、今回の釣果数を蓄積する。
+    if (caughtFishes.length && bucket?.isConnected && !leaving) {
+      const bucketBody = bucket.querySelector('[data-bucket-body]');
+      const bucketCount = bucket.querySelector('[data-bucket-count]');
+      const cards = isMultiCatch
+        ? Array.from(display.querySelectorAll('[data-multi-card]'))
+        : [display.querySelector('[data-reveal]')].filter(Boolean);
+      const catchItems = cards.map(card => ({
+        card,
+        source: card.querySelector('img') || card,
+      }));
+      const revealName = display.querySelector('[data-reveal-name]');
+      if (revealName) revealName.textContent = caughtFishes.length > 1 ? '1匹ずつバケツへ！' : 'バケツへ保管！';
+      let storedCount = bucketCountBeforeCatch;
+
+      const playBucketImpact = () => {
+        bucket.animate(
+          [
+            { transform: 'translateY(0) rotate(0)' },
+            { transform: 'translateY(3px) rotate(-7deg)', offset: .35 },
+            { transform: 'translateY(-2px) rotate(5deg)', offset: .7 },
+            { transform: 'translateY(0) rotate(0)' },
+          ],
+          { duration: reducedMotion ? 140 : 260, easing: 'ease-out' }
+        );
+        bucketCount?.animate(
+          [{ transform: 'scale(.65)', filter: 'brightness(2.5)' }, { transform: 'scale(1.35)', filter: 'brightness(1.6)', offset: .5 }, { transform: 'scale(1)', filter: 'brightness(1)' }],
+          { duration: reducedMotion ? 140 : 280, easing: 'ease-out' }
+        );
+        for (let i = 0; i < (reducedMotion ? 2 : 6); i++) {
+          const drop = document.createElement('span');
+          drop.className = 'absolute left-1/2 top-3 h-1.5 w-1.5 rounded-full bg-cyan-100 shadow-[0_0_6px_rgba(103,232,249,.9)]';
+          bucket.appendChild(drop);
+          const direction = i % 2 ? 1 : -1;
+          const distance = 10 + Math.random() * 17;
+          drop.animate(
+            [{ transform: 'translate(-50%,0) scale(.4)', opacity: 0 }, { opacity: 1, offset: .2 }, { transform: `translate(calc(-50% + ${direction * distance}px), ${-10 - Math.random() * 18}px) scale(0)`, opacity: 0 }],
+            { duration: reducedMotion ? 160 : 260 + Math.random() * 120, easing: 'ease-out', fill: 'forwards' }
+          ).onfinish = () => drop.remove();
+        }
+      };
+
+      await Promise.all(catchItems.map(({ card, source }, index) => new Promise(resolve => {
+        const sourceRect = source.getBoundingClientRect();
+        const targetRect = (bucketBody || bucket).getBoundingClientRect();
+        const clone = source.cloneNode(true);
+        clone.removeAttribute('data-reveal');
+        clone.style.position = 'fixed';
+        clone.style.left = `${sourceRect.left}px`;
+        clone.style.top = `${sourceRect.top}px`;
+        clone.style.width = `${sourceRect.width}px`;
+        clone.style.height = `${sourceRect.height}px`;
+        clone.style.margin = '0';
+        clone.style.zIndex = '200';
+        clone.style.pointerEvents = 'none';
+        clone.style.objectFit = 'contain';
+        clone.style.filter = 'drop-shadow(0 0 12px rgba(103,232,249,.85))';
+        document.body.appendChild(clone);
+        const deltaX = targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+        const deltaY = targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+        const animation = clone.animate(
+          reducedMotion
+            ? [{ opacity: 1 }, { transform: `translate(${deltaX}px, ${deltaY}px) scale(.2)`, opacity: 0 }]
+            : [
+                { transform: 'translate(0,0) scale(1) rotate(0)', opacity: 1 },
+                { transform: `translate(${deltaX * .52}px, ${deltaY * .42 - 34}px) scale(.82) rotate(${index % 2 ? -12 : 12}deg)`, opacity: 1, offset: .5 },
+                { transform: `translate(${deltaX}px, ${deltaY}px) scale(.16) rotate(${index % 2 ? -28 : 28}deg)`, opacity: .15 },
+              ],
+          { duration: reducedMotion ? 180 : 390, delay: index * (reducedMotion ? 55 : 145), easing: 'cubic-bezier(.35,.05,.55,1)', fill: 'forwards' }
+        );
+        animation.onfinish = () => {
+          clone.remove();
+          card.style.opacity = '0';
+          storedCount += 1;
+          if (bucketCount) bucketCount.textContent = formatNumber(storedCount);
+          bucket.setAttribute('aria-label', `今回の釣果を入れたバケツ ${formatNumber(storedCount)}匹`);
+          playBucketImpact();
+          resolve();
+        };
+        animation.oncancel = () => {
+          clone.remove();
+          resolve();
+        };
+      })));
+      if (!display.isConnected || leaving) return;
+      updateCatchBucket(sessionFishTotal);
+      display.innerHTML = `<span class="material-symbols-outlined text-4xl text-cyan-100/80 drop-shadow-[0_0_15px_rgba(103,232,249,.7)]">water</span>
+        <p class="mt-1 text-xs font-black text-cyan-50">次のアタリを待っています</p>
+        <p class="mt-1 text-[9px] font-black text-cyan-200/60">バケツの中：${formatNumber(sessionFishTotal)}匹</p>`;
+      display.animate(
+        [{ transform: 'translateY(5px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
+        { duration: reducedMotion ? 120 : 260, easing: 'ease-out' }
+      );
+      await wait(reducedMotion ? 100 : 220);
+    }
   };
 
   const schedule = () => {
