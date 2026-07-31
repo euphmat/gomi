@@ -18,6 +18,36 @@ import { STAT_KEYS } from '../data/constants.js';
 const MAX_PARTY_SIZE = 4;
 
 /**
+ * ホームタウン上部に表示する公式サイト広告バナー。
+ * 読み込み中も表示を維持できるよう、ステータス内容とは分けて生成する。
+ * @returns {string}
+ */
+function createOfficialSiteBanner() {
+  return `
+    <a href="https://manosaba.com/"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="魔法少女ノ魔女裁判 公式サイトを新しいタブで開く"
+       class="group relative mx-auto mb-2 block w-full max-w-[460px] overflow-hidden rounded-xl border border-fuchsia-400/45 bg-black shadow-[0_0_18px_rgba(217,70,239,0.14)] transition duration-200 hover:border-fuchsia-300/80 hover:shadow-[0_0_24px_rgba(217,70,239,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 active:scale-[0.99]">
+      <img src="./header.jpg"
+           alt="魔法少女ノ魔女裁判"
+           class="block aspect-[460/215] w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]" />
+
+      <span class="pointer-events-none absolute left-2 top-2 rounded border border-white/25 bg-black/75 px-1.5 py-0.5 font-mono text-[8px] tracking-[0.16em] text-white/70 backdrop-blur-sm">
+        ADVERTISEMENT
+      </span>
+
+      <span class="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/90 via-black/35 to-transparent px-2.5 pb-2 pt-10">
+        <span class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg backdrop-blur-sm transition-colors group-hover:bg-fuchsia-950/90 sm:text-xs">
+          公式サイト
+          <span class="material-symbols-outlined !text-[13px] leading-none">open_in_new</span>
+        </span>
+      </span>
+    </a>
+  `;
+}
+
+/**
  * Render the status page.
  * Returns a container element that will be populated asynchronously from IndexedDB.
  * @returns {HTMLElement}
@@ -28,6 +58,7 @@ export function renderStatusPage() {
 
   // Show loading state
   container.innerHTML = `
+    ${createOfficialSiteBanner()}
     <div class="flex items-center justify-center py-12">
       <div class="animate-pulse text-gray-500 text-sm">読み込み中...</div>
     </div>
@@ -150,6 +181,7 @@ async function _loadStatusData(container) {
     }
 
     container.innerHTML = `
+      ${createOfficialSiteBanner()}
       <div class="grid grid-cols-2 gap-2">
         ${cards.join('')}
       </div>

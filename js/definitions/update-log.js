@@ -1,8 +1,15 @@
-export const APP_VERSION = '0.1.9';
-export const APP_RELEASE_DATE = '2026.07.18';
+export const APP_VERSION = '0.1.10';
+export const APP_RELEASE_DATE = '2026.07.31';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.07.31',
+    version: '0.1.10',
+    items: [
+      'ホームタウン上部に「魔法少女ノ魔女裁判」の公式サイト広告バナーを追加しました。',
+    ],
+  },
   {
     date: '2026.07.18',
     version: '0.1.9',
