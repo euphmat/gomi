@@ -150,64 +150,65 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   const barTransStyle = fastMode ? '' : 'transition: transform 0.3s ease;';
 
   return `
-    <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : `${transClass} cursor-pointer active:scale-[1.02]`}">
-      <div class="flex flex-col mb-1.5 w-full">
-        <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
-          <!-- ICON -->
-          <div class="w-10 h-10 rounded border border-gray-600 overflow-hidden shadow-md bg-gray-800 shrink-0">
-            <img src="${p.iconImage}" class="w-full h-full object-cover" onerror="this.style.display='none'">
-          </div>
-          <!-- LV / JLV / SP -->
-          <div class="flex flex-col flex-1 text-[9px] text-gray-300 font-bold leading-tight justify-center gap-[2px]">
-            <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">LV:</span> <span class="${p.elementId}-lv text-gray-100">${p.level || 1}</span></div>
-            <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">JLV:</span> <span class="${p.elementId}-jlv text-gray-100">${p.jobLevel || 1}</span></div>
-            <div class="flex justify-between items-center bg-gray-900/50 px-1 rounded-sm"><span class="text-gray-400">SP:</span> <span class="${p.elementId}-sp text-gray-100">${p.sp || 0}</span></div>
-          </div>
+    <div id="${p.elementId}" class="party-card relative flex min-w-0 flex-col overflow-hidden ${bgClass} rounded-md border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : `${transClass} cursor-pointer active:scale-[1.02]`}" aria-label="${p.name} レベル${p.level || 1}">
+      <!-- Identity and turn gauge -->
+      <div class="flex min-w-0 items-center gap-1 mb-1">
+        <div class="w-8 h-8 rounded border border-gray-600/80 overflow-hidden shadow bg-gray-800 shrink-0">
+          <img src="${p.iconImage}" class="w-full h-full object-cover" onerror="this.style.display='none'">
         </div>
-        <!-- Name & ATB -->
-        <div class="px-0.5">
-          <div class="flex items-center mb-0.5 relative min-w-0 justify-start">
-            <div class="text-[10px] font-bold text-gray-100 truncate drop-shadow shrink">${p.name}</div>
-            <div class="state-icons-container flex items-center gap-[2px] shrink-0 z-20 pointer-events-auto ml-1">
+        <div class="min-w-0 flex-1">
+          <div class="flex min-w-0 items-center gap-0.5 leading-none">
+            <span class="truncate text-[9px] font-bold text-gray-100 drop-shadow">${p.name}</span>
+            <div class="state-icons-container ml-auto flex shrink-0 items-center gap-px pointer-events-auto">
               ${!p.isDead ? getActiveStateIconsHTML(p) : ''}
             </div>
           </div>
-          <div class="w-full h-1.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div id="${p.elementId}-atb" class="bg-yellow-400 h-full w-full origin-left" style="transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
+          <div class="mt-1 flex items-center gap-1 overflow-hidden whitespace-nowrap text-[7px] font-bold leading-none text-gray-400">
+            <span>Lv.<span class="${p.elementId}-lv text-gray-100">${p.level || 1}</span></span>
+            <span>J.<span class="${p.elementId}-jlv text-gray-200">${p.jobLevel || 1}</span></span>
+            <span>SP.<span class="${p.elementId}-sp text-gray-200">${p.sp || 0}</span></span>
+          </div>
+          <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-gray-950 ring-1 ring-gray-700/60">
+            <div id="${p.elementId}-atb" class="h-full w-full origin-left bg-amber-300" style="transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
           </div>
         </div>
       </div>
-      
-      <div class="flex flex-col gap-[3px] mb-1.5">
+
+      <!-- Only battle-critical values stay full size. -->
+      <div class="flex flex-col gap-0.5">
         <div class="flex items-center gap-0.5">
-          <span class="text-[9px] font-bold text-red-400 w-3.5">HP</span>
-          <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+          <span class="w-3 shrink-0 text-[7px] font-black text-red-400">HP</span>
+          <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
             <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%; ${hpTransStyle}"></div>
             <div class="hp-barrier-bar absolute shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100 - Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100), (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; width: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${p._barrierHp && p._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px); ${barrierTransStyle}"></div>
-            <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
+            <div class="hp-text absolute inset-0 z-20 flex items-center justify-center whitespace-nowrap text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
               ${formatNumber(Math.floor(p.hp.current))}/${formatNumber(p.stats.hp || p.hp.max)}
             </div>
           </div>
         </div>
         <div class="flex items-center gap-0.5">
-          <span class="text-[9px] font-bold text-blue-400 w-3.5">MP</span>
-          <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
+          <span class="w-3 shrink-0 text-[7px] font-black text-blue-400">MP</span>
+          <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
             <div class="bg-blue-600 h-full w-full origin-left" style="transform: scaleX(${p.mp.current / (p.stats.mp || p.mp.max)}); ${barTransStyle}"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.mp.current))}/${formatNumber(p.stats.mp || p.mp.max)}</div>
+            <div class="absolute inset-0 flex items-center justify-center text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">${formatNumber(Math.floor(p.mp.current))}/${formatNumber(p.stats.mp || p.mp.max)}</div>
           </div>
         </div>
-        <div class="flex items-center gap-0.5">
-          <span class="text-[9px] font-bold text-green-400 w-3.5">EX</span>
-          <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="bg-green-600 h-full w-full origin-left" style="transform: scaleX(${p.exp.current / p.exp.max}); ${barTransStyle}"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.exp.current))}/${formatNumber(p.exp.max)}</div>
+
+        <!-- Long-term progress remains visible without competing with HP/MP. -->
+        <div class="grid grid-cols-2 gap-1 pt-0.5">
+          <div class="flex min-w-0 items-center gap-0.5" title="EXP ${formatNumber(Math.floor(p.exp.current))}/${formatNumber(p.exp.max)}">
+            <span class="text-[6px] font-black text-green-400">EX</span>
+            <div class="relative h-1 flex-1 overflow-hidden rounded-full bg-gray-950">
+              <div class="bg-green-600 h-full w-full origin-left" style="transform: scaleX(${p.exp.current / p.exp.max}); ${barTransStyle}"></div>
+              <span class="sr-only">${formatNumber(Math.floor(p.exp.current))}/${formatNumber(p.exp.max)}</span>
+            </div>
           </div>
-        </div>
-        <div class="flex items-center gap-0.5">
-          <span class="text-[9px] font-bold text-purple-400 w-3.5">JP</span>
-          <div class="flex-1 relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50">
-            <div class="bg-purple-600 h-full w-full origin-left" style="transform: scaleX(${p.jp.current / p.jp.max}); ${barTransStyle}"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter">${formatNumber(Math.floor(p.jp.current))}/${formatNumber(p.jp.max)}</div>
+          <div class="flex min-w-0 items-center gap-0.5" title="JP ${formatNumber(Math.floor(p.jp.current))}/${formatNumber(p.jp.max)}">
+            <span class="text-[6px] font-black text-purple-400">JP</span>
+            <div class="relative h-1 flex-1 overflow-hidden rounded-full bg-gray-950">
+              <div class="bg-purple-600 h-full w-full origin-left" style="transform: scaleX(${p.jp.current / p.jp.max}); ${barTransStyle}"></div>
+              <span class="sr-only">${formatNumber(Math.floor(p.jp.current))}/${formatNumber(p.jp.max)}</span>
+            </div>
           </div>
         </div>
       </div>

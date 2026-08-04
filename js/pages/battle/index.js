@@ -239,8 +239,7 @@ class BattleManager {
     // Update Background Image
     const sceneBg = document.getElementById('battle-scene-bg');
     if (sceneBg && this.dungeonDef && this.dungeonDef.bgImage) {
-      // 視認性を確保しつつ、もう少し背景が見えるようにグラデーションの暗さを微調整
-      sceneBg.style.backgroundImage = `linear-gradient(rgba(11, 11, 25, 0.5), rgba(11, 11, 25, 0.7)), url('${this.dungeonDef.bgImage}')`;
+      sceneBg.style.backgroundImage = `linear-gradient(to bottom, rgba(2, 6, 23, 0.28) 0%, rgba(2, 6, 23, 0.5) 42%, rgba(2, 6, 23, 0.84) 100%), url('${this.dungeonDef.bgImage}')`;
       sceneBg.style.backgroundSize = 'cover';
       sceneBg.style.backgroundPosition = 'center top';
       this.applyBattleTheme(this.dungeonDef.bgImage);
@@ -593,7 +592,25 @@ class BattleManager {
   }
 
   updateCommandBlocker() {
-    this.elements.commandBlocker.classList.toggle('hidden', !!(this.activeCharacter || this.isAutoBattle));
+    const state = this.isAutoBattle ? 'auto' : (this.activeCharacter ? 'ready' : 'waiting');
+    const isDisabled = state !== 'ready';
+
+    this.elements.commandBlocker.classList.toggle('hidden', state !== 'waiting');
+    this.elements.btnAttack.disabled = isDisabled;
+    this.elements.btnAttack.classList.toggle('opacity-50', isDisabled);
+    this.elements.btnAttack.classList.toggle('grayscale', isDisabled);
+    this.elements.btnAttack.classList.toggle('cursor-not-allowed', isDisabled);
+
+    if (this.elements.btnAttack.dataset.state !== state) {
+      this.elements.btnAttack.dataset.state = state;
+      if (state === 'waiting') {
+        this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px]">hourglass_top</span><span>待機中</span>';
+      } else if (state === 'auto') {
+        this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px]">smart_toy</span><span>自動中</span>';
+      } else {
+        this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px] text-red-300">swords</span><span>攻撃</span>';
+      }
+    }
   }
 
   setupListeners() {
@@ -684,31 +701,28 @@ class BattleManager {
       this.isAutoBattle,
       this.autoBattleMode === 'dungeon' ? '踏破周回で自動戦闘中' : '階層周回で自動戦闘中'
     );
-    this.elements.btnAutoFloor.className = "flex-1 bg-blue-900 active:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1";
-    this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回`;
+    this.elements.btnAutoFloor.className = "battle-command flex-1 min-w-0 bg-blue-950/90 active:bg-blue-800 rounded-lg font-bold text-[9px] border border-blue-700/80 flex items-center justify-center gap-1 transition-all active:scale-[0.97] shadow-md text-blue-100 px-1";
+    this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[17px] text-blue-400">autorenew</span><span>階層周回</span>`;
 
-    this.elements.btnAutoDungeon.className = "flex-1 bg-purple-900 active:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1";
-    this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回`;
+    this.elements.btnAutoDungeon.className = "battle-command flex-1 min-w-0 bg-purple-950/90 active:bg-purple-800 rounded-lg font-bold text-[9px] border border-purple-700/80 flex items-center justify-center gap-1 transition-all active:scale-[0.97] shadow-md text-purple-100 px-1";
+    this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[17px] text-purple-400">all_inclusive</span><span>踏破周回</span>`;
 
     if (this.autoBattleMode === 'floor') {
-      this.elements.btnAutoFloor.className = "flex-1 bg-blue-600 rounded-lg font-bold text-[10px] border-2 border-blue-300 flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(59,130,246,0.9)] text-white p-1 scale-105 z-10 animate-pulse";
-      this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">autorenew</span>階層周回中`;
+      this.elements.btnAutoFloor.className = "battle-command flex-1 min-w-0 bg-blue-600 rounded-lg font-bold text-[9px] border-2 border-blue-200 flex items-center justify-center gap-1 transition-all shadow-[0_0_12px_rgba(59,130,246,0.75)] text-white px-1 z-10";
+      this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[17px] text-white">autorenew</span><span>階層周回中</span>`;
     } else if (this.autoBattleMode === 'dungeon') {
-      this.elements.btnAutoDungeon.className = "flex-1 bg-purple-600 rounded-lg font-bold text-[10px] border-2 border-purple-300 flex flex-col items-center justify-center transition-all shadow-[0_0_15px_rgba(168,85,247,0.9)] text-white p-1 scale-105 z-10 animate-pulse";
-      this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">all_inclusive</span>踏破周回中`;
+      this.elements.btnAutoDungeon.className = "battle-command flex-1 min-w-0 bg-purple-600 rounded-lg font-bold text-[9px] border-2 border-purple-200 flex items-center justify-center gap-1 transition-all shadow-[0_0_12px_rgba(168,85,247,0.75)] text-white px-1 z-10";
+      this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[17px] text-white">all_inclusive</span><span>踏破周回中</span>`;
     }
 
-    this.elements.btnRun.className = "flex-1 bg-teal-900 active:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer";
-    this.elements.btnRun.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-teal-400">home</span>街に戻る`;
+    this.elements.btnRun.className = "battle-command flex-1 min-w-0 bg-teal-950/90 active:bg-teal-800 rounded-lg font-bold text-[9px] border border-teal-700/80 flex items-center justify-center gap-1 transition-all active:scale-[0.97] shadow-md text-teal-100 px-1 cursor-pointer";
+    this.elements.btnRun.innerHTML = `<span class="material-symbols-outlined text-[17px] text-teal-400">home</span><span>街に戻る</span>`;
 
     if (this.isAutoBattle) {
       this.elements.btnAttack.disabled = true;
-      this.elements.btnAttack.classList.add('opacity-50', 'grayscale', 'cursor-not-allowed');
       this.elements.btnRun.disabled = false;
     } else {
-      this.elements.btnAttack.disabled = false;
       this.elements.btnRun.disabled = false;
-      this.elements.btnAttack.classList.remove('opacity-50', 'grayscale', 'cursor-not-allowed');
     }
     
     this.updateCommandBlocker();
@@ -812,21 +826,22 @@ class BattleManager {
 
   updateTabStyles() {
     const tabs = [
-      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'Skill' },
-      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', palette: 2, label: 'Item' },
-      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', palette: 3, label: 'Info' },
-      { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: 'Pet' },
-      { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'Medal' }
+      { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'スキル' },
+      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', palette: 2, label: '道具' },
+      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', palette: 3, label: '情報' },
+      { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: '仲間' },
+      { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'メダル' }
     ];
 
     tabs.forEach(({btn, id, icon, palette, label}) => {
       btn.style.setProperty('--tab-color', `var(--battle-palette-${palette})`);
+      btn.setAttribute('aria-selected', String(this.currentTab === id));
       if (this.currentTab === id) {
-        btn.className = 'battle-tab battle-tab--active flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold relative z-10 flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer';
-        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 13px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none">${label}</span>`;
+        btn.className = 'battle-tab battle-tab--active flex-1 min-w-0 px-0.5 border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold relative z-10 flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
       } else {
-        btn.className = 'battle-tab flex-1 py-1.5 backdrop-blur-sm border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all duration-300 cursor-pointer';
-        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">${icon}</span><span class="pointer-events-none">${label}</span>`;
+        btn.className = 'battle-tab flex-1 min-w-0 px-0.5 backdrop-blur-sm border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer';
+        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
       }
     });
   }
@@ -1234,12 +1249,12 @@ export function renderBattlePage() {
       }
       #enemy-area .enemy-card {
         min-width: 0px;
-        max-width: min(4rem, calc(100% / var(--enemy-cols, 4) - 0.25rem));
+        max-width: min(3.75rem, calc(100% / var(--enemy-cols, 4) - 0.25rem));
       }
       #enemy-area {
-        height: 105px;
-        min-height: 105px;
-        max-height: 105px;
+        height: 88px;
+        min-height: 88px;
+        max-height: 88px;
         overflow-x: hidden;
         overflow-y: hidden;
         display: flex;
@@ -1253,6 +1268,13 @@ export function renderBattlePage() {
         --battle-palette-2: ${DEFAULT_BATTLE_PALETTE[1]};
         --battle-palette-3: ${DEFAULT_BATTLE_PALETTE[2]};
         --battle-palette-4: ${DEFAULT_BATTLE_PALETTE[3]};
+        isolation: isolate;
+      }
+      #battle-scene-bg {
+        background-color: #07101c;
+      }
+      #party-area {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
       .battle-tab,
       #tab-content,
@@ -1281,9 +1303,10 @@ export function renderBattlePage() {
       }
       #tab-content {
         color: white;
-        background-color: rgb(var(--battle-palette-1) / .76);
+        background: linear-gradient(145deg, rgb(4 10 18 / .94), rgb(var(--battle-palette-1) / .72));
         border-color: rgb(var(--battle-palette-3) / .5);
         box-shadow: inset 0 1px 0 rgb(var(--battle-palette-4) / .18), 0 10px 28px rgb(0 0 0 / .35);
+        overscroll-behavior: contain;
       }
       @media (max-width: 540px), (max-height: 760px) {
         #tab-content { padding: .3rem; }
@@ -1296,38 +1319,54 @@ export function renderBattlePage() {
         .battle-info-drop-image img { width: 19px; height: 19px; }
       }
       #command-area {
-        background: linear-gradient(135deg, rgb(42 58 76 / .92), rgb(54 78 102 / .84));
+        background: linear-gradient(135deg, rgb(15 23 42 / .98), rgb(30 41 59 / .96));
         border-color: rgb(112 154 184 / .55);
         box-shadow: 0 -5px 18px rgb(42 58 76 / .5);
       }
-      #command-blocker { background-color: rgb(42 58 76 / .8); }
+      @media (max-height: 640px) {
+        #enemy-area {
+          height: 72px;
+          min-height: 72px;
+          max-height: 72px;
+        }
+        #enemy-area .enemy-card {
+          max-width: min(3rem, calc(100% / var(--enemy-cols, 4) - 0.25rem));
+        }
+        .party-card > div:first-child > div:first-child {
+          width: 1.75rem;
+          height: 1.75rem;
+        }
+      }
+      @media (max-width: 340px) {
+        .battle-tab > span:last-child { display: none; }
+      }
     </style>
 
     <!-- Fixed Battle Area (Enemies, Party, Tabs) -->
-    <div id="battle-scene-bg" class="flex-1 flex flex-col overflow-hidden" style="background: #0b0b19;">
+    <div id="battle-scene-bg" class="relative flex flex-1 flex-col overflow-hidden" style="background: #0b0b19;">
       
       <!-- Enemy Area (Moved higher) -->
-      <div id="enemy-area" class="shrink-0 px-2 py-1 relative z-10">
+      <div id="enemy-area" class="relative z-10 shrink-0 px-1 py-0.5">
         <!-- Enemies will be injected here -->
       </div>
 
       <!-- Party Area -->
-      <div id="party-area" class="shrink-0 grid grid-cols-4 gap-1 px-1 mt-1 relative z-10">
+      <div id="party-area" class="relative z-10 mt-0.5 grid shrink-0 gap-1 px-1">
         <!-- Party will be injected here -->
       </div>
       
       <!-- Tabs & Tab Content Area -->
-      <div class="flex flex-col flex-1 mt-4 px-2 mb-4 relative z-10 min-h-0">
+      <div class="relative z-10 mt-1 mb-1 flex min-h-0 flex-1 flex-col px-1">
         <!-- Tabs -->
-        <div class="flex px-0.5 gap-0.5 items-end shrink-0">
-          <button id="tab-btn-skill" class="battle-tab battle-tab--active flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold relative z-10 flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none">Skill</span></button>
-          <button id="tab-btn-item" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">backpack</span><span class="pointer-events-none">Item</span></button>
-          <button id="tab-btn-info" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">info</span><span class="pointer-events-none">Info</span></button>
-          <button id="tab-btn-pet" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">pets</span><span class="pointer-events-none">Pet</span></button>
-          <button id="tab-btn-medal" class="battle-tab flex-1 py-1.5 border-t-[3px] border-x border-b rounded-t-lg text-[10px] font-bold flex items-center justify-center gap-1" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 13px;">military_tech</span><span class="pointer-events-none">Medal</span></button>
+        <div class="flex shrink-0 items-end gap-0.5 px-0.5" role="tablist" aria-label="戦闘メニュー">
+          <button id="tab-btn-skill" role="tab" aria-selected="true" aria-label="スキル" class="battle-tab battle-tab--active relative z-10 flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none truncate">スキル</span></button>
+          <button id="tab-btn-item" role="tab" aria-selected="false" aria-label="道具" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">backpack</span><span class="pointer-events-none truncate">道具</span></button>
+          <button id="tab-btn-info" role="tab" aria-selected="false" aria-label="情報" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">info</span><span class="pointer-events-none truncate">情報</span></button>
+          <button id="tab-btn-pet" role="tab" aria-selected="false" aria-label="仲間" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">pets</span><span class="pointer-events-none truncate">仲間</span></button>
+          <button id="tab-btn-medal" role="tab" aria-selected="false" aria-label="メダル" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">military_tech</span><span class="pointer-events-none truncate">メダル</span></button>
         </div>
         <!-- Tab Content -->
-        <div id="tab-content" class="flex-1 border rounded-b-xl p-2.5 min-h-[120px] overflow-y-auto shadow-xl mb-2 relative z-0">
+        <div id="tab-content" class="relative z-0 min-h-[96px] flex-1 overflow-y-auto rounded-b-xl border p-2 shadow-xl">
           <!-- Example content to fill space -->
           <div class="text-xs text-gray-500 flex items-center justify-center h-full">
             （コマンドタブのコンテンツエリア）
@@ -1338,32 +1377,29 @@ export function renderBattlePage() {
     </div>
 
     <!-- Command Area (Fixed at bottom of main, above footer) -->
-    <div id="command-area" class="backdrop-blur-[2px] border-t p-2 flex gap-2 shrink-0 h-[72px] relative">
-      <!-- Overlay block when no active character -->
-      <div id="command-blocker" class="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[2px]">
-        <span class="text-sm font-bold text-white/80 animate-pulse tracking-wide">行動順を待っています...</span>
-      </div>
+    <div id="command-area" class="relative flex h-[60px] shrink-0 gap-1.5 border-t p-1.5 backdrop-blur-[2px]" aria-label="戦闘操作">
+      <div id="command-blocker" class="sr-only" role="status" aria-live="polite">行動順を待っています</div>
 
       <!-- Actions -->
-      <button id="btn-run" class="flex-1 bg-teal-900 active:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer">
-        <span class="material-symbols-outlined text-[18px] mb-0.5 text-teal-400">home</span>街に戻る
+      <button id="btn-run" class="battle-command flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-teal-700/80 bg-teal-950/90 px-1 text-[9px] font-bold text-teal-100 shadow-md transition-all active:scale-[0.97] active:bg-teal-800">
+        <span class="material-symbols-outlined text-[17px] text-teal-400">home</span><span>街に戻る</span>
       </button>
-      <button id="btn-auto-dungeon" class="flex-1 bg-purple-900 active:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1">
-        <span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回
+      <button id="btn-auto-dungeon" class="battle-command flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-purple-700/80 bg-purple-950/90 px-1 text-[9px] font-bold text-purple-100 shadow-md transition-all active:scale-[0.97] active:bg-purple-800">
+        <span class="material-symbols-outlined text-[17px] text-purple-400">all_inclusive</span><span>踏破周回</span>
       </button>
-      <button id="btn-auto-floor" class="flex-1 bg-blue-900 active:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1">
-        <span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回
+      <button id="btn-auto-floor" class="battle-command flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-blue-700/80 bg-blue-950/90 px-1 text-[9px] font-bold text-blue-100 shadow-md transition-all active:scale-[0.97] active:bg-blue-800">
+        <span class="material-symbols-outlined text-[17px] text-blue-400">autorenew</span><span>階層周回</span>
       </button>
-      <button id="btn-attack" class="flex-1 bg-red-700 active:bg-red-600 rounded-lg font-bold text-[11px] shadow-lg border border-red-500 flex flex-col items-center justify-center transition-all active:scale-95 text-red-50 p-1">
-        <span class="material-symbols-outlined text-[18px] mb-0.5 text-red-300">swords</span>攻撃
+      <button id="btn-attack" class="battle-command flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border border-red-500 bg-red-700 px-1 text-[9px] font-bold text-red-50 shadow-lg transition-all active:scale-[0.97] active:bg-red-600">
+        <span class="material-symbols-outlined text-[17px] text-red-300">swords</span><span>攻撃</span>
       </button>
     </div>
     
     <!-- Result Overlay -->
     <div id="battle-result" class="hidden absolute inset-0 bg-black/95 z-50 flex flex-col items-center justify-center text-white backdrop-blur-sm">
-       <h2 id="result-title" class="text-5xl font-black mb-4 tracking-widest text-yellow-400 drop-shadow-lg">VICTORY</h2>
-       <p id="result-text" class="text-gray-300 mb-10 text-sm font-bold">経験値とゴールドを獲得しました。</p>
-       <button id="btn-result-ok" class="px-10 py-4 bg-blue-600 active:bg-blue-500 rounded-2xl font-black text-lg transition-transform active:scale-90 cursor-pointer shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+       <h2 id="result-title" class="mb-3 text-4xl font-black tracking-widest text-yellow-400 drop-shadow-lg">VICTORY</h2>
+       <p id="result-text" class="mb-7 px-4 text-center text-xs font-bold text-gray-300">経験値とゴールドを獲得しました。</p>
+       <button id="btn-result-ok" class="cursor-pointer rounded-xl bg-blue-600 px-10 py-3 text-base font-black shadow-[0_0_15px_rgba(37,99,235,0.5)] transition-transform active:scale-90 active:bg-blue-500">
          街へ戻る
        </button>
     </div>

@@ -272,6 +272,13 @@
       box-shadow: 0 100px 0 100px rgb(2 6 23);
     }
 
+    /* Battle owns its bottom controls. Tighten the global chrome while the
+       battle route is active so the scene remains usable on short phones. */
+    .battle-route #game-header {
+      padding-bottom: 0.375rem;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 0.375rem);
+    }
+
     /* ─── Custom Scrollbar ──────────────────────────── */
     ::-webkit-scrollbar {
       width: 3px;

@@ -836,6 +836,17 @@ class App {
 
   renderNav() {
     const navContainer = document.getElementById('nav-container');
+    const isBattle = this.router.getCurrentRoute() === '/battle';
+
+    // 戦闘中は専用の「街に戻る」操作があるため、無効化された共通ナビを
+    // 画面下に残さない。小さい端末でもコマンドと戦況表示に高さを使える。
+    navContainer.classList.toggle('hidden', isBattle);
+    document.documentElement.classList.toggle('battle-route', isBattle);
+    if (isBattle) {
+      navContainer.innerHTML = '';
+      return;
+    }
+
     navContainer.innerHTML = createNavBar(this.router);
     initNavBar(this.router);
   }
