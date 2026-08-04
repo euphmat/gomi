@@ -4,7 +4,7 @@ import { loadFishingData } from '../../data/fishing-manager.js';
 export async function renderFishLibraryTab() {
   const state = await loadFishingData();
   const container = document.createElement('div');
-  container.className = 'h-full overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(34,211,238,.08),transparent_38%)] p-3 pb-24 no-scrollbar';
+  container.className = 'h-full overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(34,211,238,.08),transparent_38%)] p-3 pb-4 no-scrollbar';
   const discoveredCount = FISH.filter(fish => state.discovered[fish.id]).length;
   const spotSections = FISHING_SPOTS.map(spot => {
     const spotFish = getFishForSpot(spot.id);

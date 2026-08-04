@@ -31,6 +31,7 @@ import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotifica
 import { APP_VERSION } from './definitions/update-log.js';
 import { checkForAvailableUpdate, showUpdateLogModal } from './components/update-log-modal.js';
 import { initScreenLock, isScreenLockEnabled, setScreenLockEnabled } from './utils/screen-lock.js';
+import { initTouchFeedback } from './utils/touch-feedback.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -53,6 +54,7 @@ class App {
   constructor() {
     this.appEl = document.getElementById('app');
     this.router = null;
+    initTouchFeedback();
     initScreenLock();
     this.init();
   }

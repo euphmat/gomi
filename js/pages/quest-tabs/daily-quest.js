@@ -39,7 +39,7 @@ function showRewardEffect() {
 
 export function renderDailyQuestTab() {
   const container = document.createElement('div');
-  container.className = 'h-full overflow-y-auto animate-fade-in bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_36%)] pb-[calc(env(safe-area-inset-bottom,0px)+72px)]';
+  container.className = 'h-full overflow-y-auto animate-fade-in bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.08),transparent_36%)] pb-4';
 
   let timerValue = null;
   let disposed = false;

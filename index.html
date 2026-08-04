@@ -161,6 +161,7 @@
 
     /* ─── Base Styles ───────────────────────────────── */
     * {
+      box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -179,6 +180,40 @@
       -webkit-touch-callout: none;
     }
 
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    [role="tab"]:not([aria-disabled="true"]),
+    a[href] {
+      cursor: pointer;
+    }
+
+    button:disabled,
+    [aria-disabled="true"] {
+      cursor: not-allowed;
+    }
+
+    /* A pressed state that also survives DOM re-render timing on touch
+       devices.  `scale` is kept separate from `transform`, so it does not
+       overwrite positioning utilities used by cards and battle controls. */
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    [role="tab"]:not([aria-disabled="true"]),
+    a[href],
+    .cursor-pointer {
+      transition-property: color, background-color, border-color, opacity, filter, scale, box-shadow;
+      transition-duration: 120ms;
+      transition-timing-function: ease-out;
+    }
+
+    .touch-pressed {
+      filter: brightness(1.16) saturate(1.08);
+    }
+
+    /* Do not multiply Tailwind's existing active scale. */
+    .touch-pressed:not([class*="active:scale"]) {
+      scale: 0.97;
+    }
+
     button:focus-visible,
     [role="button"]:focus-visible,
     [role="tab"]:focus-visible,
@@ -191,18 +226,31 @@
 
     /* Finger-first controls. Frequently used actions get the comfortable
        44px target recommended for touch; compact header utilities are still
-       at least 36px and have separation from adjacent controls. */
+       at least 40px and have separation from adjacent controls. */
     @media (pointer: coarse) {
-      button,
-      [role="button"],
-      [role="tab"] {
+      button:not([class*="w-"]),
+      [role="button"]:not([class*="w-"]),
+      [role="tab"]:not([class*="w-"]) {
         min-width: 44px;
+      }
+
+      button:not([class*="h-"]),
+      [role="button"]:not([class*="h-"]),
+      [role="tab"]:not([class*="h-"]) {
         min-height: 44px;
       }
 
       .touch-compact {
-        min-width: 36px;
-        min-height: 36px;
+        min-width: 40px;
+        min-height: 40px;
+      }
+
+      button[id*="close"],
+      button[class*="close"],
+      button[data-close],
+      button[aria-label*="閉じ"] {
+        min-width: 44px;
+        min-height: 44px;
       }
 
       input:not([type="checkbox"]):not([type="radio"]),
@@ -218,6 +266,10 @@
       height: 100lvh;
       overflow: hidden;
       background-color: #020617;
+      color-scheme: dark;
+      /* Keep scrolling and pinch zoom available, but disable the browser's
+         double-tap-to-zoom gesture across the whole game screen. */
+      touch-action: manipulation;
     }
 
     body {
@@ -233,6 +285,26 @@
       -moz-osx-font-smoothing: grayscale;
       user-select: none;
       -webkit-user-select: none;
+    }
+
+    input,
+    textarea,
+    [contenteditable="true"] {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* iOS zooms the entire app when a smaller text field receives focus.
+       Keep editable controls at the non-zooming size without disabling pinch
+       zoom for the rest of the interface. */
+    @supports (-webkit-touch-callout: none) {
+      @media (max-width: 640px) {
+        input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+        select,
+        textarea {
+          font-size: 16px !important;
+        }
+      }
     }
 
     /* ─── Subtle Grid Background ────────────────────── */
@@ -252,6 +324,41 @@
       background-size: 20px 20px;
     }
 
+    #content,
+    [class*="overflow-y-auto"] {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    #content {
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+    }
+
+    .no-scrollbar {
+      scrollbar-width: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+    }
+
+    [role="tablist"] {
+      scroll-snap-type: x proximity;
+      overscroll-behavior-x: contain;
+    }
+    [role="tablist"] > [role="tab"] {
+      scroll-snap-align: center;
+    }
+
+    .animate-fade-in {
+      animation: fade-in 0.2s ease-out both;
+    }
+
     /*
      * Keep the buttons in the dynamic (actually usable) viewport, but extend
      * the footer's own background to the physical bottom edge.  This removes
@@ -261,6 +368,8 @@
      */
     #game-nav {
       box-sizing: border-box;
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
       padding-bottom: env(safe-area-inset-bottom, 0px);
       padding-bottom: calc(
         env(safe-area-inset-bottom, 0px) +
@@ -270,6 +379,92 @@
       /* Cover sub-pixel rounding and the transient area exposed while the
          iOS Safari toolbar animates. This is paint-only and changes no layout. */
       box-shadow: 0 100px 0 100px rgb(2 6 23);
+    }
+
+    #game-header {
+      padding-left: max(0.375rem, env(safe-area-inset-left, 0px));
+      padding-right: max(0.375rem, env(safe-area-inset-right, 0px));
+    }
+
+    /* 320–390px phones do not have enough room for location, two balances,
+       and three utilities on one line.  Keep the primary controls on the
+       first row and give balances an equally sized second row. */
+    @media (max-width: 390px) and (orientation: portrait) {
+      #game-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) repeat(3, 40px);
+        gap: 0.375rem;
+        padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+        padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+      }
+
+      #header-location {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      #header-wallet {
+        display: flex;
+        grid-column: 1 / 5;
+        grid-row: 2;
+        gap: 0.375rem;
+      }
+
+      #header-gold,
+      #header-prism {
+        flex: 1;
+        min-height: 30px;
+        justify-content: center;
+      }
+
+      #game-header > button {
+        width: 40px;
+        height: 40px;
+      }
+
+      .char-card {
+        padding: 0.375rem;
+      }
+
+      .char-card .char-avatar {
+        width: 3rem;
+        height: 3rem;
+      }
+    }
+
+    /* Short landscape screens need content more than decorative chrome. */
+    @media (orientation: landscape) and (max-height: 520px) {
+      #game-header {
+        padding-top: max(env(safe-area-inset-top, 0px), 0.25rem);
+        padding-bottom: 0.25rem;
+      }
+
+      #game-header > button {
+        min-width: 36px;
+        min-height: 36px;
+        width: 36px;
+        height: 36px;
+      }
+
+      #game-nav button {
+        min-height: 46px;
+        padding-block: 0.25rem;
+      }
+
+      #game-nav button .material-symbols-outlined {
+        font-size: 20px;
+      }
+    }
+
+    /* Modal content stays inside notches, home indicators and rounded display
+       corners even when the original overlay only supplied horizontal space. */
+    @media (max-width: 640px) {
+      body > [class~="fixed"][class~="inset-0"][class*="items-center"] {
+        padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+        padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+        padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+      }
     }
 
     /* Battle owns its bottom controls. Tighten the global chrome while the
@@ -605,6 +800,12 @@
 
     /* ─── Reduced Motion Preference ────────────────── */
     @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
       .animate-pulse { animation: none !important; }
       .animate-inn-float { animation: none !important; }
       .animate-inn-pulse-glow { animation: none !important; }
@@ -612,6 +813,10 @@
       .animate-wakeup-flash { animation: none !important; }
       .settings-section { animation: none !important; }
       #btn-hard-refresh.is-update-available { animation: none !important; }
+
+      .touch-pressed {
+        scale: 1;
+      }
     }
   </style>
 

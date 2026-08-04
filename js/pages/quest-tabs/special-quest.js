@@ -23,7 +23,7 @@ export async function renderSpecialQuestTab() {
   await SpecialQuestManager.refreshAchievements();
 
   const container = document.createElement('div');
-  container.className = 'h-full overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(217,70,239,.09),transparent_38%)] pb-[calc(env(safe-area-inset-bottom,0px)+72px)]';
+  container.className = 'h-full overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(217,70,239,.09),transparent_38%)] pb-4';
   let disposed = false;
   let activeCategory = 'all';
   let currentPage = 1;

@@ -212,7 +212,7 @@ export async function renderDungeonPage() {
     }).join('');
 
     return `
-      <div data-dungeon-page class="flex h-full min-h-0 flex-col gap-4 overflow-hidden bg-[#0b0b19] p-4 pb-24">
+      <div data-dungeon-page class="flex h-full min-h-0 flex-col gap-3 overflow-hidden bg-[#0b0b19] p-2.5 pb-3 sm:gap-4 sm:p-4">
         ${tabsHtml}
         <div class="min-h-0 flex-1 overflow-y-auto no-scrollbar">
           <div class="mb-3 flex items-end justify-between gap-3 px-1">
@@ -350,9 +350,9 @@ export async function renderDungeonPage() {
 
   scheduleDungeonPageMeasurement();
   return `
-    <div data-dungeon-page class="flex flex-col h-full min-h-0 bg-[#0b0b19] p-4 gap-4 pb-24 overflow-hidden">
+    <div data-dungeon-page class="flex h-full min-h-0 flex-col gap-2.5 overflow-hidden bg-[#0b0b19] p-2.5 pb-3 sm:gap-4 sm:p-4">
       ${tabsHtml}
-      <div data-dungeon-list class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+      <div data-dungeon-list class="flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden sm:gap-4">
         ${cardsHtml}
       </div>
       ${paginationHtml}
