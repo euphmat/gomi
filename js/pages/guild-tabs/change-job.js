@@ -5,6 +5,7 @@ import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
 import { calculateRebirthCost } from '../../utils/rebirth-cost.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
+import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 
 /**
  * 「神殿」タブの画面 — 転職・転生・SPリセット
@@ -19,6 +20,7 @@ export function renderChangeJobTab() {
   let currentGold = 0;
   let currentInnerTab = 'change-job'; // 'change-job' | 'rebirth' | 'sp-reset'
   let currentCapturedMonsters = [];
+  let currentFishingData = null;
 
   // ─── 通知トースト ─────────────────────────────────────
   const showNotification = (parentEl, message, type = 'success') => {
@@ -56,6 +58,13 @@ export function renderChangeJobTab() {
           if (req.type === 'custom') {
             if (!req.check(currentCapturedMonsters)) {
               showNotification(container, `条件未達成: ${req.description}`, 'error');
+              return;
+            }
+          } else if (req.type === 'fishLibrary') {
+            const required = Math.max(1, Number(req.discoveredSpecies) || 1);
+            const discovered = getDiscoveredFishCount(currentFishingData);
+            if (discovered < required) {
+              showNotification(container, `条件未達成: 魚図鑑 ${required}種類が必要（現在 ${discovered}種類）`, 'error');
               return;
             }
           } else {
@@ -391,6 +400,21 @@ export function renderChangeJobTab() {
                 <span class="material-symbols-outlined text-[10px] ${textColor}">military_tech</span>
                 <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
                   ${req.description}
+                </span>
+              </div>
+            `;
+          } else if (req.type === 'fishLibrary') {
+            const required = Math.max(1, Number(req.discoveredSpecies) || 1);
+            const discovered = getDiscoveredFishCount(currentFishingData);
+            const isMet = discovered >= required;
+            if (!isMet) allReqsMet = false;
+            const textColor = isMet ? 'text-emerald-400' : 'text-rose-400 opacity-90';
+
+            requirementsHtml += `
+              <div class="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 rounded border ${isMet ? 'border-emerald-500/30' : 'border-rose-500/30'} shrink-0">
+                <span class="material-symbols-outlined text-[11px] ${textColor}">phishing</span>
+                <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
+                  魚図鑑 <span class="ml-0.5 tabular-nums">${discovered} / ${required}種類</span>
                 </span>
               </div>
             `;
@@ -842,10 +866,12 @@ export function renderChangeJobTab() {
   Promise.all([
     getCharactersWithRanchBonus(),
     GameDB.getGameState('gold'),
-    GameDB.getGameState('ranch_data')
-  ]).then(async ([chars, goldVal, ranchData]) => {
+    GameDB.getGameState('ranch_data'),
+    loadFishingData()
+  ]).then(async ([chars, goldVal, ranchData, fishingData]) => {
     characters = chars;
     currentGold = goldVal || 0;
+    currentFishingData = fishingData;
     
     const captured = [];
     if (ranchData) {

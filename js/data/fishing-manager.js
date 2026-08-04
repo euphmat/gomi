@@ -70,6 +70,13 @@ function normalizeFishDiscovery(entry) {
   );
 }
 
+export function getDiscoveredFishCount(state) {
+  return FISH.reduce(
+    (count, fish) => count + (normalizeFishDiscovery(state?.discovered?.[fish.id]) ? 1 : 0),
+    0
+  );
+}
+
 function normalizeTackleLevel(level) {
   return Math.max(
     FISHING_TACKLE_MIN_LEVEL,

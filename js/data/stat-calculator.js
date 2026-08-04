@@ -100,6 +100,8 @@ export function calcFinalStats(character, equipmentMap) {
   }
 
   let hpMultiplier = 1.0;
+  let mpMultiplier = 1.0;
+  let matkMultiplier = 1.0;
   let defMultiplier = 1.0;
   let mdefMultiplier = 1.0;
 
@@ -114,11 +116,18 @@ export function calcFinalStats(character, equipmentMap) {
         const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
         if (levelConfig.bonusHp) result.hp += levelConfig.bonusHp;
         if (levelConfig.bonusHpPercent) hpMultiplier += levelConfig.bonusHpPercent / 100;
+        if (levelConfig.bonusMp) result.mp += levelConfig.bonusMp;
+        if (levelConfig.bonusMpPercent) mpMultiplier += levelConfig.bonusMpPercent / 100;
+        if (levelConfig.bonusMatk) result.matk += levelConfig.bonusMatk;
+        if (levelConfig.bonusMatkPercent) matkMultiplier += levelConfig.bonusMatkPercent / 100;
         if (levelConfig.bonusDef) result.def += levelConfig.bonusDef;
         if (levelConfig.bonusDefPercent) defMultiplier += levelConfig.bonusDefPercent / 100;
         if (levelConfig.bonusMdef) result.mdef += levelConfig.bonusMdef;
         if (levelConfig.bonusMdefPercent) mdefMultiplier += levelConfig.bonusMdefPercent / 100;
         if (levelConfig.bonusSpd) result.spd += levelConfig.bonusSpd;
+        if (levelConfig.waterResistPercent) {
+          result.elementResist.water = (result.elementResist.water || 0) + levelConfig.waterResistPercent;
+        }
       }
     }
   };
@@ -152,6 +161,8 @@ export function calcFinalStats(character, equipmentMap) {
   }
 
   result.hp = Math.floor(result.hp * hpMultiplier);
+  result.mp = Math.floor(result.mp * mpMultiplier);
+  result.matk = Math.floor(result.matk * matkMultiplier);
   result.def = Math.floor(result.def * defMultiplier);
   result.mdef = Math.floor(result.mdef * mdefMultiplier);
 

@@ -360,6 +360,14 @@ export const actionMethods = {
     
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
+
+    // --- Passive: 大洋の支配者 (water damage amplification) ---
+    if (options.element === 'water' && attacker.hp !== undefined) {
+      const oceanSovereignty = this._findSkill(attacker, 'ocean_sovereignty');
+      if (oceanSovereignty?.level > 0 && oceanSovereignty.levelConfig?.waterDamagePercent) {
+        damage = Math.floor(damage * (1 + oceanSovereignty.levelConfig.waterDamagePercent / 100));
+      }
+    }
     if (options.isGuarded) {
       damage = Math.floor(damage * 0.5);
     }
