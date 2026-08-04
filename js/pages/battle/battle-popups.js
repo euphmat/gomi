@@ -10,6 +10,7 @@ export const popupMethods = {
     this._popupLayer = document.createElement('div');
     this._popupLayer.id = 'battle-popup-layer';
     this._popupLayer.className = 'fixed inset-0 pointer-events-none z-[9999]';
+    this._popupLayer.style.contain = 'layout style paint';
     document.body.appendChild(this._popupLayer);
 
     this._domPool = [];
@@ -192,7 +193,7 @@ export const popupMethods = {
     }
 
     // Don't speed up popups too much at 5x speed so they remain readable and can stack up
-    const effectiveSpeed = speed >= 5 ? speed : Math.min(speed, 2.0);
+    const effectiveSpeed = Math.min(speed, 2.0);
     const dur = (config.duration || 1000) / effectiveSpeed;
     const itemHeight = config.height || 28;
     const stackGap = 4;

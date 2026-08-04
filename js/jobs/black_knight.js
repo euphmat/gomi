@@ -1,3 +1,5 @@
+import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+
 // ─── Animation Utilities ──────────────────────────────────────
 const playSkillAnimation = (caster, targets, type, onImpact) => {
   if (!Array.isArray(targets)) targets = [targets];
@@ -5,7 +7,8 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
-  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
+  const battleSpeed = getBattleSpeed();
+  const speedMult = getBattleAnimationSpeed(battleSpeed);
 
   const casterEl = document.getElementById(caster.elementId);
   const casterRect = casterEl ? casterEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
@@ -333,7 +336,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
   // ─── Hell Gate ───────────────────────────────────────────────
   } else if (type === 'hell_gate') {
-    if (casterEl && !document.hidden && speedMult < 5) {
+    if (casterEl && !document.hidden && battleSpeed < 5) {
       casterEl.animate([
         { filter: 'brightness(1) hue-rotate(0deg)' },
         { filter: 'brightness(0.5) hue-rotate(90deg) drop-shadow(0 0 20px #7e22ce)', offset: 0.5 },
@@ -349,7 +352,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         const tx = targetRect.left + targetRect.width / 2;
         const ty = targetRect.top + targetRect.height / 2;
 
-        if (!document.hidden && speedMult < 5) {
+        if (!document.hidden && battleSpeed < 5) {
           const spear = document.createElement('div');
           spear.style.position = 'fixed';
           spear.style.left = `${cx}px`;

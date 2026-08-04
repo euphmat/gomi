@@ -1,3 +1,5 @@
+import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+
 // ─── Poseidon skill animations ────────────────────────────────
 const playSkillAnimation = (caster, targets, type, onImpact) => {
   const targetList = Array.isArray(targets) ? targets : [targets];
@@ -6,7 +8,8 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
     return;
   }
 
-  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
+  const battleSpeed = getBattleSpeed();
+  const speedMult = getBattleAnimationSpeed(battleSpeed);
   const layer = document.getElementById('battle-effects-layer') || document.body;
   const casterEl = document.getElementById(caster.elementId);
   const casterRect = casterEl?.getBoundingClientRect();

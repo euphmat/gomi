@@ -18,6 +18,7 @@ import { renderBattleMedalTab } from './battle-medal-tab.js';
 import { formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
 import { setScreenLockActivity } from '../../utils/screen-lock.js';
+import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -168,10 +169,13 @@ class BattleManager {
       effectsLayer = document.createElement('div');
       effectsLayer.id = 'battle-effects-layer';
       effectsLayer.className = 'fixed inset-0 pointer-events-none z-[9998]';
+      effectsLayer.style.contain = 'layout style paint';
+      effectsLayer.style.overflow = 'hidden';
       document.body.appendChild(effectsLayer);
     } else {
       effectsLayer.innerHTML = '';
     }
+    configureBattleEffectsLayer(effectsLayer);
 
     if (!this.elements.tabContent.dataset.touchListenerAdded) {
       const holdTabUpdates = () => {

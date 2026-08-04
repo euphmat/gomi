@@ -1,3 +1,5 @@
+import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+
 // ─── Animation Utilities ──────────────────────────────────────
 const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
   if (!Array.isArray(targets)) targets = [targets];
@@ -5,7 +7,8 @@ const playSkillAnimation = (caster, targets, type, params = {}, onImpact) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
-  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
+  const battleSpeed = getBattleSpeed();
+  const speedMult = getBattleAnimationSpeed(battleSpeed);
 
   const screenShake = (intensity = 5, duration = 300) => {
     // Screen shake globally disabled by user preference

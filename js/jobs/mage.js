@@ -1,3 +1,5 @@
+import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+
 // ─── Animation Utilities ──────────────────────────────────────
 const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
   if (!Array.isArray(targets)) targets = [targets];
@@ -5,7 +7,8 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }
-  const speedMult = Math.max(1, parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10));
+  const battleSpeed = getBattleSpeed();
+  const speedMult = getBattleAnimationSpeed(battleSpeed);
 
   const casterEl = document.getElementById(caster.elementId);
   if (!casterEl && type !== 'magic_barrier') {
@@ -210,7 +213,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
           let completed = 0;
           for (let i = 0; i < numIcicles; i++) {
             setTimeout(() => {
-              if (i < visualIcicles && !document.hidden && speedMult < 5) {
+              if (i < visualIcicles && !document.hidden && battleSpeed < 5) {
                 const el = document.createElement('div');
                 el.style.position = 'fixed';
                 const targetX = tx + (Math.random() - 0.5) * 60;
@@ -235,7 +238,7 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
                 anim.onfinish = () => el.remove();
               }
 
-              if (targetEl && !document.hidden && speedMult < 5) {
+              if (targetEl && !document.hidden && battleSpeed < 5) {
                 targetEl.animate([
                   { transform: 'translateX(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0px #00bfff)' },
                   { transform: 'translateX(-5px) scale(0.95)', filter: 'brightness(1.5) drop-shadow(0 0 10px #00bfff)', offset: 0.2 },

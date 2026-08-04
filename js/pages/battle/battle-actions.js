@@ -1,3 +1,5 @@
+import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
+
 /**
  * battle-actions.js
  * 攻撃・スキル・敵ターン実行ロジック
@@ -188,10 +190,10 @@ export const actionMethods = {
     options.isHybrid = isHybrid;
 
     // --- 攻撃者のアクションアニメーション (モンスター側のみ) ---
-    if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim && this.speedMult < 5) {
+    if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
       const attackerEl = document.getElementById(attacker.elementId);
       if (attackerEl) {
-        const animDuration = Math.max(150, 300 / this.speedMult);
+        const animDuration = getBattleAnimationDuration(300, 120);
         if (isMagic) {
           attackerEl.animate([
             { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
@@ -503,10 +505,10 @@ export const actionMethods = {
 
     // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
     let delayDamageMs = 0;
-    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
+    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
-        const slashDuration = Math.max(120, 200 / this.speedMult);
+        const slashDuration = getBattleAnimationDuration(200, 100);
         defenderEl.animate([
           { transform: 'translateX(0)', filter: 'brightness(1)' },
           { transform: 'translateX(10px)', filter: 'brightness(1.5)', offset: 0.2 },
@@ -516,10 +518,10 @@ export const actionMethods = {
           { transform: 'translateX(0)', filter: 'brightness(1)' }
         ], { duration: slashDuration, easing: 'ease-out' });
       }
-    } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
+    } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
-        const animDuration = Math.max(150, 300 / this.speedMult);
+        const animDuration = getBattleAnimationDuration(300, 120);
         delayDamageMs = animDuration;
         defenderEl.animate([
           { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' },

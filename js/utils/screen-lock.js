@@ -10,6 +10,8 @@ let sliderThumb = null;
 let sliderTrack = null;
 let sliderFill = null;
 let activityLabel = null;
+let notificationRegion = null;
+const lockNotifications = new Map();
 let pointerId = null;
 let dragStartX = 0;
 let dragStartOffset = 0;
@@ -64,6 +66,8 @@ export function initScreenLock() {
   injectStyles();
   createOverlay();
 
+  document.addEventListener('gamenotification', showLockScreenNotification);
+
   window.addEventListener('routechange', event => {
     const path = event.detail?.path;
     if (path !== '/battle') activeAutomation.delete('battle');
@@ -114,7 +118,58 @@ function unlockScreen() {
   document.getElementById('app')?.removeAttribute('inert');
   document.body.classList.remove('screen-lock-active');
   resetSlider(false);
+  clearLockScreenNotifications();
   document.dispatchEvent(new CustomEvent('screenlockchange', { detail: { locked: false } }));
+}
+
+function showLockScreenNotification(event) {
+  if (!locked || !notificationRegion) return;
+
+  const title = String(event.detail?.title || 'イベント通知');
+  const body = String(event.detail?.body || '');
+  const key = event.detail?.tag || Symbol('screen-lock-notification');
+
+  removeLockScreenNotification(key);
+  while (lockNotifications.size >= 3) {
+    removeLockScreenNotification(lockNotifications.keys().next().value);
+  }
+
+  const item = document.createElement('div');
+  item.className = 'screen-lock__notification';
+
+  const icon = document.createElement('span');
+  icon.className = 'material-symbols-outlined screen-lock__notification-icon';
+  icon.textContent = 'notifications_active';
+
+  const content = document.createElement('div');
+  content.className = 'screen-lock__notification-content';
+
+  const titleElement = document.createElement('div');
+  titleElement.className = 'screen-lock__notification-title';
+  titleElement.textContent = title;
+
+  const bodyElement = document.createElement('div');
+  bodyElement.className = 'screen-lock__notification-body';
+  bodyElement.textContent = body;
+
+  content.append(titleElement, bodyElement);
+  item.append(icon, content);
+  notificationRegion.appendChild(item);
+
+  const timeoutId = window.setTimeout(() => removeLockScreenNotification(key), 6000);
+  lockNotifications.set(key, { item, timeoutId });
+}
+
+function removeLockScreenNotification(key) {
+  const notification = lockNotifications.get(key);
+  if (!notification) return;
+  window.clearTimeout(notification.timeoutId);
+  notification.item.remove();
+  lockNotifications.delete(key);
+}
+
+function clearLockScreenNotifications() {
+  for (const key of [...lockNotifications.keys()]) removeLockScreenNotification(key);
 }
 
 function dismissLock() {
@@ -141,6 +196,7 @@ function createOverlay() {
         <span class="material-symbols-outlined">eco</span>
         省エネ表示で動作しています
       </div>
+      <div class="screen-lock__notifications" aria-live="polite" aria-label="イベント通知"></div>
     </div>
     <div class="screen-lock__unlock-area">
       <div class="screen-lock__instruction">右へスライドしてロック解除</div>
@@ -159,6 +215,7 @@ function createOverlay() {
   sliderThumb = overlay.querySelector('.screen-lock__thumb');
   sliderFill = overlay.querySelector('.screen-lock__fill');
   activityLabel = overlay.querySelector('.screen-lock__activity');
+  notificationRegion = overlay.querySelector('.screen-lock__notifications');
 
   overlay.addEventListener('contextmenu', event => event.preventDefault());
   overlay.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
@@ -308,6 +365,50 @@ function injectStyles() {
       font-size: 9px;
     }
     .screen-lock__saving .material-symbols-outlined { font-size: 14px; }
+    .screen-lock__notifications {
+      display: flex;
+      width: min(calc(100vw - 44px), 360px);
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 18px;
+    }
+    .screen-lock__notification {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 10px 12px;
+      border: 1px solid rgba(34, 211, 238, .22);
+      border-radius: 12px;
+      text-align: left;
+      background: rgba(8, 19, 27, .94);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 255, 255, .025);
+      animation: screen-lock-notification-in .24s ease-out;
+    }
+    .screen-lock__notification-icon {
+      flex: 0 0 auto;
+      color: #22d3ee;
+      font-size: 19px;
+      font-variation-settings: 'FILL' 1;
+    }
+    .screen-lock__notification-content { min-width: 0; }
+    .screen-lock__notification-title {
+      color: #cffafe;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+    .screen-lock__notification-body {
+      margin-top: 3px;
+      overflow-wrap: anywhere;
+      color: #94a3b8;
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      line-height: 1.45;
+    }
+    @keyframes screen-lock-notification-in {
+      from { opacity: 0; transform: translateY(-7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .screen-lock__unlock-area {
       width: min(100%, 330px);
     }
@@ -374,6 +475,8 @@ function injectStyles() {
     @media (max-height: 520px) {
       .screen-lock__status { margin-top: 20px; }
       .screen-lock__saving { margin-top: 10px; }
+      .screen-lock__notifications { margin-top: 9px; }
+      .screen-lock__notification { padding: 7px 9px; }
     }
   `;
   document.head.appendChild(style);
