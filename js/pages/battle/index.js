@@ -1319,6 +1319,15 @@ export function renderBattlePage() {
         .battle-info-drop-image img { width: 19px; height: 19px; }
       }
       #command-area {
+        box-sizing: border-box;
+        height: calc(
+          60px + env(safe-area-inset-bottom, 0px) +
+          max(0px, calc(100lvh - 100dvh))
+        );
+        padding-bottom: calc(
+          0.375rem + env(safe-area-inset-bottom, 0px) +
+          max(0px, calc(100lvh - 100dvh))
+        );
         background: linear-gradient(135deg, rgb(15 23 42 / .98), rgb(30 41 59 / .96));
         border-color: rgb(112 154 184 / .55);
         box-shadow: 0 -5px 18px rgb(42 58 76 / .5);
