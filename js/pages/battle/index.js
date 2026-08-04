@@ -117,6 +117,8 @@ class BattleManager {
     this._initGeneration = 0;
     this.isTabInteracting = false;
     this._tabInteractionTimer = null;
+    this._battleReady = false;
+    this._pendingTabRender = false;
 
     // Register lifecycle cleanup before any asynchronous initialization starts.
     // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
@@ -149,6 +151,11 @@ class BattleManager {
     this.elements.btnAutoDungeon.disabled = false;
     this.autoSkillStates = {};
     this.monsterKills = {};
+
+    // Tab navigation must be usable as soon as the battle shell is visible.
+    // Waiting for the asynchronous IndexedDB initialization made the first
+    // tap disappear on slower mobile devices.
+    this.setupTabListeners();
   }
   
   async init() {
@@ -163,6 +170,7 @@ class BattleManager {
     // Stop existing ATB loop before re-initializing
     this.stopAtbLoop(false, false);
     const initGeneration = ++this._initGeneration;
+    this._battleReady = false;
 
     let effectsLayer = document.getElementById('battle-effects-layer');
     if (!effectsLayer) {
@@ -368,6 +376,12 @@ class BattleManager {
     
     this.applyStartOfBattlePassives();
     this.renderEntities();
+    this._battleReady = true;
+
+    if (this._pendingTabRender) {
+      this._pendingTabRender = false;
+      this.renderTabContent(true);
+    }
     
     // Only setup button listeners once (on first init)
     if (!this._listenersSetup) {
@@ -676,23 +690,51 @@ class BattleManager {
       }
     };
 
-    [
+    // 初期状態のタブスタイルを適用
+    this.updateTabStyles();
+    this.updateCommandUI();
+  }
+
+  setupTabListeners() {
+    const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill' },
       { btn: this.elements.tabBtnItem, id: 'item' },
       { btn: this.elements.tabBtnInfo, id: 'info' },
       { btn: this.elements.tabBtnPet, id: 'pet' },
       { btn: this.elements.tabBtnMedal, id: 'medal' }
-    ].forEach(({btn, id}) => {
-      btn.onclick = () => {
+    ];
+
+    tabs.forEach(({ btn, id }) => {
+      let lastPointerActivation = 0;
+
+      const activate = () => {
+        if (this.currentTab === id) return;
         this.currentTab = id;
         this.updateTabStyles();
-        this.renderTabContent();
-      };
-    });
 
-    // 初期状態のタブスタイルを適用
-    this.updateTabStyles();
-    this.updateCommandUI();
+        if (this._battleReady) {
+          this.renderTabContent(true);
+        } else {
+          this._pendingTabRender = true;
+        }
+      };
+
+      // Mobile Safari can defer or discard the synthesized click while the
+      // surrounding battle UI is updating. Pointerdown provides a single,
+      // immediate activation for this fixed (non-scrollable) five-tab bar.
+      btn.addEventListener('pointerdown', event => {
+        if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
+        lastPointerActivation = Date.now();
+        event.preventDefault();
+        activate();
+      });
+
+      // Keyboard activation and browsers without usable pointer events.
+      btn.addEventListener('click', () => {
+        if (Date.now() - lastPointerActivation < 500) return;
+        activate();
+      });
+    });
   }
 
   updateCommandUI() {
