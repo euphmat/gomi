@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.13';
+export const APP_VERSION = '0.1.14';
 export const APP_RELEASE_DATE = '2026.08.04';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.04',
+    version: '0.1.14',
+    items: [
+      '全14職業に、初めてその職業へ転職すると達成できるスペシャルクエストを追加しました。各クエストの報酬としてPrism（Gem）1個を獲得できます。',
+      'スペシャルクエストに「職業」カテゴリを追加し、職業別の初転職クエストを探しやすくしました。',
+      '過去に転職済みの職業は既存セーブデータから履歴を復元し、対応するクエストへ反映するようにしました。',
+    ],
+  },
   {
     date: '2026.08.04',
     version: '0.1.13',

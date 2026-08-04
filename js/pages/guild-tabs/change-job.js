@@ -6,6 +6,7 @@ import { formatNumber } from '../../utils/format.js';
 import { calculateRebirthCost } from '../../utils/rebirth-cost.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
+import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -145,6 +146,13 @@ export function renderChangeJobTab() {
     char.sp = Math.max(0, (char.jobLevel || 1) - 1) - spentSP;
 
     await GameDB.putCharacter(char);
+    try {
+      await SpecialQuestManager.completeFirstJobChange(jobDef.id);
+    } catch (error) {
+      // The saved character data lets the quest manager recover this achievement
+      // on its next refresh even if IndexedDB was briefly unavailable here.
+      console.warn(`[ChangeJob] Could not record first change to ${jobDef.id}.`, error);
+    }
     characters = await getCharactersWithRanchBonus();
     showNotification(container, `${char.name} は ${jobDef.name} に転職した！`, 'success');
     render();

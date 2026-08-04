@@ -2,6 +2,7 @@ import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 
 const CATEGORIES = [
   { id: 'all', label: 'すべて', icon: 'apps' },
+  { id: 'job', label: '職業', icon: 'badge' },
   { id: 'dungeon', label: '踏破', icon: 'swords' },
   { id: 'monster', label: 'モンスター', icon: 'pets' },
   { id: 'fish', label: '魚図鑑', icon: 'phishing' },

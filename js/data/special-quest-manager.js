@@ -8,9 +8,11 @@ import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { FISH } from '../definitions/fish.js';
+import { JOBS } from '../jobs/index.js';
 
 const STATE_KEY = 'quest_special_progress';
 const COMPLETED_DUNGEONS_KEY = 'completed_dungeons';
+const JOB_CHANGE_HISTORY_KEY = 'job_change_history';
 const ALL_DUNGEONS = [...DUNGEONS, ...SPECIAL_DUNGEONS];
 const ALL_ITEMS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
@@ -40,6 +42,16 @@ export const SPECIAL_QUESTS = [
     reward: 1,
     target: 1,
   },
+  ...Object.values(JOBS).map(job => ({
+    id: `job_first_change_${job.id}`,
+    category: 'job',
+    jobId: job.id,
+    title: `${job.name}へ初転職`,
+    description: `${job.name}へ初めて転職する`,
+    icon: 'badge',
+    reward: 1,
+    target: 1,
+  })),
   ...DUNGEONS.map((dungeon, index) => ({
     id: `dungeon_${dungeon.id}`,
     category: 'dungeon',
@@ -117,7 +129,7 @@ function getFinalFloorMonsterIds(dungeon) {
 class SpecialQuestManagerClass {
   constructor() {
     this.progress = structuredClone(DEFAULT_PROGRESS);
-    this.metrics = { monster: 0, fish: 0, item: 0, medal: 0, completedDungeons: new Set() };
+    this.metrics = { monster: 0, fish: 0, item: 0, medal: 0, completedDungeons: new Set(), changedJobs: new Set() };
     this.listenersReady = false;
     this.claimQueue = Promise.resolve();
   }
@@ -154,6 +166,8 @@ class SpecialQuestManagerClass {
       discoveredItemsValue,
       equipment,
       inventory,
+      jobChangeHistoryValue,
+      characters,
     ] = await Promise.all([
       GameDB.getGameState('mine_data'),
       GameDB.getGameState(COMPLETED_DUNGEONS_KEY),
@@ -165,6 +179,8 @@ class SpecialQuestManagerClass {
       GameDB.getGameState('discovered_items'),
       GameDB.getAllEquipment(),
       GameDB.getAllInventory(),
+      GameDB.getGameState(JOB_CHANGE_HISTORY_KEY),
+      GameDB.getAllCharacters(),
     ]);
 
     const completedDungeons = new Set(Array.isArray(completedDungeonsValue) ? completedDungeonsValue : []);
@@ -218,12 +234,42 @@ class SpecialQuestManagerClass {
     const discoveredItemsChanged = JSON.stringify([...storedDiscoveredItems].sort()) !== JSON.stringify([...normalizedDiscoveredItems].sort());
     if (discoveredItemsChanged) await GameDB.setGameState('discovered_items', normalizedDiscoveredItems);
 
+    const validJobIds = new Set(Object.keys(JOBS));
+    const changedJobs = new Set(
+      (Array.isArray(jobChangeHistoryValue) ? jobChangeHistoryValue : []).filter(id => validJobIds.has(id))
+    );
+    for (const character of characters || []) {
+      const jobLevels = character?.jobLevels && typeof character.jobLevels === 'object'
+        ? Object.keys(character.jobLevels)
+        : [];
+      const unlockedJobs = Array.isArray(character?.unlockedJobs) ? character.unlockedJobs : [];
+
+      // A non-Novice unlocked job is only added when a character actually
+      // changes into it. jobLevels proves a character previously used that job.
+      for (const jobId of [...unlockedJobs, ...jobLevels]) {
+        if (jobId !== 'norvice' && validJobIds.has(jobId)) changedJobs.add(jobId);
+      }
+      if (character?.jobId !== 'norvice' && validJobIds.has(character?.jobId)) {
+        changedJobs.add(character.jobId);
+      }
+      // Novice is the initial job, so count it only when another job has been
+      // used and the character has subsequently changed back to Novice.
+      if (character?.jobId === 'norvice' && jobLevels.some(jobId => jobId !== 'norvice' && validJobIds.has(jobId))) {
+        changedJobs.add('norvice');
+      }
+    }
+    const normalizedChangedJobs = [...changedJobs];
+    const storedChangedJobs = Array.isArray(jobChangeHistoryValue) ? jobChangeHistoryValue : [];
+    const jobHistoryChanged = JSON.stringify([...storedChangedJobs].sort()) !== JSON.stringify([...normalizedChangedJobs].sort());
+    if (jobHistoryChanged) await GameDB.setGameState(JOB_CHANGE_HISTORY_KEY, normalizedChangedJobs);
+
     this.metrics = {
       monster: discoveredMonsters.size,
       fish: fishCount,
       item: acquiredItemIds.size,
       medal: medalCount,
       completedDungeons,
+      changedJobs,
     };
 
     let changed = false;
@@ -232,6 +278,8 @@ class SpecialQuestManagerClass {
     }
     for (const quest of SPECIAL_QUESTS) {
       if (quest.category === 'dungeon' && completedDungeons.has(quest.dungeonId)) {
+        changed = this.markCompleted(quest.id) || changed;
+      } else if (quest.category === 'job' && changedJobs.has(quest.jobId)) {
         changed = this.markCompleted(quest.id) || changed;
       } else if (['monster', 'fish', 'item', 'medal'].includes(quest.category) && this.metrics[quest.category] >= quest.target) {
         changed = this.markCompleted(quest.id) || changed;
@@ -243,7 +291,7 @@ class SpecialQuestManagerClass {
     const dungeonHistoryChanged = JSON.stringify([...storedCompleted].sort()) !== JSON.stringify([...normalizedCompleted].sort());
     if (dungeonHistoryChanged) await GameDB.setGameState(COMPLETED_DUNGEONS_KEY, normalizedCompleted);
     if (changed) await this.save();
-    return changed || dungeonHistoryChanged || discoveredItemsChanged;
+    return changed || dungeonHistoryChanged || discoveredItemsChanged || jobHistoryChanged;
   }
 
   markCompleted(questId) {
@@ -257,6 +305,25 @@ class SpecialQuestManagerClass {
     if (!this.markCompleted('mineFirstUnlock')) return;
     await this.save();
     window.dispatchEvent(new CustomEvent('quest:special-updated'));
+  }
+
+  async completeFirstJobChange(jobId) {
+    if (!JOBS[jobId]) return false;
+
+    const storedHistory = await GameDB.getGameState(JOB_CHANGE_HISTORY_KEY);
+    const changedJobs = new Set([
+      ...(Array.isArray(storedHistory) ? storedHistory : []),
+      ...this.metrics.changedJobs,
+    ].filter(id => JOBS[id]));
+    const historyChanged = !changedJobs.has(jobId);
+    changedJobs.add(jobId);
+    this.metrics.changedJobs = changedJobs;
+
+    if (historyChanged) await GameDB.setGameState(JOB_CHANGE_HISTORY_KEY, [...changedJobs]);
+    const questChanged = this.markCompleted(`job_first_change_${jobId}`);
+    if (questChanged) await this.save();
+    if (historyChanged || questChanged) window.dispatchEvent(new CustomEvent('quest:special-updated'));
+    return historyChanged || questChanged;
   }
 
   async completeDungeon(dungeonId) {
@@ -291,6 +358,7 @@ class SpecialQuestManagerClass {
 
   getCurrentValue(quest) {
     if (quest.category === 'dungeon') return this.metrics.completedDungeons.has(quest.dungeonId) ? 1 : 0;
+    if (quest.category === 'job') return this.metrics.changedJobs.has(quest.jobId) ? 1 : 0;
     if (['monster', 'fish', 'item', 'medal'].includes(quest.category)) return this.metrics[quest.category] || 0;
     return this.getState(quest.id).completed ? 1 : 0;
   }
