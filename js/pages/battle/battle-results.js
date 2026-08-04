@@ -17,6 +17,7 @@ import { notifyGameEvent } from '../../utils/game-notifications.js';
 import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { setScreenLockActivity } from '../../utils/screen-lock.js';
+import { playSoundEffect } from '../../utils/sound-effects.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -360,6 +361,7 @@ export const resultMethods = {
   async endBattle(isWin, text, showModal = true) {
     this.stopAtbLoop();
     this.activeCharacter = null;
+    if (showModal) playSoundEffect(isWin ? 'victory' : 'defeat', { automatic: this.isAutoBattle });
     
     await this.saveDeferredData();
     await this.savePartyState();

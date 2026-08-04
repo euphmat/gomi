@@ -4,6 +4,8 @@
  * 必要数だけ生成して再利用し、長時間戦闘でもDOM数を上限内に保つ
  */
 
+import { playSoundEffect } from '../../utils/sound-effects.js';
+
 const POPUP_POOL_LIMITS = { float: 150, label: 50 };
 
 export const popupMethods = {
@@ -276,6 +278,8 @@ export const popupMethods = {
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500') {
+    const isRecovery = customColorClass.includes('text-green-') || customColorClass.includes('text-blue-');
+    playSoundEffect(isRecovery ? 'heal' : 'battleHit', { automatic: this.isAutoBattle });
     if (this._cachedDisableAnim) return;
     
     let color = '#ffffff';

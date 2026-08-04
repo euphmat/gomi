@@ -1,4 +1,5 @@
 import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
+import { playSoundEffect } from '../../utils/sound-effects.js';
 
 /**
  * battle-actions.js
@@ -56,6 +57,8 @@ export const actionMethods = {
     if (!options.isDoubleAct && caster.mp) {
       caster.mp.current -= levelConfig.mpCost;
     }
+
+    playSoundEffect('battleSkill', { automatic: this.isAutoBattle });
 
     // Execution Logic
     // For now, we assume skills like first_aid don't need a specific target besides caster
@@ -188,6 +191,11 @@ export const actionMethods = {
       else if (options.statDependency === 'ATK') { isMagic = false; isHybrid = false; }
     }
     options.isHybrid = isHybrid;
+
+    playSoundEffect(isMagic ? 'battleMagic' : 'battleAttack', {
+      automatic: this.isAutoBattle,
+      rate: isParty ? 1.04 : .9,
+    });
 
     // --- 攻撃者のアクションアニメーション (モンスター側のみ) ---
     if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
@@ -591,6 +599,7 @@ export const actionMethods = {
       if (defender.currentHp <= 0) {
         defender.currentHp = 0;
         defender.isDead = true;
+        playSoundEffect('enemyDown', { automatic: this.isAutoBattle });
         this.clearEntityStatuses(defender);
         this.processEnemyDeath(defender);
       }
@@ -615,6 +624,7 @@ export const actionMethods = {
       if (defender.hp.current <= 0 && !survivedBySlimeCore) {
         defender.hp.current = 0;
         defender.isDead = true;
+        playSoundEffect('enemyDown', { automatic: this.isAutoBattle, rate: .78 });
         this.clearEntityStatuses(defender);
         this.lastKilledBy = {
           monsterId: attacker.id,

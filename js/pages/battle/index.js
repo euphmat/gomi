@@ -19,6 +19,7 @@ import { formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
 import { setScreenLockActivity } from '../../utils/screen-lock.js';
 import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
+import { playSoundEffect } from '../../utils/sound-effects.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -377,6 +378,7 @@ class BattleManager {
     this.applyStartOfBattlePassives();
     this.renderEntities();
     this._battleReady = true;
+    playSoundEffect('battleStart', { automatic: this.isAutoBattle });
 
     if (this._pendingTabRender) {
       this._pendingTabRender = false;

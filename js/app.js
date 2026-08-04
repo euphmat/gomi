@@ -32,6 +32,7 @@ import { APP_VERSION } from './definitions/update-log.js';
 import { checkForAvailableUpdate, showUpdateLogModal } from './components/update-log-modal.js';
 import { initScreenLock, isScreenLockEnabled, setScreenLockEnabled } from './utils/screen-lock.js';
 import { initTouchFeedback } from './utils/touch-feedback.js';
+import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -55,6 +56,7 @@ class App {
     this.appEl = document.getElementById('app');
     this.router = null;
     initTouchFeedback();
+    initSoundEffects();
     initScreenLock();
     this.init();
   }
@@ -428,6 +430,27 @@ class App {
             </div>
           </div>
 
+          <!-- Sound Effects Toggle -->
+          <div id="setting-row-sound-effects" data-sound="none" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20
+                            flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base text-orange-400">volume_up</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-gray-200 leading-tight">効果音</div>
+                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">ボタン操作・戦闘・釣りの効果音（初期設定はOFF）</div>
+                </div>
+              </div>
+              <div id="toggle-sound-effects"
+                   role="switch" aria-checked="${areSoundEffectsEnabled()}"
+                   class="setting-toggle ${areSoundEffectsEnabled() ? 'active' : ''}"
+                   style="--toggle-color: #f97316; --toggle-glow: rgba(249,115,22,0.4)"></div>
+            </div>
+          </div>
+
           <!-- Auto Battle Speed -->
           <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
                       active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200">
@@ -606,6 +629,16 @@ class App {
         toggleScreenLock.classList.toggle('active', enabled);
         toggleScreenLock.setAttribute('aria-checked', String(enabled));
         setScreenLockEnabled(enabled);
+      });
+    }
+
+    const rowSoundEffects = document.getElementById('setting-row-sound-effects');
+    const toggleSoundEffects = document.getElementById('toggle-sound-effects');
+    if (rowSoundEffects && toggleSoundEffects) {
+      rowSoundEffects.addEventListener('click', () => {
+        const enabled = setSoundEffectsEnabled(!areSoundEffectsEnabled(), { preview: true });
+        toggleSoundEffects.classList.toggle('active', enabled);
+        toggleSoundEffects.setAttribute('aria-checked', String(enabled));
       });
     }
 
