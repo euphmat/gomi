@@ -10,6 +10,7 @@ import { bird } from './bird.js';
 import { black_knight } from './black_knight.js';
 import { paladin } from './paladin.js';
 import { poseidon } from './poseidon.js';
+import { pyromancer } from './pyromancer.js';
 
 export const JOB_STAT_GROWTH = {
   [norvice.id]:      { hp: [1, 2], mp: [0, 1], atk: [0, 1], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [1, 1] },
@@ -23,7 +24,8 @@ export const JOB_STAT_GROWTH = {
   [bird.id]:         { hp: [1, 2], mp: [2, 4], atk: [1, 2], def: [0, 2], matk: [0, 2], mdef: [1, 3], spd: [1, 1] },
   [black_knight.id]: { hp: [3, 5], mp: [0, 1], atk: [1, 3], def: [1, 2], matk: [0, 1], mdef: [0, 1], spd: [1, 1] },
   [paladin.id]:      { hp: [3, 5], mp: [1, 3], atk: [0, 2], def: [1, 2], matk: [0, 2], mdef: [2, 4], spd: [1, 1] },
-  [poseidon.id]:     { hp: [2, 4], mp: [3, 5], atk: [0, 1], def: [1, 2], matk: [2, 4], mdef: [2, 4], spd: [0, 1] }
+  [poseidon.id]:     { hp: [2, 4], mp: [3, 5], atk: [0, 1], def: [1, 2], matk: [2, 4], mdef: [2, 4], spd: [0, 1] },
+  [pyromancer.id]:   { hp: [1, 2], mp: [3, 5], atk: [0, 0], def: [0, 1], matk: [3, 5], mdef: [1, 3], spd: [1, 2] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -38,7 +40,8 @@ export const JOB_STAT_MULTIPLIER = {
   [bird.id]:         { hp: 0.8, mp: 1.5, atk: 0.5, def: 1.0, matk: 0.9, mdef: 1.5, spd: 0.8 },
   [black_knight.id]: { hp: 3.0, mp: 0.3, atk: 1.6, def: 0.8, matk: 1.0, mdef: 0.3, spd: 0.7 },
   [paladin.id]:      { hp: 2.0, mp: 1.2, atk: 0.8, def: 1.1, matk: 0.8, mdef: 1.1, spd: 0.5 },
-  [poseidon.id]:     { hp: 1.4, mp: 1.8, atk: 0.6, def: 1.1, matk: 1.8, mdef: 1.5, spd: 0.6 }
+  [poseidon.id]:     { hp: 1.4, mp: 1.8, atk: 0.6, def: 1.1, matk: 1.8, mdef: 1.5, spd: 0.6 },
+  [pyromancer.id]:   { hp: 0.6, mp: 1.9, atk: 0.1, def: 0.6, matk: 2.3, mdef: 0.9, spd: 0.7 }
 };
 
 export const JOBS = {
@@ -53,5 +56,6 @@ export const JOBS = {
   [bird.id]: { ...bird, statGrowth: JOB_STAT_GROWTH[bird.id], statMultiplier: JOB_STAT_MULTIPLIER[bird.id] },
   [black_knight.id]: { ...black_knight, statGrowth: JOB_STAT_GROWTH[black_knight.id], statMultiplier: JOB_STAT_MULTIPLIER[black_knight.id] },
   [paladin.id]: { ...paladin, statGrowth: JOB_STAT_GROWTH[paladin.id], statMultiplier: JOB_STAT_MULTIPLIER[paladin.id] },
-  [poseidon.id]: { ...poseidon, statGrowth: JOB_STAT_GROWTH[poseidon.id], statMultiplier: JOB_STAT_MULTIPLIER[poseidon.id] }
+  [poseidon.id]: { ...poseidon, statGrowth: JOB_STAT_GROWTH[poseidon.id], statMultiplier: JOB_STAT_MULTIPLIER[poseidon.id] },
+  [pyromancer.id]: { ...pyromancer, statGrowth: JOB_STAT_GROWTH[pyromancer.id], statMultiplier: JOB_STAT_MULTIPLIER[pyromancer.id] }
 };

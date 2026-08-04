@@ -7,6 +7,43 @@ import { renderEnemyCardHtml, renderPartyCardHtml, getActiveStateIconsHTML } fro
 import { formatNumber } from '../../utils/format.js';
 import { isScreenLocked } from '../../utils/screen-lock.js';
 
+// Combat effects use CSS/Web Animations and remain display-refresh-rate smooth.
+// The HUD itself does not need to recalculate styles on every animation frame,
+// especially during unattended auto battle.
+const AUTO_BATTLE_HUD_INTERVAL = 1000 / 30;
+const PARTY_BG_CLASSES = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
+const STAT_TEXT_COLORS = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
+
+function applyStatTheme(type, cache, isBuff, isDebuff, baseIconColor, isStacked) {
+  const theme = isBuff ? `buff-${isStacked}` : (isDebuff ? `debuff-${isStacked}` : `base-${baseIconColor}`);
+  if (cache.uiState.statThemes[type] === theme) return;
+  cache.uiState.statThemes[type] = theme;
+
+  const valElt = cache.statVals[type];
+  const rowElt = cache.statRows[type];
+  const iconElt = cache.statIcons[type];
+  const labelElt = cache.statLabels[type];
+  valElt.classList.remove(...STAT_TEXT_COLORS);
+  iconElt.classList.remove(...STAT_TEXT_COLORS);
+  labelElt.classList.remove(...STAT_TEXT_COLORS);
+
+  if (isBuff) {
+    valElt.classList.add('text-green-400');
+    iconElt.classList.add('text-green-400');
+    labelElt.classList.add('text-green-400');
+    rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
+  } else if (isDebuff) {
+    valElt.classList.add('text-red-400');
+    iconElt.classList.add('text-red-400');
+    labelElt.classList.add('text-red-400');
+    rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
+  } else {
+    valElt.classList.add('text-gray-100');
+    iconElt.classList.add(baseIconColor);
+    rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
+  }
+}
+
 export const rendererMethods = {
   renderEntities() {
     if (document.hidden || isScreenLocked()) return;
@@ -64,10 +101,26 @@ export const rendererMethods = {
     if (document.hidden || isScreenLocked()) return;
     if (this._updateEntitiesPending) return;
     this._updateEntitiesPending = true;
-    requestAnimationFrame(() => {
-      this._updateEntitiesPending = false;
-      this._doUpdateEntities();
-    });
+
+    const requestHudFrame = () => {
+      this._entityUpdateDelayTimer = null;
+      this._entityUpdateFrame = requestAnimationFrame(timestamp => {
+        this._entityUpdateFrame = null;
+        this._updateEntitiesPending = false;
+        this._lastEntityUpdateAt = timestamp;
+        this._doUpdateEntities();
+      });
+    };
+
+    // Keep manual input immediate. During auto battle, coalesce bursts from
+    // skills, passives and multi-hit attacks into one lightweight HUD update.
+    const elapsed = performance.now() - (this._lastEntityUpdateAt || 0);
+    const wait = this.isAutoBattle ? Math.max(0, AUTO_BATTLE_HUD_INTERVAL - elapsed) : 0;
+    if (wait > 1) {
+      this._entityUpdateDelayTimer = setTimeout(requestHudFrame, wait);
+    } else {
+      requestHudFrame();
+    }
   },
 
   _doUpdateEntities() {
@@ -78,7 +131,10 @@ export const rendererMethods = {
     if (!this.domCache) return;
 
     const aliveEnemiesCount = this.enemies.filter(e => !e.isDead).length || 1;
-    this.elements.enemyArea.style.setProperty('--enemy-cols', aliveEnemiesCount);
+    if (this._lastAliveEnemiesCount !== aliveEnemiesCount) {
+      this._lastAliveEnemiesCount = aliveEnemiesCount;
+      this.elements.enemyArea.style.setProperty('--enemy-cols', aliveEnemiesCount);
+    }
 
     this.enemies.forEach(e => {
       const cache = this.domCache.enemies[e.elementId];
@@ -93,7 +149,9 @@ export const rendererMethods = {
         }
       }
 
-      if (e.isDead) {
+      const enemyDeadState = `${e.isDead}-${fastMode}`;
+      if (e.isDead && cache.uiState.dead !== enemyDeadState) {
+        cache.uiState.dead = enemyDeadState;
         el.classList.remove('cursor-pointer', 'active:scale-105');
         if (!fastMode) {
           el.classList.remove('transition-transform');
@@ -120,15 +178,19 @@ export const rendererMethods = {
         }
       }
 
-      if (this.activeEnemy === e) {
-        iconContainer.classList.add('drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
-        iconContainer.classList.remove('drop-shadow-md', 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]');
-      } else if (this.selectedEnemyTarget === e) {
-        iconContainer.classList.add('drop-shadow-[0_0_8px_rgba(239,68,68,1)]');
-        iconContainer.classList.remove('drop-shadow-md', 'drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
-      } else {
-        iconContainer.classList.remove('drop-shadow-[0_0_8px_rgba(239,68,68,1)]', 'drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
-        iconContainer.classList.add('drop-shadow-md');
+      const enemyHighlight = this.activeEnemy === e ? 'active' : (this.selectedEnemyTarget === e ? 'selected' : 'none');
+      if (cache.uiState.highlight !== enemyHighlight) {
+        cache.uiState.highlight = enemyHighlight;
+        if (enemyHighlight === 'active') {
+          iconContainer.classList.add('drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
+          iconContainer.classList.remove('drop-shadow-md', 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]');
+        } else if (enemyHighlight === 'selected') {
+          iconContainer.classList.add('drop-shadow-[0_0_8px_rgba(239,68,68,1)]');
+          iconContainer.classList.remove('drop-shadow-md', 'drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
+        } else {
+          iconContainer.classList.remove('drop-shadow-[0_0_8px_rgba(239,68,68,1)]', 'drop-shadow-[0_0_8px_rgba(250,204,21,1)]');
+          iconContainer.classList.add('drop-shadow-md');
+        }
       }
 
       const hpPct = Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100);
@@ -140,12 +202,14 @@ export const rendererMethods = {
       if (cache.hpBarrierBar) {
         const shieldPct = e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0;
         if (shieldPct > 0) {
-          cache.hpBarrierBar.style.opacity = '1';
-          cache.hpBarrierBar.style.width = `${shieldPct}%`;
-          cache.hpBarrierBar.style.left = `${Math.min(100 - shieldPct, hpPct)}%`;
+          const shieldWidth = `${shieldPct}%`;
+          const shieldLeft = `${Math.min(100 - shieldPct, hpPct)}%`;
+          if (cache.hpBarrierBar.style.opacity !== '1') cache.hpBarrierBar.style.opacity = '1';
+          if (cache.hpBarrierBar.style.width !== shieldWidth) cache.hpBarrierBar.style.width = shieldWidth;
+          if (cache.hpBarrierBar.style.left !== shieldLeft) cache.hpBarrierBar.style.left = shieldLeft;
         } else {
-          cache.hpBarrierBar.style.opacity = '0';
-          cache.hpBarrierBar.style.width = '0%';
+          if (cache.hpBarrierBar.style.opacity !== '0') cache.hpBarrierBar.style.opacity = '0';
+          if (cache.hpBarrierBar.style.width !== '0%') cache.hpBarrierBar.style.width = '0%';
         }
       }
 
@@ -167,7 +231,6 @@ export const rendererMethods = {
         }
       }
 
-      const allBgClasses = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
       let targetBgClass = 'bg-gray-800/80';
       if (p.activeAilment && !p.isDead) {
         const ailmentBgMap = {
@@ -182,28 +245,41 @@ export const rendererMethods = {
         };
         targetBgClass = ailmentBgMap[p.activeAilment.type] || targetBgClass;
       }
-      el.classList.remove(...allBgClasses);
-      el.classList.add(targetBgClass);
-
-      if (this.activeCharacter === p && !this.isAutoBattle) {
-        el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-        el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-      } else if (this.isAutoBattle && this.selectedPartyMember === p) {
-        el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-        el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
-      } else {
-        el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
-        el.classList.add('border-gray-700');
+      if (cache.uiState.bgClass !== targetBgClass) {
+        cache.uiState.bgClass = targetBgClass;
+        el.classList.remove(...PARTY_BG_CLASSES);
+        el.classList.add(targetBgClass);
       }
 
-      if (p.isDead) {
-        el.classList.add('opacity-40', 'grayscale');
-        el.classList.remove('cursor-pointer');
-        if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'active:scale-[1.02]');
-      } else {
-        el.classList.remove('opacity-40', 'grayscale');
-        el.classList.add('cursor-pointer');
-        if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'active:scale-[1.02]');
+      const partyHighlight = this.activeCharacter === p && !this.isAutoBattle
+        ? 'active'
+        : (this.isAutoBattle && this.selectedPartyMember === p ? 'selected' : 'none');
+      if (cache.uiState.highlight !== partyHighlight) {
+        cache.uiState.highlight = partyHighlight;
+        if (partyHighlight === 'active') {
+          el.classList.add('border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+          el.classList.remove('border-gray-700', 'border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+        } else if (partyHighlight === 'selected') {
+          el.classList.add('border-blue-400', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+          el.classList.remove('border-gray-700', 'border-yellow-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]');
+        } else {
+          el.classList.remove('border-yellow-400', 'border-blue-400', 'shadow-[0_0_8px_rgba(250,204,21,0.5)]', 'shadow-[0_0_8px_rgba(96,165,250,0.5)]');
+          el.classList.add('border-gray-700');
+        }
+      }
+
+      const partyLifeState = `${p.isDead}-${disableAnim}-${fastMode}`;
+      if (cache.uiState.life !== partyLifeState) {
+        cache.uiState.life = partyLifeState;
+        if (p.isDead) {
+          el.classList.add('opacity-40', 'grayscale');
+          el.classList.remove('cursor-pointer');
+          if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'active:scale-[1.02]');
+        } else {
+          el.classList.remove('opacity-40', 'grayscale');
+          el.classList.add('cursor-pointer');
+          if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'active:scale-[1.02]');
+        }
       }
 
       if (lvEl && lvEl.textContent !== String(p.level || 1)) lvEl.textContent = p.level || 1;
@@ -221,12 +297,14 @@ export const rendererMethods = {
         if (cache.hpBarrierBar) {
           const shieldPct = p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, trueMaxHp)) * 100) : 0;
           if (shieldPct > 0) {
-            cache.hpBarrierBar.style.opacity = '1';
-            cache.hpBarrierBar.style.width = `${shieldPct}%`;
-            cache.hpBarrierBar.style.left = `${Math.min(100 - shieldPct, hpPct)}%`;
+            const shieldWidth = `${shieldPct}%`;
+            const shieldLeft = `${Math.min(100 - shieldPct, hpPct)}%`;
+            if (cache.hpBarrierBar.style.opacity !== '1') cache.hpBarrierBar.style.opacity = '1';
+            if (cache.hpBarrierBar.style.width !== shieldWidth) cache.hpBarrierBar.style.width = shieldWidth;
+            if (cache.hpBarrierBar.style.left !== shieldLeft) cache.hpBarrierBar.style.left = shieldLeft;
           } else {
-            cache.hpBarrierBar.style.opacity = '0';
-            cache.hpBarrierBar.style.width = '0%';
+            if (cache.hpBarrierBar.style.opacity !== '0') cache.hpBarrierBar.style.opacity = '0';
+            if (cache.hpBarrierBar.style.width !== '0%') cache.hpBarrierBar.style.width = '0%';
           }
         }
 
@@ -270,33 +348,10 @@ export const rendererMethods = {
       const statLabels = cache.statLabels;
 
       if (statVals && statVals.atk) {
-        const applyStatTheme = (type, valElt, rowElt, iconElt, labelElt, isBuff, isDebuff, baseIconColor, isStacked) => {
-          const colors = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
-          valElt.classList.remove(...colors);
-          iconElt.classList.remove(...colors);
-          labelElt.classList.remove(...colors);
-          
-          if (isBuff) {
-            valElt.classList.add('text-green-400');
-            iconElt.classList.add('text-green-400');
-            labelElt.classList.add('text-green-400');
-            rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
-          } else if (isDebuff) {
-            valElt.classList.add('text-red-400');
-            iconElt.classList.add('text-red-400');
-            labelElt.classList.add('text-red-400');
-            rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
-          } else {
-            valElt.classList.add('text-gray-100');
-            iconElt.classList.add(baseIconColor);
-            rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
-          }
-        };
-
         const spdTotalPercent = (p._passiveSpdBuffPercent || 0);
         const fSpd = formatNumber(Math.floor(p.stats.spd * (1 + spdTotalPercent / 100)));
         if (statVals.spd.textContent !== fSpd) statVals.spd.textContent = fSpd;
-        applyStatTheme('spd', statVals.spd, statRows.spd, statIcons.spd, statLabels.spd, spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400', false);
+        applyStatTheme('spd', cache, spdTotalPercent > 0, spdTotalPercent < 0, 'text-yellow-400', false);
 
         let demonPowerMult = 1;
         if (p.hp && p.hp.current / (p.stats?.hp || p.hp.max) <= 0.5) {
@@ -311,23 +366,23 @@ export const rendererMethods = {
         const atkTotalPercent = (p._passiveAtkBuffPercent || 0) + (p._atkBuffTurns > 0 ? (p._atkBuffPercent || 0) : 0);
         const atkStr = formatNumber(Math.floor((p.stats.atk * demonPowerMult) * (1 + atkTotalPercent / 100)));
         if (statVals.atk.textContent !== atkStr) statVals.atk.textContent = atkStr;
-        applyStatTheme('atk', statVals.atk, statRows.atk, statIcons.atk, statLabels.atk, atkTotalPercent > 0 || demonPowerMult > 1, atkTotalPercent < 0, 'text-red-400', p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0);
+        applyStatTheme('atk', cache, atkTotalPercent > 0 || demonPowerMult > 1, atkTotalPercent < 0, 'text-red-400', p._atkBuffTurns > 0 && p._passiveAtkBuffPercent > 0);
 
         const matkTotalPercent = (p._passiveMatkBuffPercent || 0) + (p._matkBuffTurns > 0 ? (p._matkBuffPercent || 0) : 0);
         const matStr = formatNumber(Math.floor((p.stats.matk * demonPowerMult) * (1 + matkTotalPercent / 100)));
         if (statVals.mat.textContent !== matStr) statVals.mat.textContent = matStr;
-        applyStatTheme('mat', statVals.mat, statRows.mat, statIcons.mat, statLabels.mat, matkTotalPercent > 0 || demonPowerMult > 1, matkTotalPercent < 0, 'text-purple-400', p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0);
+        applyStatTheme('mat', cache, matkTotalPercent > 0 || demonPowerMult > 1, matkTotalPercent < 0, 'text-purple-400', p._matkBuffTurns > 0 && p._passiveMatkBuffPercent > 0);
 
         const defTotalPercent = (p._passiveDefBuffPercent || 0) + (p._defBuffTurns > 0 ? (p._defBuffPercent || 0) : 0);
         const defStr = formatNumber(Math.floor(p.stats.def * (1 + defTotalPercent / 100)));
         if (statVals.def.textContent !== defStr) statVals.def.textContent = defStr;
-        applyStatTheme('def', statVals.def, statRows.def, statIcons.def, statLabels.def, defTotalPercent > 0, defTotalPercent < 0, 'text-slate-400', p._defBuffTurns > 0 && p._passiveDefBuffPercent > 0);
+        applyStatTheme('def', cache, defTotalPercent > 0, defTotalPercent < 0, 'text-slate-400', p._defBuffTurns > 0 && p._passiveDefBuffPercent > 0);
 
         const mdefPassivePercent = (p._passiveMdefBuffPercent || 0);
         const mdefActiveAmount = (p._mdefBuffTurns > 0 ? (p._mdefBuffAmount || 0) : 0);
         const mdefStr = formatNumber(Math.floor(p.stats.mdef * (1 + mdefPassivePercent / 100)) + mdefActiveAmount);
         if (statVals.mdf.textContent !== mdefStr) statVals.mdf.textContent = mdefStr;
-        applyStatTheme('mdf', statVals.mdf, statRows.mdf, statIcons.mdf, statLabels.mdf, mdefPassivePercent > 0 || mdefActiveAmount > 0, mdefPassivePercent < 0 || mdefActiveAmount < 0, 'text-indigo-400', p._mdefBuffTurns > 0 && p._passiveMdefBuffPercent > 0);
+        applyStatTheme('mdf', cache, mdefPassivePercent > 0 || mdefActiveAmount > 0, mdefPassivePercent < 0 || mdefActiveAmount < 0, 'text-indigo-400', p._mdefBuffTurns > 0 && p._passiveMdefBuffPercent > 0);
       }
     });
 
@@ -354,6 +409,7 @@ export const rendererMethods = {
       if (el) {
         this.atbElements[e.elementId] = el.querySelector(`#${e.elementId}-atb`);
         this.domCache.enemies[e.elementId] = {
+          uiState: {},
           root: el,
           iconContainer: el.children[0],
           stateIconsContainer: el.querySelector('.state-icons-container'),
@@ -378,6 +434,7 @@ export const rendererMethods = {
         const jpBarEl = el.querySelector('.bg-purple-600');
 
         this.domCache.party[p.elementId] = {
+          uiState: { statThemes: {} },
           root: el,
           stateIconsContainer: el.querySelector('.state-icons-container'),
           lvEl: el.querySelector(`.${p.elementId}-lv`),

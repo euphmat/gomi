@@ -370,6 +370,20 @@ export const actionMethods = {
         damage = Math.floor(damage * (1 + oceanSovereignty.levelConfig.waterDamagePercent / 100));
       }
     }
+    // --- Passive: 火界の支配者 / 燃焼連鎖 ---
+    if (options.element === 'fire' && attacker.hp !== undefined) {
+      const flameSovereignty = this._findSkill(attacker, 'flame_sovereignty');
+      if (flameSovereignty?.level > 0 && flameSovereignty.levelConfig?.fireDamagePercent) {
+        damage = Math.floor(damage * (1 + flameSovereignty.levelConfig.fireDamagePercent / 100));
+      }
+
+      if (defender.activeAilment?.type === 'burn') {
+        const combustionChain = this._findSkill(attacker, 'combustion_chain');
+        if (combustionChain?.level > 0 && combustionChain.levelConfig?.burningTargetDamagePercent) {
+          damage = Math.floor(damage * (1 + combustionChain.levelConfig.burningTargetDamagePercent / 100));
+        }
+      }
+    }
     if (options.isGuarded) {
       damage = Math.floor(damage * 0.5);
     }

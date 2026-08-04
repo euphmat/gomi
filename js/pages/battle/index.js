@@ -607,6 +607,8 @@ class BattleManager {
 
   updateCommandBlocker() {
     const state = this.isAutoBattle ? 'auto' : (this.activeCharacter ? 'ready' : 'waiting');
+    if (this.elements.btnAttack.dataset.state === state) return;
+
     const isDisabled = state !== 'ready';
 
     this.elements.commandBlocker.classList.toggle('hidden', state !== 'waiting');
@@ -615,15 +617,13 @@ class BattleManager {
     this.elements.btnAttack.classList.toggle('grayscale', isDisabled);
     this.elements.btnAttack.classList.toggle('cursor-not-allowed', isDisabled);
 
-    if (this.elements.btnAttack.dataset.state !== state) {
-      this.elements.btnAttack.dataset.state = state;
-      if (state === 'waiting') {
-        this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px]">hourglass_top</span><span>待機中</span>';
-      } else if (state === 'auto') {
-        this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px]">smart_toy</span><span>自動中</span>';
-      } else {
-        this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px] text-red-300">swords</span><span>攻撃</span>';
-      }
+    this.elements.btnAttack.dataset.state = state;
+    if (state === 'waiting') {
+      this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px]">hourglass_top</span><span>待機中</span>';
+    } else if (state === 'auto') {
+      this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px]">smart_toy</span><span>自動中</span>';
+    } else {
+      this.elements.btnAttack.innerHTML = '<span class="material-symbols-outlined text-[17px] text-red-300">swords</span><span>攻撃</span>';
     }
   }
 

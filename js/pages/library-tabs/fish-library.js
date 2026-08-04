@@ -41,10 +41,11 @@ export async function renderFishLibraryTab() {
     <div class="mx-auto w-full max-w-2xl">
       <section class="mb-3 rounded-2xl border border-cyan-400/20 bg-slate-900/80 p-4 shadow-xl">
         <div class="flex items-center justify-between gap-3">
-          <div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-cyan-300">menu_book</span><h2 class="text-base font-black text-white">魚図鑑</h2></div><p class="mt-1 text-[10px] text-slate-400">湖に棲む魚を見つけよう</p></div>
+          <div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-cyan-300">menu_book</span><h2 class="text-base font-black text-white">魚図鑑</h2></div><p class="mt-1 text-[10px] text-slate-400">1種類発見するごとに味方全体のSPDが恒久的に +1</p></div>
           <div class="text-right"><div class="text-lg font-black text-cyan-300">${discoveredCount}<span class="text-xs text-slate-500"> / ${FISH.length}</span></div><div class="text-[9px] font-bold text-slate-500">発見した魚</div></div>
         </div>
         <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-950"><div class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-400" style="width:${discoveredCount / FISH.length * 100}%"></div></div>
+        <div class="mt-2 flex items-center justify-end gap-1 text-[10px] font-black text-yellow-300"><span class="material-symbols-outlined text-sm">speed</span>味方全体 SPD +${discoveredCount}</div>
       </section>
       ${spotSections}
     </div>`;

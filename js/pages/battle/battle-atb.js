@@ -12,6 +12,15 @@ export const atbMethods = {
       this._initGeneration = (this._initGeneration || 0) + 1;
     }
     this._updateEntitiesPending = false;
+    if (this._entityUpdateDelayTimer != null) {
+      clearTimeout(this._entityUpdateDelayTimer);
+      this._entityUpdateDelayTimer = null;
+    }
+    if (this._entityUpdateFrame != null) {
+      cancelAnimationFrame(this._entityUpdateFrame);
+      this._entityUpdateFrame = null;
+    }
+    this._lastEntityUpdateAt = 0;
     if (this.elements?.tabContent) {
       if (this.elements.tabContent._petSyncTimer) {
         clearInterval(this.elements.tabContent._petSyncTimer);

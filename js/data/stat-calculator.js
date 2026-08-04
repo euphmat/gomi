@@ -22,6 +22,7 @@ import { WEAPONS } from '../definitions/weapons.js';
 import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
+import { FISH } from '../definitions/fish.js';
 import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
 
 /**
@@ -128,6 +129,9 @@ export function calcFinalStats(character, equipmentMap) {
         if (levelConfig.waterResistPercent) {
           result.elementResist.water = (result.elementResist.water || 0) + levelConfig.waterResistPercent;
         }
+        if (levelConfig.fireResistPercent) {
+          result.elementResist.fire = (result.elementResist.fire || 0) + levelConfig.fireResistPercent;
+        }
       }
     }
   };
@@ -175,6 +179,10 @@ export function calcFinalStats(character, equipmentMap) {
       }
     }
   }
+
+  // Fish-library bonuses are flat final-stat gains, so job multipliers must not
+  // reduce (or amplify) the promised +1 SPD per discovered species.
+  result.spd += character.fishLibraryBonus?.spd || 0;
 
   // Ensure SPD is at least 1
   if (result.spd < 1) {
@@ -339,20 +347,44 @@ export async function calculateDictionaryBonus() {
 }
 
 /**
- * Fetch all characters and attach the calculated ranchBonus to them.
+ * Calculate the permanent party-wide SPD bonus from the fish library.
+ * Legacy discovery entries may be objects keyed by fishing spot/variant, so
+ * treat a species as discovered when any saved value for it is truthy.
+ *
+ * @returns {Promise<{ spd: number }>}
+ */
+export async function calculateFishLibraryBonus() {
+  const fishingData = await GameDB.getGameState('fishing_data') || {};
+  const discovered = fishingData.discovered || {};
+  const spd = FISH.reduce((total, fish) => {
+    const entry = discovered[fish.id];
+    const isDiscovered = entry && typeof entry === 'object'
+      ? Object.values(entry).some(Boolean)
+      : Boolean(entry);
+    return total + (isDiscovered ? 1 : 0);
+  }, 0);
+  return { spd };
+}
+
+/**
+ * Fetch all characters and attach the calculated party-wide bonuses to them.
  * 
  * @returns {Promise<Array<Object>>}
  */
 export async function getCharactersWithRanchBonus() {
-  const characters = await GameDB.getAllCharacters();
-  const ranchBonus = await calculateTotalRanchBonus();
-  const dictionaryBonus = await calculateDictionaryBonus();
-  const equipment = await GameDB.getAllEquipment();
+  const [characters, ranchBonus, dictionaryBonus, fishLibraryBonus, equipment] = await Promise.all([
+    GameDB.getAllCharacters(),
+    calculateTotalRanchBonus(),
+    calculateDictionaryBonus(),
+    calculateFishLibraryBonus(),
+    GameDB.getAllEquipment(),
+  ]);
   const equipmentMap = buildEquipmentMap(equipment);
   
   for (const c of characters) {
     c.ranchBonus = ranchBonus;
     c.dictionaryBonus = dictionaryBonus;
+    c.fishLibraryBonus = fishLibraryBonus;
     let needSave = false;
     
     // Migrate old inheritedSkill format
