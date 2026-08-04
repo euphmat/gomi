@@ -339,9 +339,23 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   const weakHtml = renderResistGroup('弱', weakBadges, 'text-slate-200');
 
   // 2. Actions (List)
+  const specialActions = targetEntity.actions || [];
+  const specialActionChance = specialActions.reduce((total, action) => total + (Number(action.chance) || 0), 0);
+  const normalAttackChance = Math.max(0, 100 - specialActionChance);
+  const displayedActions = [
+    ...specialActions,
+    ...(normalAttackChance > 0 ? [{
+      name: '通常攻撃',
+      chance: normalAttackChance,
+      description: 'パーティのメンバー1人を対象に、通常の物理攻撃を行います。',
+      type: 'physical',
+      isMagic: false
+    }] : [])
+  ];
+
   let actionsHtml = '';
-  if (targetEntity.actions && targetEntity.actions.length > 0) {
-    actionsHtml = targetEntity.actions.map(a => {
+  if (displayedActions.length > 0) {
+    actionsHtml = displayedActions.map(a => {
       const desc = a.description || '特殊な行動を行います。';
       const isMagic = a.isMagic === true || (a.execute && /isMagic:\s*true/.test(a.execute.toString())) || (a.description && a.description.includes('魔法'));
       const isPhysical = a.isMagic === false || (a.execute && /isMagic:\s*false/.test(a.execute.toString())) || (a.description && a.description.includes('物理'));
@@ -353,22 +367,22 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
 
       let typeLabel = '特殊';
       let typeBadgeClass = 'text-slate-300 bg-slate-800/80 border-slate-600/50';
-      if (a.type === 'physical') { typeLabel = '物理'; typeBadgeClass = 'text-orange-300 bg-orange-950/60 border-orange-800/50'; }
-      else if (a.type === 'magic') { typeLabel = '魔法'; typeBadgeClass = 'text-purple-300 bg-purple-950/60 border-purple-800/50'; }
+      if (a.type === 'physical' || (!a.type && isPhysical)) { typeLabel = '物理'; typeBadgeClass = 'text-orange-300 bg-orange-950/60 border-orange-800/50'; }
+      else if (a.type === 'magic' || (!a.type && isMagic)) { typeLabel = '魔法'; typeBadgeClass = 'text-purple-300 bg-purple-950/60 border-purple-800/50'; }
       else if (a.type === 'heal') { typeLabel = '回復'; typeBadgeClass = 'text-emerald-300 bg-emerald-950/60 border-emerald-800/50'; }
       else if (a.type === 'support') { typeLabel = '補助'; typeBadgeClass = 'text-cyan-300 bg-cyan-950/60 border-cyan-800/50'; }
 
       return `
-        <div class="flex flex-col gap-0 px-1.5 py-0.5 rounded border border-slate-700/50 bg-slate-900/40 active:bg-slate-800/60 transition-colors">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
+        <div class="flex flex-col gap-1 px-2 py-1.5 rounded-md border border-slate-700/50 bg-slate-900/40 active:bg-slate-800/60 transition-colors">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-1.5">
               <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined ${colorClass}" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">${icon}</span></div>
-              <span class="text-[13px] font-black text-slate-100 leading-tight">${a.name}</span>
+              <span class="text-[13px] font-black text-slate-100 leading-tight break-words">${a.name}</span>
               <span class="text-[9px] font-bold px-1 py-[1px] rounded border ${typeBadgeClass} ml-0.5 leading-none shadow-inner shrink-0">${typeLabel}</span>
             </div>
-            <span class="text-[10px] font-black text-blue-300 bg-blue-950/80 px-1.5 rounded border border-blue-800/50 shrink-0 ml-1 py-[1px]">${a.chance}%</span>
+            <span class="text-[10px] font-black text-blue-300 bg-blue-950/80 px-1.5 rounded border border-blue-800/50 shrink-0 py-[1px]">発動率 ${a.chance}%</span>
           </div>
-          <div class="battle-info-action-desc text-[10px] text-slate-400 pl-[20px] leading-tight break-words">${desc}</div>
+          <div class="battle-info-action-desc text-[11px] text-slate-300 pl-[20px] leading-relaxed break-words">${desc}</div>
         </div>
       `;
     }).join('');
@@ -434,7 +448,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
 
   // Master Layout Assembly
   let html = `
-    <div class="battle-info-root w-full h-full min-h-0 flex flex-col gap-1 p-0.5 text-slate-200">
+    <div class="battle-info-root w-full min-h-full flex flex-col gap-1 p-0.5 text-slate-200">
       
       <!-- 1. Top Panel (Header + Stats/Rewards) -->
       <div class="battle-info-summary flex gap-1.5 bg-slate-900/60 border border-slate-700/60 rounded-lg p-1 shadow-inner shrink-0 backdrop-blur-sm relative overflow-hidden">
@@ -464,16 +478,16 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
         </div>
       </div>
 
-      <!-- 2. Actions: compact, independently scrollable -->
+      <!-- 2. Actions: show every action and its description -->
       <div class="battle-info-actions flex flex-col bg-slate-900/50 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner shrink-0">
         <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1 shrink-0">
           <div class="flex items-center gap-1">
             <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-blue-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">psychology</span></div>
             <span class="font-bold text-[12px] text-slate-300">行動パターン</span>
           </div>
-          <span class="text-[9px] text-slate-500">発動率</span>
+          <span class="text-[9px] text-slate-500">通常攻撃を含む</span>
         </div>
-        <div class="battle-info-action-list grid grid-cols-2 gap-0.5 max-h-[68px] overflow-y-auto custom-scrollbar">
+        <div class="battle-info-action-list grid grid-cols-1 gap-1">
           ${actionsHtml}
         </div>
       </div>
@@ -490,9 +504,9 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             ${bonus > 0 ? `<span class="text-[8px] text-blue-300 bg-blue-950/50 border border-blue-900/50 rounded px-1 py-0.5 whitespace-nowrap">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
           </div>
         </div>
-        <div class="battle-info-drop-scroller overflow-x-auto no-scrollbar">
+        <div class="battle-info-drop-scroller min-w-0 overflow-x-hidden">
           ${dropRows.length > 0 ? `
-            <div class="battle-info-drop-grid grid gap-1 w-full shrink-0" aria-label="ドロップ一覧">
+            <div class="battle-info-drop-grid grid w-full gap-1" aria-label="ドロップ一覧">
               ${dropsHtml}
             </div>
           ` : ''}

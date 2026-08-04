@@ -1392,8 +1392,7 @@ export function renderBattlePage() {
         aspect-ratio: 1;
       }
       .battle-info-drop-grid {
-        grid-auto-flow: column;
-        grid-auto-columns: minmax(48px, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
       }
       .battle-slider-shell {
         height: 28px;
@@ -1439,8 +1438,6 @@ export function renderBattlePage() {
         #tab-content { padding: .3rem; }
         .sub-tab-header { padding: .2rem .2rem .1rem; margin-bottom: .15rem; }
         .battle-info-stat { min-height: 18px; }
-        .battle-info-action-desc { display: none; }
-        .battle-info-actions > div:last-child { max-height: 48px; }
         .battle-info-drop-card { height: 40px; padding: 1px; }
         .battle-info-drop-image { width: 21px; height: 21px; }
         .battle-info-drop-image img { width: 19px; height: 19px; }
@@ -1476,9 +1473,8 @@ export function renderBattlePage() {
 
         /* Info: long action lists become a readable single column. */
         .battle-info-root { gap: .375rem; }
-        .battle-info-action-list { grid-template-columns: minmax(0, 1fr); max-height: none; }
-        .battle-info-drop-scroller { overscroll-behavior-x: contain; }
-        .battle-info-drop-grid { grid-auto-columns: minmax(54px, 1fr); }
+        .battle-info-action-list { grid-template-columns: minmax(0, 1fr); }
+        .battle-info-drop-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); }
         .battle-info-drop-card { min-height: 44px; }
 
         /* Companion: rate cards can swipe horizontally instead of crushing text. */
