@@ -1,8 +1,18 @@
-export const APP_VERSION = '0.1.10';
-export const APP_RELEASE_DATE = '2026.07.31';
+export const APP_VERSION = '0.1.11';
+export const APP_RELEASE_DATE = '2026.08.04';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.04',
+    version: '0.1.11',
+    items: [
+      '全画面のマウスホバー表現を廃止し、タップ中に反応が見える押下フィードバックへ統一しました。',
+      '主要な操作領域を44px基準へ拡大し、下部ナビに日本語ラベルと明確な選択状態を追加しました。',
+      'ホバーでしか確認できなかった情報を画面表示または読み上げ用ラベルへ移し、スマホで情報が欠けないようにしました。',
+      '戦闘タブの自動更新をタッチ・スクロール操作中は止め、操作中の表示ずれを抑えました。',
+    ],
+  },
   {
     date: '2026.07.31',
     version: '0.1.10',

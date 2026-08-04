@@ -10,11 +10,11 @@
  */
 
 const NAV_TABS = [
-  { id: 'status',  label: 'Status',  icon: 'person',     path: '/status' },
-  { id: 'guild',   label: 'Guild',   icon: 'groups',     path: '/guild' },
-  { id: 'dungeon', label: 'Dungeon', icon: 'castle',     path: '/dungeon' },
-  { id: 'shop',   label: 'ショップ',   icon: 'storefront',   path: '/shop' },
-  { id: 'quest',   label: 'Quest', icon: 'flag',  path: '/quest' },
+  { id: 'status',  label: 'ステータス', icon: 'person', path: '/status' },
+  { id: 'guild',   label: 'ギルド', icon: 'groups', path: '/guild' },
+  { id: 'dungeon', label: 'ダンジョン', icon: 'castle', path: '/dungeon' },
+  { id: 'shop',    label: 'ショップ', icon: 'storefront', path: '/shop' },
+  { id: 'quest',   label: 'クエスト', icon: 'flag', path: '/quest' },
 ];
 
 /**
@@ -30,11 +30,10 @@ export function createNavBar(router) {
   const tabsHTML = NAV_TABS.map(tab => {
     const isActive = currentPath === tab.path;
 
-    // Active: glowing emerald and dark slate
-    // Inactive: dark translucent slate with hover state
+    // Selected state stays visible; touch feedback is applied only while pressed.
     const classes = isActive
       ? 'bg-slate-900/95 text-emerald-400 border-t-2 border-emerald-400 shadow-[inset_0_4px_12px_rgba(16,185,129,0.05),_0_-4px_12px_rgba(16,185,129,0.15)] relative z-10'
-      : 'bg-slate-950/95 text-slate-500 border-t-2 border-transparent hover:text-slate-300 hover:bg-slate-900/50';
+      : 'bg-slate-950/95 text-slate-500 border-t-2 border-transparent active:text-slate-300 active:bg-slate-900/50';
 
     const disabledAttr = isBattle ? 'disabled' : '';
     const disabledClass = isBattle ? 'opacity-30 pointer-events-none grayscale' : 'cursor-pointer';
@@ -43,15 +42,18 @@ export function createNavBar(router) {
       <button data-nav-path="${tab.path}"
               id="nav-${tab.id}"
               ${disabledAttr}
-              class="flex-1 flex flex-col items-center justify-center pt-3 pb-3
-                     ${classes} ${disabledClass} transition-all duration-200 active:scale-95">
-        <span class="material-symbols-outlined text-[24px] leading-none">${tab.icon}</span>
+              aria-label="${tab.label}"
+              ${isActive ? 'aria-current="page"' : ''}
+              class="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-1.5
+                     ${classes} ${disabledClass} transition-all duration-150 active:scale-[0.96]">
+        <span class="material-symbols-outlined text-[22px] leading-none">${tab.icon}</span>
+        <span class="text-[9px] font-bold leading-none tracking-tight">${tab.label}</span>
       </button>
     `;
   }).join('');
 
   return `
-    <nav id="game-nav" class="shrink-0 flex border-t border-slate-900 bg-slate-950/95 backdrop-blur-md">
+    <nav id="game-nav" class="shrink-0 flex border-t border-slate-900 bg-slate-950/95 backdrop-blur-md" aria-label="メインメニュー">
       ${tabsHTML}
     </nav>
   `;

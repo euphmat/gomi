@@ -259,7 +259,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
                     flex items-center justify-center
                     ${isSelected 
                       ? 'bg-blue-900/40 border-2 border-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.4)] scale-105 z-10' 
-                      : 'bg-gray-800/60 border border-gray-600/50 hover:bg-gray-700/80 hover:border-gray-400'}">
+                      : 'bg-gray-800/60 border border-gray-600/50 active:bg-gray-700/80 active:border-gray-400'}">
           ${innerContent}
           ${countBadge}
           ${equippedBadge}
@@ -285,10 +285,10 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     let actionBtns = '';
     if (selectedGroup) {
       const unequipBtn = isCurrentlyEquipped
-        ? `<button id="btn-unequip" class="py-1 px-3 bg-red-900/60 hover:bg-red-800/80 text-red-100 rounded border border-red-700/50 transition-all active:scale-95 shadow text-[10px] font-bold">外す</button>`
+        ? `<button id="btn-unequip" class="py-1 px-3 bg-red-900/60 active:bg-red-800/80 text-red-100 rounded border border-red-700/50 transition-all active:scale-95 shadow text-[10px] font-bold">外す</button>`
         : '';
       const equipBtn = freeInstance
-        ? `<button id="btn-equip" class="py-1 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded border border-blue-400/30 transition-all active:scale-95 shadow text-[10px] font-bold">装備する</button>`
+        ? `<button id="btn-equip" class="py-1 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 active:from-blue-500 active:to-indigo-500 text-white rounded border border-blue-400/30 transition-all active:scale-95 shadow text-[10px] font-bold">装備する</button>`
         : '';
       actionBtns = `${equipBtn}${unequipBtn}`;
     }
@@ -304,7 +304,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
               <div class="text-sm font-bold text-gray-100 leading-tight">装備変更</div>
             </div>
           </div>
-          <button id="eq-modal-close" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+          <button id="eq-modal-close" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 active:text-white active:bg-gray-700 transition-colors">
             <span class="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
@@ -348,7 +348,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
               ? (sortOrder === 'desc' ? 'arrow_downward' : 'arrow_upward') 
               : '';
             return `
-              <button data-sort="${stat.key}" class="sort-btn flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 rounded-lg border transition-colors ${isSelected ? 'border-blue-400 bg-blue-900/40' : 'border-gray-700 bg-gray-800/80 hover:bg-gray-700'}">
+              <button data-sort="${stat.key}" class="sort-btn flex-1 min-w-0 flex flex-col items-center justify-center py-1.5 rounded-lg border transition-colors ${isSelected ? 'border-blue-400 bg-blue-900/40' : 'border-gray-700 bg-gray-800/80 active:bg-gray-700'}">
                 <span class="material-symbols-outlined ${stat.color}" style="font-size: 14px;">${stat.icon}</span>
                 <div class="flex items-center mt-0.5">
                   <span class="text-[9px] text-gray-300 font-bold leading-none">${stat.label}</span>
@@ -368,11 +368,11 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
 
         <!-- Pagination (Bottom Bar) -->
         <div class="flex items-center justify-between px-4 py-2 bg-gray-900/40 border-t border-gray-700/30 shrink-0">
-          <button id="eq-page-prev" class="p-1 rounded-lg hover:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${currentPage === 1 ? 'disabled' : ''}>
+          <button id="eq-page-prev" class="p-1 rounded-lg active:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:active:bg-transparent transition-colors" ${currentPage === 1 ? 'disabled' : ''}>
             <span class="material-symbols-outlined">chevron_left</span>
           </button>
           <span class="text-xs font-mono text-gray-400 tracking-widest">PAGE <span class="text-gray-200 font-bold">${currentPage}</span> / ${totalPages}</span>
-          <button id="eq-page-next" class="p-1 rounded-lg hover:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>
+          <button id="eq-page-next" class="p-1 rounded-lg active:bg-gray-700/50 text-gray-300 disabled:opacity-30 disabled:active:bg-transparent transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>
             <span class="material-symbols-outlined">chevron_right</span>
           </button>
         </div>

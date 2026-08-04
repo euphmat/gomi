@@ -148,8 +148,8 @@ export function renderChangeJobTab() {
           <p class="text-[11px] text-gray-400 mb-3 leading-relaxed whitespace-pre-wrap">${message}</p>
           ${costHtml ? `<div class="mb-5">${costHtml}</div>` : '<div class="mb-5"></div>'}
           <div class="flex gap-2 mt-2">
-            <button id="btn-cancel-action" class="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-bold rounded-xl border border-gray-700 transition-colors">キャンセル</button>
-            <button id="btn-confirm-action" class="flex-1 py-2.5 bg-${confirmColor}-600 hover:bg-${confirmColor}-500 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-${confirmColor}-900/50">${confirmText}</button>
+            <button id="btn-cancel-action" class="flex-1 py-2.5 bg-gray-800 active:bg-gray-700 text-gray-300 text-sm font-bold rounded-xl border border-gray-700 transition-colors">キャンセル</button>
+            <button id="btn-confirm-action" class="flex-1 py-2.5 bg-${confirmColor}-600 active:bg-${confirmColor}-500 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-${confirmColor}-900/50">${confirmText}</button>
           </div>
         </div>
       </div>
@@ -281,7 +281,7 @@ export function renderChangeJobTab() {
     tabs.forEach(tab => {
       const isActive = currentInnerTab === tab.id;
       const btn = document.createElement('button');
-      btn.className = `flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${isActive ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}`;
+      btn.className = `flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${isActive ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}`;
       btn.textContent = tab.label;
 
       btn.onclick = () => {
@@ -314,7 +314,7 @@ export function renderChangeJobTab() {
       if (totalPages <= 1) return;
       
       const prevBtn = document.createElement('button');
-      prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${changeJobCurrentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${changeJobCurrentPage > 1 ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
       prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
       prevBtn.onclick = () => {
         if (changeJobCurrentPage > 1) {
@@ -329,7 +329,7 @@ export function renderChangeJobTab() {
       info.textContent = `${changeJobCurrentPage} / ${totalPages}`;
 
       const nextBtn = document.createElement('button');
-      nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${changeJobCurrentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${changeJobCurrentPage < totalPages ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
       nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
       nextBtn.onclick = () => {
         if (changeJobCurrentPage < totalPages) {
@@ -420,24 +420,24 @@ export function renderChangeJobTab() {
       row.className = `group flex items-center gap-3 p-2.5 rounded-2xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md ${
         isCurrent
           ? 'bg-emerald-950/20 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-inset ring-emerald-500/20'
-          : 'bg-slate-900/60 border-slate-700/60 hover:bg-slate-800/80 hover:border-indigo-500/50 hover:shadow-[0_4px_20px_rgba(99,102,241,0.15)] cursor-pointer btn-change-job-container ring-1 ring-inset ring-white/5'
+          : 'bg-slate-900/60 border-slate-700/60 active:bg-slate-800/80 active:border-indigo-500/50 active:shadow-[0_4px_20px_rgba(99,102,241,0.15)] cursor-pointer btn-change-job-container ring-1 ring-inset ring-white/5'
       }`;
       if (!isCurrent) row.dataset.jobId = job.id;
 
       const glow = isCurrent 
         ? `<div class="absolute -inset-2 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent blur-2xl opacity-60 pointer-events-none"></div>`
-        : `<div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/0 via-purple-500/0 to-indigo-500/0 group-hover:from-indigo-500/10 group-hover:via-purple-500/5 transition-all duration-700 blur-2xl pointer-events-none"></div>`;
+        : `<div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/0 via-purple-500/0 to-indigo-500/0 group-active:from-indigo-500/10 group-active:via-purple-500/5 transition-all duration-700 blur-2xl pointer-events-none"></div>`;
 
       const buttonHtml = isCurrent
         ? `<div class="relative px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-black tracking-widest rounded-lg border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified</span>適用中</div>`
         : isUnlocked
-          ? `<button class="btn-change-job relative px-4 py-1.5 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white text-[11px] font-black rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 shrink-0 overflow-hidden hover:scale-105 active:scale-95 group/btn" data-job-id="${job.id}">
-              <div class="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300 ease-out"></div>
+          ? `<button class="btn-change-job relative px-4 py-1.5 bg-gradient-to-br from-indigo-500 to-purple-600 active:from-indigo-400 active:to-purple-500 text-white text-[11px] font-black rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.4)] active:shadow-[0_0_20px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 shrink-0 overflow-hidden active:scale-105 active:scale-95 group/btn" data-job-id="${job.id}">
+              <div class="absolute inset-0 bg-white/20 translate-y-full group-active/btn:translate-y-0 transition-transform duration-300 ease-out"></div>
               <span class="relative tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swap_horiz</span>転職</span>
             </button>`
           : (currentGold >= cost && allReqsMet)
-            ? `<button class="btn-change-job relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden hover:scale-105 active:scale-95 group/btn" data-job-id="${job.id}">
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]"></div>
+            ? `<button class="btn-change-job relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 active:from-amber-400 active:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] active:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden active:scale-105 active:scale-95 group/btn" data-job-id="${job.id}">
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-active/btn:animate-[shimmer_1.5s_infinite]"></div>
                 <span class="relative material-symbols-outlined text-[14px] drop-shadow-md" style="font-variation-settings: 'FILL' 1;">paid</span>
                 <span class="relative tracking-wide drop-shadow-md">${formatNumber(cost)}</span>
               </button>`
@@ -448,12 +448,12 @@ export function renderChangeJobTab() {
 
       row.innerHTML = `
         ${glow}
-        <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner group-hover:border-indigo-400/40 group-hover:shadow-[0_0_10px_rgba(99,102,241,0.2)] transition-all duration-300 overflow-hidden p-1 z-10">
-          <img src="./assets/job/job_${job.id}.webp" class="w-full h-full object-contain ${isCurrent ? 'opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)] scale-110' : 'opacity-85 group-hover:opacity-100 group-hover:scale-110 transition-transform duration-500'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
+        <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner group-active:border-indigo-400/40 group-active:shadow-[0_0_10px_rgba(99,102,241,0.2)] transition-all duration-300 overflow-hidden p-1 z-10">
+          <img src="./assets/job/job_${job.id}.webp" class="w-full h-full object-contain ${isCurrent ? 'opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)] scale-110' : 'opacity-85 group-active:opacity-100 group-active:scale-110 transition-transform duration-500'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
         <div class="relative flex-1 min-w-0 pr-1 z-10 flex flex-col justify-center gap-0.5">
           <div class="flex items-center gap-2 flex-wrap">
-            <h3 class="text-[14px] font-black tracking-wider whitespace-nowrap transition-colors duration-300 ${isCurrent ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 group-hover:from-white group-hover:to-indigo-200'}">${job.name}</h3>
+            <h3 class="text-[14px] font-black tracking-wider whitespace-nowrap transition-colors duration-300 ${isCurrent ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 group-active:from-white group-active:to-indigo-200'}">${job.name}</h3>
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-[9px] font-black text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-600/50 shadow-inner uppercase tracking-widest flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined text-[10px] text-slate-400">military_tech</span>JLv.${savedLevel}</span>
               ${isUnlocked && !isCurrent ? '<span class="flex items-center gap-0.5 text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/30 shadow-[0_0_5px_rgba(16,185,129,0.1)] uppercase tracking-wider shrink-0"><span class="material-symbols-outlined text-[10px]">lock_open</span>解放済</span>' : ''}
@@ -612,7 +612,7 @@ export function renderChangeJobTab() {
           ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60" disabled>レベル50が必要です (現在Lv.${char.level})</button>`
           : !canRebirthGold
             ? `<button class="px-8 py-3 bg-gray-800 text-gray-500 font-bold rounded-xl border border-gray-700 cursor-not-allowed opacity-60 flex items-center justify-center gap-2 mx-auto" disabled><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G が必要です</button>`
-            : `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] hover:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all flex items-center justify-center gap-2 mx-auto"><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G で転生する</button>`
+            : `<button id="btn-execute-rebirth" class="px-8 py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 active:from-fuchsia-500 active:to-indigo-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(192,38,211,0.4)] active:shadow-[0_0_30px_rgba(192,38,211,0.6)] transition-all flex items-center justify-center gap-2 mx-auto"><span class="material-symbols-outlined text-[20px]">paid</span>${formatNumber(cost)} G で転生する</button>`
         }
       </div>
     `;
@@ -651,7 +651,7 @@ export function renderChangeJobTab() {
       if (totalPages <= 1) return;
       
       const prevBtn = document.createElement('button');
-      prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${spResetCurrentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${spResetCurrentPage > 1 ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
       prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
       prevBtn.onclick = () => {
         if (spResetCurrentPage > 1) {
@@ -666,7 +666,7 @@ export function renderChangeJobTab() {
       info.textContent = `${spResetCurrentPage} / ${totalPages}`;
 
       const nextBtn = document.createElement('button');
-      nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${spResetCurrentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+      nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${spResetCurrentPage < totalPages ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
       nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
       nextBtn.onclick = () => {
         if (spResetCurrentPage < totalPages) {
@@ -744,7 +744,7 @@ export function renderChangeJobTab() {
             <span class="tracking-wide">リセット不要</span>
           </button>`;
       } else if (canAfford) {
-        buttonHtml = `<button class="btn-sp-reset relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] hover:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden hover:scale-105 active:scale-95" data-job-id="${jobId}" data-cost="${cost}">
+        buttonHtml = `<button class="btn-sp-reset relative px-3 py-1.5 bg-gradient-to-br from-amber-500 to-orange-600 active:from-amber-400 active:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] active:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden active:scale-105 active:scale-95" data-job-id="${jobId}" data-cost="${cost}">
             <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">paid</span>
             <span class="tracking-wide">${formatNumber(cost)}</span>
           </button>`;
@@ -757,7 +757,7 @@ export function renderChangeJobTab() {
 
       row.innerHTML = `
         <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner p-1 z-10">
-          <img src="./assets/job/job_${jobId}.webp" class="w-full h-full object-contain opacity-85 group-hover:opacity-100 transition-transform duration-500" alt="${jobDef.name}" onerror="this.src='./assets/job/job_norvice.webp'">
+          <img src="./assets/job/job_${jobId}.webp" class="w-full h-full object-contain opacity-85 group-active:opacity-100 transition-transform duration-500" alt="${jobDef.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
         <div class="relative flex-1 min-w-0 pr-1 z-10 flex flex-col justify-center gap-0.5">
           <div class="flex items-center gap-2 flex-wrap">

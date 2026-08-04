@@ -132,7 +132,7 @@ export async function renderDungeonPage() {
               class="flex-1 py-1.5 px-2 rounded-md font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
                 currentDungeonTab === 'normal' 
                   ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(37,99,235,0.1)]' 
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent'
+                  : 'text-gray-500 active:text-gray-300 active:bg-gray-800/50 border border-transparent'
               }">
         <span class="material-symbols-outlined text-[14px]">swords</span>
         ノーマル
@@ -141,7 +141,7 @@ export async function renderDungeonPage() {
               class="flex-1 py-1.5 px-2 rounded-md font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
                 currentDungeonTab === 'special' 
                   ? 'bg-fuchsia-600/20 text-fuchsia-400 border border-fuchsia-500/30 shadow-[0_0_10px_rgba(217,70,239,0.1)]' 
-                  : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50 border border-transparent'
+                  : 'text-gray-500 active:text-gray-300 active:bg-gray-800/50 border border-transparent'
               }">
         <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
         スペシャル
@@ -150,7 +150,7 @@ export async function renderDungeonPage() {
               class="flex-1 py-1.5 px-2 rounded-md font-bold text-xs transition-all duration-300 flex items-center justify-center gap-1 ${
                 currentDungeonTab === 'fishing'
                   ? 'bg-cyan-600/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(34,211,238,0.14)]'
-                  : 'text-gray-500 hover:text-cyan-300 hover:bg-cyan-950/30 border border-transparent'
+                  : 'text-gray-500 active:text-cyan-300 active:bg-cyan-950/30 border border-transparent'
               }">
         <span class="material-symbols-outlined text-[14px]">phishing</span>
         フィッシング
@@ -169,9 +169,9 @@ export async function renderDungeonPage() {
       return `
         <button ${isUnlocked ? `onclick="window.enterFishingSpot('${spot.id}')"` : 'disabled'}
                 aria-label="${isUnlocked ? `${spot.name}で釣りをする` : `${spot.name}は未解放。${unlockLabel}を${unlockStatus.required}種類発見すると解放`}"
-                class="group relative isolate min-h-[150px] w-full shrink-0 overflow-hidden rounded-2xl border text-left transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] ${isUnlocked ? 'cursor-pointer hover:-translate-y-0.5 hover:brightness-110 active:scale-[.985]' : 'cursor-not-allowed saturate-[.55]'}"
+                class="group relative isolate min-h-[150px] w-full shrink-0 overflow-hidden rounded-2xl border text-left transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] ${isUnlocked ? 'cursor-pointer active:-translate-y-0.5 active:brightness-110 active:scale-[.985]' : 'cursor-not-allowed saturate-[.55]'}"
                 style="border-color:rgba(${theme.color},${isUnlocked ? '.62' : '.24'});background-color:#080a12;box-shadow:${isUnlocked ? `0 16px 38px -18px rgba(${theme.color},.9)` : '0 12px 28px -20px rgba(0,0,0,.9)'},inset 0 0 0 1px rgba(255,255,255,.04);animation-delay:${index * 55}ms">
-          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ${isUnlocked ? 'group-hover:scale-105' : 'grayscale opacity-45'}" style="background-image:url('${spot.background}')"></div>
+          <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ${isUnlocked ? 'group-active:scale-105' : 'grayscale opacity-45'}" style="background-image:url('${spot.background}')"></div>
           <div class="absolute inset-0" style="background:linear-gradient(90deg,rgba(3,5,14,.96) 0%,rgba(3,5,14,.82) 52%,rgba(3,5,14,.35) 100%),radial-gradient(circle at 88% 25%,rgba(${theme.color},.68),transparent 36%)"></div>
           ${isUnlocked ? '' : '<div class="absolute inset-0 z-[1] bg-slate-950/35"></div>'}
           <div class="absolute inset-x-0 bottom-0 h-px" style="background:linear-gradient(90deg,transparent,rgba(${theme.color},1),transparent)"></div>
@@ -203,8 +203,8 @@ export async function renderDungeonPage() {
                 <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">固有魚 ${fishCount}種</span>
                 <span class="rounded-full border border-white/15 bg-black/45 px-2.5 py-1">${(spot.minCatchMs / 1000).toFixed(0)}〜${(spot.maxCatchMs / 1000).toFixed(0)}秒</span>
               </div>
-              <span class="flex shrink-0 items-center gap-1 rounded-full border ${isUnlocked ? 'border-white/25 text-white group-hover:border-white/60' : 'border-slate-600/40 text-slate-400'} bg-black/50 py-2 pl-3 pr-2 text-[10px] font-black tracking-wider backdrop-blur-sm transition-colors">
-                ${isUnlocked ? '釣りをする' : '未解放'}<span class="material-symbols-outlined text-base transition-transform ${isUnlocked ? 'group-hover:translate-x-1' : ''}">${isUnlocked ? 'arrow_forward' : 'lock'}</span>
+              <span class="flex shrink-0 items-center gap-1 rounded-full border ${isUnlocked ? 'border-white/25 text-white group-active:border-white/60' : 'border-slate-600/40 text-slate-400'} bg-black/50 py-2 pl-3 pr-2 text-[10px] font-black tracking-wider backdrop-blur-sm transition-colors">
+                ${isUnlocked ? '釣りをする' : '未解放'}<span class="material-symbols-outlined text-base transition-transform ${isUnlocked ? 'group-active:translate-x-1' : ''}">${isUnlocked ? 'arrow_forward' : 'lock'}</span>
               </span>
             </div>
           </div>
@@ -257,12 +257,12 @@ export async function renderDungeonPage() {
       <!-- ダンジョン: ${d.name} -->
       <button onclick="window.enterDungeon('${d.id}')"
               aria-label="${d.name}を探索する"
-              class="group relative isolate min-h-[92px] sm:min-h-[108px] w-full cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] active:translate-y-0 active:scale-[0.985]"
+              class="group relative isolate min-h-[92px] sm:min-h-[108px] w-full cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 active:-translate-y-0.5 active:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] active:translate-y-0 active:scale-[0.985]"
               style="border-color: rgba(${themeRgb}, .65); background-color: rgb(8, 10, 18); box-shadow: 0 12px 32px -16px rgba(${themeRgb}, .8), inset 0 0 0 1px rgba(255,255,255,.04); animation-delay: ${index * 45}ms;">
-        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-active:scale-105"
              style="background-image: url('${d.bgImage}');"></div>
         <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,12,.96)_0%,rgba(3,5,12,.82)_43%,rgba(3,5,12,.35)_72%,rgba(3,5,12,.68)_100%)]"></div>
-        <div class="absolute inset-0 opacity-50 transition-opacity duration-300 group-hover:opacity-80"
+        <div class="absolute inset-0 opacity-50 transition-opacity duration-300 group-active:opacity-80"
              style="background: radial-gradient(circle at 88% 50%, rgba(${themeRgb}, .55), transparent 31%);"></div>
         <div class="absolute inset-x-0 bottom-0 h-px opacity-80" style="background: linear-gradient(90deg, transparent, rgba(${themeRgb}, 1), transparent);"></div>
 
@@ -277,10 +277,10 @@ export async function renderDungeonPage() {
             <p class="mt-1 line-clamp-1 text-[10px] font-medium leading-relaxed text-slate-300/80 sm:text-xs">${d.description}</p>
           </div>
 
-          <div class="flex shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-black/45 py-2 pl-3 pr-2 text-white shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:border-white/55 group-hover:bg-black/60 sm:gap-2 sm:py-2.5 sm:pl-4 sm:pr-3">
+          <div class="flex shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-black/45 py-2 pl-3 pr-2 text-white shadow-lg backdrop-blur-sm transition-all duration-300 group-active:border-white/55 group-active:bg-black/60 sm:gap-2 sm:py-2.5 sm:pl-4 sm:pr-3">
             <span class="material-symbols-outlined text-lg sm:text-xl" style="font-variation-settings: 'FILL' 1; color: rgba(${themeRgb}, 1);">${theme.icon}</span>
             <span class="text-[10px] font-black tracking-[0.16em] sm:text-xs">探索する</span>
-            <span class="material-symbols-outlined text-base transition-transform duration-300 group-hover:translate-x-1">arrow_forward</span>
+            <span class="material-symbols-outlined text-base transition-transform duration-300 group-active:translate-x-1">arrow_forward</span>
           </div>
         </div>
       </button>`;
@@ -309,9 +309,9 @@ export async function renderDungeonPage() {
                    aria-label="${d.name}を${d.unlockCondition.prism}プリズムで解放"
                    class="group/unlock relative min-w-[190px] overflow-hidden rounded-xl border px-4 py-2 text-white transition-all duration-200
                           ${prism >= d.unlockCondition.prism
-                            ? 'cursor-pointer border-fuchsia-300/80 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 shadow-[0_0_20px_rgba(217,70,239,0.45)] hover:scale-[1.03] hover:brightness-110 active:scale-[0.98]'
+                            ? 'cursor-pointer border-fuchsia-300/80 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 shadow-[0_0_20px_rgba(217,70,239,0.45)] active:scale-[1.03] active:brightness-110 active:scale-[0.98]'
                             : 'cursor-not-allowed border-slate-600/60 bg-slate-800/90 text-slate-500 shadow-inner'}">
-                   <span class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover/unlock:translate-x-full"></span>
+                   <span class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-active/unlock:translate-x-full"></span>
                    <span class="relative flex items-center justify-center gap-2">
                      <span class="material-symbols-outlined text-[21px] ${prism >= d.unlockCondition.prism ? 'text-fuchsia-100 drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]' : 'text-slate-600'}">diamond</span>
                      <span class="whitespace-nowrap text-xs sm:text-sm font-black tracking-wide">
@@ -333,7 +333,7 @@ export async function renderDungeonPage() {
   const paginationHtml = maxPage > 1 ? `
     <div class="flex shrink-0 items-center justify-between px-2">
       <button onclick="window.changeDungeonPage(-1)" 
-              class="w-12 h-12 flex items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              class="w-12 h-12 flex items-center justify-center bg-gray-800 active:bg-gray-700 rounded-xl text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               ${currentDungeonPage === 1 ? 'disabled' : ''}>
         <span class="material-symbols-outlined text-2xl">chevron_left</span>
       </button>
@@ -341,7 +341,7 @@ export async function renderDungeonPage() {
         ${currentDungeonPage} / ${maxPage}
       </span>
       <button onclick="window.changeDungeonPage(1)" 
-              class="w-12 h-12 flex items-center justify-center bg-gray-800 hover:bg-gray-700 rounded-xl text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              class="w-12 h-12 flex items-center justify-center bg-gray-800 active:bg-gray-700 rounded-xl text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               ${currentDungeonPage === maxPage ? 'disabled' : ''}>
         <span class="material-symbols-outlined text-2xl">chevron_right</span>
       </button>

@@ -55,7 +55,7 @@ export function renderMonsterLibraryTab() {
   rightControls.className = 'flex items-center gap-2 shrink-0';
 
   const settingsBtn = document.createElement('button');
-  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 active:bg-gray-700/50 active:text-gray-200 transition-colors cursor-pointer shadow-sm';
   settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
   settingsBtn.onclick = () => {
     showSettingsModal({
@@ -80,7 +80,7 @@ export function renderMonsterLibraryTab() {
     if (totalPages <= 1) return;
     
     const prevBtn = document.createElement('button');
-    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-gray-800 text-gray-200 hover:bg-gray-700 cursor-pointer' : 'bg-gray-900 text-gray-600 cursor-not-allowed'}`;
+    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-gray-800 text-gray-200 active:bg-gray-700 cursor-pointer' : 'bg-gray-900 text-gray-600 cursor-not-allowed'}`;
     prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
     prevBtn.onclick = () => {
       if (currentPage > 1) {
@@ -95,7 +95,7 @@ export function renderMonsterLibraryTab() {
     info.textContent = `${currentPage} / ${totalPages}`;
 
     const nextBtn = document.createElement('button');
-    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-gray-800 text-gray-200 hover:bg-gray-700 cursor-pointer' : 'bg-gray-900 text-gray-600 cursor-not-allowed'}`;
+    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-gray-800 text-gray-200 active:bg-gray-700 cursor-pointer' : 'bg-gray-900 text-gray-600 cursor-not-allowed'}`;
     nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
     nextBtn.onclick = () => {
       if (currentPage < totalPages) {
@@ -159,7 +159,7 @@ export function renderMonsterLibraryTab() {
         : '';
 
       if (viewMode === 'grid') {
-        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
+        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 active:border-gray-500 active:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
         
         if (monster.image) {
           const imgClass = isDefeated ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
@@ -178,7 +178,7 @@ export function renderMonsterLibraryTab() {
         // list view
         const displayName = isDefeated ? monster.name : '？？？';
         
-        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} transition-all shadow-sm`;
+        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border ${isDefeated ? 'border-gray-700/50 active:border-gray-500 active:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} transition-all shadow-sm`;
 
         let imgHtml = '';
         if (monster.image) {
@@ -231,7 +231,7 @@ export function renderMonsterLibraryTab() {
         <span class="material-symbols-outlined text-gray-400 text-lg normal-case">info</span>
         <span class="font-bold text-gray-100 text-sm tracking-wider">モンスター詳細</span>
       </div>
-      <button class="text-gray-400 hover:text-white transition-colors bg-gray-800 hover:bg-gray-700 rounded-full p-1 flex items-center justify-center" id="close-modal-btn">
+      <button class="text-gray-400 active:text-white transition-colors bg-gray-800 active:bg-gray-700 rounded-full p-1 flex items-center justify-center" id="close-modal-btn">
         <span class="material-symbols-outlined text-lg block normal-case">close</span>
       </button>`;
       
@@ -282,7 +282,7 @@ export function renderMonsterLibraryTab() {
     };
 
     const createRow = (iconHtml, title, label, value, valueColor) => `
-      <div class="flex justify-between items-center bg-gray-800/40 hover:bg-gray-700/50 transition-colors p-2 rounded-md border border-gray-700/60">
+      <div class="flex justify-between items-center bg-gray-800/40 active:bg-gray-700/50 transition-colors p-2 rounded-md border border-gray-700/60">
         <div class="flex items-center gap-2">
           ${iconHtml}
           <span class="text-xs text-gray-200 font-bold">${title}</span>

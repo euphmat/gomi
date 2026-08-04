@@ -111,7 +111,7 @@ export function renderShopTab() {
         flex items-center justify-center w-9 h-9 rounded-lg transition-colors shrink-0 border
         ${isActive 
           ? 'bg-green-600 text-white border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' 
-          : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'}
+          : 'bg-gray-800 text-gray-400 border-gray-700 active:bg-gray-700 active:text-gray-200'}
       `;
       btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">${f.icon}</span>`;
       btn.onclick = () => {
@@ -130,7 +130,7 @@ export function renderShopTab() {
   rightControls.className = 'flex items-center gap-3 shrink-0';
 
   const settingsBtn = document.createElement('button');
-  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 active:bg-gray-700/50 active:text-gray-200 transition-colors cursor-pointer shadow-sm';
   settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
   settingsBtn.onclick = () => {
     showSettingsModal({
@@ -185,7 +185,7 @@ export function renderShopTab() {
     if (totalPages <= 1) return;
     
     const prevBtn = document.createElement('button');
-    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
     prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
     prevBtn.onclick = () => {
       if (currentPage > 1) {
@@ -200,7 +200,7 @@ export function renderShopTab() {
     info.textContent = `${currentPage} / ${totalPages}`;
 
     const nextBtn = document.createElement('button');
-    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
     nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
     nextBtn.onclick = () => {
       if (currentPage < totalPages) {
@@ -267,7 +267,7 @@ export function renderShopTab() {
       const slot = document.createElement('div');
       
       if (viewMode === 'grid') {
-        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${canCraft ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm cursor-pointer`;
+        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${canCraft ? 'border-gray-700/50 active:border-gray-500 active:bg-gray-800' : 'border-gray-700/80'} overflow-hidden transition-all shadow-sm cursor-pointer`;
         
         if (item.image) {
           const imgClass = canCraft ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
@@ -282,7 +282,7 @@ export function renderShopTab() {
         }
       } else {
         // list view
-        slot.className = `group relative w-full flex items-center gap-2.5 p-2 ${canCraft ? 'bg-gradient-to-r from-slate-900/90 to-slate-800/50 border-slate-700/80 hover:border-emerald-500/50 hover:shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'bg-slate-950/60 border-slate-800/80 opacity-80'} rounded-lg border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm`;
+        slot.className = `group relative w-full flex items-center gap-2.5 p-2 ${canCraft ? 'bg-gradient-to-r from-slate-900/90 to-slate-800/50 border-slate-700/80 active:border-emerald-500/50 active:shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'bg-slate-950/60 border-slate-800/80 opacity-80'} rounded-lg border transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm`;
         
         const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
         const statsHtml = activeStats.map(stat => {
@@ -321,17 +321,17 @@ export function renderShopTab() {
 
         let imgHtml = '';
         if (item.image) {
-          const imgClass = canCraft ? 'w-full h-full object-cover transition-transform duration-300 group-hover:scale-110' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
+          const imgClass = canCraft ? 'w-full h-full object-cover transition-transform duration-300 group-active:scale-110' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
           imgHtml = `<img src="${item.image}" alt="" class="${imgClass}" onerror="this.style.display='none'">`;
         } else {
           const iconClass = canCraft ? 'material-symbols-outlined text-slate-500 text-2xl' : 'material-symbols-outlined text-slate-700 text-2xl';
           imgHtml = `<span class="${iconClass}">category</span>`;
         }
 
-        const craftHoverBg = canCraft ? '<div class="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>' : '';
+        const craftPressBg = canCraft ? '<div class="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-300 pointer-events-none"></div>' : '';
 
         slot.innerHTML = `
-          ${craftHoverBg}
+          ${craftPressBg}
           <div class="w-9 h-9 shrink-0 relative flex items-center justify-center rounded-md bg-slate-950 border border-slate-700/80 shadow-inner overflow-hidden z-10">
             ${imgHtml}
           </div>
@@ -339,7 +339,7 @@ export function renderShopTab() {
           <div class="flex-1 min-w-0 flex flex-col justify-center py-0.5 z-10">
             <div class="flex items-baseline gap-1.5 mb-1">
               <span class="${slotColor} font-bold tracking-widest shrink-0" style="font-size: 9px;">${slotLabel}</span>
-              <span class="text-slate-100 font-black truncate group-hover:text-white drop-shadow-md transition-colors leading-none" style="font-size: 12px;">${item.name}</span>
+              <span class="text-slate-100 font-black truncate group-active:text-white drop-shadow-md transition-colors leading-none" style="font-size: 12px;">${item.name}</span>
             </div>
             
             <div class="flex items-center gap-1 overflow-hidden whitespace-nowrap" style="-webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%); mask-image: linear-gradient(to right, black 90%, transparent 100%);">
@@ -514,7 +514,7 @@ export function renderShopTab() {
         <span class="material-symbols-outlined text-emerald-400 text-lg">construction</span>
         <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">合成 — SHOP</span>
       </div>
-      <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-craft-modal">
+      <button class="text-slate-400 active:text-white bg-slate-800/40 active:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-craft-modal">
         <span class="material-symbols-outlined text-lg">close</span>
       </button>
     `;
@@ -645,10 +645,10 @@ export function renderShopTab() {
         <span class="text-[10px] text-slate-500 font-mono tracking-wider">最大: ${maxCraft} / ${formatNumber(itemCapacity)}</span>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
+        <button id="btn-minus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 active:bg-slate-700 active:text-white active:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">-</button>
         <div class="flex-1 text-center font-mono text-base font-black text-emerald-400 bg-slate-950 border border-slate-800 rounded-lg py-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" id="craft-count-disp">${formatNumber(craftCount)}</div>
-        <button id="btn-plus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">+</button>
-        <button id="btn-max" class="px-3 h-8 flex items-center justify-center bg-emerald-950/60 border border-emerald-800/80 rounded-lg text-xs font-bold text-emerald-400 hover:bg-emerald-900/60 active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.05)]">MAX</button>
+        <button id="btn-plus" class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-800/85 border border-slate-700/50 text-slate-200 active:bg-slate-700 active:text-white active:border-slate-600 active:scale-90 font-bold transition-all cursor-pointer">+</button>
+        <button id="btn-max" class="px-3 h-8 flex items-center justify-center bg-emerald-950/60 border border-emerald-800/80 rounded-lg text-xs font-bold text-emerald-400 active:bg-emerald-900/60 active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.05)]">MAX</button>
       </div>
     `;
 
@@ -679,7 +679,7 @@ export function renderShopTab() {
         
 
         materialsHtml += `
-          <div class="flex items-center justify-between py-1.5 bg-slate-900/20 hover:bg-slate-900/30 rounded-xl px-2.5 border border-slate-800/30 transition-all duration-200">
+          <div class="flex items-center justify-between py-1.5 bg-slate-900/20 active:bg-slate-900/30 rounded-xl px-2.5 border border-slate-800/30 transition-all duration-200">
             <div class="flex items-center gap-2.5 min-w-0">
               <div class="w-9 h-9 bg-slate-950 rounded-lg border border-slate-800 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
                 ${matDef && matDef.image ? `<img src="${matDef.image}" class="${matImgClass}" onerror="this.style.display='none'">` : `<span class="material-symbols-outlined text-slate-400 text-sm">category</span>`}
@@ -723,7 +723,7 @@ export function renderShopTab() {
         craftBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800 text-slate-500 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';
         craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">block</span>所持上限（${formatNumber(itemCapacity)}個）に達しています`;
       } else if (craftCount > 0) {
-        craftBtn.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.25)] hover:shadow-[0_4px_25px_rgba(16,185,129,0.4)] border border-emerald-400/20 cursor-pointer shrink-0';
+        craftBtn.className = 'w-full py-3 rounded-xl font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 active:from-emerald-500 active:to-teal-400 text-white transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-[0_4px_20px_rgba(16,185,129,0.25)] active:shadow-[0_4px_25px_rgba(16,185,129,0.4)] border border-emerald-400/20 cursor-pointer shrink-0';
         craftBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-pulse">construction</span>合成する（${craftCount}個）`;
       } else {
         craftBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-900 border border-slate-800/85 text-slate-600 cursor-not-allowed flex justify-center items-center gap-2 transition-all shrink-0';

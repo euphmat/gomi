@@ -17,7 +17,7 @@ export function showInheritanceHelpModal() {
           <span class="material-symbols-outlined text-indigo-400">help</span>
           <h2 class="text-[16px] font-black text-gray-100 tracking-wider">継承システムについて</h2>
         </div>
-        <button class="close-btn p-1.5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors active:scale-95">
+        <button class="close-btn p-1.5 rounded-full active:bg-white/10 text-gray-400 active:text-white transition-colors active:scale-95">
           <span class="material-symbols-outlined !text-[20px]">close</span>
         </button>
       </div>

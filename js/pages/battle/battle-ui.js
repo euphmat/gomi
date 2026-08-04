@@ -45,7 +45,7 @@ export function getActiveStateIconsHTML(entity) {
   if (icons.length === 0) return '';
 
   return icons.map(data => 
-    `<span class="material-symbols-outlined ${data.color} drop-shadow-md flex-shrink-0" style="font-size: 11px; font-variation-settings: 'FILL' 1" title="${data.name}">${data.icon}</span>`
+    `<span class="material-symbols-outlined ${data.color} drop-shadow-md flex-shrink-0" style="font-size: 11px; font-variation-settings: 'FILL' 1" role="img" aria-label="${data.name}">${data.icon}</span>`
   ).join('');
 }
 
@@ -55,7 +55,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   const transitionClass = fastMode ? '' : 'transition-transform';
   const deadStyle = e.isDead ? 'min-width: 0px; max-width: 0px; opacity: 0; margin: 0 -0.125rem; pointer-events: none;' : '';
   return `
-    <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-0.5 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : `cursor-pointer hover:scale-105 ${transitionClass}`}" style="${deadStyle}" data-id="${e.uniqueId}">
+    <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-0.5 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : `cursor-pointer active:scale-105 ${transitionClass}`}" style="${deadStyle}" data-id="${e.uniqueId}">
       <div class="relative w-full aspect-square ${isSelected ? 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]' : 'drop-shadow-md'} ${e.isDead ? 'opacity-0' : ''}" style="${fastMode ? '' : 'transition: filter 0.3s ease;'}">
         <div class="state-icons-container absolute -top-1.5 -right-1.5 z-20 flex gap-0.5 pointer-events-auto">
           ${!e.isDead ? getActiveStateIconsHTML(e) : ''}
@@ -150,7 +150,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   const barTransStyle = fastMode ? '' : 'transition: transform 0.3s ease;';
 
   return `
-    <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : `${transClass} cursor-pointer hover:scale-[1.02]`}">
+    <div id="${p.elementId}" class="party-card relative flex flex-col ${bgClass} rounded border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : `${transClass} cursor-pointer active:scale-[1.02]`}">
       <div class="flex flex-col mb-1.5 w-full">
         <div class="flex items-center gap-1.5 w-full mb-1 px-0.5">
           <!-- ICON -->
@@ -311,7 +311,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   const renderResistGroup = (label, badges, colorClass) => {
     if (badges.length === 0) return '';
     const badgeHtml = badges.map(r => `
-      <div class="flex items-center px-1.5 py-[1px] rounded border border-slate-600/60 bg-slate-950/60 shadow-inner" title="${r.label}">
+      <div class="flex items-center px-1.5 py-[1px] rounded border border-slate-600/60 bg-slate-950/60 shadow-inner" aria-label="${r.label}">
         <div class="flex items-center justify-center w-[10px] h-[10px] shrink-0"><span class="material-symbols-outlined ${r.color}" style="font-size: 14px; font-variation-settings: 'FILL' 1; transform: scale(0.7);">${r.icon}</span></div>
         <span class="text-[10px] font-black ${r.color} drop-shadow ml-[1px]">${Math.abs(r.val)}</span>
       </div>
@@ -349,7 +349,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       else if (a.type === 'support') { typeLabel = '補助'; typeBadgeClass = 'text-cyan-300 bg-cyan-950/60 border-cyan-800/50'; }
 
       return `
-        <div class="flex flex-col gap-0 px-1.5 py-0.5 rounded border border-slate-700/50 bg-slate-900/40 hover:bg-slate-800/60 transition-colors">
+        <div class="flex flex-col gap-0 px-1.5 py-0.5 rounded border border-slate-700/50 bg-slate-900/40 active:bg-slate-800/60 transition-colors">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined ${colorClass}" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">${icon}</span></div>
@@ -398,7 +398,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       const rateStyle = getDropRateStyle(rate);
 
       return `
-        <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 hover:brightness-125 transition-all gap-0.5 shadow-inner" title="${itemName}：ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
+        <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 active:brightness-125 transition-all gap-0.5 shadow-inner" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
           <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-slate-700/70 shrink-0 shadow-sm">
             ${itemImg}
           </div>
@@ -408,7 +408,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     });
   const equipmentDropRate = EQUIPMENT_DROP_RATE * getTreasureEffect('equipmentDropMultiplier');
   const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
-    <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 hover:brightness-125 transition-all gap-0.5 shadow-inner" title="${equipment.name}：ドロップ率 ${equipmentDropRate}%" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
+    <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 active:brightness-125 transition-all gap-0.5 shadow-inner" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
       <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
         <img src="${equipment.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm" onerror="this.style.display='none'">
       </div>
@@ -507,7 +507,7 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
       ? 'text-amber-300 border-amber-800/60 bg-amber-950/25'
       : 'text-cyan-300 border-cyan-900/60 bg-cyan-950/20';
     const cards = items.map(item => `
-      <div class="item-card relative w-10 h-10 bg-slate-900/85 border ${equipment ? 'border-amber-800/50' : 'border-slate-700/70'} rounded-md flex items-center justify-center p-1 group" data-item-id="${item.id}" title="${item.name}" aria-label="${item.name} x${formatNumber(item.quantity)}">
+      <div class="item-card relative w-10 h-10 bg-slate-900/85 border ${equipment ? 'border-amber-800/50' : 'border-slate-700/70'} rounded-md flex items-center justify-center p-1 group" data-item-id="${item.id}" aria-label="${item.name} x${formatNumber(item.quantity)}">
         <div class="w-7 h-7 rounded bg-slate-950/80 border border-slate-700/60 p-0.5 flex items-center justify-center">
           <img src="${item.image}" class="w-full h-full object-contain drop-shadow-sm pointer-events-none" onerror="this.style.display='none'">
         </div>
@@ -622,7 +622,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     if (isAutoBattle) {
       if (autoEnabled) {
         // Active Auto state: Glassmorphism blue/cyan, glowing borders
-        btnClass += "bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] hover:border-cyan-400/80 hover:shadow-[0_0_25px_rgba(34,211,238,0.25)] hover:-translate-y-0.5 active:scale-[0.98] ";
+        btnClass += "bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] active:border-cyan-400/80 active:shadow-[0_0_25px_rgba(34,211,238,0.25)] active:-translate-y-0.5 active:scale-[0.98] ";
         
         toggleHtml = `
           <div class="flex flex-col items-center justify-center pl-2 border-l border-cyan-500/20 shrink-0 min-w-[60px]">
@@ -634,7 +634,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         `;
       } else {
         // Disabled Auto state: Muted glassmorphism
-        btnClass += "bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 hover:opacity-100 hover:border-slate-500/80 hover:-translate-y-0.5 active:scale-[0.98] ";
+        btnClass += "bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 active:opacity-100 active:border-slate-500/80 active:-translate-y-0.5 active:scale-[0.98] ";
         
         toggleHtml = `
           <div class="flex flex-col items-center justify-center pl-2 border-l border-slate-700/50 shrink-0 min-w-[60px]">
@@ -647,7 +647,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
       }
     } else {
       // Manual battle state
-      btnClass += "bg-slate-900/60 backdrop-blur-md border-slate-700/60 hover:border-cyan-400/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] hover:-translate-y-0.5 active:scale-[0.98] " + grayscaleClass;
+      btnClass += "bg-slate-900/60 backdrop-blur-md border-slate-700/60 active:border-cyan-400/50 active:shadow-[0_0_20px_rgba(34,211,238,0.15)] active:-translate-y-0.5 active:scale-[0.98] " + grayscaleClass;
     }
 
     // MP Cost Display
@@ -679,13 +679,13 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
 
     skillListHtml += `
       <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}">
-        <!-- Subtle background glow on hover -->
-        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <!-- Touch press feedback -->
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-active:opacity-100 transition-opacity duration-500"></div>
         
         <!-- Left: Icon -->
         <div class="flex items-center justify-center shrink-0 z-10">
-          <div class="w-10 h-10 rounded-lg bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-hover:border-cyan-500/50 group-hover:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
-            <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[22px] group-hover:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
+          <div class="w-10 h-10 rounded-lg bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-active:border-cyan-500/50 group-active:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
+            <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[22px] group-active:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
           </div>
         </div>
         

@@ -25,9 +25,9 @@ export function renderAcquireSkillTab() {
   tabContainer.className = 'flex gap-2 px-1 mb-2 shrink-0';
   const renderTabs = () => {
     tabContainer.innerHTML = `
-      <button id="btn-tab-active" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'active' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">アクティブスキル</button>
-      <button id="btn-tab-passive" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'passive' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">パッシブスキル</button>
-      <button id="btn-tab-inheritance" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'inheritance' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 hover:bg-gray-700'}">継承</button>
+      <button id="btn-tab-active" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'active' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">アクティブスキル</button>
+      <button id="btn-tab-passive" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'passive' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">パッシブスキル</button>
+      <button id="btn-tab-inheritance" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'inheritance' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">継承</button>
     `;
     tabContainer.querySelector('#btn-tab-active').onclick = () => {
       if (currentTab !== 'active') {
@@ -106,25 +106,25 @@ export function renderAcquireSkillTab() {
       btnText = '<span class="font-black tracking-widest">MAX</span>';
     } else if (currentLevel === 0) {
       btnClass = hasEnoughSP 
-        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-md shadow-emerald-500/20 border-emerald-400/50' 
+        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 active:from-emerald-500 active:to-teal-400 text-white shadow-md shadow-emerald-500/20 border-emerald-400/50'
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
       btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">修得</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
     } else {
       btnClass = hasEnoughSP 
-        ? 'bg-gradient-to-r from-orange-600 to-rose-500 hover:from-orange-500 hover:to-rose-400 text-white shadow-md shadow-orange-500/20 border-orange-400/50' 
+        ? 'bg-gradient-to-r from-orange-600 to-rose-500 active:from-orange-500 active:to-rose-400 text-white shadow-md shadow-orange-500/20 border-orange-400/50'
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
       btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">強化</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
     }
 
-    row.className = 'group relative p-2.5 bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl border border-white/10 hover:border-white/20 shadow-lg transition-all duration-300 overflow-hidden';
+    row.className = 'group relative p-2.5 bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl border border-white/10 active:border-white/20 shadow-lg transition-all duration-300 overflow-hidden';
 
     row.innerHTML = `
-      <div class="absolute inset-0 bg-gradient-to-br ${currentLevel === 0 ? 'from-emerald-500/5' : (isMax ? 'from-gray-500/5' : 'from-orange-500/5')} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+      <div class="absolute inset-0 bg-gradient-to-br ${currentLevel === 0 ? 'from-emerald-500/5' : (isMax ? 'from-gray-500/5' : 'from-orange-500/5')} to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       
       <div class="flex items-center gap-3 relative z-10">
         <!-- Icon -->
-        <div class="flex items-center justify-center w-11 h-11 bg-black/50 rounded-xl shrink-0 relative shadow-inner border border-white/10 group-hover:border-white/20 transition-colors">
-          <span class="material-symbols-outlined text-2xl ${currentLevel === 0 ? 'text-gray-400' : (isMax ? 'text-yellow-400' : 'text-orange-400')} drop-shadow-md group-hover:scale-110 transition-transform duration-300">${skill.icon}</span>
+        <div class="flex items-center justify-center w-11 h-11 bg-black/50 rounded-xl shrink-0 relative shadow-inner border border-white/10 group-active:border-white/20 transition-colors">
+          <span class="material-symbols-outlined text-2xl ${currentLevel === 0 ? 'text-gray-400' : (isMax ? 'text-yellow-400' : 'text-orange-400')} drop-shadow-md group-active:scale-110 transition-transform duration-300">${skill.icon}</span>
           <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-br ${isMax ? 'from-yellow-500 to-amber-600' : (currentLevel === 0 ? 'from-gray-600 to-gray-700' : 'from-blue-600 to-indigo-600')} text-[9px] font-black ${currentLevel === 0 ? 'text-gray-300' : 'text-white'} px-1 py-0.5 rounded shadow-md border border-white/20">Lv.${currentLevel}</div>
         </div>
 
@@ -132,7 +132,7 @@ export function renderAcquireSkillTab() {
         <div class="flex-1 min-w-0 py-0.5">
           <div class="flex items-center justify-between mb-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate group-hover:text-white transition-colors">${skill.name}</h3>
+              <h3 class="text-[13px] font-black text-gray-100 tracking-wide truncate group-active:text-white transition-colors">${skill.name}</h3>
               ${skill.type === 'passive' 
                 ? `<span class="text-[9px] font-bold text-emerald-300 bg-emerald-900/40 border border-emerald-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">psychology</span>パッシブ</span>`
                 : `<span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/40 border border-cyan-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig ? levelConfig.mpCost : 0}</span>`
@@ -165,13 +165,13 @@ export function renderAcquireSkillTab() {
         <!-- Buttons -->
         <div class="shrink-0 flex flex-col gap-1.5 w-[85px] sm:w-[90px]">
           <button class="acquire-btn w-full relative overflow-hidden py-1 border ${btnClass} text-[11px] rounded-lg active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 transition-all duration-200" ${isDisabled ? 'disabled' : ''}>
-            ${!isDisabled ? '<div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite] skew-x-12"></div>' : ''}
+            ${!isDisabled ? '<div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-active:animate-[shimmer_1.5s_infinite] skew-x-12"></div>' : ''}
             <span class="relative z-10 flex items-center justify-center w-full">${btnText}</span>
           </button>
           
           ${!isMax && maxPossibleLevel > currentLevel ? `
-          <button class="max-btn w-full relative overflow-hidden py-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-purple-500/20 border border-purple-400/50 text-[11px] rounded-lg active:scale-[0.98] transition-all duration-200">
-            <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite] skew-x-12"></div>
+          <button class="max-btn w-full relative overflow-hidden py-1 bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-500 active:to-indigo-500 text-white shadow-md shadow-purple-500/20 border border-purple-400/50 text-[11px] rounded-lg active:scale-[0.98] transition-all duration-200">
+            <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-active:animate-[shimmer_1.5s_infinite] skew-x-12"></div>
             <span class="relative z-10 flex items-center justify-center w-full gap-1">
               <span class="font-bold">MAX</span>
               <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${totalMaxCost} SP</span>
@@ -299,10 +299,10 @@ export function renderAcquireSkillTab() {
 
     let btnClass = isSelected 
         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-400 text-white shadow-md shadow-indigo-500/30' 
-        : 'bg-gray-800 border-gray-600 text-gray-400 hover:bg-gray-700 hover:text-white';
+        : 'bg-gray-800 border-gray-600 text-gray-400 active:bg-gray-700 active:text-white';
     let btnText = isSelected ? '選択中' : '選択する';
 
-    row.className = `group relative p-2.5 backdrop-blur-md rounded-xl border transition-all duration-300 overflow-hidden ${isSelected ? 'bg-indigo-900/20 border-indigo-500/50 shadow-lg shadow-indigo-900/20' : 'bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-white/10 hover:border-white/20 shadow-md'}`;
+    row.className = `group relative p-2.5 backdrop-blur-md rounded-xl border transition-all duration-300 overflow-hidden ${isSelected ? 'bg-indigo-900/20 border-indigo-500/50 shadow-lg shadow-indigo-900/20' : 'bg-gradient-to-br from-gray-800/90 to-gray-900/90 border-white/10 active:border-white/20 shadow-md'}`;
 
     row.innerHTML = `
       <div class="flex items-center gap-3 relative z-10">
@@ -405,7 +405,7 @@ export function renderAcquireSkillTab() {
                   </div>
                 </div>
               </div>
-              <button id="btn-inheritance-help" class="shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-full bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-800 transition-colors shadow-sm active:scale-95">
+              <button id="btn-inheritance-help" class="shrink-0 flex items-center justify-center w-[26px] h-[26px] rounded-full bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 active:bg-indigo-800 transition-colors shadow-sm active:scale-95">
                 <span class="material-symbols-outlined !text-[16px]">help</span>
               </button>
             </div>
@@ -500,7 +500,7 @@ export function renderAcquireSkillTab() {
               const row = document.createElement('div');
               // Add cascade animation only on initial render
               row.style.animation = `card-in 0.4s ease-out ${index * 0.05}s both`;
-              row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 hover:border-white/10 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden';
+              row.className = 'group relative flex items-center gap-2.5 p-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md rounded-xl border border-white/5 active:border-white/10 shadow-md active:shadow-lg transition-all duration-300 overflow-hidden';
               updateSkillRow(row, skill, selectedChar, index, true);
               listContainer.appendChild(row);
             });

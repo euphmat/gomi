@@ -185,7 +185,7 @@ export function renderDailyQuestTab() {
     claimButton.className = `w-full min-h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-black transition-all ${isClaimed
       ? 'bg-emerald-950/30 border border-emerald-500/20 text-emerald-500 cursor-default'
       : isAllCompleted
-        ? 'bg-gradient-to-r from-fuchsia-600 to-violet-600 border border-fuchsia-300/30 text-white shadow-[0_8px_24px_rgba(192,38,211,0.28)] hover:brightness-110 active:scale-[0.98] cursor-pointer'
+        ? 'bg-gradient-to-r from-fuchsia-600 to-violet-600 border border-fuchsia-300/30 text-white shadow-[0_8px_24px_rgba(192,38,211,0.28)] active:brightness-110 active:scale-[0.98] cursor-pointer'
         : 'bg-slate-950/65 border border-slate-800 text-slate-500 cursor-not-allowed'}`;
     claimButton.innerHTML = isClaimed
       ? '<span class="material-symbols-outlined text-[19px]">verified</span>報酬を受け取りました'

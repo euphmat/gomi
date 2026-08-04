@@ -12,7 +12,7 @@ export function showSettingsModal(config) {
       <span class="material-symbols-outlined text-blue-400 text-lg">settings</span>
       <span class="font-bold text-gray-200 text-sm tracking-wider">画面設定</span>
     </div>
-    <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-settings-modal">
+    <button class="text-slate-400 active:text-white bg-slate-800/40 active:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-settings-modal">
       <span class="material-symbols-outlined text-lg">close</span>
     </button>
   `;
@@ -42,10 +42,10 @@ export function showSettingsModal(config) {
       if (item.type === 'toggle') {
         const isChecked = item.getValue();
         controlDiv.innerHTML = `
-          <div class="relative flex items-center cursor-pointer w-10 h-5" id="toggle-${item.id}">
+          <button type="button" class="relative flex h-11 w-11 items-center justify-center cursor-pointer" id="toggle-${item.id}" aria-label="${item.label}" aria-pressed="${isChecked}">
             <div class="block w-10 h-5 rounded-full transition-colors ${isChecked ? (item.activeColor || 'bg-blue-500') : 'bg-slate-700'}"></div>
-            <div class="absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform ${isChecked ? 'translate-x-5' : 'translate-x-0'}"></div>
-          </div>
+            <div class="absolute left-1.5 top-4 bg-white w-3 h-3 rounded-full transition-transform ${isChecked ? 'translate-x-5' : 'translate-x-0'}"></div>
+          </button>
         `;
         row.appendChild(controlDiv);
         
@@ -65,7 +65,7 @@ export function showSettingsModal(config) {
         item.options.forEach(opt => {
           const btn = document.createElement('button');
           const active = val === opt.value;
-          btn.className = `flex items-center justify-center px-3 h-7 transition-colors text-xs font-bold ${active ? (item.activeColor || 'bg-blue-600 text-white') : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-200'}`;
+          btn.className = `flex items-center justify-center px-3 h-7 transition-colors text-xs font-bold ${active ? (item.activeColor || 'bg-blue-600 text-white') : 'text-slate-400 active:bg-slate-700/50 active:text-slate-200'}`;
           if (opt.icon) {
             btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">${opt.icon}</span>`;
           } else {

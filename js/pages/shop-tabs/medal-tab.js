@@ -54,12 +54,12 @@ export function renderMedalTab() {
       <div class="flex items-center gap-2">
         <div class="relative flex items-center">
           <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" style="font-size: 16px;">filter_alt</span>
-          <select id="medal-dungeon-filter" class="appearance-none bg-slate-900/80 border border-slate-700/60 text-slate-300 text-xs font-bold rounded pl-7 pr-6 py-1 cursor-pointer outline-none focus:border-amber-500/50 shadow-inner w-40 hover:bg-slate-800 transition-colors">
+          <select id="medal-dungeon-filter" class="appearance-none bg-slate-900/80 border border-slate-700/60 text-slate-300 text-xs font-bold rounded pl-7 pr-6 py-1 cursor-pointer outline-none focus:border-amber-500/50 shadow-inner w-40 active:bg-slate-800 transition-colors">
             ${dungeonOptions.join('')}
           </select>
           <span class="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" style="font-size: 16px;">arrow_drop_down</span>
         </div>
-        <button id="btn-medal-help" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60 hover:bg-slate-700 hover:text-white transition-colors">
+        <button id="btn-medal-help" class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60 active:bg-slate-700 active:text-white transition-colors">
           <span class="material-symbols-outlined text-[16px]">help</span>
         </button>
       </div>
@@ -103,7 +103,7 @@ export function renderMedalTab() {
     if (totalPages <= 1) return;
 
     const prevBtn = document.createElement('button');
-    prevBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
+    prevBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'active:bg-slate-700/80 cursor-pointer'}`;
     prevBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_left</span>';
     prevBtn.onclick = () => {
       if (currentPage > 1) {
@@ -118,7 +118,7 @@ export function renderMedalTab() {
     pageIndicator.textContent = `${currentPage} / ${totalPages}`;
 
     const nextBtn = document.createElement('button');
-    nextBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-700/80 cursor-pointer'}`;
+    nextBtn.className = `flex items-center justify-center w-8 h-6 rounded bg-slate-800/80 border border-slate-700/60 transition-colors ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'active:bg-slate-700/80 cursor-pointer'}`;
     nextBtn.innerHTML = '<span class="material-symbols-outlined text-[14px] text-slate-300">chevron_right</span>';
     nextBtn.onclick = () => {
       if (currentPage < totalPages) {
@@ -176,14 +176,14 @@ export function renderMedalTab() {
     const btn = detailContainer.querySelector('#medal-craft-btn');
     if (btn) {
       btn.disabled = !canCraft;
-      btn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canCraft ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      btn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canCraft ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
     }
 
     const prismBtn = detailContainer.querySelector('#medal-prism-btn');
     if (prismBtn && prismBtn.dataset.processing !== 'true') {
       const canPrismUpgrade = currentRankIndex >= 0 && currentPrism >= 1;
       prismBtn.disabled = !canPrismUpgrade;
-      prismBtn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:from-fuchsia-500 hover:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      prismBtn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] active:from-fuchsia-500 active:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
       const ownedEl = prismBtn.querySelector('[data-prism-owned]');
       if (ownedEl) ownedEl.textContent = formatNumber(currentPrism);
     }
@@ -210,16 +210,16 @@ export function renderMedalTab() {
     if (status.isMaxRank) {
       return isSelected
         ? 'bg-yellow-500/40 border-yellow-200 shadow-[0_0_14px_rgba(250,204,21,0.45)]'
-        : 'bg-yellow-900/70 border-yellow-500/70 shadow-[inset_0_0_8px_rgba(250,204,21,0.18)] hover:bg-yellow-800/80 hover:border-yellow-300';
+        : 'bg-yellow-900/70 border-yellow-500/70 shadow-[inset_0_0_8px_rgba(250,204,21,0.18)] active:bg-yellow-800/80 active:border-yellow-300';
     }
     if (status.canAcquireOrUpgrade) {
       return isSelected
         ? 'bg-emerald-500/35 border-emerald-200 shadow-[0_0_14px_rgba(52,211,153,0.45)]'
-        : 'bg-emerald-900/70 border-emerald-500/70 shadow-[inset_0_0_8px_rgba(52,211,153,0.18)] hover:bg-emerald-800/80 hover:border-emerald-300';
+        : 'bg-emerald-900/70 border-emerald-500/70 shadow-[inset_0_0_8px_rgba(52,211,153,0.18)] active:bg-emerald-800/80 active:border-emerald-300';
     }
     return isSelected
       ? 'bg-amber-950/60 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-      : 'bg-slate-900/60 border-slate-800/50 hover:bg-slate-800/40 hover:border-slate-700/60';
+      : 'bg-slate-900/60 border-slate-800/50 active:bg-slate-800/40 active:border-slate-700/60';
   };
 
   const getMedalGridNameClass = (status, isSelected, hasMedal) => {
@@ -438,7 +438,7 @@ export function renderMedalTab() {
           craftBtn.className = `
             w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200
             ${canCraft
-              ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
+              ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer'
               : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
           `;
           craftBtn.disabled = !canCraft;
@@ -499,7 +499,7 @@ export function renderMedalTab() {
             const prismBtn = document.createElement('button');
             prismBtn.id = 'medal-prism-btn';
             const canPrismUpgrade = currentPrism >= 1;
-            prismBtn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] hover:from-fuchsia-500 hover:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+            prismBtn.className = `w-full py-2 mt-0.5 rounded-lg text-xs font-black tracking-wide transition-all duration-200 ${canPrismUpgrade ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white border border-fuchsia-300/50 shadow-[0_0_12px_rgba(217,70,239,0.3)] active:from-fuchsia-500 active:to-cyan-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
             prismBtn.disabled = !canPrismUpgrade;
             prismBtn.innerHTML = `
               <div class="flex items-center justify-center gap-1">
@@ -817,7 +817,7 @@ function showMedalHelpModal() {
       <span class="material-symbols-outlined text-amber-400">military_tech</span>
       <h3 class="text-sm font-black text-slate-200 tracking-wide">メダルシステムについて</h3>
     </div>
-    <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-medal-help">
+    <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 active:bg-slate-700 active:text-white transition-colors" id="btn-close-medal-help">
       <span class="material-symbols-outlined text-lg">close</span>
     </button>
   `;

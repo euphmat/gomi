@@ -41,7 +41,7 @@ export async function renderRanchTab() {
         <h2 class="text-xl font-black text-pink-400 flex items-center gap-2">
           <span class="material-symbols-outlined">pets</span>モンスター牧場
         </h2>
-        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-ranch-help">
+        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 active:bg-pink-900/50 active:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-ranch-help">
           <span class="material-symbols-outlined text-[18px]">help</span>
         </button>
       </div>
@@ -60,7 +60,7 @@ export async function renderRanchTab() {
             <span class="material-symbols-outlined text-[20px]">help</span>
             牧場・テイムについて
           </h3>
-          <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors btn-close-help">
+          <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 active:bg-slate-700 active:text-white transition-colors btn-close-help">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -142,7 +142,7 @@ export async function renderRanchTab() {
       const fishCount = FISH.reduce((sum, fish) => sum + (fishing.inventory[fish.id] || 0), 0);
       const companionCount = getRanchCompanionEntries(ranchData, currentDungeonId).length;
       const fishPanel = document.createElement('button');
-      fishPanel.className = 'mt-2 flex w-full items-center gap-2 rounded-xl border border-emerald-400/25 bg-gradient-to-r from-emerald-950/35 to-cyan-950/20 px-3 py-2.5 text-left transition-colors hover:border-emerald-400/40';
+      fishPanel.className = 'mt-2 flex w-full items-center gap-2 rounded-xl border border-emerald-400/25 bg-gradient-to-r from-emerald-950/35 to-cyan-950/20 px-3 py-2.5 text-left transition-colors active:border-emerald-400/40';
       fishPanel.innerHTML = `<span class="material-symbols-outlined text-emerald-300">bolt</span><div class="min-w-0 flex-1"><div class="text-[11px] font-black text-emerald-100">魚餌工房</div><div class="text-[9px] text-slate-400">選択中の仲間${formatNumber(companionCount)}体へ今すぐEXP</div></div><div class="shrink-0 text-right"><div class="text-[8px] text-slate-500">所持魚</div><div class="text-xs font-black text-cyan-300">${formatNumber(fishCount)}匹</div></div><span class="material-symbols-outlined text-base text-slate-500">chevron_right</span>`;
       fishPanel.onclick = () => showRanchFishModal(currentDungeonId, async result => {
         ranchData = result.ranchData || ranchData;
@@ -203,7 +203,7 @@ export async function renderRanchTab() {
         box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
         transition: transform 0.1s;
       }
-      .quantity-slider::-webkit-slider-thumb:hover {
+      .quantity-slider::-webkit-slider-thumb:active {
         transform: scale(1.15);
       }
       .quantity-slider::-webkit-slider-thumb:active {
@@ -220,7 +220,7 @@ export async function renderRanchTab() {
         transition: transform 0.1s;
         box-sizing: border-box;
       }
-      .quantity-slider::-moz-range-thumb:hover {
+      .quantity-slider::-moz-range-thumb:active {
         transform: scale(1.15);
       }
       .quantity-slider::-moz-range-thumb:active {
@@ -244,13 +244,13 @@ export async function renderRanchTab() {
       const mData = monstersInDungeon[mId];
       
       const mEl = document.createElement('div');
-      mEl.className = 'relative cursor-pointer transition-transform hover:scale-105 active:scale-95 group w-full flex justify-center';
+      mEl.className = 'relative cursor-pointer transition-transform active:scale-105 active:scale-95 group w-full flex justify-center';
       
       // Randomize animation delay to prevent sync
       const animDelay = Math.random() * -3;
       
       mEl.innerHTML = `
-        <div class="relative flex flex-col items-center justify-center w-[72px] h-[72px] bg-slate-900/40 rounded-2xl border border-slate-700/50 shadow-inner group-hover:bg-slate-800/60 group-hover:border-pink-500/50 transition-colors backdrop-blur-sm">
+        <div class="relative flex flex-col items-center justify-center w-[72px] h-[72px] bg-slate-900/40 rounded-2xl border border-slate-700/50 shadow-inner group-active:bg-slate-800/60 group-active:border-pink-500/50 transition-colors backdrop-blur-sm">
            <div class="ranch-monster-idle relative" style="animation-delay: ${animDelay}s;">
              <img src="${mDef.image}" class="w-14 h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] ${isLegendary ? 'animate-rainbow' : ''}" onerror="this.src='assets/monsters/slime.png'">
            </div>
@@ -550,10 +550,10 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
       ${monsterDef.name}
     </h3>
     <div class="flex items-center gap-1.5">
-      <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 hover:bg-pink-900/50 hover:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">
+      <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-pink-300 active:bg-pink-900/50 active:text-pink-200 transition-colors border border-slate-700/50 shadow-inner" id="btn-help-modal">
         <span class="material-symbols-outlined text-[16px]">help</span>
       </button>
-      <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" id="btn-close-modal">
+      <button class="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 active:bg-slate-700 active:text-white transition-colors" id="btn-close-modal">
         <span class="material-symbols-outlined text-[16px]">close</span>
       </button>
     </div>
@@ -808,7 +808,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
         
         const itemRow = document.createElement('div');
         itemRow.id = `ranch-item-row-${drop.itemId}`;
-        itemRow.className = 'bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800/60 hover:border-slate-600/50 rounded-xl p-3 transition-colors';
+        itemRow.className = 'bg-slate-800/40 border border-slate-700/50 active:bg-slate-800/60 active:border-slate-600/50 rounded-xl p-3 transition-colors';
         
         const maxFeed = quantity;
         
@@ -827,7 +827,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
                   <div class="text-[10px] font-bold text-slate-400 mt-1">所持: <span id="ranch-item-owned-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
                 </div>
               </div>
-              <button class="px-5 h-9 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[11px] font-black text-white transition-all active:scale-95 btn-feed flex items-center justify-center shadow-[0_0_10px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
+              <button class="px-5 h-9 bg-gradient-to-r from-pink-600 to-rose-600 active:from-pink-500 active:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[11px] font-black text-white transition-all active:scale-95 btn-feed flex items-center justify-center shadow-[0_0_10px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
                 与える
               </button>
             </div>
@@ -1134,7 +1134,7 @@ async function showFeedModal(container, dungeonId, monsterId, monsterDef, monste
           <span class="material-symbols-outlined text-[20px]">help</span>
           育成のヒント
         </h3>
-        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors btn-close-help">
+        <button class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 active:bg-slate-700 active:text-white transition-colors btn-close-help">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>

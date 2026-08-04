@@ -45,7 +45,7 @@ export function showUpdateLogModal() {
       <header class="flex items-center gap-3 border-b border-white/10 px-4 py-3">
         <span class="material-symbols-outlined text-xl text-violet-300">rocket_launch</span>
         <div class="min-w-0 flex-1"><h2 id="update-log-title" class="text-sm font-black text-white">Update履歴</h2><p class="text-[9px] text-slate-500">v${APP_VERSION} ・ ${APP_RELEASE_DATE}</p></div>
-        <button data-update-close class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-white/10 hover:text-white" aria-label="Update履歴を閉じる"><span class="material-symbols-outlined text-lg">close</span></button>
+        <button data-update-close class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 active:bg-white/10 active:text-white" aria-label="Update履歴を閉じる"><span class="material-symbols-outlined text-lg">close</span></button>
       </header>
       <div data-update-page class="min-h-0 flex-1 overflow-y-auto p-4"></div>
       <footer class="flex items-center gap-2 border-t border-white/10 bg-slate-950/70 p-3">

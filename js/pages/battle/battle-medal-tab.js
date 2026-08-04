@@ -197,7 +197,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     craftBtn.className = `
       w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200
       ${canCraft
-        ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer'
+        ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer'
         : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
     `;
     craftBtn.disabled = !canCraft;
@@ -346,7 +346,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     if (btn && !btn.disabled && !canCraftSync || btn && btn.disabled && canCraftSync) {
       // update style
       btn.disabled = !canCraftSync;
-      btn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] hover:from-amber-500 hover:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      btn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
     }
 
     } finally {

@@ -19,7 +19,7 @@ export function renderInnTab() {
   btnContainer.className = 'w-full max-w-sm flex flex-col items-center gap-2 mt-auto pb-4';
   
   const btnRest = document.createElement('button');
-  btnRest.className = 'group relative px-8 py-3.5 w-full max-w-[240px] justify-center bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 active:scale-95 disabled:bg-none disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-700 disabled:cursor-not-allowed disabled:shadow-inner disabled:active:scale-100 text-white font-bold rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] border border-blue-400/50 transition-all duration-300 flex items-center gap-2 overflow-hidden';
+  btnRest.className = 'group relative px-8 py-3.5 w-full max-w-[240px] justify-center bg-gradient-to-r from-blue-600 to-indigo-500 active:from-blue-500 active:to-indigo-400 active:scale-95 disabled:bg-none disabled:bg-gray-800 disabled:text-gray-500 disabled:border-gray-700 disabled:cursor-not-allowed disabled:shadow-inner disabled:active:scale-100 text-white font-bold rounded-2xl shadow-[0_0_15px_rgba(59,130,246,0.3)] active:shadow-[0_0_20px_rgba(59,130,246,0.5)] border border-blue-400/50 transition-all duration-300 flex items-center gap-2 overflow-hidden';
   
   btnContainer.appendChild(btnRest);
   container.appendChild(btnContainer);
@@ -53,11 +53,11 @@ export function renderInnTab() {
         : (needsHeal ? `<span class="material-symbols-outlined text-yellow-500 text-sm" style="font-variation-settings: 'FILL' 1">local_hospital</span>` : `<span class="material-symbols-outlined text-green-400 text-sm" style="font-variation-settings: 'FILL' 1">check_circle</span>`);
 
       const row = document.createElement('div');
-      row.className = `group flex items-center gap-4 p-3 rounded-2xl border transition-all duration-300 shadow-md ${needsHeal ? 'bg-slate-800/80 border-blue-500/30 hover:border-blue-400/50 hover:bg-slate-800' : 'bg-slate-900/40 border-slate-700/30 opacity-70'}`;
+      row.className = `group flex items-center gap-4 p-3 rounded-2xl border transition-all duration-300 shadow-md ${needsHeal ? 'bg-slate-800/80 border-blue-500/30 active:border-blue-400/50 active:bg-slate-800' : 'bg-slate-900/40 border-slate-700/30 opacity-70'}`;
       
       row.innerHTML = `
         <div class="w-14 h-14 rounded-xl overflow-hidden border-2 ${isDead ? 'border-red-900/50 grayscale' : (needsHeal ? 'border-blue-500/30' : 'border-slate-600/30')} bg-slate-900 shrink-0 relative shadow-inner">
-          <img src="${char.iconImage}" class="w-full h-full object-cover ${isDead ? 'opacity-40' : ''} group-hover:scale-110 transition-transform duration-300" onerror="this.style.display='none'">
+          <img src="${char.iconImage}" class="w-full h-full object-cover ${isDead ? 'opacity-40' : ''} group-active:scale-110 transition-transform duration-300" onerror="this.style.display='none'">
           <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent pt-3 pb-0.5 px-1 text-center">
             <span class="text-[10px] font-bold text-gray-200 drop-shadow">Lv.${char.level || 1}</span>
           </div>

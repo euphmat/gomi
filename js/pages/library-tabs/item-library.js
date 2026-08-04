@@ -82,7 +82,7 @@ export function renderItemLibraryTab() {
         flex items-center justify-center w-9 h-9 rounded-lg transition-colors shrink-0 border
         ${isActive 
           ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' 
-          : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'}
+          : 'bg-gray-800 text-gray-400 border-gray-700 active:bg-gray-700 active:text-gray-200'}
       `;
       btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">${f.icon}</span>`;
       btn.onclick = () => {
@@ -101,7 +101,7 @@ export function renderItemLibraryTab() {
   rightControls.className = 'flex items-center gap-1.5 shrink-0';
 
   const helpBtn = document.createElement('button');
-  helpBtn.className = 'flex items-center justify-center w-9 h-9 bg-slate-800/40 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 hover:border-blue-400 transition-colors cursor-pointer shadow-[0_0_10px_rgba(59,130,246,0.1)]';
+  helpBtn.className = 'flex items-center justify-center w-9 h-9 bg-slate-800/40 text-blue-400 border border-blue-500/30 rounded-lg active:bg-blue-500/20 active:border-blue-400 transition-colors cursor-pointer shadow-[0_0_10px_rgba(59,130,246,0.1)]';
   helpBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">help</span>';
   helpBtn.onclick = () => {
     showHelpModal();
@@ -109,7 +109,7 @@ export function renderItemLibraryTab() {
   rightControls.appendChild(helpBtn);
 
   const settingsBtn = document.createElement('button');
-  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 active:bg-gray-700/50 active:text-gray-200 transition-colors cursor-pointer shadow-sm';
   settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
   settingsBtn.onclick = () => {
     showSettingsModal({
@@ -143,7 +143,7 @@ export function renderItemLibraryTab() {
     if (totalPages <= 1) return;
     
     const prevBtn = document.createElement('button');
-    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
     prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
     prevBtn.onclick = () => {
       if (currentPage > 1) {
@@ -158,7 +158,7 @@ export function renderItemLibraryTab() {
     info.textContent = `${currentPage} / ${totalPages}`;
 
     const nextBtn = document.createElement('button');
-    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
     nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
     nextBtn.onclick = () => {
       if (currentPage < totalPages) {
@@ -215,7 +215,7 @@ export function renderItemLibraryTab() {
       const slot = document.createElement('div');
       
       if (viewMode === 'grid') {
-        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
+        slot.className = `relative w-full aspect-square flex items-center justify-center bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 active:border-gray-500 active:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} overflow-hidden transition-all shadow-sm`;
         
         if (item.image) {
           const imgClass = isAcquired ? 'w-full h-full object-cover' : `w-full h-full object-cover ${SILHOUETTE_FILTER}`;
@@ -228,7 +228,7 @@ export function renderItemLibraryTab() {
         // list view
         const displayName = isAcquired ? item.name : '？？？';
         
-        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} transition-all shadow-sm`;
+        slot.className = `relative w-full flex flex-row items-center gap-3 p-2.5 bg-gray-900/60 rounded-md border ${isAcquired ? 'border-gray-700/50 active:border-gray-500 active:bg-gray-800 cursor-pointer' : 'border-gray-700/80 cursor-pointer'} transition-all shadow-sm`;
         
         const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
         const statsHtml = activeStats.map(stat => {
@@ -345,7 +345,7 @@ export function renderItemLibraryTab() {
         <span class="material-symbols-outlined text-blue-400 text-lg">info</span>
         <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">装備コレクション恩恵</span>
       </div>
-      <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shrink-0" id="close-help-modal-btn">
+      <button class="text-slate-400 active:text-white bg-slate-800/40 active:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shrink-0" id="close-help-modal-btn">
         <span class="material-symbols-outlined text-lg">close</span>
       </button>
     `;
@@ -519,7 +519,7 @@ export function renderItemLibraryTab() {
         <span class="material-symbols-outlined text-blue-400 text-lg">info</span>
         <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">アイテム詳細</span>
       </div>
-      <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shrink-0" id="close-modal-btn">
+      <button class="text-slate-400 active:text-white bg-slate-800/40 active:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer shrink-0" id="close-modal-btn">
         <span class="material-symbols-outlined text-lg">close</span>
       </button>
     `;
@@ -660,7 +660,7 @@ export function renderItemLibraryTab() {
     };
 
     const createRow = (iconHtml, title, label, value, valueColor) => `
-      <div class="flex justify-between items-center bg-slate-950/45 hover:bg-slate-900/60 transition-colors p-2 rounded-lg border border-slate-800/80 animate-fade-in">
+      <div class="flex justify-between items-center bg-slate-950/45 active:bg-slate-900/60 transition-colors p-2 rounded-lg border border-slate-800/80 animate-fade-in">
         <div class="flex items-center gap-2.5 min-w-0">
           ${iconHtml}
           <span class="text-xs text-slate-200 font-bold truncate">${title}</span>

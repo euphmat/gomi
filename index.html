@@ -99,7 +99,7 @@
     })();
   </script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="RPG Game - Status Screen">
   <meta name="theme-color" content="#0b0b19">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -162,6 +162,54 @@
     /* ─── Base Styles ───────────────────────────────── */
     * {
       -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    [role="button"],
+    [role="tab"],
+    a[href],
+    input,
+    select {
+      touch-action: manipulation;
+    }
+
+    button,
+    [role="button"],
+    [role="tab"] {
+      -webkit-touch-callout: none;
+    }
+
+    button:focus-visible,
+    [role="button"]:focus-visible,
+    [role="tab"]:focus-visible,
+    a[href]:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid rgba(103, 232, 249, 0.95);
+      outline-offset: 2px;
+    }
+
+    /* Finger-first controls. Frequently used actions get the comfortable
+       44px target recommended for touch; compact header utilities are still
+       at least 36px and have separation from adjacent controls. */
+    @media (pointer: coarse) {
+      button,
+      [role="button"],
+      [role="tab"] {
+        min-width: 44px;
+        min-height: 44px;
+      }
+
+      .touch-compact {
+        min-width: 36px;
+        min-height: 36px;
+      }
+
+      input:not([type="checkbox"]):not([type="radio"]),
+      select,
+      textarea {
+        min-height: 44px;
+      }
     }
 
     html, body {
@@ -235,7 +283,7 @@
       background: rgba(255, 255, 255, 0.15);
       border-radius: 3px;
     }
-    ::-webkit-scrollbar-thumb:hover {
+    ::-webkit-scrollbar-thumb:active {
       background: rgba(255, 255, 255, 0.25);
     }
 
@@ -454,12 +502,9 @@
       cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .setting-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
-      box-shadow: 0 0 16px rgba(251, 191, 36, 0.6), 0 2px 8px rgba(0,0,0,0.3);
-    }
     .setting-slider::-webkit-slider-thumb:active {
-      transform: scale(1.05);
+      transform: scale(1.08);
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.6), 0 2px 8px rgba(0,0,0,0.3);
     }
     .setting-slider::-moz-range-thumb {
       width: 20px;
@@ -489,11 +534,8 @@
       box-shadow: 0 0 10px rgba(244, 114, 182, 0.6), 0 2px 4px rgba(0,0,0,0.3);
       transition: transform 0.1s ease;
     }
-    .quantity-slider::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
-    }
     .quantity-slider::-webkit-slider-thumb:active {
-      transform: scale(0.95);
+      transform: scale(1.08);
     }
     .quantity-slider::-moz-range-thumb {
       width: 18px;
@@ -506,11 +548,8 @@
       transition: transform 0.1s ease;
       box-sizing: border-box;
     }
-    .quantity-slider::-moz-range-thumb:hover {
-      transform: scale(1.15);
-    }
     .quantity-slider::-moz-range-thumb:active {
-      transform: scale(0.95);
+      transform: scale(1.08);
     }
 
     /* Speed step dots */
@@ -550,7 +589,7 @@
       opacity: 0;
       transition: opacity 0.2s ease;
     }
-    .settings-action-btn:hover::before {
+    .settings-action-btn:active::before {
       opacity: 1;
     }
     .settings-action-btn:active {

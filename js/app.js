@@ -198,7 +198,7 @@ class App {
           headerLocName.textContent = 'ホームタウン';
           headerLocFloor.textContent = '';
           headerLocFloor.classList.add('hidden');
-          headerLoc.title = 'ホームタウン';
+          headerLoc.setAttribute('aria-label', '現在地: ホームタウン');
         }
       }
     });
@@ -259,7 +259,6 @@ class App {
         if (!refreshBtn.isConnected) return;
         refreshBtn.classList.toggle('is-update-available', result.available);
         refreshBtn.dataset.latestVersion = result.latestVersion;
-        refreshBtn.title = result.available ? `v${result.latestVersion}へ更新できます` : `最新版です（v${APP_VERSION}）`;
         refreshBtn.setAttribute('aria-label', result.available ? `新しいUpdate v${result.latestVersion}を適用` : `最新版です。現在のバージョンはv${APP_VERSION}`);
       };
       updateRefreshState();
@@ -308,8 +307,8 @@ class App {
             </div>
             <button id="settings-close"
                     class="w-9 h-9 flex items-center justify-center rounded-xl
-                           text-gray-500 hover:text-gray-200 bg-gray-800/40 hover:bg-gray-700/60
-                           border border-transparent hover:border-gray-600/40
+                           text-gray-500 active:text-gray-200 bg-gray-800/40 active:bg-gray-700/60
+                           border border-transparent active:border-gray-600/40
                            transition-all duration-200 cursor-pointer">
               <span class="material-symbols-outlined text-lg">close</span>
             </button>
@@ -328,7 +327,7 @@ class App {
 
           <!-- Battle Stats Toggle -->
           <div id="setting-row-battle-stats" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/20
@@ -348,7 +347,7 @@ class App {
 
           <!-- Battle Animation Toggle -->
           <div id="setting-row-battle-anim" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/20
@@ -368,7 +367,7 @@ class App {
 
           <!-- Continue on Death Toggle -->
           <div id="setting-row-continue" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/20
@@ -388,7 +387,7 @@ class App {
 
           <!-- Auto Battle Speed -->
           <div id="setting-row-notifications" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200 cursor-pointer">
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center shrink-0">
@@ -406,7 +405,7 @@ class App {
 
           <!-- Auto Battle Speed -->
           <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/20
                           flex items-center justify-center shrink-0">
@@ -457,7 +456,7 @@ class App {
 
           <!-- Save Data Management -->
           <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      hover:bg-gray-800/55 hover:border-gray-600/40 transition-all duration-200">
+                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20
                           flex items-center justify-center shrink-0">
@@ -473,7 +472,7 @@ class App {
                       class="settings-action-btn flex-1 py-2.5 rounded-xl text-xs font-bold
                              bg-gradient-to-b from-gray-700/80 to-gray-800/80
                              border border-gray-600/40 text-gray-300
-                             hover:text-white hover:border-gray-500/50
+                             active:text-white active:border-gray-500/50
                              cursor-pointer flex items-center justify-center gap-1.5">
                 <span class="material-symbols-outlined text-sm">file_upload</span>
                 エクスポート
@@ -482,7 +481,7 @@ class App {
                       class="settings-action-btn flex-1 py-2.5 rounded-xl text-xs font-bold
                              bg-gradient-to-b from-gray-700/80 to-gray-800/80
                              border border-gray-600/40 text-gray-300
-                             hover:text-white hover:border-gray-500/50
+                             active:text-white active:border-gray-500/50
                              cursor-pointer flex items-center justify-center gap-1.5">
                 <span class="material-symbols-outlined text-sm">file_download</span>
                 インポート
@@ -492,7 +491,7 @@ class App {
 
           <!-- Data Reset -->
           <div class="settings-section bg-red-950/20 border border-red-900/25 rounded-xl p-3.5
-                      hover:bg-red-950/30 hover:border-red-800/30 transition-all duration-200">
+                      active:bg-red-950/30 active:border-red-800/30 transition-all duration-200">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/20
                           flex items-center justify-center shrink-0">
@@ -507,7 +506,7 @@ class App {
                     class="settings-action-btn w-full py-2.5 rounded-xl text-xs font-bold
                            bg-gradient-to-b from-red-900/50 to-red-950/60
                            border border-red-700/40 text-red-300/90
-                           hover:border-red-600/50 hover:text-red-200
+                           active:border-red-600/50 active:text-red-200
                            cursor-pointer flex items-center justify-center gap-1.5">
               <span class="material-symbols-outlined text-sm">warning</span>
               セーブデータを削除してリセット
@@ -690,7 +689,7 @@ class App {
       <div class="bg-gray-900 border border-gray-700 rounded-xl mx-3 w-full max-w-sm flex flex-col overflow-hidden shadow-2xl">
         <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
           <span class="text-sm font-bold text-gray-200">${title}</span>
-          <button id="data-close" class="text-gray-400 hover:text-white cursor-pointer"><span class="material-symbols-outlined">close</span></button>
+          <button id="data-close" class="text-gray-400 active:text-white cursor-pointer"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="p-4 flex flex-col gap-3">
           <p class="text-[10px] text-gray-400 leading-relaxed">${desc}</p>
@@ -701,12 +700,12 @@ class App {
           
           <div class="flex gap-2 mt-2">
             ${isExport ? `
-              <button id="data-copy" class="flex-1 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">コピー</button>
-              <button id="data-share" class="w-10 flex-none py-2 bg-gray-700/80 hover:bg-gray-600 text-white rounded transition-colors cursor-pointer flex items-center justify-center" title="共有">
+              <button id="data-copy" class="flex-1 py-2 bg-blue-600/80 active:bg-blue-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">コピー</button>
+              <button id="data-share" class="w-11 flex-none py-2 bg-gray-700/80 active:bg-gray-600 text-white rounded transition-colors cursor-pointer flex items-center justify-center" aria-label="共有">
                 <span class="material-symbols-outlined text-[16px]">share</span>
               </button>
             ` : `
-              <button id="data-confirm" class="flex-1 py-2 bg-green-600/80 hover:bg-green-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">復元</button>
+              <button id="data-confirm" class="flex-1 py-2 bg-green-600/80 active:bg-green-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">復元</button>
             `}
           </div>
         </div>

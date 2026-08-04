@@ -417,7 +417,7 @@ function updateClaimButtonAppearance(button, canClaim) {
   button.dataset.canClaim = String(canClaim);
   button.disabled = !canClaim;
   button.className = `mt-2 w-full rounded-lg border py-2.5 text-sm font-black shadow transition-all ${canClaim
-    ? 'border-yellow-300/60 bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 shadow-[0_0_16px_rgba(250,204,21,.28)] hover:brightness-110 active:scale-[.98]'
+    ? 'border-yellow-300/60 bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 shadow-[0_0_16px_rgba(250,204,21,.28)] active:brightness-110 active:scale-[.98]'
     : 'cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-70 shadow-none'}`;
   button.innerHTML = canClaim
     ? '<span class="material-symbols-outlined mr-1 align-middle text-base">toll</span>Goldを回収'

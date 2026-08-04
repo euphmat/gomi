@@ -134,7 +134,7 @@ export async function renderFishingPage() {
       return `<article data-fish-card="${fish.id}" class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-b ${tileTheme} p-1.5 text-center shadow-md">
         <div data-fish-count class="absolute right-1 top-1 z-10 rounded-full border border-white/10 bg-slate-950/80 px-1 py-0.5 text-[7px] font-black tabular-nums text-white">×${formatNumber(count)}</div>
         <div class="relative flex min-h-0 flex-1 items-center justify-center pt-1">
-          <img src="${fish.image}" onerror="this.remove()" class="relative h-14 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-hover:scale-110 sm:h-16 md:h-20" alt="${fish.name}">
+          <img src="${fish.image}" onerror="this.remove()" class="relative h-14 w-full object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.55)] transition-transform duration-200 group-active:scale-110 sm:h-16 md:h-20" alt="${fish.name}">
         </div>
         <div class="truncate rounded-lg bg-black/30 px-1 py-1 text-[9px] font-black leading-tight ${rarity.text}">${fish.name}</div>
       </article>`;

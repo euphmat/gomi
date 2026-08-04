@@ -93,7 +93,7 @@ export const rendererMethods = {
       }
 
       if (e.isDead) {
-        el.classList.remove('cursor-pointer', 'hover:scale-105');
+        el.classList.remove('cursor-pointer', 'active:scale-105');
         if (!fastMode) {
           el.classList.remove('transition-transform');
           el.style.transition = 'opacity 0.3s ease, min-width 0.3s ease 0.6s, max-width 0.3s ease 0.6s, margin 0.3s ease 0.6s';
@@ -198,11 +198,11 @@ export const rendererMethods = {
       if (p.isDead) {
         el.classList.add('opacity-40', 'grayscale');
         el.classList.remove('cursor-pointer');
-        if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'hover:scale-[1.02]');
+        if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'active:scale-[1.02]');
       } else {
         el.classList.remove('opacity-40', 'grayscale');
         el.classList.add('cursor-pointer');
-        if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'hover:scale-[1.02]');
+        if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'active:scale-[1.02]');
       }
 
       if (lvEl && lvEl.textContent !== String(p.level || 1)) lvEl.textContent = p.level || 1;

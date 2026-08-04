@@ -65,7 +65,7 @@ export function renderFishingTackleSummary(state) {
             return `<div class="relative flex min-w-0 items-center gap-1.5 rounded-lg border p-1.5 ${status?.canUpgrade ? 'border-emerald-300/70 bg-emerald-400/10 shadow-[0_0_18px_rgba(52,211,153,.28)] ring-1 ring-emerald-300/25' : `${theme.border} bg-black/25`}">
               <div class="relative flex h-8 w-8 shrink-0 items-center justify-center">${tackleImage(definition, visual)}</div>
               <div class="min-w-0"><div class="truncate text-[8px] font-black ${status?.canUpgrade ? 'text-emerald-300' : theme.text}">${definition.shortName}</div><div class="text-[10px] font-black text-white">Lv.${level}</div></div>
-              ${status?.canUpgrade ? '<span class="material-symbols-outlined absolute right-1 top-1 animate-pulse text-sm text-emerald-300" title="強化できます">upgrade</span>' : ''}
+              ${status?.canUpgrade ? '<span class="material-symbols-outlined absolute right-1 top-1 animate-pulse text-sm text-emerald-300" role="img" aria-label="強化できます">upgrade</span>' : ''}
             </div>`;
           }).join('')}
         </div>

@@ -55,7 +55,7 @@ export function showDetailedStatusModal(character, finalStats, onNameChanged) {
       const iconDef = iconMap[k] || { icon: 'help', color: 'text-gray-500' };
 
       return `
-        <div class="flex flex-col items-center bg-gray-800/60 rounded border border-gray-700/50 pb-1 overflow-hidden" title="${k}">
+        <div class="flex flex-col items-center bg-gray-800/60 rounded border border-gray-700/50 pb-1 overflow-hidden" aria-label="${k}">
           <div class="w-full bg-gray-800 flex flex-col items-center justify-center py-1 border-b border-gray-700/50">
             <span class="text-[9px] text-gray-400 capitalize leading-none mb-1">${k}</span>
             <span class="material-symbols-outlined text-[20px] ${iconDef.color} leading-none">${iconDef.icon}</span>
@@ -104,7 +104,7 @@ export function showDetailedStatusModal(character, finalStats, onNameChanged) {
           <div class="flex flex-col">
             <div class="flex items-center gap-1">
               <div id="status-modal-char-name" class="text-[13px] font-bold text-gray-100 leading-tight">${character.name}</div>
-              <button id="status-modal-edit-name" class="text-gray-400 hover:text-white transition-colors flex items-center justify-center" title="名前を変更">
+              <button id="status-modal-edit-name" class="text-gray-400 active:text-white transition-colors flex items-center justify-center" aria-label="名前を変更">
                 <span class="material-symbols-outlined text-[14px]">edit</span>
               </button>
               <span class="text-[9px] text-gray-400 ml-1">${character.jobName}</span>
@@ -112,7 +112,7 @@ export function showDetailedStatusModal(character, finalStats, onNameChanged) {
             <div class="text-[9px] text-gray-300 mt-0.5">Lv ${character.level} / JLv ${character.jobLevel}</div>
           </div>
         </div>
-        <button id="status-modal-close" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+        <button id="status-modal-close" class="w-7 h-7 flex items-center justify-center rounded-full bg-gray-800/80 text-gray-400 active:text-white active:bg-gray-700 transition-colors">
           <span class="material-symbols-outlined text-lg">close</span>
         </button>
       </div>

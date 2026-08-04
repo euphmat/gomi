@@ -113,6 +113,8 @@ class BattleManager {
     this._visibilityHandler = null;
     this._skillCache = new Map();
     this._initGeneration = 0;
+    this.isTabInteracting = false;
+    this._tabInteractionTimer = null;
 
     // Register lifecycle cleanup before any asynchronous initialization starts.
     // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
@@ -170,10 +172,26 @@ class BattleManager {
       effectsLayer.innerHTML = '';
     }
 
-    if (!this.elements.tabContent.dataset.hoverListenerAdded) {
-      this.elements.tabContent.addEventListener('mouseenter', () => this.isTabHovered = true);
-      this.elements.tabContent.addEventListener('mouseleave', () => this.isTabHovered = false);
-      this.elements.tabContent.dataset.hoverListenerAdded = 'true';
+    if (!this.elements.tabContent.dataset.touchListenerAdded) {
+      const holdTabUpdates = () => {
+        this.isTabInteracting = true;
+        clearTimeout(this._tabInteractionTimer);
+      };
+      const releaseTabUpdates = (delay = 250) => {
+        clearTimeout(this._tabInteractionTimer);
+        this._tabInteractionTimer = setTimeout(() => {
+          this.isTabInteracting = false;
+        }, delay);
+      };
+
+      this.elements.tabContent.addEventListener('pointerdown', holdTabUpdates, { passive: true });
+      this.elements.tabContent.addEventListener('pointerup', () => releaseTabUpdates(), { passive: true });
+      this.elements.tabContent.addEventListener('pointercancel', () => releaseTabUpdates(), { passive: true });
+      this.elements.tabContent.addEventListener('scroll', () => {
+        holdTabUpdates();
+        releaseTabUpdates(600);
+      }, { passive: true, capture: true });
+      this.elements.tabContent.dataset.touchListenerAdded = 'true';
     }
 
     await loadTreasureLevels();
@@ -210,7 +228,7 @@ class BattleManager {
       headerLocName.textContent = this.dungeonDef.name;
       headerLocFloor.textContent = `${this.currentFloorNum}F`;
       headerLocFloor.classList.remove('hidden');
-      headerLoc.title = `${this.dungeonDef.name} ${this.currentFloorNum}F`;
+      headerLoc.setAttribute('aria-label', `現在地: ${this.dungeonDef.name} ${this.currentFloorNum}F`);
     }
 
     // Update Background Image
@@ -510,6 +528,9 @@ class BattleManager {
   }
 
   cleanupBattleDOM() {
+    clearTimeout(this._tabInteractionTimer);
+    this._tabInteractionTimer = null;
+    this.isTabInteracting = false;
     if (this._popupLayer) {
       this._popupLayer.remove();
       this._popupLayer = null;
@@ -650,10 +671,10 @@ class BattleManager {
   }
 
   updateCommandUI() {
-    this.elements.btnAutoFloor.className = "flex-1 bg-blue-900 hover:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1";
+    this.elements.btnAutoFloor.className = "flex-1 bg-blue-900 active:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1";
     this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回`;
 
-    this.elements.btnAutoDungeon.className = "flex-1 bg-purple-900 hover:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1";
+    this.elements.btnAutoDungeon.className = "flex-1 bg-purple-900 active:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1";
     this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回`;
 
     if (this.autoBattleMode === 'floor') {
@@ -664,7 +685,7 @@ class BattleManager {
       this.elements.btnAutoDungeon.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">all_inclusive</span>踏破周回中`;
     }
 
-    this.elements.btnRun.className = "flex-1 bg-teal-900 hover:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer";
+    this.elements.btnRun.className = "flex-1 bg-teal-900 active:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer";
     this.elements.btnRun.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-teal-400">home</span>街に戻る`;
 
     if (this.isAutoBattle) {
@@ -842,7 +863,7 @@ class BattleManager {
       const lastRendered = parseInt(this.elements.tabContent.dataset.lastMedalRenderTime || '0');
 
       if (!force && this.elements.tabContent.dataset.renderedTab === 'medal' && this.elements.tabContent.dataset.medalTargetId === targetId) {
-        if (this.isTabHovered) return;
+        if (this.isTabInteracting) return;
         if (now - lastRendered < 1000) return;
       }
       
@@ -901,18 +922,18 @@ class BattleManager {
       const bgClass = medalStatus?.isMaxRank
         ? (isSelected
           ? 'bg-yellow-500/40 border-yellow-200'
-          : 'bg-yellow-900/70 border-yellow-500/70 hover:bg-yellow-800/80 hover:border-yellow-300')
+          : 'bg-yellow-900/70 border-yellow-500/70 active:bg-yellow-800/80 active:border-yellow-300')
         : medalStatus?.canAcquireOrUpgrade
           ? (isSelected
             ? 'bg-emerald-500/35 border-emerald-200'
-            : 'bg-emerald-900/70 border-emerald-500/70 hover:bg-emerald-800/80 hover:border-emerald-300')
+            : 'bg-emerald-900/70 border-emerald-500/70 active:bg-emerald-800/80 active:border-emerald-300')
           : hasLegendaryCompanion
         ? (isSelected
           ? 'bg-yellow-600/30 border-yellow-300'
-          : 'bg-yellow-900/70 border-yellow-500/70 hover:bg-yellow-800/80 hover:border-yellow-300')
+          : 'bg-yellow-900/70 border-yellow-500/70 active:bg-yellow-800/80 active:border-yellow-300')
         : (isSelected
           ? 'bg-blue-600/20 border-blue-400'
-          : 'bg-slate-900/50 border-slate-700/50 hover:bg-slate-800/80 hover:border-slate-600');
+          : 'bg-slate-900/50 border-slate-700/50 active:bg-slate-800/80 active:border-slate-600');
       const shadowClass = medalStatus?.isMaxRank
         ? (isSelected
           ? 'shadow-[0_0_14px_rgba(250,204,21,0.45)]'
@@ -937,16 +958,16 @@ class BattleManager {
       
       if (isSelected) {
         return `
-          <div class="sub-tab-item flex items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" title="${m.name}">
+          <button type="button" class="sub-tab-item flex min-h-11 items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${m.name}" aria-pressed="true">
             <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
             <span class="text-[11px] font-bold tracking-wide whitespace-nowrap pointer-events-none ${selectedTextClass}">${m.name}</span>
-          </div>
+          </button>
         `;
       } else {
         return `
-          <div class="sub-tab-item flex items-center justify-center w-7 h-7 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" title="${m.name}">
+          <button type="button" class="sub-tab-item flex h-11 w-11 items-center justify-center rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${m.name}" aria-pressed="false">
             <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
-          </div>
+          </button>
         `;
       }
     }).join('');
@@ -1233,7 +1254,7 @@ export function renderBattlePage() {
         border-top-color: transparent;
         text-shadow: 0 1px 3px rgb(0 0 0 / .9);
       }
-      .battle-tab:hover { background-color: rgb(8 16 26 / .9); color: white; }
+      .battle-tab:active { background-color: rgb(8 16 26 / .9); color: white; }
       .battle-tab--active {
         color: white;
         background-color: rgb(8 16 26 / .94);
@@ -1311,16 +1332,16 @@ export function renderBattlePage() {
       </div>
 
       <!-- Actions -->
-      <button id="btn-run" class="flex-1 bg-teal-900 hover:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer">
+      <button id="btn-run" class="flex-1 bg-teal-900 active:bg-teal-800 rounded-lg font-bold text-[11px] border border-teal-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-teal-100 p-1 cursor-pointer">
         <span class="material-symbols-outlined text-[18px] mb-0.5 text-teal-400">home</span>街に戻る
       </button>
-      <button id="btn-auto-dungeon" class="flex-1 bg-purple-900 hover:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1">
+      <button id="btn-auto-dungeon" class="flex-1 bg-purple-900 active:bg-purple-800 rounded-lg font-bold text-[10px] border border-purple-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-purple-100 p-1">
         <span class="material-symbols-outlined text-[18px] mb-0.5 text-purple-400">all_inclusive</span>踏破周回
       </button>
-      <button id="btn-auto-floor" class="flex-1 bg-blue-900 hover:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1">
+      <button id="btn-auto-floor" class="flex-1 bg-blue-900 active:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1">
         <span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回
       </button>
-      <button id="btn-attack" class="flex-1 bg-red-700 hover:bg-red-600 rounded-lg font-bold text-[11px] shadow-lg border border-red-500 flex flex-col items-center justify-center transition-all active:scale-95 text-red-50 p-1">
+      <button id="btn-attack" class="flex-1 bg-red-700 active:bg-red-600 rounded-lg font-bold text-[11px] shadow-lg border border-red-500 flex flex-col items-center justify-center transition-all active:scale-95 text-red-50 p-1">
         <span class="material-symbols-outlined text-[18px] mb-0.5 text-red-300">swords</span>攻撃
       </button>
     </div>
@@ -1329,7 +1350,7 @@ export function renderBattlePage() {
     <div id="battle-result" class="hidden absolute inset-0 bg-black/95 z-50 flex flex-col items-center justify-center text-white backdrop-blur-sm">
        <h2 id="result-title" class="text-5xl font-black mb-4 tracking-widest text-yellow-400 drop-shadow-lg">VICTORY</h2>
        <p id="result-text" class="text-gray-300 mb-10 text-sm font-bold">経験値とゴールドを獲得しました。</p>
-       <button id="btn-result-ok" class="px-10 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black text-lg transition-transform active:scale-90 cursor-pointer shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+       <button id="btn-result-ok" class="px-10 py-4 bg-blue-600 active:bg-blue-500 rounded-2xl font-black text-lg transition-transform active:scale-90 cursor-pointer shadow-[0_0_15px_rgba(37,99,235,0.5)]">
          街へ戻る
        </button>
     </div>

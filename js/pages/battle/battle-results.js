@@ -406,7 +406,7 @@ export const resultMethods = {
           <div class="flex flex-col items-center w-full max-w-[340px] px-4 py-6 overflow-y-auto max-h-full scrollbar-none text-center">
             <h2 class="text-4xl font-black tracking-widest text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)] animate-bounce mb-6">VICTORY</h2>
             <p class="text-gray-255 font-bold mb-8 text-sm">ダンジョンの最深部に到達しました！</p>
-            <button id="btn-result-ok" class="w-full py-3.5 bg-yellow-600 hover:bg-yellow-500 active:scale-95 text-white rounded-xl font-bold text-sm transition-all shadow-[0_4px_15px_rgba(250,204,21,0.3)] cursor-pointer">
+            <button id="btn-result-ok" class="w-full py-3.5 bg-yellow-600 active:bg-yellow-500 active:scale-95 text-white rounded-xl font-bold text-sm transition-all shadow-[0_4px_15px_rgba(250,204,21,0.3)] cursor-pointer">
               ダンジョン踏破！街へ戻る
             </button>
           </div>
@@ -544,7 +544,7 @@ export const resultMethods = {
           </div>
 
           <!-- 戻るボタン -->
-          <button id="btn-result-ok" class="w-full py-3 bg-red-950/80 hover:bg-red-900 active:scale-95 text-red-100 border border-red-800/40 rounded-xl font-bold text-xs transition-all shadow-[0_4px_12px_rgba(239,68,68,0.15)] cursor-pointer">
+          <button id="btn-result-ok" class="w-full py-3 bg-red-950/80 active:bg-red-900 active:scale-95 text-red-100 border border-red-800/40 rounded-xl font-bold text-xs transition-all shadow-[0_4px_12px_rgba(239,68,68,0.15)] cursor-pointer">
             街へ戻る
           </button>
         </div>

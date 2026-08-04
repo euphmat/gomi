@@ -41,7 +41,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
     if (item) {
       return `
         <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 
-                    cursor-pointer hover:bg-gray-800/50 transition-colors eq-slot-clickable"
+                    cursor-pointer active:bg-gray-800/50 transition-colors eq-slot-clickable"
              data-char-id="${character.id}" data-slot-key="${slotKey}">
           <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded shrink-0 overflow-hidden
                        border border-gray-700/40">
@@ -56,7 +56,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
     } else {
       return `
         <div class="flex items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 opacity-60
-                    cursor-pointer hover:bg-gray-800/50 hover:opacity-100 transition-all eq-slot-clickable"
+                    cursor-pointer active:bg-gray-800/50 active:opacity-100 transition-all eq-slot-clickable"
              data-char-id="${character.id}" data-slot-key="${slotKey}">
           <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded text-[11px] shrink-0
                        border border-gray-700/40">—</span>
@@ -81,14 +81,14 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
   return `
     <div class="char-card bg-gray-900/70 backdrop-blur-sm border border-gray-700/50 rounded-lg p-2
                 flex flex-col gap-1.5 transition-all duration-300 h-[330px]
-                hover:border-gray-500/50 hover:shadow-lg hover:shadow-black/20">
+                active:border-gray-500/50 active:shadow-lg active:shadow-black/20">
 
       <!-- Row 1: Icon + Name & Level Info -->
       <div class="flex gap-2">
         <!-- Character Icon -->
         <div class="w-14 h-14 rounded-lg flex items-center justify-center shrink-0
                     shadow-md border border-white/10 overflow-hidden bg-gray-800
-                    cursor-pointer hover:border-gray-400 transition-colors char-icon-clickable"
+                    cursor-pointer active:border-gray-400 transition-colors char-icon-clickable"
              data-char-id="${character.id}">
           <img src="${iconImage}" alt="" class="w-full h-full object-contain pointer-events-none"  onerror="this.style.display='none'" />
         </div>
@@ -111,7 +111,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
               <span>SP</span>
               <span class="font-bold text-[11px] drop-shadow-md">${sp}</span>
             </div>
-            <button class="px-2 py-[2px] ${isAlreadyBest ? 'bg-gray-700/50 text-gray-500 border-gray-600/30 cursor-not-allowed' : 'bg-indigo-600/80 hover:bg-indigo-500 text-white border-indigo-500/50 cursor-pointer shadow'} rounded text-[9px] font-bold transition-colors border shrink-0 equip-best-btn" data-char-id="${character.id}" ${isAlreadyBest ? 'disabled' : ''}>
+            <button class="px-2 py-[2px] ${isAlreadyBest ? 'bg-gray-700/50 text-gray-500 border-gray-600/30 cursor-not-allowed' : 'bg-indigo-600/80 active:bg-indigo-500 text-white border-indigo-500/50 cursor-pointer shadow'} rounded text-[9px] font-bold transition-colors border shrink-0 equip-best-btn" data-char-id="${character.id}" ${isAlreadyBest ? 'disabled' : ''}>
               最強装備
             </button>
           </div>
@@ -152,7 +152,7 @@ export function createEmptySlotCard(slotIndex) {
   return `
     <div class="char-card bg-gray-900/40 backdrop-blur-sm border border-dashed border-gray-700/40 rounded-lg p-2
                 flex flex-col items-center justify-center gap-2 h-[330px]
-                transition-all duration-300 hover:border-gray-600/50">
+                transition-all duration-300 active:border-gray-600/50">
       <div class="w-14 h-14 rounded-lg flex items-center justify-center
                   bg-gray-800/30 border border-gray-700/30">
         <span class="material-symbols-outlined text-2xl text-gray-700">person_add</span>

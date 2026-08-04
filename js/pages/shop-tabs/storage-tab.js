@@ -73,10 +73,9 @@ export function renderStorageTab() {
         flex items-center justify-center w-10 h-10 rounded-lg transition-colors shrink-0 border
         ${isActive 
           ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' 
-          : 'bg-gray-800 text-gray-400 border-gray-700 hover:bg-gray-700 hover:text-gray-200'}
+          : 'bg-gray-800 text-gray-400 border-gray-700 active:bg-gray-700 active:text-gray-200'}
       `;
       btn.innerHTML = `<span class="material-symbols-outlined text-[20px]">${f.icon}</span>`;
-      btn.title = f.label;
       btn.setAttribute('aria-label', f.label);
       btn.onclick = () => {
         if (activeFilter !== f.id) {
@@ -94,7 +93,7 @@ export function renderStorageTab() {
   rightControls.className = 'flex items-center gap-2 shrink-0';
 
   const settingsBtn = document.createElement('button');
-  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 hover:bg-gray-700/50 hover:text-gray-200 transition-colors cursor-pointer shadow-sm';
+  settingsBtn.className = 'flex items-center justify-center w-9 h-9 rounded-lg bg-gray-800/60 border border-gray-700/60 text-gray-400 active:bg-gray-700/50 active:text-gray-200 transition-colors cursor-pointer shadow-sm';
   settingsBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">settings</span>';
   settingsBtn.onclick = () => {
     showSettingsModal({
@@ -129,7 +128,7 @@ export function renderStorageTab() {
     if (totalPages <= 1) return;
     
     const prevBtn = document.createElement('button');
-    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    prevBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage > 1 ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
     prevBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_left</span>';
     prevBtn.onclick = () => {
       if (currentPage > 1) {
@@ -144,7 +143,7 @@ export function renderStorageTab() {
     info.textContent = `${currentPage} / ${totalPages}`;
 
     const nextBtn = document.createElement('button');
-    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 hover:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
+    nextBtn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${currentPage < totalPages ? 'bg-slate-800 text-slate-200 active:bg-slate-700 cursor-pointer' : 'bg-slate-900 text-slate-600 cursor-not-allowed'}`;
     nextBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">chevron_right</span>';
     nextBtn.onclick = () => {
       if (currentPage < totalPages) {
@@ -200,7 +199,7 @@ export function renderStorageTab() {
       const slot = document.createElement('div');
       
       if (viewMode === 'grid') {
-        slot.className = 'relative w-full aspect-square flex items-center justify-center rounded-md border border-gray-700/50 hover:border-gray-500 hover:bg-gray-800 bg-gray-900/60 overflow-hidden cursor-pointer transition-all shadow-sm';
+        slot.className = 'relative w-full aspect-square flex items-center justify-center rounded-md border border-gray-700/50 active:border-gray-500 active:bg-gray-800 bg-gray-900/60 overflow-hidden cursor-pointer transition-all shadow-sm';
         
         if (item.image) {
           slot.innerHTML = `<img src="${item.image}" alt="" class="w-full h-full ${item.itemType === 'fish' ? 'object-contain p-1' : 'object-cover'}" onerror="this.style.display='none'">`;
@@ -213,7 +212,7 @@ export function renderStorageTab() {
         }
       } else {
         // list view
-        slot.className = 'group relative w-full flex items-center gap-2.5 p-2 bg-gradient-to-r from-slate-900/90 to-slate-800/50 rounded-lg border border-slate-700/80 hover:border-blue-500/50 hover:shadow-[0_0_10px_rgba(59,130,246,0.15)] transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm';
+        slot.className = 'group relative w-full flex items-center gap-2.5 p-2 bg-gradient-to-r from-slate-900/90 to-slate-800/50 rounded-lg border border-slate-700/80 active:border-blue-500/50 active:shadow-[0_0_10px_rgba(59,130,246,0.15)] transition-all duration-300 cursor-pointer overflow-hidden backdrop-blur-sm';
         
         const activeStats = STAT_KEYS.filter(stat => item.stats && (item.stats[stat.key] || 0) !== 0);
         const statsHtml = activeStats.map(stat => {
@@ -253,7 +252,7 @@ export function renderStorageTab() {
 
         let imgHtml = '';
         if (item.image) {
-          imgHtml = `<img src="${item.image}" alt="" class="w-full h-full ${item.itemType === 'fish' ? 'object-contain p-0.5' : 'object-cover'} transition-transform duration-300 group-hover:scale-110" onerror="this.style.display='none'">`;
+          imgHtml = `<img src="${item.image}" alt="" class="w-full h-full ${item.itemType === 'fish' ? 'object-contain p-0.5' : 'object-cover'} transition-transform duration-300 group-active:scale-110" onerror="this.style.display='none'">`;
         } else {
           imgHtml = `<span class="material-symbols-outlined text-slate-500 text-2xl">category</span>`;
         }
@@ -261,7 +260,7 @@ export function renderStorageTab() {
         const quantityText = (item.quantity && item.quantity > 1) ? `x${formatNumber(item.quantity)}` : (item.quantity === 1 ? 'x1' : '');
 
         slot.innerHTML = `
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
           <div class="w-9 h-9 shrink-0 relative flex items-center justify-center rounded-md bg-slate-950 border border-slate-700/80 shadow-inner overflow-hidden z-10">
             ${imgHtml}
           </div>
@@ -269,7 +268,7 @@ export function renderStorageTab() {
           <div class="flex-1 min-w-0 flex flex-col justify-center py-0.5 z-10">
             <div class="flex items-baseline gap-1.5 mb-1">
               <span class="${slotColor} font-bold tracking-widest shrink-0" style="font-size: 9px;">${slotLabel}</span>
-              <span class="text-slate-100 font-black truncate group-hover:text-blue-200 drop-shadow-md transition-colors leading-none" style="font-size: 12px;">${item.name}</span>
+              <span class="text-slate-100 font-black truncate group-active:text-blue-200 drop-shadow-md transition-colors leading-none" style="font-size: 12px;">${item.name}</span>
             </div>
             
             <div class="flex items-center gap-1 overflow-hidden whitespace-nowrap" style="-webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%); mask-image: linear-gradient(to right, black 90%, transparent 100%);">
@@ -333,7 +332,7 @@ export function renderStorageTab() {
         <span class="material-symbols-outlined text-rose-400 text-lg">info</span>
         <span class="font-bold text-gray-200 text-sm tracking-wider uppercase">アイテム詳細</span>
       </div>
-      <button class="text-slate-400 hover:text-white bg-slate-800/40 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-modal-btn">
+      <button class="text-slate-400 active:text-white bg-slate-800/40 active:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-all cursor-pointer" id="close-modal-btn">
         <span class="material-symbols-outlined text-lg">close</span>
       </button>
     `;

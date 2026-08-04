@@ -63,11 +63,12 @@ export async function renderSpecialQuestTab() {
             const current = Math.min(SpecialQuestManager.getCurrentValue(quest), quest.target);
             const progress = quest.target ? Math.min(100, (current / quest.target) * 100) : 0;
             return `
-              <article title="${quest.description}" class="rounded-xl border ${state.completed ? 'border-fuchsia-400/30 bg-fuchsia-950/15' : 'border-slate-800 bg-slate-900/75'} p-2">
+              <article class="rounded-xl border ${state.completed ? 'border-fuchsia-400/30 bg-fuchsia-950/15' : 'border-slate-800 bg-slate-900/75'} p-2">
                 <div class="flex items-center gap-2">
                   <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${state.completed ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-800 text-slate-400'}"><span class="material-symbols-outlined text-[17px]">${state.completed ? 'check' : quest.icon}</span></div>
                   <div class="min-w-0 flex-1">
                     <h3 class="truncate text-[11px] font-black leading-tight ${state.completed ? 'text-emerald-100' : 'text-slate-100'}">${quest.title}</h3>
+                    <p class="mt-0.5 line-clamp-2 text-[9px] leading-snug text-slate-500">${quest.description}</p>
                     <div class="mt-1.5 flex items-center gap-1.5">
                       <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-950"><div class="h-full rounded-full ${state.completed ? 'bg-emerald-400' : 'bg-fuchsia-500'}" style="width:${progress}%"></div></div>
                       <span class="min-w-[42px] text-right font-mono text-[8px] font-bold tabular-nums ${state.completed ? 'text-emerald-300' : 'text-slate-500'}">${current}/${quest.target}</span>

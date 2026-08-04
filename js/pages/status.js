@@ -28,17 +28,17 @@ function createOfficialSiteBanner() {
        target="_blank"
        rel="noopener noreferrer"
        aria-label="魔法少女ノ魔女裁判 公式サイトを新しいタブで開く"
-       class="group relative mx-auto mb-2 block w-full max-w-[460px] overflow-hidden rounded-xl border border-fuchsia-400/45 bg-black shadow-[0_0_18px_rgba(217,70,239,0.14)] transition duration-200 hover:border-fuchsia-300/80 hover:shadow-[0_0_24px_rgba(217,70,239,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 active:scale-[0.99]">
+       class="group relative mx-auto mb-2 block w-full max-w-[460px] overflow-hidden rounded-xl border border-fuchsia-400/45 bg-black shadow-[0_0_18px_rgba(217,70,239,0.14)] transition duration-200 active:border-fuchsia-300/80 active:shadow-[0_0_24px_rgba(217,70,239,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-300 active:scale-[0.99]">
       <img src="./header.jpg"
            alt="魔法少女ノ魔女裁判"
-           class="block aspect-[460/215] w-full object-cover transition-transform duration-300 group-hover:scale-[1.015]" />
+           class="block aspect-[460/215] w-full object-cover transition-transform duration-300 group-active:scale-[1.015]" />
 
       <span class="pointer-events-none absolute left-2 top-2 rounded border border-white/25 bg-black/75 px-1.5 py-0.5 font-mono text-[8px] tracking-[0.16em] text-white/70 backdrop-blur-sm">
         ADVERTISEMENT
       </span>
 
       <span class="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/90 via-black/35 to-transparent px-2.5 pb-2 pt-10">
-        <span class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg backdrop-blur-sm transition-colors group-hover:bg-fuchsia-950/90 sm:text-xs">
+        <span class="inline-flex items-center gap-1 rounded-full border border-white/25 bg-black/70 px-2.5 py-1 text-[10px] font-bold text-white shadow-lg backdrop-blur-sm transition-colors group-active:bg-fuchsia-950/90 sm:text-xs">
           公式サイト
           <span class="material-symbols-outlined !text-[13px] leading-none">open_in_new</span>
         </span>
@@ -319,7 +319,7 @@ async function _loadStatusData(container) {
             { id: 'defense', label: '防御', icon: 'shield', color: 'text-slate-400' },
             { id: 'speed', label: '速度', icon: 'directions_run', color: 'text-yellow-400' }
           ].map(f => `
-            <button class="focus-btn flex-1 py-1 flex items-center justify-center gap-1 text-[10px] font-bold rounded border ${currentFocus === f.id ? 'bg-indigo-600/50 border-indigo-500 text-white shadow-inner' : 'bg-gray-800 border-gray-600/50 text-gray-400 hover:bg-gray-700 hover:text-gray-200'} transition-all" data-focus="${f.id}">
+            <button class="focus-btn flex-1 py-1 flex items-center justify-center gap-1 text-[10px] font-bold rounded border ${currentFocus === f.id ? 'bg-indigo-600/50 border-indigo-500 text-white shadow-inner' : 'bg-gray-800 border-gray-600/50 text-gray-400 active:bg-gray-700 active:text-gray-200'} transition-all" data-focus="${f.id}">
               <span class="material-symbols-outlined !text-[12px] ${f.color}" style="font-variation-settings: 'FILL' 1">${f.icon}</span>
               <span class="truncate">${f.label}</span>
             </button>
@@ -352,8 +352,8 @@ async function _loadStatusData(container) {
               </div>
 
               <div class="flex gap-3 mt-2">
-                <button id="btn-cancel" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm font-bold transition-colors">キャンセル</button>
-                <button id="btn-confirm" class="flex-1 py-2 ${changed ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-900/50' : 'bg-gray-700 text-gray-500 cursor-not-allowed'} rounded text-sm font-bold transition-colors" ${changed ? '' : 'disabled'}>変更する</button>
+                <button id="btn-cancel" class="flex-1 py-2 bg-gray-700 active:bg-gray-600 text-gray-200 rounded text-sm font-bold transition-colors">キャンセル</button>
+                <button id="btn-confirm" class="flex-1 py-2 ${changed ? 'bg-indigo-600 active:bg-indigo-500 text-white shadow-lg shadow-indigo-900/50' : 'bg-gray-700 text-gray-500 cursor-not-allowed'} rounded text-sm font-bold transition-colors" ${changed ? '' : 'disabled'}>変更する</button>
               </div>
             </div>
           `;

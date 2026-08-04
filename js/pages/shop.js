@@ -13,10 +13,10 @@ export function renderShopPage() {
 
   // タブの定義
   const TABS = [
-    { id: 'shop', label: 'ショップ', icon: 'storefront', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'hover:border-cyan-500/35 hover:bg-cyan-950/30 hover:text-cyan-300' },
-    { id: 'storage', label: '倉庫', icon: 'inventory_2', activeClass: 'border-sky-400/45 bg-sky-950/55 text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(56,189,248,0.18)]', idleClass: 'hover:border-sky-500/35 hover:bg-sky-950/30 hover:text-sky-300' },
-    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech', activeClass: 'border-yellow-400/45 bg-yellow-950/55 text-yellow-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(250,204,21,0.18)]', idleClass: 'hover:border-yellow-500/35 hover:bg-yellow-950/30 hover:text-yellow-300' },
-    { id: 'gacha', label: '秘宝ガチャ', icon: 'auto_awesome', activeClass: 'border-fuchsia-400/45 bg-fuchsia-950/55 text-fuchsia-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(217,70,239,0.18)]', idleClass: 'hover:border-fuchsia-500/35 hover:bg-fuchsia-950/30 hover:text-fuchsia-300' }
+    { id: 'shop', label: 'ショップ', icon: 'storefront', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'active:border-cyan-500/35 active:bg-cyan-950/30 active:text-cyan-300' },
+    { id: 'storage', label: '倉庫', icon: 'inventory_2', activeClass: 'border-sky-400/45 bg-sky-950/55 text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(56,189,248,0.18)]', idleClass: 'active:border-sky-500/35 active:bg-sky-950/30 active:text-sky-300' },
+    { id: 'medal', label: 'メダル鋳造', icon: 'military_tech', activeClass: 'border-yellow-400/45 bg-yellow-950/55 text-yellow-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(250,204,21,0.18)]', idleClass: 'active:border-yellow-500/35 active:bg-yellow-950/30 active:text-yellow-300' },
+    { id: 'gacha', label: '秘宝ガチャ', icon: 'auto_awesome', activeClass: 'border-fuchsia-400/45 bg-fuchsia-950/55 text-fuchsia-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(217,70,239,0.18)]', idleClass: 'active:border-fuchsia-500/35 active:bg-fuchsia-950/30 active:text-fuchsia-300' }
   ];
   
   let activeTabId = 'shop';
@@ -38,7 +38,7 @@ export function renderShopPage() {
       const isActive = tab.id === activeTabId;
       
       btn.className = `
-        flex h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer active:scale-95
+        flex h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95
         ${isActive 
           ? `gap-1.5 px-3 ${tab.activeClass}`
           : `px-2 border-slate-800/70 bg-slate-900/45 text-slate-500 ${tab.idleClass}`}
@@ -46,7 +46,6 @@ export function renderShopPage() {
       btn.setAttribute('role', 'tab');
       btn.setAttribute('aria-selected', String(isActive));
       btn.setAttribute('aria-label', tab.label);
-      btn.title = tab.label;
       btn.innerHTML = `
         <span class="material-symbols-outlined text-[18px] leading-none">${tab.icon}</span>
         ${isActive ? `<span class="leading-none">${tab.label}</span>` : ''}
