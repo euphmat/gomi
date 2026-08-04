@@ -17,6 +17,7 @@ import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
 import { formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
+import { setScreenLockActivity } from '../../utils/screen-lock.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -390,6 +391,7 @@ class BattleManager {
     if (this._routeChangeHandler) return;
     this._routeChangeHandler = () => {
       if (window.location.hash !== '#/battle') {
+        setScreenLockActivity('battle', false);
         this.stopAtbLoop();
         this.cleanupBattleDOM();
       }
@@ -618,6 +620,7 @@ class BattleManager {
       if (!this.isAutoBattle && !this.activeCharacter) return;
       sessionStorage.removeItem('autoBattleMode');
       this.autoBattleMode = 'none';
+      setScreenLockActivity('battle', false);
       this.endBattle(false, '撤退した！', false);
     };
 
@@ -647,6 +650,7 @@ class BattleManager {
         // Return to town
         sessionStorage.removeItem('autoBattleMode');
         this.autoBattleMode = 'none';
+        setScreenLockActivity('battle', false);
         window.location.hash = '/dungeon';
       }
     };
@@ -671,6 +675,11 @@ class BattleManager {
   }
 
   updateCommandUI() {
+    setScreenLockActivity(
+      'battle',
+      this.isAutoBattle,
+      this.autoBattleMode === 'dungeon' ? '踏破周回で自動戦闘中' : '階層周回で自動戦闘中'
+    );
     this.elements.btnAutoFloor.className = "flex-1 bg-blue-900 active:bg-blue-800 rounded-lg font-bold text-[10px] border border-blue-700 flex flex-col items-center justify-center transition-all active:scale-95 shadow-md text-blue-100 p-1";
     this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[18px] mb-0.5 text-blue-400">autorenew</span>階層周回`;
 

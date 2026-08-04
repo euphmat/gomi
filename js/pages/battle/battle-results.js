@@ -16,6 +16,7 @@ import { renderItemTabHtml } from './battle-ui.js';
 import { notifyGameEvent } from '../../utils/game-notifications.js';
 import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
+import { setScreenLockActivity } from '../../utils/screen-lock.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -366,6 +367,7 @@ export const resultMethods = {
     if (!showModal) {
       sessionStorage.removeItem('autoBattleMode');
       this.autoBattleMode = 'none';
+      setScreenLockActivity('battle', false);
       window.location.hash = '/dungeon';
       return;
     }
@@ -417,6 +419,7 @@ export const resultMethods = {
             this.elements.resultOverlay.classList.add('hidden');
             sessionStorage.removeItem('autoBattleMode');
             this.autoBattleMode = 'none';
+            setScreenLockActivity('battle', false);
             window.location.hash = '/dungeon';
           };
         }
@@ -477,6 +480,9 @@ export const resultMethods = {
           localStorage.setItem('continueOnDeath', 'false');
         }
       }
+      // With no automatic retry pending, combat has effectively stopped and
+      // the result screen must be operable without requiring a hidden action.
+      if (!willAutoRetry) setScreenLockActivity('battle', false);
 
       // 敗北時のUIをカスタム構築
       const lastKilledBy = this.lastKilledBy || {
@@ -581,6 +587,7 @@ export const resultMethods = {
           this.elements.resultOverlay.classList.add('hidden');
           sessionStorage.removeItem('autoBattleMode');
           this.autoBattleMode = 'none';
+          setScreenLockActivity('battle', false);
           window.location.hash = '/dungeon';
         };
       }

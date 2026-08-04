@@ -5,6 +5,7 @@
  */
 
 import { GameDB } from '../../data/database.js';
+import { isScreenLocked } from '../../utils/screen-lock.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { getRanchLevelInfo } from '../../data/stat-calculator.js';
@@ -214,7 +215,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
       if (tabContent._petSyncTimer === petSyncTimer) tabContent._petSyncTimer = null;
       return;
     }
-    if (document.hidden) return;
+    if (document.hidden || isScreenLocked()) return;
     if (syncInProgress) return;
     syncInProgress = true;
 

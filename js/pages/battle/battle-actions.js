@@ -864,7 +864,7 @@ export const actionMethods = {
         entity.hp.current = Math.min(entity.stats?.hp || entity.hp.max, entity.hp.current + entity._regenHp);
         this.showDamage(entity.elementId, `+${entity._regenHp}`, 'text-green-400');
         
-        if (localStorage.getItem('disableBattleAnimations') !== 'true' && !document.hidden && this.speedMult < 5) {
+        if (!this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
           const el = document.getElementById(entity.elementId);
           if (el) {
             const rect = el.getBoundingClientRect();

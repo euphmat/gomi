@@ -3,6 +3,7 @@ import { FISHING_TACKLE, FISHING_TACKLE_ORDER, getFishingTackleEffect, getFishin
 import { getFishingSpotUnlockStatus, getFishingTackleLevel, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
+import { isScreenLocked, setScreenLockActivity } from '../utils/screen-lock.js';
 
 function updateHeader(id, value) {
   const element = document.getElementById(id);
@@ -172,6 +173,7 @@ export async function renderFishingPage() {
 
   const stop = (message = '待機中') => {
     running = false;
+    setScreenLockActivity('fishing', false);
     clearTimeout(catchTimer);
     clearInterval(countdownTimer);
     catchTimer = null;
@@ -184,6 +186,9 @@ export async function renderFishingPage() {
   };
 
   const showCatch = async result => {
+    // The result is still applied to state while locked; only the expensive
+    // reveal/splash/card-flight presentation is omitted.
+    if (isScreenLocked()) return;
     const display = container.querySelector('[data-catch-display]');
     if (!display) return;
     const stage = display.closest('section');
@@ -475,6 +480,7 @@ export async function renderFishingPage() {
     nextCatchAt = startedAt + delay;
     container.querySelector('[data-status]').textContent = 'アタリを待っています…';
     countdownTimer = setInterval(() => {
+      if (isScreenLocked()) return;
       const remaining = Math.max(0, nextCatchAt - Date.now());
       container.querySelector('[data-countdown]').textContent = `${(remaining / 1000).toFixed(1)}秒`;
       container.querySelector('[data-progress]').style.width = `${Math.min(100, ((Date.now() - startedAt) / delay) * 100)}%`;
@@ -494,7 +500,7 @@ export async function renderFishingPage() {
           if (!leaving && container.isConnected) {
             await showCatch(caught.result);
             if (!leaving && container.isConnected) {
-              renderState();
+              if (!isScreenLocked()) renderState();
               catchTimer = setTimeout(schedule, 250);
             }
           }
@@ -508,6 +514,7 @@ export async function renderFishingPage() {
   const cleanup = () => {
     if (cleanupPromise) return cleanupPromise;
     leaving = true;
+    document.removeEventListener('screenlockchange', handleScreenLockChange);
     stop();
     cleanupPromise = (async () => {
       if (catchInFlight) await catchInFlight;
@@ -517,12 +524,18 @@ export async function renderFishingPage() {
   };
   container.cleanup = cleanup;
 
+  const handleScreenLockChange = event => {
+    if (!event.detail?.locked && !leaving && container.isConnected) renderState();
+  };
+  document.addEventListener('screenlockchange', handleScreenLockChange);
+
   container.querySelector('[data-toggle]').addEventListener('click', () => {
     if (running) return stop('釣りを中断しました');
     if (gold < spot.baitCost) return stop('Goldが足りません');
     running = true;
     container.querySelector('[data-toggle-label]').textContent = '自動釣りを停止';
     container.querySelector('[data-toggle] .material-symbols-outlined').textContent = 'stop';
+    setScreenLockActivity('fishing', true, `${spot.name}で自動釣り中`);
     schedule();
   });
   container.querySelectorAll('[data-catch-tab]').forEach(button => {

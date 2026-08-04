@@ -3,6 +3,8 @@
  * ATBループ管理 (startAtbLoop, stopAtbLoop)
  */
 
+import { isScreenLocked } from '../../utils/screen-lock.js';
+
 export const atbMethods = {
   stopAtbLoop(invalidateInit = true, removeRouteHandler = true) {
     this.isStopped = true;
@@ -62,6 +64,10 @@ export const atbMethods = {
       window.removeEventListener('settingsChanged', this._settingsHandler);
       this._settingsHandler = null;
     }
+    if (this._screenLockHandler) {
+      document.removeEventListener('screenlockchange', this._screenLockHandler);
+      this._screenLockHandler = null;
+    }
     // Clean up effects layer children (sparkle particles etc.)
     const effectsLayer = document.getElementById('battle-effects-layer');
     if (effectsLayer) effectsLayer.innerHTML = '';
@@ -76,13 +82,21 @@ export const atbMethods = {
     }
     this.isStopped = false;
     // Cache localStorage reads to avoid I/O on every tick
-    this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+    this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true' || isScreenLocked();
     this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
     this._settingsHandler = () => {
-      this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true';
+      this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true' || isScreenLocked();
       this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
     };
     window.addEventListener('settingsChanged', this._settingsHandler);
+    this._screenLockHandler = event => {
+      this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true' || event.detail?.locked;
+      if (!event.detail?.locked && !document.hidden && !this.isStopped && window.location.hash === '#/battle') {
+        this.cacheDOMElements();
+        this.renderEntities();
+      }
+    };
+    document.addEventListener('screenlockchange', this._screenLockHandler);
     let totalSpd = 0;
     let entityCount = 0;
     this.party.forEach(p => { 

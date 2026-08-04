@@ -5,10 +5,11 @@
 
 import { renderEnemyCardHtml, renderPartyCardHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { formatNumber } from '../../utils/format.js';
+import { isScreenLocked } from '../../utils/screen-lock.js';
 
 export const rendererMethods = {
   renderEntities() {
-    if (document.hidden) return;
+    if (document.hidden || isScreenLocked()) return;
     if (this.elements.enemyArea.children.length > 0) {
       this.updateEntities();
       return;
@@ -60,7 +61,7 @@ export const rendererMethods = {
   },
 
   updateEntities() {
-    if (document.hidden) return;
+    if (document.hidden || isScreenLocked()) return;
     if (this._updateEntitiesPending) return;
     this._updateEntitiesPending = true;
     requestAnimationFrame(() => {
@@ -70,7 +71,7 @@ export const rendererMethods = {
   },
 
   _doUpdateEntities() {
-    if (document.hidden) return;
+    if (document.hidden || isScreenLocked()) return;
     const disableAnim = this._cachedDisableAnim;
     const speed = this.speedMult || 1;
     const fastMode = speed >= 5;

@@ -5,6 +5,7 @@
  */
 
 import { GameDB } from '../../data/database.js';
+import { isScreenLocked } from '../../utils/screen-lock.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS, getMedalImageFilter } from '../../definitions/medal-definitions.js';
 import { formatNumber } from '../../utils/format.js';
@@ -294,7 +295,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       return;
     }
 
-    if (document.hidden) return;
+    if (document.hidden || isScreenLocked()) return;
     if (isMaxRank || !nextRank) return;
     if (syncInProgress) return;
     syncInProgress = true;
