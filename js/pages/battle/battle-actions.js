@@ -926,7 +926,7 @@ export const actionMethods = {
   },
 
   executeEnemyTurn(enemy) {
-    if (!this.atbWorker) return;
+    if (this.isStopped) return;
 
     const aliveParty = this.party.filter(p => !p.isDead);
     if (aliveParty.length === 0) {

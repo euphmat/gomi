@@ -49,14 +49,6 @@ export const atbMethods = {
       clearTimeout(this.autoRetryTimer);
       this.autoRetryTimer = null;
     }
-    if (this.atbWorker) {
-      this.atbWorker.terminate();
-      this.atbWorker = null;
-    }
-    if (this.atbWorkerUrl) {
-      URL.revokeObjectURL(this.atbWorkerUrl);
-      this.atbWorkerUrl = null;
-    }
     if (this.atbLoop) {
       clearInterval(this.atbLoop);
       this.atbLoop = null;
@@ -125,41 +117,20 @@ export const atbMethods = {
     // Doubled from 1000/70 to compensate for 100ms tick interval (was 50ms)
     const BASE_TICK_RATE = 1000 / 35;
 
-    if (this.atbWorker) {
-      this.atbWorker.terminate();
-    }
-    if (this.atbWorkerUrl) {
-      URL.revokeObjectURL(this.atbWorkerUrl);
-      this.atbWorkerUrl = null;
-    }
-
     // Adjust the tick interval for the highest supported speed.
     let tickInterval = 100;
     if (this.speedMult >= 5) tickInterval = 50;
 
-    const workerCode = `
-      let timer = null;
-      let interval = ${tickInterval};
-      self.onmessage = function(e) {
-        if (e.data === 'stop') {
-          clearInterval(timer);
-          timer = null;
-        } else if (e.data === 'start') {
-          if (timer) clearInterval(timer);
-          timer = setInterval(() => self.postMessage('tick'), interval);
-        }
-      };
-    `;
-    const blob = new Blob([workerCode], { type: 'application/javascript' });
-    this.atbWorkerUrl = URL.createObjectURL(blob);
-    this.atbWorker = new Worker(this.atbWorkerUrl);
-
-    this.atbWorker.onmessage = () => {
-      // A tick can already be queued when visibilitychange stops the Worker.
-      // Never advance combat from such a stale background message.
+    // The old implementation created a dedicated Worker only to relay timer
+    // messages. All combat work still ran on the main thread, so the Worker
+    // added a thread, Blob URL and message dispatch without moving any work off
+    // the UI thread. A modest main-thread interval has the same cadence and is
+    // automatically paused below while the page is hidden.
+    const tick = () => {
       if (this.isStopped || document.hidden) return;
 
       const disableAnim = this._cachedDisableAnim;
+      const battleSpeed = this.speedMult;
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();
         if (this.currentTab === 'skill' || this.currentTab === 'item' || this.currentTab === 'info') {
@@ -178,30 +149,30 @@ export const atbMethods = {
       
       let loops = 0;
       // アニメ無効時はティックを待たずに次の行動者が決まるまで一気に時間を進める
-      const MAX_LOOPS = disableAnim ? 50 : (this.speedMult >= 5 ? 5 : 1);
+      const MAX_LOOPS = disableAnim ? 50 : (battleSpeed >= 5 ? 5 : 1);
       
       while (!nextActor && loops < MAX_LOOPS) {
         loops++;
-        let candidates = [];
         
         this.party.forEach(p => {
           if (p.isDead) return;
           const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
           const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
           const speedRatio = spd / avgSpd;
-          p.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
-          if (p.atb >= 1000) {
-            candidates.push({ type: 'party', entity: p, atb: p.atb });
+          p.atb += speedRatio * BASE_TICK_RATE * battleSpeed;
+          if (p.atb >= 1000 && (!nextActor || p.atb > nextActor.atb)) {
+            nextActor = { type: 'party', entity: p, atb: p.atb };
           }
           
           if (!document.hidden && loops === 1) { // 描画更新は最初のループのみ
             const atbEl = this.atbElements[p.elementId];
             if(atbEl) {
-               if (disableAnim || this.speedMult >= 5) {
+               if (disableAnim || battleSpeed >= 5) {
                  if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
                } else {
                  if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-                 atbEl.style.transform = `scaleX(${Math.min(1000, p.atb) / 1000})`;
+                 const nextTransform = `scaleX(${Math.min(1000, p.atb) / 1000})`;
+                 if (atbEl.style.transform !== nextTransform) atbEl.style.transform = nextTransform;
                }
             }
           }
@@ -212,30 +183,27 @@ export const atbMethods = {
           const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
           const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
           const speedRatio = spd / avgSpd;
-          e.atb += speedRatio * BASE_TICK_RATE * this.speedMult;
-          if (e.atb >= 1000) {
-            candidates.push({ type: 'enemy', entity: e, atb: e.atb });
+          e.atb += speedRatio * BASE_TICK_RATE * battleSpeed;
+          if (e.atb >= 1000 && (!nextActor || e.atb > nextActor.atb)) {
+            nextActor = { type: 'enemy', entity: e, atb: e.atb };
           }
 
           if (!document.hidden && loops === 1) {
             const atbEl = this.atbElements[e.elementId];
             if(atbEl) {
-               if (disableAnim || this.speedMult >= 5) {
+               if (disableAnim || battleSpeed >= 5) {
                  if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
                } else {
                  if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-                 atbEl.style.transform = `scaleX(${Math.min(1000, e.atb) / 1000})`;
+                 const nextTransform = `scaleX(${Math.min(1000, e.atb) / 1000})`;
+                 if (atbEl.style.transform !== nextTransform) atbEl.style.transform = nextTransform;
                }
             }
           }
         });
         
-        if (candidates.length > 0) {
-          candidates.sort((a, b) => b.atb - a.atb);
-          nextActor = candidates[0];
-          // 待機中のキャラクターのATBを1000に制限すると、
-          // 高速戦闘時に1tickで1000以上稼ぐ高速キャラクターが無限に割り込んでしまうため制限を撤廃
-        }
+        // 待機中のキャラクターのATBを1000に制限すると、高速戦闘時に
+        // 1tickで1000以上稼ぐ高速キャラクターが無限に割り込むため制限しない。
       }
 
       if (nextActor) {
@@ -287,13 +255,13 @@ export const atbMethods = {
           this.activeEnemy = nextActor.entity;
           if (!document.hidden) this.updateEntities();
           
-          const enemyDelay = 500 / this.speedMult;
+          const enemyDelay = 500 / battleSpeed;
           const executeEnemy = () => {
             if (this.activeEnemy !== nextActor.entity) return;
             this.executeEnemyTurn(nextActor.entity);
           };
 
-          if (this.speedMult >= 5) {
+          if (battleSpeed >= 5) {
             executeEnemy();
           } else {
             this._scheduleBattleTimeout(executeEnemy, enemyDelay);
@@ -302,14 +270,20 @@ export const atbMethods = {
       }
     };
 
-    this.atbWorker.postMessage('start');
+    this.atbLoop = setInterval(tick, tickInterval);
 
-    // Stop/start worker when page visibility changes to save CPU in background
+    // Stop/start the simulation timer when page visibility changes to save CPU
+    // in the background and avoid queued catch-up ticks on return.
     this._visibilityHandler = () => {
       if (document.hidden) {
-        this.atbWorker?.postMessage('stop');
+        if (this.atbLoop) {
+          clearInterval(this.atbLoop);
+          this.atbLoop = null;
+        }
       } else {
-        this.atbWorker?.postMessage('start');
+        if (!this.atbLoop && !this.isStopped) {
+          this.atbLoop = setInterval(tick, tickInterval);
+        }
         this.cacheDOMElements();
         this.renderEntities();
       }

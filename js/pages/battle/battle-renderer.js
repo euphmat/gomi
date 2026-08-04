@@ -222,7 +222,7 @@ export const rendererMethods = {
     this.party.forEach(p => {
       const cache = this.domCache.party[p.elementId];
       if (!cache) return;
-      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, statBlocks, stateIconsContainer } = cache;
+      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, stateIconsContainer } = cache;
 
       if (stateIconsContainer && !p.isDead) {
         const newHtml = getActiveStateIconsHTML(p);
@@ -343,9 +343,6 @@ export const rendererMethods = {
       }
 
       const statVals = cache.statVals;
-      const statRows = cache.statRows;
-      const statIcons = cache.statIcons;
-      const statLabels = cache.statLabels;
 
       if (statVals && statVals.atk) {
         const spdTotalPercent = (p._passiveSpdBuffPercent || 0);
@@ -427,7 +424,6 @@ export const rendererMethods = {
       if (el) {
         this.atbElements[p.elementId] = el.querySelector(`#${p.elementId}-atb`);
         
-        const statBlocks = el.querySelectorAll('.text-gray-100.font-black.drop-shadow-md');
         const hpBarEl = el.querySelector('.bg-red-600');
         const mpBarEl = el.querySelector('.bg-blue-600');
         const expBarEl = el.querySelector('.bg-green-600');

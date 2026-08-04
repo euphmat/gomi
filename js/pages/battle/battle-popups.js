@@ -1,8 +1,10 @@
 /**
  * battle-popups.js
- * 統一ポップアップシステム (Pre-allocated DOM Pool)
- * DOMの生成・破棄を完全になくし、表示・非表示のみ切り替える
+ * 統一ポップアップシステム (Lazy DOM Pool)
+ * 必要数だけ生成して再利用し、長時間戦闘でもDOM数を上限内に保つ
  */
+
+const POPUP_POOL_LIMITS = { float: 150, label: 50 };
 
 export const popupMethods = {
   _initPopupPool() {
@@ -14,32 +16,44 @@ export const popupMethods = {
     document.body.appendChild(this._popupLayer);
 
     this._domPool = [];
-    // Pre-allocate 150 generic floating popups
-    for (let i = 0; i < 150; i++) {
+  },
+
+  _createPoolElement(type) {
+    if (type === 'float') {
       const el = document.createElement('div');
       el.className = 'hidden';
       el.style.cssText = 'display: none !important;';
       this._popupLayer.appendChild(el);
-      this._domPool.push({ el, active: false, type: 'float' });
+      const item = { el, active: false, type };
+      this._domPool.push(item);
+      return item;
     }
 
-    // Pre-allocate 50 wrapper-based popups for labels
-    for (let i = 0; i < 50; i++) {
+    if (type === 'label') {
       const wrapper = document.createElement('div');
       wrapper.className = 'hidden';
       wrapper.style.cssText = 'display: none !important;';
       const inner = document.createElement('div');
       wrapper.appendChild(inner);
       this._popupLayer.appendChild(wrapper);
-      this._domPool.push({ el: wrapper, inner, active: false, type: 'label' });
+      const item = { el: wrapper, inner, active: false, type };
+      this._domPool.push(item);
+      return item;
     }
+
+    return null;
   },
 
   _getPoolElement(type = 'float') {
     if (!this._popupLayer) this._initPopupPool();
     
-    const poolItem = this._domPool.find(item => !item.active && item.type === type);
-    if (!poolItem) return null; // If pool exhausted, ignore to prevent DOM growth
+    let poolItem = this._domPool.find(item => !item.active && item.type === type);
+    if (!poolItem) {
+      const typeCount = this._domPool.reduce((count, item) => count + (item.type === type ? 1 : 0), 0);
+      if (typeCount >= POPUP_POOL_LIMITS[type]) return null;
+      poolItem = this._createPoolElement(type);
+    }
+    if (!poolItem) return null;
     
     poolItem.active = true;
     const el = poolItem.el;
@@ -185,7 +199,7 @@ export const popupMethods = {
     
     // limit stack size — tighter at high speed to prevent severe layout thrashing
     const maxStack = speed >= 5 ? 3 : 8;
-    while (stack.length > maxStack) {
+    while (stack.length >= maxStack) {
       const oldest = stack.shift();
       if (oldest.anim) oldest.anim.cancel();
       this._releasePoolElement(oldest.el); // wrapper contains popup
