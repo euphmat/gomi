@@ -163,10 +163,10 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
               ${!p.isDead ? getActiveStateIconsHTML(p) : ''}
             </div>
           </div>
-          <div class="mt-1 flex items-center gap-1 overflow-hidden whitespace-nowrap text-[7px] font-bold leading-none text-gray-400">
-            <span>Lv.<span class="${p.elementId}-lv text-gray-100">${p.level || 1}</span></span>
-            <span>J.<span class="${p.elementId}-jlv text-gray-200">${p.jobLevel || 1}</span></span>
-            <span>SP.<span class="${p.elementId}-sp text-gray-200">${p.sp || 0}</span></span>
+          <div class="mt-1 flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[10px] font-black leading-none tabular-nums">
+            <span class="flex items-baseline gap-px text-cyan-300">LV<span class="${p.elementId}-lv text-white drop-shadow">${p.level || 1}</span></span>
+            <span class="flex items-baseline gap-px text-violet-300">JLV<span class="${p.elementId}-jlv text-white drop-shadow">${p.jobLevel || 1}</span></span>
+            <span class="flex items-baseline gap-px text-amber-300">SP<span class="${p.elementId}-sp text-white drop-shadow">${p.sp || 0}</span></span>
           </div>
           <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-gray-950 ring-1 ring-gray-700/60">
             <div id="${p.elementId}-atb" class="h-full w-full origin-left bg-amber-300" style="transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
