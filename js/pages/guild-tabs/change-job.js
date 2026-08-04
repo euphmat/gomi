@@ -7,6 +7,12 @@ import { calculateRebirthCost } from '../../utils/rebirth-cost.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 
+const getJobImagePath = jobOrId => {
+  const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
+  const id = typeof jobOrId === 'string' ? jobOrId : jobOrId?.id;
+  return job?.image || `./assets/job/job_${id || 'norvice'}.webp`;
+};
+
 /**
  * 「神殿」タブの画面 — 転職・転生・SPリセット
  */
@@ -113,7 +119,7 @@ export function renderChangeJobTab() {
 
     char.jobId = jobDef.id;
     char.jobName = jobDef.name;
-    char.iconImage = `./assets/job/job_${jobDef.id}.webp`;
+    char.iconImage = getJobImagePath(jobDef);
 
     // 転職先のジョブのスキルを継承していた場合は解除する（それ以外の継承スキルは維持）
     if (char.inheritedActiveSkill && char.inheritedActiveSkill.jobId === jobDef.id) {
@@ -429,7 +435,7 @@ export function renderChangeJobTab() {
             
             requirementsHtml += `
               <div class="flex items-center gap-1 bg-slate-900/80 px-1.5 py-0.5 rounded border ${isMet ? 'border-emerald-500/30' : 'border-rose-500/30'} shrink-0">
-                <img src="./assets/job/job_${req.jobId}.webp" class="w-3.5 h-3.5 object-contain" alt="${reqJobName}" onerror="this.style.display='none'">
+                <img src="${getJobImagePath(req.jobId)}" class="w-3.5 h-3.5 object-contain" alt="${reqJobName}" onerror="this.style.display='none'">
                 <span class="text-[9px] font-bold ${textColor} tracking-tight flex items-center whitespace-nowrap">
                   ${reqJobName}<span class="opacity-70 ml-0.5">Lv${req.level}</span>
                 </span>
@@ -473,7 +479,7 @@ export function renderChangeJobTab() {
       row.innerHTML = `
         ${glow}
         <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner group-active:border-indigo-400/40 group-active:shadow-[0_0_10px_rgba(99,102,241,0.2)] transition-all duration-300 overflow-hidden p-1 z-10">
-          <img src="./assets/job/job_${job.id}.webp" class="w-full h-full object-contain ${isCurrent ? 'opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)] scale-110' : 'opacity-85 group-active:opacity-100 group-active:scale-110 transition-transform duration-500'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
+          <img src="${getJobImagePath(job)}" class="w-full h-full object-contain ${isCurrent ? 'opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)] scale-110' : 'opacity-85 group-active:opacity-100 group-active:scale-110 transition-transform duration-500'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
         <div class="relative flex-1 min-w-0 pr-1 z-10 flex flex-col justify-center gap-0.5">
           <div class="flex items-center gap-2 flex-wrap">
@@ -781,7 +787,7 @@ export function renderChangeJobTab() {
 
       row.innerHTML = `
         <div class="relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shrink-0 border border-slate-700/60 shadow-inner p-1 z-10">
-          <img src="./assets/job/job_${jobId}.webp" class="w-full h-full object-contain opacity-85 group-active:opacity-100 transition-transform duration-500" alt="${jobDef.name}" onerror="this.src='./assets/job/job_norvice.webp'">
+          <img src="${getJobImagePath(jobDef)}" class="w-full h-full object-contain opacity-85 group-active:opacity-100 transition-transform duration-500" alt="${jobDef.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
         <div class="relative flex-1 min-w-0 pr-1 z-10 flex flex-col justify-center gap-0.5">
           <div class="flex items-center gap-2 flex-wrap">

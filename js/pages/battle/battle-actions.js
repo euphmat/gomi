@@ -263,6 +263,22 @@ export const actionMethods = {
       return;
     }
 
+    // --- 影の身のこなし (Shadow Motion) の判定 ---
+    if (defender.hp !== undefined) {
+      const shadowMotionSkill = this._findSkill(defender, 'shadow_motion');
+      if (shadowMotionSkill?.level > 0 && shadowMotionSkill.levelConfig
+        && Math.random() * 100 < shadowMotionSkill.levelConfig.evadeChance) {
+        this.showActionName(defender.elementId, '影の身のこなし', 'text-violet-300', 'border-violet-500/50');
+        if (!options.skipAtbReset && !options.isAoEProcessed) {
+          attacker.atb = 0;
+          if (attacker.hp !== undefined) this.activeCharacter = null;
+          else this.activeEnemy = null;
+          this.renderEntities();
+        }
+        return;
+      }
+    }
+
     // --- 華麗なる見切り (Splendid Evasion) の判定 ---
     if (!isMagic && defender.hp !== undefined) {
       const evadeSkill = this._findSkill(defender, 'splendid_evasion');
@@ -370,6 +386,19 @@ export const actionMethods = {
     
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
+
+    // --- Passive: 急所看破 (Anatomy Mastery) ---
+    if (attacker.hp !== undefined) {
+      const anatomyMastery = this._findSkill(attacker, 'anatomy_mastery');
+      const defenderCurrentHp = defender.hp ? defender.hp.current : defender.currentHp;
+      const defenderMaxHp = defender.hp
+        ? (defender.stats?.hp || defender.hp.max)
+        : (defender.maxHp || defender.stats?.hp);
+      if (anatomyMastery?.level > 0 && anatomyMastery.levelConfig?.lowHpDamagePercent
+        && defenderMaxHp > 0 && defenderCurrentHp / defenderMaxHp <= .4) {
+        damage = Math.floor(damage * (1 + anatomyMastery.levelConfig.lowHpDamagePercent / 100));
+      }
+    }
 
     // --- Passive: 大洋の支配者 (water damage amplification) ---
     if (options.element === 'water' && attacker.hp !== undefined) {
