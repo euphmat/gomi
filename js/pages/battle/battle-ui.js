@@ -163,12 +163,21 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
               ${!p.isDead ? getActiveStateIconsHTML(p) : ''}
             </div>
           </div>
-          <div class="mt-1 flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[10px] font-black leading-none tabular-nums">
-            <span class="flex items-baseline gap-px text-cyan-300">LV<span class="${p.elementId}-lv text-white drop-shadow">${p.level || 1}</span></span>
-            <span class="flex items-baseline gap-px text-violet-300">JLV<span class="${p.elementId}-jlv text-white drop-shadow">${p.jobLevel || 1}</span></span>
-            <span class="flex items-baseline gap-px text-amber-300">SP<span class="${p.elementId}-sp text-white drop-shadow">${p.sp || 0}</span></span>
+          <div class="mt-0.5 grid grid-cols-3 gap-0.5 overflow-hidden whitespace-nowrap">
+            <span class="flex min-w-0 flex-col items-center rounded-[3px] border border-cyan-400/40 bg-cyan-950/70 py-px leading-none shadow-inner">
+              <span class="text-[8px] font-bold text-cyan-300">LV</span>
+              <span class="${p.elementId}-lv mt-px text-[11px] font-black tabular-nums text-white drop-shadow">${p.level || 1}</span>
+            </span>
+            <span class="flex min-w-0 flex-col items-center rounded-[3px] border border-violet-400/40 bg-violet-950/70 py-px leading-none shadow-inner">
+              <span class="text-[8px] font-bold text-violet-300">JLV</span>
+              <span class="${p.elementId}-jlv mt-px text-[11px] font-black tabular-nums text-white drop-shadow">${p.jobLevel || 1}</span>
+            </span>
+            <span class="flex min-w-0 flex-col items-center rounded-[3px] border border-amber-400/40 bg-amber-950/70 py-px leading-none shadow-inner">
+              <span class="text-[8px] font-bold text-amber-300">SP</span>
+              <span class="${p.elementId}-sp mt-px text-[11px] font-black tabular-nums text-white drop-shadow">${p.sp || 0}</span>
+            </span>
           </div>
-          <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-gray-950 ring-1 ring-gray-700/60">
+          <div class="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-gray-950 ring-1 ring-gray-700/60">
             <div id="${p.elementId}-atb" class="h-full w-full origin-left bg-amber-300" style="transform: scaleX(${p.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
           </div>
         </div>
