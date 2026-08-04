@@ -88,7 +88,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
 
   // --- コンテナ作成 ---
   const container = document.createElement('div');
-  container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
+  container.className = 'battle-pet-root w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
   // (スタイルは index.html のグローバルCSSに移動しました)
 
@@ -110,27 +110,27 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   // --- ヘッダー (捕獲情報統合・3分割グリッド化) ---
   const isDisplayLegendary = targetEntity.isLegendary || isLegendaryToggleActive;
   const headerHtml = `
-    <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
+    <div class="battle-pet-header flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
       <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-md relative flex items-center justify-center p-1 shrink-0">
         ${isDisplayLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
         <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${isDisplayLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
-      <div class="flex flex-col min-w-0 flex-1">
-        <div class="flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
+      <div class="battle-pet-header-body flex flex-col min-w-0 flex-1">
+        <div class="battle-pet-title-row flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
           <div class="flex items-center gap-1.5 min-w-0">
             ${currentLevel !== null ? `<span class="text-[10px] text-pink-300 font-black bg-pink-900/40 px-2 py-0.5 rounded border border-pink-500/40 shrink-0">Lv.${currentLevel}</span>` : ''}
             <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
             ${isLegendaryCaptured ? `
-              <label class="relative inline-flex min-h-7 items-center cursor-pointer shrink-0 px-1">
+              <label class="battle-legendary-toggle inline-flex min-h-11 items-center cursor-pointer shrink-0 px-1">
                 <input type="checkbox" class="sr-only peer" id="legendary-toggle" ${isLegendaryToggleActive ? 'checked' : ''}>
-                <div class="w-6 h-3 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-slate-300 peer-checked:after:bg-yellow-400 after:rounded-full after:h-2.5 after:w-2.5 after:transition-all peer-checked:bg-yellow-600/50 border border-slate-600 peer-checked:border-yellow-500/50 shadow-inner"></div>
+                <div class="battle-legendary-track bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:bg-yellow-600/50 border border-slate-600 peer-checked:border-yellow-500/50 shadow-inner"><span class="battle-legendary-knob bg-slate-300 peer-checked:bg-yellow-400"></span></div>
                 <span class="ml-1 text-[8px] font-black ${isLegendaryToggleActive ? 'text-yellow-400 drop-shadow-[0_0_2px_rgba(250,204,21,0.5)]' : 'text-slate-500'}">伝説</span>
               </label>
             ` : ''}
           </div>
           <span class="text-[9px] text-slate-400 font-bold shrink-0 ml-1">討伐数: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
         </div>
-        <div class="grid grid-cols-3 gap-0.5 w-full">
+        <div class="battle-pet-rates grid grid-cols-3 gap-0.5 w-full">
           <!-- 捕獲率 -->
           <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
             <span class="text-[8px] text-slate-400 font-black shrink-0">捕獲率:</span>
@@ -184,7 +184,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   if (variants.length > 0) {
     for (const variant of variants) {
       const feedSection = document.createElement('div');
-      feedSection.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
+      feedSection.className = 'battle-pet-feed bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
       container.appendChild(feedSection);
       renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, onRanchDataUpdated, tabContent, monsterKills);
     }
@@ -340,7 +340,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
 
       const itemRow = document.createElement('div');
       itemRow.id = `battle-pet-mat-row-${variant.key}-${drop.itemId}`;
-      itemRow.className = 'bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors flex flex-col gap-1.5';
+      itemRow.className = 'battle-pet-material bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors flex flex-col gap-1.5';
 
       itemRow.innerHTML = `
         <div class="flex items-center justify-between gap-2">
@@ -356,20 +356,20 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
               <div class="text-[9px] font-bold text-slate-400 mt-0.5">所持: <span id="battle-pet-mat-owned-${variant.key}-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
             </div>
           </div>
-          <button class="px-3 h-7 bg-gradient-to-r from-pink-600 to-rose-600 active:from-pink-500 active:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded text-[10px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_8px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
+          <button class="battle-feed-button px-3 bg-gradient-to-r from-pink-600 to-rose-600 active:from-pink-500 active:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[10px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_8px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
             与える
           </button>
         </div>
         <!-- スライダーエリア (牧場画面と統一) -->
-        <div class="flex items-center gap-2 px-1 pt-0.5 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
-          <span class="text-[9px] font-bold text-slate-400 w-4 text-right shrink-0">1</span>
-          <div class="relative flex-1 flex items-center h-4">
+        <div class="battle-quantity-control flex items-center gap-2 px-1 pt-0.5 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
+          <span class="battle-quantity-min text-[9px] font-bold text-slate-400 w-4 text-right shrink-0">1</span>
+          <div class="battle-slider-shell relative flex-1 flex items-center">
             <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
             <input type="range" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0" data-item-id="${drop.itemId}">
           </div>
-          <button type="button" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[9px] font-black text-slate-400 cursor-pointer active:bg-slate-800 active:text-slate-200 btn-max">MAX</button>
-          <div class="bg-slate-900 border border-slate-700 rounded w-10 h-5 flex items-center justify-center shadow-inner shrink-0 relative overflow-hidden">
+          <button type="button" class="battle-max-button flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-900/60 text-[9px] font-black text-slate-300 cursor-pointer active:bg-slate-700 active:text-white btn-max">MAX</button>
+          <div class="battle-quantity-input-shell bg-slate-900 border border-slate-700 rounded-lg flex items-center justify-center shadow-inner shrink-0 relative overflow-hidden">
             <input type="number" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[10px] font-black text-pink-300 outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10">
           </div>
         </div>

@@ -40,7 +40,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
     const label = slotLabelMap[slotKey] || slotKey;
     if (item) {
       return `
-        <button type="button" class="touch-compact flex w-full items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0
+        <button type="button" class="flex h-8 w-full shrink-0 items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0
                     cursor-pointer active:bg-gray-800/50 transition-colors eq-slot-clickable text-left"
              aria-label="${label}: ${item.name}を変更"
              data-char-id="${character.id}" data-slot-key="${slotKey}">
@@ -56,7 +56,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
       `;
     } else {
       return `
-        <button type="button" class="touch-compact flex w-full items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 opacity-60
+        <button type="button" class="flex h-8 w-full shrink-0 items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 opacity-60
                     cursor-pointer active:bg-gray-800/50 active:opacity-100 transition-all eq-slot-clickable text-left"
              aria-label="${label}: 未装備。装備を選択"
              data-char-id="${character.id}" data-slot-key="${slotKey}">
@@ -114,7 +114,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
               <span>SP</span>
               <span class="font-bold text-[11px] drop-shadow-md">${sp}</span>
             </div>
-            <button type="button" class="touch-compact px-2 py-[2px] ${isAlreadyBest ? 'bg-gray-700/50 text-gray-500 border-gray-600/30 cursor-not-allowed' : 'bg-indigo-600/80 active:bg-indigo-500 text-white border-indigo-500/50 cursor-pointer shadow'} rounded text-[9px] font-bold transition-colors border shrink-0 equip-best-btn" data-char-id="${character.id}" ${isAlreadyBest ? 'disabled' : ''}>
+            <button type="button" class="h-8 px-2 py-[2px] ${isAlreadyBest ? 'bg-gray-700/50 text-gray-500 border-gray-600/30 cursor-not-allowed' : 'bg-indigo-600/80 active:bg-indigo-500 text-white border-indigo-500/50 cursor-pointer shadow'} rounded text-[9px] font-bold transition-colors border shrink-0 equip-best-btn" data-char-id="${character.id}" ${isAlreadyBest ? 'disabled' : ''}>
               最強装備
             </button>
           </div>

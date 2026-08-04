@@ -30,7 +30,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
   let inventoryMap = {};
   const container = document.createElement('div');
-  container.className = 'w-full flex flex-col gap-1.5 p-1 text-slate-200';
+  container.className = 'battle-medal-root w-full flex flex-col gap-1.5 p-1 text-slate-200';
 
   const currentRankIndex = playerMedals[targetEntity.id] !== undefined ? playerMedals[targetEntity.id] : -1;
   const nextRankIndex = currentRankIndex + 1;
@@ -40,7 +40,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
   // --- メダルビジュアル + モンスター情報 ---
   const topPanel = document.createElement('div');
-  topPanel.className = 'flex items-center gap-3 bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner shrink-0';
+  topPanel.className = 'battle-medal-header flex items-center gap-3 bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner shrink-0';
 
   // メダルビジュアル
   const medalVisual = document.createElement('div');
@@ -109,7 +109,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
   // --- 鋳造/ランクアップセクション ---
   if (!isMaxRank && nextRank) {
     const craftPanel = document.createElement('div');
-    craftPanel.className = 'bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner flex flex-col gap-2';
+    craftPanel.className = 'battle-medal-craft bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner flex flex-col gap-2';
 
     const actionLabel = currentRank ? 'ランクアップ' : '鋳造';
     const goldCost = (targetEntity.rewards?.gold || 0) * nextRank.goldMultiplier;
@@ -141,7 +141,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
     // 素材グリッド
     const materialsGrid = document.createElement('div');
-    materialsGrid.className = 'grid grid-cols-2 gap-1.5';
+    materialsGrid.className = 'battle-medal-materials grid grid-cols-2 gap-1.5';
 
     materialRequirements.forEach(({ mat, itemId, owned, required, sufficient }) => {
       const row = document.createElement('div');
@@ -196,7 +196,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     const craftBtn = document.createElement('button');
     craftBtn.id = 'battle-medal-craft-btn';
     craftBtn.className = `
-      w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200
+      battle-medal-button w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200
       ${canCraft
         ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer'
         : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}
@@ -218,7 +218,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
       }
 
       craftBtn.disabled = true;
-      craftBtn.className = 'w-full py-2 rounded-lg text-[11px] font-black tracking-wide bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed';
+      craftBtn.className = 'battle-medal-button w-full py-2 rounded-lg text-[11px] font-black tracking-wide bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed';
 
       // 素材消費
       for (const drop of materialDrops) {
@@ -347,7 +347,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
     if (btn && !btn.disabled && !canCraftSync || btn && btn.disabled && canCraftSync) {
       // update style
       btn.disabled = !canCraftSync;
-      btn.className = `w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
+      btn.className = `battle-medal-button w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
     }
 
     } finally {

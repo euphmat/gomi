@@ -448,7 +448,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           <div class="flex items-center px-0.5 mb-0.5 shrink-0 min-w-0">
             <span class="font-black text-[12px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
           </div>
-          <div class="grid grid-cols-3 gap-1 content-start flex-1">
+        <div class="battle-info-stats grid grid-cols-3 gap-1 content-start flex-1">
             ${statPillsHtml}
             ${rewardsHtml}
           </div>
@@ -464,7 +464,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
           </div>
           <span class="text-[9px] text-slate-500">発動率</span>
         </div>
-        <div class="grid grid-cols-2 gap-0.5 max-h-[68px] overflow-y-auto custom-scrollbar">
+        <div class="battle-info-action-list grid grid-cols-2 gap-0.5 max-h-[68px] overflow-y-auto custom-scrollbar">
           ${actionsHtml}
         </div>
       </div>
@@ -481,9 +481,9 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
             ${bonus > 0 ? `<span class="text-[8px] text-blue-300 bg-blue-950/50 border border-blue-900/50 rounded px-1 py-0.5 whitespace-nowrap">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
           </div>
         </div>
-        <div class="overflow-x-hidden">
+        <div class="battle-info-drop-scroller overflow-x-auto no-scrollbar">
           ${dropRows.length > 0 ? `
-            <div class="grid gap-0.5 w-full shrink-0" style="grid-template-columns: repeat(${dropRows.length}, minmax(0, 1fr));" aria-label="ドロップ一覧">
+            <div class="battle-info-drop-grid grid gap-1 w-full shrink-0" aria-label="ドロップ一覧">
               ${dropsHtml}
             </div>
           ` : ''}
@@ -508,8 +508,8 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
       ? 'text-amber-300 border-amber-800/60 bg-amber-950/25'
       : 'text-cyan-300 border-cyan-900/60 bg-cyan-950/20';
     const cards = items.map(item => `
-      <div class="item-card relative w-10 h-10 bg-slate-900/85 border ${equipment ? 'border-amber-800/50' : 'border-slate-700/70'} rounded-md flex items-center justify-center p-1 group" data-item-id="${item.id}" aria-label="${item.name} x${formatNumber(item.quantity)}">
-        <div class="w-7 h-7 rounded bg-slate-950/80 border border-slate-700/60 p-0.5 flex items-center justify-center">
+      <div class="battle-item-card item-card relative bg-slate-900/85 border ${equipment ? 'border-amber-800/50' : 'border-slate-700/70'} rounded-lg flex items-center justify-center p-1 group" data-item-id="${item.id}" aria-label="${item.name} x${formatNumber(item.quantity)}">
+        <div class="battle-item-image rounded-md bg-slate-950/80 border border-slate-700/60 p-0.5 flex items-center justify-center">
           <img src="${item.image}" class="w-full h-full object-contain drop-shadow-sm pointer-events-none" onerror="this.style.display='none'">
         </div>
         <span class="absolute right-0 bottom-0 max-w-full overflow-hidden bg-black/85 rounded-tl px-0.5 text-[8px] leading-[11px] font-black ${equipment ? 'text-amber-300' : 'text-white'} tabular-nums whitespace-nowrap pointer-events-none">x${formatNumber(item.quantity)}</span>
@@ -517,20 +517,20 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
     `).join('');
 
     return `
-      <section class="flex flex-col gap-1" aria-label="${label}">
-        <div class="h-6 px-1.5 rounded border flex items-center gap-1 ${accent}">
+      <section class="battle-item-group flex flex-col gap-1.5" aria-label="${label}">
+        <div class="battle-item-heading px-2 rounded-lg border flex items-center gap-1.5 ${accent}">
           <span class="material-symbols-outlined" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span>
           <span class="text-[10px] font-black tracking-wider">${label}</span>
           <span class="ml-auto text-[9px] opacity-70">${items.length}種</span>
         </div>
-        <div class="flex flex-wrap gap-1">${cards}</div>
+        <div class="battle-item-grid">${cards}</div>
       </section>
     `;
   };
 
   const equipmentItems = obtainedItems.filter(item => item.type === 'equipment');
   const materialItems = obtainedItems.filter(item => item.type !== 'equipment');
-  return `<div class="flex flex-col gap-2 p-1 content-start w-full">
+  return `<div class="battle-item-root flex flex-col gap-2 p-1 content-start w-full">
     ${renderGroup('素材', 'category', materialItems)}
     ${renderGroup('装備', 'swords', equipmentItems, true)}
   </div>`;
@@ -616,7 +616,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     const grayscaleClass = (!canCast && !isAutoBattle) ? 'opacity-50 saturate-50 cursor-not-allowed' : '';
     
     // Core Card Design
-    let btnClass = "skill-btn relative w-full flex items-stretch gap-2.5 p-2 border rounded-xl transition-all duration-300 group overflow-hidden ";
+    let btnClass = "battle-skill-card skill-btn relative w-full flex items-stretch gap-2.5 p-2 border rounded-xl transition-all duration-300 group overflow-hidden ";
     
     let toggleHtml = '';
     
@@ -626,10 +626,10 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         btnClass += "bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] active:border-cyan-400/80 active:shadow-[0_0_25px_rgba(34,211,238,0.25)] active:-translate-y-0.5 active:scale-[0.98] ";
         
         toggleHtml = `
-          <div class="flex flex-col items-center justify-center pl-2 border-l border-cyan-500/20 shrink-0 min-w-[60px]">
+          <div class="battle-skill-auto flex flex-col items-center justify-center pl-2 border-l border-cyan-500/20 shrink-0 min-w-[60px]">
             <span class="text-[9px] text-cyan-300 font-bold tracking-wider mb-0.5 uppercase drop-shadow-[0_0_2px_rgba(34,211,238,0.5)]">Auto</span>
-            <div class="relative inline-flex h-4 w-8 shrink-0 items-center rounded-full bg-cyan-500 transition-colors ease-in-out duration-300 shadow-[0_0_10px_rgba(34,211,238,0.4)]">
-              <span class="translate-x-4 inline-block h-3 w-3 transform rounded-full bg-white transition ease-in-out duration-300 shadow-sm"></span>
+            <div class="battle-switch is-active bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.4)]" aria-hidden="true">
+              <span class="battle-switch-knob bg-white"></span>
             </div>
           </div>
         `;
@@ -638,10 +638,10 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         btnClass += "bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 active:opacity-100 active:border-slate-500/80 active:-translate-y-0.5 active:scale-[0.98] ";
         
         toggleHtml = `
-          <div class="flex flex-col items-center justify-center pl-2 border-l border-slate-700/50 shrink-0 min-w-[60px]">
+          <div class="battle-skill-auto flex flex-col items-center justify-center pl-2 border-l border-slate-700/50 shrink-0 min-w-[60px]">
             <span class="text-[9px] text-slate-500 font-bold tracking-wider mb-0.5 uppercase">Manual</span>
-            <div class="relative inline-flex h-4 w-8 shrink-0 items-center rounded-full bg-slate-700 transition-colors ease-in-out duration-300">
-              <span class="translate-x-1 inline-block h-3 w-3 transform rounded-full bg-slate-400 transition ease-in-out duration-300 shadow-sm"></span>
+            <div class="battle-switch bg-slate-700" aria-hidden="true">
+              <span class="battle-switch-knob bg-slate-400"></span>
             </div>
           </div>
         `;
@@ -656,14 +656,14 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     if (levelConfig.mpCost > 0) {
       if (canCast) {
         mpCostHtml = `
-          <div class="flex flex-col items-end justify-center px-2 min-w-[50px]">
+          <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
             <span class="text-[9px] text-cyan-400/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
             <span class="text-lg font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${levelConfig.mpCost}</span>
           </div>
         `;
       } else {
         mpCostHtml = `
-          <div class="flex flex-col items-end justify-center px-2 min-w-[50px]">
+          <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
             <span class="text-[9px] text-rose-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
             <span class="text-lg font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${levelConfig.mpCost}</span>
           </div>
@@ -671,7 +671,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
       }
     } else {
       mpCostHtml = `
-        <div class="flex flex-col items-end justify-center px-2 min-w-[50px]">
+        <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
           <span class="text-[9px] text-slate-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
           <span class="text-lg font-mono font-black text-slate-400 leading-none">0</span>
         </div>
@@ -679,19 +679,19 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     }
 
     skillListHtml += `
-      <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}">
+      <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}" ${isAutoBattle ? `role="switch" aria-checked="${autoEnabled}" aria-label="${skillDef.name}の自動使用"` : ''}>
         <!-- Touch press feedback -->
         <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-active:opacity-100 transition-opacity duration-500"></div>
         
         <!-- Left: Icon -->
-        <div class="flex items-center justify-center shrink-0 z-10">
-          <div class="w-10 h-10 rounded-lg bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-active:border-cyan-500/50 group-active:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
+        <div class="battle-skill-icon-wrap flex items-center justify-center shrink-0 z-10">
+          <div class="battle-skill-icon w-10 h-10 rounded-lg bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-active:border-cyan-500/50 group-active:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
             <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[22px] group-active:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
           </div>
         </div>
         
         <!-- Middle: Info -->
-        <div class="flex flex-col text-left flex-1 min-w-0 justify-center z-10 py-0">
+        <div class="battle-skill-info flex flex-col text-left flex-1 min-w-0 justify-center z-10 py-0">
           <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
             <div class="text-[13px] font-bold tracking-wide ${canCast ? 'text-slate-50' : 'text-slate-400'} leading-tight">
               ${skillDef.name}
@@ -704,7 +704,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
         </div>
 
         <!-- Right: MP Cost & Auto Switch (Horizontal Layout) -->
-        <div class="flex items-stretch justify-end shrink-0 z-10">
+        <div class="battle-skill-controls flex items-stretch justify-end shrink-0 z-10">
           ${mpCostHtml}
           ${toggleHtml}
         </div>

@@ -1283,6 +1283,7 @@ export function renderBattlePage() {
         transition: color .3s ease, background-color .3s ease, border-color .3s ease, box-shadow .3s ease, transform .15s ease;
       }
       .battle-tab {
+        min-height: 36px;
         color: rgb(255 255 255 / .78);
         background-color: rgb(4 10 18 / .72);
         border-color: rgb(255 255 255 / .16);
@@ -1307,6 +1308,90 @@ export function renderBattlePage() {
         border-color: rgb(var(--battle-palette-3) / .5);
         box-shadow: inset 0 1px 0 rgb(var(--battle-palette-4) / .18), 0 10px 28px rgb(0 0 0 / .35);
         overscroll-behavior: contain;
+        touch-action: pan-y;
+      }
+      .battle-switch {
+        position: relative;
+        display: inline-flex;
+        width: 36px;
+        height: 20px;
+        flex: 0 0 auto;
+        align-items: center;
+        border-radius: 999px;
+      }
+      .battle-switch-knob {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        box-shadow: 0 1px 3px rgb(0 0 0 / .4);
+        transition: transform .2s ease, background-color .2s ease;
+      }
+      .battle-switch.is-active .battle-switch-knob {
+        transform: translateX(16px);
+      }
+      .battle-item-heading {
+        min-height: 32px;
+      }
+      .battle-item-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+        gap: .375rem;
+      }
+      .battle-item-card {
+        width: 100%;
+        min-width: 0;
+        aspect-ratio: 1;
+      }
+      .battle-item-image {
+        width: min(36px, 76%);
+        aspect-ratio: 1;
+      }
+      .battle-info-drop-grid {
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(48px, 1fr);
+      }
+      .battle-slider-shell {
+        height: 28px;
+        min-width: 0;
+        touch-action: pan-x;
+      }
+      .battle-slider-shell .quantity-slider {
+        min-height: 0;
+        touch-action: pan-x;
+      }
+      .battle-quantity-input-shell {
+        width: 52px;
+        height: 36px;
+      }
+      .battle-quantity-input-shell .quantity-input {
+        min-height: 0;
+      }
+      .battle-feed-button,
+      .battle-medal-button {
+        min-height: 40px;
+      }
+      .battle-legendary-track {
+        position: relative;
+        width: 36px;
+        height: 20px;
+        flex: 0 0 auto;
+      }
+      .battle-legendary-knob {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        box-shadow: 0 1px 3px rgb(0 0 0 / .45);
+        transition: transform .2s ease, background-color .2s ease;
+      }
+      #legendary-toggle:checked + .battle-legendary-track .battle-legendary-knob {
+        transform: translateX(16px);
+        background: rgb(250 204 21);
       }
       @media (max-width: 540px), (max-height: 760px) {
         #tab-content { padding: .3rem; }
@@ -1317,6 +1402,86 @@ export function renderBattlePage() {
         .battle-info-drop-card { height: 40px; padding: 1px; }
         .battle-info-drop-image { width: 21px; height: 21px; }
         .battle-info-drop-image img { width: 19px; height: 19px; }
+      }
+      @media (max-width: 540px) {
+        .battle-tab {
+          min-height: 44px;
+          gap: .2rem;
+          padding-inline: .15rem;
+          font-size: 10px;
+        }
+        .battle-tab .material-symbols-outlined { font-size: 15px !important; }
+        .sub-tab-body { padding-right: 0; }
+
+        /* Skill: preserve readable names while keeping MP and auto controls tappable. */
+        .battle-skill-card {
+          min-height: 68px;
+          gap: .375rem;
+          padding: .5rem;
+        }
+        .battle-skill-icon { width: 36px; height: 36px; }
+        .battle-skill-info > div:first-child { gap: .25rem; }
+        .battle-skill-info > div:last-child { font-size: 10px; line-height: 1.25; }
+        .battle-skill-controls { min-width: 0; }
+        .battle-skill-mp { min-width: 38px; padding-inline: .25rem; }
+        .battle-skill-mp > span:last-child { font-size: 15px; }
+        .battle-skill-auto { min-width: 46px; padding-left: .375rem; }
+
+        /* Items: use the full phone width and never leave 40px-only tiles. */
+        .battle-item-root { padding: .25rem; }
+        .battle-item-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
+        .battle-item-heading { min-height: 36px; }
+
+        /* Info: long action lists become a readable single column. */
+        .battle-info-root { gap: .375rem; }
+        .battle-info-action-list { grid-template-columns: minmax(0, 1fr); max-height: none; }
+        .battle-info-drop-scroller { overscroll-behavior-x: contain; }
+        .battle-info-drop-grid { grid-auto-columns: minmax(54px, 1fr); }
+        .battle-info-drop-card { min-height: 44px; }
+
+        /* Companion: rate cards can swipe horizontally instead of crushing text. */
+        .battle-pet-root { padding: .125rem; }
+        .battle-pet-rates {
+          display: flex;
+          overflow-x: auto;
+          gap: .25rem;
+          padding-bottom: 2px;
+          scrollbar-width: none;
+          overscroll-behavior-x: contain;
+        }
+        .battle-pet-rates::-webkit-scrollbar { display: none; }
+        .battle-pet-rates > div { min-width: 118px; min-height: 32px; }
+        .battle-pet-title-row { gap: .25rem; }
+        .battle-legendary-toggle { min-height: 44px; }
+        .battle-pet-material { padding: .5rem; }
+        .battle-feed-button { min-height: 44px; }
+        .battle-quantity-control {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 44px 52px;
+          gap: .375rem;
+          padding-inline: 0;
+        }
+        .battle-quantity-min { display: none; }
+        .battle-max-button { width: 44px; height: 44px; }
+        .battle-quantity-input-shell { width: 52px; height: 44px; }
+        .battle-slider-shell { height: 44px; }
+
+        /* Medal requirements are easier to scan as full-width touch rows. */
+        .battle-medal-materials { grid-template-columns: minmax(0, 1fr); }
+        .battle-medal-button { min-height: 44px; font-size: 12px; }
+      }
+      @media (max-width: 380px) {
+        .battle-info-summary { gap: .25rem; }
+        .battle-info-portrait-column { width: 60px; }
+        .battle-info-stats { gap: .2rem; }
+        .battle-info-stat { padding-inline: .2rem; }
+        .battle-info-stat > span { font-size: 11px; }
+        .battle-pet-header { align-items: flex-start; }
+        .battle-pet-title-row { flex-wrap: wrap; }
+        .battle-skill-card { gap: .25rem; padding-inline: .375rem; }
+        .battle-skill-icon { width: 32px; height: 32px; }
+        .battle-skill-mp { min-width: 34px; }
+        .battle-skill-auto { min-width: 42px; padding-left: .25rem; }
       }
       #command-area {
         box-sizing: border-box;
@@ -1345,9 +1510,6 @@ export function renderBattlePage() {
           width: 1.75rem;
           height: 1.75rem;
         }
-      }
-      @media (max-width: 340px) {
-        .battle-tab > span:last-child { display: none; }
       }
     </style>
 
