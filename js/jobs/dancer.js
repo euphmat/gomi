@@ -264,7 +264,7 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 export const dancer = {
   id: 'dancer',
   name: 'ダンサー',
-  image: 'assets/job_dancer.webp',
+  image: './assets/job/job_dancer.webp',
   icon: 'directions_run',
   changeCost: 100000,
   skills: [
