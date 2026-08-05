@@ -3,7 +3,7 @@ import { FISHING_TACKLE, FISHING_TACKLE_ORDER, getFishingTackleEffect, getFishin
 import { getFishingSpotUnlockStatus, getFishingTackleLevel, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
-import { isScreenLocked, setScreenLockActivity } from '../utils/screen-lock.js';
+import { isScreenLocked } from '../utils/screen-lock.js';
 import { playSoundEffect } from '../utils/sound-effects.js';
 
 function updateHeader(id, value) {
@@ -174,7 +174,6 @@ export async function renderFishingPage() {
 
   const stop = (message = '待機中') => {
     running = false;
-    setScreenLockActivity('fishing', false);
     clearTimeout(catchTimer);
     clearInterval(countdownTimer);
     catchTimer = null;
@@ -541,7 +540,6 @@ export async function renderFishingPage() {
     running = true;
     container.querySelector('[data-toggle-label]').textContent = '自動釣りを停止';
     container.querySelector('[data-toggle] .material-symbols-outlined').textContent = 'stop';
-    setScreenLockActivity('fishing', true, `${spot.name}で自動釣り中`);
     schedule();
   });
   container.querySelectorAll('[data-catch-tab]').forEach(button => {

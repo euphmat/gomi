@@ -1,15 +1,9 @@
-const SCREEN_LOCK_SETTING_KEY = 'screenLockEnabled';
-
-const activeAutomation = new Map();
-
 let initialized = false;
 let locked = false;
-let dismissedForCurrentRun = false;
 let overlay = null;
 let sliderThumb = null;
 let sliderTrack = null;
 let sliderFill = null;
-let activityLabel = null;
 let notificationRegion = null;
 const lockNotifications = new Map();
 let pointerId = null;
@@ -17,86 +11,12 @@ let dragStartX = 0;
 let dragStartOffset = 0;
 let dragOffset = 0;
 
-export function isScreenLockEnabled() {
-  return localStorage.getItem(SCREEN_LOCK_SETTING_KEY) === 'true';
-}
-
 export function isScreenLocked() {
   return locked;
 }
 
-export function setScreenLockEnabled(enabled) {
-  localStorage.setItem(SCREEN_LOCK_SETTING_KEY, String(Boolean(enabled)));
-  dismissedForCurrentRun = false;
-
-  if (enabled && hasActiveAutomation()) {
-    lockScreen();
-  } else if (!enabled) {
-    unlockScreen();
-  }
-}
-
-export function setScreenLockActivity(source, active, label = '') {
-  const wasActive = hasActiveAutomation();
-
-  if (active) {
-    activeAutomation.set(source, label);
-  } else {
-    activeAutomation.delete(source);
-  }
-
-  const isActive = hasActiveAutomation();
-  if (!isActive) {
-    dismissedForCurrentRun = false;
-    unlockScreen();
-    return;
-  }
-
-  updateActivityLabel();
-
-  // A manual unlock lasts until the current automatic run ends. Starting a
-  // new run enables the lock again without changing the saved preference.
-  if (!wasActive) dismissedForCurrentRun = false;
-  if (isScreenLockEnabled() && !dismissedForCurrentRun) lockScreen();
-}
-
-export function initScreenLock() {
-  if (initialized) return;
-  initialized = true;
-  injectStyles();
-  createOverlay();
-
-  document.addEventListener('gamenotification', showLockScreenNotification);
-
-  window.addEventListener('routechange', event => {
-    const path = event.detail?.path;
-    if (path !== '/battle') activeAutomation.delete('battle');
-    if (path !== '/fishing') activeAutomation.delete('fishing');
-    if (!hasActiveAutomation()) {
-      dismissedForCurrentRun = false;
-      unlockScreen();
-    } else {
-      updateActivityLabel();
-    }
-  });
-}
-
-function hasActiveAutomation() {
-  return activeAutomation.size > 0;
-}
-
-function currentActivityLabel() {
-  const labels = [...activeAutomation.values()].filter(Boolean);
-  return labels[0] || '自動プレイ中';
-}
-
-function updateActivityLabel() {
-  if (activityLabel) activityLabel.textContent = currentActivityLabel();
-}
-
-function lockScreen() {
+export function activateScreenLock() {
   if (!overlay) createOverlay();
-  updateActivityLabel();
   if (locked) return;
 
   locked = true;
@@ -107,6 +27,16 @@ function lockScreen() {
   document.body.classList.add('screen-lock-active');
   sliderThumb?.focus({ preventScroll: true });
   document.dispatchEvent(new CustomEvent('screenlockchange', { detail: { locked: true } }));
+}
+
+export function initScreenLock() {
+  if (initialized) return;
+  initialized = true;
+  localStorage.removeItem('screenLockEnabled');
+  injectStyles();
+  createOverlay();
+
+  document.addEventListener('gamenotification', showLockScreenNotification);
 }
 
 function unlockScreen() {
@@ -173,7 +103,6 @@ function clearLockScreenNotifications() {
 }
 
 function dismissLock() {
-  dismissedForCurrentRun = true;
   unlockScreen();
 }
 
@@ -191,7 +120,7 @@ function createOverlay() {
     <div class="screen-lock__status" aria-live="polite">
       <span class="material-symbols-outlined screen-lock__lock-icon">lock</span>
       <div class="screen-lock__title">画面ロック中</div>
-      <div class="screen-lock__activity">自動プレイ中</div>
+      <div class="screen-lock__activity">タッチ操作を無効化しています</div>
       <div class="screen-lock__saving">
         <span class="material-symbols-outlined">eco</span>
         省エネ表示で動作しています
@@ -214,7 +143,6 @@ function createOverlay() {
   sliderTrack = overlay.querySelector('.screen-lock__track');
   sliderThumb = overlay.querySelector('.screen-lock__thumb');
   sliderFill = overlay.querySelector('.screen-lock__fill');
-  activityLabel = overlay.querySelector('.screen-lock__activity');
   notificationRegion = overlay.querySelector('.screen-lock__notifications');
 
   overlay.addEventListener('contextmenu', event => event.preventDefault());

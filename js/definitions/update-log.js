@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.14';
-export const APP_RELEASE_DATE = '2026.08.04';
+export const APP_VERSION = '0.1.15';
+export const APP_RELEASE_DATE = '2026.08.05';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.05',
+    version: '0.1.15',
+    items: [
+      '全14職業のステータス倍率を再調整しました。初級職の弱点を緩和し、上位職の極端な倍率を抑えながら、各職業の攻撃・防御・支援の役割を明確にしました。',
+      'レベルアップ時の恒久ステータス成長量を全職業で同じ水準へ調整し、特定の職業だけで育成することが最適になりすぎないようにしました。',
+      '画面ロックを設定画面の最上部に移動し、「自動ロック」ボタンをタップした時だけロックする方式へ変更しました。自動戦闘・自動釣りを開始しても画面はロックされません。',
+    ],
+  },
   {
     date: '2026.08.04',
     version: '0.1.14',

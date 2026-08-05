@@ -30,7 +30,7 @@ import { DailyLoginManager } from './data/daily-login-manager.js';
 import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotificationsEnabled } from './utils/game-notifications.js';
 import { APP_VERSION } from './definitions/update-log.js';
 import { checkForAvailableUpdate, showUpdateLogModal } from './components/update-log-modal.js';
-import { initScreenLock, isScreenLockEnabled, setScreenLockEnabled } from './utils/screen-lock.js';
+import { activateScreenLock, initScreenLock } from './utils/screen-lock.js';
 import { initTouchFeedback } from './utils/touch-feedback.js';
 import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
 
@@ -324,6 +324,30 @@ class App {
         <!-- Modal Body -->
         <div class="px-4 py-4 flex flex-col gap-2.5 max-h-[75vh] overflow-y-auto">
 
+          <!-- Screen Lock -->
+          <button id="setting-screen-lock-button" type="button"
+                  class="settings-section w-full bg-emerald-950/30 border border-emerald-500/25 rounded-xl p-3.5 text-left
+                         active:bg-emerald-900/35 active:border-emerald-400/40 active:scale-[0.99]
+                         transition-all duration-200 cursor-pointer">
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20
+                            flex items-center justify-center shrink-0">
+                  <span class="material-symbols-outlined text-base text-emerald-400">screen_lock_portrait</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-bold text-gray-100 leading-tight">自動ロック</div>
+                  <div class="text-[9px] text-gray-400 mt-0.5 leading-relaxed">タップすると画面を暗くして誤操作を防止</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/25 px-2.5 py-1.5
+                          text-[9px] font-bold text-emerald-300 shrink-0">
+                <span class="material-symbols-outlined text-sm">lock</span>
+                ロック
+              </div>
+            </div>
+          </button>
+
           <!-- ═══ GAMEPLAY SETTINGS GROUP ═══ -->
           <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 flex items-center gap-2">
             <span class="material-symbols-outlined text-xs text-gray-600">tune</span>
@@ -406,27 +430,6 @@ class App {
               </div>
               <div id="toggle-notifications" class="setting-toggle ${areGameNotificationsEnabled() && 'Notification' in window && Notification.permission === 'granted' ? 'active' : ''}"
                    style="--toggle-color: #06b6d4; --toggle-glow: rgba(6,182,212,0.4)"></div>
-            </div>
-          </div>
-
-          <!-- Screen Lock Toggle -->
-          <div id="setting-row-screen-lock" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20
-                            flex items-center justify-center shrink-0">
-                  <span class="material-symbols-outlined text-base text-emerald-400">screen_lock_portrait</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-bold text-gray-200 leading-tight">自動プレイ中の画面ロック</div>
-                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">自動釣り・自動戦闘中に画面を暗くして誤操作を防止</div>
-                </div>
-              </div>
-              <div id="toggle-screen-lock"
-                   role="switch" aria-checked="${isScreenLockEnabled()}"
-                   class="setting-toggle ${isScreenLockEnabled() ? 'active' : ''}"
-                   style="--toggle-color: #10b981; --toggle-glow: rgba(16,185,129,0.4)"></div>
             </div>
           </div>
 
@@ -621,16 +624,7 @@ class App {
       });
     }
 
-    const rowScreenLock = document.getElementById('setting-row-screen-lock');
-    const toggleScreenLock = document.getElementById('toggle-screen-lock');
-    if (rowScreenLock && toggleScreenLock) {
-      rowScreenLock.addEventListener('click', () => {
-        const enabled = !isScreenLockEnabled();
-        toggleScreenLock.classList.toggle('active', enabled);
-        toggleScreenLock.setAttribute('aria-checked', String(enabled));
-        setScreenLockEnabled(enabled);
-      });
-    }
+    document.getElementById('setting-screen-lock-button')?.addEventListener('click', activateScreenLock);
 
     const rowSoundEffects = document.getElementById('setting-row-sound-effects');
     const toggleSoundEffects = document.getElementById('toggle-sound-effects');
