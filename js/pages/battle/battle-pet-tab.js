@@ -79,8 +79,13 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     ? `<span class="text-pink-400 text-[9px] font-black shrink-0">捕獲済</span>`
     : `<span class="text-emerald-400 text-[9px] font-black shrink-0">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
 
+  const hasAnyCompanion = isNormalCaptured || isLegendaryCaptured;
+  const monsterImageStyle = hasAnyCompanion ? '' : 'filter: brightness(0); opacity: 0.9;';
+
   // --- インベントリの一括取得 (ちらつき防止) ---
-  const allInv = await GameDB.getAllInventory();
+  // 未捕獲の表示では餌UIを出さないため、所持品も読み込まない。
+  const canFeedDisplayedVariant = isLegendaryToggleActive ? isLegendaryCaptured : isNormalCaptured;
+  const allInv = canFeedDisplayedVariant ? await GameDB.getAllInventory() : [];
   const inventoryMap = {};
   if (allInv) {
     allInv.forEach(item => inventoryMap[item.id] = item.quantity);
@@ -113,7 +118,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     <div class="battle-pet-header flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
       <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-md relative flex items-center justify-center p-1 shrink-0">
         ${isDisplayLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
-        <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${isDisplayLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
+        <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${isDisplayLegendary ? 'animate-rainbow' : ''}" style="${monsterImageStyle}" onerror="this.style.display='none'">
       </div>
       <div class="battle-pet-header-body flex flex-col min-w-0 flex-1">
         <div class="battle-pet-title-row flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
@@ -194,7 +199,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     noCapDiv.innerHTML = `
       <span class="material-symbols-outlined text-3xl text-slate-600">heart_broken</span>
       <span class="text-[11px] text-slate-400 font-bold">${isLegendaryToggleActive ? '伝説のモンスターは' : ''}まだ仲間になっていません</span>
-      <span class="text-[10px] text-slate-500">ダンジョンで討伐を繰り返すと仲間になることがあります</span>
+      <span class="text-[10px] text-slate-500">捕獲前は捕獲率の確認のみ可能で、餌は与えられません</span>
     `;
     container.appendChild(noCapDiv);
   }
@@ -204,10 +209,15 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
 
-  // --- リアルタイム反映 (ポーリング) ---
   if (tabContent._petSyncTimer) {
     clearInterval(tabContent._petSyncTimer);
+    tabContent._petSyncTimer = null;
   }
+
+  // 餌UIがない未捕獲モンスターでは所持品の監視も不要。
+  if (variants.length === 0) return;
+
+  // --- リアルタイム反映 (ポーリング) ---
   let syncInProgress = false;
   const petSyncTimer = setInterval(async () => {
     if (!document.body.contains(container)) {

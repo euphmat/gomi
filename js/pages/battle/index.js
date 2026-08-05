@@ -313,10 +313,11 @@ class BattleManager {
     this.dungeonCompanionMonsterIds = this.dungeonUniqueMonsterIds.filter(monsterId =>
       companionsInDungeon[monsterId] || companionsInDungeon[`${monsterId}_legendary`]
     );
-    const usesDungeonCompanionList = this.currentTab === 'pet' || this.currentTab === 'medal';
-    const selectableMonsterIds = usesDungeonCompanionList
-      ? this.dungeonCompanionMonsterIds
-      : allFloorMonsterIds;
+    const selectableMonsterIds = this.currentTab === 'pet'
+      ? this.dungeonUniqueMonsterIds
+      : this.currentTab === 'medal'
+        ? this.dungeonCompanionMonsterIds
+        : allFloorMonsterIds;
     if (!this.subTabSelectedMonsterId || !selectableMonsterIds.includes(this.subTabSelectedMonsterId)) {
       this.subTabSelectedMonsterId = selectableMonsterIds[0];
     }
@@ -963,12 +964,13 @@ class BattleManager {
     body.dataset.renderedTab = this.currentTab;
     previousBody.replaceWith(body);
 
-    // Pet / Medal では現在のダンジョンで仲間になっているモンスターのみ選択可能にする。
-    // Info は従来どおり現在階層のモンスターのみを表示する。
-    const usesDungeonCompanionList = this.currentTab === 'pet' || this.currentTab === 'medal';
-    const availableMonsterIds = usesDungeonCompanionList
-      ? (this.dungeonCompanionMonsterIds || [])
-      : (this.floorUniqueMonsterIds || []);
+    // Pet では未捕獲を含む現在のダンジョンの全モンスターを表示する。
+    // Medal は捕獲済みのみ、Info は現在階層のみという従来の範囲を保つ。
+    const availableMonsterIds = this.currentTab === 'pet'
+      ? (this.dungeonUniqueMonsterIds || [])
+      : this.currentTab === 'medal'
+        ? (this.dungeonCompanionMonsterIds || [])
+        : (this.floorUniqueMonsterIds || []);
 
     if (!availableMonsterIds.includes(this.subTabSelectedMonsterId)) {
       this.subTabSelectedMonsterId = availableMonsterIds[0] || null;
@@ -979,9 +981,15 @@ class BattleManager {
     header.innerHTML = monsterDefs.map(m => {
       const isSelected = this.subTabSelectedMonsterId === m.id;
       const medalStatus = this.currentTab === 'medal' ? medalAvailability[m.id] : null;
+      const isPetCompanion = this.currentTab === 'pet' && Object.values(this.ranchData || {}).some(
+        dungeonRanch => dungeonRanch?.[m.id] || dungeonRanch?.[`${m.id}_legendary`]
+      );
       const hasLegendaryCompanion = this.currentTab === 'pet' && Object.values(this.ranchData || {}).some(
         dungeonRanch => dungeonRanch?.[`${m.id}_legendary`]
       );
+      const monsterImageStyle = this.currentTab === 'pet' && !isPetCompanion
+        ? 'filter: brightness(0); opacity: 0.9;'
+        : '';
       const bgClass = medalStatus?.isMaxRank
         ? (isSelected
           ? 'bg-yellow-500/40 border-yellow-200'
@@ -1022,14 +1030,14 @@ class BattleManager {
       if (isSelected) {
         return `
           <button type="button" class="sub-tab-item flex min-h-11 items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${m.name}" aria-pressed="true">
-            <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
+            <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" style="${monsterImageStyle}" onerror="this.style.display='none'">
             <span class="text-[11px] font-bold tracking-wide whitespace-nowrap pointer-events-none ${selectedTextClass}">${m.name}</span>
           </button>
         `;
       } else {
         return `
           <button type="button" class="sub-tab-item flex h-11 w-11 items-center justify-center rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${m.name}" aria-pressed="false">
-            <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" onerror="this.style.display='none'">
+            <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" style="${monsterImageStyle}" onerror="this.style.display='none'">
           </button>
         `;
       }
