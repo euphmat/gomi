@@ -396,51 +396,55 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     if (rate <= 0.1) {
       return {
         card: 'border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80',
-        rate: 'text-amber-300 bg-amber-950/90 border-amber-700/70'
+        rate: 'text-amber-300 bg-amber-950/90 border-amber-700/70',
+        image: 'border-amber-500/65 bg-amber-950/45 shadow-[0_0_10px_rgba(245,158,11,0.28)]',
+        icon: 'drop-shadow-[0_0_7px_rgba(251,191,36,0.55)]'
       };
     }
     if (rate <= 2.0) {
       return {
         card: 'border-purple-800/60 bg-gradient-to-br from-purple-950/35 to-slate-950/80',
-        rate: 'text-purple-300 bg-purple-950/90 border-purple-700/60'
+        rate: 'text-purple-300 bg-purple-950/90 border-purple-700/60',
+        image: 'border-purple-500/60 bg-purple-950/35 shadow-[0_0_9px_rgba(168,85,247,0.22)]',
+        icon: 'drop-shadow-[0_0_6px_rgba(192,132,252,0.45)]'
       };
     }
     return {
       card: 'border-slate-700/60 bg-slate-950/65',
-      rate: 'text-emerald-300 bg-emerald-950/80 border-emerald-800/60'
+      rate: 'text-emerald-300 bg-emerald-950/80 border-emerald-800/60',
+      image: 'border-slate-600/80 bg-slate-900/95 shadow-[0_0_8px_rgba(15,23,42,0.75)]',
+      icon: 'drop-shadow-[0_0_5px_rgba(148,163,184,0.35)]'
     };
   };
 
   const materialDropRows = (targetEntity.drops || []).map(d => {
       const mat = materials.find(m => m.id === d.itemId);
       const itemName = mat ? mat.name : d.itemId;
-      const itemImg = mat && mat.image 
-        ? `<img src="${mat.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm">`
-        : `<div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-slate-500" style="font-size: 18px; transform: scale(0.65);">category</span></div>`;
-      
       const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus + getTreasureEffect('materialDropPercent');
       const rateStyle = getDropRateStyle(rate);
+      const itemImg = mat && mat.image
+        ? `<img src="${mat.image}" class="h-10 w-10 max-h-full max-w-full object-contain ${rateStyle.icon}">`
+        : `<span class="material-symbols-outlined text-slate-400" style="font-size: 30px;">category</span>`;
 
       return `
-        <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 active:brightness-125 transition-all gap-0.5 shadow-inner" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
-          <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-slate-700/70 shrink-0 shadow-sm">
+        <div class="battle-info-drop-card h-[68px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 gap-1 active:brightness-125 transition-all shadow-inner" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
+          <div class="battle-info-drop-image flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border p-0.5 ${rateStyle.image}">
             ${itemImg}
           </div>
-          <span class="max-w-full overflow-hidden text-[9px] leading-none font-black ${rateStyle.rate} px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${rate.toFixed(3).replace(/\.?0+$/, '')}%</span>
+          <span class="max-w-full overflow-hidden text-[10px] leading-none font-black ${rateStyle.rate} px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${rate.toFixed(3).replace(/\.?0+$/, '')}%</span>
         </div>
       `;
     });
   const equipmentDropRate = EQUIPMENT_DROP_RATE * getTreasureEffect('equipmentDropMultiplier');
   const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
-    <div class="battle-info-drop-card h-[52px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 active:brightness-125 transition-all gap-0.5 shadow-inner" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
-      <div class="battle-info-drop-image w-full max-w-7 h-7 rounded-md bg-slate-900/90 flex items-center justify-center border border-amber-700/60 shrink-0 shadow-sm">
-        <img src="${equipment.image}" class="w-7 max-w-full h-7 object-contain drop-shadow-sm" onerror="this.style.display='none'">
+    <div class="battle-info-drop-card h-[68px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 gap-1 active:brightness-125 transition-all shadow-inner" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
+      <div class="battle-info-drop-image flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/65 bg-amber-950/45 p-0.5 shadow-[0_0_10px_rgba(245,158,11,0.28)]">
+        <img src="${equipment.image}" class="h-10 w-10 max-h-full max-w-full object-contain drop-shadow-[0_0_7px_rgba(251,191,36,0.55)]" onerror="this.style.display='none'">
       </div>
-      <span class="max-w-full overflow-hidden text-[9px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${equipmentDropRate}%</span>
+      <span class="max-w-full overflow-hidden text-[10px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${equipmentDropRate}%</span>
     </div>
   `);
   const dropRows = [...materialDropRows, ...equipmentDropRows];
-  const dropHeaderMotionClass = cachedDisableAnimations ? '' : 'battle-info-drop-header--animated';
   if (dropRows.length > 0) {
     dropsHtml = dropRows.join('');
   } else {
@@ -494,23 +498,17 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       </div>
 
       <!-- 3. Drop inventory: materials and equipment stay visually separate -->
-      <div class="battle-info-drops shrink-0 flex flex-col bg-gradient-to-b from-emerald-950/15 to-slate-900/55 border border-emerald-900/50 rounded-lg p-1 overflow-hidden shadow-inner">
-        <div class="battle-info-drop-header ${dropHeaderMotionClass} relative flex min-h-[42px] items-center justify-between gap-2 overflow-hidden rounded-md border border-emerald-700/45 bg-gradient-to-r from-emerald-950/85 via-slate-900/95 to-cyan-950/70 px-2 py-1 mb-1 shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_3px_12px_rgba(4,120,87,0.18)]">
-          <div class="absolute -left-5 top-1/2 h-16 w-20 -translate-y-1/2 rounded-full bg-emerald-400/10 blur-xl pointer-events-none"></div>
-          <div class="relative z-10 flex min-w-0 items-center gap-2">
-            <div class="battle-info-drop-emblem relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-300/55 bg-gradient-to-br from-emerald-400/30 via-cyan-500/15 to-slate-950 shadow-[0_0_16px_rgba(52,211,153,0.38),inset_0_1px_0_rgba(255,255,255,0.2)]">
-              <span class="absolute inset-1 rounded-lg bg-emerald-300/10 blur-sm"></span>
-              <span class="material-symbols-outlined relative text-emerald-200 drop-shadow-[0_0_7px_rgba(110,231,183,0.95)]" style="font-size: 28px; font-variation-settings: 'FILL' 1, 'wght' 600;">featured_seasonal_and_gifts</span>
-              <span class="battle-info-drop-sparkle material-symbols-outlined absolute -right-1.5 -top-1.5 text-amber-200 drop-shadow-[0_0_5px_rgba(253,230,138,0.95)]" style="font-size: 13px; font-variation-settings: 'FILL' 1;">auto_awesome</span>
+      <div class="battle-info-drops shrink-0 flex flex-col bg-slate-900/55 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner">
+        <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1 shrink-0 gap-2">
+          <div class="flex items-center gap-1.5 min-w-0 shrink-0">
+            <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-emerald-800/60 bg-emerald-950/65">
+              <span class="material-symbols-outlined text-emerald-400" style="font-size: 20px; font-variation-settings: 'FILL' 1;">shopping_bag</span>
             </div>
-            <div class="flex min-w-0 flex-col leading-none">
-              <span class="text-[8px] font-black tracking-[0.18em] text-emerald-300/75">DROP REWARDS</span>
-              <span class="mt-0.5 bg-gradient-to-r from-white via-emerald-100 to-cyan-200 bg-clip-text text-[15px] font-black tracking-wide text-transparent drop-shadow-[0_1px_4px_rgba(16,185,129,0.45)]">ドロップ</span>
-            </div>
+            <span class="font-bold text-[12px] text-slate-200">ドロップ</span>
+            <span class="text-[9px] font-black text-emerald-300 bg-emerald-950/70 border border-emerald-800/50 rounded-full px-1.5 py-0.5">${dropRows.length}種</span>
           </div>
-          <div class="relative z-10 flex min-w-0 shrink-0 items-center gap-1.5">
-            ${bonus > 0 ? `<span class="text-[8px] font-bold text-blue-200 bg-blue-950/60 border border-blue-700/45 rounded px-1.5 py-1 whitespace-nowrap shadow-inner">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
-            <span class="flex h-7 min-w-9 items-center justify-center rounded-full border border-emerald-400/45 bg-emerald-950/80 px-2 text-[10px] font-black text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.2)]">${dropRows.length}種</span>
+          <div class="flex items-center gap-1.5 min-w-0">
+            ${bonus > 0 ? `<span class="text-[8px] text-blue-300 bg-blue-950/50 border border-blue-900/50 rounded px-1 py-0.5 whitespace-nowrap">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
           </div>
         </div>
         <div class="battle-info-drop-scroller min-w-0 overflow-x-hidden">

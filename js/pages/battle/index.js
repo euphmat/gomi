@@ -1395,35 +1395,6 @@ export function renderBattlePage() {
       .battle-info-drop-grid {
         grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
       }
-      @keyframes battle-drop-emblem-float {
-        0%, 100% { transform: translateY(0) rotate(-2deg); }
-        50% { transform: translateY(-2px) rotate(2deg); }
-      }
-      @keyframes battle-drop-header-shine {
-        0%, 62% { transform: translateX(-180%) skewX(-18deg); opacity: 0; }
-        72% { opacity: .55; }
-        92%, 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; }
-      }
-      @keyframes battle-drop-sparkle {
-        0%, 100% { transform: scale(.72) rotate(-8deg); opacity: .55; }
-        50% { transform: scale(1.18) rotate(8deg); opacity: 1; }
-      }
-      .battle-info-drop-header--animated::after {
-        content: '';
-        position: absolute;
-        inset-block: -45%;
-        left: 0;
-        width: 22%;
-        background: linear-gradient(90deg, transparent, rgb(255 255 255 / .22), transparent);
-        animation: battle-drop-header-shine 4.2s ease-in-out infinite;
-        pointer-events: none;
-      }
-      .battle-info-drop-header--animated .battle-info-drop-emblem {
-        animation: battle-drop-emblem-float 2.6s ease-in-out infinite;
-      }
-      .battle-info-drop-header--animated .battle-info-drop-sparkle {
-        animation: battle-drop-sparkle 1.7s ease-in-out infinite;
-      }
       .battle-slider-shell {
         height: 28px;
         min-width: 0;
@@ -1468,9 +1439,9 @@ export function renderBattlePage() {
         #tab-content { padding: .3rem; }
         .sub-tab-header { padding: .2rem .2rem .1rem; margin-bottom: .15rem; }
         .battle-info-stat { min-height: 18px; }
-        .battle-info-drop-card { height: 40px; padding: 1px; }
-        .battle-info-drop-image { width: 21px; height: 21px; }
-        .battle-info-drop-image img { width: 19px; height: 19px; }
+        .battle-info-drop-card { height: 62px; padding: 3px; }
+        .battle-info-drop-image { width: 36px; height: 36px; }
+        .battle-info-drop-image img { width: 34px; height: 34px; }
       }
       @media (max-width: 540px) {
         .battle-tab {
@@ -1505,7 +1476,7 @@ export function renderBattlePage() {
         .battle-info-root { gap: .375rem; }
         .battle-info-action-list { grid-template-columns: minmax(0, 1fr); }
         .battle-info-drop-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); }
-        .battle-info-drop-card { min-height: 44px; }
+        .battle-info-drop-card { min-height: 62px; }
 
         /* Companion: rate cards can swipe horizontally instead of crushing text. */
         .battle-pet-root { padding: .125rem; }
