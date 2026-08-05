@@ -292,27 +292,27 @@ class App {
     overlay.style.animation = 'fade-in 0.15s ease-out';
 
     overlay.innerHTML = `
-      <div class="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl mx-3 w-full max-w-[calc(100vw-24px)]
+      <div class="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl mx-3 w-full max-w-sm max-h-[calc(100dvh-24px)]
                   shadow-2xl shadow-black/60 flex flex-col overflow-hidden
                   animate-[slide-up_0.25s_ease-out]"
            style="animation: slide-up 0.25s ease-out">
 
         <!-- Modal Header -->
-        <div class="relative px-5 py-4 border-b border-gray-700/30 overflow-hidden">
+        <div class="relative px-4 py-2.5 border-b border-gray-700/30 overflow-hidden shrink-0">
           <!-- Header gradient accent -->
           <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/8 to-cyan-600/10"></div>
           <div class="relative flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gray-700/80 to-gray-800/80 border border-gray-600/40
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-gray-700/80 to-gray-800/80 border border-gray-600/40
                           flex items-center justify-center shadow-lg">
-                <span class="material-symbols-outlined text-lg text-gray-300" style="font-variation-settings: 'FILL' 1">settings</span>
+                <span class="material-symbols-outlined text-base text-gray-300" style="font-variation-settings: 'FILL' 1">settings</span>
               </div>
               <div>
                 <span class="text-sm font-bold text-gray-100 tracking-wide">設定</span>
               </div>
             </div>
-            <button id="settings-close"
-                    class="w-9 h-9 flex items-center justify-center rounded-xl
+            <button id="settings-close" type="button" aria-label="設定を閉じる"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg
                            text-gray-500 active:text-gray-200 bg-gray-800/40 active:bg-gray-700/60
                            border border-transparent active:border-gray-600/40
                            transition-all duration-200 cursor-pointer">
@@ -322,17 +322,16 @@ class App {
         </div>
 
         <!-- Modal Body -->
-        <div class="px-4 py-4 flex flex-col gap-2.5 max-h-[75vh] overflow-y-auto">
+        <div class="px-3 py-3 flex min-h-0 flex-col gap-2 overflow-y-auto">
 
           <!-- Screen Lock -->
           <button id="setting-screen-lock-button" type="button"
-                  class="settings-section w-full bg-emerald-950/30 border border-emerald-500/25 rounded-xl p-3.5 text-left
+                  class="settings-section w-full bg-emerald-950/30 border border-emerald-500/25 rounded-xl px-2.5 py-2 text-left
                          active:bg-emerald-900/35 active:border-emerald-400/40 active:scale-[0.99]
                          transition-all duration-200 cursor-pointer">
-            <div class="flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20
-                            flex items-center justify-center shrink-0">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="settings-compact-icon bg-emerald-500/15 border border-emerald-500/20">
                   <span class="material-symbols-outlined text-base text-emerald-400">screen_lock_portrait</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -340,7 +339,7 @@ class App {
                   <div class="text-[9px] text-gray-400 mt-0.5 leading-relaxed">タップすると画面を暗くして誤操作を防止</div>
                 </div>
               </div>
-              <div class="flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/25 px-2.5 py-1.5
+              <div class="flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/25 px-2 py-1
                           text-[9px] font-bold text-emerald-300 shrink-0">
                 <span class="material-symbols-outlined text-sm">lock</span>
                 ロック
@@ -355,13 +354,13 @@ class App {
             <div class="flex-1 h-px bg-gradient-to-r from-gray-700/40 to-transparent"></div>
           </div>
 
+          <div class="settings-section settings-group">
+
           <!-- Battle Stats Toggle -->
-          <div id="setting-row-battle-stats" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
+          <div id="setting-row-battle-stats" class="settings-compact-row cursor-pointer">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-blue-500/15 border border-blue-500/20
-                            flex items-center justify-center shrink-0">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="settings-compact-icon bg-blue-500/15 border border-blue-500/20">
                   <span class="material-symbols-outlined text-base text-blue-400">visibility</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -376,12 +375,10 @@ class App {
           </div>
 
           <!-- Battle Animation Toggle -->
-          <div id="setting-row-battle-anim" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
+          <div id="setting-row-battle-anim" class="settings-compact-row cursor-pointer">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-purple-500/15 border border-purple-500/20
-                            flex items-center justify-center shrink-0">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="settings-compact-icon bg-purple-500/15 border border-purple-500/20">
                   <span class="material-symbols-outlined text-base text-purple-400">animation</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -396,12 +393,10 @@ class App {
           </div>
 
           <!-- Continue on Death Toggle -->
-          <div id="setting-row-continue" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
+          <div id="setting-row-continue" class="settings-compact-row cursor-pointer">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-rose-500/15 border border-rose-500/20
-                            flex items-center justify-center shrink-0">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="settings-compact-icon bg-rose-500/15 border border-rose-500/20">
                   <span class="material-symbols-outlined text-base text-rose-400">heart_broken</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -415,12 +410,11 @@ class App {
             </div>
           </div>
 
-          <!-- Auto Battle Speed -->
-          <div id="setting-row-notifications" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
+          <!-- Event Notifications -->
+          <div id="setting-row-notifications" class="settings-compact-row cursor-pointer">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/20 flex items-center justify-center shrink-0">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="settings-compact-icon bg-cyan-500/15 border border-cyan-500/20">
                   <span class="material-symbols-outlined text-base text-cyan-400">notifications</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -434,12 +428,10 @@ class App {
           </div>
 
           <!-- Sound Effects Toggle -->
-          <div id="setting-row-sound-effects" data-sound="none" class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200 cursor-pointer">
+          <div id="setting-row-sound-effects" data-sound="none" class="settings-compact-row cursor-pointer">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <div class="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/20
-                            flex items-center justify-center shrink-0">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <div class="settings-compact-icon bg-orange-500/15 border border-orange-500/20">
                   <span class="material-symbols-outlined text-base text-orange-400">volume_up</span>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -454,25 +446,26 @@ class App {
             </div>
           </div>
 
+          </div>
+
           <!-- Auto Battle Speed -->
-          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
+          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl px-2.5 py-2
                       active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/20
-                          flex items-center justify-center shrink-0">
+            <div class="flex items-center gap-2.5 mb-1.5">
+              <div class="settings-compact-icon bg-yellow-500/15 border border-yellow-500/20">
                 <span class="material-symbols-outlined text-base text-yellow-400">speed</span>
               </div>
               <div class="flex-1">
                 <div class="text-xs font-bold text-gray-200 leading-tight">自動戦闘速度</div>
                 <div class="text-[9px] text-gray-500 mt-0.5">戦闘のテンポを調整</div>
               </div>
-              <div class="bg-yellow-500/15 border border-yellow-500/25 rounded-lg px-2.5 py-1
+              <div class="bg-yellow-500/15 border border-yellow-500/25 rounded-lg px-2 py-0.5
                           flex items-center gap-0.5">
                 <span id="setting-speed-value" class="text-sm font-bold text-yellow-400">${localStorage.getItem('autoBattleSpeed') || 1}</span>
                 <span class="text-[9px] text-yellow-500/70 font-bold">×</span>
               </div>
             </div>
-            <div class="px-1">
+            <div class="px-1 pb-0.5">
               ${(() => {
                 const speeds = [1, 2, 3, 4, 5];
                 const current = parseInt(localStorage.getItem('autoBattleSpeed') || 1);
@@ -485,7 +478,7 @@ class App {
                          value="${idx}"
                          class="setting-slider"
                          data-speeds='${JSON.stringify(speeds)}'>
-                  <div class="flex justify-between mt-2.5 px-0.5">
+                  <div class="flex justify-between mt-1.5 px-0.5">
                     ${speeds.map((v, i) => `
                       <div class="speed-step ${current >= v ? 'active' : ''}"
                            data-speed="${v}" data-idx="${i}">
@@ -499,69 +492,68 @@ class App {
           </div>
 
           <!-- ═══ DATA MANAGEMENT GROUP ═══ -->
-          <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 mt-2 flex items-center gap-2">
+          <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 mt-0.5 flex items-center gap-2">
             <span class="material-symbols-outlined text-xs text-gray-600">database</span>
             データ管理
             <div class="flex-1 h-px bg-gradient-to-r from-gray-700/40 to-transparent"></div>
           </div>
 
+          <div class="settings-section settings-group">
+
           <!-- Save Data Management -->
-          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl p-3.5
-                      active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/20
-                          flex items-center justify-center shrink-0">
+          <div class="settings-compact-row">
+            <div class="flex items-center gap-2">
+              <div class="settings-compact-icon bg-emerald-500/15 border border-emerald-500/20">
                 <span class="material-symbols-outlined text-base text-emerald-400">save</span>
               </div>
-              <div>
+              <div class="flex-1 min-w-0">
                 <div class="text-xs font-bold text-gray-200 leading-tight">セーブデータ管理</div>
-                <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">データのエクスポート・インポート</div>
               </div>
-            </div>
-            <div class="flex gap-2">
-              <button id="settings-export"
-                      class="settings-action-btn flex-1 py-2.5 rounded-xl text-xs font-bold
+              <div class="flex gap-1.5 shrink-0">
+              <button id="settings-export" type="button"
+                      class="settings-action-btn px-2 py-2 rounded-lg text-[9px] font-bold
                              bg-gradient-to-b from-gray-700/80 to-gray-800/80
                              border border-gray-600/40 text-gray-300
                              active:text-white active:border-gray-500/50
-                             cursor-pointer flex items-center justify-center gap-1.5">
-                <span class="material-symbols-outlined text-sm">file_upload</span>
+                             cursor-pointer flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-xs">file_upload</span>
                 エクスポート
               </button>
-              <button id="settings-import"
-                      class="settings-action-btn flex-1 py-2.5 rounded-xl text-xs font-bold
+              <button id="settings-import" type="button"
+                      class="settings-action-btn px-2 py-2 rounded-lg text-[9px] font-bold
                              bg-gradient-to-b from-gray-700/80 to-gray-800/80
                              border border-gray-600/40 text-gray-300
                              active:text-white active:border-gray-500/50
-                             cursor-pointer flex items-center justify-center gap-1.5">
-                <span class="material-symbols-outlined text-sm">file_download</span>
+                             cursor-pointer flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-xs">file_download</span>
                 インポート
               </button>
+              </div>
             </div>
           </div>
 
           <!-- Data Reset -->
-          <div class="settings-section bg-red-950/20 border border-red-900/25 rounded-xl p-3.5
-                      active:bg-red-950/30 active:border-red-800/30 transition-all duration-200">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/20
-                          flex items-center justify-center shrink-0">
+          <div class="settings-compact-row bg-red-950/20">
+            <div class="flex items-center gap-2">
+              <div class="settings-compact-icon bg-red-500/15 border border-red-500/20">
                 <span class="material-symbols-outlined text-base text-red-400">delete_forever</span>
               </div>
-              <div>
+              <div class="flex-1 min-w-0">
                 <div class="text-xs font-bold text-red-300/90 leading-tight">データリセット</div>
-                <div class="text-[9px] text-red-400/50 mt-0.5 leading-relaxed">全データを削除して初期状態に戻す（取り消し不可）</div>
+                <div class="text-[9px] text-red-400/50 mt-0.5 leading-tight">全データを削除（取り消し不可）</div>
               </div>
-            </div>
-            <button id="settings-reset"
-                    class="settings-action-btn w-full py-2.5 rounded-xl text-xs font-bold
+              <button id="settings-reset" type="button" aria-label="セーブデータを削除してリセット"
+                    class="settings-action-btn shrink-0 px-2.5 py-2 rounded-lg text-[9px] font-bold
                            bg-gradient-to-b from-red-900/50 to-red-950/60
                            border border-red-700/40 text-red-300/90
                            active:border-red-600/50 active:text-red-200
-                           cursor-pointer flex items-center justify-center gap-1.5">
-              <span class="material-symbols-outlined text-sm">warning</span>
-              セーブデータを削除してリセット
-            </button>
+                           cursor-pointer flex items-center justify-center gap-1">
+                <span class="material-symbols-outlined text-xs">warning</span>
+                リセット
+              </button>
+            </div>
+          </div>
+
           </div>
 
         </div>
