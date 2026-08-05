@@ -440,6 +440,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
     </div>
   `);
   const dropRows = [...materialDropRows, ...equipmentDropRows];
+  const dropHeaderMotionClass = cachedDisableAnimations ? '' : 'battle-info-drop-header--animated';
   if (dropRows.length > 0) {
     dropsHtml = dropRows.join('');
   } else {
@@ -493,15 +494,23 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       </div>
 
       <!-- 3. Drop inventory: materials and equipment stay visually separate -->
-      <div class="battle-info-drops shrink-0 flex flex-col bg-slate-900/55 border border-slate-700/50 rounded-lg p-1 overflow-hidden shadow-inner">
-        <div class="flex items-center justify-between border-b border-slate-700/50 pb-1 mb-1 shrink-0 gap-2">
-          <div class="flex items-center gap-1 min-w-0 shrink-0">
-            <div class="flex items-center justify-center w-[14px] h-[14px] shrink-0"><span class="material-symbols-outlined text-emerald-400" style="font-size: 18px; font-variation-settings: 'FILL' 1; transform: scale(0.8);">shopping_bag</span></div>
-            <span class="font-bold text-[12px] text-slate-200">ドロップ</span>
-            <span class="text-[9px] font-black text-emerald-300 bg-emerald-950/70 border border-emerald-800/50 rounded-full px-1.5 py-0.5">${dropRows.length}種</span>
+      <div class="battle-info-drops shrink-0 flex flex-col bg-gradient-to-b from-emerald-950/15 to-slate-900/55 border border-emerald-900/50 rounded-lg p-1 overflow-hidden shadow-inner">
+        <div class="battle-info-drop-header ${dropHeaderMotionClass} relative flex min-h-[42px] items-center justify-between gap-2 overflow-hidden rounded-md border border-emerald-700/45 bg-gradient-to-r from-emerald-950/85 via-slate-900/95 to-cyan-950/70 px-2 py-1 mb-1 shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_3px_12px_rgba(4,120,87,0.18)]">
+          <div class="absolute -left-5 top-1/2 h-16 w-20 -translate-y-1/2 rounded-full bg-emerald-400/10 blur-xl pointer-events-none"></div>
+          <div class="relative z-10 flex min-w-0 items-center gap-2">
+            <div class="battle-info-drop-emblem relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-300/55 bg-gradient-to-br from-emerald-400/30 via-cyan-500/15 to-slate-950 shadow-[0_0_16px_rgba(52,211,153,0.38),inset_0_1px_0_rgba(255,255,255,0.2)]">
+              <span class="absolute inset-1 rounded-lg bg-emerald-300/10 blur-sm"></span>
+              <span class="material-symbols-outlined relative text-emerald-200 drop-shadow-[0_0_7px_rgba(110,231,183,0.95)]" style="font-size: 28px; font-variation-settings: 'FILL' 1, 'wght' 600;">featured_seasonal_and_gifts</span>
+              <span class="battle-info-drop-sparkle material-symbols-outlined absolute -right-1.5 -top-1.5 text-amber-200 drop-shadow-[0_0_5px_rgba(253,230,138,0.95)]" style="font-size: 13px; font-variation-settings: 'FILL' 1;">auto_awesome</span>
+            </div>
+            <div class="flex min-w-0 flex-col leading-none">
+              <span class="text-[8px] font-black tracking-[0.18em] text-emerald-300/75">DROP REWARDS</span>
+              <span class="mt-0.5 bg-gradient-to-r from-white via-emerald-100 to-cyan-200 bg-clip-text text-[15px] font-black tracking-wide text-transparent drop-shadow-[0_1px_4px_rgba(16,185,129,0.45)]">ドロップ</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 min-w-0">
-            ${bonus > 0 ? `<span class="text-[8px] text-blue-300 bg-blue-950/50 border border-blue-900/50 rounded px-1 py-0.5 whitespace-nowrap">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
+          <div class="relative z-10 flex min-w-0 shrink-0 items-center gap-1.5">
+            ${bonus > 0 ? `<span class="text-[8px] font-bold text-blue-200 bg-blue-950/60 border border-blue-700/45 rounded px-1.5 py-1 whitespace-nowrap shadow-inner">討伐補正 +${bonus.toFixed(1)}%</span>` : ''}
+            <span class="flex h-7 min-w-9 items-center justify-center rounded-full border border-emerald-400/45 bg-emerald-950/80 px-2 text-[10px] font-black text-emerald-200 shadow-[0_0_10px_rgba(16,185,129,0.2)]">${dropRows.length}種</span>
           </div>
         </div>
         <div class="battle-info-drop-scroller min-w-0 overflow-x-hidden">

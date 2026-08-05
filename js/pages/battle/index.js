@@ -1395,6 +1395,35 @@ export function renderBattlePage() {
       .battle-info-drop-grid {
         grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
       }
+      @keyframes battle-drop-emblem-float {
+        0%, 100% { transform: translateY(0) rotate(-2deg); }
+        50% { transform: translateY(-2px) rotate(2deg); }
+      }
+      @keyframes battle-drop-header-shine {
+        0%, 62% { transform: translateX(-180%) skewX(-18deg); opacity: 0; }
+        72% { opacity: .55; }
+        92%, 100% { transform: translateX(420%) skewX(-18deg); opacity: 0; }
+      }
+      @keyframes battle-drop-sparkle {
+        0%, 100% { transform: scale(.72) rotate(-8deg); opacity: .55; }
+        50% { transform: scale(1.18) rotate(8deg); opacity: 1; }
+      }
+      .battle-info-drop-header--animated::after {
+        content: '';
+        position: absolute;
+        inset-block: -45%;
+        left: 0;
+        width: 22%;
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / .22), transparent);
+        animation: battle-drop-header-shine 4.2s ease-in-out infinite;
+        pointer-events: none;
+      }
+      .battle-info-drop-header--animated .battle-info-drop-emblem {
+        animation: battle-drop-emblem-float 2.6s ease-in-out infinite;
+      }
+      .battle-info-drop-header--animated .battle-info-drop-sparkle {
+        animation: battle-drop-sparkle 1.7s ease-in-out infinite;
+      }
       .battle-slider-shell {
         height: 28px;
         min-width: 0;
