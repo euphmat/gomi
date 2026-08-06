@@ -66,6 +66,16 @@ const getLocalDateKey = (date = new Date()) => {
 
 const dailyWinKey = difficultyId => `memoryGameLastWin:${difficultyId}`;
 
+/** プレイヤーの敗北または引き分けが、残りペアに関係なく確定しているか判定する。 */
+function getDecidedNonWinOutcome(game) {
+  const foundPairs = game.scores.player + game.scores.cpu;
+  const remainingPairs = Math.max(0, game.config.pairs - foundPairs);
+
+  if (game.scores.cpu > game.scores.player + remainingPairs) return 'lose';
+  if (remainingPairs === 0 && game.scores.player === game.scores.cpu) return 'draw';
+  return null;
+}
+
 const mixColor = (color, target, amount) => color.map((channel, index) => (
   Math.round(channel + (target[index] - channel) * amount)
 ));
@@ -189,12 +199,17 @@ const pageStyles = () => `
     .memory-card.is-matched { animation:memory-match .55s ease-out both; }
     .memory-card.is-hint { z-index:2; animation:memory-hint .7s ease-in-out 2; }
     .memory-card.is-hint .memory-card-face:first-child { border-color:rgba(103,232,249,.98); box-shadow:0 0 18px 5px rgba(34,211,238,.72), inset 0 0 16px rgba(255,255,255,.28); }
+    .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) { z-index:1; }
+    .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child { border-color:rgba(103,232,249,.95); box-shadow:0 0 16px 3px rgba(34,211,238,.5), inset 0 0 18px rgba(129,230,217,.3); animation:memory-clairvoyance-aura 1.8s ease-in-out infinite; }
+    .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision] { display:flex; animation:memory-clairvoyance-vision .7s ease-out both; }
     .memory-card:disabled { opacity:1; }
     @keyframes memory-match { 50% { transform:scale(1.08); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
     @keyframes memory-hint { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.09); filter:brightness(1.55); } }
+    @keyframes memory-clairvoyance-aura { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.28); } }
+    @keyframes memory-clairvoyance-vision { from { opacity:0; transform:scale(.72); filter:blur(7px); } to { opacity:1; transform:scale(1); filter:blur(0); } }
     @keyframes memory-result-in { from { opacity:0; transform:translateY(10px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
     .memory-result { animation:memory-result-in .28s ease-out both; }
-    @media (prefers-reduced-motion: reduce) { .memory-card-inner { transition:none; } .memory-card.is-matched, .memory-result { animation:none; } }
+    @media (prefers-reduced-motion: reduce) { .memory-card-inner { transition:none; } .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-result { animation:none; } }
   </style>
 `;
 
@@ -296,7 +311,7 @@ export function renderMemoryGamePage() {
 
         <section class="mb-3 rounded-2xl border border-amber-300/20 bg-amber-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-amber-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
-          同じ画像を2枚揃えると1ポイント。揃えた側は続けてカードをめくり、すべてのペアを取った時に得点が高い側の勝利です。
+          同じ画像を2枚揃えると1ポイント。揃えた側は続けてカードをめくり、すべてのペアを取るか、途中で敗北または引き分けが確定した時点でゲーム終了です。
           <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">勝利した難易度は翌日までプレイできません。</div>
         </section>
 
@@ -339,7 +354,7 @@ export function renderMemoryGamePage() {
     clearTimers();
 
     const selectedItems = selectCardItems(config);
-    const openingRevealSeconds = getTreasureEffect('memoryOpeningRevealSeconds');
+    const clairvoyancePercent = getTreasureEffect('memoryClairvoyancePercent');
     const cpuForgetPercent = getTreasureEffect('memoryCpuForgetPercent');
     const hintPercent = getTreasureEffect('memoryHintPercent');
     const cards = shuffle(selectedItems.flatMap((item) => [
@@ -355,10 +370,10 @@ export function renderMemoryGamePage() {
       cpuMemory: new Map(),
       scores: { player: 0, cpu: 0 },
       turn: 'player',
-      locked: openingRevealSeconds > 0,
+      locked: false,
       over: false,
       rewardClaimed: false,
-      openingRevealSeconds,
+      clairvoyancePercent,
       cpuMemoryRate: Math.max(0, config.memoryRate * (1 - cpuForgetPercent / 100)),
       hintPercent,
     };
@@ -386,8 +401,8 @@ export function renderMemoryGamePage() {
 
         <div data-message class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-950/25 px-3 text-center text-[10px] font-black text-cyan-100" role="status" aria-live="polite">あなたの番です。2枚めくってください</div>
 
-        ${openingRevealSeconds || cpuForgetPercent || hintPercent ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-violet-300/15 bg-violet-950/20 p-1.5" aria-label="発動中の神経衰弱用秘宝">
-          ${openingRevealSeconds ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">千里眼 ${openingRevealSeconds.toFixed(1)}秒</span>` : ''}
+        ${clairvoyancePercent || cpuForgetPercent || hintPercent ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-violet-300/15 bg-violet-950/20 p-1.5" aria-label="発動中の神経衰弱用秘宝">
+          ${clairvoyancePercent ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">千里眼 透視${clairvoyancePercent}%</span>` : ''}
           ${cpuForgetPercent ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">CPU記憶力 −${cpuForgetPercent}%</span>` : ''}
           ${hintPercent ? `<span class="rounded-full border border-rose-400/25 bg-rose-500/10 px-2 py-1 text-[8px] font-black text-rose-200">ペアヒント ${hintPercent}%</span>` : ''}
         </section>` : ''}
@@ -398,6 +413,10 @@ export function renderMemoryGamePage() {
               <span class="memory-card-inner block">
                 <span class="memory-card-face flex items-center justify-center border-2 border-slate-300/70 bg-[repeating-linear-gradient(135deg,#312e81_0,#312e81_5px,#1e1b4b_5px,#1e1b4b_10px)] shadow-md">
                   <span class="absolute inset-1 rounded-md border border-white/25"></span><span class="material-symbols-outlined text-[clamp(18px,6vw,30px)] text-white/85 drop-shadow">playing_cards</span>
+                  <span data-clairvoyant-vision class="absolute inset-1 hidden flex-col items-center justify-center overflow-hidden rounded-md border border-cyan-100/70 bg-cyan-950/90 p-0.5 shadow-[inset_0_0_14px_rgba(103,232,249,.6)]" aria-hidden="true">
+                    <img src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain opacity-80 drop-shadow-[0_0_5px_rgba(165,243,252,.9)]">
+                    <span class="block w-full truncate rounded-sm bg-cyan-950/85 px-0.5 py-px text-center text-[clamp(5px,1.5vw,8px)] font-black leading-none text-cyan-50">${card.name}</span>
+                  </span>
                 </span>
                 <span data-card-front class="memory-card-face memory-card-front flex flex-col items-center justify-center border-2 border-slate-400/70 p-1 shadow-md" style="background:linear-gradient(to bottom,#64748b,#1e293b)">
                   <img data-card-image src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain drop-shadow-md" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
@@ -411,22 +430,6 @@ export function renderMemoryGamePage() {
       </div>
     `;
     applyExtractedCardColors(container);
-
-    if (openingRevealSeconds > 0) {
-      const previewIndices = cards.map(card => card.index);
-      previewIndices.forEach(index => {
-        const element = container.querySelector(`[data-card-index="${index}"]`);
-        element?.classList.add('is-flipped');
-        element?.setAttribute('aria-label', cards[index].name);
-      });
-      setMessage(`千里眼の水晶が全カードを${openingRevealSeconds.toFixed(1)}秒公開中…`, 'emerald');
-      later(() => {
-        if (!game || game.over) return;
-        hideCards(previewIndices);
-        game.locked = false;
-        setMessage('あなたの番です。2枚めくってください');
-      }, openingRevealSeconds * 1000);
-    }
   };
 
   const cardElement = (index) => container.querySelector(`[data-card-index="${index}"]`);
@@ -492,8 +495,24 @@ export function renderMemoryGamePage() {
     indices.forEach(index => {
       const element = cardElement(index);
       element?.classList.remove('is-flipped');
-      element?.setAttribute('aria-label', `伏せられたカード ${index + 1}`);
+      element?.setAttribute('aria-label', element?.classList.contains('is-clairvoyant')
+        ? `透視中: ${game.cards[index].name}`
+        : `伏せられたカード ${index + 1}`);
     });
+  };
+
+  const tryClairvoyance = (indices) => {
+    if (!game?.clairvoyancePercent) return 0;
+    let revealedCount = 0;
+    indices.forEach(index => {
+      const element = cardElement(index);
+      if (!element || element.classList.contains('is-clairvoyant')) return;
+      if (Math.random() * 100 >= game.clairvoyancePercent) return;
+      element.classList.add('is-clairvoyant');
+      element.setAttribute('aria-label', `透視中: ${game.cards[index].name}`);
+      revealedCount += 1;
+    });
+    return revealedCount;
   };
 
   const availableIndices = (excluded = []) => {
@@ -610,6 +629,15 @@ export function renderMemoryGamePage() {
       game.selected = [];
       updateScores();
       setMessage(owner === 'player' ? 'ペア獲得！ 続けてあなたの番です' : 'CPUがペアを獲得。CPUの番が続きます', owner === 'player' ? 'emerald' : 'rose');
+
+      const decidedOutcome = getDecidedNonWinOutcome(game);
+      if (decidedOutcome) {
+        game.locked = true;
+        setMessage(decidedOutcome === 'draw' ? '引き分けが確定しました' : '敗北が確定しました', decidedOutcome === 'draw' ? 'amber' : 'rose');
+        later(finishGame, 650);
+        return;
+      }
+
       if (game.matched.size === game.cards.length) {
         later(finishGame, 650);
         return;
@@ -623,12 +651,15 @@ export function renderMemoryGamePage() {
     }
 
     hideCards(indices);
+    const clairvoyantCount = owner === 'player' ? tryClairvoyance(indices) : 0;
     game.selected = [];
     if (owner === 'player') {
       game.turn = 'cpu';
       game.locked = true;
       updateScores();
-      setMessage('CPUが考えています…', 'rose');
+      setMessage(clairvoyantCount
+        ? `千里眼の水晶が${clairvoyantCount}枚を透視！ CPUが考えています…`
+        : 'CPUが考えています…', clairvoyantCount ? 'emerald' : 'rose');
       later(runCpuTurn, 750);
     } else {
       game.turn = 'player';
