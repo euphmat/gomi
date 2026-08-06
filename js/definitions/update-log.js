@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.15';
-export const APP_RELEASE_DATE = '2026.08.05';
+export const APP_VERSION = '0.1.16';
+export const APP_RELEASE_DATE = '2026.08.06';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.06',
+    version: '0.1.16',
+    items: [
+      '鉱山の魚油精製所・魚油燃料・採掘速度ブーストを廃止し、魚は牧場の魚餌と釣具強化に使用する形へ整理しました。',
+      '既存セーブデータに残っている魚油とブースト時間を自動的に削除し、通常の採掘速度へ移行するようにしました。',
+    ],
+  },
   {
     date: '2026.08.05',
     version: '0.1.15',
@@ -134,7 +142,7 @@ export const UPDATE_LOG = [
     date: '2026.07.12',
     version: '0.1.0',
     items: [
-      '釣り・魚図鑑・魚餌・魚油の各システムを追加しました。',
+      '釣り・魚図鑑・魚餌の各システムを追加しました。',
       'スペシャルダンジョン「鉱山」と鉱山ギルド機能を追加しました。',
       'デイリークエストとスペシャルクエストを追加しました。',
     ],

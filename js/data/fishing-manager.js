@@ -21,7 +21,7 @@ import {
 } from '../definitions/fishing-tackle.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
 
-export const FISHING_STATE_KEY = 'fishing_data';
+const FISHING_STATE_KEY = 'fishing_data';
 const LEGACY_RANCH_FISH_STATE_KEY = 'ranch_fish_data';
 
 const ALL_EQUIPMENT = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
@@ -44,7 +44,6 @@ function createFishingState() {
     discovered: {},
     totalCaught: 0,
     prismShards: 0,
-    fishOil: 0,
     fishFeed: {},
     recentBonusCatches: [],
     tackle: {
@@ -166,7 +165,10 @@ function groupRecentBonuses(items) {
 
 export async function loadFishingData() {
   const saved = await GameDB.getGameState(FISHING_STATE_KEY) || {};
+  const hasDeprecatedFishOil = Object.prototype.hasOwnProperty.call(saved, 'fishOil');
   const state = { ...createFishingState(), ...saved };
+  // 旧バージョンで所持していた魚油は、廃止後の状態へ持ち込まない。
+  delete state.fishOil;
   state.inventory = { ...(saved.inventory || {}) };
   state.sessionInventory = { ...(saved.sessionInventory || {}) };
   state.fishFeed = { ...(saved.fishFeed || {}) };
@@ -183,6 +185,7 @@ export async function loadFishingData() {
     state.fishFeed[fish.id] = normalizeFishCount(state.fishFeed[fish.id]);
     state.discovered[fish.id] = normalizeFishDiscovery(state.discovered[fish.id]);
   }
+  if (hasDeprecatedFishOil) await saveFishingData(state);
   return state;
 }
 
@@ -443,7 +446,7 @@ export async function upgradeFishingTackle(type) {
     let remaining = requirement.required;
     const candidates = FISH
       .filter(fish => fish.spotId === status.recipe.spotId && fish.rarity === requirement.rarity)
-      .sort((a, b) => a.ranchExp - b.ranchExp || a.oilYield - b.oilYield || a.id.localeCompare(b.id));
+      .sort((a, b) => a.ranchExp - b.ranchExp || a.id.localeCompare(b.id));
     for (const fish of candidates) {
       if (remaining <= 0) break;
       const owned = normalizeFishCount(state.inventory[fish.id]);
@@ -464,20 +467,6 @@ export async function upgradeFishingTackle(type) {
     level: status.targetLevel,
     consumed,
   };
-}
-
-export async function convertFishToOil(fishId, amount = 1) {
-  const fish = FISH_MAP.get(fishId);
-  if (!fish) throw new Error('魚の指定が不正です。');
-  const state = await loadFishingData();
-  const owned = state.inventory[fishId] || 0;
-  const quantity = Math.max(1, Math.floor(amount));
-  if (owned < quantity) throw new Error('魚が足りません。');
-  const oilGained = fish.oilYield * quantity;
-  state.inventory[fishId] -= quantity;
-  state.fishOil += oilGained;
-  await saveFishingData(state);
-  return { state, oilGained };
 }
 
 export async function convertFishToFeed(fishId, amount = 1, dungeonId) {

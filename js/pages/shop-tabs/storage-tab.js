@@ -405,7 +405,7 @@ export function renderStorageTab() {
             </div>
           `;
         }).join('') + `</div>`
-      : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : item.itemType === 'fish' ? '釣りで獲得した魚です。<br>鉱山・牧場で加工できます。' : '素材アイテム<br>特殊な効果はありません。'}</div>`;
+      : `<div class="text-[10px] text-slate-500 italic text-center py-2 bg-slate-900/30 rounded border border-slate-900/40">${item.slot ? '性能変化なし' : item.itemType === 'fish' ? '釣りで獲得した魚です。<br>牧場で魚餌として利用できます。' : '素材アイテム<br>特殊な効果はありません。'}</div>`;
 
     const abilityHtml = '';
 
