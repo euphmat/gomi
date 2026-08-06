@@ -18,7 +18,7 @@ permissions:
 # Keep the active production deployment running. GitHub will retain only the
 # newest pending run for this concurrency group while it finishes.
 concurrency:
-  group: "pages"
+  group: "pages-deploy-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
