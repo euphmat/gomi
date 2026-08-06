@@ -71,13 +71,8 @@ export async function setGameNotificationsEnabled(enabled) {
 }
 
 export function notifyGameEvent(title, body, tag) {
+  if (document.body?.classList.contains('screen-lock-active')) return;
   if (!areGameNotificationsEnabled() || !('Notification' in window) || Notification.permission !== 'granted') return;
-
-  // ブラウザ通知はアプリを開いたままだと表示されない環境もあるため、
-  // 画面ロック側にも同じイベントを渡してロック画面内で確認できるようにする。
-  document.dispatchEvent(new CustomEvent('gamenotification', {
-    detail: { title, body, tag }
-  }));
 
   try {
     playNotificationSound();

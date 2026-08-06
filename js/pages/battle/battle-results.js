@@ -17,6 +17,7 @@ import { notifyGameEvent } from '../../utils/game-notifications.js';
 import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
+import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -81,6 +82,7 @@ export const resultMethods = {
     let jp = Math.floor((enemy.rewards.jp || 0) * (1 + getTreasureEffect('battleJpPercent') / 100));
 
     if (exp > 0) this.obtainedExp += exp;
+    recordLockScreenProgress('battle', { defeated: 1, gold, exp });
     
     if (exp > 0 || jp > 0) {
       for (const p of this.party) {
@@ -173,6 +175,7 @@ export const resultMethods = {
         this._needsSave = true;
 
         notifyGameEvent('モンスター捕獲', `${enemy.name}を牧場に迎え入れました！`, `monster-captured-${saveId}`);
+        addLockScreenCompanion({ id: saveId, name: enemy.name, image: enemy.image });
 
         const overlay = document.createElement('div');
         overlay.className = 'fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none bg-black/50 transition-opacity duration-300';
@@ -226,6 +229,7 @@ export const resultMethods = {
               this.obtainedItems.push(newDrop);
               this.obtainedItemsMap.set(mat.id, newDrop);
             }
+            recordLockScreenProgress('battle', { materials: dropCount });
             hasNewDrops = true;
           }
         }
@@ -261,6 +265,7 @@ export const resultMethods = {
         this.obtainedItems.push(newEquipment);
         this.obtainedItemsMap.set(obtainedKey, newEquipment);
       }
+      recordLockScreenProgress('battle', { loot: 1 });
       hasNewDrops = true;
     }
 
@@ -372,6 +377,7 @@ export const resultMethods = {
     if (!showModal) {
       sessionStorage.removeItem('autoBattleMode');
       this.autoBattleMode = 'none';
+      setLockScreenActivity('battle', false, { mode: 'none' });
       window.location.hash = '/dungeon';
       return;
     }
@@ -423,6 +429,7 @@ export const resultMethods = {
             this.elements.resultOverlay.classList.add('hidden');
             sessionStorage.removeItem('autoBattleMode');
             this.autoBattleMode = 'none';
+            setLockScreenActivity('battle', false, { mode: 'none' });
             window.location.hash = '/dungeon';
           };
         }
@@ -586,6 +593,7 @@ export const resultMethods = {
           this.elements.resultOverlay.classList.add('hidden');
           sessionStorage.removeItem('autoBattleMode');
           this.autoBattleMode = 'none';
+          setLockScreenActivity('battle', false, { mode: 'none' });
           window.location.hash = '/dungeon';
         };
       }

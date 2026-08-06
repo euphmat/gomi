@@ -3,7 +3,7 @@ import { FISHING_TACKLE, FISHING_TACKLE_ORDER, getFishingTackleEffect, getFishin
 import { getFishingSpotUnlockStatus, getFishingTackleLevel, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
-import { isScreenLocked } from '../utils/screen-lock.js';
+import { isScreenLocked, recordLockScreenProgress, setLockScreenActivity } from '../utils/screen-lock.js';
 import { playSoundEffect } from '../utils/sound-effects.js';
 
 function updateHeader(id, value) {
@@ -53,6 +53,7 @@ export async function renderFishingPage() {
   let catchInFlight = null;
   let cleanupPromise = null;
   let leaving = false;
+  setLockScreenActivity('fishing', false, { mode: 'auto' });
 
   container.innerHTML = `
     <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${spot.background}')"></div>
@@ -174,6 +175,7 @@ export async function renderFishingPage() {
 
   const stop = (message = '待機中') => {
     running = false;
+    setLockScreenActivity('fishing', false, { mode: 'auto' });
     clearTimeout(catchTimer);
     clearInterval(countdownTimer);
     catchTimer = null;
@@ -497,6 +499,15 @@ export async function renderFishingPage() {
           const caught = await performFishingCatch(spot.id);
           state = caught.state;
           gold = caught.gold;
+          const catchResult = caught.result;
+          recordLockScreenProgress('fishing', {
+            fish: catchResult.type === 'fish'
+              ? Math.max(1, Number(catchResult.catchCount) || catchResult.fishes?.length || 1)
+              : 0,
+            materials: catchResult.type === 'material' ? Math.max(0, Number(catchResult.amount) || 0) : 0,
+            loot: ['equipment', 'pet', 'prism_shard'].includes(catchResult.type) ? 1 : 0,
+            gold: catchResult.type === 'gold' ? Math.max(0, Number(catchResult.amount) || 0) : 0,
+          });
           updateHeader('header-gold-display', gold);
           if (caught.result.prismGained) {
             const prism = await GameDB.getGameState('prism') || 0;
@@ -538,6 +549,7 @@ export async function renderFishingPage() {
     if (running) return stop('釣りを中断しました');
     if (gold < spot.baitCost) return stop('Goldが足りません');
     running = true;
+    setLockScreenActivity('fishing', true, { mode: 'auto', reset: true });
     container.querySelector('[data-toggle-label]').textContent = '自動釣りを停止';
     container.querySelector('[data-toggle] .material-symbols-outlined').textContent = 'stop';
     schedule();

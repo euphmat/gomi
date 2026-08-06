@@ -4,15 +4,78 @@ let overlay = null;
 let sliderThumb = null;
 let sliderTrack = null;
 let sliderFill = null;
-let notificationRegion = null;
-const lockNotifications = new Map();
 let pointerId = null;
 let dragStartX = 0;
 let dragStartOffset = 0;
 let dragOffset = 0;
 
+const ACTIVITY_DEFAULTS = {
+  battle: { active: false, mode: 'none' },
+  fishing: { active: false, mode: 'auto' },
+};
+
+const lockActivity = {
+  battle: { ...ACTIVITY_DEFAULTS.battle },
+  fishing: { ...ACTIVITY_DEFAULTS.fishing },
+  results: {
+    defeated: 0,
+    fish: 0,
+    materials: 0,
+    loot: 0,
+    gold: 0,
+    exp: 0,
+  },
+  companions: [],
+};
+
 export function isScreenLocked() {
   return locked;
+}
+
+export function setLockScreenActivity(type, active, options = {}) {
+  if (!Object.prototype.hasOwnProperty.call(ACTIVITY_DEFAULTS, type)) return;
+
+  const wasActive = lockActivity[type].active;
+  const shouldReset = Boolean(active) && (options.reset === true || !wasActive);
+  lockActivity[type] = {
+    ...lockActivity[type],
+    active: Boolean(active),
+    mode: options.mode || lockActivity[type].mode,
+  };
+
+  if (active) {
+    for (const otherType of Object.keys(ACTIVITY_DEFAULTS)) {
+      if (otherType !== type) lockActivity[otherType].active = false;
+    }
+  }
+
+  if (shouldReset) {
+    for (const key of Object.keys(lockActivity.results)) lockActivity.results[key] = 0;
+    lockActivity.companions = [];
+  }
+  renderLockScreenActivity();
+}
+
+export function recordLockScreenProgress(type, progress = {}) {
+  if (!lockActivity[type]?.active) return;
+  for (const key of Object.keys(lockActivity.results)) {
+    const amount = Number(progress[key]);
+    if (Number.isFinite(amount) && amount > 0) lockActivity.results[key] += amount;
+  }
+  renderLockScreenActivity();
+}
+
+export function addLockScreenCompanion(monster) {
+  if (!lockActivity.battle.active || !monster) return;
+  const id = String(monster.id || monster.name || 'monster');
+  if (lockActivity.companions.some(item => item.id === id)) return;
+  lockActivity.companions.unshift({
+    id,
+    name: String(monster.name || 'モンスター'),
+    image: String(monster.image || ''),
+  });
+  lockActivity.companions = lockActivity.companions.slice(0, 5);
+  renderLockScreenActivity();
 }
 
 export function activateScreenLock() {
@@ -25,6 +88,7 @@ export function activateScreenLock() {
   overlay.setAttribute('aria-hidden', 'false');
   document.getElementById('app')?.setAttribute('inert', '');
   document.body.classList.add('screen-lock-active');
+  renderLockScreenActivity();
   sliderThumb?.focus({ preventScroll: true });
   document.dispatchEvent(new CustomEvent('screenlockchange', { detail: { locked: true } }));
 }
@@ -35,8 +99,6 @@ export function initScreenLock() {
   localStorage.removeItem('screenLockEnabled');
   injectStyles();
   createOverlay();
-
-  document.addEventListener('gamenotification', showLockScreenNotification);
 }
 
 function unlockScreen() {
@@ -48,58 +110,63 @@ function unlockScreen() {
   document.getElementById('app')?.removeAttribute('inert');
   document.body.classList.remove('screen-lock-active');
   resetSlider(false);
-  clearLockScreenNotifications();
   document.dispatchEvent(new CustomEvent('screenlockchange', { detail: { locked: false } }));
 }
 
-function showLockScreenNotification(event) {
-  if (!locked || !notificationRegion) return;
+function formatCount(value) {
+  return Math.max(0, Number(value) || 0).toLocaleString('ja-JP');
+}
 
-  const title = String(event.detail?.title || 'イベント通知');
-  const body = String(event.detail?.body || '');
-  const key = event.detail?.tag || Symbol('screen-lock-notification');
+function renderLockScreenActivity() {
+  if (!overlay) return;
 
-  removeLockScreenNotification(key);
-  while (lockNotifications.size >= 3) {
-    removeLockScreenNotification(lockNotifications.keys().next().value);
+  const modeLabels = {
+    floor: '階層周回',
+    dungeon: '踏破周回',
+    auto: '自動釣り',
+  };
+  for (const type of ['battle', 'fishing']) {
+    const activity = lockActivity[type];
+    const row = overlay.querySelector(`[data-lock-activity="${type}"]`);
+    if (!row) continue;
+    row.classList.toggle('is-active', activity.active);
+    const badge = row.querySelector('[data-lock-activity-state]');
+    if (badge) badge.textContent = activity.active ? '稼働中' : '停止中';
+    const detail = row.querySelector('[data-lock-activity-detail]');
+    if (detail) detail.textContent = activity.active ? (modeLabels[activity.mode] || '有効') : '無効';
   }
 
-  const item = document.createElement('div');
-  item.className = 'screen-lock__notification';
+  for (const [key, value] of Object.entries(lockActivity.results)) {
+    const target = overlay.querySelector(`[data-lock-result="${key}"]`);
+    if (target) target.textContent = formatCount(value);
+  }
 
-  const icon = document.createElement('span');
-  icon.className = 'material-symbols-outlined screen-lock__notification-icon';
-  icon.textContent = 'notifications_active';
-
-  const content = document.createElement('div');
-  content.className = 'screen-lock__notification-content';
-
-  const titleElement = document.createElement('div');
-  titleElement.className = 'screen-lock__notification-title';
-  titleElement.textContent = title;
-
-  const bodyElement = document.createElement('div');
-  bodyElement.className = 'screen-lock__notification-body';
-  bodyElement.textContent = body;
-
-  content.append(titleElement, bodyElement);
-  item.append(icon, content);
-  notificationRegion.appendChild(item);
-
-  const timeoutId = window.setTimeout(() => removeLockScreenNotification(key), 6000);
-  lockNotifications.set(key, { item, timeoutId });
-}
-
-function removeLockScreenNotification(key) {
-  const notification = lockNotifications.get(key);
-  if (!notification) return;
-  window.clearTimeout(notification.timeoutId);
-  notification.item.remove();
-  lockNotifications.delete(key);
-}
-
-function clearLockScreenNotifications() {
-  for (const key of [...lockNotifications.keys()]) removeLockScreenNotification(key);
+  const companionSection = overlay.querySelector('[data-lock-companions]');
+  const companionList = overlay.querySelector('[data-lock-companion-list]');
+  if (!companionSection || !companionList) return;
+  companionSection.hidden = lockActivity.companions.length === 0;
+  companionList.replaceChildren(...lockActivity.companions.map(monster => {
+    const item = document.createElement('div');
+    item.className = 'screen-lock__companion';
+    const visual = document.createElement('div');
+    visual.className = 'screen-lock__companion-visual';
+    if (monster.image) {
+      const image = document.createElement('img');
+      image.src = monster.image;
+      image.alt = '';
+      image.addEventListener('error', () => image.remove(), { once: true });
+      visual.appendChild(image);
+    }
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.textContent = 'pets';
+    visual.prepend(icon);
+    const name = document.createElement('div');
+    name.className = 'screen-lock__companion-name';
+    name.textContent = monster.name;
+    item.append(visual, name);
+    return item;
+  }));
 }
 
 function dismissLock() {
@@ -125,7 +192,38 @@ function createOverlay() {
         <span class="material-symbols-outlined">eco</span>
         省エネ表示で動作しています
       </div>
-      <div class="screen-lock__notifications" aria-live="polite" aria-label="イベント通知"></div>
+      <div class="screen-lock__activity-panel" aria-label="自動機能の稼働状況">
+        <div class="screen-lock__panel-label">AUTO STATUS</div>
+        <div class="screen-lock__activity-list">
+          <div class="screen-lock__activity-row" data-lock-activity="battle">
+            <span class="material-symbols-outlined">swords</span>
+            <span class="screen-lock__activity-name">自動戦闘</span>
+            <span class="screen-lock__activity-detail" data-lock-activity-detail>無効</span>
+            <span class="screen-lock__activity-badge" data-lock-activity-state>停止中</span>
+          </div>
+          <div class="screen-lock__activity-row" data-lock-activity="fishing">
+            <span class="material-symbols-outlined">phishing</span>
+            <span class="screen-lock__activity-name">自動釣り</span>
+            <span class="screen-lock__activity-detail" data-lock-activity-detail>無効</span>
+            <span class="screen-lock__activity-badge" data-lock-activity-state>停止中</span>
+          </div>
+        </div>
+      </div>
+      <div class="screen-lock__results" aria-label="自動機能の成果">
+        <div class="screen-lock__panel-label">SESSION RESULT</div>
+        <div class="screen-lock__result-grid">
+          <div class="screen-lock__result"><span class="material-symbols-outlined">skull</span><span class="screen-lock__result-label">討伐</span><strong><span data-lock-result="defeated">0</span><small>体</small></strong></div>
+          <div class="screen-lock__result"><span class="material-symbols-outlined">set_meal</span><span class="screen-lock__result-label">釣果</span><strong><span data-lock-result="fish">0</span><small>匹</small></strong></div>
+          <div class="screen-lock__result"><span class="material-symbols-outlined">category</span><span class="screen-lock__result-label">素材</span><strong><span data-lock-result="materials">0</span><small>個</small></strong></div>
+          <div class="screen-lock__result"><span class="material-symbols-outlined">inventory_2</span><span class="screen-lock__result-label">装備・お宝</span><strong><span data-lock-result="loot">0</span><small>個</small></strong></div>
+          <div class="screen-lock__result"><span class="material-symbols-outlined">paid</span><span class="screen-lock__result-label">獲得Gold</span><strong><span data-lock-result="gold">0</span><small>G</small></strong></div>
+          <div class="screen-lock__result"><span class="material-symbols-outlined">trending_up</span><span class="screen-lock__result-label">獲得EXP</span><strong><span data-lock-result="exp">0</span><small>EXP</small></strong></div>
+        </div>
+      </div>
+      <div class="screen-lock__companions" data-lock-companions hidden>
+        <div class="screen-lock__companion-heading"><span class="material-symbols-outlined">favorite</span>新しく仲間になったモンスター</div>
+        <div class="screen-lock__companion-list" data-lock-companion-list></div>
+      </div>
     </div>
     <div class="screen-lock__unlock-area">
       <div class="screen-lock__instruction">右へスライドしてロック解除</div>
@@ -143,7 +241,7 @@ function createOverlay() {
   sliderTrack = overlay.querySelector('.screen-lock__track');
   sliderThumb = overlay.querySelector('.screen-lock__thumb');
   sliderFill = overlay.querySelector('.screen-lock__fill');
-  notificationRegion = overlay.querySelector('.screen-lock__notifications');
+  renderLockScreenActivity();
 
   overlay.addEventListener('contextmenu', event => event.preventDefault());
   overlay.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
@@ -249,7 +347,8 @@ function injectStyles() {
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      padding: max(56px, env(safe-area-inset-top)) 22px max(34px, env(safe-area-inset-bottom));
+      gap: 14px;
+      padding: max(24px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
       color: #9ca3af;
       background: #020305;
       font-family: 'DotGothic16', system-ui, sans-serif;
@@ -261,13 +360,15 @@ function injectStyles() {
     }
     .screen-lock__status {
       display: flex;
+      width: min(100%, 380px);
+      min-height: 0;
       flex-direction: column;
       align-items: center;
-      margin-top: min(18vh, 130px);
+      margin-top: 0;
       text-align: center;
     }
     .screen-lock__lock-icon {
-      margin-bottom: 12px;
+      margin-bottom: 5px;
       color: #64748b;
       font-size: 30px;
       font-variation-settings: 'FILL' 1;
@@ -288,54 +389,177 @@ function injectStyles() {
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-top: 18px;
+      margin-top: 9px;
       color: #334155;
       font-size: 9px;
     }
     .screen-lock__saving .material-symbols-outlined { font-size: 14px; }
-    .screen-lock__notifications {
-      display: flex;
-      width: min(calc(100vw - 44px), 360px);
-      flex-direction: column;
-      gap: 7px;
-      margin-top: 18px;
+    .screen-lock__activity-panel,
+    .screen-lock__results,
+    .screen-lock__companions {
+      width: 100%;
+      margin-top: 10px;
+      border: 1px solid #17202c;
+      border-radius: 13px;
+      background: #070a0f;
+      box-shadow: inset 0 1px rgba(255, 255, 255, .025);
     }
-    .screen-lock__notification {
-      display: flex;
-      align-items: flex-start;
-      gap: 9px;
-      padding: 10px 12px;
-      border: 1px solid rgba(34, 211, 238, .22);
-      border-radius: 12px;
+    .screen-lock__panel-label {
+      padding: 6px 9px 4px;
+      color: #475569;
+      font-family: system-ui, sans-serif;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .18em;
       text-align: left;
-      background: rgba(8, 19, 27, .94);
-      box-shadow: 0 8px 28px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 255, 255, .025);
-      animation: screen-lock-notification-in .24s ease-out;
     }
-    .screen-lock__notification-icon {
-      flex: 0 0 auto;
-      color: #22d3ee;
-      font-size: 19px;
+    .screen-lock__activity-list { padding: 0 7px 7px; }
+    .screen-lock__activity-row {
+      display: grid;
+      grid-template-columns: 20px 1fr auto auto;
+      gap: 7px;
+      align-items: center;
+      min-height: 31px;
+      padding: 4px 6px;
+      border-top: 1px solid #111923;
+      text-align: left;
+    }
+    .screen-lock__activity-row:first-child { border-top: 0; }
+    .screen-lock__activity-row > .material-symbols-outlined {
+      color: #475569;
+      font-size: 17px;
+    }
+    .screen-lock__activity-name {
+      color: #94a3b8;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .screen-lock__activity-detail {
+      color: #475569;
+      font-size: 8px;
+    }
+    .screen-lock__activity-badge {
+      min-width: 46px;
+      padding: 2px 5px;
+      border: 1px solid #273244;
+      border-radius: 999px;
+      color: #64748b;
+      background: #0c1119;
+      font-size: 8px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .screen-lock__activity-row.is-active > .material-symbols-outlined,
+    .screen-lock__activity-row.is-active .screen-lock__activity-name { color: #67e8f9; }
+    .screen-lock__activity-row.is-active .screen-lock__activity-detail { color: #94a3b8; }
+    .screen-lock__activity-row.is-active .screen-lock__activity-badge {
+      border-color: rgba(16, 185, 129, .38);
+      color: #6ee7b7;
+      background: rgba(6, 78, 59, .22);
+      box-shadow: 0 0 12px rgba(16, 185, 129, .08);
+    }
+    .screen-lock__result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      border-top: 1px solid #111923;
+      border-radius: 0 0 12px 12px;
+      background: #111923;
+    }
+    .screen-lock__result {
+      display: grid;
+      grid-template-columns: 16px 1fr;
+      align-items: center;
+      gap: 1px 4px;
+      min-width: 0;
+      padding: 7px 6px;
+      text-align: left;
+      background: #070a0f;
+    }
+    .screen-lock__result > .material-symbols-outlined {
+      grid-row: span 2;
+      color: #475569;
+      font-size: 15px;
+    }
+    .screen-lock__result-label {
+      overflow: hidden;
+      color: #64748b;
+      font-size: 7px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .screen-lock__result strong {
+      overflow: hidden;
+      color: #cbd5e1;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      line-height: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .screen-lock__result small {
+      margin-left: 2px;
+      color: #475569;
+      font-size: 7px;
+      font-weight: 700;
+    }
+    .screen-lock__companions[hidden] { display: none; }
+    .screen-lock__companion-heading {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 8px 4px;
+      color: #f9a8d4;
+      font-size: 9px;
+      font-weight: 700;
+      text-align: left;
+    }
+    .screen-lock__companion-heading .material-symbols-outlined {
+      font-size: 14px;
       font-variation-settings: 'FILL' 1;
     }
-    .screen-lock__notification-content { min-width: 0; }
-    .screen-lock__notification-title {
-      color: #cffafe;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .04em;
+    .screen-lock__companion-list {
+      display: flex;
+      gap: 6px;
+      overflow: hidden;
+      padding: 2px 7px 7px;
     }
-    .screen-lock__notification-body {
+    .screen-lock__companion {
+      width: 64px;
+      flex: 0 0 auto;
+      min-width: 0;
+      text-align: center;
+    }
+    .screen-lock__companion-visual {
+      position: relative;
+      display: flex;
+      height: 43px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(244, 114, 182, .24);
+      border-radius: 9px;
+      color: #831843;
+      background: rgba(80, 7, 36, .2);
+    }
+    .screen-lock__companion-visual > .material-symbols-outlined { font-size: 24px; }
+    .screen-lock__companion-visual img {
+      position: absolute;
+      inset: 2px;
+      width: calc(100% - 4px);
+      height: calc(100% - 4px);
+      object-fit: contain;
+      filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .8));
+    }
+    .screen-lock__companion-name {
       margin-top: 3px;
-      overflow-wrap: anywhere;
-      color: #94a3b8;
-      font-family: system-ui, sans-serif;
-      font-size: 10px;
-      line-height: 1.45;
-    }
-    @keyframes screen-lock-notification-in {
-      from { opacity: 0; transform: translateY(-7px); }
-      to { opacity: 1; transform: translateY(0); }
+      overflow: hidden;
+      color: #cbd5e1;
+      font-size: 7px;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .screen-lock__unlock-area {
       width: min(100%, 330px);
@@ -401,10 +625,19 @@ function injectStyles() {
     .screen-lock__thumb.is-resetting,
     .screen-lock__fill.is-resetting { transition: transform .22s ease-out, width .22s ease-out !important; }
     @media (max-height: 520px) {
-      .screen-lock__status { margin-top: 20px; }
-      .screen-lock__saving { margin-top: 10px; }
-      .screen-lock__notifications { margin-top: 9px; }
-      .screen-lock__notification { padding: 7px 9px; }
+      #game-screen-lock { padding-top: 8px; padding-bottom: 8px; gap: 7px; }
+      .screen-lock__lock-icon { display: none; }
+      .screen-lock__title { font-size: 13px; }
+      .screen-lock__activity { margin-top: 2px; }
+      .screen-lock__saving { display: none; }
+      .screen-lock__activity-panel,
+      .screen-lock__results,
+      .screen-lock__companions { margin-top: 5px; }
+      .screen-lock__result { padding-top: 4px; padding-bottom: 4px; }
+      .screen-lock__companion-visual { height: 32px; }
+      .screen-lock__instruction { margin-bottom: 4px; }
+      .screen-lock__track { height: 50px; }
+      .screen-lock__thumb { width: 38px; height: 38px; }
     }
   `;
   document.head.appendChild(style);
