@@ -15,10 +15,11 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment and prioritize the latest pushed version.
+# Keep the active production deployment running. GitHub will retain only the
+# newest pending run for this concurrency group while it finishes.
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # Single deploy job since we're just deploying
@@ -40,6 +41,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-        with:
-          # Pages deployments can remain queued during GitHub-side delays.
-          timeout: 1200000
