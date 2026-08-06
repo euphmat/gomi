@@ -2,6 +2,7 @@ import { renderShopTab } from './shop-tabs/shop-tab.js';
 import { renderStorageTab } from './shop-tabs/storage-tab.js';
 import { renderMedalTab } from './shop-tabs/medal-tab.js';
 import { renderGachaTab } from './shop-tabs/gacha-tab.js';
+import { consumeHashRouteParam } from '../utils/route-params.js';
 
 /**
  * このファイルは「ショップ」画面のメインコンテナです。
@@ -19,7 +20,8 @@ export function renderShopPage() {
     { id: 'gacha', label: '秘宝ガチャ', icon: 'auto_awesome', activeClass: 'border-fuchsia-400/45 bg-fuchsia-950/55 text-fuchsia-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(217,70,239,0.18)]', idleClass: 'active:border-fuchsia-500/35 active:bg-fuchsia-950/30 active:text-fuchsia-300' }
   ];
   
-  let activeTabId = 'shop';
+  const requestedTabId = consumeHashRouteParam('tab');
+  let activeTabId = TABS.some(tab => tab.id === requestedTabId) ? requestedTabId : 'shop';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');

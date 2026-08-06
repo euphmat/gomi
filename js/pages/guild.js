@@ -3,6 +3,7 @@ import { renderChangeJobTab } from './guild-tabs/change-job.js';
 import { renderAcquireSkillTab } from './guild-tabs/acquire-skill.js';
 import { renderRanchTab } from './guild-tabs/ranch.js';
 import { renderMineTab } from './guild-tabs/mine.js';
+import { consumeHashRouteParam } from '../utils/route-params.js';
 
 /**
  * このファイルは「ギルド」画面のメインコンテナです。
@@ -20,7 +21,8 @@ export function renderGuildPage() {
     { id: 'ranch', label: '牧場', icon: 'pets', activeClass: 'border-pink-400/45 bg-pink-950/55 text-pink-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(244,114,182,0.18)]', idleClass: 'active:border-pink-500/35 active:bg-pink-950/30 active:text-pink-300' },
     { id: 'mine', label: '鉱山', icon: 'landscape', activeClass: 'border-amber-400/45 bg-amber-950/55 text-amber-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(251,191,36,0.18)]', idleClass: 'active:border-amber-500/35 active:bg-amber-950/30 active:text-amber-300' }
   ];
-  let activeTabId = 'inn';
+  const requestedTabId = consumeHashRouteParam('tab');
+  let activeTabId = TABS.some(tab => tab.id === requestedTabId) ? requestedTabId : 'inn';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');

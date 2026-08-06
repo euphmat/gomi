@@ -5,6 +5,7 @@ import { GameDB } from '../data/database.js';
 import { getFishingSpotUnlockStatus, loadFishingData } from '../data/fishing-manager.js';
 import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
 import { renderFishingTackleSummary, showFishingTackleWorkshop } from './fishing-tackle.js';
+import { consumeHashRouteParam } from '../utils/route-params.js';
 
 import { formatNumber } from '../utils/format.js';
 
@@ -126,6 +127,12 @@ window.switchDungeonTab = async (tab) => {
  * Dungeon Page
  */
 export async function renderDungeonPage() {
+  const requestedTab = consumeHashRouteParam('tab');
+  if (['normal', 'special', 'fishing'].includes(requestedTab)) {
+    if (currentDungeonTab !== requestedTab) currentDungeonPage = 1;
+    currentDungeonTab = requestedTab;
+  }
+
   const tabsHtml = `
     <div class="flex gap-1 p-1 bg-[#11111a] rounded-lg shadow-inner border border-gray-800/80 sticky top-0 z-20 flex-shrink-0 mx-auto w-full max-w-md">
       <button onclick="window.switchDungeonTab('normal')" 

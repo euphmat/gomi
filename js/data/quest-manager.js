@@ -14,6 +14,7 @@ export const DAILY_QUESTS = [
     eventType: 'quest:monster-kill',
     target: 10000,
     progressKey: 'kills',
+    destination: { path: '/dungeon?tab=normal', label: 'ダンジョンへ' },
   },
   {
     id: 'daily_feed_level_5',
@@ -22,6 +23,7 @@ export const DAILY_QUESTS = [
     eventType: 'quest:monster-feed-level',
     target: 5,
     progressKey: 'feedLevels',
+    destination: { path: '/guild?tab=ranch', label: '牧場へ' },
   },
   {
     id: 'daily_craft_5',
@@ -30,6 +32,7 @@ export const DAILY_QUESTS = [
     eventType: 'quest:equipment-craft',
     target: 5,
     progressKey: 'crafts',
+    destination: { path: '/shop?tab=shop', label: 'ショップへ' },
   },
   {
     id: 'daily_mine_upgrade_5',
@@ -38,6 +41,7 @@ export const DAILY_QUESTS = [
     eventType: 'quest:mine-upgrade',
     target: 5,
     progressKey: 'mineUpgrades',
+    destination: { path: '/guild?tab=mine', label: '鉱山へ' },
   },
   {
     id: 'daily_fish_5',
@@ -46,6 +50,7 @@ export const DAILY_QUESTS = [
     eventType: 'quest:fish-caught',
     target: 5,
     progressKey: 'fishCaught',
+    destination: { path: '/fishing', label: '釣り場へ' },
   },
 ];
 

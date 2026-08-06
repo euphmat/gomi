@@ -44,15 +44,17 @@ export class Router {
    * @returns {string}
    */
   getCurrentRoute() {
-    return window.location.hash.slice(1) || '/status';
+    const route = window.location.hash.slice(1) || '/status';
+    return route.split('?')[0];
   }
 
   /**
    * Handle route change - renders the matching page.
    */
   handleRoute() {
+    const routeKey = window.location.hash.slice(1) || '/status';
     const path = this.getCurrentRoute();
-    if (path === this.currentRoute) return;
+    if (routeKey === this.currentRoute) return;
 
     const cleanupPromise = Promise.all(Array.from(this.contentEl.children).map(element => {
       if (typeof element.cleanup !== 'function') return Promise.resolve();
@@ -61,7 +63,7 @@ export class Router {
       });
     }));
 
-    this.currentRoute = path;
+    this.currentRoute = routeKey;
     const renderFn = this.routes.get(path);
 
     if (renderFn) {
@@ -72,14 +74,14 @@ export class Router {
 
       setTimeout(async () => {
         await cleanupPromise;
-        if (this.currentRoute !== path) return;
+        if (this.currentRoute !== routeKey) return;
         this.contentEl.innerHTML = '';
         let content = renderFn();
 
         // Handle async render functions (Promise)
         if (content instanceof Promise) {
           content.then(resolvedContent => {
-            if (this.currentRoute !== path) return;
+            if (this.currentRoute !== routeKey) return;
             if (typeof resolvedContent === 'string') {
               this.contentEl.innerHTML = resolvedContent;
             } else if (resolvedContent instanceof HTMLElement) {

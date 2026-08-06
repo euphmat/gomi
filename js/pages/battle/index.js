@@ -1379,21 +1379,29 @@ export function renderBattlePage() {
       }
       @keyframes battle-medal-ready-glow {
         0%, 100% {
-          box-shadow: 0 -3px 12px rgb(52 211 153 / .45), inset 0 1px 0 rgb(167 243 208 / .22);
-          filter: brightness(1);
+          color: rgb(255 251 235);
+          background-color: rgb(120 53 15);
+          border-color: rgb(251 191 36 / .9);
+          box-shadow: 0 -4px 14px rgb(245 158 11 / .7), 0 0 8px rgb(250 204 21 / .35), inset 0 0 10px rgb(251 191 36 / .18);
+          filter: brightness(1.05);
         }
         50% {
-          box-shadow: 0 -5px 24px rgb(52 211 153 / .95), 0 0 10px rgb(250 204 21 / .4), inset 0 1px 0 rgb(255 255 255 / .35);
-          filter: brightness(1.28);
+          color: white;
+          background-color: rgb(245 158 11);
+          border-color: rgb(254 240 138);
+          box-shadow: 0 -7px 30px rgb(250 204 21), 0 0 18px rgb(245 158 11 / .95), inset 0 0 14px rgb(255 255 255 / .42);
+          filter: brightness(1.35);
         }
       }
       .battle-tab--upgrade-ready {
         position: relative;
-        color: rgb(209 250 229);
-        border-color: rgb(110 231 183 / .65);
-        border-top-color: rgb(167 243 208);
-        background: linear-gradient(180deg, rgb(6 78 59 / .9), rgb(4 47 46 / .82));
-        animation: battle-medal-ready-glow 1.35s ease-in-out infinite;
+        color: rgb(255 251 235);
+        border-color: rgb(251 191 36 / .9);
+        background-color: rgb(217 119 6);
+        background-image: none;
+        box-shadow: 0 -6px 24px rgb(250 204 21 / .9), 0 0 14px rgb(245 158 11 / .75), inset 0 0 12px rgb(255 255 255 / .3);
+        text-shadow: 0 1px 3px rgb(0 0 0 / .9), 0 0 7px rgb(255 255 255 / .55);
+        animation: battle-medal-ready-glow .9s ease-in-out infinite;
       }
       .battle-tab--upgrade-ready::after {
         content: '';
@@ -1407,11 +1415,15 @@ export function renderBattlePage() {
         box-shadow: 0 0 7px rgb(250 204 21);
       }
       .battle-tab--upgrade-ready .material-symbols-outlined {
-        color: rgb(167 243 208);
-        filter: drop-shadow(0 0 7px rgb(52 211 153));
+        color: rgb(254 240 138);
+        filter: drop-shadow(0 0 8px rgb(255 255 255)) drop-shadow(0 0 6px rgb(250 204 21));
       }
       @media (prefers-reduced-motion: reduce) {
-        .battle-tab--upgrade-ready { animation: none; }
+        .battle-tab--upgrade-ready {
+          animation: none;
+          background-color: rgb(245 158 11);
+          box-shadow: 0 -6px 24px rgb(250 204 21 / .9), 0 0 14px rgb(245 158 11 / .75), inset 0 0 12px rgb(255 255 255 / .3);
+        }
       }
       #tab-content {
         color: white;

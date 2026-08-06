@@ -125,10 +125,12 @@ export function renderDailyQuestTab() {
       const isCompleted = rawProgress >= quest.target;
       const remaining = Math.max(0, quest.target - rawProgress);
 
-      const item = document.createElement('article');
-      item.className = `relative overflow-hidden rounded-xl border p-3.5 transition-colors ${isCompleted
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = `group relative w-full overflow-hidden rounded-xl border p-3.5 text-left transition-all active:scale-[0.99] ${isCompleted
         ? 'border-emerald-400/30 bg-emerald-950/25'
-        : 'border-slate-800 bg-slate-900/65'}`;
+        : 'border-slate-800 bg-slate-900/65 active:border-sky-400/40 active:bg-sky-950/20'}`;
+      item.setAttribute('aria-label', `${quest.label}。${quest.destination.label}`);
       item.innerHTML = `
         <div class="flex items-center gap-3">
           <div class="relative shrink-0 w-11 h-11 rounded-xl flex items-center justify-center border ${isCompleted
@@ -151,8 +153,15 @@ export function renderDailyQuestTab() {
               <span class="min-w-[72px] text-right text-[10px] font-mono font-bold tabular-nums ${isCompleted ? 'text-emerald-300' : 'text-slate-400'}">${formatNumber(progress)} / ${formatNumber(quest.target)}</span>
             </div>
           </div>
+          <div class="flex shrink-0 flex-col items-center gap-0.5 text-sky-400/70 transition-transform group-active:translate-x-0.5">
+            <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+            <span class="text-[8px] font-black">移動</span>
+          </div>
         </div>
       `;
+      item.addEventListener('click', () => {
+        window.location.hash = quest.destination.path;
+      });
       list.appendChild(item);
     });
 
