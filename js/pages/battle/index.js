@@ -119,6 +119,7 @@ class BattleManager {
     this._tabInteractionTimer = null;
     this._battleReady = false;
     this._pendingTabRender = false;
+    this.hasUpgradeableDungeonMedal = false;
 
     // Register lifecycle cleanup before any asynchronous initialization starts.
     // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
@@ -325,6 +326,7 @@ class BattleManager {
     this.dungeonCompanionMonsterIds = this.dungeonUniqueMonsterIds.filter(monsterId =>
       companionsInDungeon[monsterId] || companionsInDungeon[`${monsterId}_legendary`]
     );
+    this.updateDungeonMedalAvailability(allInventory, this.currentGold);
     const selectableMonsterIds = this.currentTab === 'pet'
       ? this.dungeonUniqueMonsterIds
       : this.currentTab === 'medal'
@@ -882,16 +884,54 @@ class BattleManager {
     ];
 
     tabs.forEach(({btn, id, icon, palette, label}) => {
+      const isUpgradeReady = id === 'medal' && this.hasUpgradeableDungeonMedal;
+      const upgradeReadyClass = isUpgradeReady ? ' battle-tab--upgrade-ready' : '';
       btn.style.setProperty('--tab-color', `var(--battle-palette-${palette})`);
       btn.setAttribute('aria-selected', String(this.currentTab === id));
+      btn.setAttribute('aria-label', isUpgradeReady ? `${label}（アップグレード可能）` : label);
+      btn.toggleAttribute('data-upgrade-ready', isUpgradeReady);
       if (this.currentTab === id) {
-        btn.className = 'battle-tab battle-tab--active flex-1 min-w-0 px-0.5 border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold relative z-10 flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer';
+        btn.className = `battle-tab battle-tab--active${upgradeReadyClass} flex-1 min-w-0 px-0.5 border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold relative z-10 flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
         btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
       } else {
-        btn.className = 'battle-tab flex-1 min-w-0 px-0.5 backdrop-blur-sm border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer';
+        btn.className = `battle-tab${upgradeReadyClass} flex-1 min-w-0 px-0.5 backdrop-blur-sm border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
         btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
       }
     });
+  }
+
+  getDungeonMedalAvailability(allInventory = [], gold = this.currentGold) {
+    const inventoryMap = {};
+    (allInventory || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
+
+    const medalAvailability = {};
+    (this.dungeonCompanionMonsterIds || []).forEach(monsterId => {
+      const monster = MONSTERS.find(m => m.id === monsterId);
+      if (!monster) return;
+
+      const currentRankIndex = this.playerMedals[monsterId] !== undefined ? this.playerMedals[monsterId] : -1;
+      const isMaxRank = currentRankIndex >= MEDAL_RANKS.length - 1;
+      const nextRank = !isMaxRank ? MEDAL_RANKS[currentRankIndex + 1] : null;
+      const goldCost = nextRank ? (monster.rewards?.gold || 0) * nextRank.goldMultiplier : 0;
+      const hasMaterials = nextRank && (monster.drops || []).every(
+        drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
+      );
+      const canAcquireOrUpgrade = Boolean(nextRank && hasMaterials && gold >= goldCost);
+
+      medalAvailability[monsterId] = {
+        isMaxRank,
+        canAcquireOrUpgrade,
+        canUpgrade: currentRankIndex >= 0 && canAcquireOrUpgrade
+      };
+    });
+
+    return medalAvailability;
+  }
+
+  updateDungeonMedalAvailability(allInventory = [], gold = this.currentGold) {
+    const medalAvailability = this.getDungeonMedalAvailability(allInventory, gold);
+    this.hasUpgradeableDungeonMedal = Object.values(medalAvailability).some(status => status.canUpgrade);
+    return medalAvailability;
   }
 
   renderTabContent(force = false) {
@@ -1169,29 +1209,9 @@ class BattleManager {
     ]);
     if (this.currentTab !== 'medal' || !this.container.isConnected) return;
 
-    const inventoryMap = {};
-    (allInventory || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
     this.currentGold = latestGold || 0;
-
-    const medalAvailability = {};
-    (this.dungeonCompanionMonsterIds || []).forEach(monsterId => {
-      const monster = MONSTERS.find(m => m.id === monsterId);
-      if (!monster) return;
-
-      const currentRankIndex = this.playerMedals[monsterId] !== undefined ? this.playerMedals[monsterId] : -1;
-      const isMaxRank = currentRankIndex >= MEDAL_RANKS.length - 1;
-      const nextRank = !isMaxRank ? MEDAL_RANKS[currentRankIndex + 1] : null;
-      const goldCost = nextRank ? (monster.rewards?.gold || 0) * nextRank.goldMultiplier : 0;
-      const hasMaterials = nextRank && (monster.drops || []).every(
-        drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
-      );
-      const canCraft = Boolean(nextRank && hasMaterials && this.currentGold >= goldCost);
-
-      medalAvailability[monsterId] = {
-        isMaxRank,
-        canAcquireOrUpgrade: canCraft
-      };
-    });
+    const medalAvailability = this.updateDungeonMedalAvailability(allInventory, this.currentGold);
+    this.updateTabStyles();
 
     const body = this.renderSubTabsUI(medalAvailability);
     const targetEntity = this.getSubTabTargetEntity();
@@ -1356,6 +1376,42 @@ export function renderBattlePage() {
       .battle-tab .material-symbols-outlined {
         color: rgb(255 255 255 / .88);
         filter: drop-shadow(0 0 6px rgb(var(--tab-color) / .8));
+      }
+      @keyframes battle-medal-ready-glow {
+        0%, 100% {
+          box-shadow: 0 -3px 12px rgb(52 211 153 / .45), inset 0 1px 0 rgb(167 243 208 / .22);
+          filter: brightness(1);
+        }
+        50% {
+          box-shadow: 0 -5px 24px rgb(52 211 153 / .95), 0 0 10px rgb(250 204 21 / .4), inset 0 1px 0 rgb(255 255 255 / .35);
+          filter: brightness(1.28);
+        }
+      }
+      .battle-tab--upgrade-ready {
+        position: relative;
+        color: rgb(209 250 229);
+        border-color: rgb(110 231 183 / .65);
+        border-top-color: rgb(167 243 208);
+        background: linear-gradient(180deg, rgb(6 78 59 / .9), rgb(4 47 46 / .82));
+        animation: battle-medal-ready-glow 1.35s ease-in-out infinite;
+      }
+      .battle-tab--upgrade-ready::after {
+        content: '';
+        position: absolute;
+        right: 4px;
+        top: 3px;
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgb(250 204 21);
+        box-shadow: 0 0 7px rgb(250 204 21);
+      }
+      .battle-tab--upgrade-ready .material-symbols-outlined {
+        color: rgb(167 243 208);
+        filter: drop-shadow(0 0 7px rgb(52 211 153));
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .battle-tab--upgrade-ready { animation: none; }
       }
       #tab-content {
         color: white;
