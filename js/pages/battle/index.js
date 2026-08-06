@@ -151,6 +151,7 @@ class BattleManager {
     this.elements.btnAutoDungeon.disabled = false;
     this.autoSkillStates = {};
     this.monsterKills = {};
+    this.ownedItemIds = new Set();
 
     // Tab navigation must be usable as soon as the battle shell is visible.
     // Waiting for the asynchronous IndexedDB initialization made the first
@@ -214,6 +215,18 @@ class BattleManager {
     this.discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
     this.currentGold = await GameDB.getGameState('gold') || 0;
     this.ranchData = await GameDB.getGameState('ranch_data') || {};
+    const [allInventory, rawEquipment] = await Promise.all([
+      GameDB.getAllInventory(),
+      GameDB.getAllEquipment()
+    ]);
+    this.ownedItemIds = new Set(
+      (allInventory || [])
+        .filter(item => (item.quantity || 0) > 0)
+        .map(item => item.id)
+    );
+    (rawEquipment || []).forEach(item => {
+      this.ownedItemIds.add(item.baseId || item.id);
+    });
     this._needsSave = false;
 
     // The page may have been replaced while the database reads above were in
@@ -257,8 +270,7 @@ class BattleManager {
 
     if (!this.party || this.party.length === 0) {
       const rawParty = await getCharactersWithRanchBonus();
-      const rawEquip = await GameDB.getAllEquipment();
-      this.equipMap = buildEquipmentMap(rawEquip);
+      this.equipMap = buildEquipmentMap(rawEquipment);
 
       this.party = rawParty.map((char, index) => {
         const stats = calcFinalStats(char, this.equipMap);
@@ -1078,7 +1090,7 @@ class BattleManager {
       return;
     }
 
-    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData, this.playerMedals);
+    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData, this.playerMedals, this.ownedItemIds);
     body.innerHTML = html;
   }
 

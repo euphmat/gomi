@@ -248,7 +248,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   `;
 }
 
-export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills, ranchData = {}, playerMedals = {}) {
+export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorNum, materials, monsterKills, ranchData = {}, playerMedals = {}, ownedItemIds = new Set()) {
   if (!targetEntity) {
     return '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が選択されていません</div>';
   }
@@ -420,11 +420,12 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   const materialDropRows = (targetEntity.drops || []).map(d => {
       const mat = materials.find(m => m.id === d.itemId);
       const itemName = mat ? mat.name : d.itemId;
+      const isOwned = ownedItemIds.has(d.itemId);
       const rate = targetEntity.isLegendary ? 100 : parseFloat(d.rate) + bonus + getTreasureEffect('materialDropPercent');
       const rateStyle = getDropRateStyle(rate);
       const itemImg = mat && mat.image
-        ? `<img src="${mat.image}" class="h-10 w-10 max-h-full max-w-full object-contain ${rateStyle.icon}">`
-        : `<span class="material-symbols-outlined text-slate-400" style="font-size: 30px;">category</span>`;
+        ? `<img src="${mat.image}" class="h-10 w-10 max-h-full max-w-full object-contain ${isOwned ? rateStyle.icon : 'brightness-0'}">`
+        : `<span class="material-symbols-outlined ${isOwned ? 'text-slate-400' : 'text-black'}" style="font-size: 30px;">category</span>`;
 
       return `
         <div class="battle-info-drop-card h-[68px] min-w-0 flex flex-col items-center justify-center border ${rateStyle.card} rounded-lg p-1 gap-1 active:brightness-125 transition-all shadow-inner" aria-label="${itemName}、ドロップ率 ${rate.toFixed(3).replace(/\.?0+$/, '')}%">
@@ -436,14 +437,17 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
       `;
     });
   const equipmentDropRate = EQUIPMENT_DROP_RATE * getTreasureEffect('equipmentDropMultiplier');
-  const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => `
-    <div class="battle-info-drop-card h-[68px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 gap-1 active:brightness-125 transition-all shadow-inner" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
-      <div class="battle-info-drop-image flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/65 bg-amber-950/45 p-0.5 shadow-[0_0_10px_rgba(245,158,11,0.28)]">
-        <img src="${equipment.image}" class="h-10 w-10 max-h-full max-w-full object-contain drop-shadow-[0_0_7px_rgba(251,191,36,0.55)]" onerror="this.style.display='none'">
+  const equipmentDropRows = getEquipmentDropsForMonster(targetEntity).map(equipment => {
+    const isOwned = ownedItemIds.has(equipment.id);
+    return `
+      <div class="battle-info-drop-card h-[68px] min-w-0 flex flex-col items-center justify-center border border-amber-700/60 bg-gradient-to-br from-amber-950/45 to-slate-950/80 rounded-lg p-1 gap-1 active:brightness-125 transition-all shadow-inner" aria-label="${equipment.name}、ドロップ率 ${equipmentDropRate}%">
+        <div class="battle-info-drop-image flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-500/65 bg-amber-950/45 p-0.5 shadow-[0_0_10px_rgba(245,158,11,0.28)]">
+          <img src="${equipment.image}" class="h-10 w-10 max-h-full max-w-full object-contain ${isOwned ? 'drop-shadow-[0_0_7px_rgba(251,191,36,0.55)]' : 'brightness-0'}" onerror="this.style.display='none'">
+        </div>
+        <span class="max-w-full overflow-hidden text-[10px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${equipmentDropRate}%</span>
       </div>
-      <span class="max-w-full overflow-hidden text-[10px] leading-none font-black text-amber-300 bg-amber-950/90 border-amber-700/70 px-1 py-0.5 rounded border tabular-nums whitespace-nowrap">${equipmentDropRate}%</span>
-    </div>
-  `);
+    `;
+  });
   const dropRows = [...materialDropRows, ...equipmentDropRows];
   if (dropRows.length > 0) {
     dropsHtml = dropRows.join('');
