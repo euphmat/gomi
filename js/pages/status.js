@@ -150,10 +150,33 @@ async function _loadStatusData(container) {
     }
 
     container.innerHTML = `
+      <button data-memory-game
+              class="group mb-2 flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-rose-400/35 bg-gradient-to-r from-rose-950/80 via-slate-950 to-indigo-950/80 px-3 py-2.5 text-left shadow-[0_8px_24px_rgba(0,0,0,.28)] active:scale-[.99]"
+              aria-label="トランプ神経衰弱で遊ぶ">
+        <span class="relative flex h-11 w-14 shrink-0 items-center justify-center" aria-hidden="true">
+          <span class="absolute h-9 w-7 -translate-x-2 -rotate-12 rounded-md border-2 border-white/80 bg-gradient-to-br from-rose-500 to-red-800 shadow-lg"></span>
+          <span class="absolute h-9 w-7 translate-x-2 rotate-12 rounded-md border-2 border-white/90 bg-gradient-to-br from-indigo-500 to-blue-900 shadow-lg"></span>
+          <span class="material-symbols-outlined relative z-10 text-[25px] text-white drop-shadow-md">playing_cards</span>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[9px] font-black tracking-[.22em] text-rose-300">CARD BATTLE</span>
+          <span class="block text-sm font-black text-white">神経衰弱</span>
+          <span class="block truncate text-[9px] text-slate-400">CPUに勝利してPrismを獲得</span>
+        </span>
+        <span class="flex items-center gap-0.5 rounded-full border border-fuchsia-300/30 bg-fuchsia-500/10 px-2 py-1 text-[9px] font-black text-fuchsia-200">
+          <span class="material-symbols-outlined text-[13px]">diamond</span>1〜10
+        </span>
+        <span class="material-symbols-outlined text-slate-500 transition-transform group-active:translate-x-1">chevron_right</span>
+      </button>
+
       <div class="grid grid-cols-2 gap-2">
         ${cards.join('')}
       </div>
     `;
+
+    container.querySelector('[data-memory-game]')?.addEventListener('click', () => {
+      window.location.hash = '/memory-game';
+    });
 
     // Bind equipment modal click events
     const slotClickables = container.querySelectorAll('.eq-slot-clickable');

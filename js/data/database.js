@@ -404,6 +404,58 @@ class GameDatabase {
   }
 
   /**
+   * 神経衰弱の難易度別デイリー勝利を記録し、同じトランザクションでPrismを付与する。
+   * 複数タブで同時に勝利しても、各難易度の報酬は1日1回だけになる。
+   * @param {string} dateKey - ローカル日付（YYYY-MM-DD）
+   * @param {'easy'|'normal'|'hard'|'very_hard'} difficultyId
+   * @param {number} amount
+   * @returns {Promise<{awarded: boolean, prism: number}>}
+   */
+  claimDailyMemoryGameReward(dateKey, difficultyId, amount) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+      return Promise.reject(new Error('Invalid memory game date key.'));
+    }
+    if (!['easy', 'normal', 'hard', 'very_hard'].includes(difficultyId)) {
+      return Promise.reject(new Error('Invalid memory game difficulty.'));
+    }
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return Promise.reject(new Error('Invalid memory game reward amount.'));
+    }
+
+    const winKey = `memoryGameLastWin:${difficultyId}`;
+    const run = () => this._runWithConnectionRetry('gameState', (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let result;
+
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Memory game reward transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Memory game reward transaction was aborted.'));
+
+      const winRequest = store.get(winKey);
+      winRequest.onsuccess = () => {
+        const prismRequest = store.get('prism');
+        prismRequest.onsuccess = () => {
+          const currentPrism = Number(prismRequest.result?.value) || 0;
+          if (winRequest.result?.value === dateKey) {
+            result = { awarded: false, prism: currentPrism };
+            return;
+          }
+
+          const prism = currentPrism + amount;
+          store.put({ key: 'prism', value: prism });
+          store.put({ key: winKey, value: dateKey });
+          result = { awarded: true, prism };
+        };
+      };
+    }));
+
+    const queuedWrite = this._writeQueue.then(run, run);
+    this._writeQueue = queuedWrite.catch(() => undefined);
+    return queuedWrite;
+  }
+
+  /**
    * Award the daily login bonus once for the supplied local calendar date.
    * The date check and updates share one transaction so simultaneous launches
    * in multiple tabs cannot award the bonus twice.
