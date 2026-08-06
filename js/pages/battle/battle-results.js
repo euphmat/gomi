@@ -341,8 +341,12 @@ export const resultMethods = {
         const mat = MATERIALS_MAP.get(itemId);
         if (mat) {
           const currentItem = await GameDB.getInventoryItem(itemId) || { id: itemId, quantity: 0, type: 'material', ...mat };
-          const newQuantity = currentItem.quantity + qty;
-          currentItem.quantity = Math.min(newQuantity, materialCapacity);
+          const currentQuantity = Math.max(0, Number(currentItem.quantity) || 0);
+          const newQuantity = currentQuantity + qty;
+          // 旧バージョンですでに上限を超えた在庫は、ドロップ保存時にも減らさない。
+          currentItem.quantity = currentQuantity >= materialCapacity
+            ? currentQuantity
+            : Math.min(newQuantity, materialCapacity);
           await GameDB.putInventoryItem(currentItem);
         }
       }

@@ -5,12 +5,12 @@
  * 
  * Bottom Navigation Bar Component
  * 
- * 5-tab navigation: Status | Guild | Dungeon | Shop | Library
+ * 5-tab navigation: Hometown | Guild | Dungeon | Shop | Quest
  * Highlights the active tab based on current route.
  */
 
 const NAV_TABS = [
-  { id: 'status',  label: 'ステータス', icon: 'person', path: '/status' },
+  { id: 'status',  label: 'ホームタウン', icon: 'home', path: '/status' },
   { id: 'guild',   label: 'ギルド', icon: 'groups', path: '/guild' },
   { id: 'dungeon', label: 'ダンジョン', icon: 'castle', path: '/dungeon' },
   { id: 'shop',    label: 'ショップ', icon: 'storefront', path: '/shop' },

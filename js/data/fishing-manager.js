@@ -20,6 +20,7 @@ import {
   getFishingTackleRecipe,
 } from '../definitions/fishing-tackle.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
+import { getMaterialCapacity, loadTreasureLevels } from './treasure-manager.js';
 
 const FISHING_STATE_KEY = 'fishing_data';
 const LEGACY_RANCH_FISH_STATE_KEY = 'ranch_fish_data';
@@ -274,15 +275,22 @@ async function catchGoldBag(state) {
 }
 
 async function catchMonsterMaterial(state, spotId) {
+  await loadTreasureLevels();
   const discovered = new Set(await GameDB.getGameState('discovered_monsters') || []);
   const candidates = MONSTERS.filter(monster => discovered.has(monster.id))
     .flatMap(monster => (monster.drops || []).map(drop => MATERIAL_MAP.get(drop.itemId)).filter(Boolean));
   if (!candidates.length) return catchFish(state, spotId);
   const material = candidates[Math.floor(Math.random() * candidates.length)];
   const current = await GameDB.getInventoryItem(material.id) || { ...material, type: 'material', quantity: 0 };
-  current.quantity = (current.quantity || 0) + MATERIAL_CATCH_AMOUNT;
+  const currentQuantity = Math.max(0, Number(current.quantity) || 0);
+  const materialCapacity = getMaterialCapacity();
+  // 旧バージョンですでに上限を超えた在庫は減らさず、空き容量の範囲だけ追加する。
+  current.quantity = currentQuantity >= materialCapacity
+    ? currentQuantity
+    : Math.min(materialCapacity, currentQuantity + MATERIAL_CATCH_AMOUNT);
+  const gainedAmount = current.quantity - currentQuantity;
   await GameDB.putInventoryItem(current);
-  const result = { type: 'material', name: `${material.name} ×${MATERIAL_CATCH_AMOUNT}`, baseName: material.name, image: material.image, itemId: material.id, amount: MATERIAL_CATCH_AMOUNT };
+  const result = { type: 'material', name: `${material.name} ×${gainedAmount}`, baseName: material.name, image: material.image, itemId: material.id, amount: gainedAmount };
   addRecentBonus(state, result);
   return result;
 }

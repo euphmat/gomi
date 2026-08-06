@@ -276,12 +276,6 @@ export async function renderMineTab() {
   const render = () => {
     container.innerHTML = `
       <div class="mx-auto flex min-h-full max-w-xl flex-col">
-        <div data-theme-panel class="mb-3 overflow-hidden rounded-2xl border p-4 shadow-xl">
-          <div class="flex items-center gap-3">
-            <span data-theme-icon class="material-symbols-outlined text-3xl">landscape</span>
-            <div><h2 data-theme-text class="text-base font-black tracking-wider">鉱山開発</h2><p class="mt-0.5 text-[10px] text-stone-400">鉱脈を開発し、時間経過で蓄積したGoldを回収しよう。</p></div>
-          </div>
-        </div>
         <div class="flex-1" data-mine-list></div>
         <nav data-theme-panel class="sticky bottom-0 z-10 mt-4 rounded-2xl border p-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.45)] backdrop-blur-md" aria-label="鉱山ページ">
           <div class="flex items-center gap-2">
