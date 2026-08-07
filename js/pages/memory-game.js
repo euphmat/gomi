@@ -251,7 +251,7 @@ const pageStyles = () => `
     .memory-skill-tree-canvas { min-width:660px; padding:4px 10px 18px; }
     .memory-tree-root { position:relative; display:flex; width:128px; min-height:74px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:2px solid rgba(103,232,249,.6); border-radius:22px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 24px rgba(34,211,238,.2),inset 0 0 18px rgba(34,211,238,.08); }
     .memory-tree-trunk { width:3px; height:25px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
-    .memory-tree-fork { position:relative; width:66.666%; height:31px; margin:0 auto; border-top:3px solid rgba(148,163,184,.38); }
+    .memory-tree-fork { position:relative; width:438.68px; height:31px; margin:0 auto; border-top:3px solid rgba(148,163,184,.38); }
     .memory-tree-fork span { position:absolute; top:-3px; width:3px; height:34px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
     .memory-tree-fork span:nth-child(1) { left:0; }
     .memory-tree-fork span:nth-child(2) { left:50%; transform:translateX(-50%); }
@@ -648,17 +648,19 @@ export function renderMemoryGamePage() {
               <span class="memory-card-inner block">
                 <span class="memory-card-face flex items-center justify-center border-2 border-slate-300/70 bg-[repeating-linear-gradient(135deg,#312e81_0,#312e81_5px,#1e1b4b_5px,#1e1b4b_10px)] shadow-md">
                   <span class="absolute inset-1 rounded-md border border-white/25"></span><span class="material-symbols-outlined text-[clamp(18px,6vw,30px)] text-white/85 drop-shadow">playing_cards</span>
-                  <span data-memory-mark class="absolute right-1 top-1 hidden h-5 min-w-5 items-center justify-center rounded-full border border-amber-100/70 bg-amber-500 px-1 text-[9px] font-black text-slate-950 shadow-[0_0_10px_rgba(251,191,36,.65)]" aria-hidden="true"></span>
-                  <span data-seen-mark class="material-symbols-outlined absolute bottom-1 left-1 hidden h-4 w-4 items-center justify-center rounded-full border border-violet-100/60 bg-violet-500 text-[10px] text-white shadow-[0_0_8px_rgba(167,139,250,.55)]" aria-hidden="true">visibility</span>
+                  <span data-memory-mark class="absolute right-1.5 top-1.5 hidden h-5 min-w-5 items-center justify-center rounded-full border border-amber-100/70 bg-amber-500 px-1 text-[9px] font-black text-slate-950 shadow-[0_0_10px_rgba(251,191,36,.65)]" aria-hidden="true"></span>
+                  <span data-seen-mark class="absolute bottom-1.5 left-1.5 hidden h-4 w-4 items-center justify-center rounded-full border border-violet-100/60 bg-violet-500 text-white shadow-[0_0_8px_rgba(167,139,250,.55)]" aria-hidden="true">
+                    <span class="material-symbols-outlined text-[10px] leading-none">visibility</span>
+                  </span>
                   <span data-clairvoyant-vision class="absolute inset-1 hidden flex-col items-center justify-center overflow-hidden rounded-md border border-cyan-100/70 bg-cyan-950/90 p-0.5 shadow-[inset_0_0_14px_rgba(103,232,249,.6)]" aria-hidden="true">
                     <img src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain opacity-80 drop-shadow-[0_0_5px_rgba(165,243,252,.9)]">
-                    <span class="block w-full truncate rounded-sm bg-cyan-950/85 px-0.5 py-px text-center text-[clamp(5px,1.5vw,8px)] font-black leading-none text-cyan-50">${card.name}</span>
+                    <span class="block w-full truncate rounded-sm bg-cyan-950/85 px-0.5 py-px text-center text-[clamp(7px,1.8vw,9px)] font-black leading-none text-cyan-50">${card.name}</span>
                   </span>
                 </span>
                 <span data-card-front class="memory-card-face memory-card-front flex flex-col items-center justify-center border-2 border-slate-400/70 p-1 shadow-md" style="background:linear-gradient(to bottom,#64748b,#1e293b)">
                   <img data-card-image src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain drop-shadow-md" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
                   <span class="material-symbols-outlined flex-1 place-items-center text-3xl text-slate-500" style="display:none">image</span>
-                  <span class="mt-0.5 block w-full rounded-sm bg-slate-950/65 px-0.5 py-px whitespace-normal break-all text-center text-[clamp(5px,1.6vw,8px)] font-black leading-[1.08] text-white shadow-sm">${card.name}</span>
+                  <span class="mt-0.5 block w-full rounded-sm bg-slate-950/75 px-0.5 py-0.5 whitespace-normal break-all text-center text-[clamp(8px,2vw,11px)] font-black leading-[1.1] text-white shadow-sm">${card.name}</span>
                 </span>
               </span>
             </button>
@@ -685,6 +687,7 @@ export function renderMemoryGamePage() {
       </div>
     `;
     applyExtractedCardColors(container);
+    updateMemoryMarks();
 
     const beginFirstTurn = () => {
       if (!game || game.over) return;
