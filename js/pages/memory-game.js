@@ -248,38 +248,38 @@ const pageStyles = () => `
     .memory-coin-shadow { animation:memory-coin-shadow 1.45s ease-in-out both; }
     .memory-coin-result { animation:memory-coin-result-in .3s ease-out both; }
     .memory-skill-tree-scroll { overflow-x:hidden; }
-    .memory-skill-tree-canvas { width:100%; max-width:100%; padding:4px 2px 14px; }
-    .memory-tree-root { position:relative; display:flex; width:114px; min-height:64px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:2px solid rgba(103,232,249,.6); border-radius:18px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 20px rgba(34,211,238,.2),inset 0 0 14px rgba(34,211,238,.08); }
-    .memory-tree-trunk { width:2px; height:20px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
-    .memory-tree-fork { position:relative; width:66.666%; height:24px; margin:0 auto; border-top:2px solid rgba(148,163,184,.38); }
-    .memory-tree-fork span { position:absolute; top:-2px; width:2px; height:26px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
+    .memory-skill-tree-canvas { width:100%; max-width:100%; padding:2px 2px 10px; }
+    .memory-tree-root { position:relative; display:flex; width:92px; min-height:48px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:1.5px solid rgba(103,232,249,.6); border-radius:14px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 16px rgba(34,211,238,.2),inset 0 0 10px rgba(34,211,238,.08); }
+    .memory-tree-trunk { width:2px; height:14px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
+    .memory-tree-fork { position:relative; width:66.666%; height:16px; margin:0 auto; border-top:2px solid rgba(148,163,184,.38); }
+    .memory-tree-fork span { position:absolute; top:-2px; width:2px; height:18px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
     .memory-tree-fork span:nth-child(1) { left:0; }
     .memory-tree-fork span:nth-child(2) { left:50%; transform:translateX(-50%); }
     .memory-tree-fork span:nth-child(3) { right:0; }
-    .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; align-items:start; }
+    .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; align-items:start; }
     @media (min-width: 640px) {
-      .memory-tree-branches { gap:16px; }
+      .memory-tree-branches { gap:12px; }
     }
     .memory-skill-branch { --branch-rgb:34,211,238; min-width:0; }
-    .memory-branch-head { display:flex; min-height:50px; flex-direction:column; sm:flex-row; align-items:center; justify-content:center; gap:2px; sm:gap:6px; border:2px solid rgba(var(--branch-rgb),.48); border-radius:14px; padding:5px 2px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 14px rgba(var(--branch-rgb),.12); text-align:center; sm:text-left; }
-    .memory-branch-head > .material-symbols-outlined { color:rgb(var(--branch-rgb)); font-size:20px; }
-    .memory-branch-connector { width:2px; height:18px; margin:0 auto; background:rgba(var(--branch-rgb),.38); }
+    .memory-branch-head { display:flex; min-height:42px; flex-direction:column; sm:flex-row; align-items:center; justify-content:center; gap:1px; sm:gap:4px; border:1.5px solid rgba(var(--branch-rgb),.48); border-radius:10px; padding:3px 1px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 10px rgba(var(--branch-rgb),.12); text-align:center; sm:text-left; }
+    .memory-branch-head > .material-symbols-outlined { color:rgb(var(--branch-rgb)); font-size:16px; }
+    .memory-branch-connector { width:2px; height:12px; margin:0 auto; background:rgba(var(--branch-rgb),.38); }
     .memory-skill-path { display:flex; flex-direction:column; }
     .memory-skill-node { position:relative; }
-    .memory-skill-node + .memory-skill-node { margin-top:20px; }
-    .memory-skill-node + .memory-skill-node::before { content:''; position:absolute; left:50%; bottom:100%; width:2px; height:20px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
-    .memory-tree-skill { position:relative; display:flex; width:100%; min-height:136px; flex-direction:column; align-items:center; border:2px solid rgba(100,116,139,.36); border-radius:14px; padding:22px 3px 6px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:center; }
-    .memory-tree-skill.is-learned { border-color:rgba(var(--branch-rgb),.5); color:#e2e8f0; background:linear-gradient(155deg,rgba(var(--branch-rgb),.18),rgba(15,23,42,.98) 68%); box-shadow:0 0 15px rgba(var(--branch-rgb),.1),inset 0 1px rgba(255,255,255,.08); }
-    .memory-tree-skill.can-unlock { border-color:rgba(var(--branch-rgb),.9); color:white; box-shadow:0 0 18px rgba(var(--branch-rgb),.28),inset 0 0 14px rgba(var(--branch-rgb),.1); animation:memory-skill-ready 1.7s ease-in-out infinite; }
-    .memory-tree-skill.is-max { border-color:rgba(52,211,153,.65); box-shadow:0 0 14px rgba(52,211,153,.15); }
+    .memory-skill-node + .memory-skill-node { margin-top:14px; }
+    .memory-skill-node + .memory-skill-node::before { content:''; position:absolute; left:50%; bottom:100%; width:2px; height:14px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
+    .memory-tree-skill { position:relative; display:flex; width:100%; min-height:112px; flex-direction:column; align-items:center; border:1.5px solid rgba(100,116,139,.36); border-radius:10px; padding:15px 2px 4px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:center; }
+    .memory-tree-skill.is-learned { border-color:rgba(var(--branch-rgb),.5); color:#e2e8f0; background:linear-gradient(155deg,rgba(var(--branch-rgb),.18),rgba(15,23,42,.98) 68%); box-shadow:0 0 10px rgba(var(--branch-rgb),.1),inset 0 1px rgba(255,255,255,.08); }
+    .memory-tree-skill.can-unlock { border-color:rgba(var(--branch-rgb),.9); color:white; box-shadow:0 0 14px rgba(var(--branch-rgb),.28),inset 0 0 10px rgba(var(--branch-rgb),.1); animation:memory-skill-ready 1.7s ease-in-out infinite; }
+    .memory-tree-skill.is-max { border-color:rgba(52,211,153,.65); box-shadow:0 0 10px rgba(52,211,153,.15); }
     .memory-tree-skill:disabled { opacity:1; }
-    .memory-skill-orb { position:absolute; top:-14px; left:50%; display:flex; width:34px; height:34px; transform:translateX(-50%); align-items:center; justify-content:center; border:2px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 3px 8px rgba(0,0,0,.45); }
-    .is-learned .memory-skill-orb,.can-unlock .memory-skill-orb { border-color:rgba(var(--branch-rgb),.8); color:rgb(var(--branch-rgb)); background:rgb(15,23,42); box-shadow:0 0 12px rgba(var(--branch-rgb),.28); }
+    .memory-skill-orb { position:absolute; top:-11px; left:50%; display:flex; width:25px; height:25px; transform:translateX(-50%); align-items:center; justify-content:center; border:1.5px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 2px 6px rgba(0,0,0,.45); }
+    .is-learned .memory-skill-orb,.can-unlock .memory-skill-orb { border-color:rgba(var(--branch-rgb),.8); color:rgb(var(--branch-rgb)); background:rgb(15,23,42); box-shadow:0 0 8px rgba(var(--branch-rgb),.28); }
     .is-max .memory-skill-orb { border-color:rgba(52,211,153,.8); color:#6ee7b7; }
-    .memory-rank-dots { display:flex; justify-content:center; gap:3px; margin-top:3px; }
-    .memory-rank-dot { width:5px; height:5px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
-    .memory-rank-dot.is-filled { border-color:rgba(var(--branch-rgb),.9); background:rgb(var(--branch-rgb)); box-shadow:0 0 5px rgba(var(--branch-rgb),.65); }
-    .memory-tree-status { margin-top:auto; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:4px; }
+    .memory-rank-dots { display:flex; justify-content:center; gap:2px; margin-top:2px; }
+    .memory-rank-dot { width:4px; height:4px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
+    .memory-rank-dot.is-filled { border-color:rgba(var(--branch-rgb),.9); background:rgb(var(--branch-rgb)); box-shadow:0 0 4px rgba(var(--branch-rgb),.65); }
+    .memory-tree-status { margin-top:auto; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:3px; }
     @keyframes memory-skill-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.18); } }
     @media (prefers-reduced-motion: reduce) {
       .memory-card-inner { transition:none; }
@@ -348,13 +348,13 @@ function skillNodeHtml(skill, progress) {
   return `
     <div class="memory-skill-node">
       <button data-unlock-skill="${skill.id}" ${availability.ok ? '' : 'disabled aria-disabled="true"'} class="memory-tree-skill ${stateClass} active:scale-[.98]" aria-label="${skill.name} Rank ${rank}/${skill.maxRank}。${availability.ok ? `${skill.cost} SPで習得可能` : availability.reason}">
-        <span class="memory-skill-orb"><span class="material-symbols-outlined text-xl">${isMax ? 'check' : skill.icon}</span></span>
-        <span class="block text-[11px] font-black text-white">${skill.name}</span>
-        <span class="mt-0.5 block text-[8px] font-black tracking-wider">RANK ${rank}/${skill.maxRank}</span>
+        <span class="memory-skill-orb"><span class="material-symbols-outlined text-sm sm:text-base">${isMax ? 'check' : skill.icon}</span></span>
+        <span class="block text-[9px] sm:text-[10px] font-black leading-tight text-white truncate w-full px-0.5">${skill.name}</span>
+        <span class="mt-0.5 block text-[7px] sm:text-[8px] font-black tracking-wider">RANK ${rank}/${skill.maxRank}</span>
         <span class="memory-rank-dots" aria-hidden="true">${Array.from({ length: skill.maxRank }, (_, index) => `<span class="memory-rank-dot ${index < rank ? 'is-filled' : ''}"></span>`).join('')}</span>
-        <span class="mt-2 block text-[8px] leading-relaxed text-slate-300">${rank ? currentDescription : `効果: ${currentDescription}`}</span>
-        ${rank && nextDescription ? `<span class="mt-1 block text-[7px] leading-relaxed text-slate-500">次: ${nextDescription}</span>` : ''}
-        <span class="memory-tree-status block text-[8px] font-black ${isMax ? 'text-emerald-300' : availability.ok ? 'text-white' : 'text-slate-500'}"><span class="material-symbols-outlined align-middle text-[12px]">${isMax ? 'verified' : availability.ok ? 'add_circle' : 'lock'}</span> ${isMax ? 'MASTERED' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}</span>
+        <span class="mt-1 block text-[7px] leading-tight text-slate-300">${rank ? currentDescription : `効果: ${currentDescription}`}</span>
+        ${rank && nextDescription ? `<span class="mt-0.5 block text-[6.5px] leading-tight text-slate-400">次: ${nextDescription}</span>` : ''}
+        <span class="memory-tree-status block text-[7px] sm:text-[8px] font-black ${isMax ? 'text-emerald-300' : availability.ok ? 'text-white' : 'text-slate-500'}"><span class="material-symbols-outlined align-middle text-[10px] sm:text-[11px]">${isMax ? 'verified' : availability.ok ? 'add_circle' : 'lock'}</span> ${isMax ? 'MASTERED' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}</span>
       </button>
     </div>
   `;
@@ -474,7 +474,7 @@ export function renderMemoryGamePage() {
     container.innerHTML = `
       ${pageStyles()}
       <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,.15),transparent_36%),radial-gradient(circle_at_90%_55%,rgba(139,92,246,.14),transparent_42%)]"></div>
-      <div class="relative z-10 mx-auto max-w-3xl p-2.5 pb-6">
+      <div class="relative z-10 mx-auto max-w-md sm:max-w-lg p-2 pb-6">
         <header class="mb-3 flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2.5 shadow-xl">
           <button data-skill-back class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="難易度選択へ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
           <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-500/10"><span class="material-symbols-outlined text-2xl text-cyan-200">account_tree</span></span>
