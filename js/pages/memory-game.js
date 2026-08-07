@@ -208,8 +208,28 @@ const pageStyles = () => `
     @keyframes memory-clairvoyance-aura { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.28); } }
     @keyframes memory-clairvoyance-vision { from { opacity:0; transform:scale(.72); filter:blur(7px); } to { opacity:1; transform:scale(1); filter:blur(0); } }
     @keyframes memory-result-in { from { opacity:0; transform:translateY(10px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes memory-coin-toss {
+      0% { transform:translate(-50%,calc(-50% + 72px)) rotateX(-18deg) rotateY(0deg) scale(.72); }
+      48% { transform:translate(-50%,calc(-50% - 92px)) rotateX(16deg) rotateY(990deg) scale(1.08); }
+      100% { transform:translate(-50%,-50%) rotateX(0deg) rotateY(var(--coin-end)) scale(1); }
+    }
+    @keyframes memory-coin-shadow {
+      0%,100% { opacity:.72; transform:scale(1); }
+      48% { opacity:.18; transform:scale(.45); }
+    }
+    @keyframes memory-coin-result-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
     .memory-result { animation:memory-result-in .28s ease-out both; }
-    @media (prefers-reduced-motion: reduce) { .memory-card-inner { transition:none; } .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-result { animation:none; } }
+    .memory-coin { animation:memory-coin-toss 1.45s cubic-bezier(.2,.72,.25,1) both; transform-style:preserve-3d; }
+    .memory-coin-face { backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+    .memory-coin-face.is-back { transform:rotateY(180deg); }
+    .memory-coin-shadow { animation:memory-coin-shadow 1.45s ease-in-out both; }
+    .memory-coin-result { animation:memory-coin-result-in .3s ease-out both; }
+    @media (prefers-reduced-motion: reduce) {
+      .memory-card-inner { transition:none; }
+      .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-result { animation:none; }
+      .memory-coin, .memory-coin-shadow { animation-duration:.01ms; }
+      .memory-coin-result { animation:none; }
+    }
   </style>
 `;
 
@@ -357,6 +377,7 @@ export function renderMemoryGamePage() {
     const clairvoyancePercent = getTreasureEffect('memoryClairvoyancePercent');
     const cpuForgetPercent = getTreasureEffect('memoryCpuForgetPercent');
     const hintPercent = getTreasureEffect('memoryHintPercent');
+    const firstTurn = Math.random() < 0.5 ? 'player' : 'cpu';
     const cards = shuffle(selectedItems.flatMap((item) => [
       { pairId: item.pairId, name: item.name, image: item.image },
       { pairId: item.pairId, name: item.name, image: item.image },
@@ -369,8 +390,8 @@ export function renderMemoryGamePage() {
       selected: [],
       cpuMemory: new Map(),
       scores: { player: 0, cpu: 0 },
-      turn: 'player',
-      locked: false,
+      turn: firstTurn,
+      locked: true,
       over: false,
       rewardClaimed: false,
       clairvoyancePercent,
@@ -390,7 +411,7 @@ export function renderMemoryGamePage() {
         </header>
 
         <section class="mb-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/75 p-2 shadow-lg">
-          <div data-player-panel class="rounded-xl border border-cyan-300/40 bg-cyan-500/10 px-2 py-1.5 text-center transition-all">
+          <div data-player-panel class="rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-center transition-all">
             <div class="text-[8px] font-black tracking-widest text-cyan-300">YOU</div><div data-player-score class="text-xl font-black tabular-nums">0</div>
           </div>
           <div class="text-center"><div class="text-[8px] text-slate-500">PAIRS</div><div class="text-[10px] font-black text-slate-300"><span data-found-count>0</span> / ${config.pairs}</div></div>
@@ -399,7 +420,7 @@ export function renderMemoryGamePage() {
           </div>
         </section>
 
-        <div data-message class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-950/25 px-3 text-center text-[10px] font-black text-cyan-100" role="status" aria-live="polite">あなたの番です。2枚めくってください</div>
+        <div data-message class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-950/25 px-3 text-center text-[10px] font-black text-amber-100" role="status" aria-live="polite">コイントスで先行を決めています…</div>
 
         ${clairvoyancePercent || cpuForgetPercent || hintPercent ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-violet-300/15 bg-violet-950/20 p-1.5" aria-label="発動中の神経衰弱用秘宝">
           ${clairvoyancePercent ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">千里眼 透視${clairvoyancePercent}%</span>` : ''}
@@ -428,8 +449,52 @@ export function renderMemoryGamePage() {
           `).join('')}
         </section>
       </div>
+      <div data-coin-toss class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="memory-coin-title">
+        <section class="w-full max-w-xs rounded-3xl border border-amber-300/35 bg-gradient-to-b from-slate-900 to-slate-950 px-5 py-6 text-center shadow-2xl">
+          <div class="text-[9px] font-black tracking-[.3em] text-amber-300">FIRST MOVE</div>
+          <h2 id="memory-coin-title" class="mt-1 text-lg font-black">先行を決めます</h2>
+          <div class="relative mx-auto mt-5 h-36 w-36 [perspective:700px]" aria-hidden="true">
+            <div data-coin class="memory-coin absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2" style="--coin-end:${firstTurn === 'player' ? '1800deg' : '1980deg'}">
+              <div class="memory-coin-face absolute inset-0 flex flex-col items-center justify-center rounded-full border-4 border-yellow-100 bg-gradient-to-br from-yellow-200 via-amber-400 to-yellow-700 text-slate-900 shadow-[inset_0_0_0_4px_rgba(120,53,15,.25),0_0_25px_rgba(251,191,36,.45)]">
+                <span class="material-symbols-outlined text-4xl">person</span><span class="text-[9px] font-black">YOU</span>
+              </div>
+              <div class="memory-coin-face is-back absolute inset-0 flex flex-col items-center justify-center rounded-full border-4 border-rose-100 bg-gradient-to-br from-rose-200 via-rose-400 to-red-800 text-slate-950 shadow-[inset_0_0_0_4px_rgba(127,29,29,.25),0_0_25px_rgba(251,113,133,.45)]">
+                <span class="material-symbols-outlined text-4xl">smart_toy</span><span class="text-[9px] font-black">CPU</span>
+              </div>
+            </div>
+            <div class="memory-coin-shadow absolute bottom-2 left-1/2 h-3 w-20 -translate-x-1/2 rounded-full bg-black/70 blur-sm"></div>
+          </div>
+          <div data-coin-status class="min-h-12 text-xs font-black text-slate-400" role="status" aria-live="assertive">コイントス中…</div>
+        </section>
+      </div>
     `;
     applyExtractedCardColors(container);
+
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    later(() => {
+      if (!game || game.over) return;
+      const status = container.querySelector('[data-coin-status]');
+      if (status) {
+        status.className = `memory-coin-result min-h-12 text-base font-black ${firstTurn === 'player' ? 'text-cyan-200' : 'text-rose-200'}`;
+        status.innerHTML = firstTurn === 'player'
+          ? '<span class="block text-[9px] tracking-[.2em] text-cyan-400">YOU</span>あなたが先行です！'
+          : '<span class="block text-[9px] tracking-[.2em] text-rose-400">CPU</span>CPUが先行です！';
+      }
+      playSoundEffect('confirm');
+    }, reducedMotion ? 80 : 1480);
+
+    later(() => {
+      if (!game || game.over) return;
+      container.querySelector('[data-coin-toss]')?.remove();
+      updateScores();
+      if (firstTurn === 'player') {
+        game.locked = false;
+        setMessage('あなたが先行です。2枚めくってください');
+      } else {
+        setMessage('CPUが先行です。考えています…', 'rose');
+        runCpuTurn();
+      }
+    }, reducedMotion ? 650 : 2380);
   };
 
   const cardElement = (index) => container.querySelector(`[data-card-index="${index}"]`);
@@ -457,6 +522,8 @@ export function renderMemoryGamePage() {
     if (foundCount) foundCount.textContent = game.scores.player + game.scores.cpu;
     const playerPanel = container.querySelector('[data-player-panel]');
     const cpuPanel = container.querySelector('[data-cpu-panel]');
+    playerPanel?.classList.toggle('border-cyan-300/40', game.turn === 'player');
+    playerPanel?.classList.toggle('bg-cyan-500/10', game.turn === 'player');
     playerPanel?.classList.toggle('shadow-[0_0_16px_rgba(34,211,238,.22)]', game.turn === 'player');
     cpuPanel?.classList.toggle('border-rose-300/40', game.turn === 'cpu');
     cpuPanel?.classList.toggle('bg-rose-500/10', game.turn === 'cpu');
