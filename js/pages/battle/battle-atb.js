@@ -83,18 +83,33 @@ export const atbMethods = {
     }
     this.isStopped = false;
     // Cache localStorage reads to avoid I/O on every tick
-    this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true' || isScreenLocked();
+    this._cachedFastForwardAtb = localStorage.getItem('disableBattleAnimations') === 'true';
+    this._cachedScreenLocked = isScreenLocked();
+    this._cachedDisableAnim = this._cachedFastForwardAtb || this._cachedScreenLocked;
     this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
     this._settingsHandler = () => {
-      this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true' || isScreenLocked();
+      this._cachedFastForwardAtb = localStorage.getItem('disableBattleAnimations') === 'true';
+      this._cachedScreenLocked = isScreenLocked();
+      this._cachedDisableAnim = this._cachedFastForwardAtb || this._cachedScreenLocked;
       this._cachedBattleSpeed = parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
     };
     window.addEventListener('settingsChanged', this._settingsHandler);
     this._screenLockHandler = event => {
-      this._cachedDisableAnim = localStorage.getItem('disableBattleAnimations') === 'true' || event.detail?.locked;
-      if (!event.detail?.locked && !document.hidden && !this.isStopped && window.location.hash === '#/battle') {
+      this._cachedScreenLocked = Boolean(event.detail?.locked);
+      this._cachedDisableAnim = this._cachedFastForwardAtb || this._cachedScreenLocked;
+      if (this._cachedScreenLocked) {
+        if (this.elements?.tabContent?._petSyncTimer) {
+          clearInterval(this.elements.tabContent._petSyncTimer);
+          this.elements.tabContent._petSyncTimer = null;
+        }
+        if (this.elements?.tabContent?._medalSyncTimer) {
+          clearInterval(this.elements.tabContent._medalSyncTimer);
+          this.elements.tabContent._medalSyncTimer = null;
+        }
+      } else if (!document.hidden && !this.isStopped && window.location.hash === '#/battle') {
         this.cacheDOMElements();
         this.renderEntities();
+        this.renderTabContent();
       }
     };
     document.addEventListener('screenlockchange', this._screenLockHandler);
@@ -149,7 +164,10 @@ export const atbMethods = {
       
       let loops = 0;
       // アニメ無効時はティックを待たずに次の行動者が決まるまで一気に時間を進める
-      const MAX_LOOPS = disableAnim ? 50 : (battleSpeed >= 5 ? 5 : 1);
+      // The user animation setting intentionally enables ATB fast-forward.
+      // Screen lock only suppresses presentation; treating it as fast-forward
+      // multiplied both farming speed and CPU use while the display was off.
+      const MAX_LOOPS = this._cachedFastForwardAtb ? 50 : (battleSpeed >= 5 ? 5 : 1);
       
       while (!nextActor && loops < MAX_LOOPS) {
         loops++;
@@ -164,7 +182,7 @@ export const atbMethods = {
             nextActor = { type: 'party', entity: p, atb: p.atb };
           }
           
-          if (!document.hidden && loops === 1) { // 描画更新は最初のループのみ
+          if (!document.hidden && !this._cachedScreenLocked && loops === 1) { // 描画更新は最初のループのみ
             const atbEl = this.atbElements[p.elementId];
             if(atbEl) {
                if (disableAnim || battleSpeed >= 5) {
@@ -188,7 +206,7 @@ export const atbMethods = {
             nextActor = { type: 'enemy', entity: e, atb: e.atb };
           }
 
-          if (!document.hidden && loops === 1) {
+          if (!document.hidden && !this._cachedScreenLocked && loops === 1) {
             const atbEl = this.atbElements[e.elementId];
             if(atbEl) {
                if (disableAnim || battleSpeed >= 5) {
@@ -237,7 +255,7 @@ export const atbMethods = {
                   triggered = true;
                 }
               });
-              if (triggered && !document.hidden) {
+              if (triggered && !document.hidden && !this._cachedScreenLocked) {
                 this.showActionName(this.activeCharacter.elementId, '粘着物質', 'text-amber-500', 'border-amber-600/50');
               }
             }

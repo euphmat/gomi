@@ -4,10 +4,15 @@ let overlay = null;
 let sliderThumb = null;
 let sliderTrack = null;
 let sliderFill = null;
+let lockElements = null;
+let renderedCompanionSignature = '';
 let pointerId = null;
 let dragStartX = 0;
 let dragStartOffset = 0;
 let dragOffset = 0;
+let activityRenderTimer = null;
+
+const LOCK_ACTIVITY_RENDER_INTERVAL = 1000;
 
 const ACTIVITY_DEFAULTS = {
   battle: { active: false, mode: 'none' },
@@ -53,7 +58,7 @@ export function setLockScreenActivity(type, active, options = {}) {
     for (const key of Object.keys(lockActivity.results)) lockActivity.results[key] = 0;
     lockActivity.companions = [];
   }
-  renderLockScreenActivity();
+  requestLockScreenActivityRender();
 }
 
 export function recordLockScreenProgress(type, progress = {}) {
@@ -62,7 +67,7 @@ export function recordLockScreenProgress(type, progress = {}) {
     const amount = Number(progress[key]);
     if (Number.isFinite(amount) && amount > 0) lockActivity.results[key] += amount;
   }
-  renderLockScreenActivity();
+  requestLockScreenActivityRender();
 }
 
 export function addLockScreenCompanion(monster) {
@@ -75,7 +80,7 @@ export function addLockScreenCompanion(monster) {
     image: String(monster.image || ''),
   });
   lockActivity.companions = lockActivity.companions.slice(0, 5);
-  renderLockScreenActivity();
+  requestLockScreenActivityRender();
 }
 
 export function activateScreenLock() {
@@ -88,7 +93,8 @@ export function activateScreenLock() {
   overlay.setAttribute('aria-hidden', 'false');
   document.getElementById('app')?.setAttribute('inert', '');
   document.body.classList.add('screen-lock-active');
-  renderLockScreenActivity();
+  finishActiveBattleEffects();
+  requestLockScreenActivityRender(true);
   sliderThumb?.focus({ preventScroll: true });
   document.dispatchEvent(new CustomEvent('screenlockchange', { detail: { locked: true } }));
 }
@@ -109,12 +115,47 @@ function unlockScreen() {
   overlay.setAttribute('aria-hidden', 'true');
   document.getElementById('app')?.removeAttribute('inert');
   document.body.classList.remove('screen-lock-active');
+  clearTimeout(activityRenderTimer);
+  activityRenderTimer = null;
   resetSlider(false);
   document.dispatchEvent(new CustomEvent('screenlockchange', { detail: { locked: false } }));
 }
 
 function formatCount(value) {
   return Math.max(0, Number(value) || 0).toLocaleString('ja-JP');
+}
+
+function requestLockScreenActivityRender(immediate = false) {
+  if (!overlay) return;
+  if (immediate) {
+    clearTimeout(activityRenderTimer);
+    activityRenderTimer = null;
+    renderLockScreenActivity();
+    return;
+  }
+  // Hidden overlay content does not need to stay synchronized. Activation
+  // performs one immediate render with the latest accumulated state.
+  if (!locked || activityRenderTimer != null) return;
+  activityRenderTimer = window.setTimeout(() => {
+    activityRenderTimer = null;
+    if (locked) renderLockScreenActivity();
+  }, LOCK_ACTIVITY_RENDER_INTERVAL);
+}
+
+function finishActiveBattleEffects() {
+  // Effects already in flight when the user locks the screen can otherwise
+  // keep compositing behind the black overlay. Finishing them also preserves
+  // animation onfinish callbacks that apply damage and advance combat.
+  for (const id of ['battle-effects-layer', 'battle-popup-layer']) {
+    const layer = document.getElementById(id);
+    layer?.getAnimations?.({ subtree: true }).forEach(animation => {
+      try {
+        animation.finish();
+      } catch {
+        animation.cancel();
+      }
+    });
+  }
 }
 
 function renderLockScreenActivity() {
@@ -127,24 +168,30 @@ function renderLockScreenActivity() {
   };
   for (const type of ['battle', 'fishing']) {
     const activity = lockActivity[type];
-    const row = overlay.querySelector(`[data-lock-activity="${type}"]`);
+    const row = lockElements?.activities[type]?.row;
     if (!row) continue;
     row.classList.toggle('is-active', activity.active);
-    const badge = row.querySelector('[data-lock-activity-state]');
-    if (badge) badge.textContent = activity.active ? '稼働中' : '停止中';
-    const detail = row.querySelector('[data-lock-activity-detail]');
-    if (detail) detail.textContent = activity.active ? (modeLabels[activity.mode] || '有効') : '無効';
+    const badge = lockElements.activities[type].badge;
+    const badgeText = activity.active ? '稼働中' : '停止中';
+    if (badge && badge.textContent !== badgeText) badge.textContent = badgeText;
+    const detail = lockElements.activities[type].detail;
+    const detailText = activity.active ? (modeLabels[activity.mode] || '有効') : '無効';
+    if (detail && detail.textContent !== detailText) detail.textContent = detailText;
   }
 
   for (const [key, value] of Object.entries(lockActivity.results)) {
-    const target = overlay.querySelector(`[data-lock-result="${key}"]`);
-    if (target) target.textContent = formatCount(value);
+    const target = lockElements?.results[key];
+    const nextText = formatCount(value);
+    if (target && target.textContent !== nextText) target.textContent = nextText;
   }
 
-  const companionSection = overlay.querySelector('[data-lock-companions]');
-  const companionList = overlay.querySelector('[data-lock-companion-list]');
+  const companionSection = lockElements?.companionSection;
+  const companionList = lockElements?.companionList;
   if (!companionSection || !companionList) return;
   companionSection.hidden = lockActivity.companions.length === 0;
+  const companionSignature = lockActivity.companions.map(monster => `${monster.id}\u0000${monster.name}\u0000${monster.image}`).join('\u0001');
+  if (companionSignature === renderedCompanionSignature) return;
+  renderedCompanionSignature = companionSignature;
   companionList.replaceChildren(...lockActivity.companions.map(monster => {
     const item = document.createElement('div');
     item.className = 'screen-lock__companion';
@@ -241,7 +288,23 @@ function createOverlay() {
   sliderTrack = overlay.querySelector('.screen-lock__track');
   sliderThumb = overlay.querySelector('.screen-lock__thumb');
   sliderFill = overlay.querySelector('.screen-lock__fill');
-  renderLockScreenActivity();
+  lockElements = {
+    activities: Object.fromEntries(['battle', 'fishing'].map(type => {
+      const row = overlay.querySelector(`[data-lock-activity="${type}"]`);
+      return [type, {
+        row,
+        badge: row?.querySelector('[data-lock-activity-state]'),
+        detail: row?.querySelector('[data-lock-activity-detail]'),
+      }];
+    })),
+    results: Object.fromEntries(Object.keys(lockActivity.results).map(key => [
+      key,
+      overlay.querySelector(`[data-lock-result="${key}"]`),
+    ])),
+    companionSection: overlay.querySelector('[data-lock-companions]'),
+    companionList: overlay.querySelector('[data-lock-companion-list]'),
+  };
+  requestLockScreenActivityRender(true);
 
   overlay.addEventListener('contextmenu', event => event.preventDefault());
   overlay.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
@@ -331,6 +394,14 @@ function injectStyles() {
     body.screen-lock-active {
       overflow: hidden !important;
       overscroll-behavior: none;
+    }
+    body.screen-lock-active #app {
+      visibility: hidden !important;
+      content-visibility: hidden;
+    }
+    body.screen-lock-active #battle-effects-layer,
+    body.screen-lock-active #battle-popup-layer {
+      visibility: hidden !important;
     }
     body.screen-lock-active #app *,
     body.screen-lock-active #battle-effects-layer *,

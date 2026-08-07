@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.22';
-export const APP_RELEASE_DATE = '2026.08.06';
+export const APP_VERSION = '0.1.23';
+export const APP_RELEASE_DATE = '2026.08.07';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.07',
+    version: '0.1.23',
+    items: [
+      '自動戦闘・自動釣り中の省エネ画面を軽量化し、背面描画・戦闘演出・釣りの進捗更新・成果表示の更新頻度を抑えてバッテリー消費を改善しました。',
+      '省エネ画面で戦闘演出を止めた際にATBまで意図せず早送りされていた問題を修正し、設定した自動戦闘速度を保つようにしました。',
+    ],
+  },
   {
     date: '2026.08.06',
     version: '0.1.22',

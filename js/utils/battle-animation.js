@@ -1,6 +1,16 @@
 const MIN_BATTLE_SPEED = 1;
 const MAX_BATTLE_SPEED = 5;
 
+/**
+ * Battle effects are purely presentational. Skip constructing their DOM while
+ * the page cannot be seen so auto battle only pays for the simulation itself.
+ */
+export function shouldSkipBattleAnimations() {
+  return document.hidden
+    || document.body?.classList.contains('screen-lock-active')
+    || localStorage.getItem('disableBattleAnimations') === 'true';
+}
+
 export function getBattleSpeed() {
   const storedSpeed = Number.parseInt(localStorage.getItem('autoBattleSpeed') || '1', 10);
   if (!Number.isFinite(storedSpeed)) return MIN_BATTLE_SPEED;

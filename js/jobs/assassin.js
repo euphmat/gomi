@@ -1,4 +1,4 @@
-import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+import { getBattleAnimationSpeed, getBattleSpeed, shouldSkipBattleAnimations } from '../utils/battle-animation.js';
 
 const LEVEL_COSTS = [1, 1, 1, 2, 2, 2, 3, 3, 3, 5];
 const makeLevels = configs => configs.map((config, index) => ({
@@ -98,7 +98,7 @@ const getVisualProfile = (type, totalHits) => {
 // ─── Assassin skill animations ─────────────────────────────
 const playSkillAnimation = (caster, target, type, onImpact, hitIndex = 0, totalHits = 1) => {
   if (!target) return;
-  if (localStorage.getItem('disableBattleAnimations') === 'true' || document.hidden) {
+  if (shouldSkipBattleAnimations()) {
     onImpact?.();
     return;
   }

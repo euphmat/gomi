@@ -1,9 +1,9 @@
-import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+import { getBattleAnimationSpeed, getBattleSpeed, shouldSkipBattleAnimations } from '../utils/battle-animation.js';
 
 // ─── Animation Utilities ──────────────────────────────────────
 const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
   if (!Array.isArray(targets)) targets = [targets];
-  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+  if (shouldSkipBattleAnimations()) {
     if (onImpact) targets.forEach((t, i) => onImpact(t, i));
     return;
   }

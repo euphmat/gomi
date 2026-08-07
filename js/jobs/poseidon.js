@@ -1,9 +1,9 @@
-import { getBattleAnimationSpeed, getBattleSpeed } from '../utils/battle-animation.js';
+import { getBattleAnimationSpeed, getBattleSpeed, shouldSkipBattleAnimations } from '../utils/battle-animation.js';
 
 // ─── Poseidon skill animations ────────────────────────────────
 const playSkillAnimation = (caster, targets, type, onImpact) => {
   const targetList = Array.isArray(targets) ? targets : [targets];
-  if (localStorage.getItem('disableBattleAnimations') === 'true') {
+  if (shouldSkipBattleAnimations()) {
     targetList.forEach((target, index) => onImpact?.(target, index));
     return;
   }

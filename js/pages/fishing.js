@@ -49,6 +49,8 @@ export async function renderFishingPage() {
   let catchTimer = null;
   let countdownTimer = null;
   let nextCatchAt = 0;
+  let catchStartedAt = 0;
+  let catchDelay = 0;
   let activeCatchTab = 'fish';
   let catchInFlight = null;
   let cleanupPromise = null;
@@ -480,18 +482,28 @@ export async function renderFishingPage() {
     }
   };
 
+  const startCountdown = () => {
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+    if (isScreenLocked() || !running || nextCatchAt <= Date.now()) return;
+    const renderCountdown = () => {
+      const remaining = Math.max(0, nextCatchAt - Date.now());
+      container.querySelector('[data-countdown]').textContent = `${(remaining / 1000).toFixed(1)}秒`;
+      container.querySelector('[data-progress]').style.width = `${Math.min(100, ((Date.now() - catchStartedAt) / catchDelay) * 100)}%`;
+    };
+    renderCountdown();
+    countdownTimer = setInterval(renderCountdown, 100);
+  };
+
   const schedule = () => {
     if (!running || !container.isConnected || window.location.hash !== '#/fishing') return stop();
     const delay = getRandomCatchDelay(spot.id, getFishingTackleLevel(state, 'rod'));
     const startedAt = Date.now();
+    catchStartedAt = startedAt;
+    catchDelay = delay;
     nextCatchAt = startedAt + delay;
-    container.querySelector('[data-status]').textContent = 'アタリを待っています…';
-    countdownTimer = setInterval(() => {
-      if (isScreenLocked()) return;
-      const remaining = Math.max(0, nextCatchAt - Date.now());
-      container.querySelector('[data-countdown]').textContent = `${(remaining / 1000).toFixed(1)}秒`;
-      container.querySelector('[data-progress]').style.width = `${Math.min(100, ((Date.now() - startedAt) / delay) * 100)}%`;
-    }, 100);
+    if (!isScreenLocked()) container.querySelector('[data-status]').textContent = 'アタリを待っています…';
+    startCountdown();
     catchTimer = setTimeout(() => {
       clearInterval(countdownTimer);
       catchInFlight = (async () => {
@@ -508,10 +520,10 @@ export async function renderFishingPage() {
             loot: ['equipment', 'pet', 'prism_shard'].includes(catchResult.type) ? 1 : 0,
             gold: catchResult.type === 'gold' ? Math.max(0, Number(catchResult.amount) || 0) : 0,
           });
-          updateHeader('header-gold-display', gold);
+          if (!isScreenLocked()) updateHeader('header-gold-display', gold);
           if (caught.result.prismGained) {
             const prism = await GameDB.getGameState('prism') || 0;
-            updateHeader('header-prism-display', prism);
+            if (!isScreenLocked()) updateHeader('header-prism-display', prism);
           }
           if (!leaving && container.isConnected) {
             await showCatch(caught.result);
@@ -541,7 +553,22 @@ export async function renderFishingPage() {
   container.cleanup = cleanup;
 
   const handleScreenLockChange = event => {
-    if (!event.detail?.locked && !leaving && container.isConnected) renderState();
+    if (event.detail?.locked) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      return;
+    }
+    if (!leaving && container.isConnected) {
+      renderState();
+      updateHeader('header-gold-display', gold);
+      GameDB.getGameState('prism')
+        .then(prism => updateHeader('header-prism-display', Number(prism) || 0))
+        .catch(error => console.warn('[Fishing] Failed to refresh Prism header:', error));
+      if (running && nextCatchAt > Date.now()) {
+        container.querySelector('[data-status]').textContent = 'アタリを待っています…';
+        startCountdown();
+      }
+    }
   };
   document.addEventListener('screenlockchange', handleScreenLockChange);
 
