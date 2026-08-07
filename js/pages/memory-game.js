@@ -514,7 +514,8 @@ export function renderMemoryGamePage() {
     const cpuForgetPercent = getTreasureEffect('memoryCpuForgetPercent');
     const hintPercent = getTreasureEffect('memoryHintPercent');
     const skillEffects = getMemorySkillEffects(memoryProgress);
-    const firstTurn = Math.random() < skillEffects.playerFirstChance ? 'player' : 'cpu';
+    // 先行は成長要素に左右されず、常に公平な50:50とする。
+    const firstTurn = Math.random() < 0.5 ? 'player' : 'cpu';
     const cards = shuffle(selectedItems.flatMap((item) => [
       { pairId: item.pairId, name: item.name, image: item.image },
       { pairId: item.pairId, name: item.name, image: item.image },
@@ -538,6 +539,7 @@ export function renderMemoryGamePage() {
       cpuMemoryRate: Math.max(0, config.memoryRate * (1 - cpuForgetPercent / 100)),
       hintPercent,
       skillEffects,
+      firstCardResetCharges: skillEffects.firstCardResetCharges,
       refocusCharges: skillEffects.refocusCharges,
       doubleCheckCharges: skillEffects.doubleCheckCharges,
       seenCardOrder: [],
@@ -577,7 +579,7 @@ export function renderMemoryGamePage() {
           ${skillEffects.cpuRevealDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">CPU確認 +${skillEffects.cpuRevealDelayMs / 1000}秒</span>` : ''}
           ${skillEffects.mismatchDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">残像 +${skillEffects.mismatchDelayMs / 1000}秒</span>` : ''}
           ${skillEffects.memoryMarkCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">栞 ${skillEffects.memoryMarkCapacity}枚</span>` : ''}
-          ${skillEffects.playerFirstChance > 0.5 ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">先行 ${Math.round(skillEffects.playerFirstChance * 100)}%</span>` : ''}
+          ${skillEffects.firstCardResetCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">仕切り直し ${skillEffects.firstCardResetCharges}回</span>` : ''}
           ${skillEffects.refocusCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">再集中 ${skillEffects.refocusCharges}回</span>` : ''}
           ${skillEffects.doubleCheckCharges ? '<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">見直し 1回</span>' : ''}
           ${skillEffects.matchedOpacity < 1 ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">獲得札 ${Math.round(skillEffects.matchedOpacity * 100)}%</span>` : ''}
@@ -1001,11 +1003,22 @@ export function renderMemoryGamePage() {
 
   const handlePlayerCard = (index) => {
     if (!game || game.over || game.locked || game.turn !== 'player') return;
-    if (game.matched.has(index) || game.selected.includes(index)) return;
+    if (game.matched.has(index)) return;
+    if (game.selected.includes(index)) {
+      if (game.selected.length === 1 && game.firstCardResetCharges > 0) {
+        game.firstCardResetCharges -= 1;
+        hideCards([index]);
+        game.selected = [];
+        setMessage(`仕切り直し：1枚目を選び直せます（残り${game.firstCardResetCharges}回）`, 'amber');
+      }
+      return;
+    }
     revealCard(index, true);
     game.selected.push(index);
     if (game.selected.length === 1) {
-      setMessage('もう1枚選んでください');
+      setMessage(game.firstCardResetCharges > 0
+        ? `もう1枚選択／同じカードを押すと仕切り直し（残り${game.firstCardResetCharges}回）`
+        : 'もう1枚選んでください');
       tryTreasureHint(index);
       return;
     }

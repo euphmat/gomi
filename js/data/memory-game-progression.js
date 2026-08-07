@@ -40,11 +40,12 @@ export const MEMORY_SKILL_BRANCHES = [
     name: '勝負術',
     icon: 'playing_cards',
     color: 'amber',
-    description: '先手と手番を操り、失敗を立て直す',
+    description: 'カード選択と手番を立て直す',
     skills: [
       {
-        id: 'initiative', name: '先手の構え', icon: 'flag', maxRank: 3, cost: 1, requiredLevel: 2,
-        ranks: ['先行になる確率 60%', '先行になる確率 70%', '先行になる確率 80%'],
+        // 旧「先手の構え」の習得ランクを失わせないため、保存用IDは維持する。
+        id: 'initiative', name: '仕切り直し', icon: 'backspace', maxRank: 3, cost: 1, requiredLevel: 2,
+        ranks: ['1ゲームに1回、選んだ1枚目を伏せ直せる', '1ゲームに2回、選んだ1枚目を伏せ直せる', '1ゲームに3回、選んだ1枚目を伏せ直せる'],
       },
       {
         id: 'refocus', name: '再集中', icon: 'restart_alt', maxRank: 2, cost: 2, requiredLevel: 6,
@@ -151,7 +152,7 @@ export function getMemorySkillEffects(progress) {
     cpuRevealDelayMs: (ranks.wide_view || 0) * 250,
     mismatchDelayMs: (ranks.afterimage || 0) * 250,
     memoryMarkCapacity: (ranks.memory_bookmark || 0) * 3,
-    playerFirstChance: 0.5 + (ranks.initiative || 0) * 0.1,
+    firstCardResetCharges: ranks.initiative || 0,
     refocusCharges: ranks.refocus || 0,
     doubleCheckCharges: ranks.double_check || 0,
     matchedOpacity,
