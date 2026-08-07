@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.23';
+export const APP_VERSION = '0.1.24';
 export const APP_RELEASE_DATE = '2026.08.07';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.07',
+    version: '0.1.24',
+    items: [
+      '神経衰弱に専用LV・EXP・SPとスキルツリーを追加しました。勝敗を問わず対局するほど成長し、レベルアップごとにスキルポイントを獲得できます。',
+      '秘宝とは別枠の「記憶術」「勝負術」「鍛錬術」を追加しました。開始時の盤面確認、既知カードへの栞、不一致時の手番維持、選び直し、先行率・EXP効率強化などを習得できます。',
+    ],
+  },
   {
     date: '2026.08.07',
     version: '0.1.23',

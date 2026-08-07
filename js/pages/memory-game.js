@@ -9,6 +9,18 @@ import { MATERIALS } from '../definitions/materials.js';
 import { formatNumber } from '../utils/format.js';
 import { playSoundEffect } from '../utils/sound-effects.js';
 import { getTreasureEffect } from '../data/treasure-manager.js';
+import {
+  MEMORY_MAX_LEVEL,
+  MEMORY_SKILL_BRANCHES,
+  canUnlockMemorySkill,
+  getMemoryLevel,
+  getMemoryLevelStartXp,
+  getMemorySkillEffects,
+  getMemorySkillPoints,
+  loadMemoryProgress,
+  recordMemoryGameResult,
+  unlockMemorySkill,
+} from '../data/memory-game-progression.js';
 
 const PLAYABLE_FISH = FISH.filter(fish => fish.id !== 'zeus_cetus');
 const CARD_PALETTE_CACHE = new Map();
@@ -46,6 +58,12 @@ const ACCENT_CLASSES = {
   sky: 'border-sky-400/40 from-sky-500/20 to-sky-950/35 text-sky-200',
   rose: 'border-rose-400/40 from-rose-500/20 to-rose-950/35 text-rose-200',
   violet: 'border-violet-300/55 from-violet-500/30 via-fuchsia-950/35 to-slate-950 text-violet-100 shadow-[0_0_22px_rgba(139,92,246,.16)]',
+};
+
+const SKILL_BRANCH_CLASSES = {
+  cyan: 'border-cyan-300/25 bg-cyan-950/20 text-cyan-100',
+  amber: 'border-amber-300/25 bg-amber-950/20 text-amber-100',
+  violet: 'border-violet-300/25 bg-violet-950/20 text-violet-100',
 };
 
 const shuffle = (items) => {
@@ -253,6 +271,58 @@ function difficultyCard(config, cleared) {
   `;
 }
 
+function getMemoryLevelView(progress) {
+  const level = getMemoryLevel(progress.xp);
+  const levelStart = getMemoryLevelStartXp(level);
+  const levelEnd = level >= MEMORY_MAX_LEVEL ? levelStart : getMemoryLevelStartXp(level + 1);
+  const current = level >= MEMORY_MAX_LEVEL ? levelStart : progress.xp;
+  const percent = level >= MEMORY_MAX_LEVEL
+    ? 100
+    : Math.max(0, Math.min(100, ((current - levelStart) / (levelEnd - levelStart)) * 100));
+  return { level, levelStart, levelEnd, current, percent };
+}
+
+function memoryLevelPanel(progress) {
+  const view = getMemoryLevelView(progress);
+  const skillPoints = getMemorySkillPoints(progress);
+  return `
+    <section class="mb-3 rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-cyan-950/35 via-slate-950/80 to-violet-950/35 p-3 shadow-lg">
+      <div class="flex items-center gap-3">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-500/10"><span class="material-symbols-outlined text-2xl text-cyan-200">neurology</span></span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-end justify-between gap-2"><span class="text-sm font-black text-white">神経衰弱 LV.${view.level}</span><span class="text-[9px] font-black text-violet-200">SP ${skillPoints}</span></div>
+          <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style="width:${view.percent}%"></div></div>
+          <div class="mt-1 flex justify-between text-[8px] text-slate-400"><span>${progress.gamesPlayed}戦 ${progress.wins}勝</span><span>${view.level >= MEMORY_MAX_LEVEL ? 'MAX' : `${view.current - view.levelStart} / ${view.levelEnd - view.levelStart} EXP`}</span></div>
+        </div>
+        <button data-skill-tree class="flex h-10 shrink-0 items-center gap-1 rounded-xl border border-violet-300/30 bg-violet-500/15 px-2.5 text-[9px] font-black text-violet-100" aria-label="神経衰弱スキルツリーを開く"><span class="material-symbols-outlined text-lg">account_tree</span>スキル</button>
+      </div>
+    </section>
+  `;
+}
+
+function skillNodeHtml(skill, progress) {
+  const rank = progress.skillRanks[skill.id] || 0;
+  const availability = canUnlockMemorySkill(progress, skill.id);
+  const isMax = rank >= skill.maxRank;
+  const currentDescription = rank > 0 ? skill.ranks[rank - 1] : '未習得';
+  const nextDescription = !isMax ? skill.ranks[rank] : '';
+  return `
+    <article class="rounded-xl border ${rank ? 'border-white/25 bg-white/10' : 'border-white/10 bg-black/20'} p-2.5">
+      <div class="flex items-start gap-2">
+        <span class="material-symbols-outlined mt-0.5 text-xl">${skill.icon}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-2"><h3 class="text-xs font-black text-white">${skill.name}</h3><span class="text-[9px] font-black">Rank ${rank}/${skill.maxRank}</span></div>
+          <p class="mt-1 text-[9px] leading-relaxed text-slate-300">${currentDescription}</p>
+          ${nextDescription ? `<p class="mt-1 text-[8px] leading-relaxed text-slate-500">次: ${nextDescription}</p>` : ''}
+        </div>
+      </div>
+      <button data-unlock-skill="${skill.id}" ${availability.ok ? '' : 'disabled aria-disabled="true"'} class="mt-2 flex min-h-8 w-full items-center justify-center gap-1 rounded-lg border text-[9px] font-black ${availability.ok ? 'border-white/30 bg-white/15 text-white active:scale-[.98]' : isMax ? 'border-emerald-300/20 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-900/70 text-slate-500'}">
+        <span class="material-symbols-outlined text-sm">${isMax ? 'check_circle' : availability.ok ? 'add_circle' : 'lock'}</span>${isMax ? '習得済み' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}
+      </button>
+    </article>
+  `;
+}
+
 export function renderMemoryGamePage() {
   const container = document.createElement('div');
   container.className = 'relative min-h-full overflow-hidden bg-[#080916] text-white';
@@ -262,6 +332,7 @@ export function renderMemoryGamePage() {
   let disposed = false;
   let selectRenderId = 0;
   let dailyWins = new Set();
+  let memoryProgress = null;
   let startingGame = false;
   const timers = new Set();
 
@@ -305,11 +376,15 @@ export function renderMemoryGamePage() {
 
     const dateKey = getLocalDateKey();
     try {
-      const states = await Promise.all(Object.values(DIFFICULTIES).map(async config => ({
-        id: config.id,
-        cleared: (await GameDB.getGameState(dailyWinKey(config.id))) === dateKey,
-      })));
+      const [states, progress] = await Promise.all([
+        Promise.all(Object.values(DIFFICULTIES).map(async config => ({
+          id: config.id,
+          cleared: (await GameDB.getGameState(dailyWinKey(config.id))) === dateKey,
+        }))),
+        loadMemoryProgress(),
+      ]);
       dailyWins = new Set(states.filter(state => state.cleared).map(state => state.id));
+      memoryProgress = progress;
     } catch (error) {
       console.error('[MemoryGame] Failed to load daily wins.', error);
       if (!disposed && renderId === selectRenderId) renderDailyLoadError();
@@ -337,9 +412,56 @@ export function renderMemoryGamePage() {
           <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">勝利した難易度は翌日までプレイできません。</div>
         </section>
 
+        ${memoryLevelPanel(memoryProgress)}
+
         <div class="grid gap-2" aria-label="難易度を選択">
           ${Object.values(DIFFICULTIES).map(config => difficultyCard(config, dailyWins.has(config.id))).join('')}
         </div>
+      </div>
+    `;
+  };
+
+  const renderSkillTree = async (notice = '') => {
+    clearTimers();
+    game = null;
+    try {
+      memoryProgress = await loadMemoryProgress();
+    } catch (error) {
+      console.error('[MemoryGame] Failed to load progression.', error);
+      renderDailyLoadError();
+      return;
+    }
+    if (disposed) return;
+    const view = getMemoryLevelView(memoryProgress);
+    const skillPoints = getMemorySkillPoints(memoryProgress);
+    container.innerHTML = `
+      ${pageStyles()}
+      <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,.15),transparent_36%),radial-gradient(circle_at_90%_55%,rgba(139,92,246,.14),transparent_42%)]"></div>
+      <div class="relative z-10 mx-auto max-w-xl p-2.5 pb-6">
+        <header class="mb-3 flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2.5 shadow-xl">
+          <button data-skill-back class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="難易度選択へ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-500/10"><span class="material-symbols-outlined text-2xl text-cyan-200">account_tree</span></span>
+          <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-cyan-300">MEMORY SKILL TREE</div><h1 class="text-base font-black">神経衰弱スキル</h1><div class="text-[9px] text-slate-400">LVアップごとに1 SP獲得</div></div>
+          <div class="rounded-xl border border-violet-300/30 bg-violet-500/10 px-3 py-2 text-center"><div class="text-[8px] text-violet-300">SKILL POINT</div><div class="text-lg font-black text-white">${skillPoints}</div></div>
+        </header>
+
+        <section class="mb-3 rounded-2xl border border-white/10 bg-slate-950/70 p-3">
+          <div class="flex items-center justify-between"><span class="text-sm font-black">LV.${view.level}</span><span class="text-[9px] text-slate-400">${memoryProgress.gamesPlayed}戦 / ${memoryProgress.wins}勝 / ${memoryProgress.draws}分 / ${memoryProgress.losses}敗</span></div>
+          <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style="width:${view.percent}%"></div></div>
+          <div class="mt-1 text-right text-[8px] text-slate-400">${view.level >= MEMORY_MAX_LEVEL ? 'MAX LEVEL' : `${view.current - view.levelStart} / ${view.levelEnd - view.levelStart} EXP`}</div>
+        </section>
+
+        ${notice ? `<div class="mb-3 rounded-xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-black text-emerald-200" role="status">${notice}</div>` : ''}
+
+        <div class="grid gap-3">
+          ${MEMORY_SKILL_BRANCHES.map(branch => `
+            <section class="rounded-2xl border p-3 ${SKILL_BRANCH_CLASSES[branch.color] || SKILL_BRANCH_CLASSES.cyan}">
+              <div class="mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-xl">${branch.icon}</span><div><h2 class="text-sm font-black text-white">${branch.name}</h2><p class="text-[8px] text-slate-400">${branch.description}</p></div></div>
+              <div class="grid gap-2 sm:grid-cols-3">${branch.skills.map(skill => skillNodeHtml(skill, memoryProgress)).join('')}</div>
+            </section>
+          `).join('')}
+        </div>
+        <p class="mt-3 text-center text-[8px] leading-relaxed text-slate-500">スキルは秘宝とは別枠で常時発動します。現在、SPの振り直しはできません。</p>
       </div>
     `;
   };
@@ -375,11 +497,21 @@ export function renderMemoryGamePage() {
     if (disposed) return;
     clearTimers();
 
+    if (!memoryProgress) {
+      try {
+        memoryProgress = await loadMemoryProgress();
+      } catch (error) {
+        console.error('[MemoryGame] Failed to load progression.', error);
+        renderDailyLoadError();
+        return;
+      }
+    }
     const selectedItems = selectCardItems(config);
     const clairvoyancePercent = getTreasureEffect('memoryClairvoyancePercent');
     const cpuForgetPercent = getTreasureEffect('memoryCpuForgetPercent');
     const hintPercent = getTreasureEffect('memoryHintPercent');
-    const firstTurn = Math.random() < 0.5 ? 'player' : 'cpu';
+    const skillEffects = getMemorySkillEffects(memoryProgress);
+    const firstTurn = Math.random() < skillEffects.playerFirstChance ? 'player' : 'cpu';
     const cards = shuffle(selectedItems.flatMap((item) => [
       { pairId: item.pairId, name: item.name, image: item.image },
       { pairId: item.pairId, name: item.name, image: item.image },
@@ -396,9 +528,17 @@ export function renderMemoryGamePage() {
       locked: true,
       over: false,
       rewardClaimed: false,
+      progressionRecorded: false,
+      progressionResult: null,
+      progressionFailed: false,
       clairvoyancePercent,
       cpuMemoryRate: Math.max(0, config.memoryRate * (1 - cpuForgetPercent / 100)),
       hintPercent,
+      skillEffects,
+      refocusCharges: skillEffects.refocusCharges,
+      doubleCheckCharges: skillEffects.doubleCheckCharges,
+      seenCardOrder: [],
+      seenPairLabels: new Map(),
     };
 
     container.innerHTML = `
@@ -430,12 +570,22 @@ export function renderMemoryGamePage() {
           ${hintPercent ? `<span class="rounded-full border border-rose-400/25 bg-rose-500/10 px-2 py-1 text-[8px] font-black text-rose-200">ペアヒント ${hintPercent}%</span>` : ''}
         </section>` : ''}
 
+        ${Object.values(memoryProgress.skillRanks).some(Boolean) ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-cyan-300/15 bg-cyan-950/15 p-1.5" aria-label="発動中の神経衰弱スキル">
+          ${skillEffects.previewSeconds ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">全景 ${skillEffects.previewSeconds}秒</span>` : ''}
+          ${skillEffects.mismatchDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">残像 +${skillEffects.mismatchDelayMs / 1000}秒</span>` : ''}
+          ${skillEffects.memoryMarkCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">栞 ${skillEffects.memoryMarkCapacity}枚</span>` : ''}
+          ${skillEffects.playerFirstChance > 0.5 ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">先行 ${Math.round(skillEffects.playerFirstChance * 100)}%</span>` : ''}
+          ${skillEffects.refocusCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">再集中 ${skillEffects.refocusCharges}回</span>` : ''}
+          ${skillEffects.doubleCheckCharges ? '<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">見直し 1回</span>' : ''}
+        </section>` : ''}
+
         <section data-board class="mx-auto grid w-full gap-1.5" style="grid-template-columns:repeat(${config.columns},minmax(0,1fr));max-width:${config.columns >= 6 ? '520px' : config.columns === 5 ? '470px' : '400px'}" aria-label="神経衰弱のカード">
           ${cards.map(card => `
             <button data-card-index="${card.index}" class="memory-card aspect-[3/4] min-w-0 rounded-[.65rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300" aria-label="伏せられたカード ${card.index + 1}">
               <span class="memory-card-inner block">
                 <span class="memory-card-face flex items-center justify-center border-2 border-slate-300/70 bg-[repeating-linear-gradient(135deg,#312e81_0,#312e81_5px,#1e1b4b_5px,#1e1b4b_10px)] shadow-md">
                   <span class="absolute inset-1 rounded-md border border-white/25"></span><span class="material-symbols-outlined text-[clamp(18px,6vw,30px)] text-white/85 drop-shadow">playing_cards</span>
+                  <span data-memory-mark class="absolute right-1 top-1 hidden h-5 min-w-5 items-center justify-center rounded-full border border-amber-100/70 bg-amber-500 px-1 text-[9px] font-black text-slate-950 shadow-[0_0_10px_rgba(251,191,36,.65)]" aria-hidden="true"></span>
                   <span data-clairvoyant-vision class="absolute inset-1 hidden flex-col items-center justify-center overflow-hidden rounded-md border border-cyan-100/70 bg-cyan-950/90 p-0.5 shadow-[inset_0_0_14px_rgba(103,232,249,.6)]" aria-hidden="true">
                     <img src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain opacity-80 drop-shadow-[0_0_5px_rgba(165,243,252,.9)]">
                     <span class="block w-full truncate rounded-sm bg-cyan-950/85 px-0.5 py-px text-center text-[clamp(5px,1.5vw,8px)] font-black leading-none text-cyan-50">${card.name}</span>
@@ -472,6 +622,18 @@ export function renderMemoryGamePage() {
     `;
     applyExtractedCardColors(container);
 
+    const beginFirstTurn = () => {
+      if (!game || game.over) return;
+      updateScores();
+      if (firstTurn === 'player') {
+        game.locked = false;
+        setMessage('あなたが先行です。2枚めくってください');
+      } else {
+        setMessage('CPUが先行です。考えています…', 'rose');
+        runCpuTurn();
+      }
+    };
+
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     later(() => {
       if (!game || game.over) return;
@@ -488,14 +650,17 @@ export function renderMemoryGamePage() {
     later(() => {
       if (!game || game.over) return;
       container.querySelector('[data-coin-toss]')?.remove();
-      updateScores();
-      if (firstTurn === 'player') {
-        game.locked = false;
-        setMessage('あなたが先行です。2枚めくってください');
-      } else {
-        setMessage('CPUが先行です。考えています…', 'rose');
-        runCpuTurn();
+      if (!skillEffects.previewSeconds) {
+        beginFirstTurn();
+        return;
       }
+      container.querySelectorAll('[data-card-index]').forEach(element => element.classList.add('is-flipped'));
+      setMessage(`全景記憶：${skillEffects.previewSeconds}秒間、盤面を記憶してください`, 'emerald');
+      later(() => {
+        if (!game || game.over) return;
+        container.querySelectorAll('[data-card-index]').forEach(element => element.classList.remove('is-flipped'));
+        beginFirstTurn();
+      }, skillEffects.previewSeconds * 1000);
     }, reducedMotion ? 650 : 2380);
   };
 
@@ -552,12 +717,38 @@ export function renderMemoryGamePage() {
     later(() => mate?.classList.remove('is-hint'), 1500);
   };
 
-  const revealCard = (index) => {
+  const updateMemoryMarks = () => {
+    if (!game?.skillEffects.memoryMarkCapacity) return;
+    const visible = new Set(game.seenCardOrder.slice(-game.skillEffects.memoryMarkCapacity));
+    game.cards.forEach((card, index) => {
+      const mark = cardElement(index)?.querySelector('[data-memory-mark]');
+      if (!mark) return;
+      const shouldShow = visible.has(index) && !game.matched.has(index);
+      mark.textContent = shouldShow ? game.seenPairLabels.get(card.pairId) : '';
+      mark.classList.toggle('hidden', !shouldShow);
+      mark.classList.toggle('flex', shouldShow);
+    });
+  };
+
+  const rememberForPlayer = (index) => {
+    if (!game?.skillEffects.memoryMarkCapacity || game.matched.has(index)) return;
+    const pairId = game.cards[index].pairId;
+    if (!game.seenPairLabels.has(pairId)) {
+      const labelIndex = game.seenPairLabels.size;
+      game.seenPairLabels.set(pairId, String.fromCharCode(65 + (labelIndex % 26)));
+    }
+    game.seenCardOrder = game.seenCardOrder.filter(seenIndex => seenIndex !== index);
+    game.seenCardOrder.push(index);
+    updateMemoryMarks();
+  };
+
+  const revealCard = (index, observedByPlayer = false) => {
     if (!game) return;
     const element = cardElement(index);
     element?.classList.add('is-flipped');
     element?.setAttribute('aria-label', game.cards[index].name);
     rememberCard(index);
+    if (observedByPlayer) rememberForPlayer(index);
   };
 
   const hideCards = (indices) => {
@@ -628,6 +819,8 @@ export function renderMemoryGamePage() {
       element?.classList.add('is-matched');
       if (element) element.disabled = true;
     });
+    game.seenCardOrder = game.seenCardOrder.filter(index => !game.matched.has(index));
+    updateMemoryMarks();
   };
 
   const claimDailyReward = async () => {
@@ -646,9 +839,11 @@ export function renderMemoryGamePage() {
     const isWin = outcome === 'win';
     const isDraw = outcome === 'draw';
     const isDrawOrLose = outcome === 'draw_or_lose';
+    const progression = game.progressionResult;
+    const leveledUp = progression && progression.level > progression.previousLevel;
     const overlay = document.createElement('div');
     overlay.dataset.result = 'true';
-    overlay.className = 'fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md';
+    overlay.className = 'fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-slate-950/85 p-4 backdrop-blur-md';
     overlay.innerHTML = `
       <section class="memory-result w-full max-w-sm rounded-3xl border ${isWin ? 'border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-950 to-slate-950' : 'border-slate-600 bg-gradient-to-b from-slate-900 to-slate-950'} p-5 text-center shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="memory-result-title">
         <span class="material-symbols-outlined text-6xl ${isWin ? 'text-fuchsia-300 drop-shadow-[0_0_20px_rgba(232,121,249,.65)]' : isDraw ? 'text-amber-300' : 'text-slate-400'}">${isWin ? 'emoji_events' : isDraw ? 'handshake' : 'sentiment_dissatisfied'}</span>
@@ -656,6 +851,9 @@ export function renderMemoryGamePage() {
         <h2 id="memory-result-title" class="mt-1 text-xl font-black">${isWin ? 'CPUに勝利！' : isDraw ? '引き分け' : isDrawOrLose ? '引き分けまたは敗北が確定' : 'CPUの勝利'}</h2>
         <div class="mx-auto mt-3 grid max-w-[220px] grid-cols-3 items-center rounded-2xl border border-white/10 bg-black/25 p-2">
           <div><div class="text-[8px] text-cyan-300">YOU</div><div class="text-xl font-black">${game.scores.player}</div></div><div class="text-xs text-slate-600">―</div><div><div class="text-[8px] text-rose-300">CPU</div><div class="text-xl font-black">${game.scores.cpu}</div></div>
+        </div>
+        <div class="mt-3 rounded-xl border ${leveledUp ? 'border-cyan-300/40 bg-cyan-500/10' : 'border-violet-300/20 bg-violet-500/10'} px-3 py-2">
+          ${progression ? `<div class="flex items-center justify-center gap-1 text-sm font-black text-violet-100"><span class="material-symbols-outlined text-lg">neurology</span>神経衰弱EXP +${progression.xpGained}</div>${leveledUp ? `<div class="mt-1 text-xs font-black text-cyan-200">LEVEL UP! LV.${progression.previousLevel} → LV.${progression.level}</div><div class="mt-0.5 text-[8px] text-cyan-100/70">新しいSPを獲得しました</div>` : `<div class="mt-0.5 text-[8px] text-slate-400">神経衰弱 LV.${progression.level}</div>`}` : '<div class="text-[9px] font-black text-rose-300">EXPを保存できませんでした</div>'}
         </div>
         ${isWin ? `<div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の報酬は受取済み' : '報酬を保存できませんでした'}</div><p class="mt-2 text-[10px] text-slate-400">この難易度は翌日また遊べます。</p>` : '<p class="mt-3 text-[10px] leading-relaxed text-slate-400">勝利するまで何度でも挑戦できます。</p>'}
         <div class="mt-4 grid gap-2">
@@ -673,6 +871,20 @@ export function renderMemoryGamePage() {
     game.over = true;
     game.locked = true;
     const outcome = decidedOutcome || (game.scores.player > game.scores.cpu ? 'win' : game.scores.player < game.scores.cpu ? 'lose' : 'draw');
+    if (!game.progressionRecorded) {
+      game.progressionRecorded = true;
+      try {
+        game.progressionResult = await recordMemoryGameResult({
+          difficultyId: game.config.id,
+          outcome,
+          playerPairs: game.scores.player,
+        });
+        memoryProgress = game.progressionResult.progress;
+      } catch (error) {
+        console.error('[MemoryGame] Failed to save progression.', error);
+        game.progressionFailed = true;
+      }
+    }
     let rewardStatus = 'awarded';
     if (outcome === 'win') {
       try {
@@ -725,6 +937,14 @@ export function renderMemoryGamePage() {
     const clairvoyantCount = owner === 'player' ? tryClairvoyance(indices) : 0;
     game.selected = [];
     if (owner === 'player') {
+      if (game.refocusCharges > 0) {
+        game.refocusCharges -= 1;
+        game.turn = 'player';
+        game.locked = false;
+        updateScores();
+        setMessage(`再集中が発動！ 手番を維持します（残り${game.refocusCharges}回）`, 'emerald');
+        return;
+      }
       game.turn = 'cpu';
       game.locked = true;
       updateScores();
@@ -762,7 +982,7 @@ export function renderMemoryGamePage() {
   const handlePlayerCard = (index) => {
     if (!game || game.over || game.locked || game.turn !== 'player') return;
     if (game.matched.has(index) || game.selected.includes(index)) return;
-    revealCard(index);
+    revealCard(index, true);
     game.selected.push(index);
     if (game.selected.length === 1) {
       setMessage('もう1枚選んでください');
@@ -777,8 +997,18 @@ export function renderMemoryGamePage() {
     // 選べるようにする。不一致だけは絵柄を確認できる時間を残す。
     if (isMatch) {
       resolvePair('player', pair);
+    } else if (game.doubleCheckCharges > 0) {
+      game.doubleCheckCharges -= 1;
+      game.locked = true;
+      setMessage('見直しが発動！ 2枚目を選び直せます', 'emerald');
+      later(() => {
+        if (!game || game.over) return;
+        hideCards([pair[1]]);
+        game.selected = [pair[0]];
+        game.locked = false;
+      }, 550 + game.skillEffects.mismatchDelayMs);
     } else {
-      later(() => resolvePair('player', pair), 850);
+      later(() => resolvePair('player', pair), 850 + game.skillEffects.mismatchDelayMs);
     }
   };
 
@@ -786,6 +1016,34 @@ export function renderMemoryGamePage() {
     const homeButton = event.target.closest('[data-home]');
     if (homeButton) {
       window.location.hash = '/status';
+      return;
+    }
+
+    const skillTreeButton = event.target.closest('[data-skill-tree]');
+    if (skillTreeButton) {
+      await renderSkillTree();
+      return;
+    }
+
+    const skillBackButton = event.target.closest('[data-skill-back]');
+    if (skillBackButton) {
+      await renderSelect();
+      return;
+    }
+
+    const unlockButton = event.target.closest('[data-unlock-skill]');
+    if (unlockButton && !unlockButton.disabled) {
+      unlockButton.disabled = true;
+      const skillId = unlockButton.dataset.unlockSkill;
+      try {
+        const skill = MEMORY_SKILL_BRANCHES.flatMap(branch => branch.skills).find(item => item.id === skillId);
+        memoryProgress = await unlockMemorySkill(skillId);
+        playSoundEffect('confirm');
+        await renderSkillTree(`${skill?.name || 'スキル'}を習得しました！`);
+      } catch (error) {
+        console.error('[MemoryGame] Failed to unlock skill.', error);
+        await renderSkillTree(error?.message || 'スキルを習得できませんでした。');
+      }
       return;
     }
 
