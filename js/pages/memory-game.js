@@ -66,13 +66,15 @@ const getLocalDateKey = (date = new Date()) => {
 
 const dailyWinKey = difficultyId => `memoryGameLastWin:${difficultyId}`;
 
-/** プレイヤーの敗北または引き分けが、残りペアに関係なく確定しているか判定する。 */
+/** プレイヤーが残りをすべて取っても勝てない状態か判定する。 */
 function getDecidedNonWinOutcome(game) {
   const foundPairs = game.scores.player + game.scores.cpu;
   const remainingPairs = Math.max(0, game.config.pairs - foundPairs);
+  const maximumPlayerScore = game.scores.player + remainingPairs;
 
-  if (game.scores.cpu > game.scores.player + remainingPairs) return 'lose';
   if (remainingPairs === 0 && game.scores.player === game.scores.cpu) return 'draw';
+  if (game.scores.cpu > maximumPlayerScore) return 'lose';
+  if (game.scores.cpu === maximumPlayerScore) return 'draw_or_lose';
   return null;
 }
 
@@ -643,14 +645,15 @@ export function renderMemoryGamePage() {
     if (!game || disposed) return;
     const isWin = outcome === 'win';
     const isDraw = outcome === 'draw';
+    const isDrawOrLose = outcome === 'draw_or_lose';
     const overlay = document.createElement('div');
     overlay.dataset.result = 'true';
     overlay.className = 'fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md';
     overlay.innerHTML = `
       <section class="memory-result w-full max-w-sm rounded-3xl border ${isWin ? 'border-fuchsia-300/50 bg-gradient-to-b from-fuchsia-950 to-slate-950' : 'border-slate-600 bg-gradient-to-b from-slate-900 to-slate-950'} p-5 text-center shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="memory-result-title">
         <span class="material-symbols-outlined text-6xl ${isWin ? 'text-fuchsia-300 drop-shadow-[0_0_20px_rgba(232,121,249,.65)]' : isDraw ? 'text-amber-300' : 'text-slate-400'}">${isWin ? 'emoji_events' : isDraw ? 'handshake' : 'sentiment_dissatisfied'}</span>
-        <div class="mt-1 text-[10px] font-black tracking-[.25em] ${isWin ? 'text-fuchsia-300' : 'text-slate-400'}">${isWin ? 'VICTORY' : isDraw ? 'DRAW' : 'DEFEAT'}</div>
-        <h2 id="memory-result-title" class="mt-1 text-xl font-black">${isWin ? 'CPUに勝利！' : isDraw ? '引き分け' : 'CPUの勝利'}</h2>
+        <div class="mt-1 text-[10px] font-black tracking-[.25em] ${isWin ? 'text-fuchsia-300' : 'text-slate-400'}">${isWin ? 'VICTORY' : isDraw ? 'DRAW' : isDrawOrLose ? 'GAME OVER' : 'DEFEAT'}</div>
+        <h2 id="memory-result-title" class="mt-1 text-xl font-black">${isWin ? 'CPUに勝利！' : isDraw ? '引き分け' : isDrawOrLose ? '引き分けまたは敗北が確定' : 'CPUの勝利'}</h2>
         <div class="mx-auto mt-3 grid max-w-[220px] grid-cols-3 items-center rounded-2xl border border-white/10 bg-black/25 p-2">
           <div><div class="text-[8px] text-cyan-300">YOU</div><div class="text-xl font-black">${game.scores.player}</div></div><div class="text-xs text-slate-600">―</div><div><div class="text-[8px] text-rose-300">CPU</div><div class="text-xl font-black">${game.scores.cpu}</div></div>
         </div>
@@ -665,11 +668,11 @@ export function renderMemoryGamePage() {
     container.appendChild(overlay);
   };
 
-  const finishGame = async () => {
+  const finishGame = async (decidedOutcome = null) => {
     if (!game || game.over) return;
     game.over = true;
     game.locked = true;
-    const outcome = game.scores.player > game.scores.cpu ? 'win' : game.scores.player < game.scores.cpu ? 'lose' : 'draw';
+    const outcome = decidedOutcome || (game.scores.player > game.scores.cpu ? 'win' : game.scores.player < game.scores.cpu ? 'lose' : 'draw');
     let rewardStatus = 'awarded';
     if (outcome === 'win') {
       try {
@@ -700,8 +703,9 @@ export function renderMemoryGamePage() {
       const decidedOutcome = getDecidedNonWinOutcome(game);
       if (decidedOutcome) {
         game.locked = true;
-        setMessage(decidedOutcome === 'draw' ? '引き分けが確定しました' : '敗北が確定しました', decidedOutcome === 'draw' ? 'amber' : 'rose');
-        later(finishGame, 650);
+        const isDraw = decidedOutcome === 'draw';
+        setMessage(isDraw ? '引き分けが確定しました' : decidedOutcome === 'lose' ? '敗北が確定しました' : '引き分けまたは敗北が確定しました', isDraw ? 'amber' : 'rose');
+        later(() => finishGame(decidedOutcome), 650);
         return;
       }
 
