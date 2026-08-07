@@ -247,36 +247,39 @@ const pageStyles = () => `
     .memory-coin-face.is-back { transform:rotateY(180deg); }
     .memory-coin-shadow { animation:memory-coin-shadow 1.45s ease-in-out both; }
     .memory-coin-result { animation:memory-coin-result-in .3s ease-out both; }
-    .memory-skill-tree-scroll { scrollbar-width:thin; scrollbar-color:rgba(148,163,184,.35) transparent; scroll-snap-type:x proximity; }
-    .memory-skill-tree-canvas { min-width:660px; padding:4px 10px 18px; }
-    .memory-tree-root { position:relative; display:flex; width:128px; min-height:74px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:2px solid rgba(103,232,249,.6); border-radius:22px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 24px rgba(34,211,238,.2),inset 0 0 18px rgba(34,211,238,.08); }
-    .memory-tree-trunk { width:3px; height:25px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
-    .memory-tree-fork { position:relative; width:438.68px; height:31px; margin:0 auto; border-top:3px solid rgba(148,163,184,.38); }
-    .memory-tree-fork span { position:absolute; top:-3px; width:3px; height:34px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
+    .memory-skill-tree-scroll { overflow-x:hidden; }
+    .memory-skill-tree-canvas { width:100%; max-width:100%; padding:4px 2px 14px; }
+    .memory-tree-root { position:relative; display:flex; width:114px; min-height:64px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:2px solid rgba(103,232,249,.6); border-radius:18px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 20px rgba(34,211,238,.2),inset 0 0 14px rgba(34,211,238,.08); }
+    .memory-tree-trunk { width:2px; height:20px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
+    .memory-tree-fork { position:relative; width:66.666%; height:24px; margin:0 auto; border-top:2px solid rgba(148,163,184,.38); }
+    .memory-tree-fork span { position:absolute; top:-2px; width:2px; height:26px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
     .memory-tree-fork span:nth-child(1) { left:0; }
     .memory-tree-fork span:nth-child(2) { left:50%; transform:translateX(-50%); }
     .memory-tree-fork span:nth-child(3) { right:0; }
-    .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start; }
-    .memory-skill-branch { --branch-rgb:34,211,238; min-width:0; scroll-snap-align:center; }
-    .memory-branch-head { display:flex; min-height:63px; align-items:center; justify-content:center; gap:7px; border:2px solid rgba(var(--branch-rgb),.48); border-radius:18px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 18px rgba(var(--branch-rgb),.12); text-align:left; }
-    .memory-branch-head > .material-symbols-outlined { color:rgb(var(--branch-rgb)); font-size:25px; }
-    .memory-branch-connector { width:3px; height:22px; margin:0 auto; background:rgba(var(--branch-rgb),.38); }
+    .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:5px; align-items:start; }
+    @media (min-width: 640px) {
+      .memory-tree-branches { gap:16px; }
+    }
+    .memory-skill-branch { --branch-rgb:34,211,238; min-width:0; }
+    .memory-branch-head { display:flex; min-height:50px; flex-direction:column; sm:flex-row; align-items:center; justify-content:center; gap:2px; sm:gap:6px; border:2px solid rgba(var(--branch-rgb),.48); border-radius:14px; padding:5px 2px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 14px rgba(var(--branch-rgb),.12); text-align:center; sm:text-left; }
+    .memory-branch-head > .material-symbols-outlined { color:rgb(var(--branch-rgb)); font-size:20px; }
+    .memory-branch-connector { width:2px; height:18px; margin:0 auto; background:rgba(var(--branch-rgb),.38); }
     .memory-skill-path { display:flex; flex-direction:column; }
     .memory-skill-node { position:relative; }
-    .memory-skill-node + .memory-skill-node { margin-top:25px; }
-    .memory-skill-node + .memory-skill-node::before { content:''; position:absolute; left:50%; bottom:100%; width:3px; height:25px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
-    .memory-tree-skill { position:relative; display:flex; width:100%; min-height:151px; flex-direction:column; align-items:center; border:2px solid rgba(100,116,139,.36); border-radius:18px; padding:31px 9px 9px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:center; }
+    .memory-skill-node + .memory-skill-node { margin-top:20px; }
+    .memory-skill-node + .memory-skill-node::before { content:''; position:absolute; left:50%; bottom:100%; width:2px; height:20px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
+    .memory-tree-skill { position:relative; display:flex; width:100%; min-height:136px; flex-direction:column; align-items:center; border:2px solid rgba(100,116,139,.36); border-radius:14px; padding:22px 3px 6px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:center; }
     .memory-tree-skill.is-learned { border-color:rgba(var(--branch-rgb),.5); color:#e2e8f0; background:linear-gradient(155deg,rgba(var(--branch-rgb),.18),rgba(15,23,42,.98) 68%); box-shadow:0 0 15px rgba(var(--branch-rgb),.1),inset 0 1px rgba(255,255,255,.08); }
-    .memory-tree-skill.can-unlock { border-color:rgba(var(--branch-rgb),.9); color:white; box-shadow:0 0 20px rgba(var(--branch-rgb),.28),inset 0 0 16px rgba(var(--branch-rgb),.1); animation:memory-skill-ready 1.7s ease-in-out infinite; }
-    .memory-tree-skill.is-max { border-color:rgba(52,211,153,.65); box-shadow:0 0 16px rgba(52,211,153,.15); }
+    .memory-tree-skill.can-unlock { border-color:rgba(var(--branch-rgb),.9); color:white; box-shadow:0 0 18px rgba(var(--branch-rgb),.28),inset 0 0 14px rgba(var(--branch-rgb),.1); animation:memory-skill-ready 1.7s ease-in-out infinite; }
+    .memory-tree-skill.is-max { border-color:rgba(52,211,153,.65); box-shadow:0 0 14px rgba(52,211,153,.15); }
     .memory-tree-skill:disabled { opacity:1; }
-    .memory-skill-orb { position:absolute; top:-17px; left:50%; display:flex; width:44px; height:44px; transform:translateX(-50%); align-items:center; justify-content:center; border:2px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 4px 10px rgba(0,0,0,.45); }
-    .is-learned .memory-skill-orb,.can-unlock .memory-skill-orb { border-color:rgba(var(--branch-rgb),.8); color:rgb(var(--branch-rgb)); background:rgb(15,23,42); box-shadow:0 0 14px rgba(var(--branch-rgb),.28); }
+    .memory-skill-orb { position:absolute; top:-14px; left:50%; display:flex; width:34px; height:34px; transform:translateX(-50%); align-items:center; justify-content:center; border:2px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 3px 8px rgba(0,0,0,.45); }
+    .is-learned .memory-skill-orb,.can-unlock .memory-skill-orb { border-color:rgba(var(--branch-rgb),.8); color:rgb(var(--branch-rgb)); background:rgb(15,23,42); box-shadow:0 0 12px rgba(var(--branch-rgb),.28); }
     .is-max .memory-skill-orb { border-color:rgba(52,211,153,.8); color:#6ee7b7; }
-    .memory-rank-dots { display:flex; justify-content:center; gap:4px; margin-top:5px; }
-    .memory-rank-dot { width:7px; height:7px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
-    .memory-rank-dot.is-filled { border-color:rgba(var(--branch-rgb),.9); background:rgb(var(--branch-rgb)); box-shadow:0 0 6px rgba(var(--branch-rgb),.65); }
-    .memory-tree-status { margin-top:auto; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:6px; }
+    .memory-rank-dots { display:flex; justify-content:center; gap:3px; margin-top:3px; }
+    .memory-rank-dot { width:5px; height:5px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
+    .memory-rank-dot.is-filled { border-color:rgba(var(--branch-rgb),.9); background:rgb(var(--branch-rgb)); box-shadow:0 0 5px rgba(var(--branch-rgb),.65); }
+    .memory-tree-status { margin-top:auto; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:4px; }
     @keyframes memory-skill-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.18); } }
     @media (prefers-reduced-motion: reduce) {
       .memory-card-inner { transition:none; }
@@ -488,8 +491,8 @@ export function renderMemoryGamePage() {
         ${notice ? `<div class="mb-3 rounded-xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-black text-emerald-200" role="status">${notice}</div>` : ''}
 
         <section class="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/65 py-3 shadow-xl" aria-label="神経衰弱スキルツリー">
-          <div class="mb-2 flex items-center justify-between px-3 text-[8px] text-slate-500"><span>ROOTから3系統へ分岐</span><span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">swipe</span>横にスワイプ</span></div>
-          <div class="memory-skill-tree-scroll overflow-x-auto px-1 pb-2">
+          <div class="mb-2 flex items-center justify-between px-3 text-[8px] text-slate-400 font-bold"><span>ROOTから3系統へ分岐</span><span class="flex items-center gap-1 text-cyan-300"><span class="material-symbols-outlined text-xs">auto_awesome</span>画面全幅フィット</span></div>
+          <div class="memory-skill-tree-scroll px-1 pb-2">
             <div class="memory-skill-tree-canvas">
               <div class="memory-tree-root">
                 <span class="material-symbols-outlined text-3xl text-cyan-200">neurology</span>
@@ -516,12 +519,6 @@ export function renderMemoryGamePage() {
         <p class="mt-3 text-center text-[8px] leading-relaxed text-slate-500">スキルは秘宝とは別枠で常時発動します。現在、SPの振り直しはできません。</p>
       </div>
     `;
-    const treeScroller = container.querySelector('.memory-skill-tree-scroll');
-    if (treeScroller) {
-      window.requestAnimationFrame(() => {
-        if (treeScroller.isConnected) treeScroller.scrollLeft = (treeScroller.scrollWidth - treeScroller.clientWidth) / 2;
-      });
-    }
   };
 
   const updateHeaderPrism = (value) => {
