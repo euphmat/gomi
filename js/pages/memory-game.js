@@ -60,10 +60,10 @@ const ACCENT_CLASSES = {
   violet: 'border-violet-300/55 from-violet-500/30 via-fuchsia-950/35 to-slate-950 text-violet-100 shadow-[0_0_22px_rgba(139,92,246,.16)]',
 };
 
-const SKILL_BRANCH_CLASSES = {
-  cyan: 'border-cyan-300/25 bg-cyan-950/20 text-cyan-100',
-  amber: 'border-amber-300/25 bg-amber-950/20 text-amber-100',
-  violet: 'border-violet-300/25 bg-violet-950/20 text-violet-100',
+const SKILL_BRANCH_COLORS = {
+  cyan: '34,211,238',
+  amber: '251,191,36',
+  violet: '167,139,250',
 };
 
 const shuffle = (items) => {
@@ -247,11 +247,43 @@ const pageStyles = () => `
     .memory-coin-face.is-back { transform:rotateY(180deg); }
     .memory-coin-shadow { animation:memory-coin-shadow 1.45s ease-in-out both; }
     .memory-coin-result { animation:memory-coin-result-in .3s ease-out both; }
+    .memory-skill-tree-scroll { scrollbar-width:thin; scrollbar-color:rgba(148,163,184,.35) transparent; scroll-snap-type:x proximity; }
+    .memory-skill-tree-canvas { min-width:660px; padding:4px 10px 18px; }
+    .memory-tree-root { position:relative; display:flex; width:128px; min-height:74px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:2px solid rgba(103,232,249,.6); border-radius:22px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 24px rgba(34,211,238,.2),inset 0 0 18px rgba(34,211,238,.08); }
+    .memory-tree-trunk { width:3px; height:25px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
+    .memory-tree-fork { position:relative; width:66.666%; height:31px; margin:0 auto; border-top:3px solid rgba(148,163,184,.38); }
+    .memory-tree-fork span { position:absolute; top:-3px; width:3px; height:34px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
+    .memory-tree-fork span:nth-child(1) { left:0; }
+    .memory-tree-fork span:nth-child(2) { left:50%; transform:translateX(-50%); }
+    .memory-tree-fork span:nth-child(3) { right:0; }
+    .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:start; }
+    .memory-skill-branch { --branch-rgb:34,211,238; min-width:0; scroll-snap-align:center; }
+    .memory-branch-head { display:flex; min-height:63px; align-items:center; justify-content:center; gap:7px; border:2px solid rgba(var(--branch-rgb),.48); border-radius:18px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 18px rgba(var(--branch-rgb),.12); text-align:left; }
+    .memory-branch-head > .material-symbols-outlined { color:rgb(var(--branch-rgb)); font-size:25px; }
+    .memory-branch-connector { width:3px; height:22px; margin:0 auto; background:rgba(var(--branch-rgb),.38); }
+    .memory-skill-path { display:flex; flex-direction:column; }
+    .memory-skill-node { position:relative; }
+    .memory-skill-node + .memory-skill-node { margin-top:25px; }
+    .memory-skill-node + .memory-skill-node::before { content:''; position:absolute; left:50%; bottom:100%; width:3px; height:25px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
+    .memory-tree-skill { position:relative; display:flex; width:100%; min-height:151px; flex-direction:column; align-items:center; border:2px solid rgba(100,116,139,.36); border-radius:18px; padding:31px 9px 9px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:center; }
+    .memory-tree-skill.is-learned { border-color:rgba(var(--branch-rgb),.5); color:#e2e8f0; background:linear-gradient(155deg,rgba(var(--branch-rgb),.18),rgba(15,23,42,.98) 68%); box-shadow:0 0 15px rgba(var(--branch-rgb),.1),inset 0 1px rgba(255,255,255,.08); }
+    .memory-tree-skill.can-unlock { border-color:rgba(var(--branch-rgb),.9); color:white; box-shadow:0 0 20px rgba(var(--branch-rgb),.28),inset 0 0 16px rgba(var(--branch-rgb),.1); animation:memory-skill-ready 1.7s ease-in-out infinite; }
+    .memory-tree-skill.is-max { border-color:rgba(52,211,153,.65); box-shadow:0 0 16px rgba(52,211,153,.15); }
+    .memory-tree-skill:disabled { opacity:1; }
+    .memory-skill-orb { position:absolute; top:-17px; left:50%; display:flex; width:44px; height:44px; transform:translateX(-50%); align-items:center; justify-content:center; border:2px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 4px 10px rgba(0,0,0,.45); }
+    .is-learned .memory-skill-orb,.can-unlock .memory-skill-orb { border-color:rgba(var(--branch-rgb),.8); color:rgb(var(--branch-rgb)); background:rgb(15,23,42); box-shadow:0 0 14px rgba(var(--branch-rgb),.28); }
+    .is-max .memory-skill-orb { border-color:rgba(52,211,153,.8); color:#6ee7b7; }
+    .memory-rank-dots { display:flex; justify-content:center; gap:4px; margin-top:5px; }
+    .memory-rank-dot { width:7px; height:7px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
+    .memory-rank-dot.is-filled { border-color:rgba(var(--branch-rgb),.9); background:rgb(var(--branch-rgb)); box-shadow:0 0 6px rgba(var(--branch-rgb),.65); }
+    .memory-tree-status { margin-top:auto; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:6px; }
+    @keyframes memory-skill-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.18); } }
     @media (prefers-reduced-motion: reduce) {
       .memory-card-inner { transition:none; }
       .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-result { animation:none; }
       .memory-coin, .memory-coin-shadow { animation-duration:.01ms; }
       .memory-coin-result { animation:none; }
+      .memory-tree-skill.can-unlock { animation:none; }
     }
   </style>
 `;
@@ -307,22 +339,21 @@ function skillNodeHtml(skill, progress) {
   const rank = progress.skillRanks[skill.id] || 0;
   const availability = canUnlockMemorySkill(progress, skill.id);
   const isMax = rank >= skill.maxRank;
-  const currentDescription = rank > 0 ? skill.ranks[rank - 1] : '未習得';
+  const currentDescription = rank > 0 ? skill.ranks[rank - 1] : skill.ranks[0];
   const nextDescription = !isMax ? skill.ranks[rank] : '';
+  const stateClass = isMax ? 'is-learned is-max' : availability.ok ? `${rank ? 'is-learned ' : ''}can-unlock` : rank ? 'is-learned' : 'is-locked';
   return `
-    <article class="rounded-xl border ${rank ? 'border-white/25 bg-white/10' : 'border-white/10 bg-black/20'} p-2.5">
-      <div class="flex items-start gap-2">
-        <span class="material-symbols-outlined mt-0.5 text-xl">${skill.icon}</span>
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center justify-between gap-2"><h3 class="text-xs font-black text-white">${skill.name}</h3><span class="text-[9px] font-black">Rank ${rank}/${skill.maxRank}</span></div>
-          <p class="mt-1 text-[9px] leading-relaxed text-slate-300">${currentDescription}</p>
-          ${nextDescription ? `<p class="mt-1 text-[8px] leading-relaxed text-slate-500">次: ${nextDescription}</p>` : ''}
-        </div>
-      </div>
-      <button data-unlock-skill="${skill.id}" ${availability.ok ? '' : 'disabled aria-disabled="true"'} class="mt-2 flex min-h-8 w-full items-center justify-center gap-1 rounded-lg border text-[9px] font-black ${availability.ok ? 'border-white/30 bg-white/15 text-white active:scale-[.98]' : isMax ? 'border-emerald-300/20 bg-emerald-500/10 text-emerald-300' : 'border-slate-700 bg-slate-900/70 text-slate-500'}">
-        <span class="material-symbols-outlined text-sm">${isMax ? 'check_circle' : availability.ok ? 'add_circle' : 'lock'}</span>${isMax ? '習得済み' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}
+    <div class="memory-skill-node">
+      <button data-unlock-skill="${skill.id}" ${availability.ok ? '' : 'disabled aria-disabled="true"'} class="memory-tree-skill ${stateClass} active:scale-[.98]" aria-label="${skill.name} Rank ${rank}/${skill.maxRank}。${availability.ok ? `${skill.cost} SPで習得可能` : availability.reason}">
+        <span class="memory-skill-orb"><span class="material-symbols-outlined text-xl">${isMax ? 'check' : skill.icon}</span></span>
+        <span class="block text-[11px] font-black text-white">${skill.name}</span>
+        <span class="mt-0.5 block text-[8px] font-black tracking-wider">RANK ${rank}/${skill.maxRank}</span>
+        <span class="memory-rank-dots" aria-hidden="true">${Array.from({ length: skill.maxRank }, (_, index) => `<span class="memory-rank-dot ${index < rank ? 'is-filled' : ''}"></span>`).join('')}</span>
+        <span class="mt-2 block text-[8px] leading-relaxed text-slate-300">${rank ? currentDescription : `効果: ${currentDescription}`}</span>
+        ${rank && nextDescription ? `<span class="mt-1 block text-[7px] leading-relaxed text-slate-500">次: ${nextDescription}</span>` : ''}
+        <span class="memory-tree-status block text-[8px] font-black ${isMax ? 'text-emerald-300' : availability.ok ? 'text-white' : 'text-slate-500'}"><span class="material-symbols-outlined align-middle text-[12px]">${isMax ? 'verified' : availability.ok ? 'add_circle' : 'lock'}</span> ${isMax ? 'MASTERED' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}</span>
       </button>
-    </article>
+    </div>
   `;
 }
 
@@ -440,7 +471,7 @@ export function renderMemoryGamePage() {
     container.innerHTML = `
       ${pageStyles()}
       <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,.15),transparent_36%),radial-gradient(circle_at_90%_55%,rgba(139,92,246,.14),transparent_42%)]"></div>
-      <div class="relative z-10 mx-auto max-w-xl p-2.5 pb-6">
+      <div class="relative z-10 mx-auto max-w-3xl p-2.5 pb-6">
         <header class="mb-3 flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2.5 shadow-xl">
           <button data-skill-back class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="難易度選択へ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
           <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-500/10"><span class="material-symbols-outlined text-2xl text-cyan-200">account_tree</span></span>
@@ -456,17 +487,41 @@ export function renderMemoryGamePage() {
 
         ${notice ? `<div class="mb-3 rounded-xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-black text-emerald-200" role="status">${notice}</div>` : ''}
 
-        <div class="grid gap-3">
-          ${MEMORY_SKILL_BRANCHES.map(branch => `
-            <section class="rounded-2xl border p-3 ${SKILL_BRANCH_CLASSES[branch.color] || SKILL_BRANCH_CLASSES.cyan}">
-              <div class="mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-xl">${branch.icon}</span><div><h2 class="text-sm font-black text-white">${branch.name}</h2><p class="text-[8px] text-slate-400">${branch.description}</p></div></div>
-              <div class="grid gap-2 sm:grid-cols-3">${branch.skills.map(skill => skillNodeHtml(skill, memoryProgress)).join('')}</div>
-            </section>
-          `).join('')}
-        </div>
+        <section class="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/65 py-3 shadow-xl" aria-label="神経衰弱スキルツリー">
+          <div class="mb-2 flex items-center justify-between px-3 text-[8px] text-slate-500"><span>ROOTから3系統へ分岐</span><span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">swipe</span>横にスワイプ</span></div>
+          <div class="memory-skill-tree-scroll overflow-x-auto px-1 pb-2">
+            <div class="memory-skill-tree-canvas">
+              <div class="memory-tree-root">
+                <span class="material-symbols-outlined text-3xl text-cyan-200">neurology</span>
+                <span class="text-[9px] font-black text-white">神経衰弱 LV.${view.level}</span>
+                <span class="text-[8px] font-black text-violet-200">${skillPoints} SP</span>
+              </div>
+              <div class="memory-tree-trunk"></div>
+              <div class="memory-tree-fork" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="memory-tree-branches">
+                ${MEMORY_SKILL_BRANCHES.map(branch => `
+                  <section class="memory-skill-branch" style="--branch-rgb:${SKILL_BRANCH_COLORS[branch.color] || SKILL_BRANCH_COLORS.cyan}" aria-labelledby="memory-branch-${branch.id}">
+                    <div class="memory-branch-head">
+                      <span class="material-symbols-outlined">${branch.icon}</span>
+                      <span><span id="memory-branch-${branch.id}" class="block text-xs font-black text-white">${branch.name}</span><span class="mt-0.5 block text-[7px] leading-tight text-slate-400">${branch.description}</span></span>
+                    </div>
+                    <div class="memory-branch-connector" aria-hidden="true"></div>
+                    <div class="memory-skill-path">${branch.skills.map(skill => skillNodeHtml(skill, memoryProgress)).join('')}</div>
+                  </section>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </section>
         <p class="mt-3 text-center text-[8px] leading-relaxed text-slate-500">スキルは秘宝とは別枠で常時発動します。現在、SPの振り直しはできません。</p>
       </div>
     `;
+    const treeScroller = container.querySelector('.memory-skill-tree-scroll');
+    if (treeScroller) {
+      window.requestAnimationFrame(() => {
+        if (treeScroller.isConnected) treeScroller.scrollLeft = (treeScroller.scrollWidth - treeScroller.clientWidth) / 2;
+      });
+    }
   };
 
   const updateHeaderPrism = (value) => {
