@@ -454,7 +454,7 @@ export function renderMemoryGamePage() {
           <div class="text-[9px] font-black tracking-[.3em] text-amber-300">FIRST MOVE</div>
           <h2 id="memory-coin-title" class="mt-1 text-lg font-black">先行を決めます</h2>
           <div class="relative mx-auto mt-5 h-36 w-36 [perspective:700px]" aria-hidden="true">
-            <div data-coin class="memory-coin absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2" style="--coin-end:${firstTurn === 'player' ? '1800deg' : '1980deg'}">
+            <div data-coin class="memory-coin absolute left-1/2 top-1/2 h-24 w-24" style="--coin-end:${firstTurn === 'player' ? '1800deg' : '1980deg'}">
               <div class="memory-coin-face absolute inset-0 flex flex-col items-center justify-center rounded-full border-4 border-yellow-100 bg-gradient-to-br from-yellow-200 via-amber-400 to-yellow-700 text-slate-900 shadow-[inset_0_0_0_4px_rgba(120,53,15,.25),0_0_25px_rgba(251,191,36,.45)]">
                 <span class="material-symbols-outlined text-4xl">person</span><span class="text-[9px] font-black">YOU</span>
               </div>
