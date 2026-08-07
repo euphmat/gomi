@@ -19,8 +19,9 @@ export const MEMORY_SKILL_BRANCHES = [
     description: 'カードを覚える時間と手掛かりを増やす',
     skills: [
       {
-        id: 'wide_view', name: '全景記憶', icon: 'visibility', maxRank: 3, cost: 1, requiredLevel: 2,
-        ranks: ['開始時に全カードを1秒見る', '開始時に全カードを2秒見る', '開始時に全カードを3秒見る'],
+        // 旧「全景記憶」の習得ランクを失わせないため、保存用IDは維持する。
+        id: 'wide_view', name: '追跡観察', icon: 'person_search', maxRank: 3, cost: 1, requiredLevel: 2,
+        ranks: ['CPUがめくった各カードの確認時間 +0.25秒', 'CPUがめくった各カードの確認時間 +0.50秒', 'CPUがめくった各カードの確認時間 +0.75秒'],
       },
       {
         id: 'afterimage', name: '残像保持', icon: 'hourglass_top', maxRank: 3, cost: 1, requiredLevel: 5,
@@ -145,7 +146,7 @@ export function getMemorySkillPoints(progress) {
 export function getMemorySkillEffects(progress) {
   const ranks = normalizeProgress(progress).skillRanks;
   return {
-    previewSeconds: ranks.wide_view || 0,
+    cpuRevealDelayMs: (ranks.wide_view || 0) * 250,
     mismatchDelayMs: (ranks.afterimage || 0) * 250,
     memoryMarkCapacity: (ranks.memory_bookmark || 0) * 3,
     playerFirstChance: 0.5 + (ranks.initiative || 0) * 0.1,

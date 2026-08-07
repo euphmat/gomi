@@ -571,7 +571,7 @@ export function renderMemoryGamePage() {
         </section>` : ''}
 
         ${Object.values(memoryProgress.skillRanks).some(Boolean) ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-cyan-300/15 bg-cyan-950/15 p-1.5" aria-label="発動中の神経衰弱スキル">
-          ${skillEffects.previewSeconds ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">全景 ${skillEffects.previewSeconds}秒</span>` : ''}
+          ${skillEffects.cpuRevealDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">CPU確認 +${skillEffects.cpuRevealDelayMs / 1000}秒</span>` : ''}
           ${skillEffects.mismatchDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">残像 +${skillEffects.mismatchDelayMs / 1000}秒</span>` : ''}
           ${skillEffects.memoryMarkCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">栞 ${skillEffects.memoryMarkCapacity}枚</span>` : ''}
           ${skillEffects.playerFirstChance > 0.5 ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">先行 ${Math.round(skillEffects.playerFirstChance * 100)}%</span>` : ''}
@@ -650,17 +650,7 @@ export function renderMemoryGamePage() {
     later(() => {
       if (!game || game.over) return;
       container.querySelector('[data-coin-toss]')?.remove();
-      if (!skillEffects.previewSeconds) {
-        beginFirstTurn();
-        return;
-      }
-      container.querySelectorAll('[data-card-index]').forEach(element => element.classList.add('is-flipped'));
-      setMessage(`全景記憶：${skillEffects.previewSeconds}秒間、盤面を記憶してください`, 'emerald');
-      later(() => {
-        if (!game || game.over) return;
-        container.querySelectorAll('[data-card-index]').forEach(element => element.classList.remove('is-flipped'));
-        beginFirstTurn();
-      }, skillEffects.previewSeconds * 1000);
+      beginFirstTurn();
     }, reducedMotion ? 650 : 2380);
   };
 
@@ -975,8 +965,8 @@ export function renderMemoryGamePage() {
       game.selected.push(second);
       revealCard(second);
       setMessage('CPUが2枚目をめくりました', 'rose');
-      later(() => resolvePair('cpu', [first, second]), 900);
-    }, 650);
+      later(() => resolvePair('cpu', [first, second]), 900 + game.skillEffects.cpuRevealDelayMs);
+    }, 650 + game.skillEffects.cpuRevealDelayMs);
   }
 
   const handlePlayerCard = (index) => {
