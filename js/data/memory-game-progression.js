@@ -60,24 +60,24 @@ export const MEMORY_SKILL_BRANCHES = [
   },
   {
     id: 'growth',
-    name: '鍛錬術',
-    icon: 'school',
+    name: '盤面術',
+    icon: 'grid_view',
     color: 'violet',
-    description: '対局から得る神経衰弱EXPを増やす',
+    description: '公開済みの情報を整理して見落としを減らす',
     skills: [
       {
-        id: 'repetition', name: '反復練習', icon: 'autorenew', maxRank: 3, cost: 1, requiredLevel: 2,
-        ranks: ['獲得EXP +10%', '獲得EXP +20%', '獲得EXP +30%'],
+        id: 'repetition', name: '消去法', icon: 'filter_alt', maxRank: 3, cost: 1, requiredLevel: 2,
+        ranks: ['獲得済みペアを60%の濃さで表示', '獲得済みペアを30%の濃さで表示', '獲得済みペアを10%の濃さで表示'],
       },
       {
-        id: 'pair_study', name: 'ペア研究', icon: 'join_inner', maxRank: 3, cost: 1, requiredLevel: 5,
+        id: 'pair_study', name: '既視の印', icon: 'visibility_lock', maxRank: 3, cost: 1, requiredLevel: 5,
         prerequisite: { id: 'repetition', rank: 1 },
-        ranks: ['自分で取ったペアのEXP +1', '自分で取ったペアのEXP +2', '自分で取ったペアのEXP +3'],
+        ranks: ['直近4枚の見たことがあるカードに印を表示', '直近8枚の見たことがあるカードに印を表示', '見たことがあるすべてのカードに印を表示'],
       },
       {
-        id: 'adversity', name: '敗戦分析', icon: 'query_stats', maxRank: 2, cost: 1, requiredLevel: 9,
+        id: 'adversity', name: '対手の足跡', icon: 'footprint', maxRank: 2, cost: 1, requiredLevel: 9,
         prerequisite: { id: 'pair_study', rank: 2 },
-        ranks: ['敗北・引き分け時のEXP +15%', '敗北・引き分け時のEXP +30%'],
+        ranks: ['CPUが外した2枚の位置を0.8秒間強調', 'CPUが外した2枚の位置を1.6秒間強調'],
       },
     ],
   },
@@ -145,6 +145,8 @@ export function getMemorySkillPoints(progress) {
 
 export function getMemorySkillEffects(progress) {
   const ranks = normalizeProgress(progress).skillRanks;
+  const matchedOpacity = [1, 0.6, 0.3, 0.1][ranks.repetition || 0];
+  const seenMarkCapacity = [0, 4, 8, Number.POSITIVE_INFINITY][ranks.pair_study || 0];
   return {
     cpuRevealDelayMs: (ranks.wide_view || 0) * 250,
     mismatchDelayMs: (ranks.afterimage || 0) * 250,
@@ -152,19 +154,17 @@ export function getMemorySkillEffects(progress) {
     playerFirstChance: 0.5 + (ranks.initiative || 0) * 0.1,
     refocusCharges: ranks.refocus || 0,
     doubleCheckCharges: ranks.double_check || 0,
-    xpPercent: (ranks.repetition || 0) * 10,
-    pairXpBonus: ranks.pair_study || 0,
-    nonWinXpPercent: (ranks.adversity || 0) * 15,
+    matchedOpacity,
+    seenMarkCapacity,
+    cpuTraceDurationMs: (ranks.adversity || 0) * 800,
   };
 }
 
-export function getMemoryXpReward({ difficultyId, outcome, playerPairs }, progress) {
-  const effects = getMemorySkillEffects(progress);
+export function getMemoryXpReward({ difficultyId, outcome, playerPairs }) {
   const base = DIFFICULTY_XP[difficultyId] || DIFFICULTY_XP.easy;
-  const pairXp = Math.max(0, Math.floor(Number(playerPairs) || 0)) * (3 + effects.pairXpBonus);
+  const pairXp = Math.max(0, Math.floor(Number(playerPairs) || 0)) * 3;
   const outcomeMultiplier = outcome === 'win' ? 1.5 : outcome === 'draw' ? 1.2 : 1;
-  const nonWinMultiplier = outcome === 'win' ? 1 : 1 + effects.nonWinXpPercent / 100;
-  return Math.max(1, Math.round((base + pairXp) * outcomeMultiplier * nonWinMultiplier * (1 + effects.xpPercent / 100)));
+  return Math.max(1, Math.round((base + pairXp) * outcomeMultiplier));
 }
 
 export async function loadMemoryProgress(force = false) {
@@ -178,7 +178,7 @@ export async function loadMemoryProgress(force = false) {
 export async function recordMemoryGameResult({ difficultyId, outcome, playerPairs }) {
   const progress = await loadMemoryProgress();
   const previousLevel = getMemoryLevel(progress.xp);
-  const xpGained = getMemoryXpReward({ difficultyId, outcome, playerPairs }, progress);
+  const xpGained = getMemoryXpReward({ difficultyId, outcome, playerPairs });
   const next = {
     ...progress,
     xp: progress.xp + xpGained,

@@ -219,12 +219,15 @@ const pageStyles = () => `
     .memory-card.is-matched { animation:memory-match .55s ease-out both; }
     .memory-card.is-hint { z-index:2; animation:memory-hint .7s ease-in-out 2; }
     .memory-card.is-hint .memory-card-face:first-child { border-color:rgba(103,232,249,.98); box-shadow:0 0 18px 5px rgba(34,211,238,.72), inset 0 0 16px rgba(255,255,255,.28); }
+    .memory-card.is-cpu-trace { z-index:2; animation:memory-cpu-trace .8s ease-in-out infinite; }
+    .memory-card.is-cpu-trace .memory-card-face:first-child { border-color:rgba(251,191,36,.98); box-shadow:0 0 16px 4px rgba(245,158,11,.58), inset 0 0 14px rgba(253,230,138,.2); }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) { z-index:1; }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child { border-color:rgba(103,232,249,.95); box-shadow:0 0 16px 3px rgba(34,211,238,.5), inset 0 0 18px rgba(129,230,217,.3); animation:memory-clairvoyance-aura 1.8s ease-in-out infinite; }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision] { display:flex; animation:memory-clairvoyance-vision .7s ease-out both; }
     .memory-card:disabled { opacity:1; }
     @keyframes memory-match { 50% { transform:scale(1.08); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
     @keyframes memory-hint { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.09); filter:brightness(1.55); } }
+    @keyframes memory-cpu-trace { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.3); } }
     @keyframes memory-clairvoyance-aura { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.28); } }
     @keyframes memory-clairvoyance-vision { from { opacity:0; transform:scale(.72); filter:blur(7px); } to { opacity:1; transform:scale(1); filter:blur(0); } }
     @keyframes memory-result-in { from { opacity:0; transform:translateY(10px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
@@ -577,6 +580,9 @@ export function renderMemoryGamePage() {
           ${skillEffects.playerFirstChance > 0.5 ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">先行 ${Math.round(skillEffects.playerFirstChance * 100)}%</span>` : ''}
           ${skillEffects.refocusCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">再集中 ${skillEffects.refocusCharges}回</span>` : ''}
           ${skillEffects.doubleCheckCharges ? '<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">見直し 1回</span>' : ''}
+          ${skillEffects.matchedOpacity < 1 ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">獲得札 ${Math.round(skillEffects.matchedOpacity * 100)}%</span>` : ''}
+          ${skillEffects.seenMarkCapacity ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">既視 ${Number.isFinite(skillEffects.seenMarkCapacity) ? `${skillEffects.seenMarkCapacity}枚` : '全札'}</span>` : ''}
+          ${skillEffects.cpuTraceDurationMs ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">足跡 ${skillEffects.cpuTraceDurationMs / 1000}秒</span>` : ''}
         </section>` : ''}
 
         <section data-board class="mx-auto grid w-full gap-1.5" style="grid-template-columns:repeat(${config.columns},minmax(0,1fr));max-width:${config.columns >= 6 ? '520px' : config.columns === 5 ? '470px' : '400px'}" aria-label="神経衰弱のカード">
@@ -586,6 +592,7 @@ export function renderMemoryGamePage() {
                 <span class="memory-card-face flex items-center justify-center border-2 border-slate-300/70 bg-[repeating-linear-gradient(135deg,#312e81_0,#312e81_5px,#1e1b4b_5px,#1e1b4b_10px)] shadow-md">
                   <span class="absolute inset-1 rounded-md border border-white/25"></span><span class="material-symbols-outlined text-[clamp(18px,6vw,30px)] text-white/85 drop-shadow">playing_cards</span>
                   <span data-memory-mark class="absolute right-1 top-1 hidden h-5 min-w-5 items-center justify-center rounded-full border border-amber-100/70 bg-amber-500 px-1 text-[9px] font-black text-slate-950 shadow-[0_0_10px_rgba(251,191,36,.65)]" aria-hidden="true"></span>
+                  <span data-seen-mark class="material-symbols-outlined absolute bottom-1 left-1 hidden h-4 w-4 items-center justify-center rounded-full border border-violet-100/60 bg-violet-500 text-[10px] text-white shadow-[0_0_8px_rgba(167,139,250,.55)]" aria-hidden="true">visibility</span>
                   <span data-clairvoyant-vision class="absolute inset-1 hidden flex-col items-center justify-center overflow-hidden rounded-md border border-cyan-100/70 bg-cyan-950/90 p-0.5 shadow-[inset_0_0_14px_rgba(103,232,249,.6)]" aria-hidden="true">
                     <img src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain opacity-80 drop-shadow-[0_0_5px_rgba(165,243,252,.9)]">
                     <span class="block w-full truncate rounded-sm bg-cyan-950/85 px-0.5 py-px text-center text-[clamp(5px,1.5vw,8px)] font-black leading-none text-cyan-50">${card.name}</span>
@@ -708,20 +715,34 @@ export function renderMemoryGamePage() {
   };
 
   const updateMemoryMarks = () => {
-    if (!game?.skillEffects.memoryMarkCapacity) return;
-    const visible = new Set(game.seenCardOrder.slice(-game.skillEffects.memoryMarkCapacity));
+    if (!game) return;
+    const bookmarkCapacity = game.skillEffects.memoryMarkCapacity;
+    const seenCapacity = game.skillEffects.seenMarkCapacity;
+    const bookmarked = new Set(bookmarkCapacity ? game.seenCardOrder.slice(-bookmarkCapacity) : []);
+    const seen = new Set(seenCapacity
+      ? Number.isFinite(seenCapacity) ? game.seenCardOrder.slice(-seenCapacity) : game.seenCardOrder
+      : []);
     game.cards.forEach((card, index) => {
       const mark = cardElement(index)?.querySelector('[data-memory-mark]');
-      if (!mark) return;
-      const shouldShow = visible.has(index) && !game.matched.has(index);
-      mark.textContent = shouldShow ? game.seenPairLabels.get(card.pairId) : '';
-      mark.classList.toggle('hidden', !shouldShow);
-      mark.classList.toggle('flex', shouldShow);
+      const seenMark = cardElement(index)?.querySelector('[data-seen-mark]');
+      const isAvailable = !game.matched.has(index);
+      const showBookmark = bookmarked.has(index) && isAvailable;
+      const showSeen = seen.has(index) && isAvailable && !showBookmark;
+      if (mark) {
+        mark.textContent = showBookmark ? game.seenPairLabels.get(card.pairId) : '';
+        mark.classList.toggle('hidden', !showBookmark);
+        mark.classList.toggle('flex', showBookmark);
+      }
+      if (seenMark) {
+        seenMark.classList.toggle('hidden', !showSeen);
+        seenMark.classList.toggle('flex', showSeen);
+      }
     });
   };
 
   const rememberForPlayer = (index) => {
-    if (!game?.skillEffects.memoryMarkCapacity || game.matched.has(index)) return;
+    if (!game || game.matched.has(index)) return;
+    if (!game.skillEffects.memoryMarkCapacity && !game.skillEffects.seenMarkCapacity) return;
     const pairId = game.cards[index].pairId;
     if (!game.seenPairLabels.has(pairId)) {
       const labelIndex = game.seenPairLabels.size;
@@ -807,7 +828,10 @@ export function renderMemoryGamePage() {
       game.cpuMemory.delete(index);
       const element = cardElement(index);
       element?.classList.add('is-matched');
-      if (element) element.disabled = true;
+      if (element) {
+        element.disabled = true;
+        element.style.opacity = String(game.skillEffects.matchedOpacity);
+      }
     });
     game.seenCardOrder = game.seenCardOrder.filter(index => !game.matched.has(index));
     updateMemoryMarks();
@@ -946,7 +970,13 @@ export function renderMemoryGamePage() {
       game.turn = 'player';
       game.locked = false;
       updateScores();
-      setMessage('あなたの番です。2枚めくってください');
+      if (game.skillEffects.cpuTraceDurationMs) {
+        indices.forEach(index => cardElement(index)?.classList.add('is-cpu-trace'));
+        setMessage('対手の足跡：CPUが外した位置を強調しています', 'amber');
+        later(() => indices.forEach(index => cardElement(index)?.classList.remove('is-cpu-trace')), game.skillEffects.cpuTraceDurationMs);
+      } else {
+        setMessage('あなたの番です。2枚めくってください');
+      }
     }
   };
 
