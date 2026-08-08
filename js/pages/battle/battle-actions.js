@@ -8,18 +8,32 @@ import { playNormalAttackAnimation } from './normal-attack-animations.js';
  */
 
 export const actionMethods = {
-  _waitForAttackAnimation(target, duration) {
-    const wait = Math.max(0, Math.ceil(Number(duration) || 0));
-    if (wait === 0) return;
+  _waitForAttackAnimation(target, completionDuration, cadenceDuration = completionDuration) {
+    const completionWait = Math.max(0, Math.ceil(Number(completionDuration) || 0));
+    if (completionWait === 0) return;
+    const cadenceWait = Math.min(
+      completionWait,
+      Math.max(0, Math.ceil(Number(cadenceDuration) || 0))
+    );
 
     this._pendingAttackAnimations = (this._pendingAttackAnimations || 0) + 1;
+    this._pendingAttackCadenceLocks = (this._pendingAttackCadenceLocks || 0) + 1;
     if (!this._pendingAttackAnimationTargets) {
       this._pendingAttackAnimationTargets = new Map();
     }
     const targetCount = this._pendingAttackAnimationTargets.get(target) || 0;
     this._pendingAttackAnimationTargets.set(target, targetCount + 1);
 
+    const releaseCadenceLock = () => {
+      this._pendingAttackCadenceLocks = Math.max(0, (this._pendingAttackCadenceLocks || 1) - 1);
+    };
+
+    if (cadenceWait < completionWait) {
+      this._scheduleBattleTimeout(releaseCadenceLock, cadenceWait);
+    }
+
     this._scheduleBattleTimeout(() => {
+      if (cadenceWait >= completionWait) releaseCadenceLock();
       const remainingForTarget = (this._pendingAttackAnimationTargets?.get(target) || 1) - 1;
       if (remainingForTarget > 0) {
         this._pendingAttackAnimationTargets.set(target, remainingForTarget);
@@ -32,7 +46,7 @@ export const actionMethods = {
       if (this._pendingAttackAnimations === 0) {
         this.checkBattleEnd();
       }
-    }, wait);
+    }, completionWait);
   },
 
   clearEntityStatuses(entity) {
@@ -241,6 +255,7 @@ export const actionMethods = {
     if (this.isStopped) return;
     const actionName = options.actionName || '攻撃';
     let attackAnimationMs = 0;
+    let attackCadenceMs = 0;
 
     let isMagic = options.isMagic || false;
     let isHybrid = options.isHybrid || false;
@@ -263,6 +278,7 @@ export const actionMethods = {
       if (attackerEl) {
         const animDuration = getBattleAnimationDuration(300, 120);
         attackAnimationMs = Math.max(attackAnimationMs, animDuration + 34);
+        attackCadenceMs = Math.max(attackCadenceMs, animDuration * 0.8);
         if (isMagic) {
           attackerEl.animate([
             { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
@@ -623,11 +639,13 @@ export const actionMethods = {
       const timing = playNormalAttackAnimation(attacker, defender);
       delayDamageMs = timing.impactDelay;
       attackAnimationMs = Math.max(attackAnimationMs, timing.completionDelay);
+      attackCadenceMs = Math.max(attackCadenceMs, timing.cadenceDelay);
     } else if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
         const slashDuration = getBattleAnimationDuration(200, 100);
         attackAnimationMs = Math.max(attackAnimationMs, slashDuration + 34);
+        attackCadenceMs = Math.max(attackCadenceMs, slashDuration * 0.8);
         defenderEl.animate([
           { transform: 'translateX(0)', filter: 'brightness(1)' },
           { transform: 'translateX(10px)', filter: 'brightness(1.5)', offset: 0.2 },
@@ -643,6 +661,7 @@ export const actionMethods = {
         const animDuration = getBattleAnimationDuration(300, 120);
         delayDamageMs = animDuration;
         attackAnimationMs = Math.max(attackAnimationMs, animDuration + 34);
+        attackCadenceMs = Math.max(attackCadenceMs, animDuration * 0.8);
         defenderEl.animate([
           { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' },
           { transform: 'scale(0.9)', filter: 'brightness(2) hue-rotate(270deg)', offset: 0.5 },
@@ -936,12 +955,10 @@ export const actionMethods = {
       }
     }
 
-    // Keep the target DOM and the action cadence alive until the compositor
-    // has presented the complete attack. This is especially important at 5x:
-    // without the presentation lock, a new ATB action can replace the same
-    // transform animation every 50 ms, and a killing blow clears its effects
-    // before the browser paints them.
-    this._waitForAttackAnimation(defender, attackAnimationMs);
+    // Keep the target DOM alive until the compositor presents the complete
+    // attack, but release the ATB cadence as soon as the hit visibly connects.
+    // This preserves killing blows without making 5x combat feel sluggish.
+    this._waitForAttackAnimation(defender, attackAnimationMs, attackCadenceMs);
     this.renderEntities();
     this.checkBattleEnd();
   },

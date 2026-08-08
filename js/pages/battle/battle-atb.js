@@ -22,6 +22,7 @@ export const atbMethods = {
     }
     this._lastEntityUpdateAt = 0;
     this._pendingAttackAnimations = 0;
+    this._pendingAttackCadenceLocks = 0;
     this._pendingAttackAnimationTargets?.clear();
     if (this.elements?.tabContent) {
       if (this.elements.tabContent._petSyncTimer) {
@@ -159,7 +160,7 @@ export const atbMethods = {
       // Web Animations run on the compositor, but starting a new action every
       // high-speed ATB tick still replaces transforms on the same cards. Wait
       // for the current attack presentation while keeping ATB math at 5x.
-      if (this._pendingAttackAnimations > 0) return;
+      if (this._pendingAttackCadenceLocks > 0) return;
 
       if (this.activeCharacter || this.activeEnemy) return;
       

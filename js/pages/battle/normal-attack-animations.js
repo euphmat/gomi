@@ -459,11 +459,11 @@ const animateDefenderImpact = (element, profile, totalDuration, impactDelay, sty
  * completion timings. Damage itself remains synchronous in the simulation.
  */
 export function playNormalAttackAnimation(attacker, defender) {
-  if (shouldSkipBattleAnimations()) return { impactDelay: 0, completionDelay: 0 };
+  if (shouldSkipBattleAnimations()) return { impactDelay: 0, cadenceDelay: 0, completionDelay: 0 };
 
   const attackerEl = document.getElementById(attacker?.elementId);
   const defenderEl = document.getElementById(defender?.elementId);
-  if (!attackerEl || !defenderEl) return { impactDelay: 0, completionDelay: 0 };
+  if (!attackerEl || !defenderEl) return { impactDelay: 0, cadenceDelay: 0, completionDelay: 0 };
 
   const layer = document.getElementById('battle-effects-layer') || document.body;
   const origin = centerOf(attackerEl.getBoundingClientRect());
@@ -619,6 +619,9 @@ export function playNormalAttackAnimation(attacker, defender) {
   // final Web Animations frame, which makes a killing blow look truncated.
   return {
     impactDelay,
+    // The next ATB action may begin once this attack has visibly connected.
+    // Impact particles can finish concurrently without making combat sluggish.
+    cadenceDelay: impactDelay,
     completionDelay: Math.ceil(totalDuration + 34)
   };
 }
