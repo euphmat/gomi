@@ -65,7 +65,8 @@ export const CloudSaveService = {
       return () => {};
     }
     const { auth, authSdk } = await loadServices();
-    return authSdk.onAuthStateChanged(auth, callback);
+    // onIdTokenChanged also fires after an email-verification token refresh.
+    return authSdk.onIdTokenChanged(auth, callback);
   },
 
   async registerWithEmail(email, password) {

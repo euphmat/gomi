@@ -34,6 +34,7 @@ import { activateScreenLock, initScreenLock } from './utils/screen-lock.js';
 import { initTouchFeedback } from './utils/touch-feedback.js';
 import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
 import { createCloudSavePanel, initCloudSavePanel } from './components/cloud-save-panel.js';
+import { initDailyCloudSave } from './data/daily-cloud-save-manager.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -218,6 +219,12 @@ class App {
     // ── 7. Start ──
     this.router.start();
 
+    // Firebaseの読み込みはゲーム起動をブロックしない。ログイン済みの場合のみ、
+    // ローカル日付ごとの初回起動時に安全確認をしてクラウド保存する。
+    initDailyCloudSave().catch(error => {
+      console.warn('[App] Could not initialize daily cloud save.', error);
+    });
+
     if (dailyLoginAwarded) {
       DailyLoginManager.showReward();
     }
@@ -295,13 +302,13 @@ class App {
     overlay.style.animation = 'fade-in 0.15s ease-out';
 
     overlay.innerHTML = `
-      <div class="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl mx-3 w-full max-w-sm max-h-[calc(100dvh-24px)]
+      <div class="settings-modal-card bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl mx-3 w-full max-w-sm max-h-[calc(100dvh-24px)]
                   shadow-2xl shadow-black/60 flex flex-col overflow-hidden
                   animate-[slide-up_0.25s_ease-out]"
            style="animation: slide-up 0.25s ease-out">
 
         <!-- Modal Header -->
-        <div class="relative px-4 py-2.5 border-b border-gray-700/30 overflow-hidden shrink-0">
+        <div class="settings-modal-header relative px-4 py-2.5 border-b border-gray-700/30 overflow-hidden shrink-0">
           <!-- Header gradient accent -->
           <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/8 to-cyan-600/10"></div>
           <div class="relative flex items-center justify-between">
@@ -325,11 +332,11 @@ class App {
         </div>
 
         <!-- Modal Body -->
-        <div class="px-3 py-3 flex min-h-0 flex-col gap-2 overflow-y-auto">
+        <div class="settings-modal-body px-3 py-3 flex min-h-0 flex-col gap-2 overflow-y-auto">
 
           <!-- Screen Lock -->
           <button id="setting-screen-lock-button" type="button"
-                  class="settings-section w-full bg-emerald-950/30 border border-emerald-500/25 rounded-xl px-2.5 py-2 text-left
+                  class="settings-screen-lock settings-section w-full bg-emerald-950/30 border border-emerald-500/25 rounded-xl px-2.5 py-2 text-left
                          active:bg-emerald-900/35 active:border-emerald-400/40 active:scale-[0.99]
                          transition-all duration-200 cursor-pointer">
             <div class="flex items-center justify-between gap-2">
@@ -339,7 +346,7 @@ class App {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-gray-100 leading-tight">自動ロック</div>
-                  <div class="text-[9px] text-gray-400 mt-0.5 leading-relaxed">タップすると画面を暗くして誤操作を防止</div>
+                  <div class="settings-row-description text-[9px] text-gray-400 mt-0.5 leading-relaxed">タップすると画面を暗くして誤操作を防止</div>
                 </div>
               </div>
               <div class="flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/25 px-2 py-1
@@ -351,7 +358,7 @@ class App {
           </button>
 
           <!-- ═══ GAMEPLAY SETTINGS GROUP ═══ -->
-          <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 flex items-center gap-2">
+          <div class="settings-section-label text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 flex items-center gap-2">
             <span class="material-symbols-outlined text-xs text-gray-600">tune</span>
             ゲームプレイ
             <div class="flex-1 h-px bg-gradient-to-r from-gray-700/40 to-transparent"></div>
@@ -368,7 +375,7 @@ class App {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-gray-200 leading-tight">ステータス表示</div>
-                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">バトル中のATK, DEF等のステータスを表示</div>
+                  <div class="settings-row-description text-[9px] text-gray-500 mt-0.5 leading-relaxed">バトル中のATK, DEF等のステータスを表示</div>
                 </div>
               </div>
               <div id="toggle-battle-stats"
@@ -386,7 +393,7 @@ class App {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-gray-200 leading-tight">アニメーション非表示</div>
-                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">演出を省略して処理を軽量化</div>
+                  <div class="settings-row-description text-[9px] text-gray-500 mt-0.5 leading-relaxed">演出を省略して処理を軽量化</div>
                 </div>
               </div>
               <div id="toggle-battle-anim"
@@ -404,7 +411,7 @@ class App {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-gray-200 leading-tight">周回中の死亡時の探索継続</div>
-                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">全滅時に宿屋費用を払い自動で再突入</div>
+                  <div class="settings-row-description text-[9px] text-gray-500 mt-0.5 leading-relaxed">全滅時に宿屋費用を払い自動で再突入</div>
                 </div>
               </div>
               <div id="toggle-continue-on-death"
@@ -422,7 +429,7 @@ class App {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-gray-200 leading-tight">イベント通知</div>
-                  <div id="setting-notifications-help" class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">捕獲・装備ドロップ・鉱山MAXを通知</div>
+                  <div id="setting-notifications-help" class="settings-row-description text-[9px] text-gray-500 mt-0.5 leading-relaxed">捕獲・装備ドロップ・鉱山MAXを通知</div>
                 </div>
               </div>
               <div id="toggle-notifications" class="setting-toggle ${areGameNotificationsEnabled() && 'Notification' in window && Notification.permission === 'granted' ? 'active' : ''}"
@@ -439,7 +446,7 @@ class App {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-xs font-bold text-gray-200 leading-tight">効果音</div>
-                  <div class="text-[9px] text-gray-500 mt-0.5 leading-relaxed">ボタン操作・戦闘・釣りの効果音（初期設定はOFF）</div>
+                  <div class="settings-row-description text-[9px] text-gray-500 mt-0.5 leading-relaxed">ボタン操作・戦闘・釣りの効果音（初期設定はOFF）</div>
                 </div>
               </div>
               <div id="toggle-sound-effects"
@@ -452,7 +459,7 @@ class App {
           </div>
 
           <!-- Auto Battle Speed -->
-          <div class="settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl px-2.5 py-2
+          <div class="settings-speed-panel settings-section bg-gray-800/40 border border-gray-700/30 rounded-xl px-2.5 py-2
                       active:bg-gray-800/55 active:border-gray-600/40 transition-all duration-200">
             <div class="flex items-center gap-2.5 mb-1.5">
               <div class="settings-compact-icon bg-yellow-500/15 border border-yellow-500/20">
@@ -460,7 +467,7 @@ class App {
               </div>
               <div class="flex-1">
                 <div class="text-xs font-bold text-gray-200 leading-tight">自動戦闘速度</div>
-                <div class="text-[9px] text-gray-500 mt-0.5">戦闘のテンポを調整</div>
+                <div class="settings-row-description text-[9px] text-gray-500 mt-0.5">戦闘のテンポを調整</div>
               </div>
               <div class="bg-yellow-500/15 border border-yellow-500/25 rounded-lg px-2 py-0.5
                           flex items-center gap-0.5">
@@ -495,7 +502,7 @@ class App {
           </div>
 
           <!-- ═══ DATA MANAGEMENT GROUP ═══ -->
-          <div class="text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 mt-0.5 flex items-center gap-2">
+          <div class="settings-section-label text-[9px] text-gray-500 uppercase tracking-[0.15em] font-bold px-1 mt-0.5 flex items-center gap-2">
             <span class="material-symbols-outlined text-xs text-gray-600">database</span>
             データ管理
             <div class="flex-1 h-px bg-gradient-to-r from-gray-700/40 to-transparent"></div>

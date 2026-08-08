@@ -1,16 +1,17 @@
-export const APP_VERSION = '0.1.26';
+export const APP_VERSION = '0.1.27';
 export const APP_RELEASE_DATE = '2026.08.08';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
   {
     date: '2026.08.08',
-    version: '0.1.26',
+    version: '0.1.27',
     guide: 'cloud-save',
     items: [
       'セーブデータのテキストによるインポート・エクスポートを廃止し、Firebase AuthenticationとCloud Firestoreを使うクラウドセーブへ変更しました。',
       'メールアドレスまたはGoogleアカウントで登録・ログインし、画面右上の「設定」→「データ管理」からクラウドへの保存と復元を手動で実行できます。',
-      'クラウド通信は手動操作時だけに限定し、圧縮した最新セーブ1件のみを保持することで通信量とFirestore利用量を抑えました。',
+      'ログイン済みの場合、その日の最初の起動時にも1回だけクラウドへ自動保存します。別端末でクラウドセーブが更新されている場合は自動上書きを止めてデータを保護します。',
+      'クラウド通信は1日1回の起動時確認と手動操作に限定し、圧縮した最新セーブ1件のみを保持することで通信量とFirestore利用量を抑えました。',
     ],
   },
   {

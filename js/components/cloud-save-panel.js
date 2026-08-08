@@ -1,8 +1,13 @@
 import { APP_VERSION } from '../definitions/update-log.js';
 import { GameDB } from '../data/database.js';
 import { CloudSaveService } from '../data/cloud-save-service.js';
-
-const LAST_SAVE_KEY_PREFIX = 'cloudSaveLastUpload:';
+import {
+  getCloudAutoNotice,
+  getDailyAutoRecord,
+  getLastCloudUpload,
+  recordCloudRestore,
+  recordCloudUpload,
+} from '../data/cloud-save-local-state.js';
 
 export function createCloudSavePanel() {
   return `
@@ -83,8 +88,8 @@ export function createCloudSavePanel() {
             </div>
           </div>
 
-          <p class="mt-2 text-[8px] leading-relaxed text-gray-600">
-            通常の進行は端末内へ自動保存されます。クラウド通信は上の保存・復元ボタンを押した時だけ行います。
+          <p class="settings-cloud-note mt-2 text-[8px] leading-relaxed text-gray-600">
+            通常の進行は端末内へ保存されます。ログイン中はその日の初回起動時に1回だけクラウドへ自動保存し、ボタンからも手動で保存・復元できます。
           </p>
         </div>
       </div>
@@ -130,7 +135,8 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
   let unsubscribe = null;
 
   const updateActionAvailability = () => {
-    const canUseCloudSave = Boolean(currentUser?.emailVerified);
+    const dailySaveRunning = getDailyAutoRecord(currentUser?.uid)?.status === 'saving';
+    const canUseCloudSave = Boolean(currentUser?.emailVerified) && !dailySaveRunning;
     panel.querySelector('#cloud-upload').disabled = !canUseCloudSave;
     panel.querySelector('#cloud-download').disabled = !canUseCloudSave;
     panel.querySelector('#cloud-upload').classList.toggle('opacity-50', !canUseCloudSave);
@@ -166,7 +172,7 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     badge.textContent = 'ログイン中';
     badge.className = 'text-[8px] font-bold text-emerald-400';
     panel.querySelector('#cloud-account-email').textContent = user.email || 'Googleアカウント';
-    const lastUpload = localStorage.getItem(`${LAST_SAVE_KEY_PREFIX}${user.uid}`);
+    const lastUpload = getLastCloudUpload(user.uid);
     panel.querySelector('#cloud-last-upload').textContent = lastUpload
       ? `この端末からの最終保存: ${formatSavedAt(lastUpload)}`
       : 'この端末からの保存履歴はありません';
@@ -176,12 +182,19 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     verificationActions.classList.toggle('hidden', !needsVerification);
     verificationActions.classList.toggle('flex', needsVerification);
     updateActionAvailability();
-    setStatus(
-      needsVerification
-        ? '確認メールのリンクを開き、「確認状態を更新」を押してください。'
-        : 'クラウドへの保存・復元は手動で実行されます。',
-      needsVerification ? 'warning' : 'normal'
-    );
+    const dailyRecord = getDailyAutoRecord(user.uid);
+    const autoNotice = getCloudAutoNotice(user.uid);
+    if (needsVerification) {
+      setStatus('確認メールのリンクを開き、「確認状態を更新」を押してください。', 'warning');
+    } else if (dailyRecord?.status === 'saving') {
+      setStatus('本日の起動時クラウドセーブを実行しています…');
+    } else if (autoNotice?.status === 'conflict') {
+      setStatus('別端末で更新されたセーブがあります。復元または手動保存を選んでください。', 'warning');
+    } else if (dailyRecord?.status === 'saved') {
+      setStatus('本日の起動時クラウドセーブは完了しています。', 'success');
+    } else {
+      setStatus('1日1回の起動時自動保存と、手動の保存・復元を利用できます。');
+    }
   };
 
   const getCredentials = () => ({
@@ -249,7 +262,7 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       const payload = await GameDB.createCloudSnapshot();
       setStatus('クラウドへ保存しています…');
       const result = await CloudSaveService.upload(payload, APP_VERSION);
-      localStorage.setItem(`${LAST_SAVE_KEY_PREFIX}${currentUser.uid}`, result.savedAt);
+      recordCloudUpload(currentUser.uid, result.savedAt);
       panel.querySelector('#cloud-last-upload').textContent = `この端末からの最終保存: ${formatSavedAt(result.savedAt)}`;
       setStatus(`クラウドへ保存しました（約${Math.ceil(result.payloadLength / 1024)}KB）。`, 'success');
     });
@@ -261,6 +274,7 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       const cloudSave = await CloudSaveService.download();
       if (!cloudSave) throw new Error('クラウドセーブがまだありません。先に保存してください。');
       await GameDB.restoreCloudSnapshot(cloudSave.payload);
+      recordCloudRestore(currentUser.uid, cloudSave.savedAt);
       setStatus(`${formatSavedAt(cloudSave.savedAt)} のセーブを復元しました。`, 'success');
       if (onRestored) onRestored(cloudSave);
     });
@@ -284,8 +298,14 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       if (!disposed) setStatus(getErrorMessage(error), 'error');
     });
 
+  const handleDailyCloudSaveStatus = () => {
+    if (!disposed && currentUser) renderUser(currentUser);
+  };
+  window.addEventListener('dailyCloudSaveStatus', handleDailyCloudSaveStatus);
+
   return () => {
     disposed = true;
     if (unsubscribe) unsubscribe();
+    window.removeEventListener('dailyCloudSaveStatus', handleDailyCloudSaveStatus);
   };
 }

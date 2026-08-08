@@ -48,7 +48,7 @@ function renderEntryGuide(guide) {
 
       <div class="mx-3 mb-3 flex items-start gap-1.5 rounded-lg border border-amber-400/20 bg-amber-400/[.07] px-2.5 py-2 text-[8px] leading-relaxed text-amber-200/75">
         <span class="material-symbols-outlined mt-px text-xs text-amber-300">touch_app</span>
-        <span>クラウドへの通信は自動では行われません。保存・復元したい時にボタンを押してください。</span>
+        <span>ログイン中は、その日の最初の起動時にも1回だけ自動保存します。保存・復元ボタンはいつでも手動で利用できます。</span>
       </div>
 
       <div class="px-3 pb-3">
