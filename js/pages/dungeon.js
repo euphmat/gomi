@@ -92,10 +92,28 @@ window.openDungeonFloorModal = async (dungeonId) => {
   const clearedCount = dungeon.floors.filter(floor => completedFloors.has(Number(floor.level))).length;
   const theme = dungeon.theme || { color: '107, 114, 128', icon: 'swords' };
   const themeRgb = theme.color;
+  const revealedMonsterIds = [...new Set(
+    dungeon.floors
+      .filter(floor => completedFloors.has(Number(floor.level)))
+      .flatMap(getFloorMonsterIds)
+  )];
+  const collectionSummary = revealedMonsterIds.reduce((summary, monsterId) => {
+    const owned = getOwnedMonsterState(ranchData, monsterId);
+    if (owned.companion) summary.companions += 1;
+    if (owned.legendary) summary.legendary += 1;
+    if (Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId)) summary.medals += 1;
+    return summary;
+  }, { companions: 0, legendary: 0, medals: 0 });
+  const progressPercent = dungeon.floors.length
+    ? Math.round((clearedCount / dungeon.floors.length) * 100)
+    : 0;
 
-  const floorsHtml = dungeon.floors.length ? dungeon.floors.map(floor => {
+  const floorsHtml = dungeon.floors.length ? dungeon.floors.map((floor, floorIndex) => {
     const isFloorCleared = completedFloors.has(Number(floor.level));
+    const isCurrentFloor = currentDungeonId === dungeon.id && Number(currentFloorLevel) === Number(floor.level) && !isDungeonCleared;
+    const isBossFloor = floorIndex === dungeon.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
+    const isDenseMonsterFloor = monsterIds.length > 2;
     const monstersHtml = isFloorCleared ? monsterIds.map(monsterId => {
       const monster = MONSTERS.find(item => item.id === monsterId) || {
         id: monsterId,
@@ -107,50 +125,51 @@ window.openDungeonFloorModal = async (dungeonId) => {
       const medalRankIndex = Number(playerMedals?.[monsterId]);
       const medal = hasMedal && Number.isInteger(medalRankIndex) ? MEDAL_RANKS[medalRankIndex] : null;
       return `
-        <div class="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-black/30 p-2">
-          <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-slate-950/80">
-            <img src="${monster.image}" alt="" class="h-full w-full object-contain p-0.5" loading="lazy">
-            ${owned.legendary ? '<span class="material-symbols-outlined absolute right-0 top-0 text-[14px] text-amber-300 drop-shadow-[0_0_5px_#f59e0b]" style="font-variation-settings:\'FILL\' 1">auto_awesome</span>' : ''}
+        <div class="flex min-w-0 items-center rounded-lg border border-white/10 bg-black/30 ${isDenseMonsterFloor ? 'w-8 shrink-0 justify-center p-px' : 'flex-1 gap-1.5 py-1 pl-1 pr-1.5'}" title="${monster.name}｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${medal?.name || '未取得'}" aria-label="${monster.name}。仲間${owned.companion ? '獲得済み' : '未獲得'}、伝説${owned.legendary ? '獲得済み' : '未獲得'}、メダル${medal?.name || '未取得'}">
+          <div class="relative ${isDenseMonsterFloor ? 'h-7 w-7' : 'h-8 w-8'} shrink-0 overflow-hidden rounded-md border ${owned.companion ? 'border-emerald-400/45' : 'border-white/10'} bg-slate-950/85">
+            <img src="${monster.image}" alt="${monster.name}" class="h-full w-full object-contain p-px" loading="lazy">
+            ${owned.legendary ? '<span class="material-symbols-outlined absolute right-[-1px] top-[-1px] text-[11px] text-amber-300 drop-shadow-[0_0_4px_#f59e0b]" style="font-variation-settings:\'FILL\' 1">auto_awesome</span>' : ''}
+            ${isDenseMonsterFloor && medal ? '<span class="material-symbols-outlined absolute bottom-[-1px] left-[-1px] text-[10px] text-cyan-300 drop-shadow-[0_0_4px_#0891b2]">military_tech</span>' : ''}
           </div>
-          <div class="min-w-0 flex-1">
-            <div class="truncate text-[11px] font-black text-slate-100">${monster.name}</div>
-            <div class="mt-1 flex flex-wrap gap-1">
-              <span class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[8px] font-bold ${owned.companion ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900/70 text-slate-500'}">
-                <span class="material-symbols-outlined text-[10px]">${owned.companion ? 'check_circle' : 'cancel'}</span>仲間
-              </span>
-              <span class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[8px] font-bold ${owned.legendary ? 'border-amber-300/55 bg-amber-400/15 text-amber-200' : 'border-slate-700 bg-slate-900/70 text-slate-500'}">
-                <span class="material-symbols-outlined text-[10px]">${owned.legendary ? 'auto_awesome' : 'remove'}</span>伝説
-              </span>
-              <span class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[8px] font-bold ${medal ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-200' : 'border-slate-700 bg-slate-900/70 text-slate-500'}" ${medal ? `title="${medal.name}"` : ''}>
-                <span class="material-symbols-outlined text-[10px]">military_tech</span>${medal ? medal.name.replace('メダル', '') : '未取得'}
-              </span>
+          <div class="${isDenseMonsterFloor ? 'hidden' : 'min-w-0 flex-1'}">
+            <div class="truncate text-[9px] font-black text-slate-100 sm:text-[10px]">${monster.name}</div>
+            <div class="mt-0.5 flex items-center gap-1" aria-label="収集状況">
+              <span class="material-symbols-outlined text-[11px] ${owned.companion ? 'text-emerald-300' : 'text-slate-700'}" title="仲間">pets</span>
+              <span class="material-symbols-outlined text-[11px] ${owned.legendary ? 'text-amber-300' : 'text-slate-700'}" title="伝説">auto_awesome</span>
+              <span class="material-symbols-outlined text-[11px] ${medal ? 'text-cyan-300' : 'text-slate-700'}" title="${medal?.name || 'メダル未取得'}">military_tech</span>
             </div>
           </div>
         </div>`;
     }).join('') : '';
 
     return `
-      <section class="overflow-hidden rounded-2xl border ${isFloorCleared ? 'border-white/15 bg-slate-900/75' : 'border-slate-800 bg-slate-950/65'}">
-        <div class="flex items-center gap-3 border-b ${isFloorCleared ? 'border-white/10' : 'border-slate-800'} px-3 py-2.5">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-xs font-black ${isFloorCleared ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-500'}">
-            ${floor.level}F
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5 text-[10px] font-black ${isFloorCleared ? 'text-white' : 'text-slate-500'}">
-              <span class="material-symbols-outlined text-sm">${isFloorCleared ? 'verified' : 'lock'}</span>
-              ${isFloorCleared ? `クリア済み・出現 ${monsterIds.length}種` : '未クリア・モンスター情報未解放'}
-            </div>
-          </div>
-          <button onclick="window.enterDungeonFloor('${dungeon.id}', ${Number(floor.level)})"
-                  ${isDungeonCleared ? '' : 'disabled'}
-                  aria-label="${dungeon.name} ${floor.level}階へ潜入"
-                  class="flex shrink-0 items-center gap-1 rounded-lg border px-2.5 py-2 text-[9px] font-black transition-all ${isDungeonCleared ? 'border-cyan-300/50 bg-cyan-500/15 text-cyan-200 active:scale-95 active:bg-cyan-500/30' : 'border-slate-800 bg-slate-900/70 text-slate-600'}">
-            <span class="material-symbols-outlined text-sm">${isDungeonCleared ? 'login' : 'lock'}</span>${isDungeonCleared ? '潜入' : '踏破後'}
-          </button>
+      <section class="relative flex min-h-[66px] items-center gap-2 rounded-xl border px-2 py-1.5 ${isFloorCleared ? 'border-white/15 bg-slate-900/75' : isCurrentFloor ? 'border-cyan-400/35 bg-cyan-950/20' : 'border-slate-800 bg-slate-950/65'}">
+        ${floorIndex < dungeon.floors.length - 1 ? `<div class="pointer-events-none absolute left-[27px] top-[52px] z-0 h-[24px] w-px ${isFloorCleared ? 'bg-gradient-to-b from-emerald-400/70 to-slate-600/40' : 'bg-slate-800'}"></div>` : ''}
+        <div class="relative z-[1] flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl border ${isFloorCleared ? 'border-emerald-400/45 bg-emerald-500/15 text-emerald-200' : isCurrentFloor ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-200' : 'border-slate-700 bg-slate-900 text-slate-500'}">
+          <span class="text-[11px] font-black leading-none tabular-nums">${String(floor.level).padStart(2, '0')}</span>
+          <span class="mt-0.5 text-[7px] font-black leading-none tracking-wider">FLOOR</span>
+          ${isBossFloor ? '<span class="material-symbols-outlined absolute -right-1.5 -top-1.5 rounded-full border border-rose-400/40 bg-rose-950 p-0.5 text-[10px] text-rose-300" title="最深部">skull</span>' : ''}
+          ${isFloorCleared ? '<span class="material-symbols-outlined absolute -bottom-1 -right-1 rounded-full bg-emerald-400 text-[11px] text-slate-950" style="font-variation-settings:\'FILL\' 1">check_circle</span>' : ''}
         </div>
-        ${isFloorCleared
-          ? `<div class="grid grid-cols-1 gap-1.5 p-2 sm:grid-cols-2">${monstersHtml || '<p class="p-2 text-[10px] text-slate-500">出現モンスターなし</p>'}</div>`
-          : '<div class="flex items-center justify-center gap-2 px-3 py-5 text-[10px] font-bold text-slate-600"><span class="material-symbols-outlined text-lg">visibility_off</span>この階層をクリアすると表示されます</div>'}
+        <div class="min-w-0 flex-1">
+          <div class="mb-1 flex min-w-0 items-center gap-1.5">
+            <span class="truncate text-[9px] font-black ${isFloorCleared ? 'text-white' : isCurrentFloor ? 'text-cyan-200' : 'text-slate-500'}">
+              ${isBossFloor ? '最深部' : `${floor.level}階`} · ${isFloorCleared ? '探索済み' : isCurrentFloor ? '現在地' : '未探索'}
+            </span>
+            ${isCurrentFloor ? '<span class="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-1.5 py-0.5 text-[7px] font-black text-cyan-300">NOW</span>' : ''}
+            ${isFloorCleared ? `<span class="ml-auto shrink-0 text-[8px] font-bold text-slate-500">敵 ${monsterIds.length}種</span>` : ''}
+          </div>
+          ${isFloorCleared
+            ? `<div class="flex min-w-0 ${isDenseMonsterFloor ? 'gap-1' : 'gap-1.5'}">${monstersHtml || '<p class="py-2 text-[9px] text-slate-500">出現モンスターなし</p>'}</div>`
+            : `<div class="flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
+        </div>
+        <button onclick="window.enterDungeonFloor('${dungeon.id}', ${Number(floor.level)})"
+                ${isDungeonCleared ? '' : 'disabled'}
+                aria-label="${dungeon.name} ${floor.level}階へ潜入"
+                title="${isDungeonCleared ? `${floor.level}階へ潜入` : '踏破後に階層選択が解放されます'}"
+                class="flex h-11 w-12 shrink-0 flex-col items-center justify-center rounded-xl border text-[7px] font-black transition-all ${isDungeonCleared ? 'border-cyan-300/45 bg-cyan-500/15 text-cyan-200 active:scale-95 active:bg-cyan-500/30' : 'border-slate-800 bg-slate-900/70 text-slate-600'} sm:w-14">
+          <span class="material-symbols-outlined text-base">${isDungeonCleared ? 'login' : 'lock'}</span>${isDungeonCleared ? '潜入' : '踏破後'}
+        </button>
       </section>`;
   }).join('') : `
     <div class="flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 text-slate-500">
@@ -173,22 +192,51 @@ window.openDungeonFloorModal = async (dungeonId) => {
         <div class="absolute inset-0 -z-10" style="background:linear-gradient(90deg,rgba(5,7,16,.98),rgba(5,7,16,.82)),linear-gradient(0deg,#090b15,transparent)"></div>
         <div class="flex items-start gap-3">
           <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.2em]" style="color:rgb(${themeRgb})"><span class="material-symbols-outlined text-sm">format_list_numbered</span>Floor archive</div>
-            <h2 id="dungeon-floor-modal-title" class="mt-1 truncate text-lg font-black tracking-wider text-white sm:text-xl">${dungeon.name}・階層一覧</h2>
-            <p class="mt-1 text-[9px] font-bold text-slate-400">クリアした階層では、出現モンスターと収集状況を確認できます</p>
+            <div class="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[.22em]" style="color:rgb(${themeRgb})"><span class="material-symbols-outlined text-sm">route</span>Dungeon route</div>
+            <div class="mt-0.5 flex min-w-0 items-center gap-2">
+              <h2 id="dungeon-floor-modal-title" class="truncate text-lg font-black tracking-wider text-white sm:text-xl">${dungeon.name}</h2>
+              <span class="shrink-0 rounded-full border px-2 py-1 text-[7px] font-black ${isDungeonCleared ? 'border-amber-300/40 bg-amber-400/15 text-amber-200' : 'border-slate-600/50 bg-slate-900/70 text-slate-400'}">${isDungeonCleared ? 'COMPLETE' : 'IN PROGRESS'}</span>
+            </div>
           </div>
           <button data-close-dungeon-floor-modal aria-label="閉じる" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/45 text-slate-300 active:scale-95 active:bg-white/15">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
-        <div class="mt-3 flex items-center gap-2">
-          <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full" style="width:${dungeon.floors.length ? (clearedCount / dungeon.floors.length) * 100 : 0}%;background:linear-gradient(90deg,rgb(${themeRgb}),#67e8f9)"></div></div>
-          <span class="shrink-0 text-[9px] font-black tabular-nums text-slate-300">${clearedCount} / ${dungeon.floors.length}F</span>
-          <span class="shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${isDungeonCleared ? 'border-amber-300/40 bg-amber-400/15 text-amber-200' : 'border-slate-700 bg-slate-900/75 text-slate-500'}">${isDungeonCleared ? '踏破済み' : '攻略中'}</span>
+        <div class="mt-2.5 flex items-stretch gap-2">
+          <div class="relative flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full" style="background:conic-gradient(rgb(${themeRgb}) ${progressPercent}%,rgba(51,65,85,.75) 0)">
+            <div class="flex h-[43px] w-[43px] flex-col items-center justify-center rounded-full border border-white/10 bg-slate-950/95 shadow-inner">
+              <span class="text-[11px] font-black tabular-nums text-white">${progressPercent}%</span>
+              <span class="text-[6px] font-black tracking-wider text-slate-500">CLEAR</span>
+            </div>
+          </div>
+          <div class="grid min-w-0 flex-1 grid-cols-4 gap-1">
+            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="探索済み階層">
+              <span class="material-symbols-outlined text-[14px] text-emerald-300">layers</span>
+              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${clearedCount}<span class="text-[7px] text-slate-500">/${dungeon.floors.length}</span></span>
+            </div>
+            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="判明したモンスター">
+              <span class="material-symbols-outlined text-[14px]" style="color:rgb(${themeRgb})">swords</span>
+              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${revealedMonsterIds.length}<span class="text-[7px] text-slate-500">種</span></span>
+            </div>
+            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="仲間・伝説の獲得数">
+              <div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px] text-emerald-300">pets</span><span class="material-symbols-outlined text-[11px] text-amber-300">auto_awesome</span></div>
+              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${collectionSummary.companions}<span class="text-[7px] text-slate-500">・</span>${collectionSummary.legendary}</span>
+            </div>
+            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="メダル獲得数">
+              <span class="material-symbols-outlined text-[14px] text-cyan-300">military_tech</span>
+              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${collectionSummary.medals}<span class="text-[7px] text-slate-500">/${revealedMonsterIds.length}</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-2 flex items-center gap-2 text-[7px] font-bold text-slate-500">
+          <span class="mr-auto flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-white/60"></span>色付き＝取得済み</span>
+          <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-xs text-emerald-300">pets</span>仲間</span>
+          <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-xs text-amber-300">auto_awesome</span>伝説</span>
+          <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-xs text-cyan-300">military_tech</span>メダル</span>
         </div>
       </header>
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
-        <div class="flex flex-col gap-2.5">${floorsHtml}</div>
+        <div class="flex flex-col gap-2.5" aria-label="${dungeon.name}の攻略ルート">${floorsHtml}</div>
       </div>
       <footer class="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-2.5 text-center text-[9px] font-bold ${isDungeonCleared ? 'text-cyan-300' : 'text-slate-500'}">
         ${isDungeonCleared ? '<span class="material-symbols-outlined mr-1 align-middle text-sm">route</span>踏破済みのため、好きな階層から潜入できます' : '<span class="material-symbols-outlined mr-1 align-middle text-sm">lock</span>指定階層への潜入は、ダンジョン踏破後に解放されます'}
