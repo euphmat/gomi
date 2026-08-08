@@ -478,9 +478,26 @@ export async function upgradeFishingTackle(type) {
 }
 
 export async function convertFishToFeed(fishId, amount = 1, dungeonId) {
-  const fish = FISH_MAP.get(fishId);
-  if (!fish) throw new Error('魚の指定が不正です。');
+  const quantity = Math.max(1, Math.floor(Number(amount) || 1));
+  const result = await convertFishBatchToFeed([{ fishId, amount: quantity }], dungeonId);
+  return {
+    ...result,
+    feedUsed: result.consumed[0]?.amount || 0,
+  };
+}
+
+export async function convertFishBatchToFeed(selections, dungeonId) {
   if (!dungeonId) throw new Error('魚餌を与えるダンジョンを選択してください。');
+  const requested = new Map();
+  for (const selection of Array.isArray(selections) ? selections : []) {
+    const fishId = selection?.fishId;
+    const fish = FISH_MAP.get(fishId);
+    if (!fish) throw new Error('魚の指定が不正です。');
+    const amount = Math.max(0, Math.floor(Number(selection.amount) || 0));
+    if (amount > 0) requested.set(fishId, (requested.get(fishId) || 0) + amount);
+  }
+  if (!requested.size) throw new Error('魚を1匹以上選択してください。');
+
   await settleLegacyFishFeed();
   const [state, ranchData] = await Promise.all([
     loadFishingData(),
@@ -488,11 +505,17 @@ export async function convertFishToFeed(fishId, amount = 1, dungeonId) {
   ]);
   const companions = getRanchCompanions(ranchData, dungeonId);
   if (!companions.length) throw new Error('選択中のダンジョンに魚餌を与える仲間がいません。');
-  const quantity = Math.max(1, Math.floor(amount));
-  if ((state.inventory[fishId] || 0) < quantity) throw new Error('魚が足りません。');
 
-  const expPerCompanion = fish.ranchExp * quantity;
-  state.inventory[fishId] -= quantity;
+  const consumed = [];
+  let expPerCompanion = 0;
+  for (const [fishId, amount] of requested) {
+    const fish = FISH_MAP.get(fishId);
+    if ((state.inventory[fishId] || 0) < amount) throw new Error(`${fish.name}が足りません。`);
+    consumed.push({ fishId, name: fish.name, amount, ranchExp: fish.ranchExp });
+    expPerCompanion += fish.ranchExp * amount;
+  }
+  for (const item of consumed) state.inventory[item.fishId] -= item.amount;
+
   const levelsGained = applyFeedExpToCompanions(companions, expPerCompanion);
   await Promise.all([
     saveFishingData(state),
@@ -502,7 +525,9 @@ export async function convertFishToFeed(fishId, amount = 1, dungeonId) {
   return {
     state,
     ranchData,
-    feedUsed: quantity,
+    consumed,
+    feedUsed: consumed.reduce((sum, item) => sum + item.amount, 0),
+    fishKinds: consumed.length,
     expPerCompanion,
     companionCount: companions.length,
     levelsGained,

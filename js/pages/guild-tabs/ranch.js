@@ -5,12 +5,20 @@ import { MONSTERS } from '../../definitions/monsters.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { getRanchLevelInfo, calculateTotalRanchBonus } from '../../data/stat-calculator.js';
 import { getTreasureEffect, loadTreasureLevels } from '../../data/treasure-manager.js';
-import { FISH } from '../../definitions/fish.js';
-import { convertFishToFeed, loadFishingData, settleLegacyFishFeed } from '../../data/fishing-manager.js';
+import { FISH, FISH_RARITY } from '../../definitions/fish.js';
+import { convertFishBatchToFeed, loadFishingData, settleLegacyFishFeed } from '../../data/fishing-manager.js';
 import { formatNumber } from '../../utils/format.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 const MONSTERS_MAP = new Map(MONSTERS.map(m => [m.id, m]));
+const FISH_FEED_TILE_THEME = {
+  common: 'border-slate-500/35 from-slate-700/25 via-slate-950/80 to-slate-950',
+  uncommon: 'border-emerald-500/45 from-emerald-500/20 via-emerald-950/45 to-slate-950',
+  rare: 'border-sky-400/50 from-sky-400/20 via-sky-950/45 to-slate-950',
+  epic: 'border-violet-400/55 from-violet-400/25 via-violet-950/45 to-slate-950',
+  legendary: 'border-amber-300/60 from-amber-300/25 via-amber-950/45 to-slate-950',
+  mythic: 'border-fuchsia-300/65 from-fuchsia-300/30 via-fuchsia-950/50 to-slate-950',
+};
 
 function getRanchCompanionEntries(ranchData, dungeonId = null) {
   const dungeonEntries = dungeonId
@@ -88,7 +96,7 @@ export async function renderRanchTab() {
               <span class="material-symbols-outlined text-[16px]">food_bank</span> 魚餌のダンジョン育成
             </h4>
             <p class="text-xs leading-relaxed text-slate-400">
-              魚餌は作成した瞬間に効果を発揮します。使用した魚のEXPが、セレクトボックスで選択中のダンジョンにいる仲間だけに入ります。
+              写真ライブラリのように魚を複数選択し、まとめて与えられます。使用した魚のEXPは、選択中のダンジョンにいる仲間だけに入ります。
             </p>
           </div>
         </div>
@@ -349,13 +357,14 @@ export async function renderRanchTab() {
 
 async function showRanchFishModal(dungeonId, onUpdate) {
   const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm';
+  overlay.className = 'fixed inset-0 z-[100] flex items-end justify-center bg-black/85 sm:items-center sm:p-3 sm:backdrop-blur-sm';
   const modal = document.createElement('div');
-  modal.className = 'flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-3xl border border-emerald-300/25 bg-[#0c1317] shadow-[0_24px_90px_rgba(0,0,0,.8)]';
+  modal.className = 'relative flex h-[96dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-emerald-300/20 bg-[#080e13] shadow-[0_24px_90px_rgba(0,0,0,.8)] sm:h-auto sm:max-h-[94vh] sm:rounded-3xl';
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
   let busy = false;
   let lastResult = null;
+  const selectedAmounts = new Map();
   const close = () => overlay.remove();
   overlay.onclick = event => { if (event.target === overlay) close(); };
 
@@ -370,27 +379,45 @@ async function showRanchFishModal(dungeonId, onUpdate) {
     const dungeonName = dungeon?.name || dungeonId;
     const available = FISH.filter(fish => (fishing.inventory[fish.id] || 0) > 0);
     const totalFish = FISH.reduce((sum, fish) => sum + (fishing.inventory[fish.id] || 0), 0);
+    for (const [fishId, amount] of selectedAmounts) {
+      const owned = fishing.inventory[fishId] || 0;
+      if (!owned) selectedAmounts.delete(fishId);
+      else selectedAmounts.set(fishId, Math.min(owned, Math.max(1, amount)));
+    }
     modal.innerHTML = `
-      <header class="border-b border-emerald-400/15 bg-gradient-to-br from-emerald-950/80 via-slate-950 to-cyan-950/55 p-4">
-        <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2"><span class="material-symbols-outlined rounded-xl border border-emerald-300/20 bg-emerald-400/10 p-2 text-emerald-300">bolt</span><div><h3 class="text-base font-black text-emerald-100">魚餌工房</h3><p class="text-[8px] font-black tracking-widest text-emerald-300/60">INSTANT FEED LAB</p></div></div><p class="mt-2 text-[10px] leading-relaxed text-slate-400">作成した魚餌はその場で消費され、<span class="font-black text-white">${dungeonName}</span>の仲間だけに即座にEXPが入ります。</p></div><button data-close class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/25 text-slate-400"><span class="material-symbols-outlined text-lg">close</span></button></div>
-        <div class="mt-3 grid grid-cols-2 gap-2 text-center"><div class="rounded-xl border border-cyan-400/15 bg-black/25 p-2.5"><div class="text-[8px] text-slate-500">所持している魚</div><div class="mt-0.5 text-sm font-black text-cyan-300">${formatNumber(totalFish)}匹</div></div><div class="rounded-xl border border-pink-400/20 bg-pink-950/20 p-2.5"><div class="text-[8px] text-pink-200/60">選択中の育成対象</div><div class="mt-0.5 text-sm font-black text-pink-300">${formatNumber(companions.length)}体</div></div></div>
+      <header class="shrink-0 border-b border-white/10 bg-gradient-to-br from-emerald-950/75 via-slate-950 to-cyan-950/45 px-4 pb-3 pt-4">
+        <div class="grid grid-cols-[4.5rem_1fr_4.5rem] items-center"><span></span><div class="text-center"><h3 class="text-base font-black text-white">魚餌工房</h3><p class="text-[8px] font-black tracking-[.18em] text-emerald-300/60">FISH LIBRARY</p></div><button data-close class="justify-self-end text-[11px] font-bold text-cyan-300">閉じる</button></div>
+        <div class="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-2"><div class="min-w-0"><div class="truncate text-[11px] font-black text-white">${dungeonName}</div><div class="mt-0.5 text-[8px] text-slate-400">育成対象 ${formatNumber(companions.length)}体</div></div><div class="shrink-0 text-right"><div class="text-[8px] text-slate-500">所持魚</div><div class="text-xs font-black text-cyan-300">${formatNumber(totalFish)}匹</div></div></div>
       </header>
-      ${lastResult ? `<div class="border-b border-emerald-400/20 bg-emerald-950/45 px-4 py-2.5 text-[10px] text-emerald-100"><span class="material-symbols-outlined mr-1 align-middle text-base text-emerald-300">task_alt</span>${dungeonName}の${formatNumber(lastResult.companionCount)}体に <span class="font-black">+${formatNumber(lastResult.expPerCompanion)} EXP</span>${lastResult.levelsGained ? ` ・ 合計 <span class="font-black">+${formatNumber(lastResult.levelsGained)} Lv</span>` : ''}</div>` : ''}
-      <div class="no-scrollbar flex-1 space-y-2 overflow-y-auto p-3">${available.length ? available.map(fish => {
+      ${lastResult ? `<div class="shrink-0 border-b border-emerald-400/20 bg-emerald-950/45 px-4 py-2 text-[9px] text-emerald-100"><span class="material-symbols-outlined mr-1 align-middle text-sm text-emerald-300">task_alt</span>${formatNumber(lastResult.feedUsed)}匹を与え、1体あたり <span class="font-black">+${formatNumber(lastResult.expPerCompanion)} EXP</span>${lastResult.levelsGained ? ` ・ 合計 <span class="font-black">+${formatNumber(lastResult.levelsGained)} Lv</span>` : ''}</div>` : ''}
+      <div class="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/80 px-4 py-2"><div><div class="text-[10px] font-black text-slate-200">魚をタップして選択</div><div class="text-[8px] text-slate-500">選択した魚をまとめて与えられます</div></div><div class="flex gap-3"><button data-clear-selection class="hidden text-[10px] font-bold text-slate-400">解除</button><button data-select-all class="text-[10px] font-bold text-cyan-300">すべて選択</button></div></div>
+      <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto bg-[#05090d] p-0.5"><div data-fish-grid class="grid grid-cols-3 gap-0.5 sm:grid-cols-4">${available.length ? available.map(fish => {
         const owned = fishing.inventory[fish.id] || 0;
-        return `<article data-feed-card="${fish.id}" class="rounded-2xl border border-slate-700/70 bg-slate-950/65 p-3"><div class="flex items-center gap-3"><div class="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-cyan-400/15 bg-cyan-950/20 p-1"><span class="material-symbols-outlined absolute text-3xl text-cyan-700">set_meal</span><img src="${fish.image}" onerror="this.remove()" class="relative h-full w-full object-contain" alt=""></div><div class="min-w-0 flex-1"><div class="flex items-center justify-between gap-2"><div class="truncate text-xs font-black text-slate-100">${fish.name}</div><span class="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[9px] font-black text-cyan-300">${formatNumber(owned)}匹</span></div><div class="mt-1 text-[9px] text-slate-500">1個 → 選択中の仲間に <span class="font-black text-pink-300">${formatNumber(fish.ranchExp)} EXP</span></div><div class="mt-1.5 rounded-lg border border-emerald-400/10 bg-emerald-950/20 px-2 py-1.5 text-[9px]"><span data-preview-exp class="font-black text-emerald-300"></span><span class="mx-1 text-slate-700">・</span><span data-preview-levels class="text-slate-400"></span></div></div></div>
-          <div class="mt-3 grid grid-cols-[38px_1fr_38px_60px] gap-1.5"><button data-step="-1" class="h-10 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-slate-300 active:scale-95">−</button><input data-amount type="number" inputmode="numeric" min="1" max="${owned}" value="1" class="h-10 min-w-0 rounded-xl border border-emerald-400/25 bg-slate-900 px-2 text-center text-sm font-black text-white outline-none focus:border-emerald-400"><button data-step="1" class="h-10 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-slate-300 active:scale-95">＋</button><button data-max class="h-10 rounded-xl border border-cyan-400/25 bg-cyan-950/40 text-[10px] font-black text-cyan-300 active:scale-95">MAX</button></div>
-          <button data-feed="${fish.id}" class="mt-2.5 flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-300/35 bg-gradient-to-r from-emerald-600 to-teal-600 text-[11px] font-black text-white shadow-[0_0_18px_rgba(16,185,129,.18)] active:scale-[.99]"><span class="material-symbols-outlined text-base">bolt</span><span data-action-label></span></button></article>`;
-      }).join('') : '<div class="py-12 text-center"><span class="material-symbols-outlined text-4xl text-slate-700">set_meal</span><p class="mt-2 text-xs font-bold text-slate-500">魚を所持していません</p><p class="mt-1 text-[9px] text-slate-600">釣り場で魚を入手してください</p></div>'}</div>`;
+        const rarity = FISH_RARITY[fish.rarity] || FISH_RARITY.common;
+        const tileTheme = FISH_FEED_TILE_THEME[fish.rarity] || FISH_FEED_TILE_THEME.common;
+        return `<button data-fish-tile="${fish.id}" type="button" aria-pressed="false" class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden border bg-gradient-to-b ${tileTheme} text-left active:brightness-125">
+          <div class="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/10 bg-black/70 px-1.5 py-0.5 text-[8px] font-black tabular-nums text-white">×${formatNumber(owned)}</div>
+          <img src="${fish.image}" onerror="this.remove()" class="absolute left-2 right-2 top-2 h-[68%] w-[calc(100%_-_1rem)] object-contain drop-shadow-[0_5px_7px_rgba(0,0,0,.65)] transition-transform group-active:scale-105" alt="${fish.name}">
+          <div class="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black via-black/85 to-transparent px-1.5 pb-1.5 pt-6"><div class="truncate text-[9px] font-black ${rarity.text}">${fish.name}</div><div class="truncate text-[7px] font-bold text-emerald-300">+${formatNumber(fish.ranchExp)} EXP</div></div>
+          <div data-selected-layer class="hidden absolute inset-0 z-20 border-[3px] border-cyan-300 bg-cyan-400/10 shadow-[inset_0_0_22px_rgba(34,211,238,.2)]"><span class="material-symbols-outlined absolute right-1.5 top-1.5 rounded-full bg-cyan-400 text-[20px] font-black text-slate-950 shadow-lg">check_circle</span><span data-selected-amount class="absolute bottom-1.5 right-1.5 rounded-full border border-cyan-200/50 bg-cyan-950/95 px-2 py-0.5 text-[9px] font-black text-cyan-100">1匹</span></div>
+        </button>`;
+      }).join('') : '<div class="col-span-full py-16 text-center"><span class="material-symbols-outlined text-4xl text-slate-700">set_meal</span><p class="mt-2 text-xs font-bold text-slate-500">魚を所持していません</p><p class="mt-1 text-[9px] text-slate-600">釣り場で魚を入手してください</p></div>'}</div></div>
+      <footer data-selection-dock class="shrink-0 border-t border-cyan-300/15 bg-slate-950/95 px-3 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-12px_35px_rgba(0,0,0,.5)]">
+        <div class="mb-2 flex items-center justify-between px-1"><div><div data-selection-count class="text-[11px] font-black text-white">魚を選択してください</div><div data-selection-preview class="mt-0.5 text-[8px] text-slate-500">タイルをタップすると選択できます</div></div><button data-edit-amounts disabled class="rounded-full border border-slate-700 px-3 py-1.5 text-[9px] font-bold text-slate-500 disabled:opacity-40">個数を調整</button></div>
+        <button data-feed-selected disabled class="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-emerald-600 to-teal-600 text-xs font-black text-white shadow-[0_0_22px_rgba(16,185,129,.18)] transition disabled:cursor-not-allowed disabled:grayscale disabled:opacity-35"><span class="material-symbols-outlined">bolt</span><span data-feed-label>選択した魚をまとめて与える</span></button>
+      </footer>
+      <section data-amount-editor class="hidden absolute inset-0 z-40 flex flex-col bg-[#080e13]"><header class="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-950 px-4 py-3"><button data-close-editor class="text-[11px] font-bold text-cyan-300">戻る</button><div class="text-center"><h4 class="text-sm font-black text-white">個数を調整</h4><p class="text-[8px] text-slate-500">魚ごとに与える数を変更</p></div><button data-done-editor class="text-[11px] font-black text-cyan-300">完了</button></header><div data-editor-list class="no-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto p-3"></div><div class="shrink-0 border-t border-white/10 bg-slate-950 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))]"><div data-editor-summary class="mb-2 text-center text-[9px] font-bold text-emerald-300"></div><button data-done-editor class="h-11 w-full rounded-2xl bg-cyan-600 text-xs font-black text-white">この個数で決定</button></div></section>`;
     modal.querySelector('[data-close]').onclick = close;
 
-    const updateCard = card => {
-      const fish = FISH.find(item => item.id === card.dataset.feedCard);
-      const owned = fishing.inventory[fish.id] || 0;
-      const input = card.querySelector('[data-amount]');
-      const amount = Math.max(1, Math.min(owned, Math.floor(Number(input.value) || 1)));
-      input.value = amount;
-      const exp = fish.ranchExp * amount;
+    const getSelectionPreview = () => {
+      let totalAmount = 0;
+      let exp = 0;
+      for (const [fishId, amount] of selectedAmounts) {
+        const fish = FISH.find(item => item.id === fishId);
+        if (!fish) continue;
+        totalAmount += amount;
+        exp += fish.ranchExp * amount;
+      }
       let levels = 0;
       for (const companion of companions) {
         const legendary = companion.monsterId.endsWith('_legendary');
@@ -398,48 +425,121 @@ async function showRanchFishModal(dungeonId, onUpdate) {
         const after = getRanchLevelInfo((companion.data.fedMaterials || 0) + exp, legendary).level;
         levels += Math.max(0, after - before);
       }
-      card.querySelector('[data-preview-exp]').textContent = `+${formatNumber(exp)} EXP / 体`;
-      card.querySelector('[data-preview-levels]').textContent = levels ? `合計 +${formatNumber(levels)} Lv見込み` : '次のLvへEXP蓄積';
-      card.querySelector('[data-action-label]').textContent = `${formatNumber(amount)}個作って選択中の仲間へ給餌`;
+      return { totalAmount, exp, levels };
     };
-    modal.querySelectorAll('[data-feed-card]').forEach(card => {
-      const input = card.querySelector('[data-amount]');
-      input.addEventListener('input', () => updateCard(card));
-      card.querySelectorAll('[data-step]').forEach(button => button.onclick = () => {
-        input.value = (Number(input.value) || 1) + Number(button.dataset.step);
-        updateCard(card);
+
+    const updateSelectionUi = () => {
+      modal.querySelectorAll('[data-fish-tile]').forEach(tile => {
+        const amount = selectedAmounts.get(tile.dataset.fishTile) || 0;
+        tile.setAttribute('aria-pressed', String(Boolean(amount)));
+        tile.querySelector('[data-selected-layer]').classList.toggle('hidden', !amount);
+        if (amount) tile.querySelector('[data-selected-amount]').textContent = `${formatNumber(amount)}匹`;
       });
-      card.querySelector('[data-max]').onclick = () => { input.value = input.max; updateCard(card); };
-      updateCard(card);
+      const preview = getSelectionPreview();
+      const hasSelection = selectedAmounts.size > 0;
+      modal.querySelector('[data-clear-selection]').classList.toggle('hidden', !hasSelection);
+      modal.querySelector('[data-selection-count]').textContent = hasSelection
+        ? `${formatNumber(selectedAmounts.size)}種類・${formatNumber(preview.totalAmount)}匹を選択中`
+        : '魚を選択してください';
+      modal.querySelector('[data-selection-preview]').textContent = hasSelection
+        ? `1体あたり +${formatNumber(preview.exp)} EXP${preview.levels ? ` ・ 合計 +${formatNumber(preview.levels)} Lv見込み` : ''}`
+        : 'タイルをタップすると選択できます';
+      modal.querySelector('[data-feed-label]').textContent = busy
+        ? '魚餌を作成中…'
+        : hasSelection
+          ? `${formatNumber(preview.totalAmount)}匹をまとめて与える`
+          : '選択した魚をまとめて与える';
+      modal.querySelector('[data-feed-selected]').disabled = !hasSelection || busy;
+      modal.querySelector('[data-edit-amounts]').disabled = !hasSelection || busy;
+      return preview;
+    };
+
+    const renderAmountEditor = () => {
+      const editor = modal.querySelector('[data-amount-editor]');
+      const list = editor.querySelector('[data-editor-list]');
+      const selectedFish = available.filter(fish => selectedAmounts.has(fish.id));
+      list.innerHTML = selectedFish.map(fish => {
+        const amount = selectedAmounts.get(fish.id);
+        const owned = fishing.inventory[fish.id] || 0;
+        const rarity = FISH_RARITY[fish.rarity] || FISH_RARITY.common;
+        return `<article data-editor-fish="${fish.id}" class="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-2.5"><div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-cyan-950/20 p-1"><img src="${fish.image}" onerror="this.remove()" class="h-full w-full object-contain" alt="${fish.name}"></div><div class="min-w-0 flex-1"><div class="truncate text-[10px] font-black ${rarity.text}">${fish.name}</div><div class="mt-0.5 text-[8px] text-slate-500">所持 ${formatNumber(owned)}匹 ・ 1匹 ${formatNumber(fish.ranchExp)} EXP</div><div class="mt-2 grid grid-cols-[2.5rem_1fr_2.5rem_3rem] gap-1.5"><button data-editor-step="-1" class="h-9 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-white">−</button><div class="flex h-9 items-center justify-center rounded-xl border border-cyan-400/25 bg-slate-900 text-xs font-black text-white"><span data-editor-amount>${formatNumber(amount)}</span><span class="ml-1 text-[8px] text-slate-500">匹</span></div><button data-editor-step="1" class="h-9 rounded-xl border border-slate-700 bg-slate-800 text-lg font-black text-white">＋</button><button data-editor-max class="h-9 rounded-xl border border-cyan-400/25 bg-cyan-950/40 text-[8px] font-black text-cyan-300">MAX</button></div></div></article>`;
+      }).join('');
+      const preview = getSelectionPreview();
+      editor.querySelector('[data-editor-summary]').textContent = `${formatNumber(preview.totalAmount)}匹 ・ 1体あたり +${formatNumber(preview.exp)} EXP`;
+      list.querySelectorAll('[data-editor-fish]').forEach(row => {
+        const fishId = row.dataset.editorFish;
+        const owned = fishing.inventory[fishId] || 0;
+        row.querySelectorAll('[data-editor-step]').forEach(button => button.onclick = () => {
+          const next = Math.max(1, Math.min(owned, (selectedAmounts.get(fishId) || 1) + Number(button.dataset.editorStep)));
+          selectedAmounts.set(fishId, next);
+          renderAmountEditor();
+          updateSelectionUi();
+        });
+        row.querySelector('[data-editor-max]').onclick = () => {
+          selectedAmounts.set(fishId, owned);
+          renderAmountEditor();
+          updateSelectionUi();
+        };
+      });
+    };
+
+    modal.querySelectorAll('[data-fish-tile]').forEach(tile => tile.onclick = () => {
+      if (busy) return;
+      const fishId = tile.dataset.fishTile;
+      if (selectedAmounts.has(fishId)) selectedAmounts.delete(fishId);
+      else selectedAmounts.set(fishId, 1);
+      updateSelectionUi();
     });
-    modal.querySelectorAll('[data-feed]').forEach(button => button.onclick = async () => {
+    modal.querySelector('[data-select-all]').onclick = () => {
+      if (busy) return;
+      for (const fish of available) if (!selectedAmounts.has(fish.id)) selectedAmounts.set(fish.id, 1);
+      updateSelectionUi();
+    };
+    modal.querySelector('[data-clear-selection]').onclick = () => {
+      if (busy) return;
+      selectedAmounts.clear();
+      updateSelectionUi();
+    };
+    modal.querySelector('[data-edit-amounts]').onclick = () => {
+      renderAmountEditor();
+      modal.querySelector('[data-amount-editor]').classList.remove('hidden');
+    };
+    modal.querySelectorAll('[data-close-editor], [data-done-editor]').forEach(button => button.onclick = () => {
+      modal.querySelector('[data-amount-editor]').classList.add('hidden');
+      updateSelectionUi();
+    });
+    modal.querySelector('[data-feed-selected]').onclick = async () => {
       if (busy) return;
       busy = true;
-      const input = button.closest('[data-feed-card]').querySelector('[data-amount]');
+      updateSelectionUi();
       try {
-        const fish = FISH.find(item => item.id === button.dataset.feed);
-        const amount = Number(input.value) || 1;
-        const result = await convertFishToFeed(button.dataset.feed, amount, dungeonId);
-        await playFishFeedAnimation(fish, result);
+        const selections = [...selectedAmounts].map(([fishId, amount]) => ({ fishId, amount }));
+        const selectedFish = selections.map(selection => FISH.find(fish => fish.id === selection.fishId)).filter(Boolean);
+        const result = await convertFishBatchToFeed(selections, dungeonId);
+        await playFishFeedAnimation(selectedFish, result);
         lastResult = result;
+        selectedAmounts.clear();
         await onUpdate?.(result);
         if (overlay.isConnected) await render();
       } catch (error) { alert(error.message || '魚餌の作成に失敗しました。'); }
-      finally { busy = false; }
-    });
+      finally { busy = false; if (overlay.isConnected) updateSelectionUi(); }
+    };
+    updateSelectionUi();
   };
   await render();
 }
 
-function playFishFeedAnimation(fish, result) {
+function playFishFeedAnimation(fishes, result) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const duration = reducedMotion ? 1100 : 2000;
   const layer = document.createElement('div');
   layer.className = 'fixed inset-0 z-[140] overflow-hidden bg-black/45 pointer-events-none backdrop-blur-[1px]';
   const centerX = window.innerWidth / 2;
   const centerY = window.innerHeight / 2;
+  const visibleFish = (Array.isArray(fishes) ? fishes : [fishes]).filter(Boolean).slice(0, 3);
+  const fishImages = visibleFish.map((fish, index) => `<img src="${fish.image}" onerror="this.remove()" class="absolute h-16 w-16 object-contain drop-shadow-[0_5px_7px_rgba(0,0,0,.65)]" style="transform:translate(${(index - (visibleFish.length - 1) / 2) * 20}px,${index % 2 ? 8 : -5}px) rotate(${(index - 1) * 8}deg)" alt="">`).join('');
   layer.innerHTML = `
-    <div data-feed-core class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300/60 bg-emerald-950/95 shadow-[0_0_55px_rgba(52,211,153,.65)]" style="left:${centerX}px;top:${centerY}px"><span class="material-symbols-outlined absolute text-6xl text-emerald-700">set_meal</span><img src="${fish.image}" onerror="this.remove()" class="relative h-20 w-20 object-contain" alt=""></div>
+    <div data-feed-core class="absolute flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300/60 bg-emerald-950/95 shadow-[0_0_55px_rgba(52,211,153,.65)]" style="left:${centerX}px;top:${centerY}px"><span class="material-symbols-outlined absolute text-6xl text-emerald-700">set_meal</span>${fishImages}</div>
     <div data-feed-burst class="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0">
       <span class="material-symbols-outlined text-6xl text-emerald-300 drop-shadow-[0_0_25px_rgba(52,211,153,.95)]">food_bank</span>
       <div class="mt-1 w-[min(82vw,19rem)] rounded-2xl border border-emerald-300/50 bg-slate-950/95 px-4 py-3 text-center shadow-[0_0_35px_rgba(52,211,153,.4)]">

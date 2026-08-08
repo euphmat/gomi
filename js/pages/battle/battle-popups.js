@@ -5,6 +5,7 @@
  */
 
 import { playSoundEffect } from '../../utils/sound-effects.js';
+import { shouldSkipBattleAnimations } from '../../utils/battle-animation.js';
 
 const POPUP_POOL_LIMITS = { float: 150, label: 50 };
 
@@ -58,7 +59,9 @@ export const popupMethods = {
     if (!poolItem) return null;
     
     poolItem.active = true;
+    poolItem.generation = (poolItem.generation || 0) + 1;
     const el = poolItem.el;
+    el._popupPoolGeneration = poolItem.generation;
     
     // Reset element visually but KEEP it in the DOM tree
     if (type === 'float') {
@@ -83,10 +86,13 @@ export const popupMethods = {
     return el;
   },
 
-  _releasePoolElement(elOrWrapper) {
+  _releasePoolElement(elOrWrapper, generation = null) {
     if (!this._domPool) return;
     const poolItem = this._domPool.find(item => item.el === elOrWrapper);
     if (poolItem) {
+      // A canceled animation can dispatch its callback after this element has
+      // already been reused. Never let that stale callback hide the new popup.
+      if (generation !== null && poolItem.generation !== generation) return;
       poolItem.active = false;
       poolItem.el.className = 'hidden';
       poolItem.el.style.cssText = 'display: none !important;';
@@ -97,8 +103,7 @@ export const popupMethods = {
    * ダメージ用ポップアップ — 上方向に素早く浮遊して消える
    */
   _showFloatingPopup(elementId, config) {
-    if (this._cachedDisableAnim) return;
-    if (document.hidden) return;
+    if (shouldSkipBattleAnimations()) return;
 
     const speed = this.speedMult || 1;
 
@@ -142,6 +147,7 @@ export const popupMethods = {
     let finalY = baseY + (Math.random() - 0.5) * 20;
     const popup = this._getPoolElement('float');
     if (!popup) return;
+    const popupGeneration = popup._popupPoolGeneration;
     
     popup.className = config.className || '';
     popup.style.display = 'block';
@@ -172,22 +178,27 @@ export const popupMethods = {
       { opacity: 0, transform: `translate3d(calc(-50% + ${spreadX}px), ${floatY}px, 0) scale(${scale * 0.9})` }
     ], {
       duration: dur,
+      delay: Math.max(0, config.delay || 0),
       easing: 'ease-out',
-      fill: 'forwards'
+      // Keep the first, transparent frame applied during an impact delay.
+      fill: 'both'
     });
 
-    anim.onfinish = () => {
+    const releasePopup = () => {
+      anim.onfinish = null;
+      anim.oncancel = null;
       anim.cancel();
-      this._releasePoolElement(popup);
+      this._releasePoolElement(popup, popupGeneration);
     };
+    anim.onfinish = releasePopup;
+    anim.oncancel = releasePopup;
   },
 
   /**
    * アクション名用ポップアップ — その場に留まってからフェードアウト
    */
   _showLabelPopup(elementId, config) {
-    if (this._cachedDisableAnim) return;
-    if (document.hidden) return;
+    if (shouldSkipBattleAnimations()) return;
 
     const speed = this.speedMult || 1;
 
@@ -234,6 +245,7 @@ export const popupMethods = {
     const poolElements = this._getPoolElement('label');
     if (!poolElements) return;
     const { wrapper, popup } = poolElements;
+    const popupGeneration = wrapper._popupPoolGeneration;
 
     wrapper.className = `fixed z-[10000] pointer-events-none flex flex-col items-center`;
     wrapper.style.display = 'block';
@@ -268,19 +280,32 @@ export const popupMethods = {
       }
     });
 
-    anim.onfinish = () => {
+    const releasePopup = () => {
+      anim.onfinish = null;
+      anim.oncancel = null;
       anim.cancel();
-      this._releasePoolElement(wrapper); // wrapper contains popup
+      this._releasePoolElement(wrapper, popupGeneration); // wrapper contains popup
       const idx = stack.indexOf(entry);
       if (idx !== -1) stack.splice(idx, 1);
     };
+    anim.onfinish = releasePopup;
+    anim.oncancel = releasePopup;
   },
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
-  showDamage(elementId, damage, customColorClass = 'text-red-500') {
+  showDamage(elementId, damage, customColorClass = 'text-red-500', delay = 0) {
     const isRecovery = customColorClass.includes('text-green-') || customColorClass.includes('text-blue-');
-    playSoundEffect(isRecovery ? 'heal' : 'battleHit', { automatic: this.isAutoBattle });
-    if (this._cachedDisableAnim) return;
+    const playPopupSound = () => playSoundEffect(isRecovery ? 'heal' : 'battleHit', { automatic: this.isAutoBattle });
+    if (delay > 0) {
+      // This timer is intentionally independent from the combat timer list:
+      // the killing blow still needs its impact sound after endBattle stops ATB.
+      window.setTimeout(() => {
+        if (this.container?.isConnected) playPopupSound();
+      }, delay);
+    } else {
+      playPopupSound();
+    }
+    if (shouldSkipBattleAnimations()) return;
     
     let color = '#ffffff';
     let textShadow = '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 6px rgba(0,0,0,0.8)';
@@ -322,13 +347,14 @@ export const popupMethods = {
       textShadow,
       fontSize,
       scale,
-      duration
+      duration,
+      delay
     });
   },
 
   // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
-    if (this._cachedDisableAnim) return;
+    if (shouldSkipBattleAnimations()) return;
     const html = `<span class="font-black text-[15px] ${textClass} tracking-widest whitespace-nowrap bg-black/70 px-4 py-1.5 rounded-full border ${borderClass}" style="box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-shadow: 0 2px 4px rgba(0,0,0,0.9);">${actionName}</span>`;
 
     this._showLabelPopup(elementId, {
@@ -340,7 +366,7 @@ export const popupMethods = {
 
   // --- showLevelUp: レベルアップポップアップ (その場に留まる) ---
   showLevelUp(elementId, type = 'base') {
-    if (this._cachedDisableAnim) return;
+    if (shouldSkipBattleAnimations()) return;
     const isJob = type === 'job';
     const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
     const iconColor = isJob ? 'text-red-300' : 'text-orange-300';

@@ -588,9 +588,10 @@ export const actionMethods = {
     }
 
     if (delayDamageMs > 0) {
-      this._scheduleBattleTimeout(() => {
-        this.showDamage(defender.elementId, damage, dmgColor);
-      }, delayDamageMs);
+      // Delay the popup animation itself instead of using a managed battle
+      // timer. A killing blow stops the ATB loop immediately, which clears
+      // those timers before the final damage number can be shown.
+      this.showDamage(defender.elementId, damage, dmgColor, delayDamageMs);
     } else if (delayDamageMs === 0) {
       this.showDamage(defender.elementId, damage, dmgColor);
     }

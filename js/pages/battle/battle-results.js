@@ -306,6 +306,7 @@ export const resultMethods = {
     drops.forEach((drop) => {
       const dropEl = this._getPoolElement('float');
       if (!dropEl) return;
+      const popupGeneration = dropEl._popupPoolGeneration;
       
       dropEl.className = `w-10 h-10 flex items-center justify-center drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] opacity-0`;
       dropEl.style.display = 'block';
@@ -342,10 +343,14 @@ export const resultMethods = {
         fill: 'both' 
       });
 
-      anim.onfinish = () => {
+      const releasePopup = () => {
+        anim.onfinish = null;
+        anim.oncancel = null;
         anim.cancel();
-        this._releasePoolElement(dropEl);
+        this._releasePoolElement(dropEl, popupGeneration);
       };
+      anim.onfinish = releasePopup;
+      anim.oncancel = releasePopup;
     });
   },
 
