@@ -182,6 +182,8 @@ const addWeapon = (layer, point, direction, profile, duration, delay = 0, type =
     css = `width:94px;height:20px;background:linear-gradient(90deg,${profile.secondary},#fff 68%,${profile.primary});clip-path:polygon(0 43%,68% 43%,81% 0,85% 34%,100% 12%,92% 50%,100% 88%,85% 66%,81% 100%,68% 57%,0 57%);filter:drop-shadow(0 0 8px ${profile.secondary})`;
   } else if (type === 'dagger') {
     css = `width:72px;height:14px;background:linear-gradient(90deg,#312e81 0 18%,${profile.secondary} 19% 32%,#fff 62%,${profile.primary});clip-path:polygon(0 30%,25% 30%,31% 0,38% 28%,100% 50%,38% 72%,31% 100%,25% 70%,0 70%);filter:drop-shadow(0 0 7px ${profile.secondary})`;
+  } else if (type === 'baton') {
+    css = `width:86px;height:10px;background:linear-gradient(90deg,${profile.secondary},#fff 20% 76%,${profile.primary});clip-path:polygon(0 25%,9% 25%,13% 0,18% 25%,84% 25%,90% 0,95% 25%,100% 50%,95% 75%,90% 100%,84% 75%,18% 75%,13% 100%,9% 75%,0 75%);filter:drop-shadow(0 0 8px ${profile.secondary})`;
   } else {
     css = `width:90px;height:16px;background:linear-gradient(90deg,#78350f 0 18%,${profile.secondary} 19% 31%,#fff 62%,${profile.primary});clip-path:polygon(0 35%,23% 35%,28% 8%,34% 36%,90% 36%,100% 50%,90% 64%,34% 64%,28% 92%,23% 65%,0 65%);filter:drop-shadow(0 0 8px ${profile.secondary})`;
   }
@@ -234,7 +236,7 @@ const addArrowShot = (layer, origin, target, profile, duration, delay = 0) => {
     { duration: duration * .68, delay, easing: 'ease-out' }
   );
 
-  const flightDelay = delay + duration * .38;
+  const flightDelay = delay + duration * .28;
   addEffect(
     layer,
     `position:fixed;left:${origin.x - 8}px;top:${origin.y - 5}px;width:76px;height:10px;background:linear-gradient(90deg,${profile.secondary},#fff 55%,${profile.primary});clip-path:polygon(0 38%,66% 38%,66% 0,100% 50%,66% 100%,66% 62%,0 62%);filter:drop-shadow(0 0 5px ${profile.secondary});transform-origin:8px 50%`,
@@ -244,7 +246,7 @@ const addArrowShot = (layer, origin, target, profile, duration, delay = 0) => {
       { transform: `rotate(${angle}rad) translateX(${direction.distance - 15}px) scale(1)`, opacity: 1, offset: .88 },
       { transform: `rotate(${angle}rad) translateX(${direction.distance}px) scale(.8)`, opacity: 0 }
     ],
-    { duration: duration * .48, delay: flightDelay, easing: 'cubic-bezier(.3,.7,.22,1)' }
+    { duration: duration * .45, delay: flightDelay, easing: 'cubic-bezier(.3,.7,.22,1)' }
   );
 };
 
@@ -284,8 +286,9 @@ const addSlimeBounce = (layer, origin, target, profile, duration, delay = 0) => 
     [
       { transform: 'translate(0,8px) scaleX(1.25) scaleY(.55)', opacity: 0 },
       { transform: 'translate(0,0) scale(1)', opacity: 1, offset: .12 },
-      { transform: `translate(${direction.dx * .5}px,${direction.dy * .5 - 68}px) rotate(180deg) scale(.92)`, opacity: 1, offset: .54 },
-      { transform: `translate(${direction.dx}px,${direction.dy + 5}px) rotate(360deg) scaleX(1.45) scaleY(.55)`, opacity: 1, offset: .88 },
+      { transform: `translate(${direction.dx * .5}px,${direction.dy * .5 - 68}px) rotate(180deg) scale(.92)`, opacity: 1, offset: .38 },
+      { transform: `translate(${direction.dx}px,${direction.dy + 5}px) rotate(360deg) scaleX(1.45) scaleY(.55)`, opacity: 1, offset: .67 },
+      { transform: `translate(${direction.dx}px,${direction.dy}px) rotate(360deg) scale(.2)`, opacity: 0, offset: .8 },
       { transform: `translate(${direction.dx}px,${direction.dy}px) rotate(360deg) scale(.2)`, opacity: 0 }
     ],
     { duration, delay, easing: 'cubic-bezier(.28,.7,.24,1)' }
@@ -417,6 +420,20 @@ const addMusicStaff = (layer, origin, target, profile, duration, delay = 0) => {
   });
 };
 
+const addHarp = (layer, point, profile, duration, delay = 0) => {
+  addEffect(
+    layer,
+    `position:fixed;left:${point.x - 25}px;top:${point.y - 30}px;width:50px;height:58px;border:5px solid ${profile.secondary};border-top:0;border-radius:8% 8% 48% 48%;background:repeating-linear-gradient(90deg,transparent 0 7px,${profile.primary} 8px 10px,transparent 11px 15px);clip-path:polygon(8% 0,92% 0,100% 88%,50% 100%,0 88%);filter:drop-shadow(0 0 8px ${profile.secondary});mix-blend-mode:screen;transform-origin:50% 70%`,
+    [
+      { transform: 'translateY(8px) rotate(-10deg) scale(.35)', opacity: 0 },
+      { transform: 'translateY(0) rotate(-5deg) scale(1)', opacity: 1, offset: .3 },
+      { transform: 'translateY(-2px) rotate(5deg) scaleX(.94)', opacity: 1, offset: .5 },
+      { transform: 'translateY(-5px) rotate(8deg) scale(.82)', opacity: 0 }
+    ],
+    { duration, delay, easing: 'cubic-bezier(.2,.7,.22,1)' }
+  );
+};
+
 const animateDefenderImpact = (element, profile, totalDuration, impactDelay, style = 'hit') => {
   const impactOffset = Math.min(.82, impactDelay / totalDuration);
   if (style === 'burn') {
@@ -515,7 +532,7 @@ export function playNormalAttackAnimation(attacker, defender) {
 
     case 'harp_strum':
       animateActor(attackerEl, profile, actionDuration, direction, 'dance');
-      addGlyph(layer, { x: origin.x, y: origin.y - 16 }, profile, actionDuration * .72, '♫', 0, { size: 46 });
+      addHarp(layer, { x: origin.x, y: origin.y - 9 }, profile, actionDuration * .72, 0);
       addWave(layer, origin, profile, actionDuration * .78, actionDuration * .08, 'sound');
       ['♪', '♫', '♩'].forEach((glyph, index) => {
         const progress = .38 + index * .2;
@@ -574,7 +591,7 @@ export function playNormalAttackAnimation(attacker, defender) {
 
     case 'mana_crescendo':
       animateActor(attackerEl, profile, actionDuration, direction, 'dance');
-      addWeapon(layer, origin, direction, profile, actionDuration * .68, 0, 'dagger');
+      addWeapon(layer, origin, direction, profile, actionDuration * .68, 0, 'baton');
       addMusicStaff(layer, origin, target, profile, actionDuration * .82, actionDuration * .05);
       addMagicCircle(layer, target, profile, impactDuration, impactDelay * .72, '✦');
       addRing(layer, target, profile, impactDuration, impactDelay, { size: 98, width: 3, scale: 1.42, endAngle: 180 });
