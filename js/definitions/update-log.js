@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.27';
+export const APP_VERSION = '0.1.28';
 export const APP_RELEASE_DATE = '2026.08.08';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.08',
+    version: '0.1.28',
+    items: [
+      '全14ジョブの通常攻撃に、盾突進・魔力弾・聖光・矢・スライム弾・音符・暗黒斬撃・三叉槍・火球・双刃など、それぞれの特徴を表現した専用アニメーションを追加しました。',
+      '通常攻撃の命中演出とダメージ表示のタイミングを同期し、カウンターにも現在のジョブ演出が適用されるようにしました。',
+    ],
+  },
   {
     date: '2026.08.08',
     version: '0.1.27',
