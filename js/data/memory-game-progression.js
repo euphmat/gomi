@@ -16,22 +16,22 @@ export const MEMORY_SKILL_BRANCHES = [
     name: '記憶術',
     icon: 'psychology',
     color: 'cyan',
-    description: 'カードを覚える時間と手掛かりを増やす',
+    description: '見た絵柄と正解ペアを盤面へ直接記録する',
     skills: [
       {
         // 旧「全景記憶」の習得ランクを失わせないため、保存用IDは維持する。
-        id: 'wide_view', name: '追跡観察', icon: 'person_search', maxRank: 3, cost: 1, requiredLevel: 2,
-        ranks: ['CPUがめくった各カードの確認時間 +0.25秒', 'CPUがめくった各カードの確認時間 +0.50秒', 'CPUがめくった各カードの確認時間 +0.75秒'],
+        id: 'wide_view', name: '絵柄メモ', icon: 'photo_library', maxRank: 3, cost: 1, requiredLevel: 2,
+        ranks: ['見た直近4枚は、伏せた後も裏面に絵柄を表示', '見た直近8枚は、伏せた後も裏面に絵柄を表示', '一度見たすべてのカードの裏面に絵柄を表示'],
       },
       {
-        id: 'afterimage', name: '残像保持', icon: 'hourglass_top', maxRank: 3, cost: 1, requiredLevel: 5,
+        id: 'afterimage', name: 'ペアナビ', icon: 'linked_services', maxRank: 3, cost: 1, requiredLevel: 5,
         prerequisite: { id: 'wide_view', rank: 2 },
-        ranks: ['不一致カードの確認時間 +0.25秒', '不一致カードの確認時間 +0.50秒', '不一致カードの確認時間 +0.75秒'],
+        ranks: ['1ゲームに2回、1枚目の既知のペアを発光', '1ゲームに4回、1枚目の既知のペアを発光', '回数無制限で、1枚目の既知のペアを発光'],
       },
       {
-        id: 'memory_bookmark', name: '記憶の栞', icon: 'bookmark', maxRank: 2, cost: 2, requiredLevel: 11,
+        id: 'memory_bookmark', name: '完全照合', icon: 'dataset_linked', maxRank: 2, cost: 2, requiredLevel: 11,
         prerequisite: { id: 'afterimage', rank: 2 },
-        ranks: ['直近3枚の既知カードに同じ絵柄の印を残す', '直近6枚の既知カードに同じ絵柄の印を残す'],
+        ranks: ['位置が判明したペアを常に1組、2枚同時に発光', '位置が判明したすべてのペアを常に2枚同時に発光'],
       },
     ],
   },
@@ -64,21 +64,21 @@ export const MEMORY_SKILL_BRANCHES = [
     name: '盤面術',
     icon: 'grid_view',
     color: 'violet',
-    description: '公開済みの情報を整理して見落としを減らす',
+    description: '透視とCPU妨害で盤面そのものを有利にする',
     skills: [
       {
-        id: 'repetition', name: '消去法', icon: 'filter_alt', maxRank: 3, cost: 1, requiredLevel: 2,
-        ranks: ['獲得済みペアを60%の濃さで表示', '獲得済みペアを30%の濃さで表示', '獲得済みペアを10%の濃さで表示'],
+        id: 'repetition', name: '開幕透視', icon: 'grid_on', maxRank: 3, cost: 1, requiredLevel: 2,
+        ranks: ['ゲーム開始時、ランダムな2枚を永続透視', 'ゲーム開始時、ランダムな4枚を永続透視', 'ゲーム開始時、ランダムな6枚を永続透視'],
       },
       {
-        id: 'pair_study', name: '既視の印', icon: 'visibility_lock', maxRank: 3, cost: 1, requiredLevel: 5,
+        id: 'pair_study', name: '強制サーチ', icon: 'travel_explore', maxRank: 3, cost: 1, requiredLevel: 5,
         prerequisite: { id: 'repetition', rank: 1 },
-        ranks: ['直近4枚の見たことがあるカードに印を表示', '直近8枚の見たことがあるカードに印を表示', '見たことがあるすべてのカードに印を表示'],
+        ranks: ['1ゲームに1回、1枚目の正解ペアを必ず発光', '1ゲームに2回、1枚目の正解ペアを必ず発光', '1ゲームに3回、1枚目の正解ペアを必ず発光'],
       },
       {
-        id: 'adversity', name: '対手の足跡', icon: 'footprint', maxRank: 2, cost: 1, requiredLevel: 9,
+        id: 'adversity', name: '思考妨害', icon: 'psychology_alt', maxRank: 2, cost: 1, requiredLevel: 9,
         prerequisite: { id: 'pair_study', rank: 2 },
-        ranks: ['CPUが外した2枚の位置を0.8秒間強調', 'CPUが外した2枚の位置を1.6秒間強調'],
+        ranks: ['CPUがカードを記憶する確率を50%低下', 'CPUはめくったカードの位置を一切記憶できない'],
       },
     ],
   },
@@ -146,18 +146,16 @@ export function getMemorySkillPoints(progress) {
 
 export function getMemorySkillEffects(progress) {
   const ranks = normalizeProgress(progress).skillRanks;
-  const matchedOpacity = [1, 0.6, 0.3, 0.1][ranks.repetition || 0];
-  const seenMarkCapacity = [0, 4, 8, Number.POSITIVE_INFINITY][ranks.pair_study || 0];
   return {
-    cpuRevealDelayMs: (ranks.wide_view || 0) * 250,
-    mismatchDelayMs: (ranks.afterimage || 0) * 250,
-    memoryMarkCapacity: (ranks.memory_bookmark || 0) * 3,
+    recordedCardCapacity: [0, 4, 8, Number.POSITIVE_INFINITY][ranks.wide_view || 0],
+    knownMateHintCharges: [0, 2, 4, Number.POSITIVE_INFINITY][ranks.afterimage || 0],
+    knownPairGuideLimit: [0, 1, Number.POSITIVE_INFINITY][ranks.memory_bookmark || 0],
     firstCardResetCharges: ranks.initiative || 0,
     refocusCharges: ranks.refocus || 0,
     doubleCheckCharges: ranks.double_check || 0,
-    matchedOpacity,
-    seenMarkCapacity,
-    cpuTraceDurationMs: (ranks.adversity || 0) * 800,
+    openingVisionCount: (ranks.repetition || 0) * 2,
+    pairSearchCharges: ranks.pair_study || 0,
+    cpuMemoryPenaltyPercent: (ranks.adversity || 0) * 50,
   };
 }
 

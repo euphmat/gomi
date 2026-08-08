@@ -219,8 +219,8 @@ const pageStyles = () => `
     .memory-card.is-matched { animation:memory-match .55s ease-out both; }
     .memory-card.is-hint { z-index:2; animation:memory-hint .7s ease-in-out 2; }
     .memory-card.is-hint .memory-card-face:first-child { border-color:rgba(103,232,249,.98); box-shadow:0 0 18px 5px rgba(34,211,238,.72), inset 0 0 16px rgba(255,255,255,.28); }
-    .memory-card.is-cpu-trace { z-index:2; animation:memory-cpu-trace .8s ease-in-out infinite; }
-    .memory-card.is-cpu-trace .memory-card-face:first-child { border-color:rgba(251,191,36,.98); box-shadow:0 0 16px 4px rgba(245,158,11,.58), inset 0 0 14px rgba(253,230,138,.2); }
+    .memory-card.is-skill-hint { z-index:3; animation:memory-hint .7s ease-in-out infinite; }
+    .memory-card.is-skill-hint .memory-card-face:first-child { border-color:rgba(253,230,138,.98); box-shadow:0 0 20px 6px rgba(245,158,11,.78), inset 0 0 16px rgba(255,255,255,.3); }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) { z-index:1; }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child { border-color:rgba(103,232,249,.95); box-shadow:0 0 16px 3px rgba(34,211,238,.5), inset 0 0 18px rgba(129,230,217,.3); animation:memory-clairvoyance-aura 1.8s ease-in-out infinite; }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision] { display:flex; animation:memory-clairvoyance-vision .7s ease-out both; }
@@ -233,7 +233,6 @@ const pageStyles = () => `
     .memory-card:disabled { opacity:1; }
     @keyframes memory-match { 50% { transform:scale(1.08); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
     @keyframes memory-hint { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.09); filter:brightness(1.55); } }
-    @keyframes memory-cpu-trace { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.3); } }
     @keyframes memory-clairvoyance-aura { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.28); } }
     @keyframes memory-clairvoyance-vision { from { opacity:0; transform:scale(.72); filter:blur(7px); } to { opacity:1; transform:scale(1); filter:blur(0); } }
     @keyframes memory-skill-target { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.045); filter:brightness(1.3); } }
@@ -344,7 +343,7 @@ const pageStyles = () => `
     @keyframes memory-skill-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.18); } }
     @media (prefers-reduced-motion: reduce) {
       .memory-card-inner { transition:none; }
-      .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-card.is-skill-target, .memory-skill-charge.is-ready, .memory-result { animation:none; }
+      .memory-card.is-matched, .memory-card.is-hint, .memory-card.is-skill-hint, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-card.is-skill-target, .memory-skill-charge.is-ready, .memory-result { animation:none; }
       .memory-coin, .memory-coin-shadow { animation-duration:.01ms; }
       .memory-coin-result { animation:none; }
       .memory-tree-skill.can-unlock { animation:none; }
@@ -667,14 +666,21 @@ export function renderMemoryGamePage() {
       progressionResult: null,
       progressionFailed: false,
       clairvoyancePercent,
-      cpuMemoryRate: Math.max(0, config.memoryRate * (1 - cpuForgetPercent / 100)),
+      cpuMemoryRate: Math.max(0, config.memoryRate
+        * (1 - cpuForgetPercent / 100)
+        * (1 - skillEffects.cpuMemoryPenaltyPercent / 100)),
       hintPercent,
       skillEffects,
       firstCardResetCharges: skillEffects.firstCardResetCharges,
       refocusCharges: skillEffects.refocusCharges,
       doubleCheckCharges: skillEffects.doubleCheckCharges,
+      knownMateHintCharges: skillEffects.knownMateHintCharges,
+      pairSearchCharges: skillEffects.pairSearchCharges,
       seenCardOrder: [],
       seenPairLabels: new Map(),
+      openingVisionIndices: new Set(),
+      treasureVisionIndices: new Set(),
+      activeSkillHintIndex: null,
     };
 
     container.innerHTML = `
@@ -707,15 +713,15 @@ export function renderMemoryGamePage() {
         </section>` : ''}
 
         ${Object.values(memoryProgress.skillRanks).some(Boolean) ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-cyan-300/15 bg-cyan-950/15 p-1.5" aria-label="発動中の神経衰弱スキル">
-          ${skillEffects.cpuRevealDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">CPU確認 +${skillEffects.cpuRevealDelayMs / 1000}秒</span>` : ''}
-          ${skillEffects.mismatchDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">残像 +${skillEffects.mismatchDelayMs / 1000}秒</span>` : ''}
-          ${skillEffects.memoryMarkCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">栞 ${skillEffects.memoryMarkCapacity}枚</span>` : ''}
+          ${skillEffects.recordedCardCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">絵柄メモ ${Number.isFinite(skillEffects.recordedCardCapacity) ? `${skillEffects.recordedCardCapacity}枚` : '全札'}</span>` : ''}
+          ${skillEffects.knownMateHintCharges ? `<span data-known-hint-status class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">ペアナビ ${Number.isFinite(skillEffects.knownMateHintCharges) ? `${skillEffects.knownMateHintCharges}回` : '無制限'}</span>` : ''}
+          ${skillEffects.knownPairGuideLimit ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">完全照合 ${Number.isFinite(skillEffects.knownPairGuideLimit) ? '1組' : '全組'}</span>` : ''}
           ${skillEffects.firstCardResetCharges ? `<span data-first-card-reset-status class="memory-skill-charge rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">仕切り直し 残り${skillEffects.firstCardResetCharges}回</span>` : ''}
           ${skillEffects.refocusCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">再集中 ${skillEffects.refocusCharges}回</span>` : ''}
           ${skillEffects.doubleCheckCharges ? '<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">見直し 1回</span>' : ''}
-          ${skillEffects.matchedOpacity < 1 ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">獲得札 ${Math.round(skillEffects.matchedOpacity * 100)}%</span>` : ''}
-          ${skillEffects.seenMarkCapacity ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">既視 ${Number.isFinite(skillEffects.seenMarkCapacity) ? `${skillEffects.seenMarkCapacity}枚` : '全札'}</span>` : ''}
-          ${skillEffects.cpuTraceDurationMs ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">足跡 ${skillEffects.cpuTraceDurationMs / 1000}秒</span>` : ''}
+          ${skillEffects.openingVisionCount ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">開幕透視 ${skillEffects.openingVisionCount}枚</span>` : ''}
+          ${skillEffects.pairSearchCharges ? `<span data-pair-search-status class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">強制サーチ ${skillEffects.pairSearchCharges}回</span>` : ''}
+          ${skillEffects.cpuMemoryPenaltyPercent ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">CPU記憶 −${skillEffects.cpuMemoryPenaltyPercent}%</span>` : ''}
         </section>` : ''}
 
         <section data-board class="mx-auto grid w-full gap-1.5" style="grid-template-columns:repeat(${config.columns},minmax(0,1fr));max-width:${config.columns >= 6 ? '520px' : config.columns === 5 ? '470px' : '400px'}" aria-label="神経衰弱のカード">
@@ -725,9 +731,6 @@ export function renderMemoryGamePage() {
                 <span class="memory-card-face flex items-center justify-center border-2 border-slate-300/70 bg-[repeating-linear-gradient(135deg,#312e81_0,#312e81_5px,#1e1b4b_5px,#1e1b4b_10px)] shadow-md">
                   <span class="absolute inset-1 rounded-md border border-white/25"></span><span class="material-symbols-outlined text-[clamp(18px,6vw,30px)] text-white/85 drop-shadow">playing_cards</span>
                   <span data-memory-mark class="absolute right-1.5 top-1.5 hidden h-5 min-w-5 items-center justify-center rounded-full border border-amber-100/70 bg-amber-500 px-1 text-[9px] font-black text-slate-950 shadow-[0_0_10px_rgba(251,191,36,.65)]" aria-hidden="true"></span>
-                  <span data-seen-mark class="absolute bottom-1.5 left-1.5 hidden h-4 w-4 items-center justify-center rounded-full border border-violet-100/60 bg-violet-500 text-white shadow-[0_0_8px_rgba(167,139,250,.55)]" aria-hidden="true">
-                    <span class="material-symbols-outlined text-[10px] leading-none">visibility</span>
-                  </span>
                   <span data-clairvoyant-vision class="absolute inset-1 hidden flex-col items-center justify-center overflow-hidden rounded-md border border-cyan-100/70 bg-cyan-950/90 p-0.5 shadow-[inset_0_0_14px_rgba(103,232,249,.6)]" aria-hidden="true">
                     <img src="${card.image}" alt="" class="min-h-0 w-full flex-1 object-contain opacity-80 drop-shadow-[0_0_5px_rgba(165,243,252,.9)]">
                     <span class="block w-full truncate rounded-sm bg-cyan-950/85 px-0.5 py-px text-center text-[clamp(7px,1.8vw,9px)] font-black leading-none text-cyan-50">${card.name}</span>
@@ -764,7 +767,10 @@ export function renderMemoryGamePage() {
       </div>
     `;
     applyExtractedCardColors(container);
-    updateMemoryMarks();
+    game.openingVisionIndices = new Set(shuffle(game.cards.map(card => card.index))
+      .slice(0, game.skillEffects.openingVisionCount));
+    game.openingVisionIndices.forEach(index => rememberForPlayer(index));
+    updateMemoryAssists();
 
     const beginFirstTurn = () => {
       if (!game || game.over) return;
@@ -859,11 +865,12 @@ export function renderMemoryGamePage() {
     playerPanel?.classList.toggle('shadow-[0_0_16px_rgba(34,211,238,.22)]', game.turn === 'player');
     cpuPanel?.classList.toggle('border-rose-300/40', game.turn === 'cpu');
     cpuPanel?.classList.toggle('bg-rose-500/10', game.turn === 'cpu');
+    updateMemoryAssists();
   };
 
   const rememberCard = (index) => {
     if (!game || game.matched.has(index)) return;
-    if (Math.random() <= game.cpuMemoryRate) {
+    if (Math.random() < game.cpuMemoryRate) {
       game.cpuMemory.set(index, game.cards[index].pairId);
     }
   };
@@ -882,35 +889,74 @@ export function renderMemoryGamePage() {
     later(() => mate?.classList.remove('is-hint'), 1500);
   };
 
-  const updateMemoryMarks = () => {
-    if (!game) return;
-    const bookmarkCapacity = game.skillEffects.memoryMarkCapacity;
-    const seenCapacity = game.skillEffects.seenMarkCapacity;
-    const bookmarked = new Set(bookmarkCapacity ? game.seenCardOrder.slice(-bookmarkCapacity) : []);
-    const seen = new Set(seenCapacity
-      ? Number.isFinite(seenCapacity) ? game.seenCardOrder.slice(-seenCapacity) : game.seenCardOrder
-      : []);
+  const knownPlayerPairs = () => {
+    if (!game) return [];
+    const seen = new Set(game.seenCardOrder);
+    const byPair = new Map();
     game.cards.forEach((card, index) => {
-      const mark = cardElement(index)?.querySelector('[data-memory-mark]');
-      const seenMark = cardElement(index)?.querySelector('[data-seen-mark]');
+      if (!seen.has(index) || game.matched.has(index)) return;
+      if (!byPair.has(card.pairId)) byPair.set(card.pairId, []);
+      byPair.get(card.pairId).push(index);
+    });
+    return [...byPair.values()].filter(indices => indices.length >= 2);
+  };
+
+  /** 習得スキルが覚えた内容を、記憶力不要の視覚情報として盤面へ反映する。 */
+  const updateMemoryAssists = () => {
+    if (!game) return;
+    const capacity = game.skillEffects.recordedCardCapacity;
+    const recorded = new Set(capacity
+      ? Number.isFinite(capacity) ? game.seenCardOrder.slice(-capacity) : game.seenCardOrder
+      : []);
+    const vision = new Set([
+      ...game.openingVisionIndices,
+      ...game.treasureVisionIndices,
+      ...recorded,
+    ]);
+    const allKnownPairs = knownPlayerPairs();
+    const guidedPairs = allKnownPairs.slice(0, game.skillEffects.knownPairGuideLimit);
+    const guidedIndices = new Set(guidedPairs.flat());
+    if (game.activeSkillHintIndex != null) guidedIndices.add(game.activeSkillHintIndex);
+
+    game.cards.forEach((card, index) => {
+      const element = cardElement(index);
+      if (!element) return;
       const isAvailable = !game.matched.has(index);
-      const showBookmark = bookmarked.has(index) && isAvailable;
-      const showSeen = seen.has(index) && isAvailable && !showBookmark;
-      if (mark) {
-        mark.textContent = showBookmark ? game.seenPairLabels.get(card.pairId) : '';
-        mark.classList.toggle('hidden', !showBookmark);
-        mark.classList.toggle('flex', showBookmark);
+      const showVision = isAvailable && vision.has(index);
+      const showGuide = isAvailable && guidedIndices.has(index);
+      element.classList.toggle('is-clairvoyant', showVision);
+      element.classList.toggle('is-skill-hint', showGuide);
+      if (!element.classList.contains('is-flipped')) {
+        element.setAttribute('aria-label', showVision
+          ? `記録済み: ${card.name}`
+          : showGuide
+            ? `ペア候補として発光中のカード ${index + 1}`
+            : `伏せられたカード ${index + 1}`);
       }
-      if (seenMark) {
-        seenMark.classList.toggle('hidden', !showSeen);
-        seenMark.classList.toggle('flex', showSeen);
+
+      const pairMark = element.querySelector('[data-memory-mark]');
+      const showPairMark = guidedIndices.has(index) && allKnownPairs.some(pair => pair.includes(index));
+      if (pairMark) {
+        pairMark.textContent = showPairMark ? game.seenPairLabels.get(card.pairId) : '';
+        pairMark.classList.toggle('hidden', !showPairMark);
+        pairMark.classList.toggle('flex', showPairMark);
       }
     });
+
+    const knownHintStatus = container.querySelector('[data-known-hint-status]');
+    if (knownHintStatus) {
+      knownHintStatus.textContent = `ペアナビ ${Number.isFinite(game.knownMateHintCharges) ? `残り${game.knownMateHintCharges}回` : '無制限'}`;
+      knownHintStatus.classList.toggle('opacity-50', game.knownMateHintCharges <= 0);
+    }
+    const searchStatus = container.querySelector('[data-pair-search-status]');
+    if (searchStatus) {
+      searchStatus.textContent = `強制サーチ 残り${game.pairSearchCharges}回`;
+      searchStatus.classList.toggle('opacity-50', game.pairSearchCharges <= 0);
+    }
   };
 
   const rememberForPlayer = (index) => {
     if (!game || game.matched.has(index)) return;
-    if (!game.skillEffects.memoryMarkCapacity && !game.skillEffects.seenMarkCapacity) return;
     const pairId = game.cards[index].pairId;
     if (!game.seenPairLabels.has(pairId)) {
       const labelIndex = game.seenPairLabels.size;
@@ -918,16 +964,17 @@ export function renderMemoryGamePage() {
     }
     game.seenCardOrder = game.seenCardOrder.filter(seenIndex => seenIndex !== index);
     game.seenCardOrder.push(index);
-    updateMemoryMarks();
+    updateMemoryAssists();
   };
 
-  const revealCard = (index, observedByPlayer = false) => {
+  const revealCard = (index) => {
     if (!game) return;
     const element = cardElement(index);
     element?.classList.add('is-flipped');
     element?.setAttribute('aria-label', game.cards[index].name);
     rememberCard(index);
-    if (observedByPlayer) rememberForPlayer(index);
+    // CPUがめくったカードもユーザーが見ているため、記憶術の記録対象にする。
+    rememberForPlayer(index);
   };
 
   const hideCards = (indices) => {
@@ -935,9 +982,10 @@ export function renderMemoryGamePage() {
       const element = cardElement(index);
       element?.classList.remove('is-flipped');
       element?.setAttribute('aria-label', element?.classList.contains('is-clairvoyant')
-        ? `透視中: ${game.cards[index].name}`
+        ? `記録済み: ${game.cards[index].name}`
         : `伏せられたカード ${index + 1}`);
     });
+    updateMemoryAssists();
   };
 
   const tryClairvoyance = (indices) => {
@@ -945,13 +993,51 @@ export function renderMemoryGamePage() {
     let revealedCount = 0;
     indices.forEach(index => {
       const element = cardElement(index);
-      if (!element || element.classList.contains('is-clairvoyant')) return;
+      if (!element || element.classList.contains('is-clairvoyant') || game.treasureVisionIndices.has(index)) return;
       if (Math.random() * 100 >= game.clairvoyancePercent) return;
-      element.classList.add('is-clairvoyant');
-      element.setAttribute('aria-label', `透視中: ${game.cards[index].name}`);
+      game.treasureVisionIndices.add(index);
+      rememberForPlayer(index);
       revealedCount += 1;
     });
+    updateMemoryAssists();
     return revealedCount;
+  };
+
+  /** 1枚目に対し、既知ペアナビを優先し、なければ強制サーチを消費する。 */
+  const trySkillMateHint = (selectedIndex) => {
+    if (!game) return false;
+    const selected = game.cards[selectedIndex];
+    const mateIndex = game.cards.findIndex((card, index) => (
+      index !== selectedIndex && !game.matched.has(index) && card.pairId === selected.pairId
+    ));
+    if (mateIndex < 0) return false;
+
+    const alreadyGuided = knownPlayerPairs()
+      .slice(0, game.skillEffects.knownPairGuideLimit)
+      .some(pair => pair.includes(selectedIndex) && pair.includes(mateIndex));
+    if (alreadyGuided) {
+      game.activeSkillHintIndex = mateIndex;
+      updateMemoryAssists();
+      setMessage('完全照合：判明済みの正解ペアが発光しています', 'emerald');
+      return true;
+    }
+
+    const mateWasSeen = game.seenCardOrder.includes(mateIndex);
+    if (mateWasSeen && game.knownMateHintCharges > 0) {
+      if (Number.isFinite(game.knownMateHintCharges)) game.knownMateHintCharges -= 1;
+      game.activeSkillHintIndex = mateIndex;
+      updateMemoryAssists();
+      setMessage(`ペアナビ発動！ 正解のカードが発光中${Number.isFinite(game.knownMateHintCharges) ? `（残り${game.knownMateHintCharges}回）` : ''}`, 'emerald');
+      return true;
+    }
+    if (game.pairSearchCharges > 0) {
+      game.pairSearchCharges -= 1;
+      game.activeSkillHintIndex = mateIndex;
+      updateMemoryAssists();
+      setMessage(`強制サーチ発動！ 正解のカードが発光中（残り${game.pairSearchCharges}回）`, 'emerald');
+      return true;
+    }
+    return false;
   };
 
   const availableIndices = (excluded = []) => {
@@ -998,11 +1084,13 @@ export function renderMemoryGamePage() {
       element?.classList.add('is-matched');
       if (element) {
         element.disabled = true;
-        element.style.opacity = String(game.skillEffects.matchedOpacity);
+        // 獲得済み札はスキルの有無にかかわらず退色し、未獲得の盤面を見やすくする。
+        element.style.opacity = '0.18';
       }
     });
     game.seenCardOrder = game.seenCardOrder.filter(index => !game.matched.has(index));
-    updateMemoryMarks();
+    game.activeSkillHintIndex = null;
+    updateMemoryAssists();
   };
 
   const claimDailyReward = async () => {
@@ -1119,7 +1207,9 @@ export function renderMemoryGamePage() {
     hideCards(indices);
     const clairvoyantCount = owner === 'player' ? tryClairvoyance(indices) : 0;
     game.selected = [];
+    game.activeSkillHintIndex = null;
     updateSkillTargets();
+    updateMemoryAssists();
     if (owner === 'player') {
       if (game.refocusCharges > 0) {
         game.refocusCharges -= 1;
@@ -1140,13 +1230,7 @@ export function renderMemoryGamePage() {
       game.turn = 'player';
       game.locked = false;
       updateScores();
-      if (game.skillEffects.cpuTraceDurationMs) {
-        indices.forEach(index => cardElement(index)?.classList.add('is-cpu-trace'));
-        setMessage('対手の足跡：CPUが外した位置を強調しています', 'amber');
-        later(() => indices.forEach(index => cardElement(index)?.classList.remove('is-cpu-trace')), game.skillEffects.cpuTraceDurationMs);
-      } else {
-        setMessage('あなたの番です。2枚めくってください');
-      }
+      setMessage('あなたの番です。2枚めくってください');
     }
   };
 
@@ -1165,8 +1249,8 @@ export function renderMemoryGamePage() {
       game.selected.push(second);
       revealCard(second);
       setMessage('CPUが2枚目をめくりました', 'rose');
-      later(() => resolvePair('cpu', [first, second]), 900 + game.skillEffects.cpuRevealDelayMs);
-    }, 650 + game.skillEffects.cpuRevealDelayMs);
+      later(() => resolvePair('cpu', [first, second]), 900);
+    }, 650);
   }
 
   const handlePlayerCard = (index) => {
@@ -1175,6 +1259,7 @@ export function renderMemoryGamePage() {
     if (game.selected.includes(index)) {
       if (game.selected.length === 1 && game.firstCardResetCharges > 0) {
         game.firstCardResetCharges -= 1;
+        game.activeSkillHintIndex = null;
         hideCards([index]);
         game.selected = [];
         updateSkillTargets();
@@ -1182,17 +1267,22 @@ export function renderMemoryGamePage() {
       }
       return;
     }
-    revealCard(index, true);
+    revealCard(index);
     game.selected.push(index);
     updateSkillTargets();
     if (game.selected.length === 1) {
-      setMessage(game.firstCardResetCharges > 0
-        ? `もう1枚選択／同じカードを押すと仕切り直し（残り${game.firstCardResetCharges}回）`
-        : 'もう1枚選んでください');
-      tryTreasureHint(index);
+      const skillHinted = trySkillMateHint(index);
+      if (!skillHinted) {
+        setMessage(game.firstCardResetCharges > 0
+          ? `もう1枚選択／同じカードを押すと仕切り直し（残り${game.firstCardResetCharges}回）`
+          : 'もう1枚選んでください');
+        tryTreasureHint(index);
+      }
       return;
     }
     game.locked = true;
+    game.activeSkillHintIndex = null;
+    updateMemoryAssists();
     const pair = [...game.selected];
     const isMatch = game.cards[pair[0]].pairId === game.cards[pair[1]].pairId;
 
@@ -1210,9 +1300,10 @@ export function renderMemoryGamePage() {
         game.selected = [pair[0]];
         game.locked = false;
         updateSkillTargets();
-      }, 550 + game.skillEffects.mismatchDelayMs);
+        trySkillMateHint(pair[0]);
+      }, 550);
     } else {
-      later(() => resolvePair('player', pair), 850 + game.skillEffects.mismatchDelayMs);
+      later(() => resolvePair('player', pair), 850);
     }
   };
 
