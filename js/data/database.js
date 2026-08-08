@@ -62,8 +62,10 @@ function _getIndexedDBError(source) {
 }
 
 function _isRecoverableConnectionError(error) {
+  const name = String(error?.name || '');
   const message = String(error?.message || error || '');
-  return /without an in-progress transaction|connection to indexed database server lost|database connection is closing/i.test(message);
+  return ['AbortError', 'InvalidStateError', 'TransactionInactiveError', 'UnknownError'].includes(name)
+    || /without an in-progress transaction|connection to indexed database server lost|database connection is closing|transaction.*inactive|transaction.*aborted/i.test(message);
 }
 
 function _waitUntilDocumentVisible() {
@@ -103,12 +105,29 @@ async function encodeCloudSnapshot(dataObj) {
 }
 
 async function decodeCloudSnapshot(base64Str) {
-  const res = await fetch(`data:application/octet-stream;base64,${base64Str}`);
-  const blob = await res.blob();
-  const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
-  const response = new Response(decompressedStream);
-  const jsonStr = await response.text();
-  return JSON.parse(jsonStr);
+  if (typeof base64Str !== 'string' || base64Str.length === 0) {
+    throw new Error('クラウドセーブデータが空です。');
+  }
+
+  try {
+    // Avoid a large data: URL here. Some mobile browsers intermittently fail
+    // to fetch multi-megabyte data URLs even though the downloaded save itself
+    // is intact.
+    const binary = atob(base64Str);
+    const bytes = new Uint8Array(binary.length);
+    for (let index = 0; index < binary.length; index += 1) {
+      bytes[index] = binary.charCodeAt(index);
+    }
+
+    const blob = new Blob([bytes], { type: 'application/gzip' });
+    const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+    const response = new Response(decompressedStream);
+    const jsonStr = await response.text();
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error('[GameDB] Could not decode cloud snapshot.', error);
+    throw new Error('クラウドセーブデータを展開できませんでした。もう一度復元をお試しください。', { cause: error });
+  }
 }
 
 function validateCloudSnapshot(data) {
@@ -655,11 +674,32 @@ class GameDatabase {
 
     const run = () => this._runWithConnectionRetry('cloud snapshot', (db) => new Promise((resolve, reject) => {
       let tx;
+      let transactionError;
+      let settled = false;
+      const fail = (error) => {
+        if (settled) return;
+        settled = true;
+        reject(error || new Error('クラウドセーブの復元に失敗しました。'));
+      };
+
       try {
         tx = db.transaction(SAVE_STORES, 'readwrite');
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error || new Error('Cloud save restore failed.'));
-        tx.onabort = () => reject(tx.error || new Error('Cloud save restore was aborted.'));
+        tx.oncomplete = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        // Wait for abort before retrying. In WebKit, starting the replacement
+        // transaction from the earlier error event can fail against the still
+        // aborting transaction.
+        tx.onerror = (event) => {
+          transactionError = _getIndexedDBError(event.target) || transactionError;
+        };
+        tx.onabort = (event) => fail(
+          transactionError
+          || _getIndexedDBError(event.target)
+          || new DOMException('クラウドセーブの復元が中断されました。', 'AbortError')
+        );
 
         for (const storeName of SAVE_STORES) tx.objectStore(storeName).clear();
         for (const entry of data.gameState) tx.objectStore('gameState').put(entry);
@@ -668,7 +708,7 @@ class GameDatabase {
         for (const item of data.inventory) tx.objectStore('inventory').put(item);
       } catch (error) {
         try { tx?.abort(); } catch (_) { /* Transaction may not have started. */ }
-        reject(error);
+        fail(error);
       }
     }));
 

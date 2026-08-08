@@ -271,8 +271,17 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
   panel.querySelector('#cloud-download').addEventListener('click', () => {
     if (!window.confirm('クラウドセーブで現在の端末内セーブを上書きします。元に戻せません。復元しますか？')) return;
     run('クラウドセーブを読み込んでいます…', async () => {
-      const cloudSave = await CloudSaveService.download();
+      const cloudSave = await CloudSaveService.download({
+        onProgress: ({ completed, total, retrying }) => {
+          if (retrying) {
+            setStatus('クラウドの更新を検出しました。最新データを読み直しています…');
+          } else if (total > 1) {
+            setStatus(`クラウドセーブを読み込んでいます… (${completed}/${total})`);
+          }
+        }
+      });
       if (!cloudSave) throw new Error('クラウドセーブがまだありません。先に保存してください。');
+      setStatus('端末のセーブデータを安全に置き換えています…');
       await GameDB.restoreCloudSnapshot(cloudSave.payload);
       recordCloudRestore(currentUser.uid, cloudSave.savedAt);
       setStatus(`${formatSavedAt(cloudSave.savedAt)} のセーブを復元しました。`, 'success');

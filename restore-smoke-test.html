@@ -1,0 +1,28 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Cloud restore smoke test</title>
+<body>RUNNING</body>
+<script type="module">
+  import { GameDB } from './js/data/database.js';
+
+  try {
+    await GameDB.open();
+    const bytes = new Uint8Array(900000);
+    crypto.getRandomValues(bytes.subarray(0, 65536));
+    for (let offset = 65536; offset < bytes.length; offset += 65536) {
+      crypto.getRandomValues(bytes.subarray(offset, Math.min(offset + 65536, bytes.length)));
+    }
+    const largeValue = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    await GameDB.setGameState('restore_smoke_test', largeValue);
+    const snapshot = await GameDB.createCloudSnapshot();
+    await GameDB.setGameState('restore_smoke_test', 'changed');
+    await GameDB.restoreCloudSnapshot(snapshot);
+    const restored = await GameDB.getGameState('restore_smoke_test');
+    if (restored !== largeValue) throw new Error('Restored value did not match snapshot.');
+    document.body.textContent = `PASS:${snapshot.length}`;
+  } catch (error) {
+    document.body.textContent = `FAIL:${error?.stack || error}`;
+  } finally {
+    GameDB.close();
+  }
+</script>

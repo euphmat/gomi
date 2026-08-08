@@ -9,6 +9,16 @@ const CHUNK_LENGTH = 700_000;
 const MAX_CHUNK_COUNT = 64;
 const MAX_PAYLOAD_LENGTH = CHUNK_LENGTH * MAX_CHUNK_COUNT;
 const CHUNK_WRITE_CONCURRENCY = 4;
+const DOWNLOAD_ATTEMPTS = 3;
+const RETRYABLE_READ_CODES = new Set([
+  'aborted',
+  'cancelled',
+  'deadline-exceeded',
+  'internal',
+  'network-request-failed',
+  'unavailable',
+  'unknown'
+]);
 
 let servicesPromise = null;
 
@@ -97,6 +107,36 @@ async function runWithConcurrency(items, task) {
         .map((item, batchIndex) => task(item, offset + batchIndex))
     );
   }
+}
+
+function getErrorCode(error) {
+  return String(error?.code || '')
+    .replace(/^firestore\//, '')
+    .replace(/^auth\//, '');
+}
+
+function isRetryableReadError(error) {
+  const message = String(error?.message || error || '');
+  return RETRYABLE_READ_CODES.has(getErrorCode(error))
+    || /network|offline|timed? out|connection|failed to fetch/i.test(message);
+}
+
+function waitBeforeRetry(attempt) {
+  return new Promise(resolve => setTimeout(resolve, 300 * (2 ** attempt)));
+}
+
+async function readDocumentWithRetry(read, attempts = DOWNLOAD_ATTEMPTS) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await read();
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableReadError(error) || attempt === attempts - 1) throw error;
+      await waitBeforeRetry(attempt);
+    }
+  }
+  throw lastError;
 }
 
 function isChunkedManifest(data) {
@@ -295,56 +335,74 @@ export const CloudSaveService = {
     };
   },
 
-  async download() {
+  async download({ onProgress } = {}) {
     const { auth, db, firestoreSdk } = await loadServices();
     const user = requireVerifiedUser(auth);
-    const snapshot = await firestoreSdk.getDoc(
-      firestoreSdk.doc(db, CLOUD_SAVE_COLLECTION, user.uid)
-    );
+    const saveRef = firestoreSdk.doc(db, CLOUD_SAVE_COLLECTION, user.uid);
 
-    if (!snapshot.exists()) return null;
-    const data = snapshot.data();
+    // A concurrent upload can replace the manifest and remove the generation
+    // that this download started reading. Re-read the latest manifest and retry
+    // the complete download so restore remains reliable across devices.
+    for (let downloadAttempt = 0; downloadAttempt < DOWNLOAD_ATTEMPTS; downloadAttempt += 1) {
+      try {
+        const snapshot = await readDocumentWithRetry(() => firestoreSdk.getDoc(saveRef));
 
-    if (data.schemaVersion === LEGACY_SCHEMA_VERSION && typeof data.payload === 'string') {
-      if (data.payload.length > MAX_LEGACY_PAYLOAD_LENGTH) {
-        throw new Error('クラウドセーブのサイズが上限を超えています。');
-      }
-      return {
-        payload: data.payload,
-        savedAt: data.savedAt,
-        appVersion: data.appVersion
-      };
-    }
+        if (!snapshot.exists()) return null;
+        const data = snapshot.data();
 
-    if (!isChunkedManifest(data)) {
-      throw new Error('クラウドセーブの形式に対応していません。');
-    }
-
-    const indexes = Array.from({ length: data.chunkCount }, (_, index) => index);
-    const chunks = [];
-    for (let offset = 0; offset < indexes.length; offset += CHUNK_WRITE_CONCURRENCY) {
-      const batch = indexes.slice(offset, offset + CHUNK_WRITE_CONCURRENCY);
-      chunks.push(...await Promise.all(batch.map(async index => {
-        const chunkSnapshot = await firestoreSdk.getDoc(
-          getChunkRef(firestoreSdk, db, user.uid, data.generation, index)
-        );
-        const chunk = chunkSnapshot.exists() ? chunkSnapshot.data() : null;
-        if (!chunk || chunk.generation !== data.generation || chunk.index !== index
-            || typeof chunk.data !== 'string' || chunk.data.length > CHUNK_LENGTH) {
-          throw new Error('クラウドセーブの一部が見つからないか、破損しています。');
+        if (data.schemaVersion === LEGACY_SCHEMA_VERSION && typeof data.payload === 'string') {
+          if (data.payload.length === 0 || data.payload.length > MAX_LEGACY_PAYLOAD_LENGTH) {
+            throw new Error('クラウドセーブのサイズが上限を超えています。');
+          }
+          onProgress?.({ completed: 1, total: 1 });
+          return {
+            payload: data.payload,
+            savedAt: data.savedAt,
+            appVersion: data.appVersion
+          };
         }
-        return chunk.data;
-      })));
-    }
-    const payload = chunks.join('');
-    if (payload.length !== data.payloadLength || await createChecksum(payload) !== data.checksum) {
-      throw new Error('クラウドセーブの整合性を確認できませんでした。');
+
+        if (!isChunkedManifest(data)) {
+          throw new Error('クラウドセーブの形式に対応していません。');
+        }
+
+        const indexes = Array.from({ length: data.chunkCount }, (_, index) => index);
+        const chunks = [];
+        for (let offset = 0; offset < indexes.length; offset += CHUNK_WRITE_CONCURRENCY) {
+          const batch = indexes.slice(offset, offset + CHUNK_WRITE_CONCURRENCY);
+          chunks.push(...await Promise.all(batch.map(async index => {
+            const chunkSnapshot = await readDocumentWithRetry(() => firestoreSdk.getDoc(
+              getChunkRef(firestoreSdk, db, user.uid, data.generation, index)
+            ));
+            const chunk = chunkSnapshot.exists() ? chunkSnapshot.data() : null;
+            if (!chunk || chunk.generation !== data.generation || chunk.index !== index
+                || typeof chunk.data !== 'string' || chunk.data.length === 0 || chunk.data.length > CHUNK_LENGTH) {
+              const error = new Error('クラウドセーブの読み込み中に新しい保存が行われました。');
+              error.code = 'cloud-save/generation-changed';
+              throw error;
+            }
+            return chunk.data;
+          })));
+          onProgress?.({ completed: Math.min(offset + batch.length, indexes.length), total: indexes.length });
+        }
+        const payload = chunks.join('');
+        if (payload.length !== data.payloadLength || await createChecksum(payload) !== data.checksum) {
+          throw new Error('クラウドセーブの整合性を確認できませんでした。');
+        }
+
+        return {
+          payload,
+          savedAt: data.savedAt,
+          appVersion: data.appVersion
+        };
+      } catch (error) {
+        const generationChanged = error?.code === 'cloud-save/generation-changed';
+        if (!generationChanged || downloadAttempt === DOWNLOAD_ATTEMPTS - 1) throw error;
+        onProgress?.({ completed: 0, total: 0, retrying: true });
+        await waitBeforeRetry(downloadAttempt);
+      }
     }
 
-    return {
-      payload,
-      savedAt: data.savedAt,
-      appVersion: data.appVersion
-    };
+    throw new Error('クラウドセーブを読み込めませんでした。');
   }
 };
