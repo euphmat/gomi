@@ -12,6 +12,7 @@ import { paladin } from './paladin.js';
 import { poseidon } from './poseidon.js';
 import { pyromancer } from './pyromancer.js';
 import { assassin } from './assassin.js';
+import { mana_conductor } from './mana_conductor.js';
 
 export const JOB_STAT_GROWTH = {
   // HP/MP are weighted at 25% when budgeting growth because equipment grants
@@ -32,7 +33,8 @@ export const JOB_STAT_GROWTH = {
   [paladin.id]:      { hp: [3, 4], mp: [2, 3], atk: [0, 2], def: [1, 3], matk: [0, 2], mdef: [2, 3], spd: [0, 1] },
   [poseidon.id]:     { hp: [2, 4], mp: [3, 4], atk: [0, 1], def: [1, 2], matk: [2, 3], mdef: [1, 3], spd: [0, 1] },
   [pyromancer.id]:   { hp: [1, 3], mp: [3, 5], atk: [0, 0], def: [0, 1], matk: [3, 4], mdef: [1, 2], spd: [1, 2] },
-  [assassin.id]:     { hp: [1, 2], mp: [1, 3], atk: [2, 4], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [2, 3] }
+  [assassin.id]:     { hp: [1, 2], mp: [1, 3], atk: [2, 4], def: [0, 1], matk: [0, 1], mdef: [0, 1], spd: [2, 3] },
+  [mana_conductor.id]: { hp: [1, 3], mp: [3, 5], atk: [0, 1], def: [0, 2], matk: [2, 3], mdef: [1, 2], spd: [1, 2] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -52,7 +54,8 @@ export const JOB_STAT_MULTIPLIER = {
   [paladin.id]:      { hp: 1.75, mp: 1.20, atk: 0.90, def: 1.35, matk: 0.90, mdef: 1.50, spd: 0.70 },
   [poseidon.id]:     { hp: 1.20, mp: 1.55, atk: 0.65, def: 1.05, matk: 1.65, mdef: 1.40, spd: 0.80 },
   [pyromancer.id]:   { hp: 0.80, mp: 1.65, atk: 0.30, def: 0.70, matk: 1.85, mdef: 1.00, spd: 0.90 },
-  [assassin.id]:     { hp: 0.85, mp: 1.00, atk: 1.50, def: 0.75, matk: 0.45, mdef: 0.75, spd: 1.45 }
+  [assassin.id]:     { hp: 0.85, mp: 1.00, atk: 1.50, def: 0.75, matk: 0.45, mdef: 0.75, spd: 1.45 },
+  [mana_conductor.id]: { hp: 0.90, mp: 1.75, atk: 0.35, def: 0.75, matk: 1.50, mdef: 1.20, spd: 1.05 }
 };
 
 export const JOBS = {
@@ -69,5 +72,6 @@ export const JOBS = {
   [paladin.id]: { ...paladin, statGrowth: JOB_STAT_GROWTH[paladin.id], statMultiplier: JOB_STAT_MULTIPLIER[paladin.id] },
   [poseidon.id]: { ...poseidon, statGrowth: JOB_STAT_GROWTH[poseidon.id], statMultiplier: JOB_STAT_MULTIPLIER[poseidon.id] },
   [pyromancer.id]: { ...pyromancer, statGrowth: JOB_STAT_GROWTH[pyromancer.id], statMultiplier: JOB_STAT_MULTIPLIER[pyromancer.id] },
-  [assassin.id]: { ...assassin, statGrowth: JOB_STAT_GROWTH[assassin.id], statMultiplier: JOB_STAT_MULTIPLIER[assassin.id] }
+  [assassin.id]: { ...assassin, statGrowth: JOB_STAT_GROWTH[assassin.id], statMultiplier: JOB_STAT_MULTIPLIER[assassin.id] },
+  [mana_conductor.id]: { ...mana_conductor, statGrowth: JOB_STAT_GROWTH[mana_conductor.id], statMultiplier: JOB_STAT_MULTIPLIER[mana_conductor.id] }
 };

@@ -124,7 +124,6 @@ class BattleManager {
     this._tabInteractionTimer = null;
     this._battleReady = false;
     this._pendingTabRender = false;
-    this.hasUpgradeableDungeonMedal = false;
 
     // Register lifecycle cleanup before any asynchronous initialization starts.
     // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
@@ -331,7 +330,6 @@ class BattleManager {
     this.dungeonCompanionMonsterIds = this.dungeonUniqueMonsterIds.filter(monsterId =>
       companionsInDungeon[monsterId] || companionsInDungeon[`${monsterId}_legendary`]
     );
-    this.updateDungeonMedalAvailability(allInventory, this.currentGold);
     const selectableMonsterIds = this.getSubTabMonsterIds();
     if (!this.subTabSelectedMonsterId || !selectableMonsterIds.includes(this.subTabSelectedMonsterId)) {
       this.subTabSelectedMonsterId = selectableMonsterIds[0];
@@ -889,17 +887,14 @@ class BattleManager {
     ];
 
     tabs.forEach(({btn, id, icon, palette, label}) => {
-      const isUpgradeReady = id === 'medal' && this.hasUpgradeableDungeonMedal;
-      const upgradeReadyClass = isUpgradeReady ? ' battle-tab--upgrade-ready' : '';
       btn.style.setProperty('--tab-color', `var(--battle-palette-${palette})`);
       btn.setAttribute('aria-selected', String(this.currentTab === id));
-      btn.setAttribute('aria-label', isUpgradeReady ? `${label}（アップグレード可能）` : label);
-      btn.toggleAttribute('data-upgrade-ready', isUpgradeReady);
+      btn.setAttribute('aria-label', label);
       if (this.currentTab === id) {
-        btn.className = `battle-tab battle-tab--active${upgradeReadyClass} flex-1 min-w-0 px-0.5 border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold relative z-10 flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
+        btn.className = `battle-tab battle-tab--active flex-1 min-w-0 px-0.5 border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold relative z-10 flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
         btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
       } else {
-        btn.className = `battle-tab${upgradeReadyClass} flex-1 min-w-0 px-0.5 backdrop-blur-sm border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
+        btn.className = `battle-tab flex-1 min-w-0 px-0.5 backdrop-blur-sm border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
         btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
       }
     });
@@ -937,17 +932,10 @@ class BattleManager {
 
       medalAvailability[monsterId] = {
         isMaxRank,
-        canAcquireOrUpgrade,
-        canUpgrade: currentRankIndex >= 0 && canAcquireOrUpgrade
+        canAcquireOrUpgrade
       };
     });
 
-    return medalAvailability;
-  }
-
-  updateDungeonMedalAvailability(allInventory = [], gold = this.currentGold) {
-    const medalAvailability = this.getDungeonMedalAvailability(allInventory, gold);
-    this.hasUpgradeableDungeonMedal = Object.values(medalAvailability).some(status => status.canUpgrade);
     return medalAvailability;
   }
 
@@ -1246,7 +1234,7 @@ class BattleManager {
     if (this.currentTab !== 'medal' || !this.container.isConnected) return;
 
     this.currentGold = latestGold || 0;
-    const medalAvailability = this.updateDungeonMedalAvailability(allInventory, this.currentGold);
+    const medalAvailability = this.getDungeonMedalAvailability(allInventory, this.currentGold);
     this.updateTabStyles();
 
     const body = this.renderSubTabsUI(medalAvailability);
@@ -1412,54 +1400,6 @@ export function renderBattlePage() {
       .battle-tab .material-symbols-outlined {
         color: rgb(255 255 255 / .88);
         filter: drop-shadow(0 0 6px rgb(var(--tab-color) / .8));
-      }
-      @keyframes battle-medal-ready-glow {
-        0%, 100% {
-          color: rgb(255 251 235);
-          background-color: rgb(120 53 15);
-          border-color: rgb(251 191 36 / .9);
-          box-shadow: 0 -4px 14px rgb(245 158 11 / .7), 0 0 8px rgb(250 204 21 / .35), inset 0 0 10px rgb(251 191 36 / .18);
-          filter: brightness(1.05);
-        }
-        50% {
-          color: white;
-          background-color: rgb(245 158 11);
-          border-color: rgb(254 240 138);
-          box-shadow: 0 -7px 30px rgb(250 204 21), 0 0 18px rgb(245 158 11 / .95), inset 0 0 14px rgb(255 255 255 / .42);
-          filter: brightness(1.35);
-        }
-      }
-      .battle-tab--upgrade-ready {
-        position: relative;
-        color: rgb(255 251 235);
-        border-color: rgb(251 191 36 / .9);
-        background-color: rgb(217 119 6);
-        background-image: none;
-        box-shadow: 0 -6px 24px rgb(250 204 21 / .9), 0 0 14px rgb(245 158 11 / .75), inset 0 0 12px rgb(255 255 255 / .3);
-        text-shadow: 0 1px 3px rgb(0 0 0 / .9), 0 0 7px rgb(255 255 255 / .55);
-        animation: battle-medal-ready-glow .9s ease-in-out infinite;
-      }
-      .battle-tab--upgrade-ready::after {
-        content: '';
-        position: absolute;
-        right: 4px;
-        top: 3px;
-        width: 5px;
-        height: 5px;
-        border-radius: 999px;
-        background: rgb(250 204 21);
-        box-shadow: 0 0 7px rgb(250 204 21);
-      }
-      .battle-tab--upgrade-ready .material-symbols-outlined {
-        color: rgb(254 240 138);
-        filter: drop-shadow(0 0 8px rgb(255 255 255)) drop-shadow(0 0 6px rgb(250 204 21));
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .battle-tab--upgrade-ready {
-          animation: none;
-          background-color: rgb(245 158 11);
-          box-shadow: 0 -6px 24px rgb(250 204 21 / .9), 0 0 14px rgb(245 158 11 / .75), inset 0 0 12px rgb(255 255 255 / .3);
-        }
       }
       #tab-content {
         color: white;

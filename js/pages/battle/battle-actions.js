@@ -25,6 +25,9 @@ export const actionMethods = {
     entity._ailmentResistBuffAmount = 0;
     entity._barrierHp = 0;
     entity._barrierTurns = 0;
+    entity._manaFlowTurns = 0;
+    entity._manaFlowAmount = 0;
+    entity._conductorHarmony = 0;
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -36,6 +39,35 @@ export const actionMethods = {
       if (entity.stats && entity.originalDef) {
         entity.stats.def = entity.originalDef;
       }
+    }
+  },
+
+  applyManaOrchestra(caster) {
+    if (!caster?.mp || caster.isDead) return;
+    const orchestra = this._findSkill(caster, 'mana_orchestra');
+    if (!orchestra?.levelConfig) return;
+
+    const isCurrentJob = caster.jobId === 'mana_conductor';
+    const targets = isCurrentJob ? this.party.filter(member => !member.isDead && member.mp) : [caster];
+    const amount = isCurrentJob
+      ? orchestra.levelConfig.recoverMp
+      : orchestra.levelConfig.inheritedRecoverMp;
+    let applied = false;
+
+    targets.forEach(target => {
+      const maxMp = target.stats?.mp || target.mp.max;
+      const before = target.mp.current;
+      target.mp.current = Math.min(maxMp, before + amount);
+      const restored = target.mp.current - before;
+      if (restored <= 0) return;
+      applied = true;
+      this._scheduleBattleTimeout(() => {
+        this.showDamage(target.elementId, `+${restored} MP`, 'text-cyan-300');
+      }, this.speedMult >= 5 ? 0 : 450 / this.speedMult);
+    });
+
+    if (applied) {
+      this.showActionName(caster.elementId, 'マナオーケストラ', 'text-cyan-300', 'border-cyan-500/50');
     }
   },
 
@@ -172,6 +204,8 @@ export const actionMethods = {
         this.showActionName(caster.elementId, 'エナジャイジング', 'text-orange-300', 'border-orange-500/50');
       }
     }
+
+    this.applyManaOrchestra(caster);
 
     caster.atb = 0;
     this.activeCharacter = null;
@@ -847,6 +881,8 @@ export const actionMethods = {
               this.showActionName(attacker.elementId, 'いやしの歌', 'text-pink-300', 'border-pink-500/50');
             }
           }
+
+          this.applyManaOrchestra(attacker);
         }
       } else {
         this.activeEnemy = null;
@@ -967,6 +1003,18 @@ export const actionMethods = {
       }
       entity._regenTurns--;
       if (entity._regenTurns <= 0) entity._regenHp = 0;
+    }
+
+    if (entity._manaFlowTurns && entity._manaFlowTurns > 0) {
+      if (entity.mp && !entity.isDead) {
+        const maxMp = entity.stats?.mp || entity.mp.max;
+        const before = entity.mp.current;
+        entity.mp.current = Math.min(maxMp, before + (entity._manaFlowAmount || 0));
+        const restored = entity.mp.current - before;
+        if (restored > 0) this.showDamage(entity.elementId, `+${restored} MP`, 'text-cyan-300');
+      }
+      entity._manaFlowTurns--;
+      if (entity._manaFlowTurns <= 0) entity._manaFlowAmount = 0;
     }
   },
 

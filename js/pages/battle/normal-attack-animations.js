@@ -24,7 +24,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   paladin:      { kind: 'holy_blade',  primary: '#ffffff', secondary: '#fbbf24', particles: 6 },
   poseidon:     { kind: 'trident',     primary: '#a5f3fc', secondary: '#0284c7', particles: 6 },
   pyromancer:   { kind: 'fireball',    primary: '#fef3c7', secondary: '#f97316', particles: 6 },
-  assassin:     { kind: 'twin_blade',  primary: '#e9d5ff', secondary: '#8b5cf6', particles: 5 }
+  assassin:     { kind: 'twin_blade',  primary: '#e9d5ff', secondary: '#8b5cf6', particles: 5 },
+  mana_conductor: { kind: 'conductor', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -218,6 +219,12 @@ export function playNormalAttackAnimation(attacker, defender) {
     case 'melody':
       addProjectile(layer, origin, target, profile, travelDuration, 'orb');
       addGlyph(layer, target, profile, impactDuration, '♫');
+      break;
+    case 'conductor':
+      addProjectile(layer, origin, target, profile, travelDuration, 'orb');
+      addGlyph(layer, target, profile, impactDuration, '♪', impactDelay * .1);
+      addGlyph(layer, target, { ...profile, primary: '#ffffff' }, impactDuration, '✦', impactDelay * .42);
+      addImpactRing(layer, target, profile, impactDuration, '50%', impactDelay);
       break;
     case 'dark_blade':
       addSlash(layer, target, profile, impactDuration * 1.15, -48, impactDelay * .25, 132);

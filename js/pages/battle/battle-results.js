@@ -641,7 +641,8 @@ export const resultMethods = {
       '_barrierTurns', '_barrierHp',
       'atkDebuffTurns', 'atkDebuffPercent',
       'defDebuffTurns', 'defDebuffPercent',
-      '_regenTurns', '_regenHp'
+      '_regenTurns', '_regenHp',
+      '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony'
     ];
 
     for (const p of this.party) {

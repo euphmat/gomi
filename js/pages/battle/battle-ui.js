@@ -38,6 +38,10 @@ export function getActiveStateIconsHTML(entity) {
     icons.push({ icon: 'spa', color: 'text-green-400', name: 'サンクチュアリ' });
   }
 
+  if (entity._manaFlowTurns && entity._manaFlowTurns > 0) {
+    icons.push({ icon: 'all_inclusive', color: 'text-cyan-300', name: 'マナフロー' });
+  }
+
   if ((entity._barrierHp && entity._barrierHp > 0) || (entity._mdefBuffTurns && entity._mdefBuffTurns > 0)) {
     icons.push({ icon: 'verified_user', color: 'text-amber-300', name: 'ディバインシールド' });
   }
