@@ -113,8 +113,17 @@ window.openDungeonFloorModal = async (dungeonId) => {
     const isCurrentFloor = currentDungeonId === dungeon.id && Number(currentFloorLevel) === Number(floor.level) && !isDungeonCleared;
     const isBossFloor = floorIndex === dungeon.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
-    const isDenseMonsterFloor = monsterIds.length > 2;
-    const monstersHtml = isFloorCleared ? monsterIds.map(monsterId => {
+    const floorCollection = monsterIds.reduce((summary, monsterId) => {
+      const owned = getOwnedMonsterState(ranchData, monsterId);
+      if (owned.companion) summary.companions += 1;
+      if (owned.legendary) summary.legendary += 1;
+      if (Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId)) summary.medals += 1;
+      return summary;
+    }, { companions: 0, legendary: 0, medals: 0 });
+    const monsterNames = monsterIds.map(monsterId => MONSTERS.find(item => item.id === monsterId)?.name || monsterId);
+    const visibleMonsterIds = monsterIds.slice(0, 3);
+    const hiddenMonsterCount = monsterIds.length - visibleMonsterIds.length;
+    const monstersHtml = isFloorCleared ? visibleMonsterIds.map(monsterId => {
       const monster = MONSTERS.find(item => item.id === monsterId) || {
         id: monsterId,
         name: monsterId,
@@ -125,50 +134,50 @@ window.openDungeonFloorModal = async (dungeonId) => {
       const medalRankIndex = Number(playerMedals?.[monsterId]);
       const medal = hasMedal && Number.isInteger(medalRankIndex) ? MEDAL_RANKS[medalRankIndex] : null;
       return `
-        <div class="flex min-w-0 items-center rounded-lg border border-white/10 bg-black/30 ${isDenseMonsterFloor ? 'w-8 shrink-0 justify-center p-px' : 'flex-1 gap-1.5 py-1 pl-1 pr-1.5'}" title="${monster.name}｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${medal?.name || '未取得'}" aria-label="${monster.name}。仲間${owned.companion ? '獲得済み' : '未獲得'}、伝説${owned.legendary ? '獲得済み' : '未獲得'}、メダル${medal?.name || '未取得'}">
-          <div class="relative ${isDenseMonsterFloor ? 'h-7 w-7' : 'h-8 w-8'} shrink-0 overflow-hidden rounded-md border ${owned.companion ? 'border-emerald-400/45' : 'border-white/10'} bg-slate-950/85">
+        <div class="w-8 shrink-0" title="${monster.name}｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${medal?.name || '未取得'}" aria-label="${monster.name}。仲間${owned.companion ? '獲得済み' : '未獲得'}、伝説${owned.legendary ? '獲得済み' : '未獲得'}、メダル${medal?.name || '未取得'}">
+          <div class="h-8 w-8 overflow-hidden rounded-lg border border-white/15 bg-slate-950/90 p-px">
             <img src="${monster.image}" alt="${monster.name}" class="h-full w-full object-contain p-px" loading="lazy">
-            ${owned.legendary ? '<span class="material-symbols-outlined absolute right-[-1px] top-[-1px] text-[11px] text-amber-300 drop-shadow-[0_0_4px_#f59e0b]" style="font-variation-settings:\'FILL\' 1">auto_awesome</span>' : ''}
-            ${isDenseMonsterFloor && medal ? '<span class="material-symbols-outlined absolute bottom-[-1px] left-[-1px] text-[10px] text-cyan-300 drop-shadow-[0_0_4px_#0891b2]">military_tech</span>' : ''}
           </div>
-          <div class="${isDenseMonsterFloor ? 'hidden' : 'min-w-0 flex-1'}">
-            <div class="truncate text-[9px] font-black text-slate-100 sm:text-[10px]">${monster.name}</div>
-            <div class="mt-0.5 flex items-center gap-1" aria-label="収集状況">
-              <span class="material-symbols-outlined text-[11px] ${owned.companion ? 'text-emerald-300' : 'text-slate-700'}" title="仲間">pets</span>
-              <span class="material-symbols-outlined text-[11px] ${owned.legendary ? 'text-amber-300' : 'text-slate-700'}" title="伝説">auto_awesome</span>
-              <span class="material-symbols-outlined text-[11px] ${medal ? 'text-cyan-300' : 'text-slate-700'}" title="${medal?.name || 'メダル未取得'}">military_tech</span>
-            </div>
+          <div class="mt-1 grid grid-cols-3 gap-0.5" aria-hidden="true">
+            <span class="h-1 rounded-full ${owned.companion ? 'bg-emerald-300' : 'bg-slate-700'}"></span>
+            <span class="h-1 rounded-full ${owned.legendary ? 'bg-amber-300' : 'bg-slate-700'}"></span>
+            <span class="h-1 rounded-full ${medal ? 'bg-cyan-300' : 'bg-slate-700'}"></span>
           </div>
         </div>`;
     }).join('') : '';
 
     return `
-      <section class="relative flex min-h-[66px] items-center gap-2 rounded-xl border px-2 py-1.5 ${isFloorCleared ? 'border-white/15 bg-slate-900/75' : isCurrentFloor ? 'border-cyan-400/35 bg-cyan-950/20' : 'border-slate-800 bg-slate-950/65'}">
-        ${floorIndex < dungeon.floors.length - 1 ? `<div class="pointer-events-none absolute left-[27px] top-[52px] z-0 h-[24px] w-px ${isFloorCleared ? 'bg-gradient-to-b from-emerald-400/70 to-slate-600/40' : 'bg-slate-800'}"></div>` : ''}
-        <div class="relative z-[1] flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl border ${isFloorCleared ? 'border-emerald-400/45 bg-emerald-500/15 text-emerald-200' : isCurrentFloor ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-200' : 'border-slate-700 bg-slate-900 text-slate-500'}">
-          <span class="text-[11px] font-black leading-none tabular-nums">${String(floor.level).padStart(2, '0')}</span>
-          <span class="mt-0.5 text-[7px] font-black leading-none tracking-wider">FLOOR</span>
-          ${isBossFloor ? '<span class="material-symbols-outlined absolute -right-1.5 -top-1.5 rounded-full border border-rose-400/40 bg-rose-950 p-0.5 text-[10px] text-rose-300" title="最深部">skull</span>' : ''}
-          ${isFloorCleared ? '<span class="material-symbols-outlined absolute -bottom-1 -right-1 rounded-full bg-emerald-400 text-[11px] text-slate-950" style="font-variation-settings:\'FILL\' 1">check_circle</span>' : ''}
+      <section class="relative grid min-h-[64px] grid-cols-[42px_minmax(0,1fr)_44px] items-center gap-2 overflow-hidden rounded-xl border p-2 ${isFloorCleared ? 'border-white/15 bg-slate-900/70' : isCurrentFloor ? 'border-cyan-400/35 bg-cyan-950/20' : 'border-slate-800 bg-slate-950/65'}">
+        <div class="absolute inset-y-0 left-0 w-0.5 ${isFloorCleared ? 'bg-emerald-400' : isCurrentFloor ? 'bg-cyan-300' : 'bg-slate-800'}"></div>
+        <div class="flex h-11 w-[42px] shrink-0 flex-col items-center justify-center rounded-lg border ${isFloorCleared ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-200' : isCurrentFloor ? 'border-cyan-300/40 bg-cyan-400/10 text-cyan-200' : 'border-slate-700 bg-slate-900 text-slate-500'}">
+          <span class="material-symbols-outlined text-[13px]">${isBossFloor ? 'skull' : 'layers'}</span>
+          <span class="text-[10px] font-black leading-none tabular-nums">${String(floor.level).padStart(2, '0')}F</span>
         </div>
-        <div class="min-w-0 flex-1">
-          <div class="mb-1 flex min-w-0 items-center gap-1.5">
-            <span class="truncate text-[9px] font-black ${isFloorCleared ? 'text-white' : isCurrentFloor ? 'text-cyan-200' : 'text-slate-500'}">
-              ${isBossFloor ? '最深部' : `${floor.level}階`} · ${isFloorCleared ? '探索済み' : isCurrentFloor ? '現在地' : '未探索'}
-            </span>
+        <div class="min-w-0 self-stretch">
+          <div class="flex h-5 min-w-0 items-center gap-1.5">
+            <span class="truncate text-[9px] font-black ${isFloorCleared ? 'text-slate-100' : isCurrentFloor ? 'text-cyan-200' : 'text-slate-500'}">${isBossFloor ? '最深部' : `${floor.level}階`} · ${isFloorCleared ? '探索済み' : isCurrentFloor ? '現在地' : '未探索'}</span>
             ${isCurrentFloor ? '<span class="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-1.5 py-0.5 text-[7px] font-black text-cyan-300">NOW</span>' : ''}
-            ${isFloorCleared ? `<span class="ml-auto shrink-0 text-[8px] font-bold text-slate-500">敵 ${monsterIds.length}種</span>` : ''}
+            ${isFloorCleared ? `
+              <div class="ml-auto flex shrink-0 items-center gap-1.5 text-[8px] font-black tabular-nums text-slate-400" aria-label="この階層の収集状況">
+                <span class="text-slate-500">敵${monsterIds.length}</span>
+                <span class="flex items-center gap-0.5" title="仲間 ${floorCollection.companions}/${monsterIds.length}"><span class="material-symbols-outlined text-[11px] text-emerald-300">pets</span>${floorCollection.companions}</span>
+                <span class="flex items-center gap-0.5" title="伝説 ${floorCollection.legendary}/${monsterIds.length}"><span class="material-symbols-outlined text-[11px] text-amber-300">auto_awesome</span>${floorCollection.legendary}</span>
+                <span class="flex items-center gap-0.5" title="メダル ${floorCollection.medals}/${monsterIds.length}"><span class="material-symbols-outlined text-[11px] text-cyan-300">military_tech</span>${floorCollection.medals}</span>
+              </div>` : ''}
           </div>
           ${isFloorCleared
-            ? `<div class="flex min-w-0 ${isDenseMonsterFloor ? 'gap-1' : 'gap-1.5'}">${monstersHtml || '<p class="py-2 text-[9px] text-slate-500">出現モンスターなし</p>'}</div>`
-            : `<div class="flex h-9 items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
+            ? `<div class="mt-1 flex min-w-0 items-center gap-1.5">
+                <div class="flex shrink-0 items-start gap-1">${monstersHtml}${hiddenMonsterCount > 0 ? `<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-900/80 text-[8px] font-black text-slate-400" title="ほか${hiddenMonsterCount}種">+${hiddenMonsterCount}</div>` : ''}</div>
+                <span class="min-w-0 flex-1 truncate text-[8px] font-bold text-slate-400">${monsterNames.join(' / ') || '出現モンスターなし'}</span>
+              </div>`
+            : `<div class="mt-1 flex h-8 items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
         </div>
         <button onclick="window.enterDungeonFloor('${dungeon.id}', ${Number(floor.level)})"
                 ${isDungeonCleared ? '' : 'disabled'}
                 aria-label="${dungeon.name} ${floor.level}階へ潜入"
                 title="${isDungeonCleared ? `${floor.level}階へ潜入` : '踏破後に階層選択が解放されます'}"
-                class="flex h-11 w-12 shrink-0 flex-col items-center justify-center rounded-xl border text-[7px] font-black transition-all ${isDungeonCleared ? 'border-cyan-300/45 bg-cyan-500/15 text-cyan-200 active:scale-95 active:bg-cyan-500/30' : 'border-slate-800 bg-slate-900/70 text-slate-600'} sm:w-14">
-          <span class="material-symbols-outlined text-base">${isDungeonCleared ? 'login' : 'lock'}</span>${isDungeonCleared ? '潜入' : '踏破後'}
+                class="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg border text-[7px] font-black transition-all ${isDungeonCleared ? 'border-cyan-300/45 bg-cyan-500/10 text-cyan-200 active:scale-95 active:bg-cyan-500/25' : 'border-slate-800 bg-slate-900/60 text-slate-600'}">
+          <span class="material-symbols-outlined text-base">${isDungeonCleared ? 'login' : 'lock'}</span>${isDungeonCleared ? 'GO' : 'LOCK'}
         </button>
       </section>`;
   }).join('') : `
@@ -229,10 +238,10 @@ window.openDungeonFloorModal = async (dungeonId) => {
           </div>
         </div>
         <div class="mt-2 flex items-center gap-2 text-[7px] font-bold text-slate-500">
-          <span class="mr-auto flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-white/60"></span>色付き＝取得済み</span>
-          <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-xs text-emerald-300">pets</span>仲間</span>
-          <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-xs text-amber-300">auto_awesome</span>伝説</span>
-          <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-xs text-cyan-300">military_tech</span>メダル</span>
+          <span class="mr-auto text-slate-600">画像下の状態バー</span>
+          <span class="flex items-center gap-1"><span class="h-1 w-3 rounded-full bg-emerald-300"></span>仲間</span>
+          <span class="flex items-center gap-1"><span class="h-1 w-3 rounded-full bg-amber-300"></span>伝説</span>
+          <span class="flex items-center gap-1"><span class="h-1 w-3 rounded-full bg-cyan-300"></span>メダル</span>
         </div>
       </header>
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
