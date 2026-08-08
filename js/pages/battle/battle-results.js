@@ -18,6 +18,7 @@ import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-mana
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
+import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -105,7 +106,7 @@ export const resultMethods = {
     if (exp > 0 || jp > 0) {
       for (const p of this.party) {
         if (!p.isDead) {
-          if (!p.exp) p.exp = { current: 0, max: 100 };
+          normalizeBaseExpProgress(p);
           if (!p.jp) p.jp = { current: 0, max: 100 };
           p.exp.current += exp;
           p.jp.current += jp;
@@ -117,12 +118,11 @@ export const resultMethods = {
           const oldMaxMp = p.stats ? p.stats.mp : (p.mp.max || 0);
 
           // Level Up Logic
-          if (!p.exp.max || p.exp.max <= 0) p.exp.max = 10;
           let loopGuardExp = 0;
           while (p.exp.current >= p.exp.max && loopGuardExp++ < 1000) {
             p.exp.current -= p.exp.max;
-            p.exp.max = Math.max(p.exp.max + 1, Math.floor(p.exp.max * 1.2));
             p.level = (p.level || 1) + 1;
+            p.exp.max = getBaseExpToNext(p.level);
             
             const jobGrowth = JOBS[p.jobId]?.statGrowth;
             if (jobGrowth) {

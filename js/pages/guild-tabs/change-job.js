@@ -4,6 +4,7 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { JOBS } from '../../jobs/index.js';
 import { formatNumber } from '../../utils/format.js';
 import { calculateRebirthCost } from '../../utils/rebirth-cost.js';
+import { getBaseExpToNext } from '../../data/level-progression.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
@@ -228,7 +229,7 @@ export function renderChangeJobTab() {
     char.rebirthBonus.spd += Math.floor(oldBase.spd * 0.1);
 
     char.level = 1;
-    char.exp = { current: 0, max: 100 };
+    char.exp = { current: 0, max: getBaseExpToNext(1) };
     char.baseStats = { atk: 1, def: 1, matk: 1, mdef: 1, spd: 1 };
     char.hp.max = 10;
     char.hp.current = 10 + char.rebirthBonus.hp;

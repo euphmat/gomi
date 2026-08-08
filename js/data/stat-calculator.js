@@ -24,6 +24,7 @@ import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
 import { FISH } from '../definitions/fish.js';
 import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
+import { normalizeBaseExpProgress } from './level-progression.js';
 
 /**
  * Calculate the final stats for a character.
@@ -386,6 +387,10 @@ export async function getCharactersWithRanchBonus() {
     c.dictionaryBonus = dictionaryBonus;
     c.fishLibraryBonus = fishLibraryBonus;
     let needSave = false;
+
+    // Convert exponential-era saves to the level-derived curve while keeping
+    // the same percentage of progress toward the next base level.
+    if (normalizeBaseExpProgress(c)) needSave = true;
     
     // Migrate old inheritedSkill format
     if (c.inheritedSkill) {
