@@ -37,10 +37,13 @@ const centerOf = rect => ({
 const addEffect = (layer, cssText, keyframes, timing) => {
   const effect = document.createElement('div');
   effect.setAttribute('aria-hidden', 'true');
-  // Keep delayed effects invisible until their animation begins.
+  effect.className = 'battle-normal-attack-effect';
   effect.style.cssText = `${cssText};pointer-events:none;z-index:9999;opacity:0;`;
   layer.appendChild(effect);
-  const animation = effect.animate(keyframes, timing);
+  // `fill: both` makes delayed effects use their first (invisible) keyframe
+  // before they begin. This avoids a one-frame flash on WebKit while still
+  // letting the animation override the inline fallback opacity.
+  const animation = effect.animate(keyframes, { fill: 'both', ...timing });
   animation.onfinish = () => effect.remove();
   animation.oncancel = () => effect.remove();
   return effect;
@@ -57,7 +60,8 @@ const addParticles = (layer, point, profile, duration, count = profile.particles
       layer,
       `position:fixed;left:${point.x - size / 2}px;top:${point.y - size / 2}px;width:${size}px;height:${size}px;border-radius:50%;background:${profile.primary};box-shadow:0 0 7px ${profile.secondary};mix-blend-mode:screen`,
       [
-        { transform: 'translate(0,0) scale(1.25)', opacity: 1 },
+        { transform: 'translate(0,0) scale(.2)', opacity: 0 },
+        { transform: 'translate(0,0) scale(1.25)', opacity: 1, offset: .12 },
         { transform: `translate(${Math.cos(angle) * distance}px,${Math.sin(angle) * distance}px) scale(.1)`, opacity: 0 }
       ],
       { duration, delay, easing: 'ease-out' }
@@ -71,7 +75,8 @@ const addImpactRing = (layer, point, profile, duration, shape = '50%', delay = 0
     layer,
     `position:fixed;left:${point.x - size / 2}px;top:${point.y - size / 2}px;width:${size}px;height:${size}px;border:3px solid ${profile.primary};border-radius:${shape};box-shadow:0 0 12px ${profile.secondary},inset 0 0 8px ${profile.secondary};mix-blend-mode:screen`,
     [
-      { transform: 'scale(.12) rotate(-18deg)', opacity: 1 },
+      { transform: 'scale(.08) rotate(-18deg)', opacity: 0 },
+      { transform: 'scale(.22) rotate(-12deg)', opacity: 1, offset: .12 },
       { transform: 'scale(1.35) rotate(20deg)', opacity: 0 }
     ],
     { duration, delay, easing: 'cubic-bezier(.12,.72,.2,1)' }
@@ -99,26 +104,42 @@ const addProjectile = (layer, origin, target, profile, duration, variant) => {
   let css;
 
   if (variant === 'arrow') {
-    css = `width:52px;height:4px;border-radius:999px;background:linear-gradient(90deg,${profile.secondary},${profile.primary});clip-path:polygon(0 35%,72% 35%,72% 0,100% 50%,72% 100%,72% 65%,0 65%);filter:drop-shadow(0 0 5px ${profile.secondary})`;
+    css = `width:88px;height:14px;background:linear-gradient(90deg,${profile.secondary},#fff 58%,${profile.primary});clip-path:polygon(0 38%,68% 38%,68% 8%,100% 50%,68% 92%,68% 62%,0 62%);filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px ${profile.secondary})`;
   } else if (variant === 'trident') {
-    css = `width:60px;height:7px;background:linear-gradient(90deg,${profile.secondary},${profile.primary});clip-path:polygon(0 38%,68% 38%,82% 0,86% 32%,100% 12%,92% 50%,100% 88%,86% 68%,82% 100%,68% 62%,0 62%);filter:drop-shadow(0 0 7px ${profile.secondary})`;
+    css = `width:84px;height:18px;background:linear-gradient(90deg,${profile.secondary},#fff 64%,${profile.primary});clip-path:polygon(0 42%,66% 42%,80% 0,84% 34%,100% 12%,91% 50%,100% 88%,84% 66%,80% 100%,66% 58%,0 58%);filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 10px ${profile.secondary})`;
   } else if (variant === 'shield') {
-    css = `width:30px;height:34px;background:radial-gradient(circle at 45% 35%,${profile.primary},${profile.secondary} 62%,#1e3a8a);clip-path:polygon(50% 0,94% 18%,84% 72%,50% 100%,16% 72%,6% 18%);filter:drop-shadow(0 0 8px ${profile.secondary})`;
+    css = `width:40px;height:48px;background:radial-gradient(circle at 45% 35%,#fff,${profile.primary} 28%,${profile.secondary} 68%,#1e3a8a);clip-path:polygon(50% 0,94% 18%,84% 72%,50% 100%,16% 72%,6% 18%);filter:drop-shadow(0 0 10px ${profile.secondary})`;
   } else if (variant === 'slime') {
-    css = `width:30px;height:26px;border-radius:55% 55% 48% 48%;background:radial-gradient(circle at 35% 25%,white,${profile.primary} 18%,${profile.secondary} 70%);box-shadow:0 0 9px ${profile.secondary}`;
+    css = `width:38px;height:34px;border-radius:55% 55% 48% 48%;background:radial-gradient(circle at 35% 25%,white,${profile.primary} 18%,${profile.secondary} 70%);box-shadow:0 0 12px ${profile.secondary}`;
   } else if (variant === 'fireball') {
-    css = `width:27px;height:27px;border-radius:50%;background:radial-gradient(circle at 35% 35%,white,${profile.primary} 20%,${profile.secondary} 58%,#dc2626 78%,transparent 80%);box-shadow:0 0 10px ${profile.secondary},0 0 20px #dc2626`;
+    css = `width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 35%,white,${profile.primary} 20%,${profile.secondary} 58%,#dc2626 78%,transparent 80%);box-shadow:0 0 14px ${profile.secondary},0 0 26px #dc2626`;
   } else {
-    css = `width:24px;height:24px;border-radius:50%;background:radial-gradient(circle,white,${profile.primary} 28%,${profile.secondary} 62%,transparent 68%);box-shadow:0 0 12px ${profile.secondary}`;
+    css = `width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,white,${profile.primary} 28%,${profile.secondary} 62%,transparent 70%);box-shadow:0 0 14px ${profile.secondary},0 0 24px ${profile.secondary}`;
   }
+
+  // A luminous wake makes fast, mostly vertical shots readable against both
+  // bright and dark dungeon backgrounds. It also communicates the launch
+  // direction before the projectile reaches the enemy.
+  addEffect(
+    layer,
+    `position:fixed;left:${origin.x}px;top:${origin.y - 2}px;width:${distance}px;height:${variant === 'arrow' || variant === 'trident' ? 4 : 7}px;border-radius:999px;background:linear-gradient(90deg,${profile.secondary},${profile.primary} 42%,transparent 100%);box-shadow:0 0 9px ${profile.secondary};transform-origin:0 50%;mix-blend-mode:screen`,
+    [
+      { transform: `rotate(${angle}rad) scaleX(0)`, opacity: 0 },
+      { transform: `rotate(${angle}rad) scaleX(.7)`, opacity: .85, offset: .46 },
+      { transform: `rotate(${angle}rad) scaleX(1)`, opacity: .5, offset: .78 },
+      { transform: `rotate(${angle}rad) scaleX(1)`, opacity: 0 }
+    ],
+    { duration, easing: 'ease-out' }
+  );
 
   addEffect(
     layer,
     `position:fixed;left:${origin.x - 12}px;top:${origin.y - 12}px;${css};transform-origin:12px 50%;mix-blend-mode:screen`,
     [
       { transform: `rotate(${angle}rad) translateX(0) scale(.45)`, opacity: 0 },
-      { transform: `rotate(${angle}rad) translateX(${distance * .16}px) scale(1)`, opacity: 1, offset: .18 },
-      { transform: `rotate(${angle}rad) translateX(${Math.max(0, distance - 8)}px) scale(1.1)`, opacity: 1 }
+      { transform: `rotate(${angle}rad) translateX(${distance * .08}px) scale(1)`, opacity: 1, offset: .12 },
+      { transform: `rotate(${angle}rad) translateX(${Math.max(0, distance - 14)}px) scale(1.1)`, opacity: 1, offset: .82 },
+      { transform: `rotate(${angle}rad) translateX(${distance}px) scale(.75)`, opacity: 0 }
     ],
     { duration, easing: 'cubic-bezier(.28,.72,.24,1)' }
   );
@@ -153,9 +174,9 @@ export function playNormalAttackAnimation(attacker, defender) {
   const origin = centerOf(attackerEl.getBoundingClientRect());
   const target = centerOf(defenderEl.getBoundingClientRect());
   const profile = NORMAL_ATTACK_ANIMATION_PROFILES[attacker.jobId || attacker.job] || DEFAULT_PROFILE;
-  const travelDuration = getBattleAnimationDuration(280, 150);
-  const impactDuration = getBattleAnimationDuration(300, 160);
-  const impactDelay = Math.round(travelDuration * .72);
+  const travelDuration = getBattleAnimationDuration(420, 240);
+  const impactDuration = getBattleAnimationDuration(340, 190);
+  const impactDelay = Math.round(travelDuration * .82);
 
   attackerEl.animate([
     { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
@@ -230,9 +251,9 @@ export function playNormalAttackAnimation(attacker, defender) {
   addParticles(layer, target, profile, impactDuration, profile.particles, impactDelay);
   defenderEl.animate([
     { transform: 'translateX(0)', filter: 'brightness(1)' },
-    { transform: 'translateX(0)', filter: 'brightness(1)', offset: .42 },
-    { transform: 'translateX(7px)', filter: `brightness(1.8) drop-shadow(0 0 4px ${profile.secondary})`, offset: .52 },
-    { transform: 'translateX(-5px)', filter: 'brightness(1.3)', offset: .68 },
+    { transform: 'translateX(0)', filter: 'brightness(1)', offset: .54 },
+    { transform: 'translateX(7px)', filter: `brightness(1.8) drop-shadow(0 0 4px ${profile.secondary})`, offset: .6 },
+    { transform: 'translateX(-5px)', filter: 'brightness(1.3)', offset: .72 },
     { transform: 'translateX(0)', filter: 'brightness(1)' }
   ], { duration: travelDuration + impactDuration * .45, easing: 'ease-out' });
 
