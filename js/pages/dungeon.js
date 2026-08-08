@@ -113,14 +113,6 @@ window.openDungeonFloorModal = async (dungeonId) => {
     const isCurrentFloor = currentDungeonId === dungeon.id && Number(currentFloorLevel) === Number(floor.level) && !isDungeonCleared;
     const isBossFloor = floorIndex === dungeon.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
-    const floorCollection = monsterIds.reduce((summary, monsterId) => {
-      const owned = getOwnedMonsterState(ranchData, monsterId);
-      if (owned.companion) summary.companions += 1;
-      if (owned.legendary) summary.legendary += 1;
-      if (Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId)) summary.medals += 1;
-      return summary;
-    }, { companions: 0, legendary: 0, medals: 0 });
-    const monsterNames = monsterIds.map(monsterId => MONSTERS.find(item => item.id === monsterId)?.name || monsterId);
     const visibleMonsterIds = monsterIds.slice(0, 3);
     const hiddenMonsterCount = monsterIds.length - visibleMonsterIds.length;
     const monstersHtml = isFloorCleared ? visibleMonsterIds.map(monsterId => {
@@ -157,18 +149,11 @@ window.openDungeonFloorModal = async (dungeonId) => {
           <div class="flex h-5 min-w-0 items-center gap-1.5">
             <span class="truncate text-[9px] font-black ${isFloorCleared ? 'text-slate-100' : isCurrentFloor ? 'text-cyan-200' : 'text-slate-500'}">${isBossFloor ? '最深部' : `${floor.level}階`} · ${isFloorCleared ? '探索済み' : isCurrentFloor ? '現在地' : '未探索'}</span>
             ${isCurrentFloor ? '<span class="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-1.5 py-0.5 text-[7px] font-black text-cyan-300">NOW</span>' : ''}
-            ${isFloorCleared ? `
-              <div class="ml-auto flex shrink-0 items-center gap-1.5 text-[8px] font-black tabular-nums text-slate-400" aria-label="この階層の収集状況">
-                <span class="text-slate-500">敵${monsterIds.length}</span>
-                <span class="flex items-center gap-0.5" title="仲間 ${floorCollection.companions}/${monsterIds.length}"><span class="material-symbols-outlined text-[11px] text-emerald-300">pets</span>${floorCollection.companions}</span>
-                <span class="flex items-center gap-0.5" title="伝説 ${floorCollection.legendary}/${monsterIds.length}"><span class="material-symbols-outlined text-[11px] text-amber-300">auto_awesome</span>${floorCollection.legendary}</span>
-                <span class="flex items-center gap-0.5" title="メダル ${floorCollection.medals}/${monsterIds.length}"><span class="material-symbols-outlined text-[11px] text-cyan-300">military_tech</span>${floorCollection.medals}</span>
-              </div>` : ''}
+            ${isFloorCleared ? `<span class="ml-auto shrink-0 text-[8px] font-black tabular-nums text-slate-500">敵${monsterIds.length}</span>` : ''}
           </div>
           ${isFloorCleared
             ? `<div class="mt-1 flex min-w-0 items-center gap-1.5">
                 <div class="flex shrink-0 items-start gap-1">${monstersHtml}${hiddenMonsterCount > 0 ? `<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-900/80 text-[8px] font-black text-slate-400" title="ほか${hiddenMonsterCount}種">+${hiddenMonsterCount}</div>` : ''}</div>
-                <span class="min-w-0 flex-1 truncate text-[8px] font-bold text-slate-400">${monsterNames.join(' / ') || '出現モンスターなし'}</span>
               </div>`
             : `<div class="mt-1 flex h-8 items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
         </div>
