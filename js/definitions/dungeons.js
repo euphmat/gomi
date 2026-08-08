@@ -1,3 +1,5 @@
+import { ADVANCED_DUNGEONS } from './advanced-dungeon-content.js';
+
 export const DUNGEONS = [{
   id: 'slime_forest',
   name: 'スライムの森',
@@ -136,94 +138,5 @@ export const DUNGEONS = [{
     { level: 8, monsters: [{ sanctum_talos: 1, weight: 100 }] }
   ]
 },
-{
-  id: 'stargazer_tower',
-  name: '星詠みの塔',
-  description: '星空に最も近い高塔。',
-  bgImage: 'assets/dungeon/bg_stargazer_tower.webp',
-  theme: { color: '59, 130, 246', icon: 'routine' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'hell_cave',
-  name: '地獄の魔洞',
-  description: '恐ろしい魔物が潜む洞窟。',
-  bgImage: 'assets/dungeon/bg_hell_cave.webp',
-  theme: { color: '239, 68, 68', icon: 'local_fire_department' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'dragon_lair',
-  name: '竜の巣窟',
-  description: '強大な竜たちが棲む巣窟。',
-  bgImage: 'assets/dungeon/bg_dragon_lair.webp',
-  theme: { color: '234, 88, 12', icon: 'local_fire_department' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'sky_demon_castle',
-  name: '天空魔城',
-  description: '天空に浮かぶ恐ろしい魔城。',
-  bgImage: 'assets/dungeon/bg_sky_demon_castle.webp',
-  theme: { color: '217, 70, 239', icon: 'fort' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'moonlit_hall',
-  name: '月夜の礼堂',
-  description: '月光に照らされた静寂の礼堂。',
-  bgImage: 'assets/dungeon/bg_moonlit_hall.webp',
-  theme: { color: '203, 213, 225', icon: 'nightlight' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'cloud_altar',
-  name: '雲海に浮かぶ祭壇',
-  description: '雲海の上に建設された神聖な祭壇。',
-  bgImage: 'assets/dungeon/bg_cloud_altar.webp',
-  theme: { color: '56, 189, 248', icon: 'cloud' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'dusk_labyrinth',
-  name: '宵闇の迷宮',
-  description: '決して夜が明けない迷宮。',
-  bgImage: 'assets/dungeon/bg_dusk_labyrinth.webp',
-  theme: { color: '192, 38, 211', icon: 'dashboard' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'eternal_ruins',
-  name: '悠久の神殿跡',
-  description: '途方もない時を経た神殿の跡地。',
-  bgImage: 'assets/dungeon/bg_eternal_ruins.webp',
-  theme: { color: '168, 162, 158', icon: 'broken_image' },
-  isUnlocked: false,
-
-  floors: []
-},
-{
-  id: 'subspace',
-  name: '亜空間',
-  description: '世界の理から外れた異次元空間。',
-  bgImage: 'assets/dungeon/bg_subspace.webp',
-  theme: { color: '139, 92, 246', icon: 'blur_on' },
-  isUnlocked: false,
-
-  floors: []
-}
+...ADVANCED_DUNGEONS
 ];

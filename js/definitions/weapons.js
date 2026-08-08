@@ -1,3 +1,5 @@
+import { ADVANCED_WEAPONS } from './advanced-dungeon-content.js';
+
 /**
  * このファイルは武器（右手に装備するアイテム）のデータをまとめたファイルです。
  * 
@@ -130,5 +132,7 @@ export const WEAPONS = [
   { id: 'crystallos_wand'      , name: 'クリスタロスワンド'  , stats: { atk: 515, spd: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_temple_crystal', amount: 40 }, { id: 'mat_magic_reflect_prism', amount: 10 }] } },
   { id: 'machina_bow'          , name: 'マキナボウ'          , stats: { atk: 520, spd: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_four_armed_joint', amount: 10 }] } },
   { id: 'sanctum_spear'        , name: 'サンクトゥムスピア'  , stats: { atk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
+
+  ...ADVANCED_WEAPONS,
 
 ].map(item => ({ ...item, slot: 'rightHand', image: `./assets/weapon/${item.id}.webp` }));

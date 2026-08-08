@@ -1,0 +1,157 @@
+{
+  "dungeons": [
+    {
+      "id": "stargazer_tower",
+      "name": "星詠みの塔",
+      "description": "星空に最も近い高塔。天球儀と星辰魔法が侵入者の運命を試す。",
+      "bgImage": "assets/dungeon/bg_stargazer_tower.webp",
+      "theme": { "color": "59, 130, 246", "icon": "routine" },
+      "monsters": [
+        { "id": "astral_wisp", "name": "星屑のウィスプ", "element": "light", "weakness": "dark", "ailment": "silence", "action": "星屑散華", "weapon": "星灯の杖", "gearTheme": "星屑", "concept": "青白い星屑が渦を巻いて生まれた小さな霊体。尾を引く光粒子と中心の星火が特徴。", "materials": [["stardust", "星屑の結晶"], ["astral_veil", "星幽の薄布"], ["wisp_core", "星火の霊核"]] },
+        { "id": "zodiac_sentinel", "name": "黄道の番兵", "element": "earth", "weakness": "wind", "ailment": "paralysis", "action": "黄道輪撃", "weapon": "ゾディアック・ハルバード", "gearTheme": "黄道", "concept": "十二星座の紋章を刻んだ青銅の自動兵。背後に小さな天球環が回転している。", "materials": [["zodiac_bronze", "黄道青銅"], ["orbit_gear", "公転歯車"], ["sentinel_core", "星座番兵の核"]] },
+        { "id": "comet_hare", "name": "彗星兎", "element": "wind", "weakness": "ice", "ailment": "blind", "action": "コメットダッシュ", "weapon": "彗尾双刃", "gearTheme": "彗星", "concept": "彗星のような長い発光尾と結晶の耳を持ち、塔の階段を光速で駆ける霊獣。", "materials": [["comet_fur", "彗星兎の光毛"], ["crystal_ear", "彗晶の耳片"], ["comet_heart", "彗尾の心核"]] },
+        { "id": "nebula_magus", "name": "星雲の魔導士", "element": "dark", "weakness": "light", "ailment": "confusion", "action": "ネビュラフォール", "weapon": "星雲儀礼書", "gearTheme": "星雲", "concept": "星雲を閉じ込めたローブをまとい、顔の代わりに深宇宙が覗く古代の魔導士。", "materials": [["nebula_cloth", "星雲織"], ["astral_ink", "天象の魔墨"], ["nebula_orb", "星雲宝珠"]] },
+        { "id": "eclipse_owl", "name": "蝕の梟", "element": "dark", "weakness": "light", "ailment": "blind", "action": "月蝕の眼", "weapon": "蝕月の長弓", "gearTheme": "蝕月", "concept": "翼に日蝕の輪紋を持つ巨大な梟。金環状の瞳で光を奪う。", "materials": [["eclipse_feather", "蝕の黒羽"], ["lunar_eye", "月蝕眼"], ["umbra_beak", "本影の嘴"]] },
+        { "id": "orbit_golem", "name": "軌道ゴーレム", "element": "thunder", "weakness": "earth", "ailment": "paralysis", "action": "グラビティオービット", "weapon": "重力環砲", "gearTheme": "軌道", "concept": "複数の石核が重力環でつながり、惑星のように公転する浮遊ゴーレム。", "materials": [["orbit_stone", "軌道石"], ["gravity_ring", "重力環"], ["celestial_engine", "天動機関"]] },
+        { "id": "celestial_drake", "name": "天球竜", "element": "light", "weakness": "dark", "ailment": "silence", "action": "星辰ブレス", "weapon": "天球竜槍", "gearTheme": "天球", "concept": "鱗の一枚一枚に星座が灯り、翼が夜空そのものに見える蒼銀の竜。", "materials": [["star_scale", "星辰竜鱗"], ["constellation_horn", "星座角"], ["firmament_heart", "蒼穹竜心"]] },
+        { "id": "astraios", "name": "星界王アストライオス", "element": "light", "weakness": "dark", "ailment": "confusion", "action": "終天・星界崩落", "weapon": "アストライオス・セプター", "gearTheme": "星界王", "concept": "銀河の外套と天球冠をまとう塔の王。背後に巨大な星時計が浮かぶ最深部の守護者。", "materials": [["astral_crown", "星界王の天球冠"], ["galaxy_mantle", "銀河の外套片"], ["astraios_core", "アストライオスの王核"]] }
+      ]
+    },
+    {
+      "id": "hell_cave",
+      "name": "地獄の魔洞",
+      "description": "灼熱の業火と呪鎖が満ちる魔洞。深部では地獄そのものが脈打つ。",
+      "bgImage": "assets/dungeon/bg_hell_cave.webp",
+      "theme": { "color": "239, 68, 68", "icon": "local_fire_department" },
+      "monsters": [
+        { "id": "cinder_imp", "name": "熾火インプ", "element": "fire", "weakness": "water", "ailment": "burn", "action": "熾火弾", "weapon": "熾火の三叉槍", "gearTheme": "熾火", "concept": "燃え残る炭の皮膚と小さな炎翼を持つ悪戯好きな小鬼。", "materials": [["ash_wing", "灰燼の翼膜"], ["ember_horn", "熾火角"], ["cinder_heart", "残火の心臓"]] },
+        { "id": "sulfur_hound", "name": "硫黄の魔犬", "element": "fire", "weakness": "water", "ailment": "poison", "action": "硫毒牙", "weapon": "硫毒の牙剣", "gearTheme": "硫黄", "concept": "硫黄煙を吐き、黄色い結晶質の牙と溶岩の亀裂を持つ地獄の猟犬。", "materials": [["sulfur_fur", "硫黄毛皮"], ["infernal_fang", "獄犬の毒牙"], ["brimstone_core", "硫煙の魔核"]] },
+        { "id": "magma_armor", "name": "溶岩の空鎧", "element": "fire", "weakness": "water", "ailment": "burn", "action": "マグマスラスト", "weapon": "融鉄グレイブ", "gearTheme": "溶岩", "concept": "内部に騎士を持たず、鎧の隙間から溶岩が流れる巨大な黒鉄甲冑。", "materials": [["molten_plate", "融解装甲板"], ["lava_joint", "溶岩関節"], ["magma_core", "マグマ動力核"]] },
+        { "id": "hellfire_witch", "name": "業火の魔女", "element": "fire", "weakness": "ice", "ailment": "curse", "action": "ヘルフレア", "weapon": "煉獄の魔導箒", "gearTheme": "業火", "concept": "炎で編まれた帽子と焦げた魔導書を携え、黒煙の裾で浮遊する魔女。", "materials": [["hell_silk", "業火の黒絹"], ["cursed_ember", "呪われた火種"], ["hellfire_grimoire", "獄炎魔導書の頁"]] },
+        { "id": "chain_cerberus", "name": "鎖獄ケルベロス", "element": "dark", "weakness": "light", "ailment": "paralysis", "action": "三首鎖葬", "weapon": "ケルベロス・チェイン", "gearTheme": "鎖獄", "concept": "三つの頭部を灼熱の呪鎖でつながれた巨犬。鎖そのものを鞭として振るう。", "materials": [["hell_chain", "獄界の呪鎖"], ["triple_fang", "三首の魔牙"], ["cerberus_heart", "ケルベロスの心核"]] },
+        { "id": "abyss_minotaur", "name": "奈落のミノタウロス", "element": "earth", "weakness": "wind", "ailment": "confusion", "action": "奈落断ち", "weapon": "奈落断斧", "gearTheme": "奈落", "concept": "黒曜石の巨斧と迷宮の石門ほどの角を持つ、煤に覆われた牛頭の巨人。", "materials": [["abyss_hide", "奈落牛の黒皮"], ["labyrinth_horn", "迷獄の巨角"], ["hell_axe_shard", "獄斧の欠片"]] },
+        { "id": "inferno_wyrm", "name": "煉獄ワーム", "element": "fire", "weakness": "ice", "ailment": "burn", "action": "煉獄奔流", "weapon": "インフェルノ・ランス", "gearTheme": "煉獄", "concept": "火口から火口へ泳ぐ翼のない巨竜。黒い鱗の隙間が白熱している。", "materials": [["inferno_scale", "煉獄竜鱗"], ["magma_fang", "融岩牙"], ["volcano_heart", "火山心臓"]] },
+        { "id": "gehenna_overlord", "name": "獄王ゲヘナ", "element": "dark", "weakness": "light", "ailment": "curse", "action": "終獄・ゲヘナ", "weapon": "ゲヘナの断罪大剣", "gearTheme": "獄王", "concept": "燃える王冠と六本の角を持ち、地獄門を玉座とする巨大な魔王。", "materials": [["gehenna_crown", "ゲヘナの獄冠"], ["purgatory_flame", "煉罪の原火"], ["infernal_core", "獄王の魔核"]] }
+      ]
+    },
+    {
+      "id": "dragon_lair",
+      "name": "竜の巣窟",
+      "description": "あらゆる属性の竜が覇を競う原初の巣。最奥には竜帝が眠る。",
+      "bgImage": "assets/dungeon/bg_dragon_lair.webp",
+      "theme": { "color": "234, 88, 12", "icon": "local_fire_department" },
+      "monsters": [
+        { "id": "ember_wyvern", "name": "火の粉ワイバーン", "element": "fire", "weakness": "water", "ailment": "burn", "action": "火粉翼撃", "weapon": "火粉竜の斬翼", "gearTheme": "火粉竜", "concept": "火の粉を散らす赤銅色の翼を持つ俊敏な小型飛竜。", "materials": [["ember_scale", "火粉竜鱗"], ["wing_claw", "灼翼の鉤爪"], ["wyvern_gland", "火炎腺"]] },
+        { "id": "frostscale_drake", "name": "霜鱗ドレイク", "element": "ice", "weakness": "fire", "ailment": "paralysis", "action": "霜界ブレス", "weapon": "霜鱗の氷槌", "gearTheme": "霜鱗", "concept": "氷柱状の背鰭と霜に曇る青白い鱗を持つ四足竜。", "materials": [["frost_scale", "霜晶竜鱗"], ["ice_spine", "氷背棘"], ["frozen_heart", "凍竜心"]] },
+        { "id": "storm_dragonet", "name": "雷雲ドラゴネット", "element": "thunder", "weakness": "earth", "ailment": "paralysis", "action": "雷雲放電", "weapon": "雷雲の連弩", "gearTheme": "雷雲", "concept": "雷雲を翼にまとい、角の間で稲妻を蓄える若い雷竜。", "materials": [["storm_scale", "雷雲鱗"], ["thunder_horn", "蓄雷角"], ["storm_sac", "雷嵐袋"]] },
+        { "id": "verdant_lindworm", "name": "翠樹リンドヴルム", "element": "grass", "weakness": "fire", "ailment": "poison", "action": "翠毒の息", "weapon": "翠樹の蛇腹剣", "gearTheme": "翠樹", "concept": "樹皮の鱗と花咲く角を持ち、巣の森を背負うような長大な緑竜。", "materials": [["bark_scale", "樹皮竜鱗"], ["verdant_horn", "翠花角"], ["forest_dragon_sap", "竜樹の霊液"]] },
+        { "id": "obsidian_dragon", "name": "黒曜竜", "element": "earth", "weakness": "wind", "ailment": "blind", "action": "黒晶破砕", "weapon": "黒曜竜の破城剣", "gearTheme": "黒曜", "concept": "鏡面状の黒曜石装甲と溶岩色の眼を持つ重厚な地竜。", "materials": [["obsidian_scale", "黒曜竜鱗"], ["glass_fang", "黒玻璃牙"], ["obsidian_heart", "黒曜心核"]] },
+        { "id": "holy_wyrm", "name": "聖光ワーム", "element": "light", "weakness": "dark", "ailment": "silence", "action": "聖竜光輪", "weapon": "聖光の竜輪杖", "gearTheme": "聖光竜", "concept": "金白の羽毛と光輪を持ち、祈りのような咆哮を響かせる翼竜。", "materials": [["holy_plume", "聖竜の光羽"], ["halo_fragment", "竜光輪の欠片"], ["sacred_dragon_heart", "聖竜心"]] },
+        { "id": "elder_dragon", "name": "古代竜", "element": "earth", "weakness": "wind", "ailment": "sleep", "action": "太古の咆哮", "weapon": "エルダードラゴン・ボウ", "gearTheme": "古代竜", "concept": "岩山と見紛う巨体に古代の碑文と苔を宿す、巣窟最古の竜。", "materials": [["elder_scale", "古代竜の石鱗"], ["primeval_fang", "太古の巨牙"], ["elder_soul", "古竜魂"]] },
+        { "id": "bahamut_emperor", "name": "竜帝バハムート", "element": "dark", "weakness": "light", "ailment": "confusion", "action": "終焉竜星砲", "weapon": "バハムート・ノヴァ", "gearTheme": "竜帝", "concept": "九属性の宝玉を翼に連ね、黒金の王冠角を戴く圧倒的な竜帝。", "materials": [["emperor_scale", "竜帝の黒金鱗"], ["bahamut_crown", "バハムートの冠角"], ["dragon_nova_core", "終焉竜星核"]] }
+      ]
+    },
+    {
+      "id": "sky_demon_castle",
+      "name": "天空魔城",
+      "description": "雷雲上に浮遊する魔族の要塞。崩れた空路の先で堕天の王が待つ。",
+      "bgImage": "assets/dungeon/bg_sky_demon_castle.webp",
+      "theme": { "color": "217, 70, 239", "icon": "fort" },
+      "monsters": [
+        { "id": "cloud_gargoyle", "name": "雲岩ガーゴイル", "element": "wind", "weakness": "ice", "ailment": "blind", "action": "雲裂き爪", "weapon": "雲岩の鉤槍", "gearTheme": "雲岩", "concept": "雲を固めた灰白の石肌と紫水晶の眼を持つ城壁の魔像。", "materials": [["cloud_stone", "凝雲石"], ["gargoyle_claw", "魔像の翼爪"], ["storm_eye", "嵐見の魔眼"]] },
+        { "id": "thunder_warlock", "name": "雷獄の妖術師", "element": "thunder", "weakness": "earth", "ailment": "paralysis", "action": "雷獄陣", "weapon": "雷獄の環杖", "gearTheme": "雷獄", "concept": "雷鎖を編んだ外套と浮遊する紫電の魔法陣を操る魔族の術師。", "materials": [["thunder_cloth", "雷鎖織"], ["storm_rune", "魔城の雷紋"], ["warlock_orb", "妖術雷珠"]] },
+        { "id": "aerial_armor", "name": "飛空魔甲", "element": "wind", "weakness": "thunder", "ailment": "silence", "action": "魔甲急降下", "weapon": "飛空機刃", "gearTheme": "飛空魔甲", "concept": "翼型の魔導推進器を備え、空中で隊列を組む濃紺の無人甲冑。", "materials": [["aerial_plate", "飛空魔装板"], ["levitation_gear", "浮揚歯車"], ["aerial_core", "飛空魔核"]] },
+        { "id": "void_harpy", "name": "虚空ハーピー", "element": "dark", "weakness": "light", "ailment": "confusion", "action": "虚空絶唱", "weapon": "虚声の竪琴弓", "gearTheme": "虚空羽", "concept": "羽毛の先が虚空へ溶け、歌声で空間に亀裂を作る紫黒の鳥魔。", "materials": [["void_feather", "虚空の魔羽"], ["siren_throat", "絶唱の喉石"], ["harpy_void_core", "鳥魔の虚核"]] },
+        { "id": "storm_demon", "name": "暴嵐デーモン", "element": "wind", "weakness": "ice", "ailment": "blind", "action": "暴嵐魔拳", "weapon": "テンペスト・ナックル", "gearTheme": "暴嵐", "concept": "四本腕と雲角を持ち、常に小型の竜巻をまとって浮遊する青黒い悪魔。", "materials": [["storm_hide", "暴嵐魔皮"], ["cyclone_horn", "旋風魔角"], ["tempest_demon_core", "暴嵐魔核"]] },
+        { "id": "chaos_archon", "name": "混沌の執政官", "element": "dark", "weakness": "light", "ailment": "curse", "action": "カオス・ディクリー", "weapon": "混沌律の長剣", "gearTheme": "混沌律", "concept": "左右で異なる翼と仮面を持ち、崩れた法典を掲げる魔城の高位官。", "materials": [["chaos_mask", "混沌の半面"], ["broken_decree", "破戒法典"], ["archon_core", "執政官の魔核"]] },
+        { "id": "fallen_seraph", "name": "堕天熾天使", "element": "dark", "weakness": "light", "ailment": "silence", "action": "黒翼天罰", "weapon": "堕天の六翼鎌", "gearTheme": "堕天", "concept": "六枚の黒翼と砕けた光輪、涙を流す白磁の仮面を持つ堕天使。", "materials": [["fallen_plume", "堕天の黒羽"], ["broken_halo", "砕けた熾天輪"], ["seraph_tear", "熾天使の黒涙"]] },
+        { "id": "azazel_skyking", "name": "天空魔王アザゼル", "element": "dark", "weakness": "light", "ailment": "curse", "action": "終天・魔城墜落", "weapon": "アザゼルの天墜剣", "gearTheme": "天空魔王", "concept": "雷雲を玉座とし、城の尖塔を思わせる巨大な角と十二枚の魔翼を広げる天空魔王。", "materials": [["skyking_horn", "天空魔王の城角"], ["demon_wing_core", "十二魔翼の核"], ["azazel_heart", "アザゼルの王心"]] }
+      ]
+    },
+    {
+      "id": "moonlit_hall",
+      "name": "月夜の礼堂",
+      "description": "永遠の満月が照らす静謐な礼堂。夢と現実の境が月鏡に溶ける。",
+      "bgImage": "assets/dungeon/bg_moonlit_hall.webp",
+      "theme": { "color": "203, 213, 225", "icon": "nightlight" },
+      "monsters": [
+        { "id": "moon_moth", "name": "月白蛾", "element": "light", "weakness": "dark", "ailment": "sleep", "action": "月粉の夢", "weapon": "月白の扇", "gearTheme": "月白", "concept": "月光を透かす白銀の翅と三日月模様を持つ大蛾。眠りの鱗粉を散らす。", "materials": [["moon_dust", "月白の鱗粉"], ["silver_wing", "銀透翅"], ["dream_cocoon", "月夢の繭"]] },
+        { "id": "silver_hare", "name": "銀月兎", "element": "light", "weakness": "dark", "ailment": "blind", "action": "銀月跳", "weapon": "銀月の戦輪", "gearTheme": "銀月", "concept": "長い銀耳と月石の脚甲を持ち、鏡床を月光のように跳ぶ霊兎。", "materials": [["silver_fur", "銀月毛"], ["moonstone_claw", "月長石の爪"], ["hare_lunar_core", "月兎の霊核"]] },
+        { "id": "dream_nun", "name": "夢祷の修道女", "element": "water", "weakness": "thunder", "ailment": "sleep", "action": "眠りの聖歌", "weapon": "夢祷の香炉杖", "gearTheme": "夢祷", "concept": "顔を薄布で隠し、月水を満たした香炉を提げる半透明の修道女。", "materials": [["dream_veil", "夢祷の薄布"], ["moon_incense", "月眠香"], ["prayer_tear", "夢祷の涙晶"]] },
+        { "id": "lunar_knight", "name": "月鏡の騎士", "element": "light", "weakness": "dark", "ailment": "confusion", "action": "月鏡返し", "weapon": "ルナミラー・レイピア", "gearTheme": "月鏡", "concept": "鏡面の甲冑と細身剣を携え、満月を映す円盾を構える無言の騎士。", "materials": [["mirror_plate", "月鏡装甲"], ["lunar_silver", "月銀鋼"], ["knight_reflection", "騎士の鏡魂"]] },
+        { "id": "mirror_banshee", "name": "鏡哭バンシー", "element": "dark", "weakness": "light", "ailment": "silence", "action": "鏡界悲鳴", "weapon": "鏡哭の音叉", "gearTheme": "鏡哭", "concept": "砕けた鏡片をドレスのようにまとい、無数の反射顔で泣く亡霊。", "materials": [["weeping_glass", "哭く鏡片"], ["banshee_ribbon", "月葬のリボン"], ["mirror_soul", "鏡界魂"]] },
+        { "id": "eclipse_chimera", "name": "月蝕キマイラ", "element": "dark", "weakness": "light", "ailment": "curse", "action": "蝕獣の影", "weapon": "エクリプス・クロー", "gearTheme": "月蝕獣", "concept": "獅子・山羊・蛇の輪郭が月蝕の影で一つに重なる黒銀の合成獣。", "materials": [["eclipse_hide", "月蝕獣皮"], ["shadow_mane", "本影のたてがみ"], ["chimera_moon_core", "蝕月魔核"]] },
+        { "id": "moonlight_dragon", "name": "月光竜", "element": "light", "weakness": "dark", "ailment": "sleep", "action": "満月光波", "weapon": "月光竜の銀弓", "gearTheme": "月光竜", "concept": "真珠色の鱗と薄い光の翼を持ち、胸に満月の核を宿す優美な竜。", "materials": [["pearl_scale", "真珠月鱗"], ["moonlight_wing", "月光翼膜"], ["fullmoon_heart", "満月竜心"]] },
+        { "id": "selene_avatar", "name": "月神影セレーネ", "element": "light", "weakness": "dark", "ailment": "sleep", "action": "終月・静寂世界", "weapon": "セレーネの月輪錫杖", "gearTheme": "月神", "concept": "巨大な月輪を背負い、星布の長衣と銀の仮面をまとう月神の現身。", "materials": [["goddess_silver", "月神銀"], ["selene_veil", "セレーネの星布"], ["lunar_divinity", "月神の神核"]] }
+      ]
+    },
+    {
+      "id": "cloud_altar",
+      "name": "雲海に浮かぶ祭壇",
+      "description": "雲海を渡る風と雷の聖域。空の祭壇で天候を司る神獣が目覚める。",
+      "bgImage": "assets/dungeon/bg_cloud_altar.webp",
+      "theme": { "color": "56, 189, 248", "icon": "cloud" },
+      "monsters": [
+        { "id": "cloud_sprite", "name": "雲綿の精", "element": "wind", "weakness": "ice", "ailment": "sleep", "action": "綿雲包み", "weapon": "雲綿のバブルワンド", "gearTheme": "雲綿", "concept": "綿雲から顔と小さな翼が生えた、ふわりと浮かぶ空の精霊。", "materials": [["cloud_cotton", "雲綿"], ["sky_dew", "天空の朝露"], ["sprite_breeze_core", "微風精核"]] },
+        { "id": "wind_ram", "name": "疾風の角羊", "element": "wind", "weakness": "ice", "ailment": "blind", "action": "疾風螺旋角", "weapon": "疾風角のドリル槍", "gearTheme": "疾風角", "concept": "雲の毛並みと渦巻く風の角を持ち、空中を地面のように駆ける角羊。", "materials": [["cloud_wool", "雲羊毛"], ["spiral_horn", "疾風螺旋角"], ["gale_hoof", "烈風の蹄"]] },
+        { "id": "sky_manta", "name": "蒼天マンタ", "element": "water", "weakness": "thunder", "ailment": "silence", "action": "蒼天滑空", "weapon": "蒼天の翼刃", "gearTheme": "蒼天", "concept": "青空の色と雲模様を背に映し、雲海を泳ぐ巨大な空マンタ。", "materials": [["sky_membrane", "蒼天翼膜"], ["cloud_pearl", "雲海真珠"], ["manta_sky_core", "空泳核"]] },
+        { "id": "tempest_monk", "name": "嵐拳の僧", "element": "thunder", "weakness": "earth", "ailment": "paralysis", "action": "嵐天連拳", "weapon": "嵐天の法具拳", "gearTheme": "嵐拳", "concept": "雷雲の数珠と風をまとう拳甲を装備した、石像のような天空僧。", "materials": [["storm_beads", "雷雲の数珠"], ["wind_wrap", "風纏布"], ["monk_thunder_core", "嵐拳の丹田核"]] },
+        { "id": "rainbow_gryphon", "name": "虹翼グリフォン", "element": "light", "weakness": "dark", "ailment": "confusion", "action": "虹天急襲", "weapon": "虹翼の七色槍", "gearTheme": "虹翼", "concept": "光の角度で七色に輝く翼と白金の獅子体を持つ天空の守護獣。", "materials": [["rainbow_feather", "虹翼羽"], ["prism_talon", "七光の鉤爪"], ["gryphon_sun_core", "天陽獣核"]] },
+        { "id": "thunder_kirin", "name": "天雷麒麟", "element": "thunder", "weakness": "earth", "ailment": "paralysis", "action": "天雷踏", "weapon": "麒麟雷角刀", "gearTheme": "天雷", "concept": "金青の鱗、雲のたてがみ、枝分かれした雷角を持つ神聖な麒麟。", "materials": [["kirin_scale", "天雷麒麟鱗"], ["lightning_antler", "神雷角"], ["kirin_cloud_heart", "麒麟雲心"]] },
+        { "id": "seraphic_golem", "name": "熾天の祭壇兵", "element": "light", "weakness": "dark", "ailment": "silence", "action": "熾天光砲", "weapon": "熾天祭器砲", "gearTheme": "熾天祭兵", "concept": "祭壇の白石が組み上がり、六枚の機械翼と青い神火を備えた巨兵。", "materials": [["altar_marble", "天空祭壇の白石"], ["seraph_gear", "六翼機構"], ["holy_flame_core", "青神火の核"]] },
+        { "id": "uranus_herald", "name": "天空神の御使い", "element": "wind", "weakness": "ice", "ailment": "silence", "action": "終空・天蓋開闢", "weapon": "ウラノス・テンペスト", "gearTheme": "天空神", "concept": "空そのものを翼と外套にし、太陽環と雷杖を携える天空神の巨大な御使い。", "materials": [["firmament_cloth", "天蓋の神布"], ["uranus_ring", "天空神の光環"], ["sky_divinity", "蒼天神核"]] }
+      ]
+    },
+    {
+      "id": "dusk_labyrinth",
+      "name": "宵闇の迷宮",
+      "description": "夜明けを失った無限迷宮。曲がるたびに時間と方角が反転する。",
+      "bgImage": "assets/dungeon/bg_dusk_labyrinth.webp",
+      "theme": { "color": "192, 38, 211", "icon": "dashboard" },
+      "monsters": [
+        { "id": "twilight_mimic", "name": "黄昏ミミック", "element": "dark", "weakness": "light", "ailment": "confusion", "action": "黄昏の誘い", "weapon": "黄昏箱の喰剣", "gearTheme": "黄昏箱", "concept": "夕焼け色の宝箱に擬態し、内部に紫の夜空と無数の歯を隠す怪物。", "materials": [["dusk_wood", "黄昏箱の魔木"], ["mimic_tooth", "迷宝の牙"], ["twilight_lock", "宵闇錠"]] },
+        { "id": "maze_stalker", "name": "迷界ストーカー", "element": "dark", "weakness": "light", "ailment": "blind", "action": "背後なき爪", "weapon": "迷界の曲刀", "gearTheme": "迷界", "concept": "細長い四肢と壁模様の皮膚を持ち、迷路の角から影だけを伸ばす狩人。", "materials": [["maze_hide", "迷路模様の皮"], ["stalker_claw", "無音の鉤爪"], ["directionless_eye", "方角なき魔眼"]] },
+        { "id": "dusk_lantern", "name": "宵火ランタン", "element": "fire", "weakness": "water", "ailment": "sleep", "action": "宵火誘眠", "weapon": "宵火の鎖灯", "gearTheme": "宵火", "concept": "紫炎を灯す古い手提げ灯が、鎖の脚で迷宮を徘徊する付喪神。", "materials": [["dusk_glass", "宵色の灯硝子"], ["purple_wick", "不滅の紫芯"], ["lantern_soul", "迷灯魂"]] },
+        { "id": "nightblade", "name": "無明の夜刃", "element": "dark", "weakness": "light", "ailment": "silence", "action": "無明一閃", "weapon": "無明刀・夜渡", "gearTheme": "無明", "concept": "輪郭が闇に溶け、刃の紫光だけが見える仮面の迷宮剣士。", "materials": [["nightsteel", "無明鋼"], ["silent_mask", "無音の仮面片"], ["nightblade_soul", "夜刃魂"]] },
+        { "id": "paradox_sphinx", "name": "逆理スフィンクス", "element": "light", "weakness": "dark", "ailment": "confusion", "action": "逆理の問", "weapon": "パラドクス・タブレット", "gearTheme": "逆理", "concept": "前後が反転した獅子体と二つの人面を持ち、答えのない問いを刻む魔獣。", "materials": [["paradox_fur", "逆理獣毛"], ["riddle_tablet", "無答の石板"], ["sphinx_double_eye", "双面の宝眼"]] },
+        { "id": "umbral_hydra", "name": "本影ヒュドラ", "element": "dark", "weakness": "light", "ailment": "poison", "action": "九影毒牙", "weapon": "本影の九頭鞭", "gearTheme": "本影", "concept": "九つの首がそれぞれ別の通路の影から伸びる、実体の定まらない毒竜。", "materials": [["umbra_scale", "本影竜鱗"], ["hydra_venom", "九影毒"], ["shared_heart", "共有される竜心"]] },
+        { "id": "labyrinth_keeper", "name": "迷宮律の番人", "element": "earth", "weakness": "wind", "ailment": "paralysis", "action": "迷宮再構築", "weapon": "迷宮律の方陣槌", "gearTheme": "迷宮律", "concept": "迷宮の壁と階段が人型に組み替わった巨像。胸に回転する地図盤を持つ。", "materials": [["living_wall", "生ける迷宮壁"], ["map_gear", "回転地図盤"], ["keeper_rule_core", "迷宮律核"]] },
+        { "id": "nyx_minotaur", "name": "常夜王ニュクス", "element": "dark", "weakness": "light", "ailment": "curse", "action": "終夜・黎明封殺", "weapon": "ニュクスの常夜斧", "gearTheme": "常夜王", "concept": "迷宮全体を角の冠として背負い、星のない夜をまとう黒紫の牛頭王。", "materials": [["eternal_night_hide", "常夜王の黒皮"], ["labyrinth_crown", "迷宮角冠"], ["nyx_core", "黎明を喰う王核"]] }
+      ]
+    },
+    {
+      "id": "eternal_ruins",
+      "name": "悠久の神殿跡",
+      "description": "文明以前から立つ巨大遺跡。風化した石に幾つもの時代が眠る。",
+      "bgImage": "assets/dungeon/bg_eternal_ruins.webp",
+      "theme": { "color": "168, 162, 158", "icon": "broken_image" },
+      "monsters": [
+        { "id": "relic_scarab", "name": "遺宝スカラベ", "element": "earth", "weakness": "wind", "ailment": "poison", "action": "遺宝突進", "weapon": "スカラベの円月刀", "gearTheme": "遺宝虫", "concept": "古代金と青い宝石の甲殻を持ち、遺物の欠片を丸めて運ぶ巨大甲虫。", "materials": [["relic_shell", "遺宝虫の金殻"], ["lapis_wing", "瑠璃の翅"], ["scarab_sun_core", "太陽虫核"]] },
+        { "id": "moss_oracle", "name": "苔衣の神託者", "element": "grass", "weakness": "fire", "ailment": "sleep", "action": "悠久の神託", "weapon": "苔衣の託宣杖", "gearTheme": "苔衣", "concept": "苔と蔓に覆われた石の祭服をまとい、空洞の顔に小さな光を宿す神官像。", "materials": [["oracle_moss", "神託の古苔"], ["prophecy_tablet", "風化した予言板"], ["oracle_light", "神託者の灯核"]] },
+        { "id": "sand_colossus", "name": "砂暦コロッサス", "element": "earth", "weakness": "water", "ailment": "blind", "action": "砂暦崩し", "weapon": "砂暦の巨槌", "gearTheme": "砂暦", "concept": "体内の巨大な砂時計で時を刻み、崩れては再生する砂岩の巨人。", "materials": [["hourglass_sand", "砂暦の時砂"], ["colossus_sandstone", "巨像砂岩"], ["time_vessel", "時流の玻璃器"]] },
+        { "id": "epoch_knight", "name": "紀元の騎士", "element": "light", "weakness": "dark", "ailment": "silence", "action": "紀元断ち", "weapon": "エポック・クレイモア", "gearTheme": "紀元", "concept": "複数文明の甲冑が層状に重なり、時代ごとに刃の形を変える遺跡騎士。", "materials": [["epoch_plate", "紀元重層板"], ["era_blade", "時代刃の欠片"], ["knight_chronicle", "騎士年代核"]] },
+        { "id": "fossil_wyrm", "name": "化石王竜", "element": "earth", "weakness": "wind", "ailment": "paralysis", "action": "地層咆哮", "weapon": "化石王の骨弩", "gearTheme": "化石王", "concept": "地層ごと掘り出された骨格に琥珀色の魂が宿る巨大な太古竜。", "materials": [["fossil_scale", "王竜化石鱗"], ["amber_marrow", "琥珀骨髄"], ["primeval_soul", "太古竜魂"]] },
+        { "id": "chronicle_golem", "name": "年代記ゴーレム", "element": "light", "weakness": "dark", "ailment": "silence", "action": "歴史抹消光", "weapon": "年代記の頁刃", "gearTheme": "年代記", "concept": "石板と巻物が巨人型に積層し、全身に過去の光景が流れる記録守護者。", "materials": [["chronicle_page", "石の年代記頁"], ["memory_ink", "記憶の金墨"], ["archive_core", "大記録庫の核"]] },
+        { "id": "aeon_guardian", "name": "永劫の門衛", "element": "earth", "weakness": "wind", "ailment": "paralysis", "action": "永劫封門", "weapon": "永劫門の柱槍", "gearTheme": "永劫門", "concept": "神殿門そのものから立ち上がった双頭の石像兵。胸に永遠を示す環が回る。", "materials": [["aeon_stone", "永劫門石"], ["eternity_ring", "永遠環"], ["guardian_keystone", "門衛要石"]] },
+        { "id": "chronos_titan", "name": "時祖神クロノス", "element": "light", "weakness": "dark", "ailment": "sleep", "action": "終刻・万象風化", "weapon": "クロノスの時断鎌", "gearTheme": "時祖神", "concept": "崩れた神殿を冠と肩に載せ、巨大な時計輪と時砂の外套をまとう始原の巨神。", "materials": [["chronos_crown", "時祖神の遺跡冠"], ["origin_sand", "始原の時砂"], ["time_divinity", "時祖神核"]] }
+      ]
+    },
+    {
+      "id": "subspace",
+      "name": "亜空間",
+      "description": "世界法則の外側に広がる最終領域。因果も姿も絶えず書き換わる。",
+      "bgImage": "assets/dungeon/bg_subspace.webp",
+      "theme": { "color": "139, 92, 246", "icon": "blur_on" },
+      "monsters": [
+        { "id": "glitch_slime", "name": "断層スライム", "element": "thunder", "weakness": "earth", "ailment": "confusion", "action": "位相ノイズ", "weapon": "断層波ブレード", "gearTheme": "断層", "concept": "体の一部が格子状にずれ、色と輪郭が複数位置へ分裂する異常なスライム。", "materials": [["glitch_gel", "断層ゲル"], ["phase_pixel", "位相結晶片"], ["error_core", "法則誤差核"]] },
+        { "id": "phase_hunter", "name": "位相狩り", "element": "dark", "weakness": "light", "ailment": "blind", "action": "位相跳躍斬", "weapon": "フェイズ・リッパー", "gearTheme": "位相", "concept": "半透明の身体が複数の時間位置に重なり、湾曲刃だけが実体化する狩人。", "materials": [["phase_hide", "位相皮膜"], ["dimensional_claw", "次元裂爪"], ["hunter_anchor", "実在固定核"]] },
+        { "id": "void_jellyfish", "name": "虚数クラゲ", "element": "water", "weakness": "thunder", "ailment": "silence", "action": "虚数波", "weapon": "虚数触手杖", "gearTheme": "虚数", "concept": "宇宙を透かす傘と数式状の触手を持ち、上下を無視して漂う巨大クラゲ。", "materials": [["imaginary_membrane", "虚数傘膜"], ["formula_tentacle", "式紋触手"], ["void_pearl", "虚数真珠"]] },
+        { "id": "fractal_golem", "name": "自己相似ゴーレム", "element": "earth", "weakness": "wind", "ailment": "paralysis", "action": "無限相似拳", "weapon": "フラクタル・ハンマー", "gearTheme": "自己相似", "concept": "腕や指の中にさらに小さな同型の腕が続く、紫水晶の無限構造巨人。", "materials": [["fractal_crystal", "自己相似結晶"], ["infinite_joint", "無限関節"], ["recursive_core", "再帰動力核"]] },
+        { "id": "inverted_seraph", "name": "反転熾天使", "element": "dark", "weakness": "light", "ailment": "curse", "action": "反転祝福", "weapon": "反転天輪の逆槍", "gearTheme": "反転熾天", "concept": "上下反転した身体、内側へ羽ばたく六翼、黒い光を放つ逆光輪を持つ異形天使。", "materials": [["inverted_plume", "反転天羽"], ["negative_halo", "負光輪"], ["seraph_paradox", "熾天逆理核"]] },
+        { "id": "causality_dragon", "name": "因果律竜", "element": "light", "weakness": "dark", "ailment": "confusion", "action": "因果逆鱗", "weapon": "因果律の鎖剣", "gearTheme": "因果律", "concept": "頭から尾へ原因と結果の光景が逆向きに流れ、鎖状の翼を持つ次元竜。", "materials": [["causal_scale", "因果竜鱗"], ["effect_fang", "結果を刻む牙"], ["causality_heart", "因果律心臓"]] },
+        { "id": "dimension_eater", "name": "次元喰らい", "element": "dark", "weakness": "light", "ailment": "blind", "action": "空間捕食", "weapon": "ディメンション・バイト", "gearTheme": "次元喰らい", "concept": "輪郭だけの巨獣で、口内に別宇宙が見え、周囲の足場ごと空間を噛み取る。", "materials": [["space_hide", "空間皮膜"], ["dimension_fang", "次元捕食牙"], ["abyss_stomach", "虚空胃核"]] },
+        { "id": "singularity_origin", "name": "特異点オリジン", "element": "dark", "weakness": "light", "ailment": "confusion", "action": "終界・原点収束", "weapon": "オリジン・ゼロ", "gearTheme": "特異点", "concept": "人型の輪郭の中心に黒い特異点を宿し、九色の世界片が周囲を公転する最終存在。", "materials": [["singularity_shard", "特異点の欠片"], ["world_fragment", "九界の断片"], ["origin_zero_core", "原点零核"]] }
+      ]
+    }
+  ]
+}

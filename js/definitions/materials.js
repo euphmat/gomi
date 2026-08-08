@@ -1,3 +1,5 @@
+import { ADVANCED_MATERIALS } from './advanced-dungeon-content.js';
+
 /**
  * このファイルは素材やドロップアイテムなど、装備できないアイテムのデータをまとめたファイルです。
  * 
@@ -333,5 +335,7 @@ export const MATERIALS = [
   { id: 'mat_atlas_support_pillar'  , name: '天を支える支柱'         },
   { id: 'mat_sacred_bronze'         , name: '神聖なる青銅'           },
   { id: 'mat_talos_armor_plate'     , name: 'タロスの装甲板'         },
-  { id: 'mat_sanctum_key_fragment'  , name: '至聖所の鍵の欠片'       }
+  { id: 'mat_sanctum_key_fragment'  , name: '至聖所の鍵の欠片'       },
+
+  ...ADVANCED_MATERIALS
 ].map(item => ({ ...item, image: `./assets/material/${item.id}.webp` }));

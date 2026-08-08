@@ -1,3 +1,5 @@
+import { ADVANCED_SHIELDS } from './advanced-dungeon-content.js';
+
 /**
  * このファイルは盾（左手に装備する防具）のデータをまとめたファイルです。
  * 
@@ -132,5 +134,7 @@ export const SHIELDS = [
   { id: 'crystallos_shield'          , name: 'クリスタロスシールド'  , stats: { def: 515, hp: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_temple_crystal', amount: 40 }, { id: 'mat_magic_reflect_prism', amount: 10 }] } },
   { id: 'machina_defender'           , name: 'マキナディフェンダー'  , stats: { def: 520, hp: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_atlas_support_pillar', amount: 10 }] } },
   { id: 'sanctum_tower_shield'       , name: 'サンクトゥムタワーシールド', stats: { def: 530, hp: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
+
+  ...ADVANCED_SHIELDS,
 
 ].map(item => ({ ...item, slot: 'leftHand', image: `./assets/shield/${item.id}.webp` }));

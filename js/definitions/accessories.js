@@ -1,3 +1,5 @@
+import { ADVANCED_ACCESSORIES } from './advanced-dungeon-content.js';
+
 /**
  * このファイルはアクセサリー（指輪やネックレスなど）のデータをまとめたファイルです。
  * 
@@ -130,5 +132,7 @@ export const ACCESSORIES = [
   { id: 'altar_pendant'        , name: '祭壇のペンダント'    , stats: { matk: 510, spd: 255 }, elements:   { earth: 20 }, recipe: { price: 305000, materials: [{ id: 'mat_temple_pillar_fragment', amount: 40 }, { id: 'mat_altar_stone', amount: 10 }] } },
   { id: 'prism_brooch'         , name: 'プリズムブローチ'    , stats: { matk: 515, spd: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_temple_crystal', amount: 40 }, { id: 'mat_crystallos_heart', amount: 10 }] } },
   { id: 'machina_gear_ring'    , name: 'マキナギアリング'    , stats: { matk: 520, spd: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_four_armed_joint', amount: 10 }] } },
-  { id: 'sanctum_seal'         , name: '至聖所の印'          , stats: { matk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_sanctum_key_fragment', amount: 10 }] } }
+  { id: 'sanctum_seal'         , name: '至聖所の印'          , stats: { matk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_sanctum_key_fragment', amount: 10 }] } },
+
+  ...ADVANCED_ACCESSORIES
 ].map(item => ({ ...item, slot: 'accessory', image: `./assets/accessory/${item.id}.webp` }));

@@ -1,3 +1,5 @@
+import { ADVANCED_ARMORS } from './advanced-dungeon-content.js';
+
 /**
  * このファイルは鎧（体防具）のデータをまとめたファイルです。
  * 
@@ -132,5 +134,7 @@ export const ARMORS = [
   { id: 'crystallos_cloak'     , name: 'クリスタロスクローク', stats: { def: 515, mdef: 257 }, elements:   { light: 20 }, recipe: { price: 307500, materials: [{ id: 'mat_magic_reflect_prism', amount: 40 }, { id: 'mat_crystallos_heart', amount: 10 }] } },
   { id: 'atlas_armor'          , name: 'アトラスアーマー'    , stats: { def: 520, mdef: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_atlas_support_pillar', amount: 10 }] } },
   { id: 'sanctum_plate'        , name: 'サンクトゥムプレート', stats: { def: 530, mdef: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
+
+  ...ADVANCED_ARMORS,
 
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));
