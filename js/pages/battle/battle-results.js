@@ -21,6 +21,24 @@ import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
+async function recordCompletedDungeonFloor(dungeonId, floorLevel) {
+  if (!dungeonId || !Number.isFinite(Number(floorLevel))) return;
+  const savedProgress = await GameDB.getGameState('completed_dungeon_floors');
+  const completedFloors = savedProgress && !Array.isArray(savedProgress) && typeof savedProgress === 'object'
+    ? savedProgress
+    : {};
+  const savedFloors = completedFloors[dungeonId];
+  const normalizedSavedFloors = Array.isArray(savedFloors)
+    ? savedFloors
+    : Object.entries(savedFloors || {}).filter(([, cleared]) => cleared).map(([floor]) => floor);
+  const dungeonFloors = new Set(normalizedSavedFloors.map(Number));
+  const normalizedFloor = Number(floorLevel);
+  if (dungeonFloors.has(normalizedFloor)) return;
+  dungeonFloors.add(normalizedFloor);
+  completedFloors[dungeonId] = [...dungeonFloors].sort((a, b) => a - b);
+  await GameDB.setGameState('completed_dungeon_floors', completedFloors);
+}
+
 export const resultMethods = {
   checkBattleEnd() {
     if (this.isStopped) return;
@@ -373,6 +391,10 @@ export const resultMethods = {
     
     await this.saveDeferredData();
     await this.savePartyState();
+
+    if (isWin) {
+      await recordCompletedDungeonFloor(this.currentDungeonId, this.currentFloorNum);
+    }
 
     if (!showModal) {
       sessionStorage.removeItem('autoBattleMode');

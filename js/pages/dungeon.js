@@ -1,5 +1,7 @@
 import { DUNGEONS } from '../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../definitions/special_dungeons.js';
+import { MONSTERS } from '../definitions/monsters.js';
+import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
 import { FISHING_SPOTS, getFishForSpot } from '../definitions/fish.js';
 import { GameDB } from '../data/database.js';
 import { getFishingSpotUnlockStatus, loadFishingData } from '../data/fishing-manager.js';
@@ -9,7 +11,222 @@ import { consumeHashRouteParam } from '../utils/route-params.js';
 
 import { formatNumber } from '../utils/format.js';
 
+const ALL_DUNGEONS = [...DUNGEONS, ...SPECIAL_DUNGEONS];
+let dungeonModalRequestId = 0;
+
+function getFloorMonsterIds(floor) {
+  const ids = new Set();
+  for (const encounter of floor?.monsters || []) {
+    if (typeof encounter === 'string') {
+      ids.add(encounter);
+    } else if (Array.isArray(encounter?.members)) {
+      encounter.members.forEach(member => {
+        if (member?.id && Number(member.count ?? 1) > 0) ids.add(member.id);
+      });
+    } else if (encounter?.id) {
+      if (Number(encounter.count ?? 1) > 0) ids.add(encounter.id);
+    } else {
+      Object.keys(encounter || {}).forEach(key => {
+        if (key !== 'weight' && Number(encounter[key]) > 0) ids.add(key);
+      });
+    }
+  }
+  return [...ids];
+}
+
+function getOwnedMonsterState(ranchData, monsterId) {
+  const ranches = Object.values(ranchData || {});
+  return {
+    companion: ranches.some(ranch => Boolean(ranch?.[monsterId])),
+    legendary: ranches.some(ranch => Boolean(ranch?.[`${monsterId}_legendary`])),
+  };
+}
+
+function getStoredCompletedFloors(floorProgress, dungeonId) {
+  const saved = floorProgress?.[dungeonId];
+  if (Array.isArray(saved)) return new Set(saved.map(Number));
+  if (saved && typeof saved === 'object') {
+    return new Set(Object.entries(saved).filter(([, cleared]) => cleared).map(([floor]) => Number(floor)));
+  }
+  return new Set();
+}
+
+window.closeDungeonFloorModal = () => {
+  dungeonModalRequestId += 1;
+  const modal = document.querySelector('[data-dungeon-floor-modal]');
+  if (!modal) return;
+  document.removeEventListener('keydown', modal._escapeHandler);
+  window.removeEventListener('hashchange', modal._hashHandler);
+  document.body.style.overflow = modal.dataset.previousBodyOverflow || '';
+  modal.remove();
+  if (modal._returnFocus?.isConnected) modal._returnFocus.focus();
+};
+
+window.openDungeonFloorModal = async (dungeonId) => {
+  const dungeon = ALL_DUNGEONS.find(item => item.id === dungeonId);
+  if (!dungeon) return;
+
+  window.closeDungeonFloorModal();
+  const requestId = ++dungeonModalRequestId;
+  const [completedDungeonIds, floorProgress, ranchData, playerMedals, currentDungeonId, currentFloorLevel] = await Promise.all([
+    GameDB.getGameState('completed_dungeons'),
+    GameDB.getGameState('completed_dungeon_floors'),
+    GameDB.getGameState('ranch_data'),
+    GameDB.getGameState('player_medals'),
+    GameDB.getGameState('currentDungeon'),
+    GameDB.getGameState('currentFloor'),
+  ]);
+  if (requestId !== dungeonModalRequestId) return;
+
+  const isDungeonCleared = Array.isArray(completedDungeonIds) && completedDungeonIds.includes(dungeon.id);
+  const completedFloors = isDungeonCleared
+    ? new Set(dungeon.floors.map(floor => Number(floor.level)))
+    : getStoredCompletedFloors(floorProgress, dungeon.id);
+  // Older saves predate per-floor history. Reaching a later floor proves that
+  // every earlier floor in the currently selected dungeon was cleared.
+  if (!isDungeonCleared && currentDungeonId === dungeon.id && Number(currentFloorLevel) > 1) {
+    dungeon.floors.forEach(floor => {
+      if (Number(floor.level) < Number(currentFloorLevel)) completedFloors.add(Number(floor.level));
+    });
+  }
+  const clearedCount = dungeon.floors.filter(floor => completedFloors.has(Number(floor.level))).length;
+  const theme = dungeon.theme || { color: '107, 114, 128', icon: 'swords' };
+  const themeRgb = theme.color;
+
+  const floorsHtml = dungeon.floors.length ? dungeon.floors.map(floor => {
+    const isFloorCleared = completedFloors.has(Number(floor.level));
+    const monsterIds = getFloorMonsterIds(floor);
+    const monstersHtml = isFloorCleared ? monsterIds.map(monsterId => {
+      const monster = MONSTERS.find(item => item.id === monsterId) || {
+        id: monsterId,
+        name: monsterId,
+        image: `./assets/monster/${monsterId}.webp`,
+      };
+      const owned = getOwnedMonsterState(ranchData, monsterId);
+      const hasMedal = Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId);
+      const medalRankIndex = Number(playerMedals?.[monsterId]);
+      const medal = hasMedal && Number.isInteger(medalRankIndex) ? MEDAL_RANKS[medalRankIndex] : null;
+      return `
+        <div class="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-black/30 p-2">
+          <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-slate-950/80">
+            <img src="${monster.image}" alt="" class="h-full w-full object-contain p-0.5" loading="lazy">
+            ${owned.legendary ? '<span class="material-symbols-outlined absolute right-0 top-0 text-[14px] text-amber-300 drop-shadow-[0_0_5px_#f59e0b]" style="font-variation-settings:\'FILL\' 1">auto_awesome</span>' : ''}
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-[11px] font-black text-slate-100">${monster.name}</div>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <span class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[8px] font-bold ${owned.companion ? 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900/70 text-slate-500'}">
+                <span class="material-symbols-outlined text-[10px]">${owned.companion ? 'check_circle' : 'cancel'}</span>仲間
+              </span>
+              <span class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[8px] font-bold ${owned.legendary ? 'border-amber-300/55 bg-amber-400/15 text-amber-200' : 'border-slate-700 bg-slate-900/70 text-slate-500'}">
+                <span class="material-symbols-outlined text-[10px]">${owned.legendary ? 'auto_awesome' : 'remove'}</span>伝説
+              </span>
+              <span class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[8px] font-bold ${medal ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-200' : 'border-slate-700 bg-slate-900/70 text-slate-500'}" ${medal ? `title="${medal.name}"` : ''}>
+                <span class="material-symbols-outlined text-[10px]">military_tech</span>${medal ? medal.name.replace('メダル', '') : '未取得'}
+              </span>
+            </div>
+          </div>
+        </div>`;
+    }).join('') : '';
+
+    return `
+      <section class="overflow-hidden rounded-2xl border ${isFloorCleared ? 'border-white/15 bg-slate-900/75' : 'border-slate-800 bg-slate-950/65'}">
+        <div class="flex items-center gap-3 border-b ${isFloorCleared ? 'border-white/10' : 'border-slate-800'} px-3 py-2.5">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-xs font-black ${isFloorCleared ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-300' : 'border-slate-700 bg-slate-900 text-slate-500'}">
+            ${floor.level}F
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 text-[10px] font-black ${isFloorCleared ? 'text-white' : 'text-slate-500'}">
+              <span class="material-symbols-outlined text-sm">${isFloorCleared ? 'verified' : 'lock'}</span>
+              ${isFloorCleared ? `クリア済み・出現 ${monsterIds.length}種` : '未クリア・モンスター情報未解放'}
+            </div>
+          </div>
+          <button onclick="window.enterDungeonFloor('${dungeon.id}', ${Number(floor.level)})"
+                  ${isDungeonCleared ? '' : 'disabled'}
+                  aria-label="${dungeon.name} ${floor.level}階へ潜入"
+                  class="flex shrink-0 items-center gap-1 rounded-lg border px-2.5 py-2 text-[9px] font-black transition-all ${isDungeonCleared ? 'border-cyan-300/50 bg-cyan-500/15 text-cyan-200 active:scale-95 active:bg-cyan-500/30' : 'border-slate-800 bg-slate-900/70 text-slate-600'}">
+            <span class="material-symbols-outlined text-sm">${isDungeonCleared ? 'login' : 'lock'}</span>${isDungeonCleared ? '潜入' : '踏破後'}
+          </button>
+        </div>
+        ${isFloorCleared
+          ? `<div class="grid grid-cols-1 gap-1.5 p-2 sm:grid-cols-2">${monstersHtml || '<p class="p-2 text-[10px] text-slate-500">出現モンスターなし</p>'}</div>`
+          : '<div class="flex items-center justify-center gap-2 px-3 py-5 text-[10px] font-bold text-slate-600"><span class="material-symbols-outlined text-lg">visibility_off</span>この階層をクリアすると表示されます</div>'}
+      </section>`;
+  }).join('') : `
+    <div class="flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 text-slate-500">
+      <span class="material-symbols-outlined text-3xl">construction</span>
+      <p class="text-xs font-bold">階層データは準備中です</p>
+    </div>`;
+
+  const modal = document.createElement('div');
+  modal._returnFocus = document.activeElement;
+  modal.dataset.dungeonFloorModal = '';
+  modal.dataset.previousBodyOverflow = document.body.style.overflow;
+  modal.className = 'fixed inset-0 z-[100] flex items-end justify-center bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-4';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'dungeon-floor-modal-title');
+  modal.innerHTML = `
+    <div data-dungeon-floor-panel class="flex h-[94dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-white/15 bg-[#090b15] shadow-2xl sm:h-[min(88vh,760px)] sm:rounded-3xl" style="box-shadow:0 0 60px rgba(${themeRgb},.2),0 28px 80px rgba(0,0,0,.8)">
+      <header class="relative isolate shrink-0 overflow-hidden border-b border-white/10 px-4 pb-3 pt-4 sm:px-5">
+        <div class="absolute inset-0 -z-20 bg-cover bg-center opacity-50" style="background-image:url('${dungeon.bgImage}')"></div>
+        <div class="absolute inset-0 -z-10" style="background:linear-gradient(90deg,rgba(5,7,16,.98),rgba(5,7,16,.82)),linear-gradient(0deg,#090b15,transparent)"></div>
+        <div class="flex items-start gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.2em]" style="color:rgb(${themeRgb})"><span class="material-symbols-outlined text-sm">format_list_numbered</span>Floor archive</div>
+            <h2 id="dungeon-floor-modal-title" class="mt-1 truncate text-lg font-black tracking-wider text-white sm:text-xl">${dungeon.name}・階層一覧</h2>
+            <p class="mt-1 text-[9px] font-bold text-slate-400">クリアした階層では、出現モンスターと収集状況を確認できます</p>
+          </div>
+          <button data-close-dungeon-floor-modal aria-label="閉じる" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/45 text-slate-300 active:scale-95 active:bg-white/15">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+          <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full" style="width:${dungeon.floors.length ? (clearedCount / dungeon.floors.length) * 100 : 0}%;background:linear-gradient(90deg,rgb(${themeRgb}),#67e8f9)"></div></div>
+          <span class="shrink-0 text-[9px] font-black tabular-nums text-slate-300">${clearedCount} / ${dungeon.floors.length}F</span>
+          <span class="shrink-0 rounded-full border px-2 py-1 text-[8px] font-black ${isDungeonCleared ? 'border-amber-300/40 bg-amber-400/15 text-amber-200' : 'border-slate-700 bg-slate-900/75 text-slate-500'}">${isDungeonCleared ? '踏破済み' : '攻略中'}</span>
+        </div>
+      </header>
+      <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
+        <div class="flex flex-col gap-2.5">${floorsHtml}</div>
+      </div>
+      <footer class="shrink-0 border-t border-white/10 bg-slate-950/95 px-4 py-2.5 text-center text-[9px] font-bold ${isDungeonCleared ? 'text-cyan-300' : 'text-slate-500'}">
+        ${isDungeonCleared ? '<span class="material-symbols-outlined mr-1 align-middle text-sm">route</span>踏破済みのため、好きな階層から潜入できます' : '<span class="material-symbols-outlined mr-1 align-middle text-sm">lock</span>指定階層への潜入は、ダンジョン踏破後に解放されます'}
+      </footer>
+    </div>`;
+
+  modal.addEventListener('click', event => {
+    if (event.target === modal || event.target.closest('[data-close-dungeon-floor-modal]')) {
+      window.closeDungeonFloorModal();
+    }
+  });
+  modal._escapeHandler = event => {
+    if (event.key === 'Escape') window.closeDungeonFloorModal();
+  };
+  modal._hashHandler = () => window.closeDungeonFloorModal();
+  document.addEventListener('keydown', modal._escapeHandler);
+  window.addEventListener('hashchange', modal._hashHandler, { once: true });
+  document.body.style.overflow = 'hidden';
+  document.body.appendChild(modal);
+  modal.querySelector('[data-close-dungeon-floor-modal]')?.focus();
+};
+
+window.enterDungeonFloor = async (dungeonId, floorLevel) => {
+  const dungeon = ALL_DUNGEONS.find(item => item.id === dungeonId);
+  const completedDungeonIdsValue = await GameDB.getGameState('completed_dungeons');
+  const completedDungeonIds = Array.isArray(completedDungeonIdsValue) ? completedDungeonIdsValue : [];
+  const floorExists = dungeon?.floors.some(floor => Number(floor.level) === Number(floorLevel));
+  if (!floorExists || !completedDungeonIds.includes(dungeonId)) return;
+  await Promise.all([
+    GameDB.setGameState('currentDungeon', dungeonId),
+    GameDB.setGameState('currentFloor', Number(floorLevel)),
+  ]);
+  window.closeDungeonFloorModal();
+  window.location.hash = '/battle';
+};
+
 window.enterDungeon = async (dungeonId) => {
+  window.closeDungeonFloorModal();
   await GameDB.setGameState('currentDungeon', dungeonId);
   await GameDB.setGameState('currentFloor', 1);
   window.location.hash = '/battle';
@@ -98,6 +315,7 @@ function scheduleDungeonPageMeasurement() {
 }
 
 window.changeDungeonPage = async (delta) => {
+  window.closeDungeonFloorModal();
   const currentList = currentDungeonTab === 'special' ? SPECIAL_DUNGEONS : DUNGEONS;
   const maxPage = Math.ceil(currentList.length / getItemsPerPage());
   currentDungeonPage += delta;
@@ -111,6 +329,7 @@ window.changeDungeonPage = async (delta) => {
 };
 
 window.switchDungeonTab = async (tab) => {
+  window.closeDungeonFloorModal();
   if (currentDungeonTab === tab) return;
   currentDungeonTab = tab;
   currentDungeonPage = 1;
@@ -234,8 +453,14 @@ export async function renderDungeonPage() {
       </div>`;
   }
 
-  const unlockedDungeons = await GameDB.getGameState('unlockedDungeons') || ['slime_forest'];
-  const playerMedals = await GameDB.getGameState('player_medals') || {};
+  const [unlockedDungeonsValue, playerMedalsValue, completedDungeonIdsValue] = await Promise.all([
+    GameDB.getGameState('unlockedDungeons'),
+    GameDB.getGameState('player_medals'),
+    GameDB.getGameState('completed_dungeons'),
+  ]);
+  const unlockedDungeons = Array.isArray(unlockedDungeonsValue) ? unlockedDungeonsValue : ['slime_forest'];
+  const playerMedals = playerMedalsValue || {};
+  const completedDungeonIds = Array.isArray(completedDungeonIdsValue) ? completedDungeonIdsValue : [];
   const medalCount = Object.keys(playerMedals).length;
   const prism = await GameDB.getGameState('prism') || 0;
   
@@ -257,40 +482,49 @@ export async function renderDungeonPage() {
 
     let isUnlocked = d.isUnlocked || unlockedDungeons.includes(d.id) ||
       (d.unlockCondition?.medals != null && medalCount >= d.unlockCondition.medals);
+    const isCleared = completedDungeonIds.includes(d.id);
+    const hasFloors = d.floors.length > 0;
       
 
     if (isUnlocked) {
       return `
       <!-- ダンジョン: ${d.name} -->
-      <button onclick="window.enterDungeon('${d.id}')"
-              aria-label="${d.name}を探索する"
-              class="group relative isolate min-h-[92px] sm:min-h-[108px] w-full cursor-pointer overflow-hidden rounded-2xl border text-left transition-all duration-300 active:-translate-y-0.5 active:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b19] active:translate-y-0 active:scale-[0.985]"
+      <div class="group relative isolate min-h-[92px] sm:min-h-[108px] w-full overflow-hidden rounded-2xl border text-left transition-all duration-300"
               style="border-color: rgba(${themeRgb}, .65); background-color: rgb(8, 10, 18); box-shadow: 0 12px 32px -16px rgba(${themeRgb}, .8), inset 0 0 0 1px rgba(255,255,255,.04); animation-delay: ${index * 45}ms;">
-        <div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-active:scale-105"
+        <div class="pointer-events-none absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-active:scale-105"
              style="background-image: url('${d.bgImage}');"></div>
-        <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,12,.96)_0%,rgba(3,5,12,.82)_43%,rgba(3,5,12,.35)_72%,rgba(3,5,12,.68)_100%)]"></div>
-        <div class="absolute inset-0 opacity-50 transition-opacity duration-300 group-active:opacity-80"
+        <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,12,.96)_0%,rgba(3,5,12,.82)_43%,rgba(3,5,12,.35)_72%,rgba(3,5,12,.68)_100%)]"></div>
+        <div class="pointer-events-none absolute inset-0 opacity-50 transition-opacity duration-300 group-active:opacity-80"
              style="background: radial-gradient(circle at 88% 50%, rgba(${themeRgb}, .55), transparent 31%);"></div>
-        <div class="absolute inset-x-0 bottom-0 h-px opacity-80" style="background: linear-gradient(90deg, transparent, rgba(${themeRgb}, 1), transparent);"></div>
+        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-px opacity-80" style="background: linear-gradient(90deg, transparent, rgba(${themeRgb}, 1), transparent);"></div>
 
-        <div class="relative z-10 flex min-h-[92px] sm:min-h-[108px] items-center gap-3 px-4 py-3 sm:px-5">
-          <div class="min-w-0 flex-1">
+        <div class="relative z-10 flex min-h-[92px] items-stretch gap-1.5 p-2 sm:min-h-[108px] sm:gap-2 sm:p-2.5">
+          <button ${hasFloors ? `onclick="window.enterDungeon('${d.id}')"` : 'disabled'} aria-label="${hasFloors ? `${d.name}を1階から探索する` : `${d.name}は準備中`}"
+                  class="min-w-0 flex-1 rounded-xl px-2 text-left transition-all ${hasFloors ? 'active:scale-[.985] active:bg-white/5' : 'cursor-not-allowed opacity-70'} sm:px-2.5">
             <div class="mb-1 flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.24em] text-white/55">
               <span class="h-px w-5" style="background-color: rgba(${themeRgb}, 1);"></span>
               Destination
             </div>
-            <h3 class="truncate text-base font-black tracking-[0.12em] text-white sm:text-xl"
-                style="text-shadow: 0 2px 12px #000, 0 0 18px rgba(${themeRgb}, .55);">${d.name}</h3>
+            <div class="flex min-w-0 items-center gap-1.5">
+              <h3 class="truncate text-base font-black tracking-[0.12em] text-white sm:text-xl"
+                  style="text-shadow: 0 2px 12px #000, 0 0 18px rgba(${themeRgb}, .55);">${d.name}</h3>
+              ${isCleared ? '<span class="shrink-0 rounded-full border border-amber-300/40 bg-amber-400/15 px-1.5 py-0.5 text-[7px] font-black text-amber-200">踏破済</span>' : ''}
+            </div>
             <p class="mt-1 line-clamp-1 text-[10px] font-medium leading-relaxed text-slate-300/80 sm:text-xs">${d.description}</p>
-          </div>
+          </button>
 
-          <div class="flex shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-black/45 py-2 pl-3 pr-2 text-white shadow-lg backdrop-blur-sm transition-all duration-300 group-active:border-white/55 group-active:bg-black/60 sm:gap-2 sm:py-2.5 sm:pl-4 sm:pr-3">
-            <span class="material-symbols-outlined text-lg sm:text-xl" style="font-variation-settings: 'FILL' 1; color: rgba(${themeRgb}, 1);">${theme.icon}</span>
-            <span class="text-[10px] font-black tracking-[0.16em] sm:text-xs">探索する</span>
-            <span class="material-symbols-outlined text-base transition-transform duration-300 group-active:translate-x-1">arrow_forward</span>
+          <div class="flex w-[74px] shrink-0 flex-col gap-1.5 sm:w-[92px] sm:gap-2">
+            <button onclick="window.openDungeonFloorModal('${d.id}')" aria-label="${d.name}の階層一覧を開く"
+                    class="flex min-h-[42px] flex-1 items-center justify-center gap-1 rounded-xl border border-white/20 bg-black/55 px-1.5 text-[9px] font-black text-slate-100 backdrop-blur-sm active:scale-95 active:border-cyan-300/60 active:bg-cyan-950/65 sm:text-[10px]">
+              <span class="material-symbols-outlined text-base text-cyan-300">format_list_numbered</span><span>階層</span>
+            </button>
+            <button ${hasFloors ? `onclick="window.enterDungeon('${d.id}')"` : 'disabled'} aria-label="${hasFloors ? `${d.name}を1階から探索する` : `${d.name}は準備中`}"
+                    class="flex min-h-[42px] flex-1 items-center justify-center gap-0.5 rounded-xl border px-1 text-[9px] font-black shadow-lg backdrop-blur-sm ${hasFloors ? 'border-white/25 bg-black/55 text-white active:scale-95 active:border-white/60 active:bg-black/75' : 'border-slate-700/60 bg-slate-900/70 text-slate-500'} sm:text-[10px]">
+              <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1;color:rgba(${themeRgb},1)">${hasFloors ? theme.icon : 'construction'}</span><span>${hasFloors ? '探索' : '準備中'}</span>
+            </button>
           </div>
         </div>
-      </button>`;
+      </div>`;
     } else {
       return `
       <!-- 未解放ダンジョン: ${d.name} -->

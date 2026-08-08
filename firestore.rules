@@ -10,24 +10,83 @@ service cloud.firestore {
       }
 
       function isValidSave() {
+        return isValidLegacySave() || isValidChunkedSave();
+      }
+
+      function hasValidCommonFields() {
+        return request.resource.data.appVersion is string
+          && request.resource.data.appVersion.size() <= 30
+          && request.resource.data.savedAt is string
+          && request.resource.data.savedAt.size() <= 40
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      function isValidLegacySave() {
         return request.resource.data.keys().hasOnly([
             'schemaVersion', 'appVersion', 'savedAt', 'updatedAt', 'payload'
           ])
           && request.resource.data.schemaVersion == 1
-          && request.resource.data.appVersion is string
-          && request.resource.data.appVersion.size() <= 30
-          && request.resource.data.savedAt is string
-          && request.resource.data.savedAt.size() <= 40
-          && request.resource.data.updatedAt == request.time
+          && hasValidCommonFields()
           && request.resource.data.payload is string
           && request.resource.data.payload.size() > 0
           && request.resource.data.payload.size() <= 850000;
+      }
+
+      function isValidChunkedSave() {
+        return request.resource.data.keys().hasOnly([
+            'schemaVersion', 'appVersion', 'savedAt', 'updatedAt',
+            'generation', 'chunkCount', 'payloadLength', 'checksum'
+          ])
+          && request.resource.data.schemaVersion == 2
+          && hasValidCommonFields()
+          && request.resource.data.generation is string
+          && request.resource.data.generation.matches('^[A-Za-z0-9]+$')
+          && request.resource.data.generation.size() <= 80
+          && request.resource.data.chunkCount is int
+          && request.resource.data.chunkCount > 1
+          && request.resource.data.chunkCount <= 64
+          && request.resource.data.payloadLength is int
+          && request.resource.data.payloadLength > 850000
+          && request.resource.data.payloadLength <= 44800000
+          && request.resource.data.payloadLength
+            > (request.resource.data.chunkCount - 1) * 700000
+          && request.resource.data.payloadLength
+            <= request.resource.data.chunkCount * 700000
+          && request.resource.data.checksum is string
+          && request.resource.data.checksum.matches('^[a-f0-9]{64}$');
       }
 
       // 一覧取得は禁止し、本人が自分の1件だけを読み書きできるようにする。
       allow get: if isOwner();
       allow list, delete: if false;
       allow create, update: if isOwner() && isValidSave();
+    }
+
+    match /cloudSaves/{userId}/chunks/{chunkId} {
+      function isOwner() {
+        return request.auth != null
+          && request.auth.uid == userId
+          && request.auth.token.email_verified == true;
+      }
+
+      function isValidChunk() {
+        return request.resource.data.keys().hasOnly(['generation', 'index', 'data'])
+          && request.resource.data.generation is string
+          && request.resource.data.generation.matches('^[A-Za-z0-9]+$')
+          && request.resource.data.generation.size() <= 80
+          && request.resource.data.index is int
+          && request.resource.data.index >= 0
+          && request.resource.data.index < 64
+          && request.resource.data.data is string
+          && request.resource.data.data.size() > 0
+          && request.resource.data.data.size() <= 700000;
+      }
+
+      // チャンクも本人の既知IDへのアクセスだけを許可し、一覧取得は禁止する。
+      allow get: if isOwner();
+      allow list: if false;
+      allow create, update: if isOwner() && isValidChunk();
+      allow delete: if isOwner();
     }
   }
 }

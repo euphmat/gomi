@@ -54,7 +54,9 @@ async function saveOnceForDate(user, now = new Date()) {
     try {
       // 先にクラウド側を確認し、別端末の新しいセーブを古いローカルデータで
       // 自動上書きしない。この確認も1日1回だけに抑える。
-      const cloudSave = await CloudSaveService.download();
+      // 競合判定に必要なのは更新日時だけ。大容量セーブの全チャンクを
+      // 起動のたびにダウンロードしないよう、マニフェストだけを読む。
+      const cloudSave = await CloudSaveService.getMetadata();
       const knownSavedAt = getKnownCloudSavedAt(user.uid);
       if (cloudSave && cloudSave.savedAt !== knownSavedAt) {
         const result = { date: dateKey, status: 'conflict', checkedAt: new Date().toISOString() };
