@@ -1,5 +1,6 @@
 import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
+import { playNormalAttackAnimation } from './normal-attack-animations.js';
 
 /**
  * battle-actions.js
@@ -554,9 +555,13 @@ export const actionMethods = {
       }
     }
 
-    // --- 汎用攻撃アニメーション (通常攻撃のみ) ---
+    // --- 攻撃アニメーション ---
     let delayDamageMs = 0;
-    if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
+    if (isParty && !options.damageType && !this._cachedDisableAnim && !document.hidden) {
+      // Party normal attacks have a distinct visual for every job. Counter
+      // attacks intentionally come through this path as normal attacks too.
+      delayDamageMs = playNormalAttackAnimation(attacker, defender);
+    } else if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
         const slashDuration = getBattleAnimationDuration(200, 100);
