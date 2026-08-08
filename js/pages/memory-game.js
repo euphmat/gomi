@@ -211,7 +211,7 @@ function selectCardItems(config) {
 
 const pageStyles = () => `
   <style>
-    .memory-card { perspective: 700px; -webkit-tap-highlight-color: transparent; }
+    .memory-card { position:relative; perspective:700px; -webkit-tap-highlight-color:transparent; }
     .memory-card-inner { position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform .38s cubic-bezier(.2,.75,.25,1); }
     .memory-card.is-flipped .memory-card-inner { transform:rotateY(180deg); }
     .memory-card-face { position:absolute; inset:0; overflow:hidden; border-radius:.65rem; backface-visibility:hidden; -webkit-backface-visibility:hidden; }
@@ -224,12 +224,20 @@ const pageStyles = () => `
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) { z-index:1; }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child { border-color:rgba(103,232,249,.95); box-shadow:0 0 16px 3px rgba(34,211,238,.5), inset 0 0 18px rgba(129,230,217,.3); animation:memory-clairvoyance-aura 1.8s ease-in-out infinite; }
     .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision] { display:flex; animation:memory-clairvoyance-vision .7s ease-out both; }
+    .memory-card.is-skill-target { z-index:4; animation:memory-skill-target 1.15s ease-in-out infinite; }
+    .memory-card.is-skill-target .memory-card-front { border-color:rgba(253,230,138,.98); box-shadow:0 0 20px 6px rgba(245,158,11,.72),inset 0 0 16px rgba(255,255,255,.24); }
+    .memory-skill-target-badge { position:absolute; z-index:5; top:-6px; left:50%; display:none; min-width:max-content; transform:translateX(-50%); align-items:center; gap:2px; border:1px solid rgba(254,243,199,.9); border-radius:999px; padding:2px 6px; color:#451a03; background:linear-gradient(135deg,#fef3c7,#f59e0b); box-shadow:0 0 12px rgba(245,158,11,.85); font-size:8px; font-weight:900; line-height:1; }
+    .memory-card.is-skill-target > .memory-skill-target-badge { display:flex; }
+    .memory-skill-target-badge .material-symbols-outlined { font-size:11px; }
+    .memory-skill-charge.is-ready { border-color:rgba(251,191,36,.75); background:rgba(245,158,11,.24); color:#fef3c7; box-shadow:0 0 12px rgba(245,158,11,.42); animation:memory-skill-charge-ready 1.15s ease-in-out infinite; }
     .memory-card:disabled { opacity:1; }
     @keyframes memory-match { 50% { transform:scale(1.08); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
     @keyframes memory-hint { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.09); filter:brightness(1.55); } }
     @keyframes memory-cpu-trace { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.3); } }
     @keyframes memory-clairvoyance-aura { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.28); } }
     @keyframes memory-clairvoyance-vision { from { opacity:0; transform:scale(.72); filter:blur(7px); } to { opacity:1; transform:scale(1); filter:blur(0); } }
+    @keyframes memory-skill-target { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.045); filter:brightness(1.3); } }
+    @keyframes memory-skill-charge-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.3); } }
     @keyframes memory-result-in { from { opacity:0; transform:translateY(10px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
     @keyframes memory-coin-toss {
       0% { transform:translate(-50%,calc(-50% + 72px)) rotateX(-18deg) rotateY(0deg) scale(.72); }
@@ -336,7 +344,7 @@ const pageStyles = () => `
     @keyframes memory-skill-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.18); } }
     @media (prefers-reduced-motion: reduce) {
       .memory-card-inner { transition:none; }
-      .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-result { animation:none; }
+      .memory-card.is-matched, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) .memory-card-face:first-child, .memory-card.is-clairvoyant:not(.is-flipped):not(.is-matched) [data-clairvoyant-vision], .memory-card.is-skill-target, .memory-skill-charge.is-ready, .memory-result { animation:none; }
       .memory-coin, .memory-coin-shadow { animation-duration:.01ms; }
       .memory-coin-result { animation:none; }
       .memory-tree-skill.can-unlock { animation:none; }
@@ -702,7 +710,7 @@ export function renderMemoryGamePage() {
           ${skillEffects.cpuRevealDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">CPU確認 +${skillEffects.cpuRevealDelayMs / 1000}秒</span>` : ''}
           ${skillEffects.mismatchDelayMs ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">残像 +${skillEffects.mismatchDelayMs / 1000}秒</span>` : ''}
           ${skillEffects.memoryMarkCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">栞 ${skillEffects.memoryMarkCapacity}枚</span>` : ''}
-          ${skillEffects.firstCardResetCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">仕切り直し ${skillEffects.firstCardResetCharges}回</span>` : ''}
+          ${skillEffects.firstCardResetCharges ? `<span data-first-card-reset-status class="memory-skill-charge rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">仕切り直し 残り${skillEffects.firstCardResetCharges}回</span>` : ''}
           ${skillEffects.refocusCharges ? `<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">再集中 ${skillEffects.refocusCharges}回</span>` : ''}
           ${skillEffects.doubleCheckCharges ? '<span class="rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">見直し 1回</span>' : ''}
           ${skillEffects.matchedOpacity < 1 ? `<span class="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-1 text-[8px] font-black text-violet-200">獲得札 ${Math.round(skillEffects.matchedOpacity * 100)}%</span>` : ''}
@@ -731,6 +739,7 @@ export function renderMemoryGamePage() {
                   <span class="mt-0.5 block w-full rounded-sm bg-slate-950/75 px-0.5 py-0.5 whitespace-normal break-all text-center text-[clamp(8px,2vw,11px)] font-black leading-[1.1] text-white shadow-sm">${card.name}</span>
                 </span>
               </span>
+              <span class="memory-skill-target-badge" aria-hidden="true"><span class="material-symbols-outlined">undo</span>戻す</span>
             </button>
           `).join('')}
         </section>
@@ -790,6 +799,37 @@ export function renderMemoryGamePage() {
   };
 
   const cardElement = (index) => container.querySelector(`[data-card-index="${index}"]`);
+
+  const updateSkillTargets = () => {
+    if (!game) return;
+    container.querySelectorAll('.memory-card.is-skill-target').forEach(element => {
+      element.classList.remove('is-skill-target');
+      const index = Number(element.dataset.cardIndex);
+      if (!Number.isInteger(index) || !game.cards[index]) return;
+      element.setAttribute('aria-label', element.classList.contains('is-flipped')
+        ? game.cards[index].name
+        : element.classList.contains('is-clairvoyant')
+          ? `透視中: ${game.cards[index].name}`
+          : `伏せられたカード ${index + 1}`);
+    });
+
+    const canResetFirstCard = game.turn === 'player'
+      && !game.locked
+      && game.selected.length === 1
+      && game.firstCardResetCharges > 0;
+    const resetStatus = container.querySelector('[data-first-card-reset-status]');
+    if (resetStatus) {
+      resetStatus.textContent = `仕切り直し 残り${game.firstCardResetCharges}回`;
+      resetStatus.classList.toggle('is-ready', canResetFirstCard);
+      resetStatus.classList.toggle('opacity-50', game.firstCardResetCharges <= 0);
+    }
+    if (!canResetFirstCard) return;
+
+    const targetIndex = game.selected[0];
+    const target = cardElement(targetIndex);
+    target?.classList.add('is-skill-target');
+    target?.setAttribute('aria-label', `${game.cards[targetIndex].name}。仕切り直しを発動できます`);
+  };
 
   const setMessage = (message, style = 'cyan') => {
     const element = container.querySelector('[data-message]');
@@ -1051,6 +1091,7 @@ export function renderMemoryGamePage() {
       markMatch(indices);
       game.scores[owner] += 1;
       game.selected = [];
+      updateSkillTargets();
       updateScores();
       setMessage(owner === 'player' ? 'ペア獲得！ 続けてあなたの番です' : 'CPUがペアを獲得。CPUの番が続きます', owner === 'player' ? 'emerald' : 'rose');
 
@@ -1078,6 +1119,7 @@ export function renderMemoryGamePage() {
     hideCards(indices);
     const clairvoyantCount = owner === 'player' ? tryClairvoyance(indices) : 0;
     game.selected = [];
+    updateSkillTargets();
     if (owner === 'player') {
       if (game.refocusCharges > 0) {
         game.refocusCharges -= 1;
@@ -1135,12 +1177,14 @@ export function renderMemoryGamePage() {
         game.firstCardResetCharges -= 1;
         hideCards([index]);
         game.selected = [];
+        updateSkillTargets();
         setMessage(`仕切り直し：1枚目を選び直せます（残り${game.firstCardResetCharges}回）`, 'amber');
       }
       return;
     }
     revealCard(index, true);
     game.selected.push(index);
+    updateSkillTargets();
     if (game.selected.length === 1) {
       setMessage(game.firstCardResetCharges > 0
         ? `もう1枚選択／同じカードを押すと仕切り直し（残り${game.firstCardResetCharges}回）`
@@ -1165,6 +1209,7 @@ export function renderMemoryGamePage() {
         hideCards([pair[1]]);
         game.selected = [pair[0]];
         game.locked = false;
+        updateSkillTargets();
       }, 550 + game.skillEffects.mismatchDelayMs);
     } else {
       later(() => resolvePair('player', pair), 850 + game.skillEffects.mismatchDelayMs);
