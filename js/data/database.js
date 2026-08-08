@@ -49,7 +49,7 @@ function _mergeDef(item) {
 
 const DB_NAME = 'rpg_game_db';
 const DB_VERSION = 1;
-const SAVE_SECRET_KEY = 'gomi_rpg_salt';
+const SAVE_STORES = ['gameState', 'characters', 'equipment', 'inventory'];
 
 function _getIndexedDBError(source) {
   try {
@@ -81,7 +81,7 @@ function _waitUntilDocumentVisible() {
   });
 }
 
-async function encodeSaveData(dataObj) {
+async function encodeCloudSnapshot(dataObj) {
   const jsonStr = JSON.stringify(dataObj);
   
   // Compress using native CompressionStream
@@ -95,32 +95,33 @@ async function encodeSaveData(dataObj) {
     reader.onloadend = () => {
       // Extract base64 part from data URL
       const base64data = reader.result.split(',')[1];
-      resolve("GZ_" + base64data);
+      resolve(base64data);
     };
     reader.onerror = reject;
     reader.readAsDataURL(compressedBlob);
   });
 }
 
-async function decodeSaveData(base64Str) {
-  if (base64Str.startsWith("GZ_")) {
-    const actualBase64 = base64Str.substring(3);
-    const res = await fetch(`data:application/octet-stream;base64,${actualBase64}`);
-    const blob = await res.blob();
-    const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
-    const response = new Response(decompressedStream);
-    const jsonStr = await response.text();
-    return JSON.parse(jsonStr);
-  } else {
-    // Legacy format backward compatibility
-    const decodedB64 = atob(base64Str);
-    let result = '';
-    for (let i = 0; i < decodedB64.length; i++) {
-      result += String.fromCharCode(decodedB64.charCodeAt(i) ^ SAVE_SECRET_KEY.charCodeAt(i % SAVE_SECRET_KEY.length));
-    }
-    const jsonStr = decodeURIComponent(result);
-    return JSON.parse(jsonStr);
+async function decodeCloudSnapshot(base64Str) {
+  const res = await fetch(`data:application/octet-stream;base64,${base64Str}`);
+  const blob = await res.blob();
+  const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+  const response = new Response(decompressedStream);
+  const jsonStr = await response.text();
+  return JSON.parse(jsonStr);
+}
+
+function validateCloudSnapshot(data) {
+  if (!data || typeof data !== 'object') return false;
+  if (!Array.isArray(data.gameState) || !Array.isArray(data.characters)
+      || !Array.isArray(data.equipment) || !Array.isArray(data.inventory)) {
+    return false;
   }
+
+  return data.gameState.every(entry => entry && typeof entry.key === 'string')
+    && data.characters.every(character => character && character.id !== undefined)
+    && data.equipment.every(item => item && item.id !== undefined)
+    && data.inventory.every(item => item && item.id !== undefined);
 }
 
 class GameDatabase {
@@ -624,9 +625,10 @@ class GameDatabase {
     return this._write('inventory', (store) => store.delete(id));
   }
   /**
-   * Export all save data as an encrypted base64 string.
+   * Create a gzip-compressed snapshot for the authenticated cloud-save service.
+   * This is intentionally not exposed through an import/export UI.
    */
-  async exportData() {
+  async createCloudSnapshot() {
     const gameState = await this._read('gameState', store => store.getAll());
     const characters = await this.getAllCharacters();
     const equipment = await this._read('equipment', store => store.getAll()); // raw equipment without mergeDef
@@ -639,46 +641,41 @@ class GameDatabase {
       inventory
     };
 
-    return await encodeSaveData(data);
+    return encodeCloudSnapshot(data);
   }
 
   /**
-   * Import save data from an encrypted base64 string.
+   * Atomically replace every local save store with a cloud snapshot.
    */
-  async importData(base64Str) {
-    try {
-      const data = await decodeSaveData(base64Str);
-
-      // Validate data structure loosely
-      if (!data.gameState || !data.characters || !data.equipment || !data.inventory) {
-        throw new Error('Invalid save data format');
-      }
-
-      // Clear existing stores and write new data
-      await this._write('gameState', store => store.clear());
-      await this._write('characters', store => store.clear());
-      await this._write('equipment', store => store.clear());
-      await this._write('inventory', store => store.clear());
-
-      if (data.gameState.length > 0) {
-        await Promise.all(data.gameState.map(entry => this.setGameState(entry.key, entry.value)));
-      }
-      if (data.characters.length > 0) {
-        await Promise.all(data.characters.map(char => this.putCharacter(char)));
-      }
-      if (data.equipment.length > 0) {
-        await Promise.all(data.equipment.map(eq => this._write('equipment', store => store.put(eq))));
-      }
-      if (data.inventory.length > 0) {
-        await Promise.all(data.inventory.map(item => this.putInventoryItem(item)));
-      }
-
-      console.log('[GameDB] Data imported successfully.');
-      return true;
-    } catch (e) {
-      console.error('[GameDB] Import failed:', e);
-      return false;
+  async restoreCloudSnapshot(payload) {
+    const data = await decodeCloudSnapshot(payload);
+    if (!validateCloudSnapshot(data)) {
+      throw new Error('Invalid cloud save format.');
     }
+
+    const run = () => this._runWithConnectionRetry('cloud snapshot', (db) => new Promise((resolve, reject) => {
+      let tx;
+      try {
+        tx = db.transaction(SAVE_STORES, 'readwrite');
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error('Cloud save restore failed.'));
+        tx.onabort = () => reject(tx.error || new Error('Cloud save restore was aborted.'));
+
+        for (const storeName of SAVE_STORES) tx.objectStore(storeName).clear();
+        for (const entry of data.gameState) tx.objectStore('gameState').put(entry);
+        for (const character of data.characters) tx.objectStore('characters').put(character);
+        for (const item of data.equipment) tx.objectStore('equipment').put(item);
+        for (const item of data.inventory) tx.objectStore('inventory').put(item);
+      } catch (error) {
+        try { tx?.abort(); } catch (_) { /* Transaction may not have started. */ }
+        reject(error);
+      }
+    }));
+
+    const queuedRestore = this._writeQueue.then(run, run);
+    this._writeQueue = queuedRestore.catch(() => undefined);
+    await queuedRestore;
+    console.log('[GameDB] Cloud snapshot restored successfully.');
   }
 }
 

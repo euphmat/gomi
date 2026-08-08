@@ -33,6 +33,7 @@ import { checkForAvailableUpdate, showUpdateLogModal } from './components/update
 import { activateScreenLock, initScreenLock } from './utils/screen-lock.js';
 import { initTouchFeedback } from './utils/touch-feedback.js';
 import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
+import { createCloudSavePanel, initCloudSavePanel } from './components/cloud-save-panel.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -502,37 +503,8 @@ class App {
 
           <div class="settings-section settings-group">
 
-          <!-- Save Data Management -->
-          <div class="settings-compact-row">
-            <div class="flex items-center gap-2">
-              <div class="settings-compact-icon bg-emerald-500/15 border border-emerald-500/20">
-                <span class="material-symbols-outlined text-base text-emerald-400">save</span>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-xs font-bold text-gray-200 leading-tight">セーブデータ管理</div>
-              </div>
-              <div class="flex gap-1.5 shrink-0">
-              <button id="settings-export" type="button"
-                      class="settings-action-btn px-2 py-2 rounded-lg text-[9px] font-bold
-                             bg-gradient-to-b from-gray-700/80 to-gray-800/80
-                             border border-gray-600/40 text-gray-300
-                             active:text-white active:border-gray-500/50
-                             cursor-pointer flex items-center justify-center gap-1">
-                <span class="material-symbols-outlined text-xs">file_upload</span>
-                エクスポート
-              </button>
-              <button id="settings-import" type="button"
-                      class="settings-action-btn px-2 py-2 rounded-lg text-[9px] font-bold
-                             bg-gradient-to-b from-gray-700/80 to-gray-800/80
-                             border border-gray-600/40 text-gray-300
-                             active:text-white active:border-gray-500/50
-                             cursor-pointer flex items-center justify-center gap-1">
-                <span class="material-symbols-outlined text-xs">file_download</span>
-                インポート
-              </button>
-              </div>
-            </div>
-          </div>
+          <!-- Authenticated manual cloud save -->
+          ${createCloudSavePanel()}
 
           <!-- Data Reset -->
           <div class="settings-compact-row bg-red-950/20">
@@ -541,8 +513,8 @@ class App {
                 <span class="material-symbols-outlined text-base text-red-400">delete_forever</span>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-xs font-bold text-red-300/90 leading-tight">データリセット</div>
-                <div class="text-[9px] text-red-400/50 mt-0.5 leading-tight">全データを削除（取り消し不可）</div>
+                <div class="text-xs font-bold text-red-300/90 leading-tight">端末データリセット</div>
+                <div class="text-[9px] text-red-400/50 mt-0.5 leading-tight">この端末のデータを削除（クラウドは維持）</div>
               </div>
               <button id="settings-reset" type="button" aria-label="セーブデータを削除してリセット"
                     class="settings-action-btn shrink-0 px-2.5 py-2 rounded-lg text-[9px] font-bold
@@ -564,14 +536,23 @@ class App {
 
     document.body.appendChild(overlay);
 
-    // ── Close button ──
-    document.getElementById('settings-close').addEventListener('click', () => {
-      overlay.remove();
+    const disposeCloudSavePanel = initCloudSavePanel(overlay, {
+      onRestored: () => {
+        alert('クラウドセーブを復元しました。ページを再読み込みします。');
+        window.location.reload();
+      }
     });
+    const closeSettings = () => {
+      disposeCloudSavePanel();
+      overlay.remove();
+    };
+
+    // ── Close button ──
+    document.getElementById('settings-close').addEventListener('click', closeSettings);
 
     // ── Close on backdrop click ──
     overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
+      if (e.target === overlay) closeSettings();
     });
 
     // ── Toggle Settings (Custom Div Toggles) ──
@@ -694,127 +675,11 @@ class App {
       window.addEventListener('settingsChanged', window._battleStatsSettingsHandler);
     }
 
-    // ── Export / Import buttons ──
-    const btnExport = document.getElementById('settings-export');
-    if (btnExport) {
-      btnExport.addEventListener('click', async () => {
-        try {
-          const exportStr = await GameDB.exportData();
-          this.showDataModal('エクスポート', '以下のテキストをコピーして保存してください。', exportStr, true);
-        } catch (e) {
-          console.error(e);
-          alert('エクスポートに失敗しました。');
-        }
-      });
-    }
-
-    const btnImport = document.getElementById('settings-import');
-    if (btnImport) {
-      btnImport.addEventListener('click', () => {
-        this.showDataModal('インポート', 'セーブデータのテキストを貼り付けて、「復元」を押してください。', '', false, async (inputStr) => {
-          if (!inputStr) return;
-          const success = await GameDB.importData(inputStr.trim());
-          if (success) {
-            alert('セーブデータの復元が完了しました。ページをリロードします。');
-            window.location.reload();
-          } else {
-            alert('セーブデータの復元に失敗しました。テキストが正しくない可能性があります。');
-          }
-        });
-      });
-    }
-
     // ── Reset button ──
     document.getElementById('settings-reset').addEventListener('click', () => {
-      if (!window.confirm('本当にリセットしますか？')) return;
+      if (!window.confirm('この端末のセーブデータをリセットしますか？クラウドセーブは削除されません。')) return;
       this.performDataReset();
     });
-  }
-
-  /**
-   * Show a sub-modal for viewing/copying exported data or pasting import data.
-   */
-  showDataModal(title, desc, initialValue, isExport, onConfirm = null) {
-    const overlay = document.createElement('div');
-    overlay.className = `
-      fixed inset-0 z-[60] flex items-center justify-center
-      bg-black/80 backdrop-blur-sm
-      animate-[fade-in_0.15s_ease-out]
-    `;
-    
-    overlay.innerHTML = `
-      <div class="bg-gray-900 border border-gray-700 rounded-xl mx-3 w-full max-w-sm flex flex-col overflow-hidden shadow-2xl">
-        <div class="px-4 py-3 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
-          <span class="text-sm font-bold text-gray-200">${title}</span>
-          <button id="data-close" class="text-gray-400 active:text-white cursor-pointer"><span class="material-symbols-outlined">close</span></button>
-        </div>
-        <div class="p-4 flex flex-col gap-3">
-          <p class="text-[10px] text-gray-400 leading-relaxed">${desc}</p>
-          <textarea id="data-textarea"
-                    class="w-full h-32 bg-gray-950 border border-gray-700 rounded p-2 text-[10px] text-gray-300 font-mono outline-none focus:border-blue-500 resize-none"
-                    ${isExport ? 'readonly' : ''}
-                    placeholder="${isExport ? '' : 'ここにテキストを貼り付け'}">${initialValue}</textarea>
-          
-          <div class="flex gap-2 mt-2">
-            ${isExport ? `
-              <button id="data-copy" class="flex-1 py-2 bg-blue-600/80 active:bg-blue-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">コピー</button>
-              <button id="data-share" class="w-11 flex-none py-2 bg-gray-700/80 active:bg-gray-600 text-white rounded transition-colors cursor-pointer flex items-center justify-center" aria-label="共有">
-                <span class="material-symbols-outlined text-[16px]">share</span>
-              </button>
-            ` : `
-              <button id="data-confirm" class="flex-1 py-2 bg-green-600/80 active:bg-green-600 text-white rounded text-xs font-bold transition-colors cursor-pointer">復元</button>
-            `}
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    document.getElementById('data-close').addEventListener('click', () => overlay.remove());
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
-    });
-
-    if (isExport) {
-      document.getElementById('data-copy').addEventListener('click', async () => {
-        const textarea = document.getElementById('data-textarea');
-        textarea.select();
-        try {
-          await navigator.clipboard.writeText(textarea.value);
-          const btn = document.getElementById('data-copy');
-          btn.textContent = 'コピーしました！';
-          btn.classList.replace('bg-blue-600/80', 'bg-green-600/80');
-          setTimeout(() => {
-            btn.textContent = 'コピー';
-            btn.classList.replace('bg-green-600/80', 'bg-blue-600/80');
-          }, 2000);
-        } catch (err) {
-          document.execCommand('copy');
-          alert('コピーしました。');
-        }
-      });
-      document.getElementById('data-share').addEventListener('click', async () => {
-        const textarea = document.getElementById('data-textarea');
-        if (navigator.share) {
-          try {
-            await navigator.share({
-              title: 'セーブデータ',
-              text: textarea.value
-            });
-          } catch (err) {
-            console.error('Share failed:', err);
-          }
-        } else {
-          alert('お使いの環境は共有機能に対応していません。');
-        }
-      });
-    } else {
-      document.getElementById('data-confirm').addEventListener('click', () => {
-        const val = document.getElementById('data-textarea').value;
-        if (onConfirm) onConfirm(val);
-      });
-    }
   }
 
   /**

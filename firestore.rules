@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /cloudSaves/{userId} {
+      function isOwner() {
+        return request.auth != null
+          && request.auth.uid == userId
+          && request.auth.token.email_verified == true;
+      }
+
+      function isValidSave() {
+        return request.resource.data.keys().hasOnly([
+            'schemaVersion', 'appVersion', 'savedAt', 'updatedAt', 'payload'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.appVersion is string
+          && request.resource.data.appVersion.size() <= 30
+          && request.resource.data.savedAt is string
+          && request.resource.data.savedAt.size() <= 40
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.payload is string
+          && request.resource.data.payload.size() > 0
+          && request.resource.data.payload.size() <= 850000;
+      }
+
+      // 一覧取得は禁止し、本人が自分の1件だけを読み書きできるようにする。
+      allow get: if isOwner();
+      allow list, delete: if false;
+      allow create, update: if isOwner() && isValidSave();
+    }
+  }
+}

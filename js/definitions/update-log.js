@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.24';
-export const APP_RELEASE_DATE = '2026.08.07';
+export const APP_VERSION = '0.1.25';
+export const APP_RELEASE_DATE = '2026.08.08';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.08',
+    version: '0.1.25',
+    items: [
+      'セーブデータのテキストによるインポート・エクスポートを廃止し、Firebase AuthenticationとCloud Firestoreを使うクラウドセーブへ変更しました。',
+      'メールアドレスまたはGoogleアカウントで登録・ログインし、設定画面からクラウドへの保存と復元を手動で実行できます。',
+      'クラウド通信は手動操作時だけに限定し、圧縮した最新セーブ1件のみを保持することで通信量とFirestore利用量を抑えました。',
+    ],
+  },
   {
     date: '2026.08.07',
     version: '0.1.24',
