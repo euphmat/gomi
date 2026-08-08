@@ -8,6 +8,33 @@ import { playNormalAttackAnimation } from './normal-attack-animations.js';
  */
 
 export const actionMethods = {
+  _waitForAttackAnimation(target, duration) {
+    const wait = Math.max(0, Math.ceil(Number(duration) || 0));
+    if (wait === 0) return;
+
+    this._pendingAttackAnimations = (this._pendingAttackAnimations || 0) + 1;
+    if (!this._pendingAttackAnimationTargets) {
+      this._pendingAttackAnimationTargets = new Map();
+    }
+    const targetCount = this._pendingAttackAnimationTargets.get(target) || 0;
+    this._pendingAttackAnimationTargets.set(target, targetCount + 1);
+
+    this._scheduleBattleTimeout(() => {
+      const remainingForTarget = (this._pendingAttackAnimationTargets?.get(target) || 1) - 1;
+      if (remainingForTarget > 0) {
+        this._pendingAttackAnimationTargets.set(target, remainingForTarget);
+      } else {
+        this._pendingAttackAnimationTargets?.delete(target);
+      }
+
+      this._pendingAttackAnimations = Math.max(0, (this._pendingAttackAnimations || 1) - 1);
+      this.renderEntities();
+      if (this._pendingAttackAnimations === 0) {
+        this.checkBattleEnd();
+      }
+    }, wait);
+  },
+
   clearEntityStatuses(entity) {
     entity.activeAilment = null;
     entity._defBuffTurns = 0;
@@ -213,6 +240,7 @@ export const actionMethods = {
   executeAttack(attacker, defender, isParty, options = {}) {
     if (this.isStopped) return;
     const actionName = options.actionName || '攻撃';
+    let attackAnimationMs = 0;
 
     let isMagic = options.isMagic || false;
     let isHybrid = options.isHybrid || false;
@@ -234,6 +262,7 @@ export const actionMethods = {
       const attackerEl = document.getElementById(attacker.elementId);
       if (attackerEl) {
         const animDuration = getBattleAnimationDuration(300, 120);
+        attackAnimationMs = Math.max(attackAnimationMs, animDuration + 34);
         if (isMagic) {
           attackerEl.animate([
             { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
@@ -591,11 +620,14 @@ export const actionMethods = {
     if (isParty && !options.damageType && !this._cachedDisableAnim && !document.hidden) {
       // Party normal attacks have a distinct visual for every job. Counter
       // attacks intentionally come through this path as normal attacks too.
-      delayDamageMs = playNormalAttackAnimation(attacker, defender);
+      const timing = playNormalAttackAnimation(attacker, defender);
+      delayDamageMs = timing.impactDelay;
+      attackAnimationMs = Math.max(attackAnimationMs, timing.completionDelay);
     } else if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
       const defenderEl = document.getElementById(defender.elementId);
       if (defenderEl) {
         const slashDuration = getBattleAnimationDuration(200, 100);
+        attackAnimationMs = Math.max(attackAnimationMs, slashDuration + 34);
         defenderEl.animate([
           { transform: 'translateX(0)', filter: 'brightness(1)' },
           { transform: 'translateX(10px)', filter: 'brightness(1.5)', offset: 0.2 },
@@ -610,6 +642,7 @@ export const actionMethods = {
       if (defenderEl) {
         const animDuration = getBattleAnimationDuration(300, 120);
         delayDamageMs = animDuration;
+        attackAnimationMs = Math.max(attackAnimationMs, animDuration + 34);
         defenderEl.animate([
           { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' },
           { transform: 'scale(0.9)', filter: 'brightness(2) hue-rotate(270deg)', offset: 0.5 },
@@ -903,6 +936,12 @@ export const actionMethods = {
       }
     }
 
+    // Keep the target DOM and the action cadence alive until the compositor
+    // has presented the complete attack. This is especially important at 5x:
+    // without the presentation lock, a new ATB action can replace the same
+    // transform animation every 50 ms, and a killing blow clears its effects
+    // before the browser paints them.
+    this._waitForAttackAnimation(defender, attackAnimationMs);
     this.renderEntities();
     this.checkBattleEnd();
   },

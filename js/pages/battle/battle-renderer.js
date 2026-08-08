@@ -130,7 +130,9 @@ export const rendererMethods = {
     const fastMode = speed >= 5;
     if (!this.domCache) return;
 
-    const aliveEnemiesCount = this.enemies.filter(e => !e.isDead).length || 1;
+    const aliveEnemiesCount = this.enemies.filter(e => (
+      !e.isDead || this._pendingAttackAnimationTargets?.has(e)
+    )).length || 1;
     if (this._lastAliveEnemiesCount !== aliveEnemiesCount) {
       this._lastAliveEnemiesCount = aliveEnemiesCount;
       this.elements.enemyArea.style.setProperty('--enemy-cols', aliveEnemiesCount);
@@ -150,7 +152,8 @@ export const rendererMethods = {
       }
 
       const enemyDeadState = `${e.isDead}-${fastMode}`;
-      if (e.isDead && cache.uiState.dead !== enemyDeadState) {
+      const isFinishingAttack = this._pendingAttackAnimationTargets?.has(e);
+      if (e.isDead && !isFinishingAttack && cache.uiState.dead !== enemyDeadState) {
         cache.uiState.dead = enemyDeadState;
         el.classList.remove('cursor-pointer', 'active:scale-105');
         if (!fastMode) {
@@ -270,15 +273,20 @@ export const rendererMethods = {
 
       const partyLifeState = `${p.isDead}-${disableAnim}-${fastMode}`;
       if (cache.uiState.life !== partyLifeState) {
-        cache.uiState.life = partyLifeState;
-        if (p.isDead) {
-          el.classList.add('opacity-40', 'grayscale');
-          el.classList.remove('cursor-pointer');
-          if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'active:scale-[1.02]');
+        const isFinishingAttack = this._pendingAttackAnimationTargets?.has(p);
+        if (p.isDead && isFinishingAttack) {
+          // Keep the defeated card present until the hit animation has shown.
         } else {
-          el.classList.remove('opacity-40', 'grayscale');
-          el.classList.add('cursor-pointer');
-          if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'active:scale-[1.02]');
+          cache.uiState.life = partyLifeState;
+          if (p.isDead) {
+            el.classList.add('opacity-40', 'grayscale');
+            el.classList.remove('cursor-pointer');
+            if (!disableAnim && !fastMode) el.classList.remove('transition-transform', 'active:scale-[1.02]');
+          } else {
+            el.classList.remove('opacity-40', 'grayscale');
+            el.classList.add('cursor-pointer');
+            if (!disableAnim && !fastMode) el.classList.add('transition-transform', 'active:scale-[1.02]');
+          }
         }
       }
 

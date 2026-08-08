@@ -43,6 +43,7 @@ async function recordCompletedDungeonFloor(dungeonId, floorLevel) {
 export const resultMethods = {
   checkBattleEnd() {
     if (this.isStopped) return;
+    if (this._pendingAttackAnimations > 0) return;
 
     const allEnemiesDead = this.enemies.every(e => e.isDead);
     if (allEnemiesDead) {

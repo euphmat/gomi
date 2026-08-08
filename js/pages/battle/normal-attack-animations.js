@@ -455,15 +455,15 @@ const animateDefenderImpact = (element, profile, totalDuration, impactDelay, sty
 };
 
 /**
- * Plays a complete job-specific normal attack and returns the damage popup's
- * impact delay. Damage itself remains synchronous in the battle simulation.
+ * Plays a complete job-specific normal attack and returns its impact and
+ * completion timings. Damage itself remains synchronous in the simulation.
  */
 export function playNormalAttackAnimation(attacker, defender) {
-  if (shouldSkipBattleAnimations()) return 0;
+  if (shouldSkipBattleAnimations()) return { impactDelay: 0, completionDelay: 0 };
 
   const attackerEl = document.getElementById(attacker?.elementId);
   const defenderEl = document.getElementById(defender?.elementId);
-  if (!attackerEl || !defenderEl) return 0;
+  if (!attackerEl || !defenderEl) return { impactDelay: 0, completionDelay: 0 };
 
   const layer = document.getElementById('battle-effects-layer') || document.body;
   const origin = centerOf(attackerEl.getBoundingClientRect());
@@ -614,5 +614,11 @@ export function playNormalAttackAnimation(attacker, defender) {
   }
   animateDefenderImpact(defenderEl, profile, totalDuration, impactDelay, defenderStyle);
 
-  return impactDelay;
+  // Leave two display frames after the nominal end time. setTimeout callbacks
+  // can otherwise clear the battle scene in the same refresh cycle as the
+  // final Web Animations frame, which makes a killing blow look truncated.
+  return {
+    impactDelay,
+    completionDelay: Math.ceil(totalDuration + 34)
+  };
 }
