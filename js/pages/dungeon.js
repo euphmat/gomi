@@ -34,6 +34,36 @@ function getFloorMonsterIds(floor) {
   return [...ids];
 }
 
+function getFloorMonsterMaxCounts(floor) {
+  const maxCounts = new Map();
+
+  for (const encounter of floor?.monsters || []) {
+    const encounterCounts = new Map();
+    const addCount = (monsterId, count = 1) => {
+      if (!monsterId || Number(count) <= 0) return;
+      encounterCounts.set(monsterId, (encounterCounts.get(monsterId) || 0) + Number(count));
+    };
+
+    if (typeof encounter === 'string') {
+      addCount(encounter);
+    } else if (Array.isArray(encounter?.members)) {
+      encounter.members.forEach(member => addCount(member?.id, member?.count ?? 1));
+    } else if (encounter?.id) {
+      addCount(encounter.id, encounter.count ?? 1);
+    } else {
+      Object.entries(encounter || {}).forEach(([monsterId, count]) => {
+        if (monsterId !== 'weight') addCount(monsterId, count);
+      });
+    }
+
+    encounterCounts.forEach((count, monsterId) => {
+      maxCounts.set(monsterId, Math.max(maxCounts.get(monsterId) || 0, count));
+    });
+  }
+
+  return maxCounts;
+}
+
 function getOwnedMonsterState(ranchData, monsterId) {
   const ranches = Object.values(ranchData || {});
   return {
@@ -113,6 +143,7 @@ window.openDungeonFloorModal = async (dungeonId) => {
     const isCurrentFloor = currentDungeonId === dungeon.id && Number(currentFloorLevel) === Number(floor.level) && !isDungeonCleared;
     const isBossFloor = floorIndex === dungeon.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
+    const maxMonsterCounts = getFloorMonsterMaxCounts(floor);
     const visibleMonsterIds = monsterIds.slice(0, 3);
     const hiddenMonsterCount = monsterIds.length - visibleMonsterIds.length;
     const monstersHtml = isFloorCleared ? visibleMonsterIds.map(monsterId => {
@@ -125,37 +156,34 @@ window.openDungeonFloorModal = async (dungeonId) => {
       const hasMedal = Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId);
       const medalRankIndex = Number(playerMedals?.[monsterId]);
       const medal = hasMedal && Number.isInteger(medalRankIndex) ? MEDAL_RANKS[medalRankIndex] : null;
+      const maxCount = maxMonsterCounts.get(monsterId) || 1;
       return `
-        <div class="w-8 shrink-0" title="${monster.name}｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${medal?.name || '未取得'}" aria-label="${monster.name}。仲間${owned.companion ? '獲得済み' : '未獲得'}、伝説${owned.legendary ? '獲得済み' : '未獲得'}、メダル${medal?.name || '未取得'}">
-          <div class="h-8 w-8 overflow-hidden rounded-lg border border-white/15 bg-slate-950/90 p-px">
+        <div class="w-12 shrink-0 max-[360px]:w-10" title="${monster.name}｜最大${maxCount}体出現｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${medal?.name || '未取得'}" aria-label="${monster.name}。最大${maxCount}体出現。仲間${owned.companion ? '獲得済み' : '未獲得'}、伝説${owned.legendary ? '獲得済み' : '未獲得'}、メダル${medal?.name || '未取得'}">
+          <div class="relative h-12 w-12 overflow-visible rounded-xl border border-white/15 bg-slate-950/90 p-0.5 max-[360px]:h-10 max-[360px]:w-10">
             <img src="${monster.image}" alt="${monster.name}" class="h-full w-full object-contain p-px" loading="lazy">
+            <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-slate-950 bg-cyan-400 px-1 text-[9px] font-black leading-none text-slate-950 shadow-[0_0_0_2px_rgba(8,15,30,.9)]" aria-hidden="true">${maxCount}</span>
           </div>
-          <div class="mt-1 grid grid-cols-3 gap-0.5" aria-hidden="true">
-            <span class="h-1 rounded-full ${owned.companion ? 'bg-emerald-300' : 'bg-slate-700'}"></span>
-            <span class="h-1 rounded-full ${owned.legendary ? 'bg-amber-300' : 'bg-slate-700'}"></span>
-            <span class="h-1 rounded-full ${medal ? 'bg-cyan-300' : 'bg-slate-700'}"></span>
+          <div class="mt-1 grid grid-cols-3 gap-0.5 px-0.5" aria-hidden="true">
+            <span class="h-1.5 rounded-full ${owned.companion ? 'bg-emerald-300' : 'bg-slate-700'}"></span>
+            <span class="h-1.5 rounded-full ${owned.legendary ? 'bg-amber-300' : 'bg-slate-700'}"></span>
+            <span class="h-1.5 rounded-full ${medal ? 'bg-cyan-300' : 'bg-slate-700'}"></span>
           </div>
         </div>`;
     }).join('') : '';
 
     return `
-      <section class="relative grid min-h-[64px] grid-cols-[42px_minmax(0,1fr)_44px] items-center gap-2 overflow-hidden rounded-xl border p-2 ${isFloorCleared ? 'border-white/15 bg-slate-900/70' : isCurrentFloor ? 'border-cyan-400/35 bg-cyan-950/20' : 'border-slate-800 bg-slate-950/65'}">
+      <section class="relative grid min-h-[76px] grid-cols-[42px_minmax(0,1fr)_44px] items-center gap-2 overflow-hidden rounded-xl border p-2 ${isFloorCleared ? 'border-white/15 bg-slate-900/70' : isCurrentFloor ? 'border-cyan-400/35 bg-cyan-950/20' : 'border-slate-800 bg-slate-950/65'}">
         <div class="absolute inset-y-0 left-0 w-0.5 ${isFloorCleared ? 'bg-emerald-400' : isCurrentFloor ? 'bg-cyan-300' : 'bg-slate-800'}"></div>
         <div class="flex h-11 w-[42px] shrink-0 flex-col items-center justify-center rounded-lg border ${isFloorCleared ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-200' : isCurrentFloor ? 'border-cyan-300/40 bg-cyan-400/10 text-cyan-200' : 'border-slate-700 bg-slate-900 text-slate-500'}">
           <span class="material-symbols-outlined text-[13px]">${isBossFloor ? 'skull' : 'layers'}</span>
           <span class="text-[10px] font-black leading-none tabular-nums">${String(floor.level).padStart(2, '0')}F</span>
         </div>
         <div class="min-w-0 self-stretch">
-          <div class="flex h-5 min-w-0 items-center gap-1.5">
-            <span class="truncate text-[9px] font-black ${isFloorCleared ? 'text-slate-100' : isCurrentFloor ? 'text-cyan-200' : 'text-slate-500'}">${isBossFloor ? '最深部' : `${floor.level}階`} · ${isFloorCleared ? '探索済み' : isCurrentFloor ? '現在地' : '未探索'}</span>
-            ${isCurrentFloor ? '<span class="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-1.5 py-0.5 text-[7px] font-black text-cyan-300">NOW</span>' : ''}
-            ${isFloorCleared ? `<span class="ml-auto shrink-0 text-[8px] font-black tabular-nums text-slate-500">敵${monsterIds.length}</span>` : ''}
-          </div>
           ${isFloorCleared
-            ? `<div class="mt-1 flex min-w-0 items-center gap-1.5">
-                <div class="flex shrink-0 items-start gap-1">${monstersHtml}${hiddenMonsterCount > 0 ? `<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-900/80 text-[8px] font-black text-slate-400" title="ほか${hiddenMonsterCount}種">+${hiddenMonsterCount}</div>` : ''}</div>
+            ? `<div class="flex h-full min-w-0 items-center gap-1.5">
+                <div class="flex shrink-0 items-start gap-1 max-[360px]:gap-0.5">${monstersHtml}${hiddenMonsterCount > 0 ? `<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-600 bg-slate-900/80 text-[10px] font-black text-slate-400 max-[360px]:h-10 max-[360px]:w-10" title="ほか${hiddenMonsterCount}種">+${hiddenMonsterCount}</div>` : ''}</div>
               </div>`
-            : `<div class="mt-1 flex h-8 items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
+            : `<div class="flex h-full items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
         </div>
         <button onclick="window.enterDungeonFloor('${dungeon.id}', ${Number(floor.level)})"
                 ${isDungeonCleared ? '' : 'disabled'}
