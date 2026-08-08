@@ -21,6 +21,7 @@ import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
+import { findNormalAttackFinisher } from './auto-battle-ai.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -803,7 +804,8 @@ class BattleManager {
             const { level, def, levelConfig } = cacheData;
             if (level > 0 && def && levelConfig && def.type !== 'passive') {
               const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
-              if (isAutoEnabled && character.mp.current >= levelConfig.mpCost) {
+              const isBlockedBySilence = character.activeAilment?.type === 'silence' && levelConfig.mpCost > 0;
+              if (isAutoEnabled && !isBlockedBySilence && character.mp.current >= levelConfig.mpCost) {
                 if (def.autoBattle && typeof def.autoBattle.check === 'function') {
                   usableSkills.push({
                     id: skillId,
@@ -822,6 +824,19 @@ class BattleManager {
           selectedEnemyTarget: (this.selectedEnemyTarget && !this.selectedEnemyTarget.isDead) ? this.selectedEnemyTarget : null
         };
 
+        // 最低乱数の通常攻撃だけで倒せる敵がいるなら、MPを温存して先に倒す。
+        // 確率追撃は見積もりに含めないため、ぎりぎりの誤判定も起こしにくい。
+        const normalAttackFinisher = findNormalAttackFinisher(
+          character,
+          context.enemies,
+          context.selectedEnemyTarget,
+          (entity, skillId) => this._findSkill(entity, skillId)
+        );
+        if (normalAttackFinisher) {
+          this.executeAttack(character, normalAttackFinisher.target, true);
+          return;
+        }
+
         let bestAction = {
           type: 'attack',
           score: 30,
@@ -830,7 +845,13 @@ class BattleManager {
         };
 
         for (const skill of usableSkills) {
-          const checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
+          let checkResult = null;
+          try {
+            checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
+          } catch (error) {
+            console.error(`AutoBattle skill check error [${skill.id}]:`, error);
+            continue;
+          }
           if (checkResult) {
             let score = 0;
             let target = null;
