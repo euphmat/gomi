@@ -135,12 +135,9 @@ export const mana_conductor = {
       maxLevel: 10,
       levels: activeLevels(
         [12, 15, 18, 22, 26, 30, 34, 38, 43, 48],
-        [22, 28, 34, 42, 50, 59, 69, 79, 89, 100].map((restore, i) => ({
-          restoreMp: restore,
-          inheritedRestoreMp: Math.floor([12, 15, 18, 22, 26, 30, 34, 38, 43, 48][i] * .75)
-        }))
+        [22, 28, 34, 42, 50, 59, 69, 79, 89, 100].map(restoreMp => ({ restoreMp }))
       ),
-      getDescription: lc => `MPを${lc.mpCost}消費し、自分以外でMP割合が最も低い味方へMPを${lc.restoreMp}渡す。【継承時】回復量は${lc.inheritedRestoreMp}`,
+      getDescription: lc => `MPを${lc.mpCost}消費し、自分以外でMP割合が最も低い味方へMPを${lc.restoreMp}渡す`,
       execute(caster, levelConfig, battle, options = {}) {
         const candidates = getLivingAllies(caster, battle, { excludeCaster: true });
         const target = options.autoTarget && candidates.includes(options.autoTarget)
@@ -151,8 +148,7 @@ export const mana_conductor = {
           return;
         }
         animateSkill(caster, target, 'relay', () => {
-          const amount = isConductor(caster) ? levelConfig.restoreMp : levelConfig.inheritedRestoreMp;
-          const restored = restoreMp(target, amount, battle);
+          const restored = restoreMp(target, levelConfig.restoreMp, battle);
           if (restored > 0) addHarmony(caster, 1, battle);
           battle.renderEntities();
         });
@@ -164,7 +160,7 @@ export const mana_conductor = {
           if (!target) return null;
           const missing = maxMpOf(target) - currentMpOf(target);
           const ratio = currentMpOf(target) / Math.max(1, maxMpOf(target));
-          if (missing < Math.max(6, levelConfig.inheritedRestoreMp) || ratio > .72) return null;
+          if (missing < Math.max(6, levelConfig.restoreMp * .75) || ratio > .72) return null;
           return { target, score: 70 + (1 - ratio) * 80 };
         }
       }
@@ -174,16 +170,14 @@ export const mana_conductor = {
       maxLevel: 10,
       levels: advancedLevels(
         [28, 32, 36, 42, 48, 54, 62, 70, 80, 92],
-        [5, 7, 9, 11, 13, 15, 18, 21, 24, 28].map(amount => ({ recoverMp: amount, duration: 4, inheritedRecoverMp: Math.max(2, Math.floor(amount * .35)), inheritedDuration: 2 }))
+        [5, 7, 9, 11, 13, 15, 18, 21, 24, 28].map(recoverMp => ({ recoverMp, duration: 4 }))
       ),
-      getDescription: lc => `味方全体へ、各自の行動前にMPを${lc.recoverMp}回復する「マナフロー」を${lc.duration}回付与する。【継承時】MP${lc.inheritedRecoverMp}・${lc.inheritedDuration}回`,
+      getDescription: lc => `味方全体へ、各自の行動前にMPを${lc.recoverMp}回復する「マナフロー」を${lc.duration}回付与する`,
       execute(caster, levelConfig, battle) {
         const allies = getLivingAllies(caster, battle);
-        const amount = isConductor(caster) ? levelConfig.recoverMp : levelConfig.inheritedRecoverMp;
-        const duration = isConductor(caster) ? levelConfig.duration : levelConfig.inheritedDuration;
         animateSkill(caster, allies, 'overture', target => {
-          target._manaFlowAmount = Math.max(target._manaFlowAmount || 0, amount);
-          target._manaFlowTurns = Math.max(target._manaFlowTurns || 0, duration);
+          target._manaFlowAmount = Math.max(target._manaFlowAmount || 0, levelConfig.recoverMp);
+          target._manaFlowTurns = Math.max(target._manaFlowTurns || 0, levelConfig.duration);
           battle.showDamage(target.elementId, 'MANA FLOW', 'text-cyan-300');
           battle.renderEntities();
         });
@@ -242,10 +236,8 @@ export const mana_conductor = {
         const targets = battle.enemies.filter(enemy => !enemy.isDead);
         if (targets.length === 0) return;
         const harmony = isConductor(caster) ? (caster._conductorHarmony || 0) : 0;
-        if (isConductor(caster)) {
-          caster._conductorHarmony = 0;
-          getLivingAllies(caster, battle).forEach(ally => restoreMp(ally, levelConfig.pulseMp + harmony * levelConfig.harmonyPulse, battle));
-        }
+        if (isConductor(caster)) caster._conductorHarmony = 0;
+        getLivingAllies(caster, battle).forEach(ally => restoreMp(ally, levelConfig.pulseMp + harmony * levelConfig.harmonyPulse, battle));
         animateSkill(caster, targets, 'storm', target => {
           if (target.isDead) return;
           battle.executeAttack(caster, target, true, {
@@ -275,14 +267,12 @@ export const mana_conductor = {
       execute(caster, levelConfig, battle) {
         const targets = battle.enemies.filter(enemy => !enemy.isDead);
         if (targets.length === 0) return;
-        if (isConductor(caster)) {
-          caster._conductorHarmony = 0;
-          getLivingAllies(caster, battle).forEach(ally => {
-            restoreMp(ally, levelConfig.restoreMp, battle);
-            ally._manaFlowAmount = Math.max(ally._manaFlowAmount || 0, levelConfig.recoverMp);
-            ally._manaFlowTurns = Math.max(ally._manaFlowTurns || 0, levelConfig.duration);
-          });
-        }
+        if (isConductor(caster)) caster._conductorHarmony = 0;
+        getLivingAllies(caster, battle).forEach(ally => {
+          restoreMp(ally, levelConfig.restoreMp, battle);
+          ally._manaFlowAmount = Math.max(ally._manaFlowAmount || 0, levelConfig.recoverMp);
+          ally._manaFlowTurns = Math.max(ally._manaFlowTurns || 0, levelConfig.duration);
+        });
         animateSkill(caster, targets, 'finale', target => {
           if (target.isDead) return;
           battle.executeAttack(caster, target, true, {
@@ -318,9 +308,9 @@ export const mana_conductor = {
       maxLevel: 10,
       levels: advancedLevels(
         Array(10).fill(0),
-        [2, 3, 4, 5, 6, 8, 10, 12, 15, 18].map(recoverMp => ({ recoverMp, inheritedRecoverMp: Math.max(1, Math.floor(recoverMp * .25)) }))
+        [2, 3, 4, 5, 6, 8, 10, 12, 15, 18].map(recoverMp => ({ recoverMp }))
       ),
-      getDescription: lc => `行動終了時、味方全体のMPを${lc.recoverMp}回復する。【継承時】自身だけMPを${lc.inheritedRecoverMp}回復する`
+      getDescription: lc => `行動終了時、味方全体のMPを${lc.recoverMp}回復する`
     }
   ]
 };

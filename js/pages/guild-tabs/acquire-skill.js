@@ -4,6 +4,7 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { showInheritanceHelpModal } from '../../components/inheritance-help-modal.js';
 
 import { JOBS } from '../../jobs/index.js';
+import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 
 /**
  * 「修練場」タブの画面
@@ -70,8 +71,8 @@ export function renderAcquireSkillTab() {
     const currentLevel = (selectedChar.jobSkills && selectedChar.jobSkills[selectedChar.jobId] && selectedChar.jobSkills[selectedChar.jobId][skill.id]) || 0;
     const isMax = currentLevel >= skill.maxLevel;
     const targetLevel = isMax ? currentLevel : currentLevel + 1;
-    const levelConfig = skill.levels.find(l => l.level === targetLevel);
-    const currentDesc = currentLevel > 0 ? skill.getDescription(skill.levels.find(l => l.level === currentLevel)) : '未習得';
+    const levelConfig = resolveJobSkillLevelConfig(skill, targetLevel, 'current');
+    const currentDesc = currentLevel > 0 ? skill.getDescription(resolveJobSkillLevelConfig(skill, currentLevel, 'current')) : '未習得';
     const nextDesc = isMax ? '最大レベルに達しています' : skill.getDescription(levelConfig);
     const hasEnoughSP = !isMax && selectedChar.sp >= levelConfig.spCost;
 
@@ -137,6 +138,7 @@ export function renderAcquireSkillTab() {
                 ? `<span class="text-[9px] font-bold text-emerald-300 bg-emerald-900/40 border border-emerald-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">psychology</span>パッシブ</span>`
                 : `<span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/40 border border-cyan-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig ? levelConfig.mpCost : 0}</span>`
               }
+              <span class="text-[9px] font-bold text-emerald-300 bg-emerald-900/40 border border-emerald-700/50 px-1 py-px rounded">現職 110%</span>
               ${skill.statDependency === 'ATK' ? `<span class="text-[9px] font-bold text-red-300 bg-red-900/40 border border-red-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">swords</span>物理</span>` : ''}
               ${skill.statDependency === 'MAT' ? `<span class="text-[9px] font-bold text-fuchsia-300 bg-fuchsia-900/40 border border-fuchsia-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">auto_awesome</span>魔法</span>` : ''}
               ${skill.statDependency === 'BOTH' ? `<span class="text-[9px] font-bold text-yellow-300 bg-yellow-900/40 border border-yellow-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">flare</span>複合</span>` : ''}
@@ -285,7 +287,7 @@ export function renderAcquireSkillTab() {
 
   const updateInheritedSkillRow = (row, inheritedData, selectedChar, index) => {
     const { skill, level, jobId } = inheritedData;
-    const levelConfig = skill.levels.find(l => l.level === level) || skill.levels[skill.levels.length - 1];
+    const levelConfig = resolveJobSkillLevelConfig(skill, level, 'inherited');
     const jobDef = JOBS[jobId];
     
     const isSelected = skill.type === 'passive'
@@ -315,6 +317,7 @@ export function renderAcquireSkillTab() {
           <div class="flex items-center mb-1 gap-2 flex-wrap">
             <h3 class="text-[13px] font-black ${isSelected ? 'text-white' : 'text-gray-100'} tracking-wide truncate">${skill.name}</h3>
             <span class="text-[9px] font-bold text-purple-300 bg-purple-900/40 border border-purple-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">badge</span>${jobDef ? jobDef.name : ''}</span>
+            <span class="text-[9px] font-bold text-fuchsia-300 bg-fuchsia-900/40 border border-fuchsia-700/50 px-1 py-px rounded">継承 90%</span>
             ${skill.type !== 'passive' ? `<span class="text-[9px] font-bold text-cyan-300 bg-cyan-900/40 border border-cyan-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">water_drop</span>MP ${levelConfig ? levelConfig.mpCost : 0}</span>` : ''}
             ${skill.statDependency === 'ATK' ? `<span class="text-[9px] font-bold text-red-300 bg-red-900/40 border border-red-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">swords</span>物理</span>` : ''}
             ${skill.statDependency === 'MAT' ? `<span class="text-[9px] font-bold text-fuchsia-300 bg-fuchsia-900/40 border border-fuchsia-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">auto_awesome</span>魔法</span>` : ''}

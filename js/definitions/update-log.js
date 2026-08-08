@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.29';
+export const APP_VERSION = '0.1.30';
 export const APP_RELEASE_DATE = '2026.08.08';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.08',
+    version: '0.1.30',
+    items: [
+      '全職業へジョブ適性補正を追加しました。習得元の職業で使うスキルは、ダメージ・回復・補助などの効果量が110%になります。',
+      '継承スキルの効果量を基準値の90%に調整しました。MP/SP消費、HP反動、持続ターン、攻撃回数は変化しません。スライムコアのみ、性能となる発動HP条件に補正がかかります。',
+      '修練場・継承画面・戦闘画面へ適性補正と補正後の効果値を表示し、自動戦闘の判断にも補正後の性能を反映しました。',
+    ],
+  },
   {
     date: '2026.08.08',
     version: '0.1.29',

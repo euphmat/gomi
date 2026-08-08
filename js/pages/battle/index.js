@@ -20,6 +20,7 @@ import { loadTreasureLevels } from '../../data/treasure-manager.js';
 import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
+import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -586,7 +587,7 @@ class BattleManager {
           for (const [sId, level] of Object.entries(skills)) {
             if (level > 0) {
               const skillDef = jobDef.skills.find(s => s.id === sId);
-              const levelConfig = skillDef ? (skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1]) : null;
+              const levelConfig = resolveJobSkillLevelConfig(skillDef, level, 'current');
               character._skillCache.set(sId, { level, def: skillDef || null, levelConfig, jobId });
             }
           }
@@ -603,7 +604,7 @@ class BattleManager {
             const jobDef = JOBS[jobId];
             if (jobDef) {
               const skillDef = jobDef.skills.find(s => s.id === skillId);
-              const levelConfig = skillDef ? (skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1]) : null;
+              const levelConfig = resolveJobSkillLevelConfig(skillDef, level, 'inherited');
               character._skillCache.set(skillId, { level, def: skillDef || null, levelConfig, jobId, isInherited: true });
             }
           }

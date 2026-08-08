@@ -46,6 +46,17 @@ export function showInheritanceHelpModal() {
           </p>
         </div>
 
+        <div class="bg-emerald-950/30 rounded-xl p-3 border border-emerald-500/20">
+          <h3 class="flex items-center gap-1.5 text-emerald-300 font-bold mb-2">
+            <span class="material-symbols-outlined !text-[18px]">balance</span>
+            職業適性補正
+          </h3>
+          <p class="text-[12px] leading-relaxed">
+            スキルは本来の職業で使うと、ダメージ・回復・補助などの<span class="text-emerald-300 font-bold">効果量が110%</span>になります。<br>
+            継承して別職業で使う場合、効果量は<span class="text-fuchsia-300 font-bold">90%</span>になります。MP消費・持続ターン・攻撃回数は変化しません。発動条件そのものが性能となるスキルは、条件がわずかに変化します。
+          </p>
+        </div>
+
         <div class="bg-gray-800/50 rounded-xl p-3 border border-white/5">
           <h3 class="flex items-center gap-1.5 text-pink-300 font-bold mb-2">
             <span class="material-symbols-outlined !text-[18px]">touch_app</span>

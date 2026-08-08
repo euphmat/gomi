@@ -2,6 +2,7 @@ import { MEDAL_RANKS } from '../../definitions/medal-definitions.js';
 import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definitions/equipment-drops.js';
 import { getTreasureEffect } from '../../data/treasure-manager.js';
 import { formatNumber } from '../../utils/format.js';
+import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 
 export function getActiveStateIconsHTML(entity) {
   if (!entity) return '';
@@ -628,7 +629,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
 
   skillListHtml += '<div class="flex flex-col gap-2 p-1.5">';
   learnedSkills.forEach(({ skillDef, level, isInherited }) => {
-    const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
+    const levelConfig = resolveJobSkillLevelConfig(skillDef, level, isInherited ? 'inherited' : 'current');
     const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
     const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced;
     const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
@@ -736,7 +737,9 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
             </div>
             <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[9px] font-bold bg-slate-900/50 px-1 py-[1px] rounded border border-slate-700/50">Lv${level}</div>
             ${typeBadgeHtml}
-            ${isInherited ? `<div class="text-[9px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1 py-[1px] rounded uppercase tracking-wider">継承</div>` : ''}
+            ${isInherited
+              ? `<div class="text-[9px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1 py-[1px] rounded tracking-wider">継承 90%</div>`
+              : `<div class="text-[9px] font-black text-emerald-300 bg-emerald-900/30 border border-emerald-500/30 px-1 py-[1px] rounded tracking-wider">現職 110%</div>`}
           </div>
           <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${desc}</div>
         </div>

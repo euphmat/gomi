@@ -47,11 +47,8 @@ export const actionMethods = {
     const orchestra = this._findSkill(caster, 'mana_orchestra');
     if (!orchestra?.levelConfig) return;
 
-    const isCurrentJob = caster.jobId === 'mana_conductor';
-    const targets = isCurrentJob ? this.party.filter(member => !member.isDead && member.mp) : [caster];
-    const amount = isCurrentJob
-      ? orchestra.levelConfig.recoverMp
-      : orchestra.levelConfig.inheritedRecoverMp;
+    const targets = this.party.filter(member => !member.isDead && member.mp);
+    const amount = orchestra.levelConfig.recoverMp;
     let applied = false;
 
     targets.forEach(target => {

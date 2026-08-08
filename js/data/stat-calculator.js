@@ -23,6 +23,7 @@ import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
 import { FISH } from '../definitions/fish.js';
+import { resolveJobSkillLevelConfig } from '../utils/job-skill-potency.js';
 import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
 import { normalizeBaseExpProgress } from './level-progression.js';
 
@@ -108,14 +109,14 @@ export function calcFinalStats(character, equipmentMap) {
   let mdefMultiplier = 1.0;
 
   // Helper to apply passive skill bonuses
-  const applyPassiveBonus = (skillMap, jobId) => {
+  const applyPassiveBonus = (skillMap, jobId, potencyMode) => {
     const jobDef = JOBS[jobId];
     if (skillMap && jobDef) {
       for (const [skillId, level] of Object.entries(skillMap)) {
         if (level <= 0) continue;
         const skillDef = jobDef.skills.find(s => s.id === skillId);
         if (!skillDef || skillDef.type !== 'passive') continue;
-        const levelConfig = skillDef.levels.find(l => l.level === level) || skillDef.levels[skillDef.levels.length - 1];
+        const levelConfig = resolveJobSkillLevelConfig(skillDef, level, potencyMode);
         if (levelConfig.bonusHp) result.hp += levelConfig.bonusHp;
         if (levelConfig.bonusHpPercent) hpMultiplier += levelConfig.bonusHpPercent / 100;
         if (levelConfig.bonusMp) result.mp += levelConfig.bonusMp;
@@ -139,7 +140,7 @@ export function calcFinalStats(character, equipmentMap) {
 
   // Add passive skill bonuses (current job)
   if (character.jobSkills && character.jobId) {
-    applyPassiveBonus(character.jobSkills[character.jobId], character.jobId);
+    applyPassiveBonus(character.jobSkills[character.jobId], character.jobId, 'current');
   }
 
   // Add inherited skill passive bonuses
@@ -149,7 +150,7 @@ export function calcFinalStats(character, equipmentMap) {
       if (jobId !== character.jobId) {
         const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
         if (level > 0) {
-          applyPassiveBonus({ [skillId]: level }, jobId);
+          applyPassiveBonus({ [skillId]: level }, jobId, 'inherited');
         }
       }
     }
@@ -159,7 +160,7 @@ export function calcFinalStats(character, equipmentMap) {
       if (jobId !== character.jobId) {
         const level = character.jobSkills[jobId] && character.jobSkills[jobId][skillId];
         if (level > 0) {
-          applyPassiveBonus({ [skillId]: level }, jobId);
+          applyPassiveBonus({ [skillId]: level }, jobId, 'inherited');
         }
       }
     }
