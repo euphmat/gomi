@@ -332,11 +332,7 @@ class BattleManager {
       companionsInDungeon[monsterId] || companionsInDungeon[`${monsterId}_legendary`]
     );
     this.updateDungeonMedalAvailability(allInventory, this.currentGold);
-    const selectableMonsterIds = this.currentTab === 'pet'
-      ? this.dungeonUniqueMonsterIds
-      : this.currentTab === 'medal'
-        ? this.dungeonCompanionMonsterIds
-        : allFloorMonsterIds;
+    const selectableMonsterIds = this.getSubTabMonsterIds();
     if (!this.subTabSelectedMonsterId || !selectableMonsterIds.includes(this.subTabSelectedMonsterId)) {
       this.subTabSelectedMonsterId = selectableMonsterIds[0];
     }
@@ -909,12 +905,24 @@ class BattleManager {
     });
   }
 
+  getSubTabMonsterIds(tab = this.currentTab) {
+    // 自動戦闘中は戦闘の進行で階層が切り替わっても選択対象が欠けないよう、
+    // コレクション系の3タブには現在のダンジョンに登場する全種を並べる。
+    if (this.isAutoBattle && ['info', 'pet', 'medal'].includes(tab)) {
+      return this.dungeonUniqueMonsterIds || [];
+    }
+
+    if (tab === 'pet') return this.dungeonUniqueMonsterIds || [];
+    if (tab === 'medal') return this.dungeonCompanionMonsterIds || [];
+    return this.floorUniqueMonsterIds || [];
+  }
+
   getDungeonMedalAvailability(allInventory = [], gold = this.currentGold) {
     const inventoryMap = {};
     (allInventory || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
 
     const medalAvailability = {};
-    (this.dungeonCompanionMonsterIds || []).forEach(monsterId => {
+    this.getSubTabMonsterIds('medal').forEach(monsterId => {
       const monster = MONSTERS.find(m => m.id === monsterId);
       if (!monster) return;
 
@@ -969,31 +977,41 @@ class BattleManager {
       this.renderInfoTab();
     } else if (this.currentTab === 'pet') {
       const targetId = this.subTabSelectedMonsterId || 'none';
+      const monsterScope = this.isAutoBattle ? 'auto-dungeon' : 'manual';
 
       // Pet の内容は行動中のキャラクターには依存しない。自動戦闘中は
       // renderEntities() から頻繁に呼ばれるため、同じモンスターを表示中に
       // タブ全体を作り直すとスクロール領域が置換されてちらついてしまう。
       // 所持素材は Pet 側のポーリングで差分更新されるので、明示的な更新
       // (モンスター切替・餌やり等) があるまでは現在の DOM を維持する。
-      if (!force && this.elements.tabContent.dataset.renderedTab === 'pet' && this.elements.tabContent.dataset.petTargetId === targetId) {
+      if (!force &&
+          this.elements.tabContent.dataset.renderedTab === 'pet' &&
+          this.elements.tabContent.dataset.petTargetId === targetId &&
+          this.elements.tabContent.dataset.petMonsterScope === monsterScope) {
         return;
       }
       
       this.elements.tabContent.dataset.renderedTab = 'pet';
       this.elements.tabContent.dataset.petTargetId = targetId;
+      this.elements.tabContent.dataset.petMonsterScope = monsterScope;
       this.renderPetTab();
     } else if (this.currentTab === 'medal') {
       const targetId = this.subTabSelectedMonsterId || 'none';
+      const monsterScope = this.isAutoBattle ? 'auto-dungeon' : 'manual';
       const now = Date.now();
       const lastRendered = parseInt(this.elements.tabContent.dataset.lastMedalRenderTime || '0');
 
-      if (!force && this.elements.tabContent.dataset.renderedTab === 'medal' && this.elements.tabContent.dataset.medalTargetId === targetId) {
+      if (!force &&
+          this.elements.tabContent.dataset.renderedTab === 'medal' &&
+          this.elements.tabContent.dataset.medalTargetId === targetId &&
+          this.elements.tabContent.dataset.medalMonsterScope === monsterScope) {
         if (this.isTabInteracting) return;
         if (now - lastRendered < 1000) return;
       }
       
       this.elements.tabContent.dataset.renderedTab = 'medal';
       this.elements.tabContent.dataset.medalTargetId = targetId;
+      this.elements.tabContent.dataset.medalMonsterScope = monsterScope;
       this.elements.tabContent.dataset.lastMedalRenderTime = now;
       this.renderMedalTab();
     }
@@ -1025,13 +1043,7 @@ class BattleManager {
     body.dataset.renderedTab = this.currentTab;
     previousBody.replaceWith(body);
 
-    // Pet では未捕獲を含む現在のダンジョンの全モンスターを表示する。
-    // Medal は捕獲済みのみ、Info は現在階層のみという従来の範囲を保つ。
-    const availableMonsterIds = this.currentTab === 'pet'
-      ? (this.dungeonUniqueMonsterIds || [])
-      : this.currentTab === 'medal'
-        ? (this.dungeonCompanionMonsterIds || [])
-        : (this.floorUniqueMonsterIds || []);
+    const availableMonsterIds = this.getSubTabMonsterIds();
 
     if (!availableMonsterIds.includes(this.subTabSelectedMonsterId)) {
       this.subTabSelectedMonsterId = availableMonsterIds[0] || null;
@@ -1048,9 +1060,24 @@ class BattleManager {
       const hasLegendaryCompanion = this.currentTab === 'pet' && Object.values(this.ranchData || {}).some(
         dungeonRanch => dungeonRanch?.[`${m.id}_legendary`]
       );
-      const monsterImageStyle = this.currentTab === 'pet' && !isPetCompanion
+      const isDiscovered = Array.isArray(this.discoveredMonsters) && this.discoveredMonsters.includes(m.id);
+      const hasMedal = Object.prototype.hasOwnProperty.call(this.playerMedals || {}, m.id);
+      const isLockedIcon = this.currentTab === 'pet'
+        ? !isPetCompanion
+        : this.isAutoBattle && this.currentTab === 'info'
+          ? !isDiscovered
+          : this.isAutoBattle && this.currentTab === 'medal'
+            ? !hasMedal
+            : false;
+      const monsterImageStyle = isLockedIcon
         ? 'filter: brightness(0); opacity: 0.9;'
         : '';
+      const lockedLabel = this.currentTab === 'info'
+        ? '図鑑未登録'
+        : this.currentTab === 'pet'
+          ? '仲間未獲得'
+          : 'メダル未所持';
+      const monsterAriaLabel = isLockedIcon ? `${m.name}（${lockedLabel}）` : m.name;
       const bgClass = medalStatus?.isMaxRank
         ? (isSelected
           ? 'bg-yellow-500/40 border-yellow-200'
@@ -1090,14 +1117,14 @@ class BattleManager {
       
       if (isSelected) {
         return `
-          <button type="button" class="sub-tab-item flex min-h-11 items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${m.name}" aria-pressed="true">
+          <button type="button" class="sub-tab-item flex min-h-11 items-center justify-center gap-1.5 px-3 py-1 rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${monsterAriaLabel}" aria-pressed="true">
             <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" style="${monsterImageStyle}" onerror="this.style.display='none'">
             <span class="text-[11px] font-bold tracking-wide whitespace-nowrap pointer-events-none ${selectedTextClass}">${m.name}</span>
           </button>
         `;
       } else {
         return `
-          <button type="button" class="sub-tab-item flex h-11 w-11 items-center justify-center rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${m.name}" aria-pressed="false">
+          <button type="button" class="sub-tab-item flex h-11 w-11 items-center justify-center rounded-full cursor-pointer border ${bgClass} ${shadowClass} ${opacity} transition-all mb-1 backdrop-blur-sm shrink-0" data-id="${m.id}" aria-label="${monsterAriaLabel}" aria-pressed="false">
             <img src="${m.image}" class="w-4 h-4 shrink-0 object-contain pointer-events-none" style="${monsterImageStyle}" onerror="this.style.display='none'">
           </button>
         `;
