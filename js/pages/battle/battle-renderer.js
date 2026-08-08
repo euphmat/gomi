@@ -6,6 +6,7 @@
 import { renderEnemyCardHtml, renderPartyCardHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { formatNumber } from '../../utils/format.js';
 import { isScreenLocked } from '../../utils/screen-lock.js';
+import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 
 // Combat effects use CSS/Web Animations and remain display-refresh-rate smooth.
 // The HUD itself does not need to recalculate styles on every animation frame,
@@ -13,6 +14,93 @@ import { isScreenLocked } from '../../utils/screen-lock.js';
 const AUTO_BATTLE_HUD_INTERVAL = 1000 / 30;
 const PARTY_BG_CLASSES = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
 const STAT_TEXT_COLORS = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
+const ENEMY_EXIT_DURATION = 160;
+
+function playEnemyDefeatAnimation(iconContainer) {
+  if (!iconContainer || iconContainer.dataset.defeatAnimated === 'true') return;
+  iconContainer.dataset.defeatAnimated = 'true';
+
+  const sourceImage = iconContainer.querySelector('img');
+  const rect = iconContainer.getBoundingClientRect();
+  if (!sourceImage || rect.width < 1 || rect.height < 1) return;
+
+  const fragmentLayer = document.createElement('div');
+  fragmentLayer.className = 'enemy-defeat-fragments';
+  Object.assign(fragmentLayer.style, {
+    position: 'fixed',
+    left: `${rect.left}px`,
+    top: `${rect.top}px`,
+    width: `${rect.width}px`,
+    height: `${rect.height}px`,
+    pointerEvents: 'none',
+    zIndex: '9999',
+    overflow: 'visible',
+    contain: 'layout style',
+  });
+
+  const rows = 4;
+  const columns = 5;
+  const duration = getBattleAnimationDuration(330, 190);
+  let longestAnimation = duration;
+
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const fragment = sourceImage.cloneNode(false);
+      const index = row * columns + column;
+      const left = (column / columns) * 100;
+      const right = ((column + 1) / columns) * 100;
+      const top = (row / rows) * 100;
+      const bottom = ((row + 1) / rows) * 100;
+      const horizontalDirection = column - (columns - 1) / 2;
+      const verticalDirection = row - (rows - 1) / 2;
+      const scatterX = horizontalDirection * 8 + Math.sin(index * 2.37) * 8;
+      const scatterY = verticalDirection * 4 + 9 + Math.cos(index * 1.91) * 7;
+      const rotation = Math.sin(index * 3.11) * 42;
+      const delay = ((row + column) % 3) * 14;
+
+      fragment.removeAttribute('id');
+      fragment.removeAttribute('onerror');
+      Object.assign(fragment.style, {
+        position: 'absolute',
+        inset: '0',
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        padding: '0.25rem',
+        margin: '0',
+        maxWidth: 'none',
+        clipPath: `polygon(${left}% ${top}%, ${right}% ${top}%, ${right}% ${bottom}%, ${left}% ${bottom}%)`,
+        willChange: 'transform, opacity, filter',
+      });
+      fragmentLayer.appendChild(fragment);
+
+      fragment.animate([
+        { transform: 'translate3d(0, 0, 0) rotate(0deg) scale(1)', opacity: 1, filter: 'brightness(1.45)' },
+        { transform: `translate3d(${scatterX * 0.35}px, ${scatterY * 0.15}px, 0) rotate(${rotation * 0.3}deg) scale(0.96)`, opacity: 0.9, filter: 'brightness(1.15)', offset: 0.35 },
+        { transform: `translate3d(${scatterX}px, ${scatterY}px, 0) rotate(${rotation}deg) scale(0.35)`, opacity: 0, filter: 'brightness(0.7)' },
+      ], {
+        duration,
+        delay,
+        easing: 'cubic-bezier(0.18, 0.72, 0.28, 1)',
+        fill: 'forwards',
+      });
+      longestAnimation = Math.max(longestAnimation, duration + delay);
+    }
+  }
+
+  document.body.appendChild(fragmentLayer);
+  sourceImage.style.visibility = 'hidden';
+  const stateIcons = iconContainer.querySelector('.state-icons-container');
+  if (stateIcons) stateIcons.style.opacity = '0';
+
+  const cleanup = fragmentLayer.animate(
+    [{ opacity: 1 }, { opacity: 1 }],
+    { duration: longestAnimation, fill: 'forwards' }
+  );
+  const removeFragments = () => fragmentLayer.remove();
+  cleanup.onfinish = removeFragments;
+  cleanup.oncancel = removeFragments;
+}
 
 function applyStatTheme(type, cache, isBuff, isDebuff, baseIconColor, isStacked) {
   const theme = isBuff ? `buff-${isStacked}` : (isDebuff ? `debuff-${isStacked}` : `base-${baseIconColor}`);
@@ -156,12 +244,12 @@ export const rendererMethods = {
       if (e.isDead && !isFinishingAttack && cache.uiState.dead !== enemyDeadState) {
         cache.uiState.dead = enemyDeadState;
         el.classList.remove('cursor-pointer', 'active:scale-105');
-        if (!fastMode) {
+        if (!disableAnim) {
+          playEnemyDefeatAnimation(iconContainer);
           el.classList.remove('transition-transform');
-          el.style.transition = 'opacity 0.3s ease, min-width 0.3s ease 0.6s, max-width 0.3s ease 0.6s, margin 0.3s ease 0.6s';
-          iconContainer.style.transition = 'opacity 0.3s ease';
-          hpContainer.style.transition = 'opacity 0.3s ease';
-          atbContainer.style.transition = 'opacity 0.3s ease';
+          el.style.transition = `opacity 100ms ease, min-width ${ENEMY_EXIT_DURATION}ms ease, max-width ${ENEMY_EXIT_DURATION}ms ease, margin ${ENEMY_EXIT_DURATION}ms ease`;
+          hpContainer.style.transition = 'opacity 80ms ease';
+          atbContainer.style.transition = 'opacity 80ms ease';
         } else {
           el.style.transition = '';
           iconContainer.style.transition = '';
