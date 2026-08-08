@@ -231,6 +231,7 @@ const pageStyles = () => `
     .memory-skill-target-badge .material-symbols-outlined { font-size:11px; }
     .memory-skill-charge.is-ready { border-color:rgba(251,191,36,.75); background:rgba(245,158,11,.24); color:#fef3c7; box-shadow:0 0 12px rgba(245,158,11,.42); animation:memory-skill-charge-ready 1.15s ease-in-out infinite; }
     .memory-card:disabled { opacity:1; }
+    .memory-card.is-skill-blocked:disabled:not(.is-matched) { opacity:.18; filter:grayscale(1); }
     @keyframes memory-match { 50% { transform:scale(1.08); filter:brightness(1.35); } 100% { transform:scale(1); filter:brightness(1); } }
     @keyframes memory-hint { 0%,100% { transform:scale(1); filter:brightness(1); } 50% { transform:scale(1.09); filter:brightness(1.55); } }
     @keyframes memory-clairvoyance-aura { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.28); } }
@@ -681,6 +682,7 @@ export function renderMemoryGamePage() {
       openingVisionIndices: new Set(),
       treasureVisionIndices: new Set(),
       activeSkillHintIndex: null,
+      candidateAllowedIndices: null,
     };
 
     container.innerHTML = `
@@ -713,7 +715,7 @@ export function renderMemoryGamePage() {
         </section>` : ''}
 
         ${Object.values(memoryProgress.skillRanks).some(Boolean) ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-cyan-300/15 bg-cyan-950/15 p-1.5" aria-label="発動中の神経衰弱スキル">
-          ${skillEffects.recordedCardCapacity ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">絵柄メモ ${Number.isFinite(skillEffects.recordedCardCapacity) ? `${skillEffects.recordedCardCapacity}枚` : '全札'}</span>` : ''}
+          ${skillEffects.candidateChoiceCount ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">候補絞り ${skillEffects.candidateChoiceCount}枚</span>` : ''}
           ${skillEffects.knownMateHintCharges ? `<span data-known-hint-status class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">ペアナビ ${Number.isFinite(skillEffects.knownMateHintCharges) ? `${skillEffects.knownMateHintCharges}回` : '無制限'}</span>` : ''}
           ${skillEffects.knownPairGuideLimit ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">完全照合 ${Number.isFinite(skillEffects.knownPairGuideLimit) ? '1組' : '全組'}</span>` : ''}
           ${skillEffects.firstCardResetCharges ? `<span data-first-card-reset-status class="memory-skill-charge rounded-full border border-amber-400/25 bg-amber-500/10 px-2 py-1 text-[8px] font-black text-amber-200">仕切り直し 残り${skillEffects.firstCardResetCharges}回</span>` : ''}
@@ -904,14 +906,9 @@ export function renderMemoryGamePage() {
   /** 習得スキルが覚えた内容を、記憶力不要の視覚情報として盤面へ反映する。 */
   const updateMemoryAssists = () => {
     if (!game) return;
-    const capacity = game.skillEffects.recordedCardCapacity;
-    const recorded = new Set(capacity
-      ? Number.isFinite(capacity) ? game.seenCardOrder.slice(-capacity) : game.seenCardOrder
-      : []);
     const vision = new Set([
       ...game.openingVisionIndices,
       ...game.treasureVisionIndices,
-      ...recorded,
     ]);
     const allKnownPairs = knownPlayerPairs();
     const guidedPairs = allKnownPairs.slice(0, game.skillEffects.knownPairGuideLimit);
@@ -1045,6 +1042,44 @@ export function renderMemoryGamePage() {
     return game.cards.map((_, index) => index).filter(index => !game.matched.has(index) && !excludedSet.has(index));
   };
 
+  const clearCandidateFilter = () => {
+    if (!game) return;
+    game.candidateAllowedIndices = null;
+    game.cards.forEach((_, index) => {
+      const element = cardElement(index);
+      element?.classList.remove('is-skill-blocked');
+      if (element && !game.matched.has(index)) element.disabled = false;
+    });
+  };
+
+  /** 正解を必ず残しつつ、2枚目として選べるカードをRank別の枚数まで減らす。 */
+  const applyCandidateFilter = (selectedIndex, excludedIndices = []) => {
+    clearCandidateFilter();
+    const limit = game?.skillEffects.candidateChoiceCount || 0;
+    if (!limit) return 0;
+    const choices = availableIndices([selectedIndex, ...excludedIndices]);
+    excludedIndices.forEach(index => {
+      if (game.matched.has(index)) return;
+      const element = cardElement(index);
+      element?.classList.add('is-skill-blocked');
+      if (element) element.disabled = true;
+    });
+    if (choices.length <= limit) return 0;
+
+    const pairId = game.cards[selectedIndex].pairId;
+    const mateIndex = choices.find(index => game.cards[index].pairId === pairId);
+    if (mateIndex == null) return 0;
+    const wrongChoices = shuffle(choices.filter(index => index !== mateIndex));
+    game.candidateAllowedIndices = new Set([mateIndex, ...wrongChoices.slice(0, limit - 1)]);
+    choices.forEach(index => {
+      const blocked = !game.candidateAllowedIndices.has(index);
+      const element = cardElement(index);
+      element?.classList.toggle('is-skill-blocked', blocked);
+      if (element) element.disabled = blocked;
+    });
+    return game.candidateAllowedIndices.size;
+  };
+
   const knownPairs = () => {
     const byPair = new Map();
     game.cpuMemory.forEach((pairId, index) => {
@@ -1174,6 +1209,7 @@ export function renderMemoryGamePage() {
 
   const resolvePair = (owner, indices) => {
     if (!game || game.over) return;
+    clearCandidateFilter();
     const matched = game.cards[indices[0]].pairId === game.cards[indices[1]].pairId;
     if (matched) {
       markMatch(indices);
@@ -1260,6 +1296,7 @@ export function renderMemoryGamePage() {
       if (game.selected.length === 1 && game.firstCardResetCharges > 0) {
         game.firstCardResetCharges -= 1;
         game.activeSkillHintIndex = null;
+        clearCandidateFilter();
         hideCards([index]);
         game.selected = [];
         updateSkillTargets();
@@ -1271,17 +1308,21 @@ export function renderMemoryGamePage() {
     game.selected.push(index);
     updateSkillTargets();
     if (game.selected.length === 1) {
+      const narrowedCount = applyCandidateFilter(index);
       const skillHinted = trySkillMateHint(index);
       if (!skillHinted) {
-        setMessage(game.firstCardResetCharges > 0
-          ? `もう1枚選択／同じカードを押すと仕切り直し（残り${game.firstCardResetCharges}回）`
-          : 'もう1枚選んでください');
+        setMessage(narrowedCount
+          ? `候補絞り：正解を含む${narrowedCount}枚から選んでください`
+          : game.firstCardResetCharges > 0
+            ? `もう1枚選択／同じカードを押すと仕切り直し（残り${game.firstCardResetCharges}回）`
+            : 'もう1枚選んでください');
         tryTreasureHint(index);
       }
       return;
     }
     game.locked = true;
     game.activeSkillHintIndex = null;
+    clearCandidateFilter();
     updateMemoryAssists();
     const pair = [...game.selected];
     const isMatch = game.cards[pair[0]].pairId === game.cards[pair[1]].pairId;
@@ -1300,6 +1341,7 @@ export function renderMemoryGamePage() {
         game.selected = [pair[0]];
         game.locked = false;
         updateSkillTargets();
+        applyCandidateFilter(pair[0], [pair[1]]);
         trySkillMateHint(pair[0]);
       }, 550);
     } else {

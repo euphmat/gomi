@@ -16,12 +16,12 @@ export const MEMORY_SKILL_BRANCHES = [
     name: '記憶術',
     icon: 'psychology',
     color: 'cyan',
-    description: '見た絵柄と正解ペアを盤面へ直接記録する',
+    description: '正解候補を絞り、判明したペアを盤面へ示す',
     skills: [
       {
         // 旧「全景記憶」の習得ランクを失わせないため、保存用IDは維持する。
-        id: 'wide_view', name: '絵柄メモ', icon: 'photo_library', maxRank: 3, cost: 1, requiredLevel: 2,
-        ranks: ['見た直近4枚は、伏せた後も裏面に絵柄を表示', '見た直近8枚は、伏せた後も裏面に絵柄を表示', '一度見たすべてのカードの裏面に絵柄を表示'],
+        id: 'wide_view', name: '候補絞り', icon: 'filter_alt', maxRank: 3, cost: 1, requiredLevel: 2,
+        ranks: ['1枚目をめくると、正解を含む6枚まで候補を絞る', '1枚目をめくると、正解を含む4枚まで候補を絞る', '1枚目をめくると、正解を含む2枚まで候補を絞る'],
       },
       {
         id: 'afterimage', name: 'ペアナビ', icon: 'linked_services', maxRank: 3, cost: 1, requiredLevel: 5,
@@ -147,7 +147,7 @@ export function getMemorySkillPoints(progress) {
 export function getMemorySkillEffects(progress) {
   const ranks = normalizeProgress(progress).skillRanks;
   return {
-    recordedCardCapacity: [0, 4, 8, Number.POSITIVE_INFINITY][ranks.wide_view || 0],
+    candidateChoiceCount: [0, 6, 4, 2][ranks.wide_view || 0],
     knownMateHintCharges: [0, 2, 4, Number.POSITIVE_INFINITY][ranks.afterimage || 0],
     knownPairGuideLimit: [0, 1, Number.POSITIVE_INFINITY][ranks.memory_bookmark || 0],
     firstCardResetCharges: ranks.initiative || 0,
