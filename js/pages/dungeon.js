@@ -119,24 +119,16 @@ window.openDungeonFloorModal = async (dungeonId) => {
       if (Number(floor.level) < Number(currentFloorLevel)) completedFloors.add(Number(floor.level));
     });
   }
-  const clearedCount = dungeon.floors.filter(floor => completedFloors.has(Number(floor.level))).length;
   const theme = dungeon.theme || { color: '107, 114, 128', icon: 'swords' };
   const themeRgb = theme.color;
-  const revealedMonsterIds = [...new Set(
-    dungeon.floors
-      .filter(floor => completedFloors.has(Number(floor.level)))
-      .flatMap(getFloorMonsterIds)
-  )];
-  const collectionSummary = revealedMonsterIds.reduce((summary, monsterId) => {
+  const allMonsterIds = [...new Set(dungeon.floors.flatMap(getFloorMonsterIds))];
+  const collectionSummary = allMonsterIds.reduce((summary, monsterId) => {
     const owned = getOwnedMonsterState(ranchData, monsterId);
     if (owned.companion) summary.companions += 1;
     if (owned.legendary) summary.legendary += 1;
     if (Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId)) summary.medals += 1;
     return summary;
   }, { companions: 0, legendary: 0, medals: 0 });
-  const progressPercent = dungeon.floors.length
-    ? Math.round((clearedCount / dungeon.floors.length) * 100)
-    : 0;
 
   const floorsHtml = dungeon.floors.length ? dungeon.floors.map((floor, floorIndex) => {
     const isFloorCleared = completedFloors.has(Number(floor.level));
@@ -224,37 +216,28 @@ window.openDungeonFloorModal = async (dungeonId) => {
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
-        <div class="mt-2.5 flex items-stretch gap-2">
-          <div class="relative flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full" style="background:conic-gradient(rgb(${themeRgb}) ${progressPercent}%,rgba(51,65,85,.75) 0)">
-            <div class="flex h-[43px] w-[43px] flex-col items-center justify-center rounded-full border border-white/10 bg-slate-950/95 shadow-inner">
-              <span class="text-[11px] font-black tabular-nums text-white">${progressPercent}%</span>
-              <span class="text-[6px] font-black tracking-wider text-slate-500">CLEAR</span>
+        <div class="mt-3 grid grid-cols-3 gap-1.5">
+          <div class="flex min-w-0 items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-950/35 px-2 py-2.5" title="仲間になったモンスター ${collectionSummary.companions}/${allMonsterIds.length}">
+            <span class="material-symbols-outlined shrink-0 text-xl text-emerald-300" style="font-variation-settings:'FILL' 1">pets</span>
+            <div class="min-w-0">
+              <div class="text-[7px] font-bold leading-tight text-emerald-100/65">仲間になった<br><span class="text-emerald-100">モンスター</span></div>
+              <div class="mt-1 text-sm font-black leading-none tabular-nums text-white">${collectionSummary.companions}<span class="mx-0.5 text-[8px] text-slate-500">/</span><span class="text-[10px] text-emerald-200">${allMonsterIds.length}</span></div>
             </div>
           </div>
-          <div class="grid min-w-0 flex-1 grid-cols-4 gap-1">
-            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="探索済み階層">
-              <span class="material-symbols-outlined text-[14px] text-emerald-300">layers</span>
-              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${clearedCount}<span class="text-[7px] text-slate-500">/${dungeon.floors.length}</span></span>
-            </div>
-            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="判明したモンスター">
-              <span class="material-symbols-outlined text-[14px]" style="color:rgb(${themeRgb})">swords</span>
-              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${revealedMonsterIds.length}<span class="text-[7px] text-slate-500">種</span></span>
-            </div>
-            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="仲間・伝説の獲得数">
-              <div class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px] text-emerald-300">pets</span><span class="material-symbols-outlined text-[11px] text-amber-300">auto_awesome</span></div>
-              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${collectionSummary.companions}<span class="text-[7px] text-slate-500">・</span>${collectionSummary.legendary}</span>
-            </div>
-            <div class="flex min-w-0 flex-col items-center justify-center rounded-lg border border-white/10 bg-black/35 px-1" title="メダル獲得数">
-              <span class="material-symbols-outlined text-[14px] text-cyan-300">military_tech</span>
-              <span class="mt-0.5 text-[9px] font-black tabular-nums text-slate-100">${collectionSummary.medals}<span class="text-[7px] text-slate-500">/${revealedMonsterIds.length}</span></span>
+          <div class="flex min-w-0 items-center gap-2 rounded-xl border border-amber-300/20 bg-amber-950/30 px-2 py-2.5" title="仲間になった伝説モンスター ${collectionSummary.legendary}/${allMonsterIds.length}">
+            <span class="material-symbols-outlined shrink-0 text-xl text-amber-300" style="font-variation-settings:'FILL' 1">auto_awesome</span>
+            <div class="min-w-0">
+              <div class="text-[7px] font-bold leading-tight text-amber-100/65">仲間になった<br><span class="text-amber-100">伝説モンスター</span></div>
+              <div class="mt-1 text-sm font-black leading-none tabular-nums text-white">${collectionSummary.legendary}<span class="mx-0.5 text-[8px] text-slate-500">/</span><span class="text-[10px] text-amber-200">${allMonsterIds.length}</span></div>
             </div>
           </div>
-        </div>
-        <div class="mt-2 flex items-center gap-2 text-[7px] font-bold text-slate-500">
-          <span class="mr-auto text-slate-600">画像下の状態バー</span>
-          <span class="flex items-center gap-1"><span class="h-1 w-3 rounded-full bg-emerald-300"></span>仲間</span>
-          <span class="flex items-center gap-1"><span class="h-1 w-3 rounded-full bg-amber-300"></span>伝説</span>
-          <span class="flex items-center gap-1"><span class="h-1 w-3 rounded-full bg-cyan-300"></span>メダル</span>
+          <div class="flex min-w-0 items-center gap-2 rounded-xl border border-cyan-300/20 bg-cyan-950/30 px-2 py-2.5" title="メダルを獲得したモンスター ${collectionSummary.medals}/${allMonsterIds.length}">
+            <span class="material-symbols-outlined shrink-0 text-xl text-cyan-300" style="font-variation-settings:'FILL' 1">military_tech</span>
+            <div class="min-w-0">
+              <div class="text-[7px] font-bold leading-tight text-cyan-100/65">メダルを獲得した<br><span class="text-cyan-100">モンスター</span></div>
+              <div class="mt-1 text-sm font-black leading-none tabular-nums text-white">${collectionSummary.medals}<span class="mx-0.5 text-[8px] text-slate-500">/</span><span class="text-[10px] text-cyan-200">${allMonsterIds.length}</span></div>
+            </div>
+          </div>
         </div>
       </header>
       <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2.5 sm:p-4">
