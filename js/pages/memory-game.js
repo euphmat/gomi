@@ -248,38 +248,91 @@ const pageStyles = () => `
     .memory-coin-shadow { animation:memory-coin-shadow 1.45s ease-in-out both; }
     .memory-coin-result { animation:memory-coin-result-in .3s ease-out both; }
     .memory-skill-tree-scroll { overflow-x:hidden; }
-    .memory-skill-tree-canvas { width:100%; max-width:100%; padding:2px 2px 10px; }
-    .memory-tree-root { position:relative; display:flex; width:92px; min-height:48px; margin:0 auto; flex-direction:column; align-items:center; justify-content:center; border:1.5px solid rgba(103,232,249,.6); border-radius:14px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 16px rgba(34,211,238,.2),inset 0 0 10px rgba(34,211,238,.08); }
+    .memory-skill-tree-canvas { width:100%; max-width:100%; padding:2px 10px 10px; }
+    .memory-tree-root { position:relative; display:flex; width:min(100%,240px); min-height:58px; margin:0 auto; align-items:center; justify-content:center; gap:9px; border:1.5px solid rgba(103,232,249,.6); border-radius:14px; padding:8px 12px; background:radial-gradient(circle at 50% 10%,rgba(34,211,238,.3),rgba(15,23,42,.96) 65%); box-shadow:0 0 16px rgba(34,211,238,.2),inset 0 0 10px rgba(34,211,238,.08); }
+    .memory-tree-root > .material-symbols-outlined { font-size:28px; }
+    .memory-tree-root-copy { min-width:0; text-align:left; }
     .memory-tree-trunk { width:2px; height:14px; margin:0 auto; background:linear-gradient(rgba(103,232,249,.75),rgba(148,163,184,.45)); }
-    .memory-tree-fork { position:relative; width:66.666%; height:16px; margin:0 auto; border-top:2px solid rgba(148,163,184,.38); }
+    .memory-tree-fork { display:none; position:relative; width:66.666%; height:16px; margin:0 auto; border-top:2px solid rgba(148,163,184,.38); }
     .memory-tree-fork span { position:absolute; top:-2px; width:2px; height:18px; background:linear-gradient(rgba(148,163,184,.42),rgba(148,163,184,.2)); }
     .memory-tree-fork span:nth-child(1) { left:0; }
     .memory-tree-fork span:nth-child(2) { left:50%; transform:translateX(-50%); }
     .memory-tree-fork span:nth-child(3) { right:0; }
-    .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; align-items:start; }
-    @media (min-width: 640px) {
-      .memory-tree-branches { gap:12px; }
-    }
+    .memory-branch-tabs { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-bottom:12px; }
+    .memory-branch-tab { --branch-rgb:34,211,238; display:flex; min-width:0; min-height:56px; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:1px solid rgba(100,116,139,.34); border-radius:12px; padding:6px 3px; color:#64748b; background:rgba(15,23,42,.86); }
+    .memory-branch-tab .material-symbols-outlined { font-size:21px; }
+    .memory-branch-tab.is-active { border-color:rgba(var(--branch-rgb),.7); color:rgb(var(--branch-rgb)); background:linear-gradient(160deg,rgba(var(--branch-rgb),.22),rgba(15,23,42,.96) 70%); box-shadow:0 0 12px rgba(var(--branch-rgb),.13),inset 0 1px rgba(255,255,255,.06); }
+    .memory-branch-tab:focus-visible { outline:2px solid rgb(var(--branch-rgb)); outline-offset:2px; }
+    .memory-tree-branches { display:block; }
     .memory-skill-branch { --branch-rgb:34,211,238; min-width:0; }
-    .memory-branch-head { display:flex; min-height:42px; flex-direction:column; sm:flex-row; align-items:center; justify-content:center; gap:1px; sm:gap:4px; border:1.5px solid rgba(var(--branch-rgb),.48); border-radius:10px; padding:3px 1px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 10px rgba(var(--branch-rgb),.12); text-align:center; sm:text-left; }
-    .memory-branch-head > .material-symbols-outlined { color:rgb(var(--branch-rgb)); font-size:16px; }
+    .memory-skill-branch:not(.is-active) { display:none; }
+    .memory-branch-head { display:flex; min-height:58px; align-items:center; gap:10px; border:1.5px solid rgba(var(--branch-rgb),.48); border-radius:12px; padding:9px 11px; background:linear-gradient(145deg,rgba(var(--branch-rgb),.2),rgba(15,23,42,.94) 70%); box-shadow:0 0 10px rgba(var(--branch-rgb),.12); text-align:left; }
+    .memory-branch-head > .material-symbols-outlined { flex:0 0 auto; color:rgb(var(--branch-rgb)); font-size:25px; }
     .memory-branch-connector { width:2px; height:12px; margin:0 auto; background:rgba(var(--branch-rgb),.38); }
-    .memory-skill-path { display:flex; flex-direction:column; }
+    .memory-skill-path { position:relative; display:flex; flex-direction:column; padding-left:25px; }
+    .memory-skill-path::before { content:''; position:absolute; left:9px; top:0; bottom:20px; width:2px; background:linear-gradient(rgba(var(--branch-rgb),.52),rgba(var(--branch-rgb),.16)); }
     .memory-skill-node { position:relative; }
-    .memory-skill-node + .memory-skill-node { margin-top:14px; }
-    .memory-skill-node + .memory-skill-node::before { content:''; position:absolute; left:50%; bottom:100%; width:2px; height:14px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
-    .memory-tree-skill { position:relative; display:flex; width:100%; min-height:112px; flex-direction:column; align-items:center; border:1.5px solid rgba(100,116,139,.36); border-radius:10px; padding:15px 2px 4px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:center; }
+    .memory-skill-node + .memory-skill-node { margin-top:10px; }
+    .memory-skill-node::before { content:''; position:absolute; left:-16px; top:50%; width:16px; height:2px; background:rgba(var(--branch-rgb),.42); }
+    .memory-skill-node::after { content:''; position:absolute; z-index:1; left:-20px; top:calc(50% - 5px); width:10px; height:10px; border:2px solid rgba(var(--branch-rgb),.7); border-radius:999px; background:#0f172a; box-shadow:0 0 7px rgba(var(--branch-rgb),.28); }
+    .memory-tree-skill { position:relative; display:grid; width:100%; min-height:108px; grid-template-columns:42px minmax(0,1fr); align-items:center; gap:10px; border:1.5px solid rgba(100,116,139,.36); border-radius:12px; padding:10px; color:#94a3b8; background:linear-gradient(160deg,rgba(30,41,59,.96),rgba(2,6,23,.98)); box-shadow:inset 0 1px rgba(255,255,255,.04); text-align:left; }
     .memory-tree-skill.is-learned { border-color:rgba(var(--branch-rgb),.5); color:#e2e8f0; background:linear-gradient(155deg,rgba(var(--branch-rgb),.18),rgba(15,23,42,.98) 68%); box-shadow:0 0 10px rgba(var(--branch-rgb),.1),inset 0 1px rgba(255,255,255,.08); }
     .memory-tree-skill.can-unlock { border-color:rgba(var(--branch-rgb),.9); color:white; box-shadow:0 0 14px rgba(var(--branch-rgb),.28),inset 0 0 10px rgba(var(--branch-rgb),.1); animation:memory-skill-ready 1.7s ease-in-out infinite; }
     .memory-tree-skill.is-max { border-color:rgba(52,211,153,.65); box-shadow:0 0 10px rgba(52,211,153,.15); }
     .memory-tree-skill:disabled { opacity:1; }
-    .memory-skill-orb { position:absolute; top:-11px; left:50%; display:flex; width:25px; height:25px; transform:translateX(-50%); align-items:center; justify-content:center; border:1.5px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 2px 6px rgba(0,0,0,.45); }
+    .memory-skill-orb { display:flex; width:42px; height:42px; align-items:center; justify-content:center; border:1.5px solid rgba(100,116,139,.6); border-radius:999px; color:#64748b; background:#0f172a; box-shadow:0 2px 6px rgba(0,0,0,.45); }
+    .memory-skill-orb .material-symbols-outlined { font-size:21px; }
     .is-learned .memory-skill-orb,.can-unlock .memory-skill-orb { border-color:rgba(var(--branch-rgb),.8); color:rgb(var(--branch-rgb)); background:rgb(15,23,42); box-shadow:0 0 8px rgba(var(--branch-rgb),.28); }
     .is-max .memory-skill-orb { border-color:rgba(52,211,153,.8); color:#6ee7b7; }
-    .memory-rank-dots { display:flex; justify-content:center; gap:2px; margin-top:2px; }
-    .memory-rank-dot { width:4px; height:4px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
+    .memory-skill-content { display:flex; min-width:0; height:100%; flex-direction:column; justify-content:center; }
+    .memory-skill-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .memory-skill-name { min-width:0; color:white; font-size:12px; font-weight:900; line-height:1.25; }
+    .memory-skill-rank { flex:0 0 auto; font-size:9px; font-weight:900; letter-spacing:.06em; }
+    .memory-rank-dots { display:flex; justify-content:flex-start; gap:3px; margin-top:4px; }
+    .memory-rank-dot { width:6px; height:6px; border:1px solid rgba(148,163,184,.45); border-radius:999px; background:#0f172a; }
     .memory-rank-dot.is-filled { border-color:rgba(var(--branch-rgb),.9); background:rgb(var(--branch-rgb)); box-shadow:0 0 4px rgba(var(--branch-rgb),.65); }
-    .memory-tree-status { margin-top:auto; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:3px; }
+    .memory-skill-description { margin-top:6px; color:#cbd5e1; font-size:10px; line-height:1.45; }
+    .memory-skill-next { margin-top:2px; color:#94a3b8; font-size:9px; line-height:1.4; }
+    .memory-tree-status { margin-top:7px; width:100%; border-top:1px solid rgba(148,163,184,.14); padding-top:6px; font-size:9px; font-weight:900; }
+    .memory-tree-status .material-symbols-outlined { font-size:12px; }
+    @media (min-width:640px) {
+      .memory-skill-tree-canvas { padding-inline:2px; }
+      .memory-tree-root { width:104px; min-height:54px; flex-direction:column; gap:0; padding:4px; text-align:center; }
+      .memory-tree-root > .material-symbols-outlined { font-size:30px; }
+      .memory-tree-root-copy { text-align:center; }
+      .memory-tree-fork { display:block; }
+      .memory-branch-tabs { display:none; }
+      .memory-tree-branches { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:start; }
+      .memory-skill-branch:not(.is-active) { display:block; }
+      .memory-branch-head { min-height:58px; justify-content:center; gap:5px; padding:6px; text-align:left; }
+      .memory-branch-head > .material-symbols-outlined { font-size:20px; }
+      .memory-skill-path { padding-left:0; }
+      .memory-skill-path::before { display:none; }
+      .memory-skill-node + .memory-skill-node { margin-top:14px; }
+      .memory-skill-node::after { display:none; }
+      .memory-skill-node::before { left:50%; top:auto; bottom:100%; width:2px; height:14px; transform:translateX(-50%); background:rgba(var(--branch-rgb),.38); }
+      .memory-skill-node:first-child::before { display:none; }
+      .memory-tree-skill { display:flex; min-height:132px; flex-direction:column; gap:0; padding:17px 6px 6px; text-align:center; }
+      .memory-skill-orb { position:absolute; top:-11px; left:50%; width:26px; height:26px; transform:translateX(-50%); }
+      .memory-skill-orb .material-symbols-outlined { font-size:16px; }
+      .memory-skill-content { width:100%; align-items:center; }
+      .memory-skill-title-row { width:100%; flex-direction:column; justify-content:center; gap:1px; }
+      .memory-skill-name { width:100%; overflow:hidden; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+      .memory-skill-rank { font-size:8px; }
+      .memory-rank-dots { justify-content:center; gap:2px; margin-top:3px; }
+      .memory-rank-dot { width:5px; height:5px; }
+      .memory-skill-description { margin-top:5px; font-size:8px; line-height:1.35; }
+      .memory-skill-next { font-size:7px; line-height:1.3; }
+      .memory-tree-status { margin-top:auto; padding-top:4px; font-size:8px; }
+      .memory-tree-status .material-symbols-outlined { font-size:11px; }
+    }
+    @media (max-width:360px) {
+      .memory-skill-tree-canvas { padding-inline:7px; }
+      .memory-branch-tab { min-height:52px; }
+      .memory-branch-tab .material-symbols-outlined { font-size:19px; }
+      .memory-tree-skill { grid-template-columns:38px minmax(0,1fr); gap:8px; padding:9px; }
+      .memory-skill-orb { width:38px; height:38px; }
+    }
     @keyframes memory-skill-ready { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.18); } }
     @media (prefers-reduced-motion: reduce) {
       .memory-card-inner { transition:none; }
@@ -348,13 +401,17 @@ function skillNodeHtml(skill, progress) {
   return `
     <div class="memory-skill-node">
       <button data-unlock-skill="${skill.id}" ${availability.ok ? '' : 'disabled aria-disabled="true"'} class="memory-tree-skill ${stateClass} active:scale-[.98]" aria-label="${skill.name} Rank ${rank}/${skill.maxRank}。${availability.ok ? `${skill.cost} SPで習得可能` : availability.reason}">
-        <span class="memory-skill-orb"><span class="material-symbols-outlined text-sm sm:text-base">${isMax ? 'check' : skill.icon}</span></span>
-        <span class="block text-[9px] sm:text-[10px] font-black leading-tight text-white truncate w-full px-0.5">${skill.name}</span>
-        <span class="mt-0.5 block text-[7px] sm:text-[8px] font-black tracking-wider">RANK ${rank}/${skill.maxRank}</span>
-        <span class="memory-rank-dots" aria-hidden="true">${Array.from({ length: skill.maxRank }, (_, index) => `<span class="memory-rank-dot ${index < rank ? 'is-filled' : ''}"></span>`).join('')}</span>
-        <span class="mt-1 block text-[7px] leading-tight text-slate-300">${rank ? currentDescription : `効果: ${currentDescription}`}</span>
-        ${rank && nextDescription ? `<span class="mt-0.5 block text-[6.5px] leading-tight text-slate-400">次: ${nextDescription}</span>` : ''}
-        <span class="memory-tree-status block text-[7px] sm:text-[8px] font-black ${isMax ? 'text-emerald-300' : availability.ok ? 'text-white' : 'text-slate-500'}"><span class="material-symbols-outlined align-middle text-[10px] sm:text-[11px]">${isMax ? 'verified' : availability.ok ? 'add_circle' : 'lock'}</span> ${isMax ? 'MASTERED' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}</span>
+        <span class="memory-skill-orb"><span class="material-symbols-outlined">${isMax ? 'check' : skill.icon}</span></span>
+        <span class="memory-skill-content">
+          <span class="memory-skill-title-row">
+            <span class="memory-skill-name">${skill.name}</span>
+            <span class="memory-skill-rank">RANK ${rank}/${skill.maxRank}</span>
+          </span>
+          <span class="memory-rank-dots" aria-hidden="true">${Array.from({ length: skill.maxRank }, (_, index) => `<span class="memory-rank-dot ${index < rank ? 'is-filled' : ''}"></span>`).join('')}</span>
+          <span class="memory-skill-description">${rank ? currentDescription : `効果: ${currentDescription}`}</span>
+          ${rank && nextDescription ? `<span class="memory-skill-next">次: ${nextDescription}</span>` : ''}
+          <span class="memory-tree-status ${isMax ? 'text-emerald-300' : availability.ok ? 'text-white' : 'text-slate-500'}"><span class="material-symbols-outlined align-middle">${isMax ? 'verified' : availability.ok ? 'add_circle' : 'lock'}</span> ${isMax ? 'MASTERED' : availability.ok ? `${skill.cost} SPで習得` : availability.reason}</span>
+        </span>
       </button>
     </div>
   `;
@@ -370,6 +427,7 @@ export function renderMemoryGamePage() {
   let selectRenderId = 0;
   let dailyWins = new Set();
   let memoryProgress = null;
+  let activeSkillBranchId = MEMORY_SKILL_BRANCHES[0]?.id || '';
   let startingGame = false;
   const timers = new Set();
 
@@ -491,22 +549,35 @@ export function renderMemoryGamePage() {
         ${notice ? `<div class="mb-3 rounded-xl border border-emerald-300/25 bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-black text-emerald-200" role="status">${notice}</div>` : ''}
 
         <section class="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/65 py-3 shadow-xl" aria-label="神経衰弱スキルツリー">
-          <div class="mb-2 flex items-center justify-between px-3 text-[8px] text-slate-400 font-bold"><span>ROOTから3系統へ分岐</span><span class="flex items-center gap-1 text-cyan-300"><span class="material-symbols-outlined text-xs">auto_awesome</span>画面全幅フィット</span></div>
+          <div class="mb-2 px-3 text-[8px] font-bold text-slate-400">ROOTから3系統へ分岐</div>
           <div class="memory-skill-tree-scroll px-1 pb-2">
             <div class="memory-skill-tree-canvas">
               <div class="memory-tree-root">
-                <span class="material-symbols-outlined text-3xl text-cyan-200">neurology</span>
-                <span class="text-[9px] font-black text-white">神経衰弱 LV.${view.level}</span>
-                <span class="text-[8px] font-black text-violet-200">${skillPoints} SP</span>
+                <span class="material-symbols-outlined text-cyan-200">neurology</span>
+                <span class="memory-tree-root-copy">
+                  <span class="block text-[10px] font-black text-white">神経衰弱 LV.${view.level}</span>
+                  <span class="block text-[8px] font-black text-violet-200">ROOT ・ ${skillPoints} SP</span>
+                </span>
               </div>
               <div class="memory-tree-trunk"></div>
               <div class="memory-tree-fork" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="memory-branch-tabs" role="tablist" aria-label="スキル系統">
+                ${MEMORY_SKILL_BRANCHES.map(branch => {
+                  const isActive = branch.id === activeSkillBranchId;
+                  return `
+                    <button type="button" role="tab" data-memory-branch-tab="${branch.id}" aria-selected="${isActive}" aria-controls="memory-branch-${branch.id}" class="memory-branch-tab ${isActive ? 'is-active' : ''}" style="--branch-rgb:${SKILL_BRANCH_COLORS[branch.color] || SKILL_BRANCH_COLORS.cyan}">
+                      <span class="material-symbols-outlined">${branch.icon}</span>
+                      <span class="truncate text-[10px] font-black text-white">${branch.name}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
               <div class="memory-tree-branches">
                 ${MEMORY_SKILL_BRANCHES.map(branch => `
-                  <section class="memory-skill-branch" style="--branch-rgb:${SKILL_BRANCH_COLORS[branch.color] || SKILL_BRANCH_COLORS.cyan}" aria-labelledby="memory-branch-${branch.id}">
+                  <section id="memory-branch-${branch.id}" class="memory-skill-branch ${branch.id === activeSkillBranchId ? 'is-active' : ''}" style="--branch-rgb:${SKILL_BRANCH_COLORS[branch.color] || SKILL_BRANCH_COLORS.cyan}" aria-labelledby="memory-branch-title-${branch.id}">
                     <div class="memory-branch-head">
                       <span class="material-symbols-outlined">${branch.icon}</span>
-                      <span><span id="memory-branch-${branch.id}" class="block text-xs font-black text-white">${branch.name}</span><span class="mt-0.5 block text-[7px] leading-tight text-slate-400">${branch.description}</span></span>
+                      <span class="min-w-0"><span id="memory-branch-title-${branch.id}" class="block text-xs font-black text-white">${branch.name}</span><span class="mt-0.5 block text-[9px] leading-relaxed text-slate-400">${branch.description}</span></span>
                     </div>
                     <div class="memory-branch-connector" aria-hidden="true"></div>
                     <div class="memory-skill-path">${branch.skills.map(skill => skillNodeHtml(skill, memoryProgress)).join('')}</div>
@@ -1116,6 +1187,22 @@ export function renderMemoryGamePage() {
     const skillBackButton = event.target.closest('[data-skill-back]');
     if (skillBackButton) {
       await renderSelect();
+      return;
+    }
+
+    const branchTab = event.target.closest('[data-memory-branch-tab]');
+    if (branchTab) {
+      const branchId = branchTab.dataset.memoryBranchTab;
+      if (!MEMORY_SKILL_BRANCHES.some(branch => branch.id === branchId)) return;
+      activeSkillBranchId = branchId;
+      container.querySelectorAll('[data-memory-branch-tab]').forEach(tab => {
+        const isActive = tab.dataset.memoryBranchTab === branchId;
+        tab.classList.toggle('is-active', isActive);
+        tab.setAttribute('aria-selected', String(isActive));
+      });
+      container.querySelectorAll('.memory-skill-branch').forEach(branch => {
+        branch.classList.toggle('is-active', branch.id === `memory-branch-${branchId}`);
+      });
       return;
     }
 
