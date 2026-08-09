@@ -1,10 +1,6 @@
 import { getBaseExpToNext } from './level-progression.js';
 
 export const JOB_EXP_REQUIREMENT_MULTIPLIER = 1.2;
-export const JOB_SP_PROGRESSION_VERSION = 2;
-
-const LEGACY_DOUBLE_SP_JOB_LEVEL = 31;
-const LEGACY_TRIPLE_SP_JOB_LEVEL = 41;
 
 /**
  * Return the JP required to advance from the supplied job level.
@@ -77,47 +73,43 @@ export function getJobLevelUpSP() {
   return 1;
 }
 
-function getLegacyTotalJobSP(jobLevel) {
-  const level = Math.max(1, Math.floor(Number(jobLevel) || 1));
-  const levelUpCount = level - 1;
-  const doubleSpLevelUpCount = Math.max(0, level - LEGACY_DOUBLE_SP_JOB_LEVEL + 1);
-  const tripleSpLevelUpCount = Math.max(0, level - LEGACY_TRIPLE_SP_JOB_LEVEL + 1);
-  return levelUpCount + doubleSpLevelUpCount + tripleSpLevelUpCount;
-}
+/** Return SP already spent on the supplied job's acquired skill levels. */
+export function getSpentJobSP(character, job) {
+  if (!character || !job?.id || !Array.isArray(job.skills)) return 0;
+  const acquiredSkills = character.jobSkills?.[job.id];
+  if (!acquiredSkills || typeof acquiredSkills !== 'object') return 0;
 
-/** Return the total usable SP, including SP grandfathered from the old rules. */
-export function getJobTotalSP(character, jobId, jobLevel) {
-  const legacyBonus = Math.max(0, Math.floor(Number(character?.jobSpLegacyBonuses?.[jobId]) || 0));
-  return getTotalJobSP(jobLevel) + legacyBonus;
+  let spentSP = 0;
+  for (const [skillId, acquiredLevel] of Object.entries(acquiredSkills)) {
+    const skill = job.skills.find(candidate => candidate.id === skillId);
+    if (!skill) continue;
+    const normalizedLevel = Math.max(0, Math.floor(Number(acquiredLevel) || 0));
+    for (let level = 1; level <= normalizedLevel; level++) {
+      const levelConfig = skill.levels.find(candidate => candidate.level === level);
+      spentSP += Math.max(0, Number(levelConfig?.spCost) || 0);
+    }
+  }
+  return spentSP;
 }
 
 /**
- * Preserve SP already earned under the former 2x/3x high-level rules.
- * Future job levels still add only 1 SP after this one-time migration.
+ * Return currently spendable SP under the 1-SP-per-level rule.
+ *
+ * Existing skills are never removed. If their cost exceeds the new total,
+ * later level-up SP pays down that over-allocation before becoming spendable.
  */
-export function normalizeJobSpProgression(character) {
+export function getAvailableJobSP(character, job, jobLevel = character?.jobLevel) {
+  return Math.max(0, getTotalJobSP(jobLevel) - getSpentJobSP(character, job));
+}
+
+/** Remove legacy-bonus metadata written by the superseded migration. */
+export function clearLegacyJobSpBonus(character) {
   if (!character || typeof character !== 'object') return false;
-  if (Number(character.jobSpProgressionVersion) >= JOB_SP_PROGRESSION_VERSION) return false;
-
-  const legacyBonuses = character.jobSpLegacyBonuses
-    && !Array.isArray(character.jobSpLegacyBonuses)
-    && typeof character.jobSpLegacyBonuses === 'object'
-    ? character.jobSpLegacyBonuses
-    : {};
-
-  const preserveLegacyBonus = (jobId, jobLevel) => {
-    if (!jobId) return;
-    const bonus = Math.max(0, getLegacyTotalJobSP(jobLevel) - getTotalJobSP(jobLevel));
-    if (bonus > (Number(legacyBonuses[jobId]) || 0)) legacyBonuses[jobId] = bonus;
-  };
-
-  preserveLegacyBonus(character.jobId, character.jobLevel);
-  for (const [jobId, savedJob] of Object.entries(character.jobLevels || {})) {
-    if (!savedJob || typeof savedJob !== 'object') continue;
-    preserveLegacyBonus(jobId, savedJob.level);
+  let changed = false;
+  for (const key of ['jobSpLegacyBonuses', 'jobSpProgressionVersion']) {
+    if (!Object.prototype.hasOwnProperty.call(character, key)) continue;
+    delete character[key];
+    changed = true;
   }
-
-  character.jobSpLegacyBonuses = legacyBonuses;
-  character.jobSpProgressionVersion = JOB_SP_PROGRESSION_VERSION;
-  return true;
+  return changed;
 }

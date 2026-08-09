@@ -4,7 +4,7 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { showInheritanceHelpModal } from '../../components/inheritance-help-modal.js';
 
 import { JOBS } from '../../jobs/index.js';
-import { getJobTotalSP } from '../../data/job-progression.js';
+import { getAvailableJobSP } from '../../data/job-progression.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 
 /**
@@ -525,25 +525,7 @@ export function renderAcquireSkillTab() {
     // FIX: Check and correct SP based ONLY on current Job Lv and current acquired skills
     // -------------------------------------------------------------
     for (const char of chars) {
-      let spentSP = 0;
-      if (char.jobSkills && char.jobSkills[char.jobId]) {
-        const job = JOBS[char.jobId];
-        if (job) {
-          for (const [skillId, level] of Object.entries(char.jobSkills[char.jobId])) {
-            const skill = job.skills.find(s => s.id === skillId);
-            if (!skill) continue;
-            for (let i = 1; i <= level; i++) {
-              const lConf = skill.levels.find(l => l.level === i);
-              if (lConf && lConf.spCost) {
-                spentSP += lConf.spCost;
-              }
-            }
-          }
-        }
-      }
-
-      const earnedSP = getJobTotalSP(char, char.jobId, char.jobLevel);
-      const correctSP = earnedSP - spentSP;
+      const correctSP = getAvailableJobSP(char, JOBS[char.jobId], char.jobLevel);
 
       let needSave = false;
 

@@ -1,8 +1,15 @@
-export const APP_VERSION = '0.1.37';
+export const APP_VERSION = '0.1.38';
 export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.38',
+    items: [
+      '旧仕様の追加SPを廃止し、所持SPを新基準へ再計算しました。習得済みスキルは維持し、消費SPの超過分は今後のレベルアップで獲得するSPと相殺されます。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.37',

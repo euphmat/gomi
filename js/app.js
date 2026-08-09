@@ -36,7 +36,7 @@ import { initTouchFeedback } from './utils/touch-feedback.js';
 import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
 import { createCloudSavePanel, initCloudSavePanel } from './components/cloud-save-panel.js';
 import { initDailyCloudSave } from './data/daily-cloud-save-manager.js';
-import { getJobTotalSP, normalizeJobSpProgression } from './data/job-progression.js';
+import { clearLegacyJobSpBonus, getAvailableJobSP } from './data/job-progression.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -104,24 +104,8 @@ class App {
       // ── SP Correction Logic (Global) ──
       const chars = await GameDB.getAllCharacters();
       for (const char of chars) {
-        let needSave = normalizeJobSpProgression(char);
-        let spentSP = 0;
-        if (char.jobSkills && char.jobId) {
-          const skills = char.jobSkills[char.jobId];
-          const job = JOBS[char.jobId];
-          if (skills && job) {
-            for (const [skillId, level] of Object.entries(skills)) {
-              const skill = job.skills.find(s => s.id === skillId);
-              if (!skill) continue;
-              for (let i = 1; i <= level; i++) {
-                const lConf = skill.levels.find(l => l.level === i);
-                if (lConf && lConf.spCost) spentSP += lConf.spCost;
-              }
-            }
-          }
-        }
-        const earnedSP = getJobTotalSP(char, char.jobId, char.jobLevel);
-        const correctSP = earnedSP - spentSP;
+        let needSave = clearLegacyJobSpBonus(char);
+        const correctSP = getAvailableJobSP(char, JOBS[char.jobId], char.jobLevel);
         if (char.sp !== correctSP) {
           console.log(`[App] SP Correction for ${char.name}: ${char.sp} -> ${correctSP}`);
           char.sp = correctSP;

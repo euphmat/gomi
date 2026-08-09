@@ -19,7 +19,7 @@ import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
-import { getJobExpToNext, getJobLevelUpSP, normalizeJobExpProgress, normalizeJobSpProgression } from '../../data/job-progression.js';
+import { getAvailableJobSP, getJobExpToNext, normalizeJobExpProgress } from '../../data/job-progression.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -110,7 +110,6 @@ export const resultMethods = {
         if (!p.isDead) {
           normalizeBaseExpProgress(p);
           normalizeJobExpProgress(p);
-          normalizeJobSpProgression(p);
           p.exp.current += exp;
           p.jp.current += jp;
 
@@ -150,9 +149,10 @@ export const resultMethods = {
             p.jp.current -= p.jp.max;
             p.jobLevel = (p.jobLevel || 1) + 1;
             p.jp.max = getJobExpToNext(p.jobLevel);
-            p.sp = (p.sp || 0) + getJobLevelUpSP(p.jobLevel);
             jobLevelUp = true;
           }
+
+          if (jobLevelUp) p.sp = getAvailableJobSP(p, JOBS[p.jobId], p.jobLevel);
 
           if (baseLevelUp || jobLevelUp) {
             p.stats = calcFinalStats(p, this.equipMap);

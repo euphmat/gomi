@@ -1,12 +1,12 @@
 import {
   JOB_EXP_REQUIREMENT_MULTIPLIER,
-  JOB_SP_PROGRESSION_VERSION,
+  clearLegacyJobSpBonus,
+  getAvailableJobSP,
   getJobExpToNext,
   getJobLevelUpSP,
-  getJobTotalSP,
+  getSpentJobSP,
   getTotalJobSP,
-  normalizeJobExpProgress,
-  normalizeJobSpProgression
+  normalizeJobExpProgress
 } from '../js/data/job-progression.js';
 import { getBaseExpToNext } from '../js/data/level-progression.js';
 
@@ -15,7 +15,6 @@ const assert = (condition, message) => {
 };
 
 assert(JOB_EXP_REQUIREMENT_MULTIPLIER === 1.2, 'job EXP multiplier is invalid');
-assert(JOB_SP_PROGRESSION_VERSION === 2, 'job SP progression version is invalid');
 
 for (const level of [1, 2, 10, 30, 50, 100]) {
   assert(
@@ -54,27 +53,36 @@ assert(getTotalJobSP(41) === 40, 'level 41 total SP is invalid');
 assert(getTotalJobSP(50) === 49, 'level 50 total SP is invalid');
 assert(getTotalJobSP(51) === 50, 'level 51 total SP is invalid');
 
+const testJob = {
+  id: 'test_job',
+  skills: [
+    { id: 'skill_a', levels: [{ level: 1, spCost: 10 }, { level: 2, spCost: 20 }] },
+    { id: 'skill_b', levels: [{ level: 1, spCost: 25 }] }
+  ]
+};
 const existingCharacter = {
-  jobId: 'gunner',
   jobLevel: 50,
-  jobLevels: { mage: { level: 41 } }
+  jobSkills: { test_job: { skill_a: 2, skill_b: 1 } }
 };
-assert(normalizeJobSpProgression(existingCharacter), 'existing SP progression should be migrated');
-assert(existingCharacter.jobSpLegacyBonuses.gunner === 30, 'active job legacy SP was not preserved');
-assert(existingCharacter.jobSpLegacyBonuses.mage === 12, 'saved job legacy SP was not preserved');
-assert(getJobTotalSP(existingCharacter, 'gunner', 50) === 79, 'existing active job should retain earned SP');
-assert(getJobTotalSP(existingCharacter, 'gunner', 51) === 80, 'future job levels should add only 1 SP');
-assert(getJobTotalSP(existingCharacter, 'mage', 41) === 52, 'existing saved job should retain earned SP');
-assert(!normalizeJobSpProgression(existingCharacter), 'SP progression should not migrate twice');
+assert(getSpentJobSP(existingCharacter, testJob) === 55, 'spent job SP is invalid');
+assert(getAvailableJobSP(existingCharacter, testJob, 50) === 0, 'over-allocated skills should consume future SP');
+assert(getAvailableJobSP(existingCharacter, testJob, 56) === 0, 'SP debt should be settled before SP becomes available');
+assert(getAvailableJobSP(existingCharacter, testJob, 57) === 1, 'SP should become available after debt is settled');
 
-const newCharacter = {
-  jobId: 'norvice',
+const partiallySpentCharacter = {
   jobLevel: 50,
-  jobSpProgressionVersion: JOB_SP_PROGRESSION_VERSION,
-  jobSpLegacyBonuses: {}
+  jobSkills: { test_job: { skill_a: 1 } }
 };
-assert(!normalizeJobSpProgression(newCharacter), 'new SP progression should not be migrated');
-assert(getJobTotalSP(newCharacter, 'norvice', 50) === 49, 'new characters should not receive legacy SP');
+assert(getAvailableJobSP(partiallySpentCharacter, testJob) === 39, 'legacy unspent SP should be removed');
+
+const previouslyMigratedCharacter = {
+  jobSpProgressionVersion: 2,
+  jobSpLegacyBonuses: { test_job: 30 }
+};
+assert(clearLegacyJobSpBonus(previouslyMigratedCharacter), 'legacy SP metadata should be removed');
+assert(!('jobSpProgressionVersion' in previouslyMigratedCharacter), 'legacy SP version was not removed');
+assert(!('jobSpLegacyBonuses' in previouslyMigratedCharacter), 'legacy SP bonus was not removed');
+assert(!clearLegacyJobSpBonus(previouslyMigratedCharacter), 'legacy SP cleanup should be idempotent');
 
 if (typeof print === 'function') print('Job progression tests passed.');
 else console.log('Job progression tests passed.');
