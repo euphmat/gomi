@@ -19,7 +19,7 @@ const DECIMAL_EFFECT_KEYS = new Set([
   'atkReduce', 'barrierMatkPercent', 'barrierPercent', 'bossMultiplier',
   'bonusDefPercent', 'bonusHpPercent', 'bonusMatkPercent', 'bonusMdefPercent',
   'bonusMpPercent', 'buffPercent', 'burnChance', 'burningTargetDamagePercent',
-  'chainBonusPerHitPercent', 'chance', 'curseChance', 'defPercent', 'defReduce',
+  'chainBonusPerHitPercent', 'chance', 'curseChance', 'defenseRatio', 'defPercent', 'defReduce',
   'detonationMultiplier', 'drainPercent', 'evadeChance', 'finisherChance',
   'fireDamagePercent', 'fireResistPercent', 'guardChance', 'harmonyMultiplier',
   'healMatkPercent', 'instantDeathBonus', 'instantDeathChance',

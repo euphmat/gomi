@@ -62,6 +62,8 @@ export const actionMethods = {
     entity._matkBuffPercent = 0;
     entity._provokeTurns = 0;
     entity._provokeChance = 0;
+    entity._guardianCoverTurns = 0;
+    entity._guardianCoverReduction = 0;
     entity._ailmentResistBuffTurns = 0;
     entity._ailmentResistBuffAmount = 0;
     entity._barrierHp = 0;
@@ -69,6 +71,7 @@ export const actionMethods = {
     entity._manaFlowTurns = 0;
     entity._manaFlowAmount = 0;
     entity._conductorHarmony = 0;
+    entity._entertainerHype = 0;
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -297,8 +300,25 @@ export const actionMethods = {
       }
     }
 
+    // --- Guardian Oath: intercept every incoming party hit, including AoE ---
+    if (!isParty && defender.hp !== undefined) {
+      let guardian = defender._guardianCoverTurns > 0 ? defender : null;
+      if (!guardian) {
+        guardian = this.party
+          .filter(member => !member.isDead && member !== defender && member._guardianCoverTurns > 0)
+          .sort((a, b) => (b._guardianCoverReduction || 0) - (a._guardianCoverReduction || 0))[0] || null;
+      }
+      if (guardian) {
+        if (guardian !== defender) {
+          defender = guardian;
+          this.showActionName(guardian.elementId, '守護者の誓約', 'text-amber-200', 'border-amber-400/60');
+        }
+        options.guardianCoverReduction = guardian._guardianCoverReduction || 0;
+      }
+    }
+
     // --- Passive: Auto Guard (オートガード) ---
-    if (!isParty && !options.isAoEProcessed && defender.hp !== undefined) {
+    if (!isParty && !options.isAoEProcessed && !options.guardianCoverReduction && defender.hp !== undefined) {
       const paladinsWithGuard = this.party.filter(p => !p.isDead && p !== defender && p.job === 'paladin');
       for (const p of paladinsWithGuard) {
         const guardSkill = this._findSkill(p, 'auto_guard');
@@ -561,6 +581,10 @@ export const actionMethods = {
     damage = Math.floor(finalDamage);
     if (damage < 1) damage = 1;
 
+    if (options.guardianCoverReduction > 0) {
+      damage = Math.max(1, Math.floor(damage * (1 - options.guardianCoverReduction / 100)));
+    }
+
     // --- Passive: Guard ---
     if (!isParty && defender.jobSkills) {
       const guardSkill = this._findSkill(defender, 'guard');
@@ -680,6 +704,9 @@ export const actionMethods = {
     }
 
     // --- 状態異常付与判定 ---
+    // この攻撃で新しく眠らせた対象まで直後のダメージで起こさないよう、
+    // 付与処理より前の状態を記録する。
+    const ailmentBeforeHit = defender.activeAilment?.type || null;
     const attackAilments = attacker.stats.attackAilments || {};
     const defenderAilmentResist = defender.stats.ailmentResist || {};
     const inflictedAilments = [];
@@ -723,8 +750,22 @@ export const actionMethods = {
       }
     } else {
       let survivedBySlimeCore = false;
+      let survivedByLastBastion = false;
       if (defender.hp.current - damage <= 0 && defender.jobSkills) {
-        const slimeCoreSkill = this._findSkill(defender, 'slime_core');
+        const lastBastion = this._findSkill(defender, 'last_bastion');
+        if (lastBastion?.level > 0 && lastBastion.levelConfig && !defender._guardianLastBastionUsed) {
+          const maxHp = defender.stats?.hp || defender.hp.max;
+          const survivingHp = Math.max(1, Math.floor(maxHp * lastBastion.levelConfig.revivePercent / 100));
+          damage = prevHp - survivingHp;
+          defender._guardianLastBastionUsed = true;
+          survivedByLastBastion = true;
+          this._scheduleBattleTimeout(() => {
+            this.showActionName(defender.elementId, 'ラストバスティオン', 'text-amber-200', 'border-amber-400/60');
+            this.showDamage(defender.elementId, `HP ${survivingHp}`, 'text-emerald-300');
+          }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
+        }
+
+        const slimeCoreSkill = !survivedByLastBastion ? this._findSkill(defender, 'slime_core') : null;
         if (slimeCoreSkill && slimeCoreSkill.level > 0 && slimeCoreSkill.levelConfig) {
           const thresholdPercent = slimeCoreSkill.levelConfig.threshold || 50;
           const currentPercent = (prevHp / (defender.stats.hp || defender.hp.max)) * 100;
@@ -739,7 +780,7 @@ export const actionMethods = {
       }
 
       defender.hp.current -= damage;
-      if (defender.hp.current <= 0 && !survivedBySlimeCore) {
+      if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion) {
         defender.hp.current = 0;
         defender.isDead = true;
         playSoundEffect('enemyDown', { automatic: this.isAutoBattle, rate: .78 });
@@ -788,7 +829,8 @@ export const actionMethods = {
       }
     }
 
-    if (newHp < prevHp && defender.activeAilment && defender.activeAilment.type === 'sleep') {
+    if (newHp < prevHp && ailmentBeforeHit === 'sleep'
+      && defender.activeAilment && defender.activeAilment.type === 'sleep') {
       if (Math.random() < 0.5) {
         defender.activeAilment = null;
       }
@@ -980,6 +1022,12 @@ export const actionMethods = {
       entity._provokeTurns--;
       if (entity._provokeTurns <= 0) {
         entity._provokeChance = 0;
+      }
+    }
+    if (entity._guardianCoverTurns > 0) {
+      entity._guardianCoverTurns--;
+      if (entity._guardianCoverTurns <= 0) {
+        entity._guardianCoverReduction = 0;
       }
     }
     if (entity._ailmentResistBuffTurns > 0) {

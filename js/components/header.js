@@ -5,7 +5,7 @@
  * 
  * Header Component
  * 
- * Displays: Location Name | Gold | Prism | Update Log | Refresh | Settings
+ * Displays: Location Name | Gold | Prism | Quest | Update Log | Refresh | Settings
  * 
  * @param {Object} gameState
  * @param {string} gameState.location - Current location name
@@ -29,6 +29,12 @@ export function createHeader(gameState) {
         <div id="header-gold" class="flex items-center gap-0.5 sm:gap-1 bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.15)] rounded-md px-1.5 sm:px-2.5 py-1 shrink-0" aria-label="所持ゴールド ${formatNumber(gameState.gold)}"> <span class="material-symbols-outlined text-[14px] text-amber-200 leading-none">toll</span> <span id="header-gold-display" class="text-[11px] sm:text-xs text-amber-200 font-mono font-bold tracking-tight">${formatNumber(gameState.gold)}</span> </div>
         <div id="header-prism" class="flex items-center gap-0.5 sm:gap-1 bg-gradient-to-r from-fuchsia-500/20 to-cyan-500/20 border border-fuchsia-400/50 shadow-[0_0_6px_rgba(232,121,249,0.15)] rounded-md px-1.5 sm:px-2.5 py-1 shrink-0" aria-label="プリズム ${formatNumber(gameState.prism || 0)}"> <span class="material-symbols-outlined text-[14px] text-fuchsia-200 leading-none">diamond</span> <span id="header-prism-display" class="text-[11px] sm:text-xs text-fuchsia-200 font-mono font-bold tracking-tight">${formatNumber(gameState.prism || 0)}</span> </div>
       </div>
+
+      <!-- Quest -->
+      <button id="btn-quest" class="touch-compact relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-sky-500/45 bg-sky-950/70 text-sky-200 transition duration-150 active:scale-95 active:bg-sky-900" aria-label="クエストを開く">
+        <span class="material-symbols-outlined text-lg leading-none">assignment</span>
+        <span id="header-quest-badge" class="pointer-events-none absolute -right-1.5 -top-1.5 hidden min-w-4 h-4 items-center justify-center rounded-full border border-slate-950 bg-rose-500 px-1 text-[8px] font-black leading-none text-white shadow-[0_2px_6px_rgba(0,0,0,.45)]" aria-hidden="true"></span>
+      </button>
 
       <!-- Update Log -->
       <button id="btn-update-log" class="touch-compact flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/45 bg-violet-950/70 text-violet-200 transition duration-150 active:scale-95 active:bg-violet-900" aria-label="Updateログを開く"> <span class="material-symbols-outlined text-lg leading-none">rocket_launch</span> </button>

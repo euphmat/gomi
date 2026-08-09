@@ -1,5 +1,12 @@
 import { getBattleAnimationSpeed, getBattleSpeed, shouldSkipBattleAnimations } from '../utils/battle-animation.js';
 
+const hasAtonementStigma = target => {
+  const cached = target?._skillCache?.get?.('stigma_of_atonement');
+  return cached?.level > 0
+    || (target?.jobId === 'black_knight' && target?.jobSkills?.black_knight?.stigma_of_atonement > 0)
+    || target?.inheritedPassiveSkill?.skillId === 'stigma_of_atonement';
+};
+
 // ─── Poseidon skill animations ────────────────────────────────
 const playSkillAnimation = (caster, targets, type, onImpact) => {
   const targetList = Array.isArray(targets) ? targets : [targets];
@@ -473,7 +480,8 @@ export const poseidon = {
 
         playSkillAnimation(caster, targets, 'oceanic_benediction', (target) => {
           if (target.isDead) return;
-          const hadAilment = Boolean(target.activeAilment);
+          const hasPermanentCurse = target.activeAilment?.type === 'curse' && hasAtonementStigma(target);
+          const hadAilment = Boolean(target.activeAilment) && !hasPermanentCurse;
           const maxHp = target.stats?.hp || target.hp?.max || target.maxHp || 1;
           const currentHp = target.hp !== undefined ? target.hp.current : target.currentHp;
           const recovered = Math.max(0, Math.min(healAmount, maxHp - currentHp));
@@ -483,7 +491,7 @@ export const poseidon = {
           } else {
             target.currentHp = Math.min(maxHp, target.currentHp + healAmount);
           }
-          target.activeAilment = null;
+          if (!hasPermanentCurse) target.activeAilment = null;
 
           if (recovered > 0) battle.showDamage(target.elementId, `+${recovered}`, 'text-emerald-300');
           if (hadAilment) {
@@ -496,7 +504,8 @@ export const poseidon = {
         check: (caster, lc, context) => {
           const allies = context.party.filter(member => !member.isDead);
           if (!allies.length || caster.mp.current < lc.mpCost) return null;
-          const afflicted = allies.filter(member => member.activeAilment).length;
+          const afflicted = allies.filter(member => member.activeAilment
+            && !(member.activeAilment.type === 'curse' && hasAtonementStigma(member))).length;
           const totalMissingRatio = allies.reduce((sum, member) => {
             const maxHp = member.stats?.hp || member.hp?.max || member.maxHp || 1;
             const currentHp = member.hp !== undefined ? member.hp.current : member.currentHp;

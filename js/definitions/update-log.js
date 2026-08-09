@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.30';
-export const APP_RELEASE_DATE = '2026.08.08';
+export const APP_VERSION = '0.1.31';
+export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.31',
+    items: [
+      'バード・ダンサーLv.50で解放される上位職「エンターテイナー」を追加しました。歌と踊りで攻撃・強化・回復を担い、現職時は「舞台熱」をグランドフィナーレの威力へ変換できます。',
+      'エンターテイナー専用のジョブ画像、スキル演出、通常攻撃演出を追加しました。',
+      '全職業の自動戦闘ロジックを見直し、睡眠→ナイトメア、火傷→メテオ、舞台熱・共鳴の蓄積技など、職業固有のコンボを優先してつなぐようにしました。',
+    ],
+  },
   {
     date: '2026.08.08',
     version: '0.1.30',

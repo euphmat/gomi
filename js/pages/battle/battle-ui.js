@@ -27,6 +27,10 @@ export function getActiveStateIconsHTML(entity) {
     icons.push({ icon: 'shield', color: 'text-amber-500', name: '挑発' });
   }
 
+  if (entity._guardianCoverTurns > 0) {
+    icons.push({ icon: 'shield_lock', color: 'text-cyan-200', name: '守護者の誓約' });
+  }
+
   if (entity.atkDebuffTurns > 0) {
     icons.push({ icon: 'trending_down', color: 'text-blue-400', name: '攻撃力ダウン' });
   }

@@ -21,7 +21,7 @@ import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
-import { findNormalAttackFinisher } from './auto-battle-ai.js';
+import { selectAutoBattleAction } from './auto-battle-ai.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -824,54 +824,16 @@ class BattleManager {
           selectedEnemyTarget: (this.selectedEnemyTarget && !this.selectedEnemyTarget.isDead) ? this.selectedEnemyTarget : null
         };
 
-        // 最低乱数の通常攻撃だけで倒せる敵がいるなら、MPを温存して先に倒す。
-        // 確率追撃は見積もりに含めないため、ぎりぎりの誤判定も起こしにくい。
-        const normalAttackFinisher = findNormalAttackFinisher(
+        const bestAction = selectAutoBattleAction({
           character,
-          context.enemies,
-          context.selectedEnemyTarget,
-          (entity, skillId) => this._findSkill(entity, skillId)
-        );
-        if (normalAttackFinisher) {
-          this.executeAttack(character, normalAttackFinisher.target, true);
-          return;
-        }
-
-        let bestAction = {
-          type: 'attack',
-          score: 30,
-          target: context.selectedEnemyTarget || (this.enemies.find(e => !e.isDead) || null),
-          skill: null
-        };
-
-        for (const skill of usableSkills) {
-          let checkResult = null;
-          try {
-            checkResult = skill.def.autoBattle.check(character, skill.levelConfig, context);
-          } catch (error) {
-            console.error(`AutoBattle skill check error [${skill.id}]:`, error);
-            continue;
+          usableSkills,
+          context,
+          findSkill: (entity, skillId) => this._findSkill(entity, skillId),
+          isSkillEnabled: (entity, skillId) => this.autoSkillStates[entity.id]?.[skillId] !== false,
+          onSkillCheckError: (skillId, error) => {
+            console.error(`AutoBattle skill check error [${skillId}]:`, error);
           }
-          if (checkResult) {
-            let score = 0;
-            let target = null;
-            if (typeof checkResult === 'object' && checkResult.score !== undefined) {
-              score = checkResult.score;
-              target = checkResult.target;
-            } else if (checkResult === true) {
-              target = context.selectedEnemyTarget || this.enemies.find(e => !e.isDead) || null;
-            }
-            
-            if (score > bestAction.score && target) {
-              bestAction = {
-                type: 'skill',
-                score,
-                target,
-                skill
-              };
-            }
-          }
-        }
+        });
 
         if (bestAction.type === 'skill' && bestAction.skill && bestAction.target) {
           const prevTarget = this.selectedEnemyTarget;
@@ -881,7 +843,7 @@ class BattleManager {
         } else if (bestAction.target) {
           this.executeAttack(character, bestAction.target, true);
         } else {
-          // Fallback if no target exists but battle hasn't ended yet
+          // 対象がすべて睡眠中でナイトメア担当が控えている場合などは行動を譲る。
           this.activeCharacter = null;
           character.atb = 0;
         }

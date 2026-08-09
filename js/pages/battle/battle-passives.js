@@ -14,6 +14,8 @@ export const passiveMethods = {
     const stigmaCharacters = [];
 
     aliveParty.forEach(p => {
+      // Last Bastion can trigger once on every floor battle.
+      p._guardianLastBastionUsed = false;
       if (p.jobSkills) {
         // --- 贖罪の烙印 (Stigma of Atonement) ---
         const uw = this._findSkill(p, 'stigma_of_atonement');

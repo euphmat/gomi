@@ -19,6 +19,7 @@ import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
+import { getJobLevelUpSP } from '../../data/job-progression.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -149,7 +150,7 @@ export const resultMethods = {
             p.jp.current -= p.jp.max;
             p.jp.max = Math.max(p.jp.max + 1, Math.floor(p.jp.max * 1.2));
             p.jobLevel = (p.jobLevel || 1) + 1;
-            p.sp = (p.sp || 0) + 1;
+            p.sp = (p.sp || 0) + getJobLevelUpSP(p.jobLevel);
             jobLevelUp = true;
           }
 
@@ -638,12 +639,13 @@ export const resultMethods = {
       '_atkBuffTurns', '_atkBuffPercent', '_atkBuffAmount',
       '_matkBuffTurns', '_matkBuffPercent', '_matkBuffAmount',
       '_provokeTurns', '_provokeChance',
+      '_guardianCoverTurns', '_guardianCoverReduction', '_guardianLastBastionUsed',
       '_ailmentResistBuffTurns', '_ailmentResistBuffAmount',
       '_barrierTurns', '_barrierHp',
       'atkDebuffTurns', 'atkDebuffPercent',
       'defDebuffTurns', 'defDebuffPercent',
       '_regenTurns', '_regenHp',
-      '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony'
+      '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype'
     ];
 
     for (const p of this.party) {

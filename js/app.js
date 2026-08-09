@@ -30,11 +30,13 @@ import { DailyLoginManager } from './data/daily-login-manager.js';
 import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotificationsEnabled } from './utils/game-notifications.js';
 import { APP_VERSION } from './definitions/update-log.js';
 import { checkForAvailableUpdate, showUpdateLogModal } from './components/update-log-modal.js';
+import { initQuestHeaderBadge, showQuestModal } from './components/quest-modal.js';
 import { activateScreenLock, initScreenLock } from './utils/screen-lock.js';
 import { initTouchFeedback } from './utils/touch-feedback.js';
 import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
 import { createCloudSavePanel, initCloudSavePanel } from './components/cloud-save-panel.js';
 import { initDailyCloudSave } from './data/daily-cloud-save-manager.js';
+import { getTotalJobSP } from './data/job-progression.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
@@ -117,7 +119,7 @@ class App {
             }
           }
         }
-        const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
+        const earnedSP = getTotalJobSP(char.jobLevel);
         const correctSP = earnedSP - spentSP;
         if (char.sp !== correctSP) {
           console.log(`[App] SP Correction for ${char.name}: ${char.sp} -> ${correctSP}`);
@@ -235,6 +237,13 @@ class App {
    */
   initHeaderButtons() {
     initGameNotificationSound();
+    initQuestHeaderBadge();
+
+    const questBtn = document.getElementById('btn-quest');
+    if (questBtn) {
+      questBtn.addEventListener('click', () => showQuestModal());
+    }
+
     const btn = document.getElementById('btn-setting');
     if (btn) {
       btn.addEventListener('click', () => this.showSettingsModal());

@@ -75,9 +75,9 @@ export async function renderSpecialQuestTab() {
                       <span class="min-w-[42px] text-right font-mono text-[8px] font-bold tabular-nums ${state.completed ? 'text-emerald-300' : 'text-slate-500'}">${current}/${quest.target}</span>
                     </div>
                   </div>
-                  <div class="flex w-[66px] shrink-0 flex-col items-stretch gap-1">
+                  <div class="flex w-[70px] shrink-0 flex-col items-stretch gap-1">
                     <div class="flex items-center justify-center gap-0.5 text-[8px] font-black text-fuchsia-200"><span class="material-symbols-outlined text-[12px]">diamond</span>Prism × ${quest.reward}</div>
-                    <button data-claim-special="${quest.id}" class="h-7 rounded-md border px-1 text-[9px] font-black transition ${state.completed ? 'border-fuchsia-300/30 bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white active:scale-[.97]' : 'cursor-not-allowed border-slate-800 bg-slate-950/60 text-slate-600'}" ${!state.completed ? 'disabled' : ''}>${state.completed ? '受け取る' : '進行中'}</button>
+                    <button ${state.completed ? `data-claim-special="${quest.id}"` : `data-special-destination="${quest.destination?.path || '/status'}"`} aria-label="${state.completed ? `${quest.title}の報酬を受け取る` : `${quest.title}。${quest.destination?.label || '目的地へ移動'}`}" class="h-7 rounded-md border px-1 text-[9px] font-black transition ${state.completed ? 'border-fuchsia-300/30 bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white active:scale-[.97]' : 'border-sky-400/25 bg-sky-500/10 text-sky-300 active:scale-[.97] active:bg-sky-500/20'}">${state.completed ? '受け取る' : `${quest.destination?.label || '移動'} ›`}</button>
                   </div>
                 </div>
               </article>`;
@@ -118,6 +118,12 @@ export async function renderSpecialQuestTab() {
         } else {
           button.disabled = false;
         }
+      };
+    });
+
+    container.querySelectorAll('[data-special-destination]').forEach(button => {
+      button.onclick = () => {
+        window.location.hash = button.dataset.specialDestination;
       };
     });
   };

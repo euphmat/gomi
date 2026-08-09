@@ -4,6 +4,7 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { showInheritanceHelpModal } from '../../components/inheritance-help-modal.js';
 
 import { JOBS } from '../../jobs/index.js';
+import { getTotalJobSP } from '../../data/job-progression.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 
 /**
@@ -541,7 +542,7 @@ export function renderAcquireSkillTab() {
         }
       }
 
-      const earnedSP = Math.max(0, (char.jobLevel || 1) - 1);
+      const earnedSP = getTotalJobSP(char.jobLevel);
       const correctSP = earnedSP - spentSP;
 
       let needSave = false;

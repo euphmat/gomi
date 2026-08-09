@@ -23,7 +23,9 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   poseidon:       { kind: 'tide_thrust',     primary: '#a5f3fc', secondary: '#0284c7', particles: 8 },
   pyromancer:     { kind: 'flame_eruption', primary: '#fef3c7', secondary: '#f97316', particles: 8 },
   assassin:       { kind: 'shadow_step',    primary: '#e9d5ff', secondary: '#8b5cf6', particles: 6 },
-  mana_conductor: { kind: 'mana_crescendo', primary: '#cffafe', secondary: '#8b5cf6', particles: 8 }
+  mana_conductor: { kind: 'mana_crescendo', primary: '#cffafe', secondary: '#8b5cf6', particles: 8 },
+  entertainer:    { kind: 'stage_spectacle', primary: '#fef3c7', secondary: '#d946ef', particles: 9 },
+  guardian:       { kind: 'guardian_rampart', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -563,6 +565,14 @@ export function playNormalAttackAnimation(attacker, defender) {
       addRing(layer, target, profile, impactDuration, impactDelay, { size: 94, width: 3, scale: 1.45 });
       break;
 
+    case 'guardian_rampart':
+      animateActor(attackerEl, profile, actionDuration, direction, 'heavy');
+      addWeapon(layer, origin, direction, profile, actionDuration * .86, actionDuration * .02, 'shield');
+      addRing(layer, origin, profile, actionDuration * .72, 0, { radius: '24%', size: 72, width: 5, scale: 1.12, color: '#fde68a' });
+      addRing(layer, target, profile, impactDuration * 1.08, impactDelay * .82, { radius: '24%', size: 102, width: 6, scale: 1.5 });
+      addGroundCracks(layer, target, profile, impactDuration, impactDelay * .88);
+      break;
+
     case 'tide_thrust':
       animateActor(attackerEl, profile, actionDuration, direction, 'melee');
       addWeapon(layer, origin, direction, profile, actionDuration * .9, actionDuration * .03, 'trident');
@@ -596,6 +606,16 @@ export function playNormalAttackAnimation(attacker, defender) {
       addMagicCircle(layer, target, profile, impactDuration, impactDelay * .72, '✦');
       addRing(layer, target, profile, impactDuration, impactDelay, { size: 98, width: 3, scale: 1.42, endAngle: 180 });
       addGlyph(layer, target, { ...profile, primary: '#fff' }, impactDuration * .8, '♬', impactDelay * .82, { size: 38 });
+      break;
+
+    case 'stage_spectacle':
+      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
+      addHarp(layer, { x: origin.x - 8, y: origin.y - 10 }, profile, actionDuration * .68, 0);
+      addRibbonOrbit(layer, origin, profile, actionDuration * .78, actionDuration * .04, true);
+      addMusicStaff(layer, origin, target, profile, actionDuration * .8, actionDuration * .08);
+      addWave(layer, target, profile, impactDuration, impactDelay * .7, 'sound');
+      addRing(layer, target, profile, impactDuration, impactDelay * .82, { size: 100, width: 4, scale: 1.45, endAngle: 220 });
+      addGlyph(layer, target, { ...profile, primary: '#fff' }, impactDuration * .82, '★', impactDelay * .76, { size: 46 });
       break;
 
     case 'sword_draw':

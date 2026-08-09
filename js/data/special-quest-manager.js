@@ -41,6 +41,7 @@ export const SPECIAL_QUESTS = [
     icon: 'landscape',
     reward: 1,
     target: 1,
+    destination: { path: '/guild?tab=mine', label: '鉱山へ' },
   },
   ...Object.values(JOBS).map(job => ({
     id: `job_first_change_${job.id}`,
@@ -51,6 +52,7 @@ export const SPECIAL_QUESTS = [
     icon: 'badge',
     reward: 1,
     target: 1,
+    destination: { path: '/guild?tab=job', label: '神殿へ' },
   })),
   ...DUNGEONS.map((dungeon, index) => ({
     id: `dungeon_${dungeon.id}`,
@@ -62,6 +64,7 @@ export const SPECIAL_QUESTS = [
     icon: dungeon.theme?.icon || 'swords',
     reward: 1,
     target: 1,
+    destination: { path: '/dungeon?tab=normal', label: 'ダンジョンへ' },
   })),
   // Special dungeons use independent unlock conditions, so they do not block
   // each other or the main-dungeon progression chain.
@@ -75,26 +78,31 @@ export const SPECIAL_QUESTS = [
     icon: dungeon.theme?.icon || 'swords',
     reward: 1,
     target: 1,
+    destination: { path: '/dungeon?tab=special', label: 'スペシャルへ' },
   })),
   ...makeMilestoneQuests('monster', MONSTER_LIBRARY_TARGETS, {
     titlePrefix: 'モンスター図鑑',
     descriptionPrefix: 'モンスター図鑑に',
     icon: 'pets',
+    destination: { path: '/quest?tab=monster_lib', label: '図鑑へ' },
   }),
   ...makeMilestoneQuests('fish', FISH_LIBRARY_TARGETS, {
     titlePrefix: '魚図鑑',
     descriptionPrefix: '魚図鑑に',
     icon: 'phishing',
+    destination: { path: '/quest?tab=fish_lib', label: '魚図鑑へ' },
   }),
   ...makeMilestoneQuests('item', ITEM_LIBRARY_TARGETS, {
     titlePrefix: 'アイテム図鑑',
     descriptionPrefix: 'アイテム図鑑に',
     icon: 'auto_stories',
+    destination: { path: '/quest?tab=item_lib', label: '図鑑へ' },
   }),
   ...makeMilestoneQuests('medal', MEDAL_TARGETS, {
     titlePrefix: 'メダル',
     descriptionPrefix: '異なるモンスターのメダルを',
     icon: 'military_tech',
+    destination: { path: '/dungeon?tab=normal', label: 'ダンジョンへ' },
   }),
 ];
 
@@ -290,7 +298,10 @@ class SpecialQuestManagerClass {
     const storedCompleted = Array.isArray(completedDungeonsValue) ? completedDungeonsValue : [];
     const dungeonHistoryChanged = JSON.stringify([...storedCompleted].sort()) !== JSON.stringify([...normalizedCompleted].sort());
     if (dungeonHistoryChanged) await GameDB.setGameState(COMPLETED_DUNGEONS_KEY, normalizedCompleted);
-    if (changed) await this.save();
+    if (changed) {
+      await this.save();
+      window.dispatchEvent(new CustomEvent('quest:special-updated'));
+    }
     return changed || dungeonHistoryChanged || discoveredItemsChanged || jobHistoryChanged;
   }
 

@@ -27,23 +27,23 @@ const CARD_PALETTE_CACHE = new Map();
 
 const DIFFICULTIES = {
   easy: {
-    id: 'easy', label: 'EASY', pairs: 6, columns: 4, reward: 1,
+    id: 'easy', label: 'EASY', pairs: 6, columns: 4, reward: 1, skillReward: 1,
     category: 'モンスター', icon: 'pets', accent: 'emerald', memoryRate: 0.28,
     pool: MONSTERS,
   },
   normal: {
-    id: 'normal', label: 'NORMAL', pairs: 8, columns: 4, reward: 3,
+    id: 'normal', label: 'NORMAL', pairs: 8, columns: 4, reward: 3, skillReward: 1,
     category: '魚', icon: 'set_meal', accent: 'sky', memoryRate: 0.62,
     // 画像アセットがまだ用意されていない定義は、絵柄抽選から除外する。
     pool: PLAYABLE_FISH,
   },
   hard: {
-    id: 'hard', label: 'HARD', pairs: 10, columns: 5, reward: 5,
+    id: 'hard', label: 'HARD', pairs: 10, columns: 5, reward: 5, skillReward: 2,
     category: 'アイテム素材', icon: 'category', accent: 'rose', memoryRate: 0.95,
     pool: MATERIALS,
   },
   very_hard: {
-    id: 'very_hard', label: 'VERY HARD', pairs: 12, columns: 6, reward: 10,
+    id: 'very_hard', label: 'VERY HARD', pairs: 12, columns: 6, reward: 10, skillReward: 3,
     category: 'モンスター・魚・素材', icon: 'skull', accent: 'violet', memoryRate: 1,
     mixedPools: [
       { prefix: 'monster', pool: MONSTERS, count: 4 },
@@ -52,6 +52,11 @@ const DIFFICULTIES = {
     ],
   },
 };
+
+// スキルON時は、補助効果とのバランスを取った専用報酬を使う。
+const getDifficultyReward = (config, skillsEnabled) => (
+  skillsEnabled ? (config.skillReward ?? config.reward) : config.reward
+);
 
 const ACCENT_CLASSES = {
   emerald: 'border-emerald-400/40 from-emerald-500/20 to-emerald-950/35 text-emerald-200',
@@ -352,7 +357,8 @@ const pageStyles = () => `
   </style>
 `;
 
-function difficultyCard(config, cleared) {
+function difficultyCard(config, cleared, skillsEnabled) {
+  const reward = getDifficultyReward(config, skillsEnabled);
   return `
     <button data-difficulty="${config.id}"
             ${cleared ? 'disabled aria-disabled="true"' : ''}
@@ -363,10 +369,29 @@ function difficultyCard(config, cleared) {
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-black tracking-[.16em] ${cleared ? 'text-slate-400' : 'text-white'}">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.category} ・ ${config.pairs}ペア</span>
-        <span class="mt-1 flex items-center gap-1 text-[10px] font-black ${cleared ? 'text-emerald-400' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[14px]">${cleared ? 'event_busy' : 'diamond'}</span>${cleared ? '本日はクリア済み' : `勝利報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[10px] font-black ${cleared ? 'text-emerald-400' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[14px]">${cleared ? 'event_busy' : 'diamond'}</span>${cleared ? '本日はクリア済み' : `勝利報酬 ${reward} Prism`}</span>
       </span>
       <span class="material-symbols-outlined text-white/45">${cleared ? 'lock_clock' : 'chevron_right'}</span>
     </button>
+  `;
+}
+
+function skillModePanel(enabled, hasLearnedSkills) {
+  return `
+    <section class="mb-3 rounded-2xl border ${enabled ? 'border-cyan-300/30 bg-cyan-950/25' : 'border-slate-600/40 bg-slate-950/65'} p-3 shadow-lg" aria-labelledby="memory-skill-mode-title">
+      <div class="flex items-center gap-3">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${enabled ? 'border-cyan-300/30 bg-cyan-500/10 text-cyan-200' : 'border-slate-600 bg-slate-800/60 text-slate-500'}"><span class="material-symbols-outlined">${enabled ? 'neurology' : 'do_not_disturb_on'}</span></span>
+        <span class="min-w-0 flex-1">
+          <span id="memory-skill-mode-title" class="block text-xs font-black text-white">神経衰弱スキル</span>
+          <span class="mt-0.5 block text-[9px] leading-relaxed text-slate-400">${enabled ? '習得済みスキルを使用します。ON用の勝利報酬が適用されます。' : '習得済みスキルを使わず、通常の勝利報酬で遊びます。'}</span>
+          ${!hasLearnedSkills ? '<span class="mt-0.5 block text-[8px] text-amber-300/80">習得済みスキルはまだありません。</span>' : ''}
+        </span>
+        <span class="grid shrink-0 grid-cols-2 rounded-xl border border-white/10 bg-black/25 p-1" role="group" aria-label="神経衰弱スキルの使用設定">
+          <button type="button" data-skill-mode="on" aria-pressed="${enabled}" class="rounded-lg px-2.5 py-1.5 text-[9px] font-black ${enabled ? 'bg-cyan-500 text-slate-950 shadow-md' : 'text-slate-500'}">ON</button>
+          <button type="button" data-skill-mode="off" aria-pressed="${!enabled}" class="rounded-lg px-2.5 py-1.5 text-[9px] font-black ${enabled ? 'text-slate-500' : 'bg-slate-600 text-white shadow-md'}">OFF</button>
+        </span>
+      </div>
+    </section>
   `;
 }
 
@@ -435,6 +460,7 @@ export function renderMemoryGamePage() {
   let selectRenderId = 0;
   let dailyWins = new Set();
   let memoryProgress = null;
+  let skillsEnabled = true;
   let activeSkillBranchId = MEMORY_SKILL_BRANCHES[0]?.id || '';
   let startingGame = false;
   const timers = new Set();
@@ -517,8 +543,10 @@ export function renderMemoryGamePage() {
 
         ${memoryLevelPanel(memoryProgress)}
 
+        ${skillModePanel(skillsEnabled, Object.values(memoryProgress.skillRanks).some(Boolean))}
+
         <div class="grid gap-2" aria-label="難易度を選択">
-          ${Object.values(DIFFICULTIES).map(config => difficultyCard(config, dailyWins.has(config.id))).join('')}
+          ${Object.values(DIFFICULTIES).map(config => difficultyCard(config, dailyWins.has(config.id), skillsEnabled)).join('')}
         </div>
       </div>
     `;
@@ -607,9 +635,13 @@ export function renderMemoryGamePage() {
     if (holder) holder.setAttribute('aria-label', `プリズム ${formatNumber(value)}`);
   };
 
-  const startGame = async (difficultyId) => {
-    const config = DIFFICULTIES[difficultyId];
-    if (!config || dailyWins.has(difficultyId) || startingGame) return;
+  const startGame = async (difficultyId, useSkills = skillsEnabled) => {
+    const baseConfig = DIFFICULTIES[difficultyId];
+    if (!baseConfig || dailyWins.has(difficultyId) || startingGame) return;
+    const config = {
+      ...baseConfig,
+      reward: getDifficultyReward(baseConfig, useSkills),
+    };
 
     startingGame = true;
     try {
@@ -644,7 +676,7 @@ export function renderMemoryGamePage() {
     const clairvoyancePercent = getTreasureEffect('memoryClairvoyancePercent');
     const cpuForgetPercent = getTreasureEffect('memoryCpuForgetPercent');
     const hintPercent = getTreasureEffect('memoryHintPercent');
-    const skillEffects = getMemorySkillEffects(memoryProgress);
+    const skillEffects = getMemorySkillEffects(useSkills ? memoryProgress : null);
     // 先行は成長要素に左右されず、常に公平な50:50とする。
     const firstTurn = Math.random() < 0.5 ? 'player' : 'cpu';
     const cards = shuffle(selectedItems.flatMap((item) => [
@@ -671,6 +703,7 @@ export function renderMemoryGamePage() {
         * (1 - cpuForgetPercent / 100)
         * (1 - skillEffects.cpuMemoryPenaltyPercent / 100)),
       hintPercent,
+      skillsEnabled: useSkills,
       skillEffects,
       firstCardResetCharges: skillEffects.firstCardResetCharges,
       refocusCharges: skillEffects.refocusCharges,
@@ -714,7 +747,7 @@ export function renderMemoryGamePage() {
           ${hintPercent ? `<span class="rounded-full border border-rose-400/25 bg-rose-500/10 px-2 py-1 text-[8px] font-black text-rose-200">ペアヒント ${hintPercent}%</span>` : ''}
         </section>` : ''}
 
-        ${Object.values(memoryProgress.skillRanks).some(Boolean) ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-cyan-300/15 bg-cyan-950/15 p-1.5" aria-label="発動中の神経衰弱スキル">
+        ${useSkills && Object.values(memoryProgress.skillRanks).some(Boolean) ? `<section class="mb-2 flex flex-wrap justify-center gap-1 rounded-xl border border-cyan-300/15 bg-cyan-950/15 p-1.5" aria-label="発動中の神経衰弱スキル">
           ${skillEffects.candidateChoiceCount ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">候補絞り ${skillEffects.candidateChoiceCount}枚</span>` : ''}
           ${skillEffects.knownMateHintCharges ? `<span data-known-hint-status class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">ペアナビ ${Number.isFinite(skillEffects.knownMateHintCharges) ? `${skillEffects.knownMateHintCharges}回` : '無制限'}</span>` : ''}
           ${skillEffects.knownPairGuideLimit ? `<span class="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-1 text-[8px] font-black text-cyan-200">完全照合 ${Number.isFinite(skillEffects.knownPairGuideLimit) ? '1組' : '全組'}</span>` : ''}
@@ -1408,6 +1441,16 @@ export function renderMemoryGamePage() {
       return;
     }
 
+    const skillModeButton = event.target.closest('[data-skill-mode]');
+    if (skillModeButton) {
+      const nextEnabled = skillModeButton.dataset.skillMode === 'on';
+      if (skillsEnabled !== nextEnabled) {
+        skillsEnabled = nextEnabled;
+        await renderSelect();
+      }
+      return;
+    }
+
     const reloadDailyButton = event.target.closest('[data-reload-daily]');
     if (reloadDailyButton) {
       renderSelect();
@@ -1430,9 +1473,10 @@ export function renderMemoryGamePage() {
     const retryButton = event.target.closest('[data-retry]');
     if (retryButton && game) {
       const difficultyId = game.config.id;
+      const useSkills = game.skillsEnabled;
       retryButton.disabled = true;
       container.querySelector('[data-result]')?.remove();
-      await startGame(difficultyId);
+      await startGame(difficultyId, useSkills);
       return;
     }
 

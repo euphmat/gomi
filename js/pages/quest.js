@@ -3,6 +3,7 @@ import { renderSpecialQuestTab } from './quest-tabs/special-quest.js';
 import { renderItemLibraryTab } from './library-tabs/item-library.js';
 import { renderMonsterLibraryTab } from './library-tabs/monster-library.js';
 import { renderFishLibraryTab } from './library-tabs/fish-library.js';
+import { consumeHashRouteParam } from '../utils/route-params.js';
 
 /**
  * クエスト画面のメインコンテナ
@@ -20,7 +21,8 @@ export function renderQuestPage() {
     { id: 'fish_lib', label: '魚図鑑', icon: 'phishing', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'active:border-cyan-500/35 active:bg-cyan-950/30 active:text-cyan-300' }
   ];
   
-  let activeTabId = 'daily';
+  const requestedTabId = consumeHashRouteParam('tab');
+  let activeTabId = TABS.some(tab => tab.id === requestedTabId) ? requestedTabId : 'daily';
 
   // ヘッダー部分（タブナビゲーション）
   const tabHeader = document.createElement('div');
