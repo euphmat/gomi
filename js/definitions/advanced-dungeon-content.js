@@ -11,6 +11,21 @@ const ADVANCED_DUNGEON_SPECS = [
       "color": "59, 130, 246",
       "icon": "routine"
     },
+    "mechanic": "astral_fate",
+    "behaviors": {
+      "astral_wisp": "sweep",
+      "zodiac_sentinel": "dispel_break",
+      "comet_hare": "multi_hit",
+      "nebula_magus": "sweep",
+      "eclipse_owl": "dispel_break",
+      "orbit_golem": "atb_drain",
+      "celestial_drake": "commander",
+      "astraios": "boss"
+    },
+    "pressure": {
+      "name": "星命加速",
+      "type": "astral_acceleration"
+    },
     "monsters": [
       {
         "id": "astral_wisp",
@@ -222,6 +237,21 @@ const ADVANCED_DUNGEON_SPECS = [
     "theme": {
       "color": "239, 68, 68",
       "icon": "local_fire_department"
+    },
+    "mechanic": "infernal_fury",
+    "behaviors": {
+      "cinder_imp": "empower",
+      "sulfur_hound": "drain",
+      "magma_armor": "dispel_break",
+      "hellfire_witch": "sweep",
+      "chain_cerberus": "multi_hit",
+      "abyss_minotaur": "execute",
+      "inferno_wyrm": "commander",
+      "gehenna_overlord": "boss"
+    },
+    "pressure": {
+      "name": "ゲヘナ再誕",
+      "type": "infernal_rebirth"
     },
     "monsters": [
       {
@@ -435,6 +465,21 @@ const ADVANCED_DUNGEON_SPECS = [
       "color": "234, 88, 12",
       "icon": "local_fire_department"
     },
+    "mechanic": "dragon_blood",
+    "behaviors": {
+      "ember_wyvern": "multi_hit",
+      "frostscale_drake": "atb_drain",
+      "storm_dragonet": "sweep",
+      "verdant_lindworm": "drain",
+      "obsidian_dragon": "dispel_break",
+      "holy_wyrm": "empower",
+      "elder_dragon": "commander",
+      "bahamut_emperor": "boss"
+    },
+    "pressure": {
+      "name": "竜帝の威圧",
+      "type": "dragon_dominion"
+    },
     "monsters": [
       {
         "id": "ember_wyvern",
@@ -646,6 +691,21 @@ const ADVANCED_DUNGEON_SPECS = [
     "theme": {
       "color": "217, 70, 239",
       "icon": "fort"
+    },
+    "mechanic": "demon_siege",
+    "behaviors": {
+      "cloud_gargoyle": "multi_hit",
+      "thunder_warlock": "sweep",
+      "aerial_armor": "dispel_break",
+      "void_harpy": "atb_drain",
+      "storm_demon": "multi_hit",
+      "chaos_archon": "dispel_break",
+      "fallen_seraph": "commander",
+      "azazel_skyking": "boss"
+    },
+    "pressure": {
+      "name": "天空魔王の号令",
+      "type": "demon_command"
     },
     "monsters": [
       {
@@ -859,6 +919,21 @@ const ADVANCED_DUNGEON_SPECS = [
       "color": "203, 213, 225",
       "icon": "nightlight"
     },
+    "mechanic": "lunar_mirror",
+    "behaviors": {
+      "moon_moth": "sweep",
+      "silver_hare": "multi_hit",
+      "dream_nun": "atb_drain",
+      "lunar_knight": "dispel_break",
+      "mirror_banshee": "sweep",
+      "eclipse_chimera": "multi_hit",
+      "moonlight_dragon": "commander",
+      "selene_avatar": "boss"
+    },
+    "pressure": {
+      "name": "静寂の月蝕",
+      "type": "lunar_eclipse"
+    },
     "monsters": [
       {
         "id": "moon_moth",
@@ -1070,6 +1145,21 @@ const ADVANCED_DUNGEON_SPECS = [
     "theme": {
       "color": "56, 189, 248",
       "icon": "cloud"
+    },
+    "mechanic": "storm_momentum",
+    "behaviors": {
+      "cloud_sprite": "atb_drain",
+      "wind_ram": "multi_hit",
+      "sky_manta": "sweep",
+      "tempest_monk": "multi_hit",
+      "rainbow_gryphon": "sweep",
+      "thunder_kirin": "execute",
+      "seraphic_golem": "commander",
+      "uranus_herald": "boss"
+    },
+    "pressure": {
+      "name": "天候支配",
+      "type": "storm_rule"
     },
     "monsters": [
       {
@@ -1283,6 +1373,21 @@ const ADVANCED_DUNGEON_SPECS = [
       "color": "192, 38, 211",
       "icon": "dashboard"
     },
+    "mechanic": "labyrinth_dread",
+    "behaviors": {
+      "twilight_mimic": "drain",
+      "maze_stalker": "multi_hit",
+      "dusk_lantern": "atb_drain",
+      "nightblade": "execute",
+      "paradox_sphinx": "dispel_break",
+      "umbral_hydra": "multi_hit",
+      "labyrinth_keeper": "commander",
+      "nyx_minotaur": "boss"
+    },
+    "pressure": {
+      "name": "迷宮反転",
+      "type": "labyrinth_inversion"
+    },
     "monsters": [
       {
         "id": "twilight_mimic",
@@ -1494,6 +1599,21 @@ const ADVANCED_DUNGEON_SPECS = [
     "theme": {
       "color": "168, 162, 158",
       "icon": "broken_image"
+    },
+    "mechanic": "time_erosion",
+    "behaviors": {
+      "relic_scarab": "multi_hit",
+      "moss_oracle": "empower",
+      "sand_colossus": "sweep",
+      "epoch_knight": "execute",
+      "fossil_wyrm": "commander",
+      "chronicle_golem": "dispel_break",
+      "aeon_guardian": "atb_drain",
+      "chronos_titan": "boss"
+    },
+    "pressure": {
+      "name": "時流掌握",
+      "type": "time_stop"
     },
     "monsters": [
       {
@@ -1707,6 +1827,21 @@ const ADVANCED_DUNGEON_SPECS = [
       "color": "139, 92, 246",
       "icon": "blur_on"
     },
+    "mechanic": "subspace_distortion",
+    "behaviors": {
+      "glitch_slime": "sweep",
+      "phase_hunter": "multi_hit",
+      "void_jellyfish": "atb_drain",
+      "fractal_golem": "multi_hit",
+      "inverted_seraph": "dispel_break",
+      "causality_dragon": "execute",
+      "dimension_eater": "drain",
+      "singularity_origin": "boss"
+    },
+    "pressure": {
+      "name": "法則崩壊",
+      "type": "law_collapse"
+    },
     "monsters": [
       {
         "id": "glitch_slime",
@@ -1916,29 +2051,255 @@ const MAGIC_ELEMENTS = new Set(['water', 'ice', 'thunder', 'light', 'dark']);
 const ELEMENT_NAMES = { fire: '炎', water: '水', grass: '草', ice: '氷', thunder: '雷', wind: '風', earth: '土', light: '光', dark: '闇' };
 const AILMENT_NAMES = { poison: '毒', burn: '火傷', paralysis: '麻痺', sleep: '睡眠', confusion: '混乱', curse: '呪い', blind: '暗闇', silence: '沈黙' };
 
-function createAdvancedAction(monster, tier, isBoss) {
-  const multiplier = 10 + Math.floor(tier / 8) * 0.8 + (isBoss ? 2 : 0);
+function livingParty(battle) {
+  return Array.isArray(battle.party) ? battle.party.filter(target => !target.isDead) : [];
+}
+
+function livingEnemies(battle, attacker) {
+  const enemies = Array.isArray(battle.enemies) ? battle.enemies.filter(target => !target.isDead) : [];
+  return enemies.length > 0 ? enemies : [attacker];
+}
+
+function clearPositiveBuffs(target) {
+  for (const stat of ['atk', 'matk', 'def', 'mdef']) {
+    const turnsKey = `_${stat}BuffTurns`;
+    const percentKey = `_${stat}BuffPercent`;
+    const amountKey = `_${stat}BuffAmount`;
+    if ((target[percentKey] || 0) > 0) target[percentKey] = 0;
+    if ((target[amountKey] || 0) > 0) target[amountKey] = 0;
+    if ((target[percentKey] || 0) === 0 && (target[amountKey] || 0) === 0) target[turnsKey] = 0;
+  }
+  target._provokeTurns = 0;
+  target._provokeChance = 0;
+  target._ailmentResistBuffTurns = 0;
+  target._ailmentResistBuffAmount = 0;
+}
+
+function applyOffenseBuff(target, percent, turns = 3) {
+  target._atkBuffPercent = Math.max(target._atkBuffPercent || 0, percent);
+  target._atkBuffTurns = Math.max(target._atkBuffTurns || 0, turns);
+  target._matkBuffPercent = Math.max(target._matkBuffPercent || 0, percent);
+  target._matkBuffTurns = Math.max(target._matkBuffTurns || 0, turns);
+}
+
+function applyOffenseBreak(target, percent, turns = 3) {
+  target._atkBuffPercent = Math.min(target._atkBuffPercent || 0, -percent);
+  target._atkBuffTurns = Math.max(target._atkBuffTurns || 0, turns);
+  target._matkBuffPercent = Math.min(target._matkBuffPercent || 0, -percent);
+  target._matkBuffTurns = Math.max(target._matkBuffTurns || 0, turns);
+}
+
+function applyDefenseBreak(target, percent, turns = 3) {
+  target._defBuffPercent = Math.min(target._defBuffPercent || 0, -percent);
+  target._defBuffTurns = Math.max(target._defBuffTurns || 0, turns);
+  target._mdefBuffPercent = Math.min(target._mdefBuffPercent || 0, -percent);
+  target._mdefBuffTurns = Math.max(target._mdefBuffTurns || 0, turns);
+}
+
+function currentHp(target) {
+  return target?.hp ? target.hp.current : target?.currentHp;
+}
+
+const MECHANIC_DESCRIPTIONS = {
+  astral_fate: '星命効果で、命中した対象のATBを追加で奪う。',
+  infernal_fury: '獄炎効果で、自身のHPが減るほど威力が上昇する。',
+  dragon_blood: '竜血効果で、使用するたび自身の攻撃・魔攻が上昇する。',
+  demon_siege: '魔城効果で、命中した対象の攻撃・魔攻を低下させる。',
+  lunar_mirror: '月鏡効果で、命中した対象の強化効果を解除する。',
+  storm_momentum: '風雷効果で対象のATBを奪い、自身の攻撃・魔攻を上げる。',
+  labyrinth_dread: '迷界効果で対象のATBと攻撃・魔攻を大きく奪う。',
+  time_erosion: '時蝕効果で、命中した対象のATBを0にする。',
+  subspace_distortion: '亜空効果で、命中した対象の強化を消し、防御・魔防を低下させる。',
+};
+
+function advancedActionDescription(monster, dungeon, dungeonIndex, behavior) {
+  const element = ELEMENT_NAMES[monster.element];
+  const ailment = AILMENT_NAMES[monster.ailment];
+  const severity = dungeonIndex >= 6 ? '高確率' : '確率';
+  const atbDrain = 220 + dungeonIndex * 45;
+  const hits = 2 + Math.floor(dungeonIndex / 4);
+  const defenseBreak = 15 + dungeonIndex * 3;
+  const drainPercent = 25 + dungeonIndex * 5;
+  const targetScope = dungeonIndex >= 6 ? '生存者全員' : dungeonIndex >= 3 ? '最大3人' : '最大2人';
+  const behaviorDescription = {
+    empower: `${element}属性の強襲。${ailment}を与え、自身の攻撃・魔攻を強化する。`,
+    atb_drain: `${element}属性攻撃。${severity}で${ailment}を与え、対象のATBを${atbDrain}減少させる。`,
+    sweep: `${element}属性で${targetScope}を攻撃し、${ailment}を与える。`,
+    multi_hit: `${element}属性の${hits}連撃。各攻撃で${ailment}を与えることがある。`,
+    dispel_break: `${element}属性攻撃。対象の強化効果を解除し、防御・魔防を${defenseBreak}%低下させる。`,
+    drain: `${element}属性攻撃。${ailment}を与え、与えたダメージの${drainPercent}%だけHPを回復する。`,
+    execute: `${element}属性の処刑攻撃。対象のHPが40%以下なら威力が1.65倍になる。`,
+    commander: `${element}属性の全体攻撃。${ailment}を与え、生存中の敵全体の攻撃・魔攻を強化する。`,
+    boss: `${element}属性の全体攻撃。${severity}で${ailment}を与え、全員のATBを${atbDrain}減少、防御・魔防を${defenseBreak}%低下させる。`,
+  }[behavior];
+  return `${behaviorDescription} ${MECHANIC_DESCRIPTIONS[dungeon.mechanic]}`;
+}
+
+function createAdvancedAction(monster, dungeon, dungeonIndex, floorIndex, isBoss) {
+  const behavior = dungeon.behaviors[monster.id];
+  const multiplier = 10 + dungeonIndex * 0.9 + floorIndex * 0.25 + (isBoss ? 2 : 0);
+  const ailmentChance = Math.min(90, 40 + dungeonIndex * 5 + (isBoss ? 10 : 0));
+  const chance = isBoss ? 44 + dungeonIndex : 34 + dungeonIndex * 2;
+  const isMagic = MAGIC_ELEMENTS.has(monster.element);
   return {
     name: monster.action,
-    chance: isBoss ? 45 : 35,
-    description: `${ELEMENT_NAMES[monster.element]}属性の${isBoss ? '全体' : '強力な'}固有攻撃。${AILMENT_NAMES[monster.ailment]}を付与することがある。`,
+    chance,
+    type: isMagic ? 'magic' : 'physical',
+    isMagic,
+    description: advancedActionDescription(monster, dungeon, dungeonIndex, behavior),
     execute: (attacker, defender, battle) => {
       const originalElements = attacker.stats.attackElements;
       const originalAilments = attacker.stats.attackAilments;
       attacker.stats.attackElements = { [monster.element]: 100 };
-      attacker.stats.attackAilments = { ...(originalAilments || {}), [monster.ailment]: isBoss ? 65 : 45 };
-      const targets = isBoss && Array.isArray(battle.party)
-        ? battle.party.filter(target => !target.isDead)
-        : [defender];
-      targets.forEach((target, index) => battle.executeAttack(attacker, target, false, {
-        actionName: monster.action,
-        damageMultiplier: multiplier,
-        isMagic: MAGIC_ELEMENTS.has(monster.element),
-        damageType: 'skill',
-        hideActionName: index > 0,
-      }));
+      attacker.stats.attackAilments = { ...(originalAilments || {}), [monster.ailment]: ailmentChance };
+
+      const party = livingParty(battle);
+      const affectedTargets = new Set();
+      const missingHpRatio = Math.max(0, 1 - attacker.currentHp / attacker.stats.hp);
+      const furyMultiplier = dungeon.mechanic === 'infernal_fury' ? 1 + missingHpRatio * 0.4 : 1;
+      const attack = (target, attackMultiplier = multiplier, hideActionName = false) => {
+        if (!target || target.isDead) return;
+        affectedTargets.add(target);
+        battle.executeAttack(attacker, target, false, {
+          actionName: monster.action,
+          damageMultiplier: attackMultiplier * furyMultiplier,
+          isMagic,
+          damageType: 'skill',
+          hideActionName,
+        });
+      };
+
+      if (behavior === 'boss') {
+        party.forEach((target, index) => attack(target, multiplier, index > 0));
+        party.forEach(target => {
+          target.atb = Math.max(0, (target.atb || 0) - (220 + dungeonIndex * 45));
+          applyDefenseBreak(target, 15 + dungeonIndex * 3);
+        });
+      } else if (behavior === 'empower') {
+        attack(defender);
+        applyOffenseBuff(attacker, 18 + dungeonIndex * 4);
+        battle.showDamage?.(attacker.elementId, 'ATK/MATK UP', 'text-red-300');
+      } else if (behavior === 'atb_drain') {
+        attack(defender);
+        defender.atb = Math.max(0, (defender.atb || 0) - (220 + dungeonIndex * 45));
+        battle.showDamage?.(defender.elementId, 'ATB DOWN', 'text-yellow-400');
+      } else if (behavior === 'sweep') {
+        const targetCount = dungeonIndex >= 6 ? party.length : dungeonIndex >= 3 ? 3 : 2;
+        const targets = [defender, ...party.filter(target => target !== defender)].slice(0, targetCount);
+        targets.forEach((target, index) => attack(target, multiplier * 0.82, index > 0));
+      } else if (behavior === 'multi_hit') {
+        const hits = 2 + Math.floor(dungeonIndex / 4);
+        for (let hit = 0; hit < hits && !defender.isDead; hit += 1) {
+          attack(defender, multiplier * 0.68, hit > 0);
+        }
+      } else if (behavior === 'dispel_break') {
+        attack(defender);
+        if (!defender.isDead) {
+          clearPositiveBuffs(defender);
+          applyDefenseBreak(defender, 15 + dungeonIndex * 3);
+          battle.showDamage?.(defender.elementId, 'BUFF BREAK', 'text-blue-400');
+        }
+      } else if (behavior === 'drain') {
+        const hpBefore = currentHp(defender);
+        attack(defender);
+        const dealt = Math.max(0, (hpBefore || 0) - (currentHp(defender) || 0));
+        const heal = Math.floor(dealt * (0.25 + dungeonIndex * 0.05));
+        if (heal > 0) {
+          attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + heal);
+          battle.showDamage?.(attacker.elementId, `+${heal}`, 'text-green-400');
+        }
+      } else if (behavior === 'execute') {
+        const maxHp = defender.stats?.hp || defender.hp?.max || defender.maxHp || currentHp(defender);
+        const executeMultiplier = currentHp(defender) <= maxHp * 0.4 ? 1.65 : 1;
+        attack(defender, multiplier * executeMultiplier);
+      } else if (behavior === 'commander') {
+        party.forEach((target, index) => attack(target, multiplier * 0.78, index > 0));
+        livingEnemies(battle, attacker).forEach(target => applyOffenseBuff(target, 22 + dungeonIndex * 4));
+        battle.showDamage?.(attacker.elementId, 'ENEMY ATK/MATK UP', 'text-red-300');
+      }
+
+      if (dungeon.mechanic === 'astral_fate') {
+        affectedTargets.forEach(target => { target.atb = Math.max(0, (target.atb || 0) - 150); });
+      } else if (dungeon.mechanic === 'dragon_blood') {
+        applyOffenseBuff(attacker, 24 + dungeonIndex * 3);
+      } else if (dungeon.mechanic === 'demon_siege') {
+        affectedTargets.forEach(target => applyOffenseBreak(target, 18));
+      } else if (dungeon.mechanic === 'lunar_mirror') {
+        affectedTargets.forEach(target => clearPositiveBuffs(target));
+      } else if (dungeon.mechanic === 'storm_momentum') {
+        affectedTargets.forEach(target => { target.atb = Math.max(0, (target.atb || 0) - 180); });
+        applyOffenseBuff(attacker, 20);
+      } else if (dungeon.mechanic === 'labyrinth_dread') {
+        affectedTargets.forEach(target => { target.atb = Math.max(0, (target.atb || 0) - 350); applyOffenseBreak(target, 15); });
+      } else if (dungeon.mechanic === 'time_erosion') {
+        affectedTargets.forEach(target => { target.atb = 0; });
+      } else if (dungeon.mechanic === 'subspace_distortion') {
+        affectedTargets.forEach(target => { clearPositiveBuffs(target); applyDefenseBreak(target, 25); });
+      }
+
       attacker.stats.attackElements = originalElements;
       attacker.stats.attackAilments = originalAilments;
+    },
+  };
+}
+
+const PRESSURE_DESCRIPTIONS = {
+  astral_acceleration: '星の加護で敵全体の攻撃・魔攻を強化し、自身のHPを5%回復する。',
+  infernal_rebirth: '業火で自身のHPを8%回復し、攻撃・魔攻を大幅に強化する。',
+  dragon_dominion: '竜威で敵全体を強化し、味方全員の防御・魔防を15%低下させる。',
+  demon_command: '魔王の号令で敵全体を強化し、味方全員のATBを250減少させる。',
+  lunar_eclipse: '月蝕で味方全員の強化効果を解除し、ATBを300減少させる。',
+  storm_rule: '天候を支配して敵全体の魔攻を強化し、味方全員のATBと魔防を奪う。',
+  labyrinth_inversion: '迷宮法則を反転し、味方全員の強化を解除してATBと防御・魔防を大きく奪う。',
+  time_stop: '時間を停止して味方全員のATBを0にし、防御・魔防を30%低下させる。',
+  law_collapse: '世界法則を崩壊させ、味方全員の強化とATBを消去。敵全体を凶暴化し、自身を回復する。',
+};
+
+function createPressureAction(dungeon, dungeonIndex) {
+  const pressure = dungeon.pressure;
+  return {
+    name: pressure.name,
+    chance: 18 + Math.floor(dungeonIndex / 2),
+    type: 'support',
+    isMagic: false,
+    description: PRESSURE_DESCRIPTIONS[pressure.type],
+    execute: (attacker, defender, battle) => {
+      const party = livingParty(battle);
+      const enemies = livingEnemies(battle, attacker);
+      const heal = rate => {
+        const amount = Math.floor(attacker.stats.hp * rate);
+        attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + amount);
+        battle.showDamage?.(attacker.elementId, `+${amount}`, 'text-green-400');
+      };
+      battle.showActionName?.(attacker.elementId, pressure.name, 'text-fuchsia-300', 'border-fuchsia-500/50');
+
+      if (pressure.type === 'astral_acceleration') {
+        enemies.forEach(target => applyOffenseBuff(target, 30));
+        heal(0.05);
+      } else if (pressure.type === 'infernal_rebirth') {
+        applyOffenseBuff(attacker, 40);
+        heal(0.08);
+      } else if (pressure.type === 'dragon_dominion') {
+        enemies.forEach(target => applyOffenseBuff(target, 35));
+        party.forEach(target => applyDefenseBreak(target, 15));
+      } else if (pressure.type === 'demon_command') {
+        enemies.forEach(target => applyOffenseBuff(target, 45));
+        party.forEach(target => { target.atb = Math.max(0, (target.atb || 0) - 250); });
+      } else if (pressure.type === 'lunar_eclipse') {
+        party.forEach(target => { clearPositiveBuffs(target); target.atb = Math.max(0, (target.atb || 0) - 300); });
+      } else if (pressure.type === 'storm_rule') {
+        enemies.forEach(target => applyOffenseBuff(target, 45));
+        party.forEach(target => { target.atb = Math.max(0, (target.atb || 0) - 350); applyDefenseBreak(target, 25); });
+      } else if (pressure.type === 'labyrinth_inversion') {
+        party.forEach(target => { clearPositiveBuffs(target); target.atb = Math.max(0, (target.atb || 0) - 500); applyDefenseBreak(target, 25); });
+      } else if (pressure.type === 'time_stop') {
+        party.forEach(target => { target.atb = 0; applyDefenseBreak(target, 30); });
+        heal(0.06);
+      } else if (pressure.type === 'law_collapse') {
+        party.forEach(target => { clearPositiveBuffs(target); target.atb = 0; applyDefenseBreak(target, 35); });
+        enemies.forEach(target => applyOffenseBuff(target, 60));
+        heal(0.1);
+      }
     },
   };
 }
@@ -1980,7 +2341,7 @@ export const ADVANCED_DUNGEONS = ADVANCED_DUNGEON_SPECS.map(dungeon => ({
   })),
 }));
 
-export const ADVANCED_MONSTERS = ENTRIES.map(({ monster, tier, isBoss }) => {
+export const ADVANCED_MONSTERS = ENTRIES.map(({ dungeon, dungeonIndex, monster, floorIndex, tier, isBoss }) => {
   const growth = 1.025 ** tier;
   const bossGrowth = isBoss ? 1.8 : 1;
   return {
@@ -2005,7 +2366,10 @@ export const ADVANCED_MONSTERS = ENTRIES.map(({ monster, tier, isBoss }) => {
       itemId: materialId(monster, material),
       rate: [5, 1, 0.1][index],
     })),
-    actions: [createAdvancedAction(monster, tier, isBoss)],
+    actions: [
+      createAdvancedAction(monster, dungeon, dungeonIndex, floorIndex, isBoss),
+      ...(isBoss ? [createPressureAction(dungeon, dungeonIndex)] : []),
+    ],
   };
 });
 

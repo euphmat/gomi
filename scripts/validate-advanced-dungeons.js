@@ -63,18 +63,81 @@ for (const dungeonId of ADVANCED_DUNGEON_IDS) {
 assert(advancedMonsterIds.size === 72, `追加モンスター数が72ではありません: ${advancedMonsterIds.size}`);
 for (const monsterId of advancedMonsterIds) {
   const monster = monsterMap.get(monsterId);
+  const isBoss = bossIds.has(monsterId);
   assert(monster.drops.length === 3, `${monsterId}の素材ドロップが3件ではありません`);
   assert(monster.drops.map(drop => drop.rate).join(',') === '5,1,0.1', `${monsterId}のドロップ率が不正です`);
   monster.drops.forEach(drop => assert(materialIds.has(drop.itemId), `${monsterId}が未定義素材を参照しています: ${drop.itemId}`));
-  assert(monster.actions.length === 1, `${monsterId}の固有行動が1件ではありません`);
-  const attacker = { stats: { attackElements: {}, attackAilments: {} } };
-  const defender = { isDead: false };
-  let attackCount = 0;
-  monster.actions[0].execute(attacker, defender, {
-    party: [{ isDead: false }, { isDead: false }, { isDead: true }],
-    executeAttack() { attackCount += 1; },
+  assert(monster.actions.length === (isBoss ? 2 : 1), `${monsterId}の固有行動数が不正です`);
+  assert(monster.actions.every(action => action.description && action.chance > 0), `${monsterId}の行動表示情報が不正です`);
+  assert(monster.actions.reduce((sum, action) => sum + action.chance, 0) < 100, `${monsterId}の行動確率合計が100%以上です`);
+
+  monster.actions.forEach((action, actionIndex) => {
+    const attacker = {
+      stats: { hp: 10000, attackElements: {}, attackAilments: {} },
+      currentHp: 5000,
+      atb: 800,
+      isDead: false,
+      elementId: 'attacker',
+    };
+    const defender = {
+      currentHp: 5000,
+      atb: 900,
+      isDead: false,
+      elementId: 'defender',
+      _atkBuffPercent: 30,
+      _atkBuffTurns: 3,
+      _defBuffPercent: 30,
+      _defBuffTurns: 3,
+    };
+    const secondTarget = { currentHp: 5000, atb: 900, isDead: false, elementId: 'second' };
+    let attackCount = 0;
+    const battle = {
+      party: [defender, secondTarget, { currentHp: 0, atb: 0, isDead: true }],
+      enemies: [attacker],
+      executeAttack(source, target) {
+        attackCount += 1;
+        target.currentHp = Math.max(0, target.currentHp - 100);
+        if (target.currentHp === 0) target.isDead = true;
+      },
+      showActionName() {},
+      showDamage() {},
+    };
+    action.execute(attacker, defender, battle);
+    if (actionIndex === 0) assert(attackCount > 0, `${monsterId}の攻撃行動が攻撃を実行しません`);
+    if (actionIndex === 1) assert(attackCount === 0, `${monsterId}の圧力行動が意図せず直接攻撃しています`);
+    if (monsterId === 'orbit_golem' && actionIndex === 0) assert(defender.atb < 900, `${monsterId}のATB妨害が機能していません`);
+    if (monsterId === 'eclipse_owl' && actionIndex === 0) {
+      assert(defender._atkBuffPercent === 0, `${monsterId}のバフ解除が機能していません`);
+      assert(defender._defBuffPercent < 0, `${monsterId}の防御低下が機能していません`);
+    }
+    if (isBoss && actionIndex === 0) {
+      assert(defender.atb < 900 && secondTarget.atb < 900, `${monsterId}の全体ATB妨害が機能していません`);
+      assert(defender._defBuffPercent < 0, `${monsterId}の全体防御低下が機能していません`);
+    }
   });
-  assert(attackCount === (bossIds.has(monsterId) ? 2 : 1), `${monsterId}の固有行動対象数が不正です`);
+}
+
+const finalBoss = monsterMap.get('singularity_origin');
+assert(finalBoss.actions[0].chance > monsterMap.get('astraios').actions[0].chance, '終盤で固有行動率が上昇していません');
+assert(finalBoss.actions[1].description.includes('ATBを消去'), '最終ボスの法則崩壊が凶悪化していません');
+
+const thematicExpectations = {
+  astral_wisp: ['最大2人', '星命効果'],
+  comet_hare: ['2連撃', '星命効果'],
+  cinder_imp: ['自身の攻撃・魔攻を強化', 'HPが減るほど威力'],
+  magma_armor: ['強化効果を解除', '獄炎効果'],
+  abyss_minotaur: ['処刑攻撃', 'HPが40%以下'],
+  ember_wyvern: ['連撃', '竜血効果'],
+  cloud_gargoyle: ['連撃', '魔城効果'],
+  moon_moth: ['最大3人', '月鏡効果'],
+  cloud_sprite: ['ATB', '風雷効果'],
+  twilight_mimic: ['HPを回復', '迷界効果'],
+  relic_scarab: ['連撃', '時蝕効果'],
+  glitch_slime: ['生存者全員', '亜空効果'],
+};
+for (const [monsterId, phrases] of Object.entries(thematicExpectations)) {
+  const description = monsterMap.get(monsterId).actions[0].description;
+  phrases.forEach(phrase => assert(description.includes(phrase), `${monsterId}のテーマ行動に「${phrase}」がありません`));
 }
 
 const equipmentGroups = [WEAPONS, ARMORS, SHIELDS, ACCESSORIES];
