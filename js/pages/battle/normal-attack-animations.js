@@ -27,7 +27,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   entertainer:    { kind: 'stage_spectacle', primary: '#fef3c7', secondary: '#d946ef', particles: 9 },
   guardian:       { kind: 'guardian_rampart', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
   cryomancer:     { kind: 'frost_nova', primary: '#ecfeff', secondary: '#38bdf8', particles: 9 },
-  magic_archer:   { kind: 'bow_shot', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 }
+  magic_archer:   { kind: 'bow_shot', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 },
+  slime_singer:   { kind: 'slime_serenade', primary: '#a7f3d0', secondary: '#38bdf8', particles: 9 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -546,6 +547,16 @@ export function playNormalAttackAnimation(attacker, defender) {
         }, profile, actionDuration * .58, glyph, actionDuration * (.18 + index * .1), { size: 28 + index * 2 });
       });
       addWave(layer, target, profile, impactDuration, impactDelay * .78, 'sound');
+      break;
+
+    case 'slime_serenade':
+      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
+      addHarp(layer, { x: origin.x - 6, y: origin.y - 10 }, profile, actionDuration * .68, 0);
+      addSlimeBounce(layer, origin, target, profile, actionDuration, actionDuration * .04);
+      addMusicStaff(layer, origin, target, profile, actionDuration * .82, actionDuration * .06);
+      addWave(layer, target, profile, impactDuration, impactDelay * .72, 'sound');
+      addRing(layer, target, profile, impactDuration, impactDelay * .84, { radius: '46% 54% 48% 52%', size: 92, width: 4, scale: 1.4 });
+      addGlyph(layer, target, { ...profile, primary: '#fef08a' }, impactDuration * .82, '♫', impactDelay * .76, { size: 42 });
       break;
 
     case 'abyss_cleave':

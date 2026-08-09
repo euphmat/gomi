@@ -121,6 +121,23 @@ const select = (character, usableSkills, enemies, party = [character]) =>
 }
 
 {
+  const enemy = makeEnemy();
+  const chorus = makeUsable('king_slime_chorus', (_caster, _lc, context) => ({ target: context.enemies[0], score: 999 }));
+  const jellyNote = makeUsable('jelly_note', (_caster, _lc, context) => ({ target: context.enemies[0], score: 50 }));
+  const singer = makeCharacter({
+    jobId: 'slime_singer', _slimeSingerNotes: 1,
+    skills: { resonant_gel: { level: 1, def: {}, levelConfig: { maxNotes: 3 } } }
+  });
+  assert(select(singer, [chorus, jellyNote], [enemy]).skill?.id === 'jelly_note',
+    'ぷるぷる音符が最大になるまではキングスライム大合唱を温存する');
+
+  singer._slimeSingerNotes = 3;
+  chorus.def.autoBattle.check = () => null;
+  assert(select(singer, [chorus, jellyNote], [enemy]).skill?.id === 'king_slime_chorus',
+    'ぷるぷる音符が最大なら単体戦でもキングスライム大合唱を使う');
+}
+
+{
   const enemy = makeEnemy({ currentHp: 10 });
   const priest = makeCharacter({ jobId: 'priest' });
   const deadAlly = makeCharacter({ id: 'dead', isDead: true, hp: { current: 0, max: 100 } });
@@ -136,11 +153,11 @@ const select = (character, usableSkills, enemies, party = [character]) =>
     '緊急行動やコンボがなければ通常攻撃の確殺を維持する');
 }
 
-assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 19,
-  '全19職業の自動戦闘プロファイルを定義する');
+assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 20,
+  '全20職業の自動戦闘プロファイルを定義する');
 assert(Object.values(AUTO_BATTLE_JOB_TACTICS)
-  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 77,
-  '全77アクティブスキルの役割を定義する');
+  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 82,
+  '全82アクティブスキルの役割を定義する');
 
 if (typeof print === 'function') print('auto-battle-ai: all tests passed');
 else console.log('auto-battle-ai: all tests passed');

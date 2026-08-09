@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.33';
+export const APP_VERSION = '0.1.34';
 export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.34',
+    items: [
+      'バード・スライムマスターLv.50で解放される上位職「スライムシンガー」を追加しました。歌とスライムの力で攻撃・睡眠・回復・バリアを担い、ぷるぷる音符をキングスライム大合唱の威力へ変換できます。',
+      'スライムシンガー専用のジョブ画像、スキル演出、通常攻撃演出、自動戦闘コンボを追加しました。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.33',

@@ -72,6 +72,7 @@ export const actionMethods = {
     entity._manaFlowAmount = 0;
     entity._conductorHarmony = 0;
     entity._entertainerHype = 0;
+    entity._slimeSingerNotes = 0;
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {

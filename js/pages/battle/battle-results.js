@@ -645,7 +645,7 @@ export const resultMethods = {
       'atkDebuffTurns', 'atkDebuffPercent',
       'defDebuffTurns', 'defDebuffPercent',
       '_regenTurns', '_regenHp',
-      '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype'
+      '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype', '_slimeSingerNotes'
     ];
 
     for (const p of this.party) {

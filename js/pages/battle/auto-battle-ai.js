@@ -109,6 +109,11 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     arcane_arrow: skill(ROLE.OFFENSE), elemental_arrow: skill(ROLE.OFFENSE),
     mana_barrage: skill(ROLE.AREA_OFFENSE, 'random'),
     astral_arrow_rain: skill(ROLE.AREA_OFFENSE, 'area')
+  }),
+  slime_singer: Object.freeze({
+    jelly_note: skill(ROLE.COMBO_FINISHER), puyopuyo_chorus: skill(ROLE.COMBO_SETUP, 'area'),
+    elastic_refrain: skill(ROLE.MAINTENANCE, 'party'), healing_refrain: skill(ROLE.RECOVERY, 'party'),
+    king_slime_chorus: skill(ROLE.COMBO_FINISHER, 'area')
   })
 });
 
@@ -364,6 +369,37 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
         finisher.priority = 440;
         finisher.score += 350 + harmony * 60;
         if (!existing) candidates.push(finisher);
+      }
+    }
+  }
+
+  // スライムシンガー: 音符を最大まで育てて大合唱へつなぎ、睡眠中は単体追撃を優先する。
+  if (currentJob === 'slime_singer') {
+    const maxNotes = getMaxResource(character, findSkill, 'resonant_gel', 'maxNotes');
+    const notes = character._slimeSingerNotes || 0;
+    const chorusSkill = getUsableSkill(usableSkills, 'king_slime_chorus');
+    if (maxNotes > 0 && notes < maxNotes) {
+      const chorusIndex = candidates.findIndex(candidate => candidate.skill.id === 'king_slime_chorus');
+      if (chorusIndex >= 0) candidates.splice(chorusIndex, 1);
+      ['jelly_note', 'puyopuyo_chorus', 'elastic_refrain', 'healing_refrain'].forEach(id => {
+        const builder = byId.get(id);
+        if (builder) builder.score += 70 + notes * 10;
+      });
+      const jellyNote = byId.get('jelly_note');
+      const sleepingTarget = aliveEnemies.find(enemy => enemy.activeAilment?.type === 'sleep');
+      if (jellyNote && sleepingTarget) {
+        jellyNote.target = sleepingTarget;
+        jellyNote.priority = 430;
+        jellyNote.score += 260;
+      }
+    } else if (chorusSkill && maxNotes > 0 && notes >= maxNotes && aliveEnemies.length) {
+      const existing = byId.get('king_slime_chorus');
+      const chorus = existing || makeCandidate(chorusSkill, aliveEnemies[0], 0);
+      if (chorus) {
+        chorus.target = aliveEnemies[0];
+        chorus.priority = 460;
+        chorus.score += 420 + notes * 55;
+        if (!existing) candidates.push(chorus);
       }
     }
   }
