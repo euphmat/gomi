@@ -97,9 +97,9 @@ const attacker = {
   stats: { atk: 100, matk: 0, attackElements: {}, attackAilments: {} }
 };
 const coverBattle = makeActionBattle([protectedAlly, coveringGuardian]);
-coverBattle.executeAttack(attacker, protectedAlly, false);
+coverBattle.executeAttack(attacker, protectedAlly, false, { isAoEProcessed: true });
 assert(protectedAlly.hp.current === 500, 'covered ally took damage');
-assert(coveringGuardian.hp.current < 1000 && coveringGuardian.hp.current > 930, 'cover damage or reduction is invalid');
+assert(coveringGuardian.hp.current < 1000 && coveringGuardian.hp.current > 930, 'AoE cover damage or reduction is invalid');
 
 const lastStandGuardian = makeCombatant({
   id: 'last-stand', elementId: 'last-stand', hp: { current: 50, max: 1000 },
@@ -110,5 +110,7 @@ const lastStandBattle = makeActionBattle([lastStandGuardian]);
 lastStandBattle.executeAttack(lethalAttacker, lastStandGuardian, false);
 assert(lastStandGuardian.hp.current === 250, 'last bastion recovery is invalid');
 assert(lastStandGuardian._guardianLastBastionUsed === true, 'last bastion use was not recorded');
+lastStandBattle.executeAttack(lethalAttacker, lastStandGuardian, false);
+assert(lastStandGuardian.isDead && lastStandGuardian.hp.current === 0, 'last bastion triggered more than once');
 
 print('Guardian tests passed.');
