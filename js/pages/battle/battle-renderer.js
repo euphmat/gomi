@@ -119,16 +119,16 @@ function applyStatTheme(type, cache, isBuff, isDebuff, baseIconColor, isStacked)
     valElt.classList.add('text-green-400');
     iconElt.classList.add('text-green-400');
     labelElt.classList.add('text-green-400');
-    rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
+    rowElt.className = `stat-row-${type} flex h-[17px] shrink-0 justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-green-800/60 border-green-400 shadow-[0_0_5px_rgba(74,222,128,0.4)]' : 'bg-green-900/40 border-green-500/50 shadow-none'}`;
   } else if (isDebuff) {
     valElt.classList.add('text-red-400');
     iconElt.classList.add('text-red-400');
     labelElt.classList.add('text-red-400');
-    rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
+    rowElt.className = `stat-row-${type} flex h-[17px] shrink-0 justify-between items-center border rounded px-1 py-0.5 transition-colors ${isStacked ? 'bg-red-800/60 border-red-400 shadow-[0_0_5px_rgba(248,113,113,0.4)]' : 'bg-red-900/40 border-red-500/50 shadow-none'}`;
   } else {
     valElt.classList.add('text-gray-100');
     iconElt.classList.add(baseIconColor);
-    rowElt.className = `stat-row-${type} flex justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
+    rowElt.className = `stat-row-${type} flex h-[17px] shrink-0 justify-between items-center border rounded px-1 py-0.5 transition-colors bg-gray-900/40 border-transparent shadow-none`;
   }
 }
 
