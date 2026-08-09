@@ -55,7 +55,7 @@ export function getActiveStateIconsHTML(entity) {
   if (icons.length === 0) return '';
 
   return icons.map(data => 
-    `<span class="material-symbols-outlined ${data.color} drop-shadow-md flex-shrink-0" style="font-size: 11px; font-variation-settings: 'FILL' 1" role="img" aria-label="${data.name}">${data.icon}</span>`
+    `<span class="material-symbols-outlined inline-flex h-[11px] w-[11px] flex-shrink-0 items-center justify-center leading-none ${data.color} drop-shadow-md" style="font-size: 11px; font-variation-settings: 'FILL' 1" role="img" aria-label="${data.name}">${data.icon}</span>`
   ).join('');
 }
 
@@ -168,9 +168,9 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
           <img src="${p.iconImage}" class="w-full h-full object-cover" onerror="this.style.display='none'">
         </div>
         <div class="min-w-0 flex-1">
-          <div class="flex min-w-0 items-center gap-0.5 leading-none">
+          <div class="flex h-[11px] min-w-0 shrink-0 items-center gap-0.5 leading-none">
             <span class="truncate text-[9px] font-bold text-gray-100 drop-shadow">${p.name}</span>
-            <div class="state-icons-container ml-auto flex shrink-0 items-center gap-px pointer-events-auto">
+            <div class="state-icons-container ml-auto flex h-[11px] shrink-0 items-center gap-px leading-none pointer-events-auto">
               ${!p.isDead ? getActiveStateIconsHTML(p) : ''}
             </div>
           </div>
