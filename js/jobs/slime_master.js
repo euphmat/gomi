@@ -289,7 +289,7 @@ export const slime_master = {
       ],
       getDescription: (lc) => {
         const numSlimes = Math.round(10 + (lc.level - 1) * (20 / 9));
-        return `MP を ${lc.mpCost} 消費し、ランダムな敵に${numSlimes}体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.25).toFixed(2)} 倍`;
+        return `MP を ${lc.mpCost} 消費し、ランダムな敵に${numSlimes}体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.30).toFixed(2)} 倍`;
       },
       execute(caster, levelConfig, battle) {
         if (!battle) return;
@@ -322,7 +322,7 @@ export const slime_master = {
           battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
             statDependency: this.statDependency,
             actionName: 'スライムハザード',
-            damageMultiplier: levelConfig.multiplier * 0.25,
+            damageMultiplier: levelConfig.multiplier * 0.30,
             damageType: 'skill',
             hideActionName: true
           });
@@ -333,7 +333,7 @@ export const slime_master = {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length >= 2) {
              const numSlimes = Math.round(10 + (levelConfig.level - 1) * (20 / 9));
-             return { target: caster, score: 35 * (levelConfig.multiplier * 0.25) * numSlimes };
+             return { target: caster, score: 35 * (levelConfig.multiplier * 0.30) * numSlimes };
           }
           return null;
         }
@@ -389,7 +389,7 @@ export const slime_master = {
         { level:  9, spCost: 4, spdDown: 12 },
         { level: 10, spCost: 6, spdDown: 15 }
       ],
-      getDescription: (lc) => `ターン開始時に、敵全体の SPD を ${lc.spdDown}％ ダウンさせる（累積する）`
+      getDescription: (lc) => `ターン開始時に、敵全体の SPD を ${lc.spdDown}％ ダウンさせる（同効果は累積せず、最も高い効果のみ適用）`
     }
   ]
 };

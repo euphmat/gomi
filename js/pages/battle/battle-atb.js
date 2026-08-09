@@ -258,8 +258,10 @@ export const atbMethods = {
               const spdDown = adhesiveSkill.levelConfig.spdDown || 10;
               let triggered = false;
               this.enemies.forEach(enemy => {
-                if (!enemy.isDead && enemy.stats && enemy.stats.spd > 1) {
-                  enemy.stats.spd = Math.max(1, Math.floor(enemy.stats.spd * (1 - spdDown / 100)));
+                if (!enemy.isDead && enemy.stats && enemy.stats.spd > 1 && spdDown > (enemy._adhesiveSpdDown || 0)) {
+                  if (enemy._adhesiveBaseSpd === undefined) enemy._adhesiveBaseSpd = enemy.stats.spd;
+                  enemy._adhesiveSpdDown = spdDown;
+                  enemy.stats.spd = Math.max(1, Math.floor(enemy._adhesiveBaseSpd * (1 - spdDown / 100)));
                   triggered = true;
                 }
               });
