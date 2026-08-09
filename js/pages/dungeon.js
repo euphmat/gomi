@@ -136,9 +136,7 @@ window.openDungeonFloorModal = async (dungeonId) => {
     const isBossFloor = floorIndex === dungeon.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
     const maxMonsterCounts = getFloorMonsterMaxCounts(floor);
-    const visibleMonsterIds = monsterIds.slice(0, 3);
-    const hiddenMonsterCount = monsterIds.length - visibleMonsterIds.length;
-    const monstersHtml = isFloorCleared ? visibleMonsterIds.map(monsterId => {
+    const monstersHtml = isFloorCleared ? monsterIds.map(monsterId => {
       const monster = MONSTERS.find(item => item.id === monsterId) || {
         id: monsterId,
         name: monsterId,
@@ -153,7 +151,7 @@ window.openDungeonFloorModal = async (dungeonId) => {
         <div class="w-12 shrink-0 max-[360px]:w-10" title="${monster.name}｜最大${maxCount}体出現｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${medal?.name || '未取得'}" aria-label="${monster.name}。最大${maxCount}体出現。仲間${owned.companion ? '獲得済み' : '未獲得'}、伝説${owned.legendary ? '獲得済み' : '未獲得'}、メダル${medal?.name || '未取得'}">
           <div class="relative h-12 w-12 overflow-visible rounded-xl border border-white/15 bg-slate-950/90 p-0.5 max-[360px]:h-10 max-[360px]:w-10">
             <img src="${monster.image}" alt="${monster.name}" class="h-full w-full object-contain p-px" loading="lazy">
-            <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-slate-950 bg-cyan-400 px-1 text-[9px] font-black leading-none text-slate-950 shadow-[0_0_0_2px_rgba(8,15,30,.9)]" aria-hidden="true">${maxCount}</span>
+            <span class="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border border-slate-600/70 bg-slate-900/90 px-1 text-[7px] font-bold leading-none text-slate-400 shadow-sm" aria-hidden="true">${maxCount}</span>
           </div>
           <div class="mt-1 grid grid-cols-3 gap-0.5 px-0.5" aria-hidden="true">
             <span class="h-1.5 rounded-full ${owned.companion ? 'bg-emerald-300' : 'bg-slate-700'}"></span>
@@ -173,7 +171,7 @@ window.openDungeonFloorModal = async (dungeonId) => {
         <div class="min-w-0 self-stretch">
           ${isFloorCleared
             ? `<div class="flex h-full min-w-0 items-center gap-1.5">
-                <div class="flex shrink-0 items-start gap-1 max-[360px]:gap-0.5">${monstersHtml}${hiddenMonsterCount > 0 ? `<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-600 bg-slate-900/80 text-[10px] font-black text-slate-400 max-[360px]:h-10 max-[360px]:w-10" title="ほか${hiddenMonsterCount}種">+${hiddenMonsterCount}</div>` : ''}</div>
+                <div class="flex min-w-0 items-start gap-1 overflow-x-auto px-0.5 py-1 no-scrollbar max-[360px]:gap-0.5">${monstersHtml}</div>
               </div>`
             : `<div class="flex h-full items-center gap-2 rounded-lg border border-dashed border-slate-800/80 bg-black/15 px-2 text-[8px] font-bold text-slate-600"><span class="material-symbols-outlined text-sm">visibility_off</span><span class="truncate">クリアで敵情報を開示</span></div>`}
         </div>
