@@ -42,6 +42,9 @@ assert(stats.matk === 128, 'bardic mastery MATK bonus was not applied');
 const dreamEcho = bird.skills.find(skill => skill.id === 'dream_echo');
 const inheritedDreamEcho = resolveJobSkillLevelConfig(dreamEcho, 10, 'inherited');
 assert(inheritedDreamEcho.sleepingTargetDamagePercent === 27, 'inherited dream echo potency is invalid');
+const nightmare = bird.skills.find(skill => skill.id === 'nightmare');
+assert(nightmare.getDescription(nightmare.levels[0]).includes('睡眠状態は解除されない'),
+  'nightmare description should mention that sleep is preserved');
 
 const attacker = {
   id: 'bird', name: 'bird', elementId: 'bird', isDead: false, activeAilment: null,
@@ -77,6 +80,15 @@ Math.random = () => 0.5;
 battle.executeAttack(attacker, sleepingEnemy, true);
 Math.random = originalRandom;
 assert(sleepingEnemy.currentHp === 870, 'dream echo did not increase sleeping-target damage by 30%');
+
+sleepingEnemy.currentHp = 1000;
+sleepingEnemy.activeAilment = { type: 'sleep', duration: 10 };
+battle.selectedEnemyTarget = sleepingEnemy;
+Math.random = () => 0;
+nightmare.execute(attacker, nightmare.levels[0], battle);
+Math.random = originalRandom;
+assert(sleepingEnemy.currentHp < 1000, 'nightmare did not damage the sleeping target');
+assert(sleepingEnemy.activeAilment?.type === 'sleep', 'nightmare woke the sleeping target');
 
 if (typeof print === 'function') print('Bird tests passed.');
 else console.log('Bird tests passed.');

@@ -186,7 +186,7 @@ export const bird = {
         { level:  9, spCost: 3, mpCost: 50, multiplier: 10.0 },
         { level: 10, spCost: 5, mpCost: 65, multiplier: 15.0 }
       ],
-      getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、睡眠状態の敵単体に ${levelConfig.multiplier.toFixed(1)} 倍の闇属性魔法攻撃。対象が睡眠状態でなければ失敗する`,
+      getDescription: (levelConfig) => `MP を ${levelConfig.mpCost} 消費し、睡眠状態の敵単体に ${levelConfig.multiplier.toFixed(1)} 倍の闇属性魔法攻撃。対象の睡眠状態は解除されない。対象が睡眠状態でなければ失敗する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
@@ -202,7 +202,7 @@ export const bird = {
                 battle.showActionName(caster.elementId, 'ナイトメア', 'text-purple-300', 'border-purple-500/50');
                 playSkillAnimation(caster, [target], 'nightmare', () => {
                     battle.executeAttack(caster, target, true, { damageType: 'skill', hideActionName: true,
-                        statDependency: this.statDependency, actionName: 'ナイトメア', damageMultiplier: levelConfig.multiplier, isMagic: true, damageType: 'skill', element: 'dark'
+                        statDependency: this.statDependency, actionName: 'ナイトメア', damageMultiplier: levelConfig.multiplier, isMagic: true, damageType: 'skill', element: 'dark', preserveSleep: true
                     });
                 });
             } else {

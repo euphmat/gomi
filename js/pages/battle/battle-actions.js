@@ -852,7 +852,7 @@ export const actionMethods = {
       }
     }
 
-    if (newHp < prevHp && ailmentBeforeHit === 'sleep'
+    if (!options.preserveSleep && newHp < prevHp && ailmentBeforeHit === 'sleep'
       && defender.activeAilment && defender.activeAilment.type === 'sleep') {
       if (Math.random() < 0.5) {
         defender.activeAilment = null;
