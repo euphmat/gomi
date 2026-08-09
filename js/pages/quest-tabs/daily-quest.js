@@ -1,4 +1,4 @@
-import { QuestManager, DAILY_QUESTS } from '../../data/quest-manager.js';
+import { DAILY_COMPLETE_REWARD, QuestManager, DAILY_QUESTS } from '../../data/quest-manager.js';
 import { formatNumber } from '../../utils/format.js';
 
 function getJSTNextMidnight() {
@@ -181,7 +181,7 @@ export function renderDailyQuestTab() {
           <p class="text-[9px] font-bold tracking-[0.16em] text-slate-500">コンプリート報酬</p>
           <div class="flex items-baseline gap-1.5 mt-0.5">
             <span class="text-sm font-black text-white">プリズム</span>
-            <span class="text-lg font-black text-fuchsia-300">× 1</span>
+            <span class="text-lg font-black text-fuchsia-300">× ${DAILY_COMPLETE_REWARD}</span>
           </div>
         </div>
         <span class="text-[10px] font-bold ${isClaimed ? 'text-emerald-400' : isAllCompleted ? 'text-fuchsia-300' : 'text-slate-500'}">${isClaimed ? '受取済み' : isAllCompleted ? '受取可能' : `${completedCount}/${totalCount} 達成`}</span>

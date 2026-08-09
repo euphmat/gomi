@@ -100,6 +100,10 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     guardian_oath: skill(ROLE.MAINTENANCE, 'self'),
     impregnable_wall: skill(ROLE.MAINTENANCE, 'party'),
     aegis_bash: skill(ROLE.OFFENSE)
+  }),
+  cryomancer: Object.freeze({
+    frost_spear: skill(ROLE.COMBO_SETUP), hail_barrage: skill(ROLE.AREA_OFFENSE, 'random'),
+    whiteout: skill(ROLE.COMBO_SETUP, 'area'), absolute_zero: skill(ROLE.COMBO_FINISHER, 'area')
   })
 });
 
@@ -214,7 +218,7 @@ export function findNormalAttackFinisher(attacker, enemies, preferredTarget, fin
 
 function isSkillUsableBy(member, skillId, findSkill, isSkillEnabled) {
   if (!member || member.isDead) return false;
-  if (['sleep', 'confusion', 'paralysis'].includes(member.activeAilment?.type)) return false;
+  if (['sleep', 'confusion', 'paralysis', 'freeze'].includes(member.activeAilment?.type)) return false;
   const cached = getSkill(findSkill, member, skillId);
   if (!cached?.def || cached.level <= 0 || !cached.levelConfig) return false;
   if (typeof isSkillEnabled === 'function' && !isSkillEnabled(member, skillId)) return false;
@@ -280,6 +284,19 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
     ['inferno', 'flare_lance'].forEach(id => {
       const setup = byId.get(id);
       if (setup) setup.score += 85;
+    });
+  }
+
+  // クライオマンサー: 凍結を確認したら、解除される前に絶対零度で粉砕する。
+  const frozenCount = aliveEnemies.filter(enemy => enemy.activeAilment?.type === 'freeze').length;
+  const absoluteZero = byId.get('absolute_zero');
+  if (absoluteZero && frozenCount > 0) {
+    absoluteZero.priority = 480;
+    absoluteZero.score += frozenCount * 190;
+  } else if (getUsableSkill(usableSkills, 'absolute_zero')) {
+    ['whiteout', 'frost_spear'].forEach(id => {
+      const setup = byId.get(id);
+      if (setup) setup.score += 90;
     });
   }
 

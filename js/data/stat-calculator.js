@@ -134,6 +134,9 @@ export function calcFinalStats(character, equipmentMap) {
         if (levelConfig.fireResistPercent) {
           result.elementResist.fire = (result.elementResist.fire || 0) + levelConfig.fireResistPercent;
         }
+        if (levelConfig.iceResistPercent) {
+          result.elementResist.ice = (result.elementResist.ice || 0) + levelConfig.iceResistPercent;
+        }
       }
     }
   };

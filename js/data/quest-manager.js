@@ -52,7 +52,18 @@ export const DAILY_QUESTS = [
     progressKey: 'fishCaught',
     destination: { path: '/fishing', label: '釣り場へ' },
   },
+  {
+    id: 'daily_play_memory_game',
+    label: '神経衰弱で1回遊ぶ',
+    icon: 'neurology',
+    eventType: 'quest:memory-game-play',
+    target: 1,
+    progressKey: 'memoryGamesPlayed',
+    destination: { path: '/memory-game', label: '神経衰弱へ' },
+  },
 ];
+
+export const DAILY_COMPLETE_REWARD = 3;
 
 class QuestManagerClass {
   constructor() {
@@ -67,6 +78,7 @@ class QuestManagerClass {
       crafts: 0,
       mineUpgrades: 0,
       fishCaught: 0,
+      memoryGamesPlayed: 0,
       claimed: false,
     };
   }
@@ -110,6 +122,10 @@ class QuestManagerClass {
     window.addEventListener('quest:fish-caught', (e) => {
       const { count } = e.detail;
       this.addProgress('fishCaught', count);
+    });
+
+    window.addEventListener('quest:memory-game-play', () => {
+      this.addProgress('memoryGamesPlayed', 1);
     });
   }
 
@@ -169,9 +185,9 @@ class QuestManagerClass {
     this.dailyProgress.claimed = true;
     await this.saveProgress();
 
-    // Add 1 Prism
+    // Add the daily completion reward.
     const currentPrism = await GameDB.getGameState('prism') || 0;
-    const newPrism = currentPrism + 1;
+    const newPrism = currentPrism + DAILY_COMPLETE_REWARD;
     await GameDB.setGameState('prism', newPrism);
 
     // Update Header

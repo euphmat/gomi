@@ -25,7 +25,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   assassin:       { kind: 'shadow_step',    primary: '#e9d5ff', secondary: '#8b5cf6', particles: 6 },
   mana_conductor: { kind: 'mana_crescendo', primary: '#cffafe', secondary: '#8b5cf6', particles: 8 },
   entertainer:    { kind: 'stage_spectacle', primary: '#fef3c7', secondary: '#d946ef', particles: 9 },
-  guardian:       { kind: 'guardian_rampart', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 }
+  guardian:       { kind: 'guardian_rampart', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
+  cryomancer:     { kind: 'frost_nova', primary: '#ecfeff', secondary: '#38bdf8', particles: 9 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -588,6 +589,15 @@ export function playNormalAttackAnimation(attacker, defender) {
       addFlameEruption(layer, target, profile, impactDuration * 1.25, impactDelay * .72);
       addRing(layer, target, profile, impactDuration, impactDelay, { color: '#fb923c', size: 86, width: 5, scale: 1.5 });
       defenderStyle = 'burn';
+      break;
+
+    case 'frost_nova':
+      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
+      addMagicCircle(layer, origin, profile, actionDuration * .76, 0, '❄');
+      addGlyph(layer, { x: origin.x, y: origin.y - 26 }, profile, actionDuration * .62, '✧', 0, { size: 38 });
+      addVerticalStrike(layer, target, profile, impactDuration * 1.15, impactDelay * .76, 'light');
+      addMagicCircle(layer, target, { ...profile, primary: '#fff' }, impactDuration, impactDelay * .74, '❄');
+      addRing(layer, target, profile, impactDuration, impactDelay, { size: 96, width: 4, scale: 1.5 });
       break;
 
     case 'shadow_step':

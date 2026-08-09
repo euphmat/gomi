@@ -85,6 +85,14 @@ const select = (character, usableSkills, enemies, party = [character]) =>
 }
 
 {
+  const enemy = makeEnemy({ currentHp: 10, activeAilment: { type: 'freeze', duration: 1 } });
+  const absoluteZero = makeUsable('absolute_zero', (_caster, _lc, context) => ({ target: context.enemies[0], score: 40 }));
+  const cryomancer = makeCharacter({ jobId: 'cryomancer' });
+  assert(select(cryomancer, [absoluteZero], [enemy]).skill?.id === 'absolute_zero',
+    '凍結中は通常攻撃よりアブソリュートゼロの粉砕を優先する');
+}
+
+{
   const enemy = makeEnemy();
   const finale = makeUsable('grand_finale', (_caster, _lc, context) => ({ target: context.enemies[0], score: 999 }));
   const spotlight = makeUsable('spotlight_step', (_caster, _lc, context) => ({ target: context.enemies[0], score: 50 }));
@@ -128,11 +136,11 @@ const select = (character, usableSkills, enemies, party = [character]) =>
     '緊急行動やコンボがなければ通常攻撃の確殺を維持する');
 }
 
-assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 17,
-  '全17職業の自動戦闘プロファイルを定義する');
+assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 18,
+  '全18職業の自動戦闘プロファイルを定義する');
 assert(Object.values(AUTO_BATTLE_JOB_TACTICS)
-  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 69,
-  '全69アクティブスキルの役割を定義する');
+  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 73,
+  '全73アクティブスキルの役割を定義する');
 
 if (typeof print === 'function') print('auto-battle-ai: all tests passed');
 else console.log('auto-battle-ai: all tests passed');

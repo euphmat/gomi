@@ -518,6 +518,20 @@ export const actionMethods = {
         }
       }
     }
+    // --- Passive: 氷界の支配者 / 氷砕の奥義 ---
+    if (options.element === 'ice' && attacker.hp !== undefined) {
+      const iceSovereignty = this._findSkill(attacker, 'ice_sovereignty');
+      if (iceSovereignty?.level > 0 && iceSovereignty.levelConfig?.iceDamagePercent) {
+        damage = Math.floor(damage * (1 + iceSovereignty.levelConfig.iceDamagePercent / 100));
+      }
+
+      if (defender.activeAilment?.type === 'freeze') {
+        const shatterMastery = this._findSkill(attacker, 'shatter_mastery');
+        if (shatterMastery?.level > 0 && shatterMastery.levelConfig?.frozenTargetDamagePercent) {
+          damage = Math.floor(damage * (1 + shatterMastery.levelConfig.frozenTargetDamagePercent / 100));
+        }
+      }
+    }
     if (options.isGuarded) {
       damage = Math.floor(damage * 0.5);
     }

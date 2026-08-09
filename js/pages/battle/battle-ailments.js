@@ -24,6 +24,8 @@ export const ailmentMethods = {
       if (Math.random() < 0.75) {
         skipTurn = true;
       }
+    } else if (ailment === 'freeze') {
+      skipTurn = true;
     } else if (ailment === 'sleep') {
       skipTurn = true;
     }

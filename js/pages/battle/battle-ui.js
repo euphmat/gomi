@@ -13,6 +13,7 @@ export function getActiveStateIconsHTML(entity) {
       poison: { icon: 'skull', color: 'text-purple-500', name: '毒' },
       burn: { icon: 'mode_heat', color: 'text-red-500', name: '火傷' },
       paralysis: { icon: 'flash_off', color: 'text-yellow-400', name: '麻痺' },
+      freeze: { icon: 'ac_unit', color: 'text-cyan-200', name: '凍結' },
       sleep: { icon: 'bedtime', color: 'text-blue-300', name: '睡眠' },
       blind: { icon: 'visibility_off', color: 'text-gray-400', name: '暗闇' },
       silence: { icon: 'volume_off', color: 'text-indigo-400', name: '沈黙' },
@@ -107,6 +108,7 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
       poison: 'bg-purple-900/70',
       burn: 'bg-red-900/70',
       paralysis: 'bg-yellow-900/70',
+      freeze: 'bg-cyan-950/80',
       sleep: 'bg-blue-900/70',
       blind: 'bg-stone-900/90',
       silence: 'bg-slate-300/30',
@@ -306,7 +308,7 @@ export function renderInfoTabHtml(targetEntity, isParty, equipMap, currentFloorN
   };
   const ailmentMap = {
     poison: { label: '毒', color: 'text-purple-500', icon: 'skull' }, burn: { label: '火傷', color: 'text-red-500', icon: 'mode_heat' },
-    paralysis: { label: '麻痺', color: 'text-yellow-400', icon: 'flash_off' }, sleep: { label: '睡眠', color: 'text-blue-300', icon: 'bedtime' },
+    paralysis: { label: '麻痺', color: 'text-yellow-400', icon: 'flash_off' }, freeze: { label: '凍結', color: 'text-cyan-200', icon: 'ac_unit' }, sleep: { label: '睡眠', color: 'text-blue-300', icon: 'bedtime' },
     confusion: { label: '混乱', color: 'text-pink-400', icon: 'mood_bad' }, curse: { label: '呪い', color: 'text-fuchsia-500', icon: 'priority_high' },
     blind: { label: '暗闇', color: 'text-gray-400', icon: 'visibility_off' }, silence: { label: '沈黙', color: 'text-indigo-400', icon: 'volume_off' }
   };

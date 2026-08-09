@@ -1208,6 +1208,7 @@ export function renderMemoryGamePage() {
     if (!game || game.over) return;
     game.over = true;
     game.locked = true;
+    window.dispatchEvent(new CustomEvent('quest:memory-game-play'));
     const outcome = decidedOutcome || (game.scores.player > game.scores.cpu ? 'win' : game.scores.player < game.scores.cpu ? 'lose' : 'draw');
     if (!game.progressionRecorded) {
       game.progressionRecorded = true;
