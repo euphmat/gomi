@@ -26,7 +26,7 @@ const DECIMAL_EFFECT_KEYS = new Set([
   'healMatkPercent', 'instantDeathBonus', 'instantDeathChance',
   'lowHpDamagePercent', 'matkRatio', 'maxChainBonusPercent', 'multiplier', 'shatterMultiplier',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
-  'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
+  'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
   'waterResistPercent'
 ]);
 
@@ -40,7 +40,7 @@ const PERCENTAGE_KEYS = new Set([
   'healMatkPercent', 'iceDamagePercent', 'iceResistPercent', 'instantDeathBonus',
   'instantDeathChance', 'lowHpDamagePercent', 'maxChainBonusPercent',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
-  'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
+  'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
   'waterResistPercent'
 ]);
 

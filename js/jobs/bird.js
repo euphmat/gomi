@@ -267,6 +267,40 @@ export const bird = {
       }
     },
     {
+      id: 'bardic_mastery', name: '吟遊詩人の心得', icon: 'queue_music', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 1, bonusMpPercent:  3, bonusMatkPercent:  2 },
+        { level:  2, spCost: 1, bonusMpPercent:  5, bonusMatkPercent:  4 },
+        { level:  3, spCost: 1, bonusMpPercent:  7, bonusMatkPercent:  6 },
+        { level:  4, spCost: 2, bonusMpPercent:  9, bonusMatkPercent:  8 },
+        { level:  5, spCost: 2, bonusMpPercent: 12, bonusMatkPercent: 10 },
+        { level:  6, spCost: 2, bonusMpPercent: 15, bonusMatkPercent: 12 },
+        { level:  7, spCost: 3, bonusMpPercent: 18, bonusMatkPercent: 14 },
+        { level:  8, spCost: 3, bonusMpPercent: 21, bonusMatkPercent: 16 },
+        { level:  9, spCost: 3, bonusMpPercent: 24, bonusMatkPercent: 18 },
+        { level: 10, spCost: 5, bonusMpPercent: 30, bonusMatkPercent: 20 }
+      ],
+      getDescription: (lc) => `最大 MP の倍率が ${lc.bonusMpPercent}％、魔法攻撃力の倍率が ${lc.bonusMatkPercent}％ 上昇する`
+    },
+    {
+      id: 'dream_echo', name: '夢の残響', icon: 'bedtime', type: 'passive',
+      maxLevel: 10,
+      levels: [
+        { level:  1, spCost: 1, sleepingTargetDamagePercent:  4 },
+        { level:  2, spCost: 1, sleepingTargetDamagePercent:  6 },
+        { level:  3, spCost: 1, sleepingTargetDamagePercent:  8 },
+        { level:  4, spCost: 2, sleepingTargetDamagePercent: 10 },
+        { level:  5, spCost: 2, sleepingTargetDamagePercent: 12 },
+        { level:  6, spCost: 2, sleepingTargetDamagePercent: 15 },
+        { level:  7, spCost: 3, sleepingTargetDamagePercent: 18 },
+        { level:  8, spCost: 3, sleepingTargetDamagePercent: 21 },
+        { level:  9, spCost: 3, sleepingTargetDamagePercent: 25 },
+        { level: 10, spCost: 5, sleepingTargetDamagePercent: 30 }
+      ],
+      getDescription: (lc) => `睡眠状態の敵に与えるダメージが ${lc.sleepingTargetDamagePercent}％ 上昇する`
+    },
+    {
       id: 'healing_song', name: 'いやしの歌', icon: 'favorite', type: 'passive',
       maxLevel: 10,
       levels: [

@@ -498,6 +498,14 @@ export const actionMethods = {
       }
     }
 
+    // --- Passive: 夢の残響 (sleeping target damage amplification) ---
+    if (defender.activeAilment?.type === 'sleep' && attacker.hp !== undefined) {
+      const dreamEcho = this._findSkill(attacker, 'dream_echo');
+      if (dreamEcho?.level > 0 && dreamEcho.levelConfig?.sleepingTargetDamagePercent) {
+        damage = Math.floor(damage * (1 + dreamEcho.levelConfig.sleepingTargetDamagePercent / 100));
+      }
+    }
+
     // --- Passive: 大洋の支配者 (water damage amplification) ---
     if (options.element === 'water' && attacker.hp !== undefined) {
       const oceanSovereignty = this._findSkill(attacker, 'ocean_sovereignty');
