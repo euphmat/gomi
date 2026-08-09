@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.32';
+export const APP_VERSION = '0.1.33';
 export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.33',
+    items: [
+      'レンジャー・メイジLv.50で解放される上位職「マジックアーチャー」を追加しました。弱点属性を見抜く魔法矢や、連射・全体攻撃を使用できます。',
+      'マジックアーチャー専用のジョブ画像、スキル演出、通常攻撃演出を追加しました。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.32',

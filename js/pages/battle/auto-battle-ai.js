@@ -104,6 +104,11 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
   cryomancer: Object.freeze({
     frost_spear: skill(ROLE.COMBO_SETUP), hail_barrage: skill(ROLE.AREA_OFFENSE, 'random'),
     whiteout: skill(ROLE.COMBO_SETUP, 'area'), absolute_zero: skill(ROLE.COMBO_FINISHER, 'area')
+  }),
+  magic_archer: Object.freeze({
+    arcane_arrow: skill(ROLE.OFFENSE), elemental_arrow: skill(ROLE.OFFENSE),
+    mana_barrage: skill(ROLE.AREA_OFFENSE, 'random'),
+    astral_arrow_rain: skill(ROLE.AREA_OFFENSE, 'area')
   })
 });
 

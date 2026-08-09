@@ -26,7 +26,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   mana_conductor: { kind: 'mana_crescendo', primary: '#cffafe', secondary: '#8b5cf6', particles: 8 },
   entertainer:    { kind: 'stage_spectacle', primary: '#fef3c7', secondary: '#d946ef', particles: 9 },
   guardian:       { kind: 'guardian_rampart', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
-  cryomancer:     { kind: 'frost_nova', primary: '#ecfeff', secondary: '#38bdf8', particles: 9 }
+  cryomancer:     { kind: 'frost_nova', primary: '#ecfeff', secondary: '#38bdf8', particles: 9 },
+  magic_archer:   { kind: 'bow_shot', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
