@@ -130,6 +130,13 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     gaia_rampart: skill(ROLE.COMBO_SETUP, 'party'),
     worldtree_breath: skill(ROLE.RECOVERY, 'party'),
     shinra_mandala: skill(ROLE.COMBO_FINISHER, 'area')
+  }),
+  plague_doctor: Object.freeze({
+    pathogen_injection: skill(ROLE.COMBO_SETUP),
+    corrosive_miasma: skill(ROLE.COMBO_SETUP, 'area'),
+    virulent_mutation: skill(ROLE.COMBO_FINISHER),
+    pandemic: skill(ROLE.COMBO_FINISHER, 'area'),
+    black_death: skill(ROLE.COMBO_FINISHER, 'area')
   })
 });
 
@@ -347,6 +354,33 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
           if (builder) builder.score += 105;
         });
       });
+    }
+  }
+
+  // ペスト医師: まず感染させ、感染後は変異・拡散・黒死病で一気に畳みかける。
+  if (currentJob === 'plague_doctor') {
+    const afflicted = aliveEnemies.filter(enemy => enemy.activeAilment);
+    if (afflicted.length === 0) {
+      ['pathogen_injection', 'corrosive_miasma'].forEach(id => {
+        const setup = byId.get(id);
+        if (setup) setup.score += 120;
+      });
+    } else {
+      const mutation = byId.get('virulent_mutation');
+      if (mutation) {
+        mutation.target = afflicted.reduce((best, enemy) => enemy.currentHp > best.currentHp ? enemy : best);
+        mutation.score += 110;
+      }
+      const pandemic = byId.get('pandemic');
+      if (pandemic && aliveEnemies.length >= 2 && afflicted.length < aliveEnemies.length) {
+        pandemic.priority = 460;
+        pandemic.score += (aliveEnemies.length - afflicted.length) * 180;
+      }
+      const blackDeath = byId.get('black_death');
+      if (blackDeath && afflicted.length >= Math.ceil(aliveEnemies.length / 2)) {
+        blackDeath.priority = 475;
+        blackDeath.score += afflicted.length * 150;
+      }
     }
   }
 

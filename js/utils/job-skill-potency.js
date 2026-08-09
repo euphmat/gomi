@@ -25,8 +25,10 @@ const DECIMAL_EFFECT_KEYS = new Set([
   'guardChance', 'harmonyMultiplier', 'iceDamagePercent', 'iceResistPercent',
   'healMatkPercent', 'instantDeathBonus', 'instantDeathChance',
   'lowHpDamagePercent', 'matkRatio', 'maxChainBonusPercent', 'multiplier', 'shatterMultiplier',
+  'ailmentChance', 'ailmentResistPercent', 'resistancePierce', 'statusDamagePercent',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
   'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
+  'spreadChance',
   'waterResistPercent', 'natureDamagePercent', 'natureResistPercent'
 ]);
 
@@ -39,6 +41,7 @@ const PERCENTAGE_KEYS = new Set([
   'fireResistPercent', 'freezeChance', 'frozenTargetDamagePercent', 'guardChance',
   'healMatkPercent', 'iceDamagePercent', 'iceResistPercent', 'instantDeathBonus',
   'instantDeathChance', 'lowHpDamagePercent', 'maxChainBonusPercent',
+  'ailmentChance', 'ailmentResistPercent', 'resistancePierce', 'statusDamagePercent', 'spreadChance',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
   'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
   'waterResistPercent', 'natureDamagePercent', 'natureResistPercent'

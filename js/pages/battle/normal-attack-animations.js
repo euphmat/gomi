@@ -31,7 +31,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   slime_singer:   { kind: 'slime_serenade', primary: '#a7f3d0', secondary: '#38bdf8', particles: 9 },
   dragoon:        { kind: 'dragon_lance', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
   gunner:         { kind: 'gun_shot', primary: '#fef3c7', secondary: '#f59e0b', particles: 8 },
-  shinra_sage:    { kind: 'shinra_invocation', primary: '#d9f99d', secondary: '#a16207', particles: 10 }
+  shinra_sage:    { kind: 'shinra_invocation', primary: '#d9f99d', secondary: '#a16207', particles: 10 },
+  plague_doctor:  { kind: 'plague_ritual', primary: '#d9f99d', secondary: '#7e22ce', particles: 10 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -564,6 +565,14 @@ export function playNormalAttackAnimation(attacker, defender) {
       addVerticalStrike(layer, target, { ...profile, primary: '#fde68a' }, impactDuration * 1.08, impactDelay * .75, 'light');
       addGroundCracks(layer, target, profile, impactDuration, impactDelay * .86);
       addGlyph(layer, target, { ...profile, primary: '#bef264', secondary: '#16a34a' }, impactDuration, '✤', impactDelay * .74, { size: 48 });
+      break;
+
+    case 'plague_ritual':
+      addMagicCircle(layer, origin, profile, actionDuration * .78, 0, '☣');
+      addRibbonOrbit(layer, origin, { ...profile, primary: '#a3e635', secondary: '#9333ea' }, actionDuration * .7, actionDuration * .04, true);
+      addWave(layer, target, { ...profile, primary: '#bef264', secondary: '#581c87' }, impactDuration * 1.1, impactDelay * .72, 'sound');
+      addRing(layer, target, profile, impactDuration, impactDelay * .82, { size: 96, width: 4, scale: 1.5 });
+      addGlyph(layer, target, profile, impactDuration, '☠', impactDelay * .76, { size: 46 });
       break;
 
     case 'shadow_step':

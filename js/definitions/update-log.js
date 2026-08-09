@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.39';
-export const APP_RELEASE_DATE = '2026.08.09';
+export const APP_VERSION = '0.1.40';
+export const APP_RELEASE_DATE = '2026.08.10';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.10',
+    version: '0.1.40',
+    items: [
+      'プリースト・ダンサーLv.150と1,500,000Gで解放される最上位職「ペスト医師」を追加しました。',
+      '敵の最も低い状態異常耐性を診断し、耐性を貫通して感染させる病原注射・腐蝕ミアズマを追加しました。',
+      '状態異常を変異・延長・全体感染させる劇症変異・パンデミック・黒死病と、専用画像・演出・自動戦闘判断を追加しました。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.39',

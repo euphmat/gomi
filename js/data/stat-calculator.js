@@ -146,6 +146,11 @@ export function calcFinalStats(character, equipmentMap) {
             result.elementResist[element] = (result.elementResist[element] || 0) + levelConfig.natureResistPercent;
           });
         }
+        if (levelConfig.ailmentResistPercent) {
+          for (const ailment of Object.keys(result.ailmentResist)) {
+            result.ailmentResist[ailment] += levelConfig.ailmentResistPercent;
+          }
+        }
       }
     }
   };

@@ -153,11 +153,11 @@ const select = (character, usableSkills, enemies, party = [character]) =>
     '緊急行動やコンボがなければ通常攻撃の確殺を維持する');
 }
 
-assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 23,
-  '全23職業の自動戦闘プロファイルを定義する');
+assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 24,
+  '全24職業の自動戦闘プロファイルを定義する');
 assert(Object.values(AUTO_BATTLE_JOB_TACTICS)
-  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 96,
-  '全96アクティブスキルの役割を定義する');
+  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 101,
+  '全101アクティブスキルの役割を定義する');
 
 if (typeof print === 'function') print('auto-battle-ai: all tests passed');
 else console.log('auto-battle-ai: all tests passed');
