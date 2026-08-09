@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.35';
+export const APP_VERSION = '0.1.36';
 export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.36',
+    items: [
+      'レンジャー・アサシンLv.50で解放される上位職「ガンナー」を追加しました。チャージ弾、弱点を狙う属性弾、腕封じ、連射を使用できます。',
+      '敵全体を銃弾で覆う「バレットストーム」と、単体銃撃が他の敵へ貫通するパッシブ「ペネトレイター」を追加しました。',
+      'ガンナー専用のジョブ画像、銃撃スキル演出、通常攻撃演出、自動戦闘判断を追加しました。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.35',

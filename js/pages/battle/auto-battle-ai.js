@@ -118,6 +118,11 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
   dragoon: Object.freeze({
     piercing_lance: skill(ROLE.COMBO_SETUP), high_jump: skill(ROLE.COMBO_SETUP),
     dragon_sweep: skill(ROLE.COMBO_SETUP, 'area'), skyfall_dive: skill(ROLE.COMBO_FINISHER)
+  }),
+  gunner: Object.freeze({
+    charged_shot: skill(ROLE.OFFENSE), elemental_charge: skill(ROLE.OFFENSE),
+    arm_snipe: skill(ROLE.COMBO_SETUP), rapid_fire: skill(ROLE.AREA_OFFENSE, 'random'),
+    bullet_storm: skill(ROLE.AREA_OFFENSE, 'area')
   })
 });
 

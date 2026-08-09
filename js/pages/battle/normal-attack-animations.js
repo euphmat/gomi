@@ -29,7 +29,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   cryomancer:     { kind: 'frost_nova', primary: '#ecfeff', secondary: '#38bdf8', particles: 9 },
   magic_archer:   { kind: 'bow_shot', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 },
   slime_singer:   { kind: 'slime_serenade', primary: '#a7f3d0', secondary: '#38bdf8', particles: 9 },
-  dragoon:        { kind: 'dragon_lance', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 }
+  dragoon:        { kind: 'dragon_lance', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
+  gunner:         { kind: 'gun_shot', primary: '#fef3c7', secondary: '#f59e0b', particles: 8 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -509,6 +510,33 @@ export function playNormalAttackAnimation(attacker, defender) {
       animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addArrowShot(layer, origin, target, profile, actionDuration, 0);
       addSlash(layer, target, profile, impactDuration * .72, direction.angle * 180 / Math.PI, impactDelay, 62, 5);
+      break;
+
+    case 'gun_shot':
+      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
+      addEffect(
+        layer,
+        `position:fixed;left:${origin.x - 5}px;top:${origin.y - 5}px;width:82px;height:10px;background:linear-gradient(90deg,#78350f 0 22%,${profile.secondary} 23% 42%,#fff 43% 82%,${profile.primary});clip-path:polygon(0 25%,18% 25%,23% 0,32% 25%,100% 25%,100% 75%,32% 75%,27% 100%,18% 75%,0 75%);filter:drop-shadow(0 0 7px ${profile.secondary});transform-origin:5px 50%;mix-blend-mode:screen`,
+        [
+          { transform: `rotate(${direction.angle}rad) translateX(-8px) scale(.55)`, opacity: 0 },
+          { transform: `rotate(${direction.angle}rad) translateX(0) scale(1)`, opacity: 1, offset: .34 },
+          { transform: `rotate(${direction.angle}rad) translateX(-6px) scale(1.05)`, opacity: 1, offset: .58 },
+          { transform: `rotate(${direction.angle}rad) translateX(-2px) scale(.82)`, opacity: 0 }
+        ],
+        { duration: actionDuration * .72, easing: 'ease-out' }
+      );
+      addEffect(
+        layer,
+        `position:fixed;left:${origin.x}px;top:${origin.y - 3}px;width:92px;height:6px;background:linear-gradient(90deg,${profile.secondary},#fff 70%,${profile.primary});box-shadow:0 0 9px ${profile.secondary};transform-origin:0 50%;mix-blend-mode:screen`,
+        [
+          { transform: `rotate(${direction.angle}rad) translateX(0) scaleX(.1)`, opacity: 0 },
+          { transform: `rotate(${direction.angle}rad) translateX(${direction.distance * .08}px) scaleX(1)`, opacity: 1, offset: .12 },
+          { transform: `rotate(${direction.angle}rad) translateX(${direction.distance - 12}px) scaleX(.8)`, opacity: 1, offset: .82 },
+          { transform: `rotate(${direction.angle}rad) translateX(${direction.distance}px) scaleX(.2)`, opacity: 0 }
+        ],
+        { duration: actionDuration * .42, delay: actionDuration * .28, easing: 'cubic-bezier(.2,.8,.2,1)' }
+      );
+      addRing(layer, target, profile, impactDuration, impactDelay * .84, { size: 78, width: 4, scale: 1.35 });
       break;
 
     case 'runic_blade':
