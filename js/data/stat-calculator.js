@@ -26,6 +26,7 @@ import { FISH } from '../definitions/fish.js';
 import { resolveJobSkillLevelConfig } from '../utils/job-skill-potency.js';
 import { getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
 import { normalizeBaseExpProgress } from './level-progression.js';
+import { normalizeJobExpProgress, normalizeJobSpProgression } from './job-progression.js';
 
 /**
  * Calculate the final stats for a character.
@@ -396,9 +397,11 @@ export async function getCharactersWithRanchBonus() {
     c.fishLibraryBonus = fishLibraryBonus;
     let needSave = false;
 
-    // Convert exponential-era saves to the level-derived curve while keeping
-    // the same percentage of progress toward the next base level.
+    // Convert exponential-era saves to the level-derived curves while keeping
+    // the same percentage of progress toward the next level.
     if (normalizeBaseExpProgress(c)) needSave = true;
+    if (normalizeJobExpProgress(c)) needSave = true;
+    if (normalizeJobSpProgression(c)) needSave = true;
     
     // Migrate old inheritedSkill format
     if (c.inheritedSkill) {

@@ -8,7 +8,7 @@ import { getBaseExpToNext } from '../../data/level-progression.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
-import { getTotalJobSP } from '../../data/job-progression.js';
+import { getJobExpToNext, getJobTotalSP } from '../../data/job-progression.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -114,7 +114,7 @@ export function renderChangeJobTab() {
       char.jp = { current: savedJob.jp.current, max: savedJob.jp.max };
     } else {
       char.jobLevel = 1;
-      char.jp = { current: 0, max: 20 };
+      char.jp = { current: 0, max: getJobExpToNext(1) };
     }
 
     if (!char.jobSkills) char.jobSkills = {};
@@ -145,7 +145,7 @@ export function renderChangeJobTab() {
         }
       }
     }
-    char.sp = getTotalJobSP(char.jobLevel) - spentSP;
+    char.sp = getJobTotalSP(char, char.jobId, char.jobLevel) - spentSP;
 
     await GameDB.putCharacter(char);
     try {
@@ -252,7 +252,7 @@ export function renderChangeJobTab() {
       targetJobLevel = char.jobLevels[targetJobId].level;
     }
     
-    const totalSp = getTotalJobSP(targetJobLevel);
+    const totalSp = getJobTotalSP(char, targetJobId, targetJobLevel);
     const cost = totalSp * 100;
 
     const gold = await GameDB.getGameState('gold') || 0;
@@ -764,7 +764,7 @@ export function renderChangeJobTab() {
         const jobDef = JOBS[jobId];
         if (!jobDef) return;
 
-      const totalSp = getTotalJobSP(level);
+      const totalSp = getJobTotalSP(char, jobId, level);
       const cost = totalSp * 100;
       
       let hasSpentSp = false;

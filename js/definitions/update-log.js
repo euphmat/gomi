@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.36';
+export const APP_VERSION = '0.1.37';
 export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.37',
+    items: [
+      'ジョブレベルの必要JPを、EXPと同じ緩やかな成長カーブ（必要値はEXPより20%高め）へ変更しました。既存のJP進捗率も維持されます。',
+      'ジョブレベルアップ時の獲得SPを、全レベル帯で1に統一しました。既存プレイヤーが旧仕様で獲得した追加SPはそのまま維持されます。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.36',

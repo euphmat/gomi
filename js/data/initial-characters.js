@@ -9,6 +9,7 @@ import { WEAPONS } from '../definitions/weapons.js';
 import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { getBaseExpToNext } from './level-progression.js';
+import { JOB_SP_PROGRESSION_VERSION, getJobExpToNext } from './job-progression.js';
 
 // ─── Initial Equipment ───────────────────────────────────
 // 決定論的なIDを生成して、キャラクターに事前割り当てできるようにする
@@ -38,10 +39,12 @@ const BASE_TEMPLATE = {
   level: 1,
   jobLevel: 1,
   sp: 0,
+  jobSpProgressionVersion: JOB_SP_PROGRESSION_VERSION,
+  jobSpLegacyBonuses: {},
   hp:  { current: 10, max: 10 },
   mp:  { current: 10,  max: 10 },
   exp: { current: 0,   max: getBaseExpToNext(1) },
-  jp:  { current: 0,   max: 20 },
+  jp:  { current: 0,   max: getJobExpToNext(1) },
   modifiers: [],
   elementResist: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0, },
   ailmentResist: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, },

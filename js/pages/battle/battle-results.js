@@ -19,7 +19,7 @@ import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
-import { getJobLevelUpSP } from '../../data/job-progression.js';
+import { getJobExpToNext, getJobLevelUpSP, normalizeJobExpProgress, normalizeJobSpProgression } from '../../data/job-progression.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -109,7 +109,8 @@ export const resultMethods = {
       for (const p of this.party) {
         if (!p.isDead) {
           normalizeBaseExpProgress(p);
-          if (!p.jp) p.jp = { current: 0, max: 100 };
+          normalizeJobExpProgress(p);
+          normalizeJobSpProgression(p);
           p.exp.current += exp;
           p.jp.current += jp;
 
@@ -144,12 +145,11 @@ export const resultMethods = {
           }
 
           // Job Level Up Logic
-          if (!p.jp.max || p.jp.max <= 0) p.jp.max = 20;
           let loopGuardJp = 0;
           while (p.jp.current >= p.jp.max && loopGuardJp++ < 1000) {
             p.jp.current -= p.jp.max;
-            p.jp.max = Math.max(p.jp.max + 1, Math.floor(p.jp.max * 1.2));
             p.jobLevel = (p.jobLevel || 1) + 1;
+            p.jp.max = getJobExpToNext(p.jobLevel);
             p.sp = (p.sp || 0) + getJobLevelUpSP(p.jobLevel);
             jobLevelUp = true;
           }
