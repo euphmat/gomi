@@ -1,6 +1,7 @@
 import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { playNormalAttackAnimation } from './normal-attack-animations.js';
+import { playMagicMissileAnimation } from './magic-missile-animation.js';
 
 /**
  * battle-actions.js
@@ -703,18 +704,10 @@ export const actionMethods = {
         ], { duration: slashDuration, easing: 'ease-out' });
       }
     } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden) {
-      const defenderEl = document.getElementById(defender.elementId);
-      if (defenderEl) {
-        const animDuration = getBattleAnimationDuration(300, 120);
-        delayDamageMs = animDuration;
-        attackAnimationMs = Math.max(attackAnimationMs, animDuration + 34);
-        attackCadenceMs = Math.max(attackCadenceMs, animDuration * 0.8);
-        defenderEl.animate([
-          { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' },
-          { transform: 'scale(0.9)', filter: 'brightness(2) hue-rotate(270deg)', offset: 0.5 },
-          { transform: 'scale(1)', filter: 'brightness(1) hue-rotate(0deg)' }
-        ], { duration: animDuration, easing: 'ease-in-out' });
-      }
+      const timing = playMagicMissileAnimation(attacker, defender);
+      delayDamageMs = timing.impactDelay;
+      attackAnimationMs = Math.max(attackAnimationMs, timing.completionDelay);
+      attackCadenceMs = Math.max(attackCadenceMs, timing.cadenceDelay);
     }
 
     if (delayDamageMs > 0) {
@@ -870,6 +863,11 @@ export const actionMethods = {
         if (!options.damageType && !isMagic && !defender.isDead) {
           const missileSkill = this._findSkill(attacker, 'magic_missile');
           if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
+            // Start the passive after the normal attack has visibly connected,
+            // so the two independently implemented animations do not overlap.
+            const missileDelay = attackCadenceMs > 0
+              ? attackCadenceMs
+              : (this.speedMult >= 5 ? 0 : 300 / this.speedMult);
             this._scheduleBattleTimeout(() => {
               if (!defender.isDead && !attacker.isDead) {
                 this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
@@ -882,7 +880,7 @@ export const actionMethods = {
                   skipAtbReset: true
                 });
               }
-            }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
+            }, missileDelay);
           }
         }
         
