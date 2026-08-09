@@ -11,8 +11,8 @@ const assert = (condition, message) => {
 };
 
 assert(JOBS.slime_singer?.name === 'スライムシンガー', 'slime singer is not registered');
-assert(slime_singer.requirements.some(req => req.jobId === 'bird' && req.level === 50), 'bard requirement is missing');
-assert(slime_singer.requirements.some(req => req.jobId === 'slime_master' && req.level === 50), 'slime master requirement is missing');
+assert(slime_singer.requirements.some(req => req.jobId === 'bird' && req.level === 100), 'bard requirement is missing');
+assert(slime_singer.requirements.some(req => req.jobId === 'slime_master' && req.level === 100), 'slime master requirement is missing');
 assert(JOB_STAT_GROWTH.slime_singer && JOB_STAT_MULTIPLIER.slime_singer, 'slime singer stats are missing');
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.slime_singer || {}).length === 5, 'slime singer auto-battle tactics are missing');
 assert(NORMAL_ATTACK_ANIMATION_PROFILES.slime_singer?.kind === 'slime_serenade', 'slime singer normal attack is missing');

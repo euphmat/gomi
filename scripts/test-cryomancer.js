@@ -11,8 +11,8 @@ const assert = (condition, message) => {
 };
 
 assert(JOBS.cryomancer?.name === 'クライオマンサー', 'cryomancer is not registered');
-assert(cryomancer.requirements.some(req => req.jobId === 'mage' && req.level === 50), 'mage requirement is missing');
-assert(cryomancer.requirements.some(req => req.jobId === 'poseidon' && req.level === 50), 'poseidon requirement is missing');
+assert(cryomancer.requirements.some(req => req.jobId === 'mage' && req.level === 100), 'mage requirement is missing');
+assert(cryomancer.requirements.some(req => req.jobId === 'poseidon' && req.level === 100), 'poseidon requirement is missing');
 assert(JOB_STAT_GROWTH.cryomancer && JOB_STAT_MULTIPLIER.cryomancer, 'cryomancer stats are missing');
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.cryomancer || {}).length === 4, 'cryomancer auto-battle tactics are missing');
 

@@ -139,12 +139,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           { transform: `rotate(${angle}rad) translateX(${Math.max(0, distance - 22)}px) scaleX(1.15)`, opacity: 1 }
         ], { duration: 260 / speedMult, easing: 'cubic-bezier(.3,.75,.25,1)' }).onfinish = () => {
           projectile.remove();
-          targetEl.animate([
-            { transform: 'translateX(0)', filter: 'brightness(1)' },
-            { transform: 'translateX(7px)', filter: 'brightness(2) saturate(1.5)', offset: .32 },
-            { transform: 'translateX(-5px)', filter: 'brightness(1.4)', offset: .62 },
-            { transform: 'translateX(0)', filter: 'brightness(1)' }
-          ], { duration: 260 / speedMult, easing: 'ease-out' });
           addImpactRing(x, y, '#67e8f9', 88);
           addBubbleBurst(x, y, 7, 42);
           onImpact?.(target, index);
@@ -208,12 +202,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         ], { duration: 700 / speedMult, easing: 'cubic-bezier(.1,.8,.2,1)' }).onfinish = () => pillar.remove();
 
         setTimeout(() => {
-          targetEl.animate([
-            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-            { transform: 'translateY(-12px) scale(.94)', filter: 'brightness(2.4) saturate(1.8)', offset: .35 },
-            { transform: 'translateY(7px) scale(1.04)', filter: 'brightness(1.5)', offset: .68 },
-            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-          ], { duration: 380 / speedMult, easing: 'ease-out' });
           addImpactRing(x, y, '#fef3c7', 148);
           addBubbleBurst(x, y, 14, 85);
           onImpact?.(target, index);

@@ -126,8 +126,8 @@ export const mana_conductor = {
   image: './assets/job/job_mana_conductor.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'mage', level: 50 },
-    { jobId: 'dancer', level: 50 }
+    { jobId: 'mage', level: 100 },
+    { jobId: 'dancer', level: 100 }
   ],
   skills: [
     {

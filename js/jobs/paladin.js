@@ -303,8 +303,8 @@ export const paladin = {
   icon: 'local_police',
   changeCost: 500000,
   requirements: [
-    { jobId: 'knight', level: 50 },
-    { jobId: 'priest', level: 50 }
+    { jobId: 'knight', level: 100 },
+    { jobId: 'priest', level: 100 }
   ],
   skills: [
     // ─── Active Skills ──────────────────────────────────────

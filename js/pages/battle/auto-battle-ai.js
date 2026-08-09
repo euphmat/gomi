@@ -123,6 +123,13 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     charged_shot: skill(ROLE.OFFENSE), elemental_charge: skill(ROLE.OFFENSE),
     arm_snipe: skill(ROLE.COMBO_SETUP), rapid_fire: skill(ROLE.AREA_OFFENSE, 'random'),
     bullet_storm: skill(ROLE.AREA_OFFENSE, 'area')
+  }),
+  shinra_sage: Object.freeze({
+    verdant_spear: skill(ROLE.COMBO_SETUP),
+    sylph_cyclone: skill(ROLE.COMBO_SETUP, 'area'),
+    gaia_rampart: skill(ROLE.COMBO_SETUP, 'party'),
+    worldtree_breath: skill(ROLE.RECOVERY, 'party'),
+    shinra_mandala: skill(ROLE.COMBO_FINISHER, 'area')
   })
 });
 
@@ -317,6 +324,30 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
       const setup = byId.get(id);
       if (setup) setup.score += 90;
     });
+  }
+
+  // 森羅導師: 草・風・土の印を揃え、三界輪へつなぐ。
+  if (currentJob === 'shinra_sage') {
+    const sigils = Array.isArray(character._shinraSigils) ? character._shinraSigils : [];
+    const mandalaSkill = getUsableSkill(usableSkills, 'shinra_mandala');
+    if (sigils.length >= 3 && mandalaSkill && aliveEnemies.length) {
+      const existing = byId.get('shinra_mandala');
+      const mandala = existing || makeCandidate(mandalaSkill, aliveEnemies[0], 0);
+      if (mandala) {
+        mandala.priority = 485;
+        mandala.score += 430;
+        if (!existing) candidates.push(mandala);
+      }
+    } else {
+      const builders = { grass: ['worldtree_breath', 'verdant_spear'], wind: ['sylph_cyclone'], earth: ['gaia_rampart'] };
+      Object.entries(builders).forEach(([element, ids]) => {
+        if (sigils.includes(element)) return;
+        ids.forEach(id => {
+          const builder = byId.get(id);
+          if (builder) builder.score += 105;
+        });
+      });
+    }
   }
 
   // ブラックナイト: カースブレードを起点にし、呪い中の敵へ単体技を集中する。

@@ -77,8 +77,8 @@ export const guardian = {
   image: './assets/job/job_guardian.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'knight', level: 50 },
-    { jobId: 'paladin', level: 50 }
+    { jobId: 'knight', level: 100 },
+    { jobId: 'paladin', level: 100 }
   ],
   skills: [
     {

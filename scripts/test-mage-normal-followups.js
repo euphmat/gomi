@@ -98,10 +98,11 @@ assert(repeatedNormalCalls.every(options => options.isNormalAttack === true), 'r
 assert(missileCalls.length === 3, 'Magic Missile did not trigger once for every normal attack');
 assert(actionNames.filter(name => name === 'マジックミサイル').length === 3,
   'Magic Missile action feedback did not run for every normal attack');
-assert(attackerEl.animations.filter(timing => timing.duration === 560).length === 3,
-  'mage normal attack animation did not run for every normal attack');
-assert(attackerEl.animations.filter(timing => timing.duration === 520).length === 3,
-  'Magic Missile animation did not run for every normal attack');
+assert(attackerEl.animations.length === 0,
+  'attacker status panel must remain stationary during attacks');
+assert(defenderEl.animations.length === 0,
+  'defender status panel must remain stationary during attacks');
+assert(effects.length > 0, 'attack effects were not rendered');
 
 if (typeof print === 'function') print('Mage normal follow-up tests passed.');
 else console.log('Mage normal follow-up tests passed.');

@@ -6,7 +6,7 @@ import {
 /**
  * The normal attack is a short piece of job acting, not a recoloured bullet.
  * Keep this list in sync with js/jobs/index.js so every playable job owns a
- * silhouette, movement and impact language of its own.
+ * distinct effect and impact language without moving either status panel.
  */
 export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   norvice:        { kind: 'sword_draw',     primary: '#f8fafc', secondary: '#f59e0b', particles: 3 },
@@ -30,7 +30,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   magic_archer:   { kind: 'bow_shot', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 },
   slime_singer:   { kind: 'slime_serenade', primary: '#a7f3d0', secondary: '#38bdf8', particles: 9 },
   dragoon:        { kind: 'dragon_lance', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
-  gunner:         { kind: 'gun_shot', primary: '#fef3c7', secondary: '#f59e0b', particles: 8 }
+  gunner:         { kind: 'gun_shot', primary: '#fef3c7', secondary: '#f59e0b', particles: 8 },
+  shinra_sage:    { kind: 'shinra_invocation', primary: '#d9f99d', secondary: '#a16207', particles: 10 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -57,59 +58,6 @@ const addEffect = (layer, cssText, keyframes, timing) => {
   animation.onfinish = () => effect.remove();
   animation.oncancel = () => effect.remove();
   return effect;
-};
-
-const animateActor = (element, profile, duration, direction, style = 'cast') => {
-  const lungeX = direction.ux * 32;
-  const lungeY = direction.uy * 32;
-  const recoilX = -direction.ux * 5;
-  const recoilY = -direction.uy * 5;
-  let keyframes;
-
-  switch (style) {
-    case 'melee':
-      keyframes = [
-        { transform: 'translate(0,0) rotate(0) scale(1)', filter: 'brightness(1)' },
-        { transform: `translate(${recoilX}px,${recoilY}px) rotate(-2deg) scale(.98)`, filter: `brightness(1.25) drop-shadow(0 0 5px ${profile.secondary})`, offset: .25 },
-        { transform: `translate(${lungeX}px,${lungeY}px) rotate(2deg) scale(1.04)`, filter: `brightness(1.65) drop-shadow(0 0 8px ${profile.secondary})`, offset: .62 },
-        { transform: 'translate(0,0) rotate(0) scale(1)', filter: 'brightness(1)' }
-      ];
-      break;
-    case 'heavy':
-      keyframes = [
-        { transform: 'translate(0,0) rotate(0) scale(1)', filter: 'brightness(1)' },
-        { transform: `translate(${recoilX * 1.4}px,${recoilY * 1.4}px) rotate(3deg) scale(1.03)`, filter: `brightness(.8) drop-shadow(0 0 8px ${profile.secondary})`, offset: .38 },
-        { transform: `translate(${lungeX * .82}px,${lungeY * .82}px) rotate(-3deg) scale(1.06)`, filter: `brightness(1.55) drop-shadow(0 0 11px ${profile.secondary})`, offset: .7 },
-        { transform: 'translate(0,0) rotate(0) scale(1)', filter: 'brightness(1)' }
-      ];
-      break;
-    case 'dance':
-      keyframes = [
-        { transform: 'translate(0,0) rotate(0) scale(1)', filter: 'brightness(1)' },
-        { transform: 'translateY(-3px) rotate(-7deg) scale(.98)', filter: `brightness(1.35) drop-shadow(0 0 6px ${profile.secondary})`, offset: .25 },
-        { transform: 'translateY(-7px) rotate(8deg) scale(1.06)', filter: `brightness(1.65) drop-shadow(0 0 10px ${profile.secondary})`, offset: .58 },
-        { transform: 'translate(0,0) rotate(0) scale(1)', filter: 'brightness(1)' }
-      ];
-      break;
-    case 'vanish':
-      keyframes = [
-        { transform: 'translate(0,0) scale(1)', filter: 'brightness(1)', opacity: 1 },
-        { transform: `translate(${recoilX}px,${recoilY}px) scale(.94)`, filter: `brightness(.35) drop-shadow(0 0 9px ${profile.secondary})`, opacity: .18, offset: .3 },
-        { transform: `translate(${lungeX}px,${lungeY}px) scale(1.04)`, filter: `brightness(1.8) drop-shadow(0 0 8px ${profile.secondary})`, opacity: .7, offset: .68 },
-        { transform: 'translate(0,0) scale(1)', filter: 'brightness(1)', opacity: 1 }
-      ];
-      break;
-    case 'cast':
-    default:
-      keyframes = [
-        { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-        { transform: 'translateY(3px) scale(.98)', filter: `brightness(1.2) drop-shadow(0 0 5px ${profile.secondary})`, offset: .24 },
-        { transform: 'translateY(-6px) scale(1.035)', filter: `brightness(1.65) drop-shadow(0 0 10px ${profile.secondary})`, offset: .58 },
-        { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-      ];
-  }
-
-  element.animate(keyframes, { duration, easing: 'cubic-bezier(.2,.68,.25,1)' });
 };
 
 const addParticles = (layer, point, profile, duration, count = profile.particles, delay = 0, spread = 48) => {
@@ -441,26 +389,6 @@ const addHarp = (layer, point, profile, duration, delay = 0) => {
   );
 };
 
-const animateDefenderImpact = (element, profile, totalDuration, impactDelay, style = 'hit') => {
-  const impactOffset = Math.min(.82, impactDelay / totalDuration);
-  if (style === 'burn') {
-    element.animate([
-      { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-      { transform: 'translateY(0) scale(1)', filter: 'brightness(1)', offset: impactOffset },
-      { transform: 'translateY(-5px) scale(.96)', filter: `brightness(2.1) sepia(1) drop-shadow(0 0 7px ${profile.secondary})`, offset: Math.min(.92, impactOffset + .08) },
-      { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-    ], { duration: totalDuration, easing: 'ease-out' });
-    return;
-  }
-  element.animate([
-    { transform: 'translateX(0) scale(1)', filter: 'brightness(1)' },
-    { transform: 'translateX(0) scale(1)', filter: 'brightness(1)', offset: impactOffset },
-    { transform: 'translateX(7px) scale(.97)', filter: `brightness(1.9) drop-shadow(0 0 5px ${profile.secondary})`, offset: Math.min(.9, impactOffset + .06) },
-    { transform: 'translateX(-5px) scale(1.01)', filter: 'brightness(1.3)', offset: Math.min(.96, impactOffset + .14) },
-    { transform: 'translateX(0) scale(1)', filter: 'brightness(1)' }
-  ], { duration: totalDuration, easing: 'ease-out' });
-};
-
 /**
  * Plays a complete job-specific normal attack and returns its impact and
  * completion timings. Damage itself remains synchronous in the simulation.
@@ -481,25 +409,20 @@ export function playNormalAttackAnimation(attacker, defender) {
   const impactDuration = getBattleAnimationDuration(360, 190);
   const impactDelay = Math.round(actionDuration * .68);
   const totalDuration = impactDelay + impactDuration;
-  let defenderStyle = 'hit';
-
   switch (profile.kind) {
     case 'shield_bash':
-      animateActor(attackerEl, profile, actionDuration, direction, 'heavy');
       addWeapon(layer, origin, direction, profile, actionDuration * .82, actionDuration * .08, 'shield');
       addRing(layer, target, profile, impactDuration, impactDelay, { radius: '24%', size: 82, width: 5, scale: 1.25 });
       addGroundCracks(layer, target, profile, impactDuration * .8, impactDelay);
       break;
 
     case 'arcane_cast':
-      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addMagicCircle(layer, origin, profile, actionDuration * .72, 0, '✧');
       addVerticalStrike(layer, target, profile, impactDuration * 1.15, impactDelay * .82, 'lightning');
       addMagicCircle(layer, target, profile, impactDuration, impactDelay * .72, '✦');
       break;
 
     case 'prayer':
-      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addGlyph(layer, { x: origin.x, y: origin.y - 26 }, profile, actionDuration * .7, '♱', 0, { size: 42 });
       addRing(layer, { x: origin.x, y: origin.y - 24 }, profile, actionDuration * .72, 0, { size: 54, width: 2, scale: 1.1 });
       addVerticalStrike(layer, target, profile, impactDuration * 1.25, impactDelay * .74, 'light');
@@ -507,13 +430,11 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'bow_shot':
-      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addArrowShot(layer, origin, target, profile, actionDuration, 0);
       addSlash(layer, target, profile, impactDuration * .72, direction.angle * 180 / Math.PI, impactDelay, 62, 5);
       break;
 
     case 'gun_shot':
-      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addEffect(
         layer,
         `position:fixed;left:${origin.x - 5}px;top:${origin.y - 5}px;width:82px;height:10px;background:linear-gradient(90deg,#78350f 0 22%,${profile.secondary} 23% 42%,#fff 43% 82%,${profile.primary});clip-path:polygon(0 25%,18% 25%,23% 0,32% 25%,100% 25%,100% 75%,32% 75%,27% 100%,18% 75%,0 75%);filter:drop-shadow(0 0 7px ${profile.secondary});transform-origin:5px 50%;mix-blend-mode:screen`,
@@ -540,7 +461,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'runic_blade':
-      animateActor(attackerEl, profile, actionDuration, direction, 'melee');
       addMagicCircle(layer, origin, profile, actionDuration * .62, 0, '◇');
       addWeapon(layer, origin, direction, profile, actionDuration * .85, actionDuration * .05, 'sword');
       addSlash(layer, target, profile, impactDuration, -46, impactDelay * .9, 128, 10);
@@ -548,7 +468,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'slime_command':
-      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
       addGlyph(layer, { x: origin.x + 16, y: origin.y - 22 }, profile, actionDuration * .55, '!', 0, { size: 27, font: 'sans-serif' });
       addSlimeBounce(layer, origin, target, profile, actionDuration, actionDuration * .04);
       addRing(layer, target, profile, impactDuration, impactDelay, { radius: '48% 52% 45% 55%', size: 78, scale: 1.25 });
@@ -556,7 +475,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'ribbon_dance':
-      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
       addRibbonOrbit(layer, origin, profile, actionDuration * .82, 0, true);
       addRibbonOrbit(layer, origin, profile, actionDuration * .76, actionDuration * .06, false);
       addSlash(layer, target, profile, impactDuration, -24, impactDelay * .82, 128, 7);
@@ -565,7 +483,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'harp_strum':
-      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
       addHarp(layer, { x: origin.x, y: origin.y - 9 }, profile, actionDuration * .72, 0);
       addWave(layer, origin, profile, actionDuration * .78, actionDuration * .08, 'sound');
       ['♪', '♫', '♩'].forEach((glyph, index) => {
@@ -579,7 +496,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'slime_serenade':
-      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
       addHarp(layer, { x: origin.x - 6, y: origin.y - 10 }, profile, actionDuration * .68, 0);
       addSlimeBounce(layer, origin, target, profile, actionDuration, actionDuration * .04);
       addMusicStaff(layer, origin, target, profile, actionDuration * .82, actionDuration * .06);
@@ -589,7 +505,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'abyss_cleave':
-      animateActor(attackerEl, profile, actionDuration, direction, 'heavy');
       addWeapon(layer, { x: origin.x, y: origin.y - 8 }, direction, profile, actionDuration * .94, 0, 'sword');
       addSlash(layer, target, profile, impactDuration * 1.2, -58, impactDelay * .78, 154, 16);
       addSlash(layer, target, { ...profile, primary: '#111827', secondary: '#dc2626' }, impactDuration, -52, impactDelay * .9, 138, 10);
@@ -598,7 +513,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'sacred_verdict':
-      animateActor(attackerEl, profile, actionDuration, direction, 'heavy');
       addWeapon(layer, origin, direction, profile, actionDuration * .72, 0, 'shield');
       addGlyph(layer, { x: origin.x, y: origin.y - 28 }, profile, actionDuration * .64, '✝', 0, { size: 42 });
       addVerticalStrike(layer, target, profile, impactDuration * 1.25, impactDelay * .7, 'light');
@@ -608,7 +522,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'guardian_rampart':
-      animateActor(attackerEl, profile, actionDuration, direction, 'heavy');
       addWeapon(layer, origin, direction, profile, actionDuration * .86, actionDuration * .02, 'shield');
       addRing(layer, origin, profile, actionDuration * .72, 0, { radius: '24%', size: 72, width: 5, scale: 1.12, color: '#fde68a' });
       addRing(layer, target, profile, impactDuration * 1.08, impactDelay * .82, { radius: '24%', size: 102, width: 6, scale: 1.5 });
@@ -616,7 +529,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'tide_thrust':
-      animateActor(attackerEl, profile, actionDuration, direction, 'melee');
       addWeapon(layer, origin, direction, profile, actionDuration * .9, actionDuration * .03, 'trident');
       addWave(layer, target, profile, impactDuration * 1.2, impactDelay * .75, 'water');
       addGlyph(layer, target, profile, impactDuration, '♆', impactDelay * .72, { size: 54 });
@@ -624,7 +536,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'dragon_lance':
-      animateActor(attackerEl, profile, actionDuration, direction, 'melee');
       addWeapon(layer, origin, direction, profile, actionDuration * .9, actionDuration * .02, 'trident');
       addSlash(layer, target, profile, impactDuration * .92, direction.angle * 180 / Math.PI, impactDelay * .82, 152, 8);
       addVerticalStrike(layer, target, profile, impactDuration, impactDelay * .72, 'light');
@@ -633,16 +544,13 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'flame_eruption':
-      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addMagicCircle(layer, origin, profile, actionDuration * .76, 0, '△');
       addRibbonOrbit(layer, origin, profile, actionDuration * .62, actionDuration * .08, true);
       addFlameEruption(layer, target, profile, impactDuration * 1.25, impactDelay * .72);
       addRing(layer, target, profile, impactDuration, impactDelay, { color: '#fb923c', size: 86, width: 5, scale: 1.5 });
-      defenderStyle = 'burn';
       break;
 
     case 'frost_nova':
-      animateActor(attackerEl, profile, actionDuration, direction, 'cast');
       addMagicCircle(layer, origin, profile, actionDuration * .76, 0, '❄');
       addGlyph(layer, { x: origin.x, y: origin.y - 26 }, profile, actionDuration * .62, '✧', 0, { size: 38 });
       addVerticalStrike(layer, target, profile, impactDuration * 1.15, impactDelay * .76, 'light');
@@ -650,8 +558,15 @@ export function playNormalAttackAnimation(attacker, defender) {
       addRing(layer, target, profile, impactDuration, impactDelay, { size: 96, width: 4, scale: 1.5 });
       break;
 
+    case 'shinra_invocation':
+      addMagicCircle(layer, origin, { ...profile, secondary: '#22c55e' }, actionDuration * .76, 0, '❧');
+      addRibbonOrbit(layer, origin, { ...profile, primary: '#ecfdf5', secondary: '#2dd4bf' }, actionDuration * .68, actionDuration * .04, true);
+      addVerticalStrike(layer, target, { ...profile, primary: '#fde68a' }, impactDuration * 1.08, impactDelay * .75, 'light');
+      addGroundCracks(layer, target, profile, impactDuration, impactDelay * .86);
+      addGlyph(layer, target, { ...profile, primary: '#bef264', secondary: '#16a34a' }, impactDuration, '✤', impactDelay * .74, { size: 48 });
+      break;
+
     case 'shadow_step':
-      animateActor(attackerEl, profile, actionDuration, direction, 'vanish');
       addShadowAfterimages(layer, origin, target, profile, actionDuration, actionDuration * .08);
       addWeapon(layer, origin, direction, profile, actionDuration * .72, actionDuration * .08, 'dagger');
       addSlash(layer, target, profile, impactDuration * .82, -42, impactDelay * .82, 112, 7);
@@ -660,7 +575,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'mana_crescendo':
-      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
       addWeapon(layer, origin, direction, profile, actionDuration * .68, 0, 'baton');
       addMusicStaff(layer, origin, target, profile, actionDuration * .82, actionDuration * .05);
       addMagicCircle(layer, target, profile, impactDuration, impactDelay * .72, '✦');
@@ -669,7 +583,6 @@ export function playNormalAttackAnimation(attacker, defender) {
       break;
 
     case 'stage_spectacle':
-      animateActor(attackerEl, profile, actionDuration, direction, 'dance');
       addHarp(layer, { x: origin.x - 8, y: origin.y - 10 }, profile, actionDuration * .68, 0);
       addRibbonOrbit(layer, origin, profile, actionDuration * .78, actionDuration * .04, true);
       addMusicStaff(layer, origin, target, profile, actionDuration * .8, actionDuration * .08);
@@ -680,7 +593,6 @@ export function playNormalAttackAnimation(attacker, defender) {
 
     case 'sword_draw':
     default:
-      animateActor(attackerEl, profile, actionDuration, direction, 'melee');
       addWeapon(layer, origin, direction, profile, actionDuration * .82, actionDuration * .06, 'sword');
       addSlash(layer, target, profile, impactDuration, -38, impactDelay * .9, 112, 9);
       addGroundCracks(layer, target, profile, impactDuration * .68, impactDelay);
@@ -692,8 +604,6 @@ export function playNormalAttackAnimation(attacker, defender) {
   if (profile.kind !== 'slime_command' && profile.kind !== 'shadow_step') {
     addParticles(layer, target, profile, impactDuration, profile.particles, impactDelay, 44);
   }
-  animateDefenderImpact(defenderEl, profile, totalDuration, impactDelay, defenderStyle);
-
   // Leave two display frames after the nominal end time. setTimeout callbacks
   // can otherwise clear the battle scene in the same refresh cycle as the
   // final Web Animations frame, which makes a killing blow look truncated.

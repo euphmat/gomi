@@ -27,7 +27,7 @@ const DECIMAL_EFFECT_KEYS = new Set([
   'lowHpDamagePercent', 'matkRatio', 'maxChainBonusPercent', 'multiplier', 'shatterMultiplier',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
   'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
-  'waterResistPercent'
+  'waterResistPercent', 'natureDamagePercent', 'natureResistPercent'
 ]);
 
 const PERCENTAGE_KEYS = new Set([
@@ -41,7 +41,7 @@ const PERCENTAGE_KEYS = new Set([
   'instantDeathChance', 'lowHpDamagePercent', 'maxChainBonusPercent',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
   'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
-  'waterResistPercent'
+  'waterResistPercent', 'natureDamagePercent', 'natureResistPercent'
 ]);
 
 // These values describe improvement away from a neutral/default multiplier.

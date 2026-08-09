@@ -141,6 +141,11 @@ export function calcFinalStats(character, equipmentMap) {
         if (levelConfig.iceResistPercent) {
           result.elementResist.ice = (result.elementResist.ice || 0) + levelConfig.iceResistPercent;
         }
+        if (levelConfig.natureResistPercent) {
+          ['grass', 'wind', 'earth'].forEach(element => {
+            result.elementResist[element] = (result.elementResist[element] || 0) + levelConfig.natureResistPercent;
+          });
+        }
       }
     }
   };

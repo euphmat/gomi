@@ -11,8 +11,8 @@ const assert = (condition, message) => {
 };
 
 assert(JOBS.guardian?.name === 'ガーディアン', 'guardian is not registered');
-assert(guardian.requirements.some(req => req.jobId === 'knight' && req.level === 50), 'knight requirement is missing');
-assert(guardian.requirements.some(req => req.jobId === 'paladin' && req.level === 50), 'paladin requirement is missing');
+assert(guardian.requirements.some(req => req.jobId === 'knight' && req.level === 100), 'knight requirement is missing');
+assert(guardian.requirements.some(req => req.jobId === 'paladin' && req.level === 100), 'paladin requirement is missing');
 assert(JOB_STAT_GROWTH.guardian && JOB_STAT_MULTIPLIER.guardian, 'guardian stats are missing');
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.guardian || {}).length === 3, 'guardian auto-battle tactics are missing');
 

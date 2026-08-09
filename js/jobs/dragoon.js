@@ -160,8 +160,8 @@ export const dragoon = {
   image: './assets/job/job_dragoon.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'knight', level: 50 },
-    { jobId: 'ranger', level: 50 }
+    { jobId: 'knight', level: 100 },
+    { jobId: 'ranger', level: 100 }
   ],
   skills: [
     {

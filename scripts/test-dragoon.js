@@ -18,8 +18,8 @@ const assert = (condition, message) => {
 };
 
 assert(JOBS.dragoon?.name === 'ドラグーン', 'dragoon is not registered');
-assert(dragoon.requirements.some(req => req.jobId === 'knight' && req.level === 50), 'knight requirement is missing');
-assert(dragoon.requirements.some(req => req.jobId === 'ranger' && req.level === 50), 'ranger requirement is missing');
+assert(dragoon.requirements.some(req => req.jobId === 'knight' && req.level === 100), 'knight requirement is missing');
+assert(dragoon.requirements.some(req => req.jobId === 'ranger' && req.level === 100), 'ranger requirement is missing');
 assert(JOB_STAT_GROWTH.dragoon && JOB_STAT_MULTIPLIER.dragoon, 'dragoon stats are missing');
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.dragoon || {}).length === 4, 'dragoon auto-battle tactics are missing');
 assert(NORMAL_ATTACK_ANIMATION_PROFILES.dragoon?.kind === 'dragon_lance', 'dragoon normal attack animation is missing');

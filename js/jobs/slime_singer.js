@@ -105,8 +105,8 @@ export const slime_singer = {
   image: './assets/job/job_slime_singer.png',
   changeCost: 500000,
   requirements: [
-    { jobId: 'bird', level: 50 },
-    { jobId: 'slime_master', level: 50 }
+    { jobId: 'bird', level: 100 },
+    { jobId: 'slime_master', level: 100 }
   ],
   skills: [
     {

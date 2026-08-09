@@ -137,8 +137,8 @@ export const entertainer = {
   image: './assets/job/job_entertainer.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'bird', level: 50 },
-    { jobId: 'dancer', level: 50 }
+    { jobId: 'bird', level: 100 },
+    { jobId: 'dancer', level: 100 }
   ],
   skills: [
     {

@@ -1316,11 +1316,6 @@ export function renderBattlePage() {
   // Basic structure
   container.innerHTML = `
     <style>
-      @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-4px); }
-        75% { transform: translateX(4px); }
-      }
       @keyframes drop-bounce {
         0% { transform: translateY(-10px) scale(0.5); opacity: 0; }
         50% { transform: translateY(0) scale(1.1); opacity: 1; }

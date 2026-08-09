@@ -313,12 +313,6 @@ const playSkillAnimation = (caster, target, type, onImpact, hitIndex = 0, totalH
     }
   }
 
-  targetEl.animate([
-    { transform: 'translate(0,0)', filter: 'brightness(1)' },
-    { transform: `translate(${hitIndex % 2 ? -5 : 5}px,${hitIndex % 3 - 1}px)`, filter: 'brightness(2)', offset: .35 },
-    { transform: 'translate(0,0)', filter: 'brightness(1)' }
-  ], { duration: (type === 'assassinate' ? 480 : 190) / speedMult, easing: 'ease-out' });
-
   setTimeout(() => onImpact?.(), impactDelay);
 };
 
@@ -352,8 +346,8 @@ export const assassin = {
   icon: 'target',
   changeCost: 500000,
   requirements: [
-    { jobId: 'ranger', level: 50 },
-    { jobId: 'dancer', level: 50 }
+    { jobId: 'ranger', level: 100 },
+    { jobId: 'dancer', level: 100 }
   ],
   skills: [
     {

@@ -130,8 +130,8 @@ export const magic_archer = {
   image: './assets/job/job_magic_archer.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'ranger', level: 50 },
-    { jobId: 'mage', level: 50 }
+    { jobId: 'ranger', level: 100 },
+    { jobId: 'mage', level: 100 }
   ],
   skills: [
     {

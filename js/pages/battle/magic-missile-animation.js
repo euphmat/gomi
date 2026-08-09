@@ -161,29 +161,12 @@ export function playMagicMissileAnimation(attacker, defender) {
     launchDelay,
     impactDelay,
     impactDuration,
-    completionDelay,
-    totalDuration
+    completionDelay
   } = getMagicMissileAnimationTiming();
-
-  attackerEl.animate([
-    { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-    { transform: 'translateY(2px) scale(.98)', filter: `brightness(1.25) drop-shadow(0 0 6px ${profile.secondary})`, offset: .24 },
-    { transform: 'translateY(-5px) scale(1.04)', filter: `brightness(1.75) drop-shadow(0 0 12px ${profile.secondary})`, offset: .5 },
-    { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-  ], { duration: actionDuration, easing: 'cubic-bezier(.2,.68,.25,1)' });
 
   addCastingSeal(layer, origin, angle, actionDuration, profile);
   addProjectile(layer, origin, dx, dy, angle, actionDuration, launchDelay, profile);
   addImpact(layer, target, impactDuration, impactDelay, profile);
-
-  const impactOffset = Math.min(.86, impactDelay / totalDuration);
-  defenderEl.animate([
-    { transform: 'translateX(0) scale(1)', filter: 'brightness(1)' },
-    { transform: 'translateX(0) scale(1)', filter: 'brightness(1)', offset: impactOffset },
-    { transform: 'translateX(7px) scale(.91)', filter: `brightness(2.2) hue-rotate(275deg) drop-shadow(0 0 9px ${profile.secondary})`, offset: Math.min(.94, impactOffset + .06) },
-    { transform: 'translateX(-4px) scale(1.02)', filter: 'brightness(1.35)', offset: Math.min(.98, impactOffset + .13) },
-    { transform: 'translateX(0) scale(1)', filter: 'brightness(1)' }
-  ], { duration: totalDuration, easing: 'ease-out' });
 
   return {
     impactDelay,

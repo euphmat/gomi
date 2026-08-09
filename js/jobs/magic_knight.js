@@ -246,8 +246,8 @@ export const magic_knight = {
   icon: 'swords',
   changeCost: 200000,
   requirements: [
-    { jobId: 'knight', level: 50 },
-    { jobId: 'mage', level: 50 }
+    { jobId: 'knight', level: 100 },
+    { jobId: 'mage', level: 100 }
   ],
   skills: [
     // ─── Active Skills ──────────────────────────────────────

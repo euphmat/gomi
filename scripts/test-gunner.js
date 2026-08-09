@@ -12,8 +12,8 @@ const assert = (condition, message) => {
 };
 
 assert(JOBS.gunner?.name === 'ガンナー', 'gunner is not registered');
-assert(gunner.requirements.some(req => req.jobId === 'ranger' && req.level === 50), 'ranger requirement is missing');
-assert(gunner.requirements.some(req => req.jobId === 'assassin' && req.level === 50), 'assassin requirement is missing');
+assert(gunner.requirements.some(req => req.jobId === 'ranger' && req.level === 100), 'ranger requirement is missing');
+assert(gunner.requirements.some(req => req.jobId === 'assassin' && req.level === 100), 'assassin requirement is missing');
 assert(JOB_STAT_GROWTH.gunner && JOB_STAT_MULTIPLIER.gunner, 'gunner stats are missing');
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.gunner || {}).length === 5, 'gunner auto-battle tactics are missing');
 assert(NORMAL_ATTACK_ANIMATION_PROFILES.gunner?.kind === 'gun_shot', 'gunner normal attack animation is missing');

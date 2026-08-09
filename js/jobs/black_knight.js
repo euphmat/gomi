@@ -336,14 +336,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
   // ─── Hell Gate ───────────────────────────────────────────────
   } else if (type === 'hell_gate') {
-    if (casterEl && !document.hidden && battleSpeed < 5) {
-      casterEl.animate([
-        { filter: 'brightness(1) hue-rotate(0deg)' },
-        { filter: 'brightness(0.5) hue-rotate(90deg) drop-shadow(0 0 20px #7e22ce)', offset: 0.5 },
-        { filter: 'brightness(1) hue-rotate(0deg)' }
-      ], { duration: 400 / speedMult, easing: 'ease-out' });
-    }
-
     targets.forEach((target, index) => {
       setTimeout(() => {
         const targetEl = document.getElementById(target.elementId);
@@ -387,16 +379,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
 
           anim.onfinish = () => spear.remove();
           
-          setTimeout(() => {
-            if (targetEl) {
-              targetEl.animate([
-                { transform: 'translateX(0)', filter: 'brightness(1) drop-shadow(0 0 0px #7e22ce)' },
-                { transform: 'translateX(-8px)', filter: 'brightness(2) drop-shadow(0 0 15px #7e22ce)', offset: 0.2 },
-                { transform: 'translateX(8px)', filter: 'brightness(2) drop-shadow(0 0 15px #c084fc)', offset: 0.6 },
-                { transform: 'translateX(0)', filter: 'brightness(1) drop-shadow(0 0 0px #7e22ce)' }
-              ], { duration: 200 / speedMult, easing: 'ease-out' });
-            }
-          }, 250 / speedMult);
         }
 
         setTimeout(() => {
@@ -430,8 +412,8 @@ export const black_knight = {
   icon: 'swords',
   changeCost: 500000,
   requirements: [
-    { jobId: 'knight', level: 50 },
-    { jobId: 'dancer', level: 50 }
+    { jobId: 'knight', level: 100 },
+    { jobId: 'dancer', level: 100 }
   ],
   skills: [
     // ─── Active Skills ──────────────────────────────────────

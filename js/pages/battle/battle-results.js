@@ -646,7 +646,7 @@ export const resultMethods = {
       'defDebuffTurns', 'defDebuffPercent',
       '_regenTurns', '_regenHp',
       '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype', '_slimeSingerNotes',
-      '_dragoonSpirit'
+      '_dragoonSpirit', '_shinraSigils'
     ];
 
     for (const p of this.party) {

@@ -10,8 +10,8 @@ const assert = (condition, message) => {
 };
 
 assert(JOBS.magic_archer?.name === 'マジックアーチャー', 'magic archer is not registered');
-assert(magic_archer.requirements.some(req => req.jobId === 'ranger' && req.level === 50), 'ranger requirement is missing');
-assert(magic_archer.requirements.some(req => req.jobId === 'mage' && req.level === 50), 'mage requirement is missing');
+assert(magic_archer.requirements.some(req => req.jobId === 'ranger' && req.level === 100), 'ranger requirement is missing');
+assert(magic_archer.requirements.some(req => req.jobId === 'mage' && req.level === 100), 'mage requirement is missing');
 assert(JOB_STAT_GROWTH.magic_archer && JOB_STAT_MULTIPLIER.magic_archer, 'magic archer stats are missing');
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.magic_archer || {}).length === 4, 'magic archer auto-battle tactics are missing');
 

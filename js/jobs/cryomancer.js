@@ -122,11 +122,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
         addSnowMist(x, y, 175);
         addFrostRing(x, y, 128);
         addCrystalBurst(x, y, 12, 80);
-        targetEl.animate([
-          { filter: 'brightness(1) saturate(1)', transform: 'scale(1)' },
-          { filter: 'brightness(2.4) saturate(.35) hue-rotate(15deg)', transform: 'scale(.94)', offset: .45 },
-          { filter: 'brightness(1) saturate(1)', transform: 'scale(1)' }
-        ], { duration: 520 / speedMult, easing: 'ease-out' });
         setTimeout(() => onImpact?.(target, index), 290 / speedMult);
       } else if (type === 'absolute_zero') {
         const prison = document.createElement('div');
@@ -186,8 +181,8 @@ export const cryomancer = {
   image: './assets/job/job_cryomancer.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'mage', level: 50 },
-    { jobId: 'poseidon', level: 50 }
+    { jobId: 'mage', level: 100 },
+    { jobId: 'poseidon', level: 100 }
   ],
   skills: [
     {

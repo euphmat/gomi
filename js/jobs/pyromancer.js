@@ -178,12 +178,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           setTimeout(() => addFireRing(x, y, 138), 60 / speedMult);
           addFlameWisps(x, y, 5, 54);
           addEmbers(x, y, 14, 72);
-          targetEl.animate([
-            { transform: 'translateX(0) scale(1)', filter: 'brightness(1)' },
-            { transform: 'translateX(8px) scale(.94)', filter: 'brightness(2.5) saturate(1.7)', offset: .35 },
-            { transform: 'translateX(-5px) scale(1.03)', filter: 'brightness(1.45)', offset: .68 },
-            { transform: 'translateX(0) scale(1)', filter: 'brightness(1)' }
-          ], { duration: 320 / speedMult, easing: 'ease-out' });
           onImpact?.(target, index);
         };
 
@@ -220,11 +214,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           addImpactFlash(x, y, 76, '#fde68a');
           addFireRing(x, y, 68);
           addEmbers(x, y, 9, 52);
-          targetEl.animate([
-            { transform: 'translateY(0)', filter: 'brightness(1)' },
-            { transform: 'translateY(5px) scale(.96)', filter: 'brightness(2.1) saturate(1.5)', offset: .45 },
-            { transform: 'translateY(0)', filter: 'brightness(1)' }
-          ], { duration: 230 / speedMult, easing: 'ease-out' });
           onImpact?.(target, index);
         };
 
@@ -276,12 +265,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
           setTimeout(() => addFireRing(x, y + 8, 190), 70 / speedMult);
           addFlameWisps(x, y, 7, 78);
           addEmbers(x, y, 20, 105);
-          targetEl.animate([
-            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-            { transform: 'translateY(-8px) scale(.92)', filter: 'brightness(2.6) saturate(1.8)', offset: .35 },
-            { transform: 'translateY(6px) scale(1.05)', filter: 'brightness(1.5)', offset: .68 },
-            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-          ], { duration: 390 / speedMult, easing: 'ease-out' });
           onImpact?.(target, index);
         }, 360 / speedMult);
       } else if (type === 'meteor_catastrophe') {
@@ -334,13 +317,6 @@ const playSkillAnimation = (caster, targets, type, onImpact) => {
             { transform: 'scale(1.5)', opacity: 0 }
           ], { duration: 720 / speedMult, easing: 'cubic-bezier(.1,.75,.2,1)' }).onfinish = () => crater.remove();
 
-          targetEl.animate([
-            { transform: 'translateX(0)', filter: 'brightness(1)' },
-            { transform: 'translateX(12px) translateY(5px) scale(.9)', filter: 'brightness(3) saturate(2)', offset: .26 },
-            { transform: 'translateX(-10px) translateY(-4px) scale(1.07)', filter: 'brightness(1.8)', offset: .54 },
-            { transform: 'translateX(6px) scale(.96)', filter: 'brightness(1.35)', offset: .76 },
-            { transform: 'translateX(0)', filter: 'brightness(1)' }
-          ], { duration: 520 / speedMult, easing: 'ease-out' });
           onImpact?.(target, index);
         };
       }
@@ -383,8 +359,8 @@ export const pyromancer = {
   icon: 'local_fire_department',
   changeCost: 500000,
   requirements: [
-    { jobId: 'mage', level: 50 },
-    { jobId: 'magic_knight', level: 50 }
+    { jobId: 'mage', level: 100 },
+    { jobId: 'magic_knight', level: 100 }
   ],
   skills: [
     // ─── Active Skills ──────────────────────────────────────

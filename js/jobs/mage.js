@@ -238,14 +238,6 @@ const playSkillAnimation = (caster, targets, type, onImpact, options = {}) => {
                 anim.onfinish = () => el.remove();
               }
 
-              if (targetEl && !document.hidden && battleSpeed < 5) {
-                targetEl.animate([
-                  { transform: 'translateX(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0px #00bfff)' },
-                  { transform: 'translateX(-5px) scale(0.95)', filter: 'brightness(1.5) drop-shadow(0 0 10px #00bfff)', offset: 0.2 },
-                  { transform: 'translateX(5px) scale(0.95)', filter: 'brightness(1.5) drop-shadow(0 0 10px #e0ffff)', offset: 0.6 },
-                  { transform: 'translateX(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0px #00bfff)' }
-                ], { duration: 150 / speedMult, easing: 'ease-out' });
-              }
               completed++;
               if (onImpact) onImpact(target, index, completed - 1);
             }, i * 45 / speedMult);

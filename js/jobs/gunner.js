@@ -163,8 +163,8 @@ export const gunner = {
   image: './assets/job/job_gunner.webp',
   changeCost: 500000,
   requirements: [
-    { jobId: 'ranger', level: 50 },
-    { jobId: 'assassin', level: 50 }
+    { jobId: 'ranger', level: 100 },
+    { jobId: 'assassin', level: 100 }
   ],
   skills: [
     {

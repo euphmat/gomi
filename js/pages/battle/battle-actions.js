@@ -1,4 +1,3 @@
-import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { playNormalAttackAnimation } from './normal-attack-animations.js';
 import {
@@ -78,6 +77,7 @@ export const actionMethods = {
     entity._entertainerHype = 0;
     entity._slimeSingerNotes = 0;
     entity._dragoonSpirit = 0;
+    entity._shinraSigils = [];
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -283,31 +283,6 @@ export const actionMethods = {
       automatic: this.isAutoBattle,
       rate: isParty ? 1.04 : .9,
     });
-
-    // --- 攻撃者のアクションアニメーション (モンスター側のみ) ---
-    if (!isParty && !this._cachedDisableAnim && !document.hidden && !options.skipAttackerAnim) {
-      const attackerEl = document.getElementById(attacker.elementId);
-      if (attackerEl) {
-        const animDuration = getBattleAnimationDuration(300, 120);
-        attackAnimationMs = Math.max(attackAnimationMs, animDuration + 34);
-        attackCadenceMs = Math.max(attackCadenceMs, animDuration * 0.8);
-        if (isMagic) {
-          attackerEl.animate([
-            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
-            { transform: 'translateY(-15px) scale(1.1)', filter: 'brightness(1.5)', offset: 0.5 },
-            { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' }
-          ], { duration: animDuration, easing: 'ease-in-out' });
-        } else {
-          const direction = isParty ? -30 : 30; 
-          attackerEl.animate([
-            { transform: 'translateY(0) scale(1)' },
-            { transform: `translateY(${direction}px) scale(1.05)`, offset: 0.2 },
-            { transform: `translateY(${direction}px) scale(1.05)`, offset: 0.4 },
-            { transform: 'translateY(0) scale(1)' }
-          ], { duration: animDuration, easing: 'ease-out' });
-        }
-      }
-    }
 
     // --- Guardian Oath: intercept every incoming party hit, including AoE ---
     if (!isParty && defender.hp !== undefined) {
@@ -556,6 +531,13 @@ export const actionMethods = {
         }
       }
     }
+    // --- Passive: 三界の理 (grass / wind / earth damage amplification) ---
+    if (['grass', 'wind', 'earth'].includes(options.element) && attacker.hp !== undefined) {
+      const dominion = this._findSkill(attacker, 'three_realms_dominion');
+      if (dominion?.level > 0 && dominion.levelConfig?.natureDamagePercent) {
+        damage = Math.floor(damage * (1 + dominion.levelConfig.natureDamagePercent / 100));
+      }
+    }
     if (options.isGuarded) {
       damage = Math.floor(damage * 0.5);
     }
@@ -702,21 +684,6 @@ export const actionMethods = {
       delayDamageMs = timing.impactDelay;
       attackAnimationMs = Math.max(attackAnimationMs, timing.completionDelay);
       attackCadenceMs = Math.max(attackCadenceMs, timing.cadenceDelay);
-    } else if ((!options.damageType || options.damageType === 'ability') && !this._cachedDisableAnim && !document.hidden) {
-      const defenderEl = document.getElementById(defender.elementId);
-      if (defenderEl) {
-        const slashDuration = getBattleAnimationDuration(200, 100);
-        attackAnimationMs = Math.max(attackAnimationMs, slashDuration + 34);
-        attackCadenceMs = Math.max(attackCadenceMs, slashDuration * 0.8);
-        defenderEl.animate([
-          { transform: 'translateX(0)', filter: 'brightness(1)' },
-          { transform: 'translateX(10px)', filter: 'brightness(1.5)', offset: 0.2 },
-          { transform: 'translateX(-10px)', filter: 'brightness(1.5)', offset: 0.4 },
-          { transform: 'translateX(8px)', filter: 'brightness(1)', offset: 0.6 },
-          { transform: 'translateX(-8px)', filter: 'brightness(1)', offset: 0.8 },
-          { transform: 'translateX(0)', filter: 'brightness(1)' }
-        ], { duration: slashDuration, easing: 'ease-out' });
-      }
     } else if (actionName === 'マジックミサイル' && !this._cachedDisableAnim && !document.hidden) {
       const timing = playMagicMissileAnimation(attacker, defender);
       delayDamageMs = timing.impactDelay;
