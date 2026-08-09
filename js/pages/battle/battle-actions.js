@@ -1,7 +1,10 @@
 import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { playNormalAttackAnimation } from './normal-attack-animations.js';
-import { playMagicMissileAnimation } from './magic-missile-animation.js';
+import {
+  getMagicMissileAnimationTiming,
+  playMagicMissileAnimation
+} from './magic-missile-animation.js';
 
 /**
  * battle-actions.js
@@ -259,6 +262,9 @@ export const actionMethods = {
   executeAttack(attacker, defender, isParty, options = {}) {
     if (this.isStopped) return;
     const actionName = options.actionName || '攻撃';
+    // Follow-up effects can remain abilities for damage/passive bookkeeping
+    // while explicitly representing another normal-attack hit.
+    const isNormalAttack = !options.damageType || options.isNormalAttack === true;
     let attackAnimationMs = 0;
     let attackCadenceMs = 0;
 
@@ -681,7 +687,7 @@ export const actionMethods = {
 
     // --- 攻撃アニメーション ---
     let delayDamageMs = 0;
-    if (isParty && !options.damageType && !this._cachedDisableAnim && !document.hidden) {
+    if (isParty && isNormalAttack && !this._cachedDisableAnim && !document.hidden) {
       // Party normal attacks have a distinct visual for every job. Counter
       // attacks intentionally come through this path as normal attacks too.
       const timing = playNormalAttackAnimation(attacker, defender);
@@ -852,36 +858,41 @@ export const actionMethods = {
       }
     }
 
+    // --- Passive: Magic Missile ---
+    // Every hit explicitly marked as a normal attack owns one missile. This
+    // includes Plus One and future effects that repeat a normal attack, while
+    // the missile itself remains a skill and cannot recursively trigger here.
+    let normalAttackSequenceMs = attackCadenceMs;
+    if (isParty && isNormalAttack && !isMagic && attacker.hp !== undefined && !defender.isDead) {
+      const missileSkill = this._findSkill(attacker, 'magic_missile');
+      if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
+        const missileDelay = attackCadenceMs > 0
+          ? attackCadenceMs
+          : (this.speedMult >= 5 ? 0 : 300 / this.speedMult);
+        if (attackCadenceMs > 0) {
+          normalAttackSequenceMs = missileDelay + getMagicMissileAnimationTiming().impactDelay;
+        }
+        this._scheduleBattleTimeout(() => {
+          if (!defender.isDead && !attacker.isDead) {
+            this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
+            this.executeAttack(attacker, defender, true, {
+              actionName: 'マジックミサイル',
+              damageMultiplier: missileSkill.levelConfig.multiplier,
+              damageType: 'skill',
+              isMagic: true,
+              hideActionName: true,
+              skipAtbReset: true
+            });
+          }
+        }, missileDelay);
+      }
+    }
+
     if (!options.skipAtbReset) {
       attacker.atb = 0;
       if (attacker.hp !== undefined) {
         if (this.activeCharacter === attacker) {
           this.activeCharacter = null;
-        }
-        
-        // --- Passive: Magic Missile ---
-        if (!options.damageType && !isMagic && !defender.isDead) {
-          const missileSkill = this._findSkill(attacker, 'magic_missile');
-          if (missileSkill && missileSkill.level > 0 && missileSkill.levelConfig) {
-            // Start the passive after the normal attack has visibly connected,
-            // so the two independently implemented animations do not overlap.
-            const missileDelay = attackCadenceMs > 0
-              ? attackCadenceMs
-              : (this.speedMult >= 5 ? 0 : 300 / this.speedMult);
-            this._scheduleBattleTimeout(() => {
-              if (!defender.isDead && !attacker.isDead) {
-                this.showActionName(attacker.elementId, 'マジックミサイル', 'text-fuchsia-400', 'border-fuchsia-500/50');
-                this.executeAttack(attacker, defender, true, { 
-                  actionName: 'マジックミサイル', 
-                  damageMultiplier: missileSkill.levelConfig.multiplier, 
-                  damageType: 'skill', 
-                  isMagic: true, 
-                  hideActionName: true,
-                  skipAtbReset: true
-                });
-              }
-            }, missileDelay);
-          }
         }
         
         // --- Passive: Plus One ---
@@ -903,11 +914,14 @@ export const actionMethods = {
                     actionName: 'プラスワン',
                     damageMultiplier: plusOneSkill.levelConfig.multiplier || 0.5,
                     damageType: 'ability',
+                    isNormalAttack: true,
                     hideActionName: true,
                     skipAtbReset: true
                   });
                 }
-              }, this.speedMult >= 5 ? 0 : (400 + i * 200) / this.speedMult);
+              }, normalAttackSequenceMs > 0
+                ? normalAttackSequenceMs * (i + 1)
+                : (this.speedMult >= 5 ? 0 : (400 + i * 200) / this.speedMult));
             }
           }
         }

@@ -16,6 +16,24 @@ export const MAGIC_MISSILE_ANIMATION_PROFILE = Object.freeze({
 
 const emptyTiming = () => ({ impactDelay: 0, cadenceDelay: 0, completionDelay: 0 });
 
+export function getMagicMissileAnimationTiming() {
+  const actionDuration = getBattleAnimationDuration(520, 280);
+  const launchDelay = Math.round(actionDuration * .2);
+  const impactDelay = Math.round(launchDelay + actionDuration * .7);
+  const impactDuration = getBattleAnimationDuration(300, 170);
+  const totalDuration = impactDelay + impactDuration;
+
+  return {
+    actionDuration,
+    launchDelay,
+    impactDelay,
+    impactDuration,
+    cadenceDelay: impactDelay,
+    completionDelay: Math.ceil(totalDuration + 34),
+    totalDuration
+  };
+}
+
 const centerOf = rect => ({
   x: rect.left + rect.width / 2,
   y: rect.top + rect.height / 2
@@ -138,11 +156,14 @@ export function playMagicMissileAnimation(attacker, defender) {
   const dy = target.y - origin.y;
   const angle = Math.atan2(dy, dx);
   const profile = MAGIC_MISSILE_ANIMATION_PROFILE;
-  const actionDuration = getBattleAnimationDuration(520, 280);
-  const launchDelay = Math.round(actionDuration * .2);
-  const impactDelay = Math.round(launchDelay + actionDuration * .7);
-  const impactDuration = getBattleAnimationDuration(300, 170);
-  const totalDuration = impactDelay + impactDuration;
+  const {
+    actionDuration,
+    launchDelay,
+    impactDelay,
+    impactDuration,
+    completionDelay,
+    totalDuration
+  } = getMagicMissileAnimationTiming();
 
   attackerEl.animate([
     { transform: 'translateY(0) scale(1)', filter: 'brightness(1)' },
@@ -167,6 +188,6 @@ export function playMagicMissileAnimation(attacker, defender) {
   return {
     impactDelay,
     cadenceDelay: impactDelay,
-    completionDelay: Math.ceil(totalDuration + 34)
+    completionDelay
   };
 }
