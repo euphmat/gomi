@@ -28,7 +28,8 @@ export const NORMAL_ATTACK_ANIMATION_PROFILES = Object.freeze({
   guardian:       { kind: 'guardian_rampart', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 },
   cryomancer:     { kind: 'frost_nova', primary: '#ecfeff', secondary: '#38bdf8', particles: 9 },
   magic_archer:   { kind: 'bow_shot', primary: '#cffafe', secondary: '#8b5cf6', particles: 7 },
-  slime_singer:   { kind: 'slime_serenade', primary: '#a7f3d0', secondary: '#38bdf8', particles: 9 }
+  slime_singer:   { kind: 'slime_serenade', primary: '#a7f3d0', secondary: '#38bdf8', particles: 9 },
+  dragoon:        { kind: 'dragon_lance', primary: '#ecfeff', secondary: '#0ea5e9', particles: 9 }
 });
 
 const DEFAULT_PROFILE = NORMAL_ATTACK_ANIMATION_PROFILES.norvice;
@@ -592,6 +593,15 @@ export function playNormalAttackAnimation(attacker, defender) {
       addWave(layer, target, profile, impactDuration * 1.2, impactDelay * .75, 'water');
       addGlyph(layer, target, profile, impactDuration, '♆', impactDelay * .72, { size: 54 });
       addRing(layer, target, profile, impactDuration, impactDelay, { size: 92, width: 2, scale: 1.45 });
+      break;
+
+    case 'dragon_lance':
+      animateActor(attackerEl, profile, actionDuration, direction, 'melee');
+      addWeapon(layer, origin, direction, profile, actionDuration * .9, actionDuration * .02, 'trident');
+      addSlash(layer, target, profile, impactDuration * .92, direction.angle * 180 / Math.PI, impactDelay * .82, 152, 8);
+      addVerticalStrike(layer, target, profile, impactDuration, impactDelay * .72, 'light');
+      addRing(layer, target, profile, impactDuration, impactDelay, { size: 96, width: 3, scale: 1.5 });
+      addGlyph(layer, target, { ...profile, primary: '#fef08a' }, impactDuration * .82, '♢', impactDelay * .76, { size: 44 });
       break;
 
     case 'flame_eruption':

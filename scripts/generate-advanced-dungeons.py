@@ -60,6 +60,17 @@ MECHANICS = {
     "time_erosion",
     "subspace_distortion",
 }
+UNIQUE_SKILL_TYPES = {
+    "gravity_well",
+    "soul_furnace",
+    "ancestral_molt",
+    "dark_aegis",
+    "mirror_theft",
+    "prismatic_tempest",
+    "inverse_law",
+    "chronicle_repair",
+    "causality_reversal",
+}
 
 
 def validate(catalog: dict) -> None:
@@ -82,6 +93,11 @@ def validate(catalog: dict) -> None:
             assert monster["element"] in ELEMENT_LABELS, f"invalid element: {monster['element']}"
             assert monster["weakness"] in ELEMENT_LABELS, f"invalid weakness: {monster['weakness']}"
             assert monster["ailment"] in AILMENTS, f"invalid ailment: {monster['ailment']}"
+            if unique_skill := monster.get("uniqueSkill"):
+                assert unique_skill.get("name"), f"unique skill name is missing: {monster['id']}"
+                assert unique_skill.get("description"), f"unique skill description is missing: {monster['id']}"
+                assert unique_skill.get("type") in UNIQUE_SKILL_TYPES, f"invalid unique skill type: {monster['id']}"
+                assert 0 < unique_skill.get("chance", 0) < 100, f"invalid unique skill chance: {monster['id']}"
             assert len(monster["materials"]) == 3, f"{monster['id']} must have 3 materials"
             generated_ids = [
                 monster["id"],
@@ -126,6 +142,17 @@ function clearPositiveBuffs(target) {{
   target._provokeChance = 0;
   target._ailmentResistBuffTurns = 0;
   target._ailmentResistBuffAmount = 0;
+}}
+
+function clearNegativeBuffs(target) {{
+  for (const stat of ['atk', 'matk', 'def', 'mdef']) {{
+    const turnsKey = `_${{stat}}BuffTurns`;
+    const percentKey = `_${{stat}}BuffPercent`;
+    const amountKey = `_${{stat}}BuffAmount`;
+    if ((target[percentKey] || 0) < 0) target[percentKey] = 0;
+    if ((target[amountKey] || 0) < 0) target[amountKey] = 0;
+    if ((target[percentKey] || 0) === 0 && (target[amountKey] || 0) === 0) target[turnsKey] = 0;
+  }}
 }}
 
 function applyOffenseBuff(target, percent, turns = 3) {{
@@ -296,6 +323,113 @@ function createAdvancedAction(monster, dungeon, dungeonIndex, floorIndex, isBoss
   }};
 }}
 
+function createUniqueAction(monster, dungeonIndex) {{
+  const skill = monster.uniqueSkill;
+  const attack = (attacker, target, battle, element, multiplier, ailments = {{}}) => {{
+    if (!target || target.isDead) return;
+    const originalElements = attacker.stats.attackElements;
+    const originalAilments = attacker.stats.attackAilments;
+    attacker.stats.attackElements = {{ [element]: 100 }};
+    attacker.stats.attackAilments = {{ ...(originalAilments || {{}}), ...ailments }};
+    battle.executeAttack(attacker, target, false, {{
+      actionName: skill.name,
+      damageMultiplier: multiplier,
+      isMagic: MAGIC_ELEMENTS.has(element),
+      damageType: 'skill',
+      hideActionName: true,
+    }});
+    attacker.stats.attackElements = originalElements;
+    attacker.stats.attackAilments = originalAilments;
+  }};
+
+  return {{
+    name: skill.name,
+    chance: skill.chance,
+    type: ['ancestral_molt', 'dark_aegis', 'chronicle_repair'].includes(skill.type) ? 'support' : 'magic',
+    isMagic: !['ancestral_molt', 'dark_aegis', 'chronicle_repair'].includes(skill.type),
+    description: skill.description,
+    execute: (attacker, defender, battle) => {{
+      const party = livingParty(battle);
+      const enemies = livingEnemies(battle, attacker);
+      battle.showActionName?.(attacker.elementId, skill.name, 'text-cyan-200', 'border-cyan-400/60');
+
+      if (skill.type === 'gravity_well') {{
+        party.forEach(target => {{
+          attack(attacker, target, battle, 'thunder', 7.4 + dungeonIndex * 0.4, {{ paralysis: 55 }});
+          target.atb = Math.floor(Math.max(0, target.atb || 0) * 0.5);
+        }});
+      }} else if (skill.type === 'soul_furnace') {{
+        const sacrifice = Math.floor(attacker.stats.hp * 0.06);
+        attacker.currentHp = Math.max(1, attacker.currentHp - sacrifice);
+        battle.showDamage?.(attacker.elementId, sacrifice, 'text-red-500');
+        party.forEach(target => attack(attacker, target, battle, 'fire', 8 + dungeonIndex * 0.45, {{ burn: 60, curse: 45 }}));
+      }} else if (skill.type === 'ancestral_molt') {{
+        const heal = Math.floor(attacker.stats.hp * 0.12);
+        attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + heal);
+        attacker.activeAilment = null;
+        clearNegativeBuffs(attacker);
+        applyOffenseBuff(attacker, 35);
+        battle.showDamage?.(attacker.elementId, `+${{heal}}`, 'text-green-400');
+      }} else if (skill.type === 'dark_aegis') {{
+        enemies.forEach(target => {{
+          const barrier = Math.floor((target.stats?.hp || target.maxHp || currentHp(target) || 1) * 0.08);
+          target._barrierHp = Math.max(target._barrierHp || 0, barrier);
+          applyOffenseBuff(target, 25);
+          battle.showDamage?.(target.elementId, `BARRIER +${{barrier}}`, 'text-blue-300');
+        }});
+      }} else if (skill.type === 'mirror_theft') {{
+        const stolen = Object.fromEntries(['atk', 'matk', 'def', 'mdef'].map(stat => [stat, {{
+          percent: Math.max(0, defender[`_${{stat}}BuffPercent`] || 0),
+          amount: Math.max(0, defender[`_${{stat}}BuffAmount`] || 0),
+        }}]));
+        clearPositiveBuffs(defender);
+        for (const [stat, buff] of Object.entries(stolen)) {{
+          if (buff.percent <= 0 && buff.amount <= 0) continue;
+          attacker[`_${{stat}}BuffPercent`] = Math.max(attacker[`_${{stat}}BuffPercent`] || 0, buff.percent);
+          attacker[`_${{stat}}BuffAmount`] = Math.max(attacker[`_${{stat}}BuffAmount`] || 0, buff.amount);
+          attacker[`_${{stat}}BuffTurns`] = Math.max(attacker[`_${{stat}}BuffTurns`] || 0, 3);
+        }}
+        attack(attacker, defender, battle, 'light', 10 + dungeonIndex * 0.5, {{ confusion: 55 }});
+      }} else if (skill.type === 'prismatic_tempest') {{
+        const multiplier = 3.1 + dungeonIndex * 0.18;
+        for (const element of ['wind', 'thunder', 'light']) {{
+          party.forEach(target => attack(attacker, target, battle, element, multiplier, element === 'light' ? {{ confusion: 60 }} : {{}}));
+        }}
+      }} else if (skill.type === 'inverse_law') {{
+        party.forEach(target => {{
+          attack(attacker, target, battle, 'light', 6.2 + dungeonIndex * 0.35, {{ confusion: 70 }});
+          target.atb = Math.max(0, 1000 - Math.min(1000, target.atb || 0));
+        }});
+      }} else if (skill.type === 'chronicle_repair') {{
+        enemies.forEach(target => {{
+          const maxHp = target.stats?.hp || target.maxHp || currentHp(target) || 1;
+          const heal = Math.floor(maxHp * 0.08);
+          target.currentHp = Math.min(maxHp, currentHp(target) + heal);
+          target.activeAilment = null;
+          clearNegativeBuffs(target);
+          target.atb = Math.min(1000, (target.atb || 0) + 250);
+          battle.showDamage?.(target.elementId, `+${{heal}}`, 'text-green-400');
+        }});
+      }} else if (skill.type === 'causality_reversal') {{
+        const positiveBuffs = Object.fromEntries(['atk', 'matk', 'def', 'mdef'].map(stat => [stat, {{
+          percent: Math.max(0, defender[`_${{stat}}BuffPercent`] || 0),
+          amount: Math.max(0, defender[`_${{stat}}BuffAmount`] || 0),
+        }}]));
+        attack(attacker, defender, battle, 'light', 12 + dungeonIndex * 0.55, {{ confusion: 75 }});
+        if (!defender.isDead) {{
+          clearPositiveBuffs(defender);
+          for (const [stat, buff] of Object.entries(positiveBuffs)) {{
+            if (buff.percent <= 0 && buff.amount <= 0) continue;
+            if (buff.percent > 0) defender[`_${{stat}}BuffPercent`] = -Math.max(20, buff.percent);
+            if (buff.amount > 0) defender[`_${{stat}}BuffAmount`] = -buff.amount;
+            defender[`_${{stat}}BuffTurns`] = Math.max(defender[`_${{stat}}BuffTurns`] || 0, 3);
+          }}
+        }}
+      }}
+    }},
+  }};
+}}
+
 const PRESSURE_DESCRIPTIONS = {{
   astral_acceleration: '星の加護で敵全体の攻撃・魔攻を強化し、自身のHPを5%回復する。',
   infernal_rebirth: '業火で自身のHPを8%回復し、攻撃・魔攻を大幅に強化する。',
@@ -421,6 +555,7 @@ export const ADVANCED_MONSTERS = ENTRIES.map(({{ dungeon, dungeonIndex, monster,
     }})),
     actions: [
       createAdvancedAction(monster, dungeon, dungeonIndex, floorIndex, isBoss),
+      ...(monster.uniqueSkill ? [createUniqueAction(monster, dungeonIndex)] : []),
       ...(isBoss ? [createPressureAction(dungeon, dungeonIndex)] : []),
     ],
   }};

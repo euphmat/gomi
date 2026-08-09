@@ -104,6 +104,7 @@ export function calcFinalStats(character, equipmentMap) {
 
   let hpMultiplier = 1.0;
   let mpMultiplier = 1.0;
+  let atkMultiplier = 1.0;
   let matkMultiplier = 1.0;
   let defMultiplier = 1.0;
   let mdefMultiplier = 1.0;
@@ -121,6 +122,8 @@ export function calcFinalStats(character, equipmentMap) {
         if (levelConfig.bonusHpPercent) hpMultiplier += levelConfig.bonusHpPercent / 100;
         if (levelConfig.bonusMp) result.mp += levelConfig.bonusMp;
         if (levelConfig.bonusMpPercent) mpMultiplier += levelConfig.bonusMpPercent / 100;
+        if (levelConfig.bonusAtk) result.atk += levelConfig.bonusAtk;
+        if (levelConfig.bonusAtkPercent) atkMultiplier += levelConfig.bonusAtkPercent / 100;
         if (levelConfig.bonusMatk) result.matk += levelConfig.bonusMatk;
         if (levelConfig.bonusMatkPercent) matkMultiplier += levelConfig.bonusMatkPercent / 100;
         if (levelConfig.bonusDef) result.def += levelConfig.bonusDef;
@@ -171,6 +174,7 @@ export function calcFinalStats(character, equipmentMap) {
 
   result.hp = Math.floor(result.hp * hpMultiplier);
   result.mp = Math.floor(result.mp * mpMultiplier);
+  result.atk = Math.floor(result.atk * atkMultiplier);
   result.matk = Math.floor(result.matk * matkMultiplier);
   result.def = Math.floor(result.def * defMultiplier);
   result.mdef = Math.floor(result.mdef * mdefMultiplier);

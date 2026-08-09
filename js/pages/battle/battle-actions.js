@@ -77,6 +77,7 @@ export const actionMethods = {
     entity._conductorHarmony = 0;
     entity._entertainerHype = 0;
     entity._slimeSingerNotes = 0;
+    entity._dragoonSpirit = 0;
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -449,6 +450,13 @@ export const actionMethods = {
         mdefStat = mdefStat + totalMdefAmount;
       }
       defStat = mdefStat;
+    }
+
+    // --- 物理防御貫通 ---
+    // スキル側から割合を渡し、装備値と防御バフを含む最終DEFを軽減する。
+    if (!isMagic && !options.isHybrid && options.defenseIgnorePercent > 0) {
+      const ignorePercent = Math.min(100, Math.max(0, Number(options.defenseIgnorePercent) || 0));
+      defStat = Math.floor(defStat * (1 - ignorePercent / 100));
     }
 
     let damage = 0;

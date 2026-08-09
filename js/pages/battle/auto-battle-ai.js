@@ -114,6 +114,10 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     jelly_note: skill(ROLE.COMBO_FINISHER), puyopuyo_chorus: skill(ROLE.COMBO_SETUP, 'area'),
     elastic_refrain: skill(ROLE.MAINTENANCE, 'party'), healing_refrain: skill(ROLE.RECOVERY, 'party'),
     king_slime_chorus: skill(ROLE.COMBO_FINISHER, 'area')
+  }),
+  dragoon: Object.freeze({
+    piercing_lance: skill(ROLE.COMBO_SETUP), high_jump: skill(ROLE.COMBO_SETUP),
+    dragon_sweep: skill(ROLE.COMBO_SETUP, 'area'), skyfall_dive: skill(ROLE.COMBO_FINISHER)
   })
 });
 
@@ -400,6 +404,31 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
         chorus.priority = 460;
         chorus.score += 420 + notes * 55;
         if (!existing) candidates.push(chorus);
+      }
+    }
+  }
+
+  // ドラグーン: 竜気を最大まで溜めてから天墜竜槍で放出する。
+  if (currentJob === 'dragoon') {
+    const maxSpirit = getMaxResource(character, findSkill, 'dragon_heart', 'maxDragonSpirit');
+    const spirit = character._dragoonSpirit || 0;
+    const diveSkill = getUsableSkill(usableSkills, 'skyfall_dive');
+    if (maxSpirit > 0 && spirit < maxSpirit) {
+      const diveIndex = candidates.findIndex(candidate => candidate.skill.id === 'skyfall_dive');
+      if (diveIndex >= 0) candidates.splice(diveIndex, 1);
+      ['piercing_lance', 'high_jump', 'dragon_sweep'].forEach(id => {
+        const builder = byId.get(id);
+        if (builder) builder.score += 80 + (maxSpirit - spirit) * 18;
+      });
+    } else if (diveSkill && maxSpirit > 0 && spirit >= maxSpirit && aliveEnemies.length) {
+      const existing = byId.get('skyfall_dive');
+      const dive = existing || makeCandidate(diveSkill, aliveEnemies[0], 0);
+      if (dive) {
+        dive.target = aliveEnemies.reduce((best, enemy) =>
+          (enemy.currentHp || 0) > (best.currentHp || 0) ? enemy : best);
+        dive.priority = 475;
+        dive.score += 400 + spirit * 70;
+        if (!existing) candidates.push(dive);
       }
     }
   }

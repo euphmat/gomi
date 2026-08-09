@@ -18,6 +18,7 @@ import { guardian } from './guardian.js';
 import { cryomancer } from './cryomancer.js';
 import { magic_archer } from './magic_archer.js';
 import { slime_singer } from './slime_singer.js';
+import { dragoon } from './dragoon.js';
 
 export const JOB_STAT_GROWTH = {
   // HP/MP are weighted at 25% when budgeting growth because equipment grants
@@ -44,7 +45,8 @@ export const JOB_STAT_GROWTH = {
   [guardian.id]:    { hp: [4, 5], mp: [1, 3], atk: [0, 1], def: [2, 4], matk: [0, 0], mdef: [2, 4], spd: [0, 1] },
   [cryomancer.id]:  { hp: [1, 3], mp: [3, 5], atk: [0, 0], def: [0, 1], matk: [3, 4], mdef: [1, 2], spd: [0, 2] },
   [magic_archer.id]: { hp: [1, 3], mp: [2, 4], atk: [0, 1], def: [0, 2], matk: [2, 3], mdef: [1, 2], spd: [1, 2] },
-  [slime_singer.id]: { hp: [2, 4], mp: [2, 4], atk: [0, 1], def: [0, 2], matk: [2, 3], mdef: [1, 3], spd: [0, 2] }
+  [slime_singer.id]: { hp: [2, 4], mp: [2, 4], atk: [0, 1], def: [0, 2], matk: [2, 3], mdef: [1, 3], spd: [0, 2] },
+  [dragoon.id]:     { hp: [2, 4], mp: [1, 3], atk: [2, 3], def: [1, 2], matk: [0, 0], mdef: [0, 2], spd: [1, 3] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -70,7 +72,8 @@ export const JOB_STAT_MULTIPLIER = {
   [guardian.id]:    { hp: 2.20, mp: 0.95, atk: 0.75, def: 1.85, matk: 0.30, mdef: 1.80, spd: 0.55 },
   [cryomancer.id]:  { hp: 0.85, mp: 1.70, atk: 0.30, def: 0.70, matk: 1.80, mdef: 1.15, spd: 0.85 },
   [magic_archer.id]: { hp: 0.90, mp: 1.55, atk: 0.45, def: 0.80, matk: 1.65, mdef: 1.15, spd: 1.25 },
-  [slime_singer.id]: { hp: 1.15, mp: 1.65, atk: 0.40, def: 1.00, matk: 1.55, mdef: 1.45, spd: 0.95 }
+  [slime_singer.id]: { hp: 1.15, mp: 1.65, atk: 0.40, def: 1.00, matk: 1.55, mdef: 1.45, spd: 0.95 },
+  [dragoon.id]:     { hp: 1.35, mp: 0.85, atk: 1.50, def: 1.15, matk: 0.30, mdef: 0.90, spd: 1.15 }
 };
 
 export const JOBS = {
@@ -93,5 +96,6 @@ export const JOBS = {
   [guardian.id]: { ...guardian, statGrowth: JOB_STAT_GROWTH[guardian.id], statMultiplier: JOB_STAT_MULTIPLIER[guardian.id] },
   [cryomancer.id]: { ...cryomancer, statGrowth: JOB_STAT_GROWTH[cryomancer.id], statMultiplier: JOB_STAT_MULTIPLIER[cryomancer.id] },
   [magic_archer.id]: { ...magic_archer, statGrowth: JOB_STAT_GROWTH[magic_archer.id], statMultiplier: JOB_STAT_MULTIPLIER[magic_archer.id] },
-  [slime_singer.id]: { ...slime_singer, statGrowth: JOB_STAT_GROWTH[slime_singer.id], statMultiplier: JOB_STAT_MULTIPLIER[slime_singer.id] }
+  [slime_singer.id]: { ...slime_singer, statGrowth: JOB_STAT_GROWTH[slime_singer.id], statMultiplier: JOB_STAT_MULTIPLIER[slime_singer.id] },
+  [dragoon.id]: { ...dragoon, statGrowth: JOB_STAT_GROWTH[dragoon.id], statMultiplier: JOB_STAT_MULTIPLIER[dragoon.id] }
 };

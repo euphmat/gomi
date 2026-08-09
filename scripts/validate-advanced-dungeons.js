@@ -18,6 +18,18 @@ const ADVANCED_DUNGEON_IDS = [
   'subspace',
 ];
 
+const UNIQUE_ACTIONS = new Map([
+  ['orbit_golem', '重力井戸'],
+  ['hellfire_witch', '魂炉点火'],
+  ['elder_dragon', '始祖の脱皮'],
+  ['fallen_seraph', '黒翼結界'],
+  ['lunar_knight', '月鏡簒奪'],
+  ['rainbow_gryphon', '三相虹嵐'],
+  ['paradox_sphinx', '逆理転位'],
+  ['chronicle_golem', '年代修復'],
+  ['causality_dragon', '因果反転'],
+]);
+
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
@@ -64,12 +76,14 @@ assert(advancedMonsterIds.size === 72, `追加モンスター数が72ではあ�
 for (const monsterId of advancedMonsterIds) {
   const monster = monsterMap.get(monsterId);
   const isBoss = bossIds.has(monsterId);
+  const hasUniqueAction = UNIQUE_ACTIONS.has(monsterId);
   assert(monster.drops.length === 3, `${monsterId}の素材ドロップが3件ではありません`);
   assert(monster.drops.map(drop => drop.rate).join(',') === '5,1,0.1', `${monsterId}のドロップ率が不正です`);
   monster.drops.forEach(drop => assert(materialIds.has(drop.itemId), `${monsterId}が未定義素材を参照しています: ${drop.itemId}`));
-  assert(monster.actions.length === (isBoss ? 2 : 1), `${monsterId}の固有行動数が不正です`);
+  assert(monster.actions.length === 1 + Number(isBoss) + Number(hasUniqueAction), `${monsterId}の固有行動数が不正です`);
   assert(monster.actions.every(action => action.description && action.chance > 0), `${monsterId}の行動表示情報が不正です`);
   assert(monster.actions.reduce((sum, action) => sum + action.chance, 0) < 100, `${monsterId}の行動確率合計が100%以上です`);
+  if (hasUniqueAction) assert(monster.actions[1].name === UNIQUE_ACTIONS.get(monsterId), `${monsterId}の固有スキル名が不正です`);
 
   monster.actions.forEach((action, actionIndex) => {
     const attacker = {
@@ -78,9 +92,14 @@ for (const monsterId of advancedMonsterIds) {
       atb: 800,
       isDead: false,
       elementId: 'attacker',
+      activeAilment: { type: 'poison' },
+      _defBuffPercent: -30,
+      _defBuffTurns: 3,
     };
     const defender = {
+      stats: { hp: 10000 },
       currentHp: 5000,
+      maxHp: 10000,
       atb: 900,
       isDead: false,
       elementId: 'defender',
@@ -88,8 +107,10 @@ for (const monsterId of advancedMonsterIds) {
       _atkBuffTurns: 3,
       _defBuffPercent: 30,
       _defBuffTurns: 3,
+      _mdefBuffAmount: 500,
+      _mdefBuffTurns: 3,
     };
-    const secondTarget = { currentHp: 5000, atb: 900, isDead: false, elementId: 'second' };
+    const secondTarget = { stats: { hp: 10000 }, currentHp: 5000, maxHp: 10000, atb: 900, isDead: false, elementId: 'second' };
     let attackCount = 0;
     const battle = {
       party: [defender, secondTarget, { currentHp: 0, atb: 0, isDead: true }],
@@ -104,7 +125,7 @@ for (const monsterId of advancedMonsterIds) {
     };
     action.execute(attacker, defender, battle);
     if (actionIndex === 0) assert(attackCount > 0, `${monsterId}の攻撃行動が攻撃を実行しません`);
-    if (actionIndex === 1) assert(attackCount === 0, `${monsterId}の圧力行動が意図せず直接攻撃しています`);
+    if (isBoss && actionIndex === monster.actions.length - 1) assert(attackCount === 0, `${monsterId}の圧力行動が意図せず直接攻撃しています`);
     if (monsterId === 'orbit_golem' && actionIndex === 0) assert(defender.atb < 900, `${monsterId}のATB妨害が機能していません`);
     if (monsterId === 'eclipse_owl' && actionIndex === 0) {
       assert(defender._atkBuffPercent === 0, `${monsterId}のバフ解除が機能していません`);
@@ -113,6 +134,30 @@ for (const monsterId of advancedMonsterIds) {
     if (isBoss && actionIndex === 0) {
       assert(defender.atb < 900 && secondTarget.atb < 900, `${monsterId}の全体ATB妨害が機能していません`);
       assert(defender._defBuffPercent < 0, `${monsterId}の全体防御低下が機能していません`);
+    }
+    if (hasUniqueAction && actionIndex === 1) {
+      if (monsterId === 'orbit_golem') assert(defender.atb === 450 && secondTarget.atb === 450, `${monsterId}のATB半減が機能していません`);
+      if (monsterId === 'hellfire_witch') assert(attacker.currentHp === 4400 && attackCount === 2, `${monsterId}の自傷全体攻撃が機能していません`);
+      if (monsterId === 'elder_dragon') {
+        assert(attacker.currentHp === 6200 && attacker.activeAilment === null, `${monsterId}の回復・状態異常解除が機能していません`);
+        assert(attacker._defBuffPercent === 0 && attacker._atkBuffPercent === 35, `${monsterId}の能力回復・強化が機能していません`);
+      }
+      if (monsterId === 'fallen_seraph') assert(attacker._barrierHp === 800 && attacker._atkBuffPercent === 25, `${monsterId}の障壁・強化が機能していません`);
+      if (monsterId === 'lunar_knight') {
+        assert(defender._atkBuffPercent === 0 && defender._defBuffPercent === 0, `${monsterId}のバフ奪取が対象へ反映されていません`);
+        assert(attacker._atkBuffPercent === 30 && attacker._defBuffPercent === 30, `${monsterId}が奪ったバフを獲得していません`);
+        assert(defender._mdefBuffAmount === 0 && attacker._mdefBuffAmount === 500, `${monsterId}が固定値バフを奪取していません`);
+      }
+      if (monsterId === 'rainbow_gryphon') assert(attackCount === 6, `${monsterId}の三属性全体攻撃回数が不正です`);
+      if (monsterId === 'paradox_sphinx') assert(defender.atb === 100 && secondTarget.atb === 100, `${monsterId}のATB反転が機能していません`);
+      if (monsterId === 'chronicle_golem') {
+        assert(attacker.currentHp === 5800 && attacker.atb === 1000, `${monsterId}のHP・ATB回復が機能していません`);
+        assert(attacker.activeAilment === null && attacker._defBuffPercent === 0, `${monsterId}の状態巻き戻しが機能していません`);
+      }
+      if (monsterId === 'causality_dragon') {
+        assert(defender._atkBuffPercent === -30 && defender._defBuffPercent === -30, `${monsterId}のバフ反転が機能していません`);
+        assert(defender._mdefBuffAmount === -500, `${monsterId}の固定値バフ反転が機能していません`);
+      }
     }
   });
 }
@@ -155,6 +200,7 @@ print(JSON.stringify({
   dungeons: ADVANCED_DUNGEON_IDS.length,
   floors: ADVANCED_DUNGEON_IDS.length * 8,
   monsters: advancedMonsterIds.size,
+  uniqueActions: UNIQUE_ACTIONS.size,
   materials: [...materialIds].filter(id => [...advancedMonsterIds].some(monsterId => id.startsWith(`mat_${monsterId}_`))).length,
   equipment: equipmentGroups.reduce((sum, items, index) => sum + items.filter(item => [...advancedMonsterIds].some(id => item.id === `${id}${suffixes[index]}`)).length, 0),
 }));

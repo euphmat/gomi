@@ -159,6 +159,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "earth",
         "ailment": "paralysis",
         "action": "グラビティオービット",
+        "uniqueSkill": {
+          "name": "重力井戸",
+          "type": "gravity_well",
+          "chance": 18,
+          "description": "重力場で生存者全員に雷属性魔法ダメージを与え、現在のATBを半減させる。"
+        },
         "weapon": "重力環砲",
         "gearTheme": "軌道",
         "concept": "複数の石核が重力環でつながり、惑星のように公転する浮遊ゴーレム。",
@@ -336,6 +342,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "ice",
         "ailment": "curse",
         "action": "ヘルフレア",
+        "uniqueSkill": {
+          "name": "魂炉点火",
+          "type": "soul_furnace",
+          "chance": 18,
+          "description": "自身の最大HPの6%を燃料にし、生存者全員へ火傷または呪いを伴う炎属性魔法を放つ。"
+        },
         "weapon": "煉獄の魔導箒",
         "gearTheme": "業火",
         "concept": "炎で編まれた帽子と焦げた魔導書を携え、黒煙の裾で浮遊する魔女。",
@@ -638,6 +650,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "wind",
         "ailment": "sleep",
         "action": "太古の咆哮",
+        "uniqueSkill": {
+          "name": "始祖の脱皮",
+          "type": "ancestral_molt",
+          "chance": 18,
+          "description": "状態異常と能力低下を解除し、HPを12%回復して攻撃・魔攻を強化する。"
+        },
         "weapon": "エルダードラゴン・ボウ",
         "gearTheme": "古代竜",
         "concept": "岩山と見紛う巨体に古代の碑文と苔を宿す、巣窟最古の竜。",
@@ -865,6 +883,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "light",
         "ailment": "silence",
         "action": "黒翼天罰",
+        "uniqueSkill": {
+          "name": "黒翼結界",
+          "type": "dark_aegis",
+          "chance": 18,
+          "description": "生存中の敵全体に最大HP8%分の障壁を張り、攻撃・魔攻を強化する。"
+        },
         "weapon": "堕天の六翼鎌",
         "gearTheme": "堕天",
         "concept": "六枚の黒翼と砕けた光輪、涙を流す白磁の仮面を持つ堕天使。",
@@ -1017,6 +1041,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "dark",
         "ailment": "confusion",
         "action": "月鏡返し",
+        "uniqueSkill": {
+          "name": "月鏡簒奪",
+          "type": "mirror_theft",
+          "chance": 18,
+          "description": "光属性の刺突とともに対象の能力強化を奪い、自身へ移し替える。"
+        },
         "weapon": "ルナミラー・レイピア",
         "gearTheme": "月鏡",
         "concept": "鏡面の甲冑と細身剣を携え、満月を映す円盾を構える無言の騎士。",
@@ -1269,6 +1299,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "dark",
         "ailment": "confusion",
         "action": "虹天急襲",
+        "uniqueSkill": {
+          "name": "三相虹嵐",
+          "type": "prismatic_tempest",
+          "chance": 18,
+          "description": "風・雷・光の三属性で生存者全員を連続攻撃する虹色の嵐。"
+        },
         "weapon": "虹翼の七色槍",
         "gearTheme": "虹翼",
         "concept": "光の角度で七色に輝く翼と白金の獅子体を持つ天空の守護獣。",
@@ -1496,6 +1532,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "dark",
         "ailment": "confusion",
         "action": "逆理の問",
+        "uniqueSkill": {
+          "name": "逆理転位",
+          "type": "inverse_law",
+          "chance": 18,
+          "description": "生存者全員に混乱を伴う光属性魔法を放ち、それぞれのATB進行度を反転させる。"
+        },
         "weapon": "パラドクス・タブレット",
         "gearTheme": "逆理",
         "concept": "前後が反転した獅子体と二つの人面を持ち、答えのない問いを刻む魔獣。",
@@ -1748,6 +1790,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "dark",
         "ailment": "silence",
         "action": "歴史抹消光",
+        "uniqueSkill": {
+          "name": "年代修復",
+          "type": "chronicle_repair",
+          "chance": 18,
+          "description": "生存中の敵全体を過去の状態へ戻し、HP・状態異常・能力低下・ATBを回復する。"
+        },
         "weapon": "年代記の頁刃",
         "gearTheme": "年代記",
         "concept": "石板と巻物が巨人型に積層し、全身に過去の光景が流れる記録守護者。",
@@ -1975,6 +2023,12 @@ const ADVANCED_DUNGEON_SPECS = [
         "weakness": "dark",
         "ailment": "confusion",
         "action": "因果逆鱗",
+        "uniqueSkill": {
+          "name": "因果反転",
+          "type": "causality_reversal",
+          "chance": 18,
+          "description": "光属性攻撃の後、対象の能力強化を同量以上の能力低下へ反転させる。"
+        },
         "weapon": "因果律の鎖剣",
         "gearTheme": "因果律",
         "concept": "頭から尾へ原因と結果の光景が逆向きに流れ、鎖状の翼を持つ次元竜。",
@@ -2073,6 +2127,17 @@ function clearPositiveBuffs(target) {
   target._provokeChance = 0;
   target._ailmentResistBuffTurns = 0;
   target._ailmentResistBuffAmount = 0;
+}
+
+function clearNegativeBuffs(target) {
+  for (const stat of ['atk', 'matk', 'def', 'mdef']) {
+    const turnsKey = `_${stat}BuffTurns`;
+    const percentKey = `_${stat}BuffPercent`;
+    const amountKey = `_${stat}BuffAmount`;
+    if ((target[percentKey] || 0) < 0) target[percentKey] = 0;
+    if ((target[amountKey] || 0) < 0) target[amountKey] = 0;
+    if ((target[percentKey] || 0) === 0 && (target[amountKey] || 0) === 0) target[turnsKey] = 0;
+  }
 }
 
 function applyOffenseBuff(target, percent, turns = 3) {
@@ -2243,6 +2308,113 @@ function createAdvancedAction(monster, dungeon, dungeonIndex, floorIndex, isBoss
   };
 }
 
+function createUniqueAction(monster, dungeonIndex) {
+  const skill = monster.uniqueSkill;
+  const attack = (attacker, target, battle, element, multiplier, ailments = {}) => {
+    if (!target || target.isDead) return;
+    const originalElements = attacker.stats.attackElements;
+    const originalAilments = attacker.stats.attackAilments;
+    attacker.stats.attackElements = { [element]: 100 };
+    attacker.stats.attackAilments = { ...(originalAilments || {}), ...ailments };
+    battle.executeAttack(attacker, target, false, {
+      actionName: skill.name,
+      damageMultiplier: multiplier,
+      isMagic: MAGIC_ELEMENTS.has(element),
+      damageType: 'skill',
+      hideActionName: true,
+    });
+    attacker.stats.attackElements = originalElements;
+    attacker.stats.attackAilments = originalAilments;
+  };
+
+  return {
+    name: skill.name,
+    chance: skill.chance,
+    type: ['ancestral_molt', 'dark_aegis', 'chronicle_repair'].includes(skill.type) ? 'support' : 'magic',
+    isMagic: !['ancestral_molt', 'dark_aegis', 'chronicle_repair'].includes(skill.type),
+    description: skill.description,
+    execute: (attacker, defender, battle) => {
+      const party = livingParty(battle);
+      const enemies = livingEnemies(battle, attacker);
+      battle.showActionName?.(attacker.elementId, skill.name, 'text-cyan-200', 'border-cyan-400/60');
+
+      if (skill.type === 'gravity_well') {
+        party.forEach(target => {
+          attack(attacker, target, battle, 'thunder', 7.4 + dungeonIndex * 0.4, { paralysis: 55 });
+          target.atb = Math.floor(Math.max(0, target.atb || 0) * 0.5);
+        });
+      } else if (skill.type === 'soul_furnace') {
+        const sacrifice = Math.floor(attacker.stats.hp * 0.06);
+        attacker.currentHp = Math.max(1, attacker.currentHp - sacrifice);
+        battle.showDamage?.(attacker.elementId, sacrifice, 'text-red-500');
+        party.forEach(target => attack(attacker, target, battle, 'fire', 8 + dungeonIndex * 0.45, { burn: 60, curse: 45 }));
+      } else if (skill.type === 'ancestral_molt') {
+        const heal = Math.floor(attacker.stats.hp * 0.12);
+        attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + heal);
+        attacker.activeAilment = null;
+        clearNegativeBuffs(attacker);
+        applyOffenseBuff(attacker, 35);
+        battle.showDamage?.(attacker.elementId, `+${heal}`, 'text-green-400');
+      } else if (skill.type === 'dark_aegis') {
+        enemies.forEach(target => {
+          const barrier = Math.floor((target.stats?.hp || target.maxHp || currentHp(target) || 1) * 0.08);
+          target._barrierHp = Math.max(target._barrierHp || 0, barrier);
+          applyOffenseBuff(target, 25);
+          battle.showDamage?.(target.elementId, `BARRIER +${barrier}`, 'text-blue-300');
+        });
+      } else if (skill.type === 'mirror_theft') {
+        const stolen = Object.fromEntries(['atk', 'matk', 'def', 'mdef'].map(stat => [stat, {
+          percent: Math.max(0, defender[`_${stat}BuffPercent`] || 0),
+          amount: Math.max(0, defender[`_${stat}BuffAmount`] || 0),
+        }]));
+        clearPositiveBuffs(defender);
+        for (const [stat, buff] of Object.entries(stolen)) {
+          if (buff.percent <= 0 && buff.amount <= 0) continue;
+          attacker[`_${stat}BuffPercent`] = Math.max(attacker[`_${stat}BuffPercent`] || 0, buff.percent);
+          attacker[`_${stat}BuffAmount`] = Math.max(attacker[`_${stat}BuffAmount`] || 0, buff.amount);
+          attacker[`_${stat}BuffTurns`] = Math.max(attacker[`_${stat}BuffTurns`] || 0, 3);
+        }
+        attack(attacker, defender, battle, 'light', 10 + dungeonIndex * 0.5, { confusion: 55 });
+      } else if (skill.type === 'prismatic_tempest') {
+        const multiplier = 3.1 + dungeonIndex * 0.18;
+        for (const element of ['wind', 'thunder', 'light']) {
+          party.forEach(target => attack(attacker, target, battle, element, multiplier, element === 'light' ? { confusion: 60 } : {}));
+        }
+      } else if (skill.type === 'inverse_law') {
+        party.forEach(target => {
+          attack(attacker, target, battle, 'light', 6.2 + dungeonIndex * 0.35, { confusion: 70 });
+          target.atb = Math.max(0, 1000 - Math.min(1000, target.atb || 0));
+        });
+      } else if (skill.type === 'chronicle_repair') {
+        enemies.forEach(target => {
+          const maxHp = target.stats?.hp || target.maxHp || currentHp(target) || 1;
+          const heal = Math.floor(maxHp * 0.08);
+          target.currentHp = Math.min(maxHp, currentHp(target) + heal);
+          target.activeAilment = null;
+          clearNegativeBuffs(target);
+          target.atb = Math.min(1000, (target.atb || 0) + 250);
+          battle.showDamage?.(target.elementId, `+${heal}`, 'text-green-400');
+        });
+      } else if (skill.type === 'causality_reversal') {
+        const positiveBuffs = Object.fromEntries(['atk', 'matk', 'def', 'mdef'].map(stat => [stat, {
+          percent: Math.max(0, defender[`_${stat}BuffPercent`] || 0),
+          amount: Math.max(0, defender[`_${stat}BuffAmount`] || 0),
+        }]));
+        attack(attacker, defender, battle, 'light', 12 + dungeonIndex * 0.55, { confusion: 75 });
+        if (!defender.isDead) {
+          clearPositiveBuffs(defender);
+          for (const [stat, buff] of Object.entries(positiveBuffs)) {
+            if (buff.percent <= 0 && buff.amount <= 0) continue;
+            if (buff.percent > 0) defender[`_${stat}BuffPercent`] = -Math.max(20, buff.percent);
+            if (buff.amount > 0) defender[`_${stat}BuffAmount`] = -buff.amount;
+            defender[`_${stat}BuffTurns`] = Math.max(defender[`_${stat}BuffTurns`] || 0, 3);
+          }
+        }
+      }
+    },
+  };
+}
+
 const PRESSURE_DESCRIPTIONS = {
   astral_acceleration: '星の加護で敵全体の攻撃・魔攻を強化し、自身のHPを5%回復する。',
   infernal_rebirth: '業火で自身のHPを8%回復し、攻撃・魔攻を大幅に強化する。',
@@ -2368,6 +2540,7 @@ export const ADVANCED_MONSTERS = ENTRIES.map(({ dungeon, dungeonIndex, monster, 
     })),
     actions: [
       createAdvancedAction(monster, dungeon, dungeonIndex, floorIndex, isBoss),
+      ...(monster.uniqueSkill ? [createUniqueAction(monster, dungeonIndex)] : []),
       ...(isBoss ? [createPressureAction(dungeon, dungeonIndex)] : []),
     ],
   };

@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.34';
+export const APP_VERSION = '0.1.35';
 export const APP_RELEASE_DATE = '2026.08.09';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.09',
+    version: '0.1.35',
+    items: [
+      'ナイト・レンジャーLv.50で解放される上位職「ドラグーン」を追加しました。防御貫通の槍技、風属性の跳躍・全体攻撃を使用できます。',
+      'ドラグーン現職時は攻撃スキルで「竜気」を蓄積し、天墜竜槍で全て消費して単体へ大ダメージを与えます。',
+      'ドラグーン専用のジョブ画像、スキル演出、通常攻撃演出、自動戦闘コンボを追加しました。',
+    ],
+  },
   {
     date: '2026.08.09',
     version: '0.1.34',
