@@ -355,8 +355,10 @@ export const paladin = {
           const baseHeal = Math.floor(((caster.stats.atk || 0) + (caster.stats.matk || 0)) * levelConfig.drainPercent / 100);
           const healAmt = Math.max(1, baseHeal);
           const maxHp = caster.stats?.hp || caster.hp.max;
-          caster.hp.current = Math.min(maxHp, caster.hp.current + healAmt);
-          battle.showDamage(caster.elementId, `+${healAmt}`, 'text-green-400');
+          const hpBefore = caster.hp.current;
+          caster.hp.current = Math.min(maxHp, hpBefore + healAmt);
+          const restoredHp = caster.hp.current - hpBefore;
+          if (restoredHp > 0) battle.showDamage(caster.elementId, `+${restoredHp}`, 'text-green-400');
           battle.renderEntities();
         });
       },

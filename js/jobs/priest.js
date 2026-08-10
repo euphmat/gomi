@@ -244,12 +244,14 @@ export const priest = {
 
         playSkillAnimation(caster, [target], 'heal', () => {
           if (target.isDead) return;
+          const hpBefore = target.hp !== undefined ? target.hp.current : target.currentHp;
           if (target.hp !== undefined) {
             target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
           } else {
             target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + levelConfig.healAmount);
           }
-          battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+          const hpAfter = target.hp !== undefined ? target.hp.current : target.currentHp;
+          if (hpAfter > hpBefore) battle.showDamage(target.elementId, `+${hpAfter - hpBefore}`, 'text-green-400');
           battle.renderEntities();
         });
       },
@@ -478,12 +480,14 @@ export const priest = {
         
         playSkillAnimation(caster, aliveParty, 'all_heal', (target) => {
           if (target.isDead) return;
+          const hpBefore = target.hp !== undefined ? target.hp.current : target.currentHp;
           if (target.hp !== undefined) {
             target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
           } else {
             target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + levelConfig.healAmount);
           }
-          battle.showDamage(target.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+          const hpAfter = target.hp !== undefined ? target.hp.current : target.currentHp;
+          if (hpAfter > hpBefore) battle.showDamage(target.elementId, `+${hpAfter - hpBefore}`, 'text-green-400');
           battle.renderEntities();
         });
       },

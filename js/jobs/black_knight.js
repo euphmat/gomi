@@ -704,6 +704,7 @@ export const black_knight = {
     {
       id: 'stigma_of_atonement', name: '贖罪の烙印', icon: 'gavel', type: 'passive',
       maxLevel: 10,
+      limitBreakMinimums: { curseDamageMultiplier: 0.5, curseRecoilMultiplier: 0.1 },
       levels: [
         { level:  1, spCost: 2, mpCost: 0, curseDamageMultiplier: 1.9, curseRecoilMultiplier: 0.38 },
         { level:  2, spCost: 2, mpCost: 0, curseDamageMultiplier: 1.8, curseRecoilMultiplier: 0.36 },

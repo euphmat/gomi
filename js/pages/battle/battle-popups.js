@@ -6,6 +6,7 @@
 
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { shouldSkipBattleAnimations } from '../../utils/battle-animation.js';
+import { captureBattleActionLabel, captureBattlePopup } from './battle-log.js';
 
 const POPUP_POOL_LIMITS = { float: 150, label: 50 };
 
@@ -294,6 +295,7 @@ export const popupMethods = {
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
   showDamage(elementId, damage, customColorClass = 'text-red-500', delay = 0) {
+    captureBattlePopup(this, elementId, damage);
     const isRecovery = customColorClass.includes('text-green-') || customColorClass.includes('text-blue-');
     const playPopupSound = () => playSoundEffect(isRecovery ? 'heal' : 'battleHit', { automatic: this.isAutoBattle });
     if (delay > 0) {
@@ -354,6 +356,7 @@ export const popupMethods = {
 
   // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
+    captureBattleActionLabel(this, elementId, actionName);
     if (shouldSkipBattleAnimations()) return;
     const html = `<span class="font-black text-[15px] ${textClass} tracking-widest whitespace-nowrap bg-black/70 px-4 py-1.5 rounded-full border ${borderClass}" style="box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-shadow: 0 2px 4px rgba(0,0,0,0.9);">${actionName}</span>`;
 

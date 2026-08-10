@@ -48,7 +48,9 @@ export const ailmentMethods = {
     damage = Math.max(1, damage);
     
     let originalDamage = damage;
+    const hpBefore = entity.hp ? entity.hp.current : entity.currentHp;
     if (ailmentName === 'CURSE' && entity._barrierHp && entity._barrierHp > 0) {
+      const damageBeforeBarrier = damage;
       if (entity._barrierHp >= damage) {
         entity._barrierHp -= damage;
         damage = 0;
@@ -56,6 +58,14 @@ export const ailmentMethods = {
         damage -= entity._barrierHp;
         entity._barrierHp = 0;
       }
+      const barrierMetric = entity._battleBarrierMetric;
+      this.battleTelemetry?.recordPrevented(
+        barrierMetric?.actor || entity,
+        entity,
+        damageBeforeBarrier - damage,
+        barrierMetric?.skill || { id: 'barrier', name: 'バリア', type: 'active' }
+      );
+      if (!(entity._barrierHp > 0)) entity._battleBarrierMetric = null;
     }
 
     if (damage > 0) {
@@ -81,6 +91,12 @@ export const ailmentMethods = {
         }
       }
     }
+    const hpAfter = entity.hp ? entity.hp.current : entity.currentHp;
+    this.battleTelemetry?.recordDamage(null, entity, Math.max(0, hpBefore - hpAfter), {
+      id: `ailment_${String(ailmentName).toLowerCase()}`,
+      name: ailmentName,
+      type: 'ailment'
+    });
     this.showDamage(entity.elementId, originalDamage, 'text-purple-400');
   },
 

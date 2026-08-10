@@ -499,6 +499,7 @@ export const magic_knight = {
     {
       id: 'mp_absorb', name: 'MP吸収', icon: 'water_drop', type: 'passive',
       maxLevel: 10,
+      limitBreakMaximums: { percent: 80 },
       levels: [
         { level:  1, spCost: 1, mpCost: 0, percent: 2 },
         { level:  2, spCost: 1, mpCost: 0, percent: 4 },

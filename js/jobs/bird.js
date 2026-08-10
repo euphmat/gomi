@@ -226,6 +226,7 @@ export const bird = {
     {
       id: 'warding_song', name: '破邪の歌', icon: 'shield_moon',
       maxLevel: 10,
+      limitBreakMaximums: { amount: 90 },
       levels: [
         { level:  1, spCost: 1, mpCost: 10, amount: 15, turns: 3 },
         { level:  2, spCost: 1, mpCost: 12, amount: 20, turns: 3 },

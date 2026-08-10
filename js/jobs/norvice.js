@@ -177,8 +177,10 @@ export const norvice = {
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         playSkillAnimation(caster, [caster], 'first_aid', () => {
-          caster.hp.current = Math.min(caster.hp.current + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
-          battle.showDamage(caster.elementId, `+${levelConfig.healAmount}`, 'text-green-400');
+          const hpBefore = caster.hp.current;
+          caster.hp.current = Math.min(hpBefore + levelConfig.healAmount, caster.stats?.hp || caster.hp.max);
+          const restoredHp = caster.hp.current - hpBefore;
+          if (restoredHp > 0) battle.showDamage(caster.elementId, `+${restoredHp}`, 'text-green-400');
           battle.renderEntities();
         });
       },

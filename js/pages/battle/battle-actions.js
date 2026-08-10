@@ -5,6 +5,25 @@ import {
   playMagicMissileAnimation
 } from './magic-missile-animation.js';
 import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
+import { resolveBattleSkill } from './battle-log.js';
+
+export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
+
+export function getStackedAttackNegationStep(
+  cumulativeChance,
+  nextChance,
+  maximumChance = MAX_STACKED_ATTACK_NEGATION_CHANCE
+) {
+  const previous = Math.min(100, Math.max(0, Number(cumulativeChance) || 0));
+  const candidate = Math.min(100, Math.max(0, Number(nextChance) || 0));
+  const maximum = Math.min(100, Math.max(0, Number(maximumChance) || 0));
+  const uncappedCombined = 100 - ((100 - previous) * (100 - candidate) / 100);
+  const combinedChance = Math.min(maximum, uncappedCombined);
+  const rollChance = previous >= 100
+    ? 0
+    : Math.max(0, (combinedChance - previous) * 100 / (100 - previous));
+  return { rollChance, combinedChance };
+}
 
 /**
  * battle-actions.js
@@ -155,6 +174,12 @@ export const actionMethods = {
       caster.mp.current -= levelConfig.mpCost;
     }
 
+    const telemetrySkill = { ...skillDef, type: skillDef.type || 'active' };
+    const telemetryCapturedAt = globalThis.performance?.now?.() ?? Date.now();
+    caster._lastBattleTelemetrySkill = telemetrySkill;
+    this._battleTelemetryAction = { actor: caster, skill: telemetrySkill, capturedAt: telemetryCapturedAt };
+    this.battleTelemetry?.recordAction(caster, telemetrySkill);
+
     playSoundEffect('battleSkill', { automatic: this.isAutoBattle });
 
     // Execution Logic
@@ -206,26 +231,32 @@ export const actionMethods = {
     const regenSkill = this._findSkill(caster, 'mana_regen');
     if (regenSkill && regenSkill.level > 0 && regenSkill.levelConfig) {
       const amount = regenSkill.levelConfig.recoverMp;
-      if (amount > 0 && caster.mp.current < (caster.stats?.mp || caster.mp.max)) {
+      const mpBefore = caster.mp.current;
+      const maxMp = caster.stats?.mp || caster.mp.max;
+      caster.mp.current = Math.min(maxMp, mpBefore + amount);
+      const restoredMp = caster.mp.current - mpBefore;
+      if (restoredMp > 0) {
         this.showActionName(caster.elementId, 'マナリジェネ', 'text-blue-300', 'border-blue-500/50');
+        this._scheduleBattleTimeout(() => {
+          this.showDamage(caster.elementId, `+${restoredMp} MP`, 'text-blue-400');
+        }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
       }
-      caster.mp.current = Math.min(caster.stats?.mp || caster.mp.max, caster.mp.current + amount);
-      this._scheduleBattleTimeout(() => {
-        this.showDamage(caster.elementId, `+${amount} MP`, 'text-blue-400');
-      }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
     }
     
     // --- Passive: Regen (HP) ---
     const hpRegenSkill = this._findSkill(caster, 'regen');
     if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
       const amount = hpRegenSkill.levelConfig.recoverHp;
-      if (amount > 0 && caster.hp.current < (caster.stats?.hp || caster.hp.max)) {
+      const hpBefore = caster.hp.current;
+      const maxHp = caster.stats?.hp || caster.hp.max;
+      caster.hp.current = Math.min(maxHp, hpBefore + amount);
+      const restoredHp = caster.hp.current - hpBefore;
+      if (restoredHp > 0) {
         this.showActionName(caster.elementId, 'リジェネ', 'text-green-300', 'border-green-500/50');
+        this._scheduleBattleTimeout(() => {
+          this.showDamage(caster.elementId, `+${restoredHp}`, 'text-green-400');
+        }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
       }
-      caster.hp.current = Math.min(caster.stats?.hp || caster.hp.max, caster.hp.current + amount);
-      this._scheduleBattleTimeout(() => {
-        this.showDamage(caster.elementId, `+${amount}`, 'text-green-400');
-      }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
     }
 
     // --- Passive: Healing Song (いやしの歌) ---
@@ -237,10 +268,12 @@ export const actionMethods = {
           const maxHp = p.stats?.hp || p.hp.max;
           const healAmount = healingSongSkill.levelConfig.healAmount;
           if (healAmount > 0) {
-            triggered = true;
-            p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
+            const hpBefore = p.hp.current;
+            p.hp.current = Math.min(maxHp, hpBefore + healAmount);
+            const restoredHp = p.hp.current - hpBefore;
+            triggered = triggered || restoredHp > 0;
             this._scheduleBattleTimeout(() => {
-              this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
+              if (restoredHp > 0) this.showDamage(p.elementId, `+${restoredHp}`, 'text-green-400');
             }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
           }
         }
@@ -283,6 +316,12 @@ export const actionMethods = {
     // Follow-up effects can remain abilities for damage/passive bookkeeping
     // while explicitly representing another normal-attack hit.
     const isNormalAttack = !options.damageType || options.isNormalAttack === true;
+    if (isParty && !options.damageType && !options.isCounter) {
+      attacker._lastBattleTelemetrySkill = null;
+      this.battleTelemetry?.recordAction(attacker, {
+        id: 'normal_attack', name: '通常攻撃', type: 'active'
+      });
+    }
     let attackAnimationMs = 0;
     let attackCadenceMs = 0;
 
@@ -295,6 +334,12 @@ export const actionMethods = {
       else if (options.statDependency === 'ATK') { isMagic = false; isHybrid = false; }
     }
     options.isHybrid = isHybrid;
+    let cumulativeAttackNegationChance = 0;
+    const rollAttackNegation = chance => {
+      const step = getStackedAttackNegationStep(cumulativeAttackNegationChance, chance);
+      cumulativeAttackNegationChance = step.combinedChance;
+      return Math.random() * 100 < step.rollChance;
+    };
 
     playSoundEffect(isMagic ? 'battleMagic' : 'battleAttack', {
       automatic: this.isAutoBattle,
@@ -365,7 +410,7 @@ export const actionMethods = {
     if (defender.hp !== undefined) {
       const shadowMotionSkill = this._findSkill(defender, 'shadow_motion');
       if (shadowMotionSkill?.level > 0 && shadowMotionSkill.levelConfig
-        && Math.random() * 100 < shadowMotionSkill.levelConfig.evadeChance) {
+        && rollAttackNegation(shadowMotionSkill.levelConfig.evadeChance)) {
         this.showActionName(defender.elementId, '影の身のこなし', 'text-violet-300', 'border-violet-500/50');
         if (!options.skipAtbReset && !options.isAoEProcessed) {
           attacker.atb = 0;
@@ -381,7 +426,7 @@ export const actionMethods = {
     if (!isMagic && defender.hp !== undefined) {
       const evadeSkill = this._findSkill(defender, 'splendid_evasion');
       if (evadeSkill && evadeSkill.level > 0 && evadeSkill.levelConfig) {
-        if (Math.random() < (evadeSkill.levelConfig.evadeChance / 100)) {
+        if (rollAttackNegation(evadeSkill.levelConfig.evadeChance)) {
           this.showActionName(defender.elementId, '華麗なる見切り', 'text-green-400', 'border-green-500/50');
           if (!options.skipAtbReset && !options.isAoEProcessed) {
             attacker.atb = 0;
@@ -565,7 +610,11 @@ export const actionMethods = {
       }
     }
     if (options.isGuarded) {
+      const damageBeforeAutoGuard = damage;
       damage = Math.floor(damage * 0.5);
+      this.battleTelemetry?.recordPrevented(defender, defender, damageBeforeAutoGuard - damage, {
+        id: 'auto_guard', name: 'オートガード', type: 'passive'
+      });
     }
 
     // --- 呪い (Curse) の被ダメージ増加判定 ---
@@ -628,7 +677,11 @@ export const actionMethods = {
     if (damage < 1) damage = 1;
 
     if (options.guardianCoverReduction > 0) {
+      const damageBeforeGuardianCover = damage;
       damage = Math.max(1, Math.floor(damage * (1 - options.guardianCoverReduction / 100)));
+      this.battleTelemetry?.recordPrevented(defender, defender, damageBeforeGuardianCover - damage, {
+        id: 'guardian_oath', name: '守護者の誓約', type: 'active'
+      });
     }
 
     // --- Passive: Guard ---
@@ -637,9 +690,11 @@ export const actionMethods = {
       if (guardSkill && guardSkill.level > 0 && guardSkill.def && guardSkill.levelConfig) {
         const levelConfig = guardSkill.levelConfig;
         if (Math.random() * 100 < levelConfig.chance) {
+          const damageBeforeGuard = damage;
           const reduction = levelConfig.reduction;
           damage = Math.floor(damage * (1 - reduction / 100));
           if (damage < 1) damage = 1;
+          this.battleTelemetry?.recordPrevented(defender, defender, damageBeforeGuard - damage, guardSkill.def);
           this.showActionName(defender.elementId, 'ガード', 'text-blue-300', 'border-blue-500/50');
         }
       }
@@ -649,9 +704,11 @@ export const actionMethods = {
     if (!isParty && defender.jobSkills) {
       const slimeBodySkill = this._findSkill(defender, 'slime_body');
       if (slimeBodySkill && slimeBodySkill.level > 0 && slimeBodySkill.levelConfig) {
+        const damageBeforeSlimeBody = damage;
         const reduction = slimeBodySkill.levelConfig.reduction || 15;
         damage = Math.floor(damage * (1 - reduction / 100));
         if (damage < 1) damage = 1;
+        this.battleTelemetry?.recordPrevented(defender, defender, damageBeforeSlimeBody - damage, slimeBodySkill.def);
         this.showActionName(defender.elementId, 'スライムボディ', 'text-teal-300', 'border-teal-500/50');
       }
     }
@@ -660,8 +717,12 @@ export const actionMethods = {
     if (!isParty && !isMagic && defender.jobSkills) {
       const parrySkill = this._findSkill(defender, 'parry');
       if (parrySkill && parrySkill.level > 0 && parrySkill.levelConfig) {
-        if (Math.random() * 100 < parrySkill.levelConfig.chance) {
+        if (rollAttackNegation(parrySkill.levelConfig.chance)) {
+          const damageBeforeParry = damage;
           damage = 0;
+          this.battleTelemetry?.recordPrevented(defender, defender, damageBeforeParry, {
+            id: 'parry', name: 'パリィ', type: 'passive'
+          });
           this.showActionName(defender.elementId, 'パリィ', 'text-cyan-300', 'border-cyan-500/50');
         }
       }
@@ -669,6 +730,7 @@ export const actionMethods = {
 
     // --- 汎用バリア処理 (Divine Shield etc.) ---
     if (defender._barrierHp && defender._barrierHp > 0 && damage > 0) {
+      const damageBeforeBarrier = damage;
       if (defender._barrierHp >= damage) {
         defender._barrierHp -= damage;
         damage = 0;
@@ -679,6 +741,14 @@ export const actionMethods = {
         defender._barrierTurns = 0;
         this.showActionName(defender.elementId, 'BARRIER BREAK', 'text-amber-400', 'border-amber-600/50');
       }
+      const barrierMetric = defender._battleBarrierMetric;
+      this.battleTelemetry?.recordPrevented(
+        barrierMetric?.actor || defender,
+        defender,
+        damageBeforeBarrier - damage,
+        barrierMetric?.skill || { id: 'barrier', name: 'バリア', type: 'active' }
+      );
+      if (!(defender._barrierHp > 0)) defender._battleBarrierMetric = null;
     }
 
     let dmgColor = 'text-white';
@@ -736,7 +806,9 @@ export const actionMethods = {
     
     for (const [ailment, chance] of Object.entries(attackAilments)) {
       if (chance > 0) {
-        const resist = (defenderAilmentResist[ailment] || 0) + (defender._ailmentResistBuffTurns > 0 ? (defender._ailmentResistBuffAmount || 0) : 0);
+        const rawResist = (defenderAilmentResist[ailment] || 0)
+          + (defender._ailmentResistBuffTurns > 0 ? (defender._ailmentResistBuffAmount || 0) : 0);
+        const resist = defender.hp !== undefined ? Math.min(95, rawResist) : rawResist;
         const finalChance = Math.max(0, chance - resist);
         if (Math.random() * 100 < finalChance) {
           inflictedAilments.push(ailment);
@@ -816,7 +888,7 @@ export const actionMethods = {
             actionName: actionName
           };
         }
-      } else if (defender.jobSkills) {
+      } else if (defender.jobSkills && !options.isCounter) {
         // --- Passive: Counter ---
         const counterSkill = this._findSkill(defender, 'counter');
         if (counterSkill && counterSkill.level > 0 && counterSkill.def && counterSkill.levelConfig) {
@@ -825,7 +897,9 @@ export const actionMethods = {
             this._scheduleBattleTimeout(() => {
               if (!defender.isDead && !attacker.isDead) {
                 this.showActionName(defender.elementId, 'カウンター', 'text-orange-400', 'border-orange-500/50');
-                this.executeAttack(defender, attacker, true, { actionName: 'カウンター', hideActionName: true });
+                this.executeAttack(defender, attacker, true, {
+                  actionName: 'カウンター', hideActionName: true, isCounter: true
+                });
               }
             }, this.speedMult >= 5 ? 0 : 500 / this.speedMult);
           }
@@ -835,6 +909,12 @@ export const actionMethods = {
     
     const newHp = isDefenderParty ? defender.hp.current : defender.currentHp;
     const damageDealt = Math.max(0, prevHp - newHp);
+    this.battleTelemetry?.recordDamage(
+      attacker,
+      defender,
+      damageDealt,
+      resolveBattleSkill(this, attacker, actionName, options)
+    );
 
     // --- Passive: Blood Thirst (血の渇望) ---
     // 連撃・全体攻撃の後続ヒットでも毎回処理し、オーバーキル分は吸収量に含めない。
@@ -936,9 +1016,11 @@ export const actionMethods = {
              const mpRecover = Math.floor(damage * (mpAbsorbSkill.levelConfig.percent / 100));
              if (mpRecover > 0) {
                  this.showActionName(attacker.elementId, 'MP吸収', 'text-indigo-300', 'border-indigo-500/50');
-                 attacker.mp.current = Math.min((attacker.stats?.mp || attacker.mp.max), attacker.mp.current + mpRecover);
+                 const mpBefore = attacker.mp.current;
+                 attacker.mp.current = Math.min((attacker.stats?.mp || attacker.mp.max), mpBefore + mpRecover);
+                 const restoredMp = attacker.mp.current - mpBefore;
                  this._scheduleBattleTimeout(() => {
-                   this.showDamage(attacker.elementId, `+${mpRecover} MP`, 'text-blue-400');
+                   if (restoredMp > 0) this.showDamage(attacker.elementId, `+${restoredMp} MP`, 'text-blue-400');
                  }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
              }
           }
@@ -949,25 +1031,29 @@ export const actionMethods = {
           const manaRegenSkill = this._findSkill(attacker, 'mana_regen');
           if (manaRegenSkill && manaRegenSkill.level > 0 && manaRegenSkill.levelConfig) {
             const amount = manaRegenSkill.levelConfig.recoverMp;
-            if (amount > 0 && attacker.mp.current < (attacker.stats?.mp || attacker.mp.max)) {
+            const mpBefore = attacker.mp.current;
+            attacker.mp.current = Math.min(attacker.stats?.mp || attacker.mp.max, mpBefore + amount);
+            const restoredMp = attacker.mp.current - mpBefore;
+            if (restoredMp > 0) {
               this.showActionName(attacker.elementId, 'マナリジェネ', 'text-blue-300', 'border-blue-500/50');
+              this._scheduleBattleTimeout(() => {
+                this.showDamage(attacker.elementId, `+${restoredMp} MP`, 'text-blue-400');
+              }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
             }
-            attacker.mp.current = Math.min(attacker.stats?.mp || attacker.mp.max, attacker.mp.current + amount);
-            this._scheduleBattleTimeout(() => {
-              this.showDamage(attacker.elementId, `+${amount} MP`, 'text-blue-400');
-            }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           }
           
           const hpRegenSkill = this._findSkill(attacker, 'regen');
           if (hpRegenSkill && hpRegenSkill.level > 0 && hpRegenSkill.levelConfig) {
             const amount = hpRegenSkill.levelConfig.recoverHp;
-            if (amount > 0 && attacker.hp.current < (attacker.stats?.hp || attacker.hp.max)) {
+            const hpBefore = attacker.hp.current;
+            attacker.hp.current = Math.min(attacker.stats?.hp || attacker.hp.max, hpBefore + amount);
+            const restoredHp = attacker.hp.current - hpBefore;
+            if (restoredHp > 0) {
               this.showActionName(attacker.elementId, 'リジェネ', 'text-green-300', 'border-green-500/50');
+              this._scheduleBattleTimeout(() => {
+                this.showDamage(attacker.elementId, `+${restoredHp}`, 'text-green-400');
+              }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
             }
-            attacker.hp.current = Math.min(attacker.stats?.hp || attacker.hp.max, attacker.hp.current + amount);
-            this._scheduleBattleTimeout(() => {
-              this.showDamage(attacker.elementId, `+${amount}`, 'text-green-400');
-            }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
           }
 
           // --- Passive: Energizing ---
@@ -977,11 +1063,13 @@ export const actionMethods = {
             let applied = false;
             this.party.forEach(p => {
               if (!p.isDead && p.mp && (p.mp.current < (p.stats?.mp || p.mp.max))) {
-                p.mp.current = Math.min(p.stats?.mp || p.mp.max, p.mp.current + amount);
+                const mpBefore = p.mp.current;
+                p.mp.current = Math.min(p.stats?.mp || p.mp.max, mpBefore + amount);
+                const restoredMp = p.mp.current - mpBefore;
                 this._scheduleBattleTimeout(() => {
-                  this.showDamage(p.elementId, `+${amount} MP`, 'text-blue-400');
+                  if (restoredMp > 0) this.showDamage(p.elementId, `+${restoredMp} MP`, 'text-blue-400');
                 }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
-                applied = true;
+                applied = applied || restoredMp > 0;
               }
             });
             if (applied) {
@@ -998,10 +1086,12 @@ export const actionMethods = {
                 const maxHp = p.stats?.hp || p.hp.max;
                 const healAmount = healingSongSkill.levelConfig.healAmount;
                 if (healAmount > 0) {
-                  triggered = true;
-                  p.hp.current = Math.min(maxHp, p.hp.current + healAmount);
+                  const hpBefore = p.hp.current;
+                  p.hp.current = Math.min(maxHp, hpBefore + healAmount);
+                  const restoredHp = p.hp.current - hpBefore;
+                  triggered = triggered || restoredHp > 0;
                   this._scheduleBattleTimeout(() => {
-                    this.showDamage(p.elementId, `+${healAmount}`, 'text-green-400');
+                    if (restoredHp > 0) this.showDamage(p.elementId, `+${restoredHp}`, 'text-green-400');
                   }, this.speedMult >= 5 ? 0 : 600 / this.speedMult);
                 }
               }
@@ -1105,8 +1195,10 @@ export const actionMethods = {
     
     if (entity._regenTurns && entity._regenTurns > 0) {
       if (entity.hp && entity.hp.current < (entity.stats?.hp || entity.hp.max) && !entity.isDead) {
-        entity.hp.current = Math.min(entity.stats?.hp || entity.hp.max, entity.hp.current + entity._regenHp);
-        this.showDamage(entity.elementId, `+${entity._regenHp}`, 'text-green-400');
+        const hpBefore = entity.hp.current;
+        entity.hp.current = Math.min(entity.stats?.hp || entity.hp.max, hpBefore + entity._regenHp);
+        const restoredHp = entity.hp.current - hpBefore;
+        if (restoredHp > 0) this.showDamage(entity.elementId, `+${restoredHp}`, 'text-green-400');
         
         if (!this._cachedDisableAnim && !document.hidden && this.speedMult < 5) {
           const el = document.getElementById(entity.elementId);

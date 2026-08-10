@@ -188,6 +188,7 @@ export const slime_singer = {
       id: 'elastic_refrain', name: '弾力のリフレイン', icon: 'shield_moon',
       actionNameClass: 'text-lime-200', actionNameBorderClass: 'border-cyan-400/60',
       maxLevel: 10,
+      limitBreakMaximums: { amount: 90 },
       levels: makeLevels([
         { mpCost: 36, barrierMatkPercent: 35, amount: 10, turns: 3 }, { mpCost: 41, barrierMatkPercent: 42, amount: 13, turns: 3 },
         { mpCost: 46, barrierMatkPercent: 49, amount: 16, turns: 3 }, { mpCost: 52, barrierMatkPercent: 57, amount: 19, turns: 3 },

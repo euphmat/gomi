@@ -15,6 +15,12 @@ import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-defini
 import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
+import {
+  BattleTelemetry,
+  cleanupBattleLog,
+  renderBattleLogTab,
+  scheduleBattleLogRender
+} from './battle-log.js';
 import { formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
 import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
@@ -111,6 +117,8 @@ class BattleManager {
     this.equipMap = {};
     this.isDungeonClear = false;
     this.currentTab = 'skill';
+    this.battleLogView = 'events';
+    this.battleLogFilter = 'all';
     this.obtainedItems = [];
     this.obtainedGold = 0;
     this.obtainedExp = 0;
@@ -126,6 +134,9 @@ class BattleManager {
     this._tabInteractionTimer = null;
     this._battleReady = false;
     this._pendingTabRender = false;
+    this.battleTelemetry = new BattleTelemetry({
+      onChange: () => scheduleBattleLogRender(this)
+    });
 
     // Register lifecycle cleanup before any asynchronous initialization starts.
     // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
@@ -145,6 +156,7 @@ class BattleManager {
       resultText: container.querySelector('#result-text'),
       btnResultOk: container.querySelector('#btn-result-ok'),
       tabBtnSkill: container.querySelector('#tab-btn-skill'),
+      tabBtnLog: container.querySelector('#tab-btn-log'),
       tabBtnInfo: container.querySelector('#tab-btn-info'),
       tabBtnPet: container.querySelector('#tab-btn-pet'),
       tabBtnMedal: container.querySelector('#tab-btn-medal'),
@@ -389,6 +401,7 @@ class BattleManager {
       this.elements.enemyArea.innerHTML = '';
     }
     
+    this.battleTelemetry.markEncounter(`${this.dungeonDef?.name || 'ダンジョン'} ${this.currentFloorNum}F`);
     this.applyStartOfBattlePassives();
     this.renderEntities();
     this._battleReady = true;
@@ -563,6 +576,7 @@ class BattleManager {
   }
 
   cleanupBattleDOM() {
+    cleanupBattleLog(this);
     clearTimeout(this._tabInteractionTimer);
     this._tabInteractionTimer = null;
     this.isTabInteracting = false;
@@ -714,6 +728,7 @@ class BattleManager {
   setupTabListeners() {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill' },
+      { btn: this.elements.tabBtnLog, id: 'log' },
       { btn: this.elements.tabBtnInfo, id: 'info' },
       { btn: this.elements.tabBtnPet, id: 'pet' },
       { btn: this.elements.tabBtnMedal, id: 'medal' }
@@ -863,6 +878,7 @@ class BattleManager {
   updateTabStyles() {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'スキル' },
+      { btn: this.elements.tabBtnLog, id: 'log', icon: 'receipt_long', palette: 2, label: 'ログ' },
       { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', palette: 3, label: '情報' },
       { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: '仲間' },
       { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'メダル' }
@@ -939,6 +955,9 @@ class BattleManager {
     if (this.currentTab === 'skill') {
       this.elements.tabContent.dataset.renderedTab = 'skill';
       this.renderSkillTab();
+    } else if (this.currentTab === 'log') {
+      this.elements.tabContent.dataset.renderedTab = 'log';
+      renderBattleLogTab(this, force);
     } else if (this.currentTab === 'info') {
       this.elements.tabContent.dataset.renderedTab = 'info';
       this.renderInfoTab();
@@ -1604,6 +1623,7 @@ export function renderBattlePage() {
         <!-- Tabs -->
         <div class="flex shrink-0 items-end gap-0.5 px-0.5" role="tablist" aria-label="戦闘メニュー">
           <button id="tab-btn-skill" role="tab" aria-selected="true" aria-label="スキル" class="battle-tab battle-tab--active relative z-10 flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none truncate">スキル</span></button>
+          <button id="tab-btn-log" role="tab" aria-selected="false" aria-label="ログ" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">receipt_long</span><span class="pointer-events-none truncate">ログ</span></button>
           <button id="tab-btn-info" role="tab" aria-selected="false" aria-label="情報" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">info</span><span class="pointer-events-none truncate">情報</span></button>
           <button id="tab-btn-pet" role="tab" aria-selected="false" aria-label="仲間" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">pets</span><span class="pointer-events-none truncate">仲間</span></button>
           <button id="tab-btn-medal" role="tab" aria-selected="false" aria-label="メダル" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">military_tech</span><span class="pointer-events-none truncate">メダル</span></button>

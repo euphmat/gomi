@@ -10,6 +10,11 @@ import {
   hasMasteredAllJobSkills
 } from '../js/data/job-progression.js';
 import { JOBS } from '../js/jobs/index.js';
+import { calcFinalStats } from '../js/data/stat-calculator.js';
+import {
+  getStackedAttackNegationStep,
+  MAX_STACKED_ATTACK_NEGATION_CHANCE
+} from '../js/pages/battle/battle-actions.js';
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -89,7 +94,7 @@ const variedSkill = {
     mpCost: 100,
     bonusHp: 150,
     bonusAtkPercent: 120,
-    barrierPercent: 140,
+    barrierPercent: 60,
     maxDragonSpirit: 5,
     threshold: 50,
     atkMatkMultiplier: 1.5,
@@ -100,7 +105,7 @@ const variedSkill = {
 const variedBreak = resolveJobSkillLevelConfig(variedSkill, 20, 'base');
 assert(variedBreak.bonusHp === 300, 'flat stat bonus did not limit break');
 assert(variedBreak.bonusAtkPercent === 240, 'stat percentage should grow without a 100% cap');
-assert(variedBreak.barrierPercent === 280, 'barrier strength should grow without a 100% cap');
+assert(variedBreak.barrierPercent === 100, 'maximum-HP barrier exceeded its safe cap');
 assert(variedBreak.maxDragonSpirit === 5, 'job resource maximum should stay structural');
 assert(variedBreak.threshold === 25, 'inverse threshold did not improve');
 assert(variedBreak.atkMatkMultiplier === 2, 'neutral multiplier did not improve correctly');
@@ -119,6 +124,14 @@ const dangerousEffectSkill = {
     resistancePierce: 40,
     statusResist: 25,
     instantDeathChance: 35,
+    spdDown: 40,
+    spdPercent: 45,
+    buffPercent: 35,
+    recoverMp: 20,
+    pulseMp: 10,
+    restoreMp: 60,
+    harmonyPulse: 5,
+    revivePercent: 50,
     threshold: 30
   }]
 };
@@ -130,7 +143,42 @@ assert(safeDeepBreak.drainPercent === 80, 'life drain reached full damage');
 assert(safeDeepBreak.resistancePierce === 80, 'resistance pierce erased all resistance');
 assert(safeDeepBreak.statusResist === 90, 'status resistance reached immunity');
 assert(safeDeepBreak.instantDeathChance === 60, 'instant death chance exceeded its safe cap');
+assert(safeDeepBreak.spdDown === 80, 'enemy SPD reduction reached a full shutdown');
+assert(safeDeepBreak.spdPercent === 100, 'party SPD bonus grew without a limit');
+assert(safeDeepBreak.buffPercent === 100, 'party stat buff grew without a limit');
+assert(safeDeepBreak.recoverMp === 80, 'turn-based MP recovery grew without a limit');
+assert(safeDeepBreak.pulseMp === 40, 'per-hit MP recovery grew without a limit');
+assert(safeDeepBreak.restoreMp === 200, 'direct MP restoration grew without a limit');
+assert(safeDeepBreak.harmonyPulse === 20, 'resource-amplified MP recovery grew without a limit');
+assert(safeDeepBreak.revivePercent === 80, 'revival became a full heal');
 assert(safeDeepBreak.threshold === 10, 'survival threshold reached functional immortality');
+
+const cappedOnlySkill = {
+  id: 'capped_only',
+  maxLevel: 10,
+  limitBreakMaximums: { chance: 30 },
+  levels: [{ level: 10, spCost: 5, mpCost: 0, chance: 25 }]
+};
+assert(canLimitBreakJobSkill(cappedOnlySkill, 10), 'the final useful limit break was blocked');
+assert(resolveJobSkillLevelConfig(cappedOnlySkill, 11, 'current').chance === 30, 'custom cap was not applied');
+assert(!canLimitBreakJobSkill(cappedOnlySkill, 11), 'a saturated skill still accepted limit breaks');
+assert(getJobSkillLevelCost(cappedOnlySkill, 11) === 5, 'the final useful limit break lost its cost');
+assert(getJobSkillLevelCost(cappedOnlySkill, 12) === 0, 'a saturated limit break still consumed SP');
+const cappedOnlyJob = { id: 'capped_job', skills: [cappedOnlySkill] };
+const cappedCharacter = { jobSkills: { capped_job: { capped_only: 11 } } };
+const overleveledCappedCharacter = { jobSkills: { capped_job: { capped_only: 50 } } };
+assert(
+  getSpentJobSP(overleveledCappedCharacter, cappedOnlyJob) === getSpentJobSP(cappedCharacter, cappedOnlyJob),
+  'SP spent beyond a semantic cap was not refunded'
+);
+
+let negationStep = getStackedAttackNegationStep(0, 75);
+assert(negationStep.rollChance === 75 && negationStep.combinedChance === 75,
+  'the first attack-negation skill changed probability');
+negationStep = getStackedAttackNegationStep(negationStep.combinedChance, 95);
+assert(negationStep.rollChance === 40, 'stacked attack-negation conditional chance is invalid');
+assert(negationStep.combinedChance === MAX_STACKED_ATTACK_NEGATION_CHANCE,
+  'stacked attack-negation skills exceeded the combined cap');
 
 const authoredGuaranteedSkill = {
   maxLevel: 10,
@@ -201,6 +249,73 @@ for (const job of Object.values(JOBS)) {
 }
 assert(nonScalingSkills.length === 0, `unexpected non-scaling skills: ${nonScalingSkills.join(', ')}`);
 
+let saturatedSkillCount = 0;
+for (const job of Object.values(JOBS)) {
+  for (const jobSkill of job.skills) {
+    const masterLevel = getJobSkillMasterLevel(jobSkill);
+    let saturatedLevel = null;
+    for (let level = masterLevel; level <= masterLevel + 200; level += 1) {
+      if (!canLimitBreakJobSkill(jobSkill, level)) {
+        saturatedLevel = level;
+        break;
+      }
+    }
+    if (saturatedLevel === null) continue;
+
+    saturatedSkillCount += 1;
+    const saturatedConfig = resolveJobSkillLevelConfig(jobSkill, saturatedLevel, 'current');
+    const distantConfig = resolveJobSkillLevelConfig(jobSkill, saturatedLevel + 1000, 'current');
+    assert(
+      Object.keys(distantConfig).every(
+        key => key === 'level' || distantConfig[key] === saturatedConfig[key]
+      ),
+      `${job.id}/${jobSkill.id} was blocked before its final useful limit break`
+    );
+    assert(
+      getJobSkillLevelCost(jobSkill, saturatedLevel + 1) === 0,
+      `${job.id}/${jobSkill.id} charged SP after reaching its final effect cap`
+    );
+  }
+}
+assert(saturatedSkillCount > 0, 'the all-job audit did not find any semantically capped skill');
+
+const deepConfig = (jobId, skillId) => {
+  const jobSkill = JOBS[jobId].skills.find(candidate => candidate.id === skillId);
+  return resolveJobSkillLevelConfig(jobSkill, getJobSkillMasterLevel(jobSkill) + 1000, 'current');
+};
+const stigma = deepConfig('black_knight', 'stigma_of_atonement');
+assert(stigma.curseDamageMultiplier === .5, 'atonement stigma erased its damage drawback');
+assert(stigma.curseRecoilMultiplier === .1, 'atonement stigma erased its recoil drawback');
+assert(deepConfig('black_knight', 'demon_power').atkMatkMultiplier === 3,
+  'demon power created an unbounded secondary multiplier');
+assert(deepConfig('bird', 'warding_song').amount === 90, 'warding song granted status immunity');
+assert(deepConfig('entertainer', 'inspiring_revue').amount === 90,
+  'inspiring revue granted status immunity');
+assert(deepConfig('slime_singer', 'elastic_refrain').amount === 90,
+  'elastic refrain granted status immunity');
+assert(deepConfig('slime_master', 'adhesive_substance').spdDown === 80,
+  'adhesive substance reduced enemy SPD to its minimum');
+assert(deepConfig('dancer', 'opening_act').spdPercent === 100,
+  'opening act grew party SPD without a limit');
+for (const auraId of ['protection', 'magic_barrier', 'weapon_bless', 'magic_bless']) {
+  assert(deepConfig('magic_knight', auraId).percent === 100, `${auraId} grew without a limit`);
+}
+assert(deepConfig('magic_knight', 'mp_absorb').percent === 80, 'MP absorb reached full damage conversion');
+
+const resistanceCharacter = {
+  jobId: 'norvice',
+  hp: { max: 100 }, mp: { max: 100 },
+  baseStats: { atk: 10, def: 10, matk: 10, mdef: 10, spd: 10 },
+  elementResist: { fire: 80 }, ailmentResist: { poison: 80 },
+  equipment: { armor: 'test_resistance_armor' }
+};
+const resistanceEquipment = new Map([['test_resistance_armor', {
+  slot: 'armor', elements: { fire: 40 }, ailments: { poison: 40 }
+}]]);
+const cappedResistanceStats = calcFinalStats(resistanceCharacter, resistanceEquipment);
+assert(cappedResistanceStats.elementResist.fire === 90, 'combined elemental resistance reached immunity');
+assert(cappedResistanceStats.ailmentResist.poison === 95, 'combined ailment resistance reached immunity');
+
 const restore = JOBS.priest.skills.find(candidate => candidate.id === 'restore');
 const masteredRestore = resolveJobSkillLevelConfig(restore, 10, 'base');
 const firstRestoreBreak = resolveJobSkillLevelConfig(restore, 11, 'base');
@@ -208,6 +323,7 @@ const farRestoreBreak = resolveJobSkillLevelConfig(restore, 21, 'base');
 assert(masteredRestore.cleanseCount === 1, 'mastered restore target count changed');
 assert(firstRestoreBreak.cleanseCount === 2, 'restore did not gain a second cleanse target');
 assert(farRestoreBreak.cleanseCount === 4, 'restore target growth exceeded its intended steps');
+assert(canLimitBreakJobSkill(restore, 11), 'a temporary stepped-effect plateau was treated as MAX');
 
 const timedSkill = {
   maxLevel: 10,

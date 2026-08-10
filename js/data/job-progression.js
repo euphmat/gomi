@@ -84,8 +84,8 @@ export function getJobSkillMasterLevel(skill) {
 }
 
 /**
- * Return the SP cost of a skill level. Limit breaks reuse the mastered level's
- * cost forever; this makes their SP accounting deterministic and uncapped.
+ * Return the SP cost of a skill level. Useful limit breaks reuse the mastered
+ * level's cost, then become free once every scalable effect has saturated.
  */
 export function getJobSkillLevelCost(skill, level) {
   if (!skill?.levels?.length) return 0;
@@ -96,7 +96,7 @@ export function getJobSkillLevelCost(skill, level) {
   if (authoredConfig) return Math.max(0, Number(authoredConfig.spCost) || 0);
 
   if (normalizedLevel > getJobSkillMasterLevel(skill)) {
-    if (!canLimitBreakJobSkill(skill)) return 0;
+    if (!canLimitBreakJobSkill(skill, normalizedLevel - 1)) return 0;
     const masterConfig = skill.levels.find(candidate => candidate.level === getJobSkillMasterLevel(skill))
       || skill.levels[skill.levels.length - 1];
     return Math.max(0, Number(masterConfig?.spCost) || 0);
@@ -133,7 +133,9 @@ export function getSpentJobSP(character, job) {
       spentSP += Math.max(0, Number(levelConfig.spCost) || 0);
     }
     if (normalizedLevel > masterLevel) {
-      spentSP += (normalizedLevel - masterLevel) * getJobSkillLevelCost(skill, masterLevel + 1);
+      for (let level = masterLevel + 1; level <= normalizedLevel; level += 1) {
+        spentSP += getJobSkillLevelCost(skill, level);
+      }
     }
   }
   return spentSP;
@@ -159,7 +161,7 @@ export function getAvailableJobSP(character, job, jobLevel = character?.jobLevel
  *
  * Lower-level skills are raised first, one level at a time. Skills whose next
  * level is currently unaffordable are skipped so the remaining SP can still be
- * used. Limit-break levels are deliberately excluded because they have no cap.
+ * used. Limit-break levels are deliberately excluded from automatic spending.
  */
 export function planBalancedJobSkillAcquisition(character, job, availableSp = character?.sp) {
   const remainingSkills = Array.isArray(job?.skills)

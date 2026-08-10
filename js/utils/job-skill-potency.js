@@ -1,6 +1,7 @@
 export const CURRENT_JOB_SKILL_POTENCY = 1.10;
 export const INHERITED_SKILL_POTENCY = 0.90;
 export const JOB_SKILL_LIMIT_BREAK_GROWTH = 0.10;
+const LIMIT_BREAK_SATURATION_PROBE = 10000;
 
 const POTENCY_BY_MODE = Object.freeze({
   current: CURRENT_JOB_SKILL_POTENCY,
@@ -134,7 +135,21 @@ const LIMIT_BREAK_MAXIMUMS = new Map([
   ['curseChance', 95],
   ['freezeChance', 95],
   ['paralysisChance', 95],
-  ['spreadChance', 95]
+  ['spreadChance', 95],
+  ['spdDown', 80],
+  ['spdPercent', 100],
+  ['percent', 100],
+  ['barrierPercent', 100],
+  ['barrierMatkPercent', 200],
+  ['buffPercent', 100],
+  ['defPercent', 100],
+  ['atkMatkMultiplier', 3],
+  ['revivePercent', 80],
+  ['recoverMp', 80],
+  ['pulseMp', 40],
+  ['recoverAmount', 100],
+  ['restoreMp', 200],
+  ['harmonyPulse', 20]
 ]);
 
 const LIMIT_BREAK_MINIMUMS = new Map([
@@ -199,7 +214,13 @@ export function applyJobSkillPotency(levelConfig, mode = 'base') {
  * explode. Effects that could become guaranteed prevention, control, or
  * resource loops use stricter per-effect caps.
  */
-export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedKeys = []) {
+export function applyJobSkillLimitBreak(
+  levelConfig,
+  limitBreakLevel = 0,
+  fixedKeys = [],
+  customMaximums = {},
+  customMinimums = {}
+) {
   const breaks = Math.max(0, Math.floor(Number(limitBreakLevel) || 0));
   if (!levelConfig || breaks === 0) return levelConfig;
 
@@ -217,7 +238,9 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedK
     }
 
     if (INVERSE_EFFECT_KEYS.has(key)) {
-      const minimum = LIMIT_BREAK_MINIMUMS.get(key) ?? 0;
+      const minimum = Number.isFinite(customMinimums[key])
+        ? customMinimums[key]
+        : (LIMIT_BREAK_MINIMUMS.get(key) ?? 0);
       adjusted[key] = Math.min(100, Math.max(minimum, round(value / factor)));
       continue;
     }
@@ -228,7 +251,14 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedK
       // from their neutral value. Unlimited linear growth must stop at zero;
       // a negative damage multiplier would otherwise turn the drawback into
       // permanent minimum damage.
-      adjusted[key] = Math.max(0, round(neutral + (value - neutral) * factor));
+      const minimum = Number.isFinite(customMinimums[key]) ? customMinimums[key] : 0;
+      const bounded = Math.max(minimum, round(neutral + (value - neutral) * factor));
+      const configuredMaximum = Number.isFinite(customMaximums[key])
+        ? customMaximums[key]
+        : LIMIT_BREAK_MAXIMUMS.get(key);
+      adjusted[key] = configuredMaximum === undefined
+        ? bounded
+        : Math.min(Math.max(value, configuredMaximum), bounded);
       continue;
     }
 
@@ -238,7 +268,9 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedK
     const bounded = LIMIT_BREAK_PERCENTAGE_KEYS.has(key)
       ? Math.min(100, Math.max(0, scaled))
       : scaled;
-    const configuredMaximum = LIMIT_BREAK_MAXIMUMS.get(key);
+    const configuredMaximum = Number.isFinite(customMaximums[key])
+      ? customMaximums[key]
+      : LIMIT_BREAK_MAXIMUMS.get(key);
     adjusted[key] = configuredMaximum === undefined
       ? bounded
       : Math.min(Math.max(value, configuredMaximum), bounded);
@@ -248,7 +280,7 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedK
 }
 
 /** Return whether a skill has at least one effect that limit breaks can improve. */
-export function canLimitBreakJobSkill(skillDef) {
+export function canLimitBreakJobSkill(skillDef, currentLevel = null) {
   if (!skillDef?.levels?.length) return false;
   const maxLevel = Math.max(
     1,
@@ -257,8 +289,43 @@ export function canLimitBreakJobSkill(skillDef) {
   const masterConfig = skillDef.levels.find(candidate => candidate.level === maxLevel)
     || skillDef.levels[skillDef.levels.length - 1];
   const fixedKeys = skillDef.limitBreakFixedKeys || [];
-  return Object.entries(masterConfig).some(([key, value]) =>
+  const hasScalableEffect = Object.entries(masterConfig).some(([key, value]) =>
     Number.isFinite(value) && !LIMIT_BREAK_FIXED_KEYS.has(key) && !fixedKeys.includes(key)
+  );
+  if (!hasScalableEffect || currentLevel === null || currentLevel === undefined) {
+    return hasScalableEffect;
+  }
+
+  const normalizedLevel = Math.max(maxLevel, Math.floor(Number(currentLevel) || maxLevel));
+  const currentConfig = resolveLimitBreakConfig(skillDef, normalizedLevel, 'current');
+  // Some integer and duration effects improve only every few levels. Compare
+  // against their eventual value so a temporary plateau is not mistaken for
+  // the final semantic cap.
+  const futureConfig = resolveLimitBreakConfig(
+    skillDef,
+    normalizedLevel + LIMIT_BREAK_SATURATION_PROBE,
+    'current'
+  );
+  return Object.keys(futureConfig).some(
+    key => key !== 'level' && futureConfig[key] !== currentConfig[key]
+  );
+}
+
+function resolveLimitBreakConfig(skillDef, level, mode) {
+  const maxLevel = Math.max(
+    1,
+    Math.floor(Number(skillDef.maxLevel) || skillDef.levels[skillDef.levels.length - 1].level || 1)
+  );
+  const authoredConfig = skillDef.levels.find(candidate => candidate.level === level)
+    || skillDef.levels.find(candidate => candidate.level === maxLevel)
+    || skillDef.levels[skillDef.levels.length - 1];
+  const potentConfig = applyJobSkillPotency({ ...authoredConfig, level }, mode);
+  return applyJobSkillLimitBreak(
+    potentConfig,
+    Math.max(0, level - maxLevel),
+    skillDef.limitBreakFixedKeys,
+    skillDef.limitBreakMaximums,
+    skillDef.limitBreakMinimums
   );
 }
 
@@ -272,9 +339,5 @@ export function resolveJobSkillLevelConfig(skillDef, level, mode = 'base') {
   const resolvedLevel = normalizedLevel > maxLevel && !canLimitBreakJobSkill(skillDef)
     ? maxLevel
     : normalizedLevel;
-  const authoredConfig = skillDef.levels.find(candidate => candidate.level === resolvedLevel)
-    || skillDef.levels[skillDef.levels.length - 1];
-  const limitBreakLevel = Math.max(0, resolvedLevel - maxLevel);
-  const potentConfig = applyJobSkillPotency({ ...authoredConfig, level: resolvedLevel }, mode);
-  return applyJobSkillLimitBreak(potentConfig, limitBreakLevel, skillDef.limitBreakFixedKeys);
+  return resolveLimitBreakConfig(skillDef, resolvedLevel, mode);
 }

@@ -214,6 +214,7 @@ export const entertainer = {
       id: 'inspiring_revue', name: '鼓舞のレビュー', icon: 'celebration',
       actionNameClass: 'text-pink-200', actionNameBorderClass: 'border-amber-400/60',
       maxLevel: 10,
+      limitBreakMaximums: { amount: 90 },
       levels: advancedLevels([
         { mpCost: 32, buffPercent: 10, amount: 15, duration: 3 }, { mpCost: 36, buffPercent: 12, amount: 18, duration: 3 },
         { mpCost: 40, buffPercent: 14, amount: 21, duration: 3 }, { mpCost: 46, buffPercent: 16, amount: 24, duration: 4 },

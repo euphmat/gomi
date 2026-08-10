@@ -209,6 +209,15 @@ export function calcFinalStats(character, equipmentMap) {
     result.spd = 1;
   }
 
+  // Equipment and limit-broken passives are additive. Keep a small amount of
+  // counterplay instead of letting their sum create permanent immunity.
+  for (const element of Object.keys(result.elementResist)) {
+    result.elementResist[element] = Math.min(90, result.elementResist[element]);
+  }
+  for (const ailment of Object.keys(result.ailmentResist)) {
+    result.ailmentResist[ailment] = Math.min(95, result.ailmentResist[ailment]);
+  }
+
   return result;
 }
 
