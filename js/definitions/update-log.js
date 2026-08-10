@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.40';
-export const APP_RELEASE_DATE = '2026.08.10';
+export const APP_VERSION = '0.1.41';
+export const APP_RELEASE_DATE = '2026.08.11';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.11',
+    version: '0.1.41',
+    items: [
+      '戦闘統計のスキル詳細をコンパクトに整理し、攻撃・防御・回復・補助の用途別発動割合をドーナツグラフで確認できるようにしました。',
+      '戦闘統計の大きな数値をk・m・b・t単位で表示し、スキルの効果・レベル・発動回数・貢献度を比較しやすくしました。',
+      '味方と敵のバリアをHPバー内のラインと数値で表示し、戦闘画面を省スペース化しました。',
+    ],
+  },
   {
     date: '2026.08.10',
     version: '0.1.40',
