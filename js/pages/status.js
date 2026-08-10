@@ -14,6 +14,7 @@ import { GameDB } from '../data/database.js';
 import { calcFinalStats, buildEquipmentMap, getEquippedItems, getCharactersWithRanchBonus } from '../data/stat-calculator.js';
 import { showEquipmentModal } from '../components/equipment-modal.js';
 import { STAT_KEYS } from '../data/constants.js';
+import { calculateBestEquipmentResults } from '../utils/best-equipment.js';
 
 const MAX_PARTY_SIZE = 4;
 
@@ -67,75 +68,13 @@ async function _loadStatusData(container) {
       const finalStats = calcFinalStats(char, equipmentMap);
       const equippedItems = getEquippedItems(char, equipmentMap);
 
-      // Pre-calculate best equipment for different focuses
-      const focuses = ['overall', 'physical', 'magic', 'defense', 'speed'];
-      const bestResults = {};
-      let anyChanged = false;
-
-      for (const focus of focuses) {
-        const otherEquippedIds = new Set(allEquippedIds);
-        Object.values(char.equipment || {}).forEach(id => {
-          if (id) otherEquippedIds.delete(id);
-        });
-        let availableItems = allEquipment.filter(eq => !otherEquippedIds.has(eq.id));
-        const slots = ['rightHand', 'leftHand', 'armor', 'accessory1', 'accessory2'];
-        let changed = false;
-        const newEquipment = { ...(char.equipment || {}) };
-        const changes = [];
-        const oldEquipment = { ...(char.equipment || {}) };
-        
-        for (const slot of slots) {
-          const validItems = availableItems.filter(eq => {
-            if (slot.startsWith('accessory')) return eq.slot === 'accessory';
-            return eq.slot === slot;
-          });
-          
-          let bestItem = null;
-          let bestScore = -Infinity;
-          for (const item of validItems) {
-            let score = 0;
-            if (item.stats) {
-              const overallScore = (item.stats.hp || 0) + (item.stats.mp || 0) + (item.stats.atk || 0) + (item.stats.def || 0) + (item.stats.matk || 0) + (item.stats.mdef || 0) + (item.stats.spd || 0);
-              let focusScore = 0;
-              if (focus === 'overall') {
-                focusScore = overallScore;
-              } else if (focus === 'physical') {
-                focusScore = (item.stats.atk || 0);
-              } else if (focus === 'magic') {
-                focusScore = (item.stats.matk || 0) + (item.stats.mp || 0);
-              } else if (focus === 'defense') {
-                focusScore = (item.stats.hp || 0) + (item.stats.def || 0) + (item.stats.mdef || 0);
-              } else if (focus === 'speed') {
-                focusScore = (item.stats.spd || 0);
-              }
-              // 重視ステータスを最優先しつつ、同値の場合は総合値（overallScore）をタイブレーカーとして加算する
-              score = focusScore * 1000000 + overallScore;
-            }
-            if (score > bestScore || (score === bestScore && item.id === oldEquipment[slot])) {
-              bestScore = score;
-              bestItem = item;
-            }
-          }
-          if (bestItem) {
-            if (newEquipment[slot] !== bestItem.id) {
-              const oldItem = oldEquipment[slot] ? equipmentMap.get(oldEquipment[slot]) : null;
-              changes.push({ slot, oldItem, newItem: bestItem });
-              newEquipment[slot] = bestItem.id;
-              changed = true;
-            }
-            availableItems = availableItems.filter(eq => eq.id !== bestItem.id);
-          } else {
-            if (newEquipment[slot]) {
-              const oldItem = equipmentMap.get(oldEquipment[slot]);
-              changes.push({ slot, oldItem, newItem: null });
-              newEquipment[slot] = null;
-              changed = true;
-            }
-          }
-        }
-        bestResults[focus] = { newEquipment, changes, changed };
-        if (changed) anyChanged = true;
-      }
+      // Pre-calculate best equipment for different focuses. Locked slots remain unchanged.
+      const { results: bestResults, anyChanged } = calculateBestEquipmentResults(
+        char,
+        allEquipment,
+        equipmentMap,
+        allEquippedIds,
+      );
 
       const isAlreadyBest = !anyChanged;
       char._bestResults = bestResults;
@@ -187,6 +126,36 @@ async function _loadStatusData(container) {
         const character = characters.find(c => c.id === charId);
         if (character && slotKey) {
           showEquipmentModal(character, slotKey, () => _loadStatusData(container));
+        }
+      });
+    });
+
+    // Bind automatic-equipment lock buttons
+    const equipmentLockBtns = container.querySelectorAll('.equipment-lock-btn');
+    equipmentLockBtns.forEach(btn => {
+      btn.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        const charId = parseInt(btn.getAttribute('data-char-id'), 10);
+        const slotKey = btn.getAttribute('data-slot-key');
+        const character = characters.find(c => c.id === charId);
+        if (!character || !slotKey) return;
+
+        btn.disabled = true;
+        try {
+          const storedCharacter = await GameDB.getCharacter(charId);
+          if (!storedCharacter) {
+            btn.disabled = false;
+            return;
+          }
+          storedCharacter.equipmentLocks = {
+            ...(storedCharacter.equipmentLocks || {}),
+            [slotKey]: !storedCharacter.equipmentLocks?.[slotKey],
+          };
+          await GameDB.putCharacter(storedCharacter);
+          await _loadStatusData(container);
+        } catch (error) {
+          console.error('[StatusPage] Failed to update equipment lock:', error);
+          btn.disabled = false;
         }
       });
     });

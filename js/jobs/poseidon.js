@@ -392,7 +392,7 @@ export const poseidon = {
       autoBattle: {
         check: (caster, lc, context) => {
           const targets = context.enemies.filter(enemy => !enemy.isDead);
-          if (!targets.length || caster.mp.current < lc.mpCost) return null;
+          if (!targets.length || caster.mp.current < (context.getEffectiveMpCost?.(caster, lc.mpCost) ?? lc.mpCost)) return null;
           const damageScore = targets.reduce((score, enemy) => {
             const resist = enemy.stats?.elementResist?.water || 0;
             return score + 42 * lc.multiplier * lc.hits * Math.max(.2, 1 - resist / 100);
@@ -491,7 +491,7 @@ export const poseidon = {
       autoBattle: {
         check: (caster, lc, context) => {
           const allies = context.party.filter(member => !member.isDead);
-          if (!allies.length || caster.mp.current < lc.mpCost) return null;
+          if (!allies.length || caster.mp.current < (context.getEffectiveMpCost?.(caster, lc.mpCost) ?? lc.mpCost)) return null;
           const afflicted = allies.filter(member => member.activeAilment
             && !(member.activeAilment.type === 'curse' && hasAtonementStigma(member))).length;
           const totalMissingRatio = allies.reduce((sum, member) => {

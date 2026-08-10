@@ -503,7 +503,7 @@ export const assassin = {
       autoBattle: {
         check: (caster, lc, context) => {
           const targets = context.enemies.filter(enemy => !enemy.isDead);
-          if (!targets.length || caster.mp.current < lc.mpCost) return null;
+          if (!targets.length || caster.mp.current < (context.getEffectiveMpCost?.(caster, lc.mpCost) ?? lc.mpCost)) return null;
           const target = context.selectedEnemyTarget && !context.selectedEnemyTarget.isDead
             ? context.selectedEnemyTarget
             : targets.reduce((highest, enemy) => (enemy.currentHp || 0) > (highest.currentHp || 0) ? enemy : highest);
@@ -536,7 +536,7 @@ export const assassin = {
       autoBattle: {
         check: (caster, lc, context) => {
           const targets = context.enemies.filter(enemy => !enemy.isDead);
-          if (!targets.length || caster.mp.current < lc.mpCost) return null;
+          if (!targets.length || caster.mp.current < (context.getEffectiveMpCost?.(caster, lc.mpCost) ?? lc.mpCost)) return null;
           const target = context.selectedEnemyTarget && !context.selectedEnemyTarget.isDead
             ? context.selectedEnemyTarget
             : targets.reduce((highest, enemy) => (enemy.currentHp || 0) > (highest.currentHp || 0) ? enemy : highest);

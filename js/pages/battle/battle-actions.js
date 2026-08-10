@@ -7,6 +7,8 @@ import {
 import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
 import { resolveBattleSkill } from './battle-statistics.js';
 import {
+  calculateMedalEquipmentIncomingDamage,
+  getEffectiveMedalEquipmentMpCost,
   getMedalEquipmentEffects,
   hasMedalEquipmentImmunity,
   rollMedalEquipmentEffect,
@@ -43,6 +45,36 @@ export function getStackedAttackNegationStep(
  */
 
 export const actionMethods = {
+  applyMedalEquipmentIncomingDamage(entity, damage, options = {}) {
+    return calculateMedalEquipmentIncomingDamage(entity, this.equipMap, damage, options);
+  },
+
+  applyMedalEquipmentLethalSurvival(entity, damage) {
+    if (!entity?.hp || entity.isDead || entity.hp.current - damage > 0 || entity._medalLethalSurvivalUsed) {
+      return { damage, survived: false };
+    }
+    const survivePercent = sumMedalEquipmentEffect(entity, this.equipMap, 'surviveLethalPercent', 80);
+    if (survivePercent <= 0) return { damage, survived: false };
+
+    const maxHp = entity.stats?.hp || entity.hp.max || 1;
+    const survivingHp = Math.max(1, Math.floor(maxHp * survivePercent / 100));
+    entity.hp.current = survivingHp;
+    entity._medalLethalSurvivalUsed = true;
+    this._scheduleBattleTimeout(() => {
+      this.showActionName(entity.elementId, 'メダル装備・不屈', 'text-amber-200', 'border-amber-400/60');
+      this.showDamage(entity.elementId, `HP ${survivingHp}`, 'text-emerald-300');
+    }, this.speedMult >= 5 ? 0 : 250 / this.speedMult);
+    return { damage: 0, survived: true };
+  },
+
+  isMedalEquipmentAilmentImmune(entity, ailment, { announce = true } = {}) {
+    const immune = hasMedalEquipmentImmunity(entity, this.equipMap, ailment);
+    if (immune && announce) {
+      this.showActionName(entity.elementId, '状態異常無効', 'text-amber-200', 'border-amber-400/60');
+    }
+    return immune;
+  },
+
   applyMedalEquipmentActionRecovery(entity) {
     if (!entity?.hp || entity.isDead) return;
     const hpPercent = sumMedalEquipmentEffect(entity, this.equipMap, 'actionHpRegenPercent', 25);
@@ -190,8 +222,7 @@ export const actionMethods = {
 
   executeSkill(caster, skillDef, levelConfig, options = {}) {
     if (this.isStopped) return;
-    const mpCostReduction = sumMedalEquipmentEffect(caster, this.equipMap, 'mpCostReductionPercent', 80);
-    const effectiveMpCost = Math.max(0, Math.floor((Number(levelConfig.mpCost) || 0) * (1 - mpCostReduction / 100)));
+    const effectiveMpCost = getEffectiveMedalEquipmentMpCost(caster, this.equipMap, levelConfig.mpCost);
     if (!options.isDoubleAct && caster.mp && caster.mp.current < effectiveMpCost) {
       caster.atb = 0;
       this.activeCharacter = null;
@@ -789,18 +820,7 @@ export const actionMethods = {
     }
 
     if (!isParty && defender.hp !== undefined) {
-      let reduction = sumMedalEquipmentEffect(defender, this.equipMap, 'incomingDamageReductionPercent', 60);
-      reduction += isMagic
-        ? sumMedalEquipmentEffect(defender, this.equipMap, 'magicDamageReductionPercent', 50)
-        : sumMedalEquipmentEffect(defender, this.equipMap, 'physicalDamageReductionPercent', 50);
-      const defenderMaxHp = defender.stats?.hp || defender.hp.max || 1;
-      if (defender.hp.current / defenderMaxHp <= .5) {
-        reduction += sumMedalEquipmentEffect(defender, this.equipMap, 'lowHpDamageReductionPercent', 60);
-      }
-      if (defender.hp.current >= defenderMaxHp) {
-        reduction += sumMedalEquipmentEffect(defender, this.equipMap, 'fullHpDamageReductionPercent', 60);
-      }
-      damage = Math.max(1, Math.floor(damage * (1 - Math.min(75, reduction) / 100)));
+      damage = this.applyMedalEquipmentIncomingDamage(defender, damage, { isMagic });
     }
 
     // --- Passive: Guard ---
@@ -944,9 +964,8 @@ export const actionMethods = {
           ailmentImmune = true;
         }
       }
-      if (defender.hp !== undefined && hasMedalEquipmentImmunity(defender, this.equipMap, inflictedAilments[0])) {
+      if (defender.hp !== undefined && this.isMedalEquipmentAilmentImmune(defender, inflictedAilments[0])) {
         ailmentImmune = true;
-        this.showActionName(defender.elementId, '状態異常無効', 'text-amber-200', 'border-amber-400/60');
       }
       if (!ailmentImmune) {
         const ailment = inflictedAilments[0];
@@ -970,18 +989,9 @@ export const actionMethods = {
       let survivedBySlimeCore = false;
       let survivedByLastBastion = false;
       let survivedByMedalArmor = false;
-      const medalSurvivePercent = sumMedalEquipmentEffect(defender, this.equipMap, 'surviveLethalPercent', 80);
-      if (defender.hp.current - damage <= 0 && medalSurvivePercent > 0 && !defender._medalLethalSurvivalUsed) {
-        const maxHp = defender.stats?.hp || defender.hp.max;
-        const survivingHp = Math.max(1, Math.floor(maxHp * medalSurvivePercent / 100));
-        damage = Math.max(0, prevHp - survivingHp);
-        defender._medalLethalSurvivalUsed = true;
-        survivedByMedalArmor = true;
-        this._scheduleBattleTimeout(() => {
-          this.showActionName(defender.elementId, 'メダル装備・不屈', 'text-amber-200', 'border-amber-400/60');
-          this.showDamage(defender.elementId, `HP ${survivingHp}`, 'text-emerald-300');
-        }, this.speedMult >= 5 ? 0 : 250 / this.speedMult);
-      }
+      const medalSurvival = this.applyMedalEquipmentLethalSurvival(defender, damage);
+      damage = medalSurvival.damage;
+      survivedByMedalArmor = medalSurvival.survived;
       if (!survivedByMedalArmor && defender.hp.current - damage <= 0 && defender.jobSkills) {
         const lastBastion = this._findSkill(defender, 'last_bastion');
         if (lastBastion?.level > 0 && lastBastion.levelConfig && !defender._guardianLastBastionUsed) {

@@ -113,7 +113,8 @@ const reviveFallenParty = (caster, battle, revivePercent) => {
     member.hp.current = Math.max(1, Math.floor(maxHp * revivePercent / 100));
     member.atb = 0;
     const stigma = battle._findSkill?.(member, 'stigma_of_atonement');
-    if (stigma?.level > 0 && stigma.levelConfig) {
+    if (stigma?.level > 0 && stigma.levelConfig
+      && !battle.isMedalEquipmentAilmentImmune?.(member, 'curse')) {
       member.activeAilment = { type: 'curse', duration: 9999 };
     }
     battle.showDamage?.(member.elementId, 'SOUL RETURN', 'text-cyan-200');

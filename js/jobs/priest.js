@@ -316,7 +316,8 @@ export const priest = {
           }
           target.atb = 0; // Reset ATB on revive just in case
           const stigmaSkill = battle._findSkill?.(target, 'stigma_of_atonement');
-          if (stigmaSkill && stigmaSkill.level > 0 && stigmaSkill.levelConfig) {
+          if (stigmaSkill && stigmaSkill.level > 0 && stigmaSkill.levelConfig
+            && !battle.isMedalEquipmentAilmentImmune?.(target, 'curse')) {
             target.activeAilment = { type: 'curse', duration: 9999 };
           }
           battle.showDamage(target.elementId, `RAISE`, 'text-yellow-300');

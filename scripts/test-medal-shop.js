@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import {
   MEDAL_SHOP_ACCESSORIES,
   MEDAL_SHOP_ARMORS,
@@ -8,9 +9,13 @@ import {
   calculateMedalPoints,
 } from '../js/definitions/medal-shop-definitions.js';
 import {
+  calculateMedalEquipmentIncomingDamage,
+  getEffectiveMedalEquipmentMpCost,
   hasMedalEquipmentImmunity,
   sumMedalEquipmentEffect,
 } from '../js/utils/medal-equipment-effects.js';
+import { actionMethods } from '../js/pages/battle/battle-actions.js';
+import { ailmentMethods } from '../js/pages/battle/battle-ailments.js';
 import { calcFinalStats } from '../js/data/stat-calculator.js';
 import { DUNGEONS } from '../js/definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../js/definitions/special_dungeons.js';
@@ -25,6 +30,11 @@ assert.equal(MEDAL_SHOP_REWARDS.length, 51);
 assert.equal(MEDAL_SHOP_ACCESSORIES.length, 17);
 assert.equal(MEDAL_SHOP_ARMORS.length, 17);
 assert.equal(MEDAL_SHOP_WEAPONS.length, 17);
+
+for (const reward of MEDAL_SHOP_REWARDS) {
+  const imageUrl = new URL(`../assets/${reward.type}/${reward.id}.webp`, import.meta.url);
+  assert.equal(existsSync(imageUrl), true, `Missing medal shop image for ${reward.id}`);
+}
 
 for (const dungeon of MEDAL_SHOP_DUNGEON_REWARDS) {
   assert.equal(dungeon.rewards.length, 3);
@@ -86,6 +96,62 @@ assert.equal(sumMedalEquipmentEffect(entity, equipmentMap, 'incomingDamageReduct
 assert.equal(sumMedalEquipmentEffect(entity, equipmentMap, 'incomingDamageReductionPercent', 20), 20);
 assert.equal(hasMedalEquipmentImmunity(entity, equipmentMap, 'poison'), true);
 assert.equal(hasMedalEquipmentImmunity(entity, equipmentMap, 'sleep'), false);
+
+const moonlitDress = MEDAL_SHOP_REWARDS.find(reward => reward.id === 'medal_moonlit_ceremony_dress');
+const slimeCrown = MEDAL_SHOP_REWARDS.find(reward => reward.id === 'medal_slime_crown');
+const requiemLocket = MEDAL_SHOP_REWARDS.find(reward => reward.id === 'medal_requiem_locket');
+const effectEquipmentMap = new Map([
+  [moonlitDress.id, moonlitDress],
+  [slimeCrown.id, slimeCrown],
+  [requiemLocket.id, requiemLocket],
+]);
+const effectCharacter = {
+  hp: { current: 100, max: 100 },
+  stats: { hp: 100 },
+  equipment: { armor: moonlitDress.id, accessory1: slimeCrown.id },
+};
+assert.equal(getEffectiveMedalEquipmentMpCost(effectCharacter, effectEquipmentMap, 100), 75);
+assert.equal(calculateMedalEquipmentIncomingDamage(effectCharacter, effectEquipmentMap, 100), 92);
+
+const survivalCharacter = {
+  elementId: 'survival-test',
+  hp: { current: 10, max: 100 },
+  stats: { hp: 100 },
+  equipment: { accessory1: requiemLocket.id },
+};
+const survivalBattle = {
+  equipMap: effectEquipmentMap,
+  speedMult: 5,
+  _scheduleBattleTimeout() {},
+  showActionName() {},
+  showDamage() {},
+};
+const survivalResult = actionMethods.applyMedalEquipmentLethalSurvival.call(survivalBattle, survivalCharacter, 20);
+assert.deepEqual(survivalResult, { damage: 0, survived: true });
+assert.equal(survivalCharacter.hp.current, 25);
+assert.equal(survivalCharacter._medalLethalSurvivalUsed, true);
+
+const ailmentCharacter = {
+  elementId: 'ailment-test',
+  hp: { current: 10, max: 100 },
+  stats: { hp: 100 },
+  equipment: { accessory1: requiemLocket.id, accessory2: slimeCrown.id },
+  _barrierHp: 5,
+  isDead: false,
+};
+const ailmentBattle = {
+  ...survivalBattle,
+  isStopped: false,
+  applyMedalEquipmentIncomingDamage: actionMethods.applyMedalEquipmentIncomingDamage,
+  applyMedalEquipmentLethalSurvival: actionMethods.applyMedalEquipmentLethalSurvival,
+  battleTelemetry: { recordPrevented() {}, recordDamage() {} },
+  clearEntityStatuses() {},
+  trySoulReaperDeathDenial() { return false; },
+};
+ailmentMethods.takeAilmentDamage.call(ailmentBattle, ailmentCharacter, 20, 'POISON');
+assert.equal(ailmentCharacter._barrierHp, 0);
+assert.equal(ailmentCharacter.hp.current, 25);
+assert.equal(ailmentCharacter.isDead, false);
 
 const stats = calcFinalStats({
   hp: { max: 100 }, mp: { max: 20 },

@@ -346,7 +346,7 @@ export const cryomancer = {
       autoBattle: {
         check: (caster, lc, context) => {
           const targets = context.enemies.filter(enemy => !enemy.isDead);
-          if (!targets.length || caster.mp.current < lc.mpCost) return null;
+          if (!targets.length || caster.mp.current < (context.getEffectiveMpCost?.(caster, lc.mpCost) ?? lc.mpCost)) return null;
           const frozen = targets.filter(enemy => enemy.activeAilment?.type === 'freeze').length;
           if (!frozen && targets.length < 3) return null;
           return { target: targets[0], score: 50 * lc.multiplier * (targets.length + frozen * (lc.shatterMultiplier - 1)) + frozen * 80 };

@@ -26,6 +26,7 @@ import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
+import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
 import { selectAutoBattleAction } from './auto-battle-ai.js';
 
 // --- Mixin imports ---
@@ -803,9 +804,10 @@ class BattleManager {
             const { level, def, levelConfig } = cacheData;
             if (level > 0 && def && levelConfig && def.type !== 'passive') {
               const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
-              const isBlockedBySilence = character.activeAilment?.type === 'silence' && levelConfig.mpCost > 0;
+              const effectiveMpCost = getEffectiveMedalEquipmentMpCost(character, this.equipMap, levelConfig.mpCost);
+              const isBlockedBySilence = character.activeAilment?.type === 'silence' && effectiveMpCost > 0;
               const useState = def.getUseState?.(character, levelConfig) || { canUse: true };
-              if (isAutoEnabled && !isBlockedBySilence && character.mp.current >= levelConfig.mpCost && useState.canUse !== false) {
+              if (isAutoEnabled && !isBlockedBySilence && character.mp.current >= effectiveMpCost && useState.canUse !== false) {
                 if (def.autoBattle && typeof def.autoBattle.check === 'function') {
                   usableSkills.push({
                     id: skillId,
@@ -821,6 +823,8 @@ class BattleManager {
         const context = {
           enemies: this.enemies,
           party: this.party,
+          equipMap: this.equipMap,
+          getEffectiveMpCost: (entity, baseCost) => getEffectiveMedalEquipmentMpCost(entity, this.equipMap, baseCost),
           selectedEnemyTarget: (this.selectedEnemyTarget && !this.selectedEnemyTarget.isDead) ? this.selectedEnemyTarget : null
         };
 
@@ -1230,7 +1234,7 @@ class BattleManager {
 
     const p = this.isAutoBattle ? (this.selectedPartyMember || this.party.find(char => !char.isDead)) : this.activeCharacter;
     
-    const html = renderSkillTabHtml(p, this.isAutoBattle, this.autoSkillStates, JOBS);
+    const html = renderSkillTabHtml(p, this.isAutoBattle, this.autoSkillStates, JOBS, this.equipMap);
     this.elements.tabContent.innerHTML = html;
 
     this.elements.tabContent.querySelectorAll('.skill-btn').forEach(btn => {
@@ -1259,7 +1263,8 @@ class BattleManager {
 
         if (found.def && found.levelConfig) {
           const levelConfig = found.levelConfig;
-          if (this.activeCharacter.mp.current < levelConfig.mpCost) {
+          const effectiveMpCost = getEffectiveMedalEquipmentMpCost(this.activeCharacter, this.equipMap, levelConfig.mpCost);
+          if (this.activeCharacter.mp.current < effectiveMpCost) {
             this.showDamage(this.activeCharacter.elementId, 'MP不足', 'text-blue-400');
             return;
           }

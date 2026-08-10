@@ -3,6 +3,8 @@
  * 状態異常処理 (poison, burn, paralysis, sleep, confusion 等)
  */
 
+import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+
 export const ailmentMethods = {
   processPreActionAilment(entity) {
     if (!entity.activeAilment) return false;
@@ -46,10 +48,13 @@ export const ailmentMethods = {
     if (this.isStopped) return;
     if (entity.isDead) return;
     damage = Math.max(1, damage);
+    if (entity.hp) {
+      damage = this.applyMedalEquipmentIncomingDamage(entity, damage);
+    }
     
     let originalDamage = damage;
     const hpBefore = entity.hp ? entity.hp.current : entity.currentHp;
-    if (ailmentName === 'CURSE' && entity._barrierHp && entity._barrierHp > 0) {
+    if (entity._barrierHp && entity._barrierHp > 0) {
       const damageBeforeBarrier = damage;
       if (entity._barrierHp >= damage) {
         entity._barrierHp -= damage;
@@ -68,10 +73,17 @@ export const ailmentMethods = {
       if (!(entity._barrierHp > 0)) entity._battleBarrierMetric = null;
     }
 
+    let survivedByMedalArmor = false;
+    if (damage > 0 && entity.hp) {
+      const medalSurvival = this.applyMedalEquipmentLethalSurvival(entity, damage);
+      damage = medalSurvival.damage;
+      survivedByMedalArmor = medalSurvival.survived;
+    }
+
     if (damage > 0) {
       if (entity.hp) {
         entity.hp.current -= damage;
-        if (entity.hp.current <= 0) {
+        if (entity.hp.current <= 0 && !survivedByMedalArmor) {
            if (!this.trySoulReaperDeathDenial?.(entity)) {
              entity.hp.current = 0;
              entity.isDead = true;
@@ -122,7 +134,8 @@ export const ailmentMethods = {
             const { level, def, levelConfig } = cacheData;
             if (level > 0 && def && levelConfig && def.type !== 'passive' && !def.isPassive) {
               const useState = def.getUseState?.(entity, levelConfig) || { canUse: true };
-              if (entity.mp && entity.mp.current >= levelConfig.mpCost && useState.canUse !== false) {
+              const effectiveMpCost = getEffectiveMedalEquipmentMpCost(entity, this.equipMap, levelConfig.mpCost);
+              if (entity.mp && entity.mp.current >= effectiveMpCost && useState.canUse !== false) {
                 usableSkills.push({ skillId, def, levelConfig });
               }
             }

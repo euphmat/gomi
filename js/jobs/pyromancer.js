@@ -545,7 +545,7 @@ export const pyromancer = {
       autoBattle: {
         check: (caster, lc, context) => {
           const targets = context.enemies.filter(enemy => !enemy.isDead);
-          if (!targets.length || caster.mp.current < lc.mpCost) return null;
+          if (!targets.length || caster.mp.current < (context.getEffectiveMpCost?.(caster, lc.mpCost) ?? lc.mpCost)) return null;
           const burning = targets.filter(enemy => enemy.activeAilment?.type === 'burn').length;
           if (!burning && targets.length < 3) return null;
           return { target: targets[0], score: 50 * lc.multiplier * (targets.length + burning * (lc.detonationMultiplier - 1)) + burning * 70 };

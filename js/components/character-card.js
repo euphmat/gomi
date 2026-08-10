@@ -15,6 +15,7 @@
 import { createStatusBar, BAR_COLORS } from './status-bar.js';
 import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 import { formatNumber } from '../utils/format.js';
+import { isMedalShopEquipment } from '../utils/medal-equipment-scaling.js';
 
 /**
  * Render a character card.
@@ -38,32 +39,56 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
 
   const equipmentHTML = equippedItems.map(({ slotKey, item }) => {
     const label = slotLabelMap[slotKey] || slotKey;
+    const isLocked = Boolean(character.equipmentLocks?.[slotKey]);
+    const lockButton = `
+      <button type="button"
+              class="equipment-lock-btn flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors ${isLocked ? 'bg-amber-500/15 text-amber-300 active:bg-amber-500/25' : 'text-gray-600 active:bg-gray-800/70 active:text-gray-300'}"
+              aria-label="${label}の自動装備ロックを${isLocked ? '解除' : '設定'}"
+              aria-pressed="${isLocked}"
+              data-char-id="${character.id}" data-slot-key="${slotKey}">
+        <span class="material-symbols-outlined pointer-events-none text-[15px]" style="font-variation-settings: 'FILL' ${isLocked ? 1 : 0}">${isLocked ? 'lock' : 'lock_open'}</span>
+      </button>
+    `;
     if (item) {
+      const isMedalEquipment = isMedalShopEquipment(item);
+      const slotClasses = isMedalEquipment
+        ? 'rounded-md border border-yellow-200/40 bg-yellow-100/10 shadow-[inset_0_0_10px_rgba(254,240,138,0.08)]'
+        : 'border-b border-gray-700/30 last:border-b-0';
+      const iconClasses = isMedalEquipment
+        ? 'bg-yellow-100/10 border-yellow-200/35'
+        : 'bg-gray-800/80 border-gray-700/40';
       return `
-        <button type="button" class="flex h-8 w-full shrink-0 items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0
-                    cursor-pointer active:bg-gray-800/50 transition-colors eq-slot-clickable text-left"
-             aria-label="${label}: ${item.name}を変更"
-             data-char-id="${character.id}" data-slot-key="${slotKey}">
-          <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded shrink-0 overflow-hidden
-                       border border-gray-700/40">
-            ${item.image 
-              ? `<img src="${item.image}" class="w-[90%] h-[90%] object-contain drop-shadow-sm" alt=""  onerror="this.style.display='none'" />` 
-              : `<span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span>`
-            }
-          </span>
-          <span class="text-[10px] text-gray-300 truncate">${item.name}</span>
-        </button>
+        <div class="flex h-8 w-full shrink-0 items-center ${slotClasses}">
+          <button type="button" class="flex h-full min-w-0 flex-1 items-center gap-1.5 py-[3px]
+                      cursor-pointer transition-colors active:bg-gray-800/50 eq-slot-clickable text-left"
+               aria-label="${label}: ${isMedalEquipment ? 'メダル装備 ' : ''}${item.name}を変更"
+               ${isMedalEquipment ? 'data-medal-equipment="true"' : ''}
+               data-char-id="${character.id}" data-slot-key="${slotKey}">
+            <span class="w-6 h-6 flex items-center justify-center rounded shrink-0 overflow-hidden
+                         border ${iconClasses}">
+              ${item.image
+                ? `<img src="${item.image}" class="w-[90%] h-[90%] object-contain drop-shadow-sm" alt=""  onerror="this.style.display='none'" />`
+                : `<span class="material-symbols-outlined text-[14px] text-gray-300">${item.icon}</span>`
+              }
+            </span>
+            <span class="min-w-0 truncate text-[10px] text-gray-300">${item.name}</span>
+          </button>
+          ${lockButton}
+        </div>
       `;
     } else {
       return `
-        <button type="button" class="flex h-8 w-full shrink-0 items-center gap-1.5 py-[3px] border-b border-gray-700/30 last:border-b-0 opacity-60
-                    cursor-pointer active:bg-gray-800/50 active:opacity-100 transition-all eq-slot-clickable text-left"
-             aria-label="${label}: 未装備。装備を選択"
-             data-char-id="${character.id}" data-slot-key="${slotKey}">
-          <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded text-[11px] shrink-0
-                       border border-gray-700/40">—</span>
-          <span class="text-[10px] text-gray-600 truncate italic">未装備</span>
-        </button>
+        <div class="flex h-8 w-full shrink-0 items-center border-b border-gray-700/30 last:border-b-0">
+          <button type="button" class="flex h-full min-w-0 flex-1 items-center gap-1.5 py-[3px] opacity-60
+                      cursor-pointer active:bg-gray-800/50 active:opacity-100 transition-all eq-slot-clickable text-left"
+               aria-label="${label}: 未装備。装備を選択"
+               data-char-id="${character.id}" data-slot-key="${slotKey}">
+            <span class="w-6 h-6 flex items-center justify-center bg-gray-800/80 rounded text-[11px] shrink-0
+                         border border-gray-700/40">—</span>
+            <span class="min-w-0 truncate text-[10px] text-gray-600 italic">未装備</span>
+          </button>
+          ${lockButton}
+        </div>
       `;
     }
   }).join('');

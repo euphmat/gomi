@@ -454,7 +454,7 @@ export const black_knight = {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          if (caster.mp.current < levelConfig.mpCost) return null;
+          if (caster.mp.current < (context.getEffectiveMpCost?.(caster, levelConfig.mpCost) ?? levelConfig.mpCost)) return null;
           let target = context.selectedEnemyTarget;
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
           
@@ -516,7 +516,7 @@ export const black_knight = {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
-          if (caster.mp.current < levelConfig.mpCost) return null;
+          if (caster.mp.current < (context.getEffectiveMpCost?.(caster, levelConfig.mpCost) ?? levelConfig.mpCost)) return null;
           
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           const avgHits = (levelConfig.minHits + levelConfig.maxHits) / 2;
@@ -598,7 +598,7 @@ export const black_knight = {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length === 0) return null;
           
-          if (caster.mp.current < levelConfig.mpCost) return null;
+          if (caster.mp.current < (context.getEffectiveMpCost?.(caster, levelConfig.mpCost) ?? levelConfig.mpCost)) return null;
           
           // デバフ状態の敵がいるかチェック
           const hasDebuffedEnemy = aliveEnemies.some(e => {
@@ -661,7 +661,7 @@ export const black_knight = {
           if (aliveEnemies.length === 0) return null;
           const hpRatio = caster.hp.current / (caster.stats?.hp || caster.hp.max);
           if (hpRatio < 0.25) return null;
-          if (caster.mp.current < levelConfig.mpCost) return null;
+          if (caster.mp.current < (context.getEffectiveMpCost?.(caster, levelConfig.mpCost) ?? levelConfig.mpCost)) return null;
           
           let totalScore = 0;
           for (const enemy of aliveEnemies) {

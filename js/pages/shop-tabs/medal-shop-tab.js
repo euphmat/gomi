@@ -11,9 +11,9 @@ import {
 } from '../../utils/medal-equipment-scaling.js';
 
 const TYPE_META = {
-  accessory: { label: 'アクセサリ', icon: 'diamond', color: 'text-fuchsia-300', border: 'border-fuchsia-400/25' },
-  armor: { label: '防具', icon: 'shield', color: 'text-sky-300', border: 'border-sky-400/25' },
-  weapon: { label: '武器', icon: 'swords', color: 'text-rose-300', border: 'border-rose-400/25' },
+  accessory: { label: 'アクセサリ', icon: 'diamond', color: 'text-fuchsia-300', border: 'border-fuchsia-400/25', glow: 'rgba(232,121,249,.2)' },
+  armor: { label: '防具', icon: 'shield', color: 'text-sky-300', border: 'border-sky-400/25', glow: 'rgba(125,211,252,.2)' },
+  weapon: { label: '武器', icon: 'swords', color: 'text-rose-300', border: 'border-rose-400/25', glow: 'rgba(253,164,175,.2)' },
 };
 
 function statSummary(stats = {}) {
@@ -24,6 +24,10 @@ function statSummary(stats = {}) {
     .join(' / ');
 }
 
+function rewardImage(reward) {
+  return `./assets/${reward.type}/${reward.id}.webp`;
+}
+
 function createEquipmentInstance(reward) {
   return {
     id: `${reward.id}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
@@ -31,9 +35,30 @@ function createEquipmentInstance(reward) {
   };
 }
 
+function showClaimCelebration(container, reward) {
+  const celebration = document.createElement('div');
+  celebration.className = 'absolute inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-6 backdrop-blur-sm';
+  celebration.setAttribute('role', 'status');
+  celebration.setAttribute('aria-live', 'polite');
+  celebration.innerHTML = `
+    <div class="relative w-full max-w-xs overflow-hidden rounded-[28px] border border-amber-200/50 bg-gradient-to-b from-amber-950 via-slate-950 to-violet-950 p-5 text-center shadow-[0_0_70px_rgba(251,191,36,.35)]">
+      <div class="absolute -left-12 -top-12 h-32 w-32 rounded-full bg-amber-300/20 blur-3xl"></div>
+      <div class="absolute -bottom-14 -right-10 h-36 w-36 rounded-full bg-fuchsia-400/20 blur-3xl"></div>
+      <div class="relative text-[9px] font-black tracking-[.35em] text-amber-200">MILESTONE COMPLETE</div>
+      <div class="relative mx-auto mt-4 flex h-36 w-36 items-center justify-center rounded-3xl border border-amber-200/25 bg-[radial-gradient(circle,rgba(251,191,36,.2),transparent_68%)]">
+        <img src="${rewardImage(reward)}" alt="" class="h-32 w-32 object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,.65)]">
+      </div>
+      <div class="relative mt-3 text-[10px] font-black text-amber-300">${formatNumber(reward.points)}P REWARD</div>
+      <div class="relative mt-1 text-base font-black text-white">${reward.name}</div>
+      <div class="relative mt-2 text-[10px] font-bold text-emerald-300">装備を獲得しました！</div>
+    </div>`;
+  container.appendChild(celebration);
+  window.setTimeout(() => celebration.remove(), 1400);
+}
+
 export async function renderMedalShopTab() {
   const container = document.createElement('div');
-  container.className = 'flex h-full min-h-0 flex-col bg-[#0b0b19] text-slate-100';
+  container.className = 'relative flex h-full min-h-0 flex-col overflow-hidden bg-[#080812] text-slate-100';
   container.innerHTML = '<div class="flex h-full items-center justify-center text-xs font-bold text-slate-500">メダルポイントを集計中...</div>';
 
   const [
@@ -66,6 +91,7 @@ export async function renderMedalShopTab() {
   if (claimed.size > storedClaimedCount) {
     await GameDB.setGameState('medal_shop_claimed_rewards', [...claimed]);
   }
+
   const rankRows = getMedalPointRows();
   const medalCounts = rankRows.map((rank, index) => ({
     ...rank,
@@ -79,88 +105,140 @@ export async function renderMedalShopTab() {
     currentDungeonId,
     currentFloor,
   });
+  const allRewards = MEDAL_SHOP_DUNGEON_REWARDS
+    .flatMap(dungeon => dungeon.rewards)
+    .sort((a, b) => a.points - b.points);
+  const maxPoints = allRewards.at(-1)?.points || points || 1;
   let claiming = false;
-
-  const allRewards = MEDAL_SHOP_DUNGEON_REWARDS.flatMap(dungeon => dungeon.rewards);
-  const nextReward = allRewards
-    .filter(reward => !claimed.has(reward.id) && reward.points > points)
-    .sort((a, b) => a.points - b.points)[0];
-  const nextTarget = nextReward?.points || MEDAL_SHOP_DUNGEON_REWARDS.at(-1)?.maxPoints || points;
-  const progress = nextReward ? Math.min(100, points / nextTarget * 100) : 100;
 
   const render = () => {
     const acquiredCount = allRewards.filter(reward => claimed.has(reward.id)).length;
+    const claimableRewards = allRewards.filter(reward => !claimed.has(reward.id) && reward.points <= points);
+    const nextLockedReward = allRewards.find(reward => !claimed.has(reward.id) && reward.points > points);
+    const spotlightReward = claimableRewards[0] || nextLockedReward || allRewards.at(-1);
+    const spotlightMeta = TYPE_META[spotlightReward.type];
+    const remainingPoints = Math.max(0, (nextLockedReward?.points || maxPoints) - points);
+    const overallProgress = Math.min(100, points / maxPoints * 100);
+
     container.innerHTML = `
-      <header class="shrink-0 border-b border-amber-300/15 bg-gradient-to-br from-amber-950/70 via-slate-950 to-violet-950/55 px-3 py-3 shadow-lg">
-        <div class="flex items-start justify-between gap-3">
+      <header class="relative shrink-0 overflow-hidden border-b border-amber-300/15 bg-[radial-gradient(circle_at_85%_0%,rgba(251,191,36,.18),transparent_38%),linear-gradient(135deg,rgba(69,26,3,.82),rgba(2,6,23,.96)_52%,rgba(46,16,101,.55))] px-3 pb-3 pt-3 shadow-xl">
+        <div class="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-amber-200/10"></div>
+        <div class="relative flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-2xl text-amber-300" style="font-variation-settings:'FILL' 1">workspace_premium</span>
+              <span class="material-symbols-outlined text-2xl text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,.6)]" style="font-variation-settings:'FILL' 1">route</span>
               <div>
-                <h2 class="text-sm font-black tracking-wide text-white">メダルショップ</h2>
-                <p class="text-[9px] font-bold text-amber-100/55">ポイントは消費されない累積達成報酬です</p>
+                <div class="text-[8px] font-black tracking-[.28em] text-amber-200/60">MEDAL ROAD</div>
+                <h2 class="text-sm font-black tracking-wide text-white">伝説装備へのロードマップ</h2>
               </div>
             </div>
+            <p class="mt-1 text-[9px] font-bold text-slate-400">集めたポイントは減りません。到達した報酬を順番に受け取ろう。</p>
           </div>
-          <div class="shrink-0 rounded-xl border border-amber-300/30 bg-black/35 px-3 py-2 text-right shadow-[0_0_18px_rgba(251,191,36,.12)]">
-            <div class="text-[8px] font-black tracking-widest text-amber-200/65">MEDAL POINT</div>
-            <div class="text-xl font-black tabular-nums text-amber-300">${formatNumber(points)}<span class="ml-1 text-[10px]">P</span></div>
-            <div class="mt-0.5 text-[8px] font-bold text-cyan-200/65">ダンジョン進捗 ${scalingContext.progressPercent.toFixed(1)}%</div>
+          <div class="shrink-0 rounded-2xl border border-amber-300/30 bg-black/35 px-3 py-2 text-right shadow-[0_0_22px_rgba(251,191,36,.13)]">
+            <div class="text-[7px] font-black tracking-widest text-amber-200/65">TOTAL POINT</div>
+            <div class="text-xl font-black tabular-nums text-amber-300">${formatNumber(points)}<span class="ml-1 text-[9px]">P</span></div>
           </div>
         </div>
-        <div class="mt-2.5 flex items-center gap-2">
-          <div class="h-2 flex-1 overflow-hidden rounded-full border border-white/5 bg-black/50">
-            <div class="h-full rounded-full bg-gradient-to-r from-amber-600 via-yellow-300 to-fuchsia-300 transition-all" style="width:${progress}%"></div>
+
+        <div class="relative mt-3 grid grid-cols-[64px_1fr] items-center gap-3 rounded-2xl border ${claimableRewards.length ? 'border-amber-300/35 bg-amber-300/[.08]' : 'border-white/10 bg-black/25'} p-2">
+          <div class="relative flex h-16 w-16 items-center justify-center rounded-xl border ${spotlightMeta.border} bg-[radial-gradient(circle,rgba(255,255,255,.12),transparent_70%)]">
+            <img src="${rewardImage(spotlightReward)}" alt="${spotlightReward.name}" class="h-[58px] w-[58px] object-contain drop-shadow-[0_7px_9px_rgba(0,0,0,.7)]">
+            ${claimableRewards.length ? '<span class="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full border-2 border-amber-100 bg-amber-400"></span>' : ''}
           </div>
-          <span class="w-24 text-right text-[9px] font-bold text-slate-400">${nextReward ? `次まで ${formatNumber(Math.max(0, nextTarget - points))}P` : '全報酬解放可能'}</span>
+          <div class="min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[8px] font-black tracking-[.2em] ${claimableRewards.length ? 'text-amber-300' : 'text-cyan-300'}">${claimableRewards.length ? `REWARD READY ×${claimableRewards.length}` : nextLockedReward ? 'NEXT MILESTONE' : 'ROAD COMPLETE'}</span>
+              <span class="text-[9px] font-black tabular-nums text-white">${formatNumber(spotlightReward.points)}P</span>
+            </div>
+            <div class="mt-0.5 truncate text-[11px] font-black text-white">${spotlightReward.name}</div>
+            <div class="mt-1 flex items-center gap-1 text-[8px] font-bold text-slate-400"><span class="material-symbols-outlined ${spotlightMeta.color}" style="font-size:12px">${spotlightMeta.icon}</span>${spotlightMeta.label}${nextLockedReward && !claimableRewards.length ? ` ・ あと ${formatNumber(remainingPoints)}P` : ''}</div>
+          </div>
         </div>
-        <details class="mt-2 rounded-lg border border-white/5 bg-black/20 px-2 py-1.5">
-          <summary class="cursor-pointer text-[9px] font-bold text-slate-400">ポイント内訳・所持メダル ${Object.keys(playerMedals).length}枚</summary>
+
+        <div class="relative mt-2.5">
+          <div class="mb-1 flex items-center justify-between text-[8px] font-black text-slate-500"><span>JOURNEY PROGRESS</span><span>${acquiredCount} / ${allRewards.length} 獲得</span></div>
+          <div class="h-2 overflow-hidden rounded-full border border-white/5 bg-black/55">
+            <div class="relative h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-300 to-fuchsia-300 transition-all duration-500" style="width:${overallProgress}%"><span class="absolute right-0 top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-white shadow-[0_0_10px_white]"></span></div>
+          </div>
+          <div class="mt-1 flex items-center justify-between text-[7px] font-bold text-slate-600"><span>0P</span><button type="button" data-jump-current class="flex items-center gap-0.5 text-amber-300/80 active:text-amber-200"><span class="material-symbols-outlined text-[11px]">my_location</span>現在地へ</button><span>${formatNumber(maxPoints)}P</span></div>
+        </div>
+
+        <details class="relative mt-2 rounded-xl border border-white/5 bg-black/20 px-2 py-1.5">
+          <summary class="cursor-pointer text-[8px] font-bold text-slate-500">ポイント内訳 ・ 所持メダル ${Object.keys(playerMedals).length}枚</summary>
           <div class="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-4">
-            ${medalCounts.map(rank => `<div class="flex items-center justify-between rounded border border-white/5 bg-slate-950/55 px-2 py-1 text-[9px]"><span style="color:${rank.color}">${rank.name.replace('メダル', '')}</span><span class="font-black tabular-nums text-white">${rank.count} × ${rank.points}P</span></div>`).join('')}
+            ${medalCounts.map(rank => `<div class="flex items-center justify-between rounded-lg border border-white/5 bg-slate-950/60 px-2 py-1 text-[8px]"><span style="color:${rank.color}">${rank.name.replace('メダル', '')}</span><span class="font-black tabular-nums text-white">${rank.count} × ${rank.points}P</span></div>`).join('')}
           </div>
         </details>
       </header>
 
-      <div class="flex-1 min-h-0 overflow-y-auto p-3">
-        <div class="mb-2 flex items-center justify-between text-[9px] font-bold text-slate-500">
-          <span>ダンジョン別コレクション</span><span>${acquiredCount} / ${allRewards.length} 獲得済み</span>
-        </div>
-        <div class="flex flex-col gap-3 pb-4">
-          ${MEDAL_SHOP_DUNGEON_REWARDS.map(dungeon => `
-            <section class="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/95 to-slate-950/95 shadow-lg">
-              <div class="flex items-center justify-between border-b border-white/5 bg-white/[.025] px-3 py-2">
-                <div class="flex min-w-0 items-center gap-2">
-                  <span class="material-symbols-outlined text-[17px] text-amber-300">castle</span>
-                  <h3 class="truncate text-[11px] font-black text-slate-100">${dungeon.dungeonName}</h3>
-                </div>
-                <span class="shrink-0 text-[9px] font-bold text-slate-500">武器到達 ${dungeon.maxPoints}P</span>
-              </div>
-              <div class="grid grid-cols-3 gap-1.5 p-2">
-                ${dungeon.rewards.map(reward => {
-                  const meta = TYPE_META[reward.type];
-                  const scaledReward = scaleMedalShopEquipment(reward, scalingContext);
-                  const isClaimed = claimed.has(reward.id);
-                  const canClaim = points >= reward.points && !isClaimed;
-                  const missing = Math.max(0, reward.points - points);
-                  return `<article class="flex min-w-0 flex-col rounded-xl border ${isClaimed ? 'border-emerald-400/25 bg-emerald-950/15' : canClaim ? 'border-amber-300/40 bg-amber-950/20 shadow-[0_0_14px_rgba(251,191,36,.08)]' : 'border-slate-700/55 bg-black/20'} p-2">
-                    <div class="flex items-center justify-between gap-1">
-                      <span class="material-symbols-outlined ${meta.color}" style="font-size:18px">${meta.icon}</span>
-                      <span class="rounded-full border ${meta.border} bg-black/30 px-1.5 py-0.5 text-[7px] font-black ${meta.color}">${meta.label}</span>
+      <div data-roadmap-scroll class="no-scrollbar min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,.08),transparent_32%)] px-3 py-4">
+        <div class="mx-auto max-w-2xl">
+          <div class="mb-3 flex items-end justify-between">
+            <div><div class="text-[8px] font-black tracking-[.25em] text-violet-300/60">51 MILESTONES</div><h3 class="text-xs font-black text-white">ポイント達成報酬</h3></div>
+            <div class="text-right text-[8px] font-bold text-slate-500">輝く装備が<br>あなたを待っている</div>
+          </div>
+
+          <ol class="relative" aria-label="メダルポイント報酬ロードマップ">
+            ${allRewards.map((reward, index) => {
+              const meta = TYPE_META[reward.type];
+              const scaledReward = scaleMedalShopEquipment(reward, scalingContext);
+              const isClaimed = claimed.has(reward.id);
+              const canClaim = points >= reward.points && !isClaimed;
+              const isReached = points >= reward.points;
+              const isCurrent = spotlightReward.id === reward.id;
+              const missing = Math.max(0, reward.points - points);
+              const connectorReached = index < allRewards.length - 1 && points >= allRewards[index + 1].points;
+              return `
+                <li class="relative grid grid-cols-[38px_1fr] gap-2 pb-3" ${isCurrent ? 'data-current-milestone' : ''}>
+                  ${index < allRewards.length - 1 ? `<div class="absolute bottom-0 left-[18px] top-8 w-px ${connectorReached ? 'bg-gradient-to-b from-amber-300 to-fuchsia-400' : 'bg-slate-800'}"></div>` : ''}
+                  <div class="relative z-10 mt-3 flex h-9 w-9 items-center justify-center rounded-full border-2 ${isClaimed ? 'border-emerald-300 bg-emerald-950 text-emerald-300 shadow-[0_0_14px_rgba(52,211,153,.3)]' : canClaim ? 'animate-pulse border-amber-200 bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(251,191,36,.6)]' : isReached ? 'border-amber-400 bg-amber-950 text-amber-300' : 'border-slate-700 bg-slate-950 text-slate-600'}">
+                    <span class="material-symbols-outlined text-base" style="font-variation-settings:'FILL' 1">${isClaimed ? 'check' : canClaim ? 'redeem' : 'lock'}</span>
+                  </div>
+
+                  <article class="relative overflow-hidden rounded-2xl border ${isClaimed ? 'border-emerald-400/20 bg-gradient-to-br from-emerald-950/30 to-slate-950/95' : canClaim ? 'border-amber-300/45 bg-gradient-to-br from-amber-950/55 via-slate-950 to-violet-950/60 shadow-[0_0_25px_rgba(251,191,36,.12)]' : isCurrent ? 'border-cyan-400/30 bg-gradient-to-br from-cyan-950/30 to-slate-950' : 'border-slate-800/80 bg-slate-950/80'} p-2.5">
+                    ${isCurrent ? `<div class="absolute right-0 top-0 rounded-bl-xl border-b border-l ${canClaim ? 'border-amber-300/25 bg-amber-300/10 text-amber-300' : 'border-cyan-300/20 bg-cyan-300/10 text-cyan-300'} px-2 py-1 text-[7px] font-black tracking-widest">現在地</div>` : ''}
+                    <div class="grid grid-cols-[84px_1fr] gap-2.5">
+                      <div class="relative flex h-[84px] w-[84px] items-center justify-center overflow-hidden rounded-xl border ${meta.border} bg-[radial-gradient(circle,rgba(255,255,255,.12),rgba(2,6,23,.15)_68%)]" style="box-shadow:inset 0 0 22px ${meta.glow}">
+                        <div class="absolute inset-x-2 bottom-1 h-3 rounded-full bg-black/55 blur-md"></div>
+                        <img src="${rewardImage(reward)}" alt="${reward.name}" class="relative h-20 w-20 object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,.75)] transition ${!isReached ? 'grayscale opacity-50' : ''}">
+                        ${!isReached ? '<span class="material-symbols-outlined absolute right-1 top-1 rounded-full bg-slate-950/80 p-1 text-[12px] text-slate-500">lock</span>' : ''}
+                      </div>
+
+                      <div class="min-w-0 pr-1">
+                        <div class="flex items-center gap-1.5">
+                          <span class="rounded-full border ${isReached ? 'border-amber-300/25 bg-amber-300/10 text-amber-300' : 'border-slate-700 bg-slate-900 text-slate-500'} px-2 py-0.5 text-[8px] font-black tabular-nums">${formatNumber(reward.points)}P</span>
+                          <span class="flex items-center gap-0.5 text-[7px] font-black ${meta.color}"><span class="material-symbols-outlined text-[11px]">${meta.icon}</span>${meta.label}</span>
+                        </div>
+                        <h4 class="mt-1.5 break-words text-[11px] font-black leading-tight ${isReached ? 'text-white' : 'text-slate-400'}">${reward.name}</h4>
+                        <p class="mt-1 text-[8px] font-bold leading-snug text-cyan-100/70">${statSummary(scaledReward.stats)}</p>
+                        <p class="mt-1 text-[7px] font-black text-amber-300/65">成長倍率 ×${scaledReward.medalScaling.totalMultiplier.toFixed(2)}</p>
+                      </div>
                     </div>
-                    <h4 class="mt-1.5 min-h-[2.3em] break-words text-[9px] font-black leading-tight text-white">${reward.name}</h4>
-                    <p class="mt-1 text-[7px] font-bold leading-snug text-cyan-100/70">${statSummary(scaledReward.stats)}</p>
-                    <p class="mt-1 text-[7px] font-black text-amber-300/75">現在の成長倍率 ×${scaledReward.medalScaling.totalMultiplier.toFixed(2)}</p>
-                    <p class="mt-1.5 flex-1 text-[8px] leading-snug text-slate-400">${reward.specialEffect.description}</p>
-                    <button type="button" data-medal-reward-id="${reward.id}" ${canClaim ? '' : 'disabled'} class="mt-2 min-h-8 rounded-lg border px-1 py-1 text-[9px] font-black transition-all ${isClaimed ? 'border-emerald-500/20 bg-emerald-950/40 text-emerald-400' : canClaim ? 'border-amber-300/35 bg-gradient-to-r from-amber-600 to-yellow-500 text-white active:scale-95' : 'border-slate-700/40 bg-slate-900/70 text-slate-600'}">
-                      ${isClaimed ? '獲得済み' : canClaim ? `${reward.points}Pで受け取る` : `${reward.points}P（あと${missing}）`}
+
+                    <div class="mt-2 rounded-xl border border-white/5 bg-black/25 px-2.5 py-2">
+                      <div class="flex gap-1.5"><span class="material-symbols-outlined mt-px text-[13px] ${meta.color}">auto_awesome</span><p class="text-[8px] leading-relaxed ${isReached ? 'text-slate-300' : 'text-slate-500'}">${reward.specialEffect.description}</p></div>
+                    </div>
+
+                    <button type="button" data-medal-reward-id="${reward.id}" ${canClaim ? '' : 'disabled'} aria-label="${reward.name}を受け取る" class="mt-2 flex min-h-10 w-full items-center justify-center gap-1 rounded-xl border px-2 py-2 text-[10px] font-black transition-all ${isClaimed ? 'border-emerald-500/20 bg-emerald-950/40 text-emerald-400' : canClaim ? 'border-amber-200/50 bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,.25)] active:scale-[.98]' : 'border-slate-800 bg-slate-900/60 text-slate-600'}">
+                      <span class="material-symbols-outlined text-[15px]">${isClaimed ? 'check_circle' : canClaim ? 'redeem' : 'lock'}</span>
+                      ${isClaimed ? '獲得済み' : canClaim ? '到達報酬を受け取る' : `あと ${formatNumber(missing)}P`}
                     </button>
-                  </article>`;
-                }).join('')}
-              </div>
-            </section>`).join('')}
+                  </article>
+                </li>`;
+            }).join('')}
+          </ol>
+
+          <div class="ml-[46px] rounded-2xl border border-dashed border-amber-300/25 bg-amber-300/[.04] px-4 py-5 text-center">
+            <span class="material-symbols-outlined text-2xl text-amber-300">emoji_events</span>
+            <div class="mt-1 text-[10px] font-black text-white">全ロード踏破</div>
+            <div class="mt-1 text-[8px] text-slate-500">${formatNumber(maxPoints)}Pで、すべての伝説装備があなたのものに</div>
+          </div>
         </div>
       </div>`;
+
+    container.querySelector('[data-jump-current]')?.addEventListener('click', () => {
+      container.querySelector('[data-current-milestone]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
 
     container.querySelectorAll('[data-medal-reward-id]').forEach(button => {
       button.addEventListener('click', async () => {
@@ -170,7 +248,7 @@ export async function renderMedalShopTab() {
         if (!reward || claimed.has(rewardId) || points < reward.points) return;
         claiming = true;
         button.disabled = true;
-        button.textContent = '受け取り中...';
+        button.innerHTML = '<span class="material-symbols-outlined animate-spin text-[15px]">progress_activity</span>受け取り中...';
         const instance = createEquipmentInstance(reward);
         try {
           await GameDB.putEquipment(instance);
@@ -178,6 +256,7 @@ export async function renderMedalShopTab() {
           await GameDB.setGameState('medal_shop_claimed_rewards', [...claimed]);
           window.dispatchEvent(new CustomEvent('quest:equipment-craft', { detail: { itemId: reward.id, count: 1 } }));
           render();
+          showClaimCelebration(container, reward);
         } catch (error) {
           console.error('[MedalShop] Reward claim failed.', error);
           claimed.delete(rewardId);

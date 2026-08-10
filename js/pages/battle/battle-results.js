@@ -99,9 +99,10 @@ export const resultMethods = {
     }
 
     // Add Gold
-    const equipmentGoldPercent = Math.max(0, ...this.party
+    const equipmentGoldPercent = Math.min(100, this.party
       .filter(member => !member.isDead)
-      .map(member => sumMedalEquipmentEffect(member, this.equipMap, 'goldRewardPercent', 100)));
+      .reduce((total, member) => total
+        + sumMedalEquipmentEffect(member, this.equipMap, 'goldRewardPercent', 100), 0));
     let gold = Math.floor((enemy.rewards.gold || 0) * (1 + (getTreasureEffect('monsterGoldPercent') + equipmentGoldPercent) / 100));
     if (gold > 0) {
       this.currentGold += gold;

@@ -1,5 +1,6 @@
 import { formatNumber } from '../../utils/format.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
+import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
 import { renderJobResourceHtml } from './job-resource-ui.js';
 
 /**
@@ -345,7 +346,7 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
   </div>`;
 }
 
-export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
+export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equipmentMap) {
   if (!p || !p.jobSkills) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
   }
@@ -400,9 +401,10 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
   skillListHtml += '<div class="flex flex-col gap-2 p-1.5">';
   learnedSkills.forEach(({ skillDef, level, isInherited }) => {
     const levelConfig = resolveJobSkillLevelConfig(skillDef, level, isInherited ? 'inherited' : 'current');
-    const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
+    const effectiveMpCost = getEffectiveMedalEquipmentMpCost(p, equipmentMap, levelConfig.mpCost);
+    const isSilenced = effectiveMpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
     const useState = skillDef.getUseState?.(p, levelConfig) || { canUse: true };
-    const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced && useState.canUse !== false;
+    const canCast = p.mp.current >= effectiveMpCost && !isSilenced && useState.canUse !== false;
     const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
     const useStateHtml = useState.canUse === false && useState.message
       ? `<span class="font-black text-rose-300">${useState.message}。</span>`
@@ -466,19 +468,19 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
 
     // MP Cost Display
     let mpCostHtml = '';
-    if (levelConfig.mpCost > 0) {
+    if (effectiveMpCost > 0) {
       if (canCast) {
         mpCostHtml = `
           <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
             <span class="text-[9px] text-cyan-400/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
-            <span class="text-lg font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${levelConfig.mpCost}</span>
+            <span class="text-lg font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${effectiveMpCost}</span>
           </div>
         `;
       } else {
         mpCostHtml = `
           <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
             <span class="text-[9px] text-rose-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
-            <span class="text-lg font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${levelConfig.mpCost}</span>
+            <span class="text-lg font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${effectiveMpCost}</span>
           </div>
         `;
       }

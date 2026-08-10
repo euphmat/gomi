@@ -2,7 +2,7 @@
  * battle-passives.js
  * 戦闘開始時のパッシブスキル適用
  */
-import { sumMedalEquipmentEffect } from '../../utils/medal-equipment-effects.js';
+import { hasMedalEquipmentImmunity, sumMedalEquipmentEffect } from '../../utils/medal-equipment-effects.js';
 
 export const passiveMethods = {
   applyStartOfBattlePassives() {
@@ -142,7 +142,11 @@ export const passiveMethods = {
     // --- 贖罪の烙印 (Stigma of Atonement): 常時呪い状態付与 ---
     if (stigmaCharacters.length > 0) {
       stigmaCharacters.forEach(p => {
-        p.activeAilment = { type: 'curse', duration: 9999 };
+        if (!hasMedalEquipmentImmunity(p, this.equipMap, 'curse')) {
+          p.activeAilment = { type: 'curse', duration: 9999 };
+        } else {
+          this.showActionName(p.elementId, '状態異常無効', 'text-amber-200', 'border-amber-400/60');
+        }
         
         if (isFirstFloor) {
           setTimeout(() => {

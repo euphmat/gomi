@@ -8,6 +8,11 @@ import {
 const ALL_DUNGEONS = [...DUNGEONS, ...SPECIAL_DUNGEONS];
 const REWARD_MAP = new Map(MEDAL_SHOP_REWARDS.map(reward => [reward.id, reward]));
 
+export function isMedalShopEquipment(item) {
+  const baseId = item?.baseId || item?.id;
+  return typeof baseId === 'string' && REWARD_MAP.has(baseId);
+}
+
 function completedFloorCount(value) {
   if (Array.isArray(value)) return new Set(value.map(Number)).size;
   if (value && typeof value === 'object') {

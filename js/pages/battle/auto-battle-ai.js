@@ -6,6 +6,8 @@
  * 蘇生・大回復・成立済みコンボより先に割り込まないようにする。
  */
 
+import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+
 const ROLE = Object.freeze({
   OFFENSE: 'offense',
   AREA_OFFENSE: 'area_offense',
@@ -256,13 +258,13 @@ export function findNormalAttackFinisher(attacker, enemies, preferredTarget, fin
   return finishers[0] || null;
 }
 
-function isSkillUsableBy(member, skillId, findSkill, isSkillEnabled) {
+function isSkillUsableBy(member, skillId, findSkill, isSkillEnabled, equipmentMap) {
   if (!member || member.isDead) return false;
   if (['sleep', 'confusion', 'paralysis', 'freeze'].includes(member.activeAilment?.type)) return false;
   const cached = getSkill(findSkill, member, skillId);
   if (!cached?.def || cached.level <= 0 || !cached.levelConfig) return false;
   if (typeof isSkillEnabled === 'function' && !isSkillEnabled(member, skillId)) return false;
-  const mpCost = cached.levelConfig.mpCost || 0;
+  const mpCost = getEffectiveMedalEquipmentMpCost(member, equipmentMap, cached.levelConfig.mpCost);
   if ((member.mp?.current || 0) < mpCost) return false;
   return !(member.activeAilment?.type === 'silence' && mpCost > 0);
 }
@@ -307,8 +309,15 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
   } else if (currentJob === 'bird' && nightmare) {
     const lullaby = byId.get('lullaby');
     if (lullaby) {
-      const combinedCost = (lullaby.skill.levelConfig.mpCost || 0)
-        + (nightmare.levelConfig.mpCost || 0);
+      const combinedCost = getEffectiveMedalEquipmentMpCost(
+        character,
+        context.equipMap,
+        lullaby.skill.levelConfig.mpCost
+      ) + getEffectiveMedalEquipmentMpCost(
+        character,
+        context.equipMap,
+        nightmare.levelConfig.mpCost
+      );
       lullaby.priority = 180;
       lullaby.score += character.mp.current >= combinedCost ? 140 : 55;
     }
@@ -564,10 +573,10 @@ export function selectAutoBattleAction({
   const aliveEnemies = context.enemies.filter(enemy => !enemy.isDead);
   const sleepingEnemies = aliveEnemies.filter(enemy => enemy.activeAilment?.type === 'sleep');
   const nightmareUser = sleepingEnemies.length
-    ? context.party.find(member => isSkillUsableBy(member, 'nightmare', findSkill, isSkillEnabled))
+    ? context.party.find(member => isSkillUsableBy(member, 'nightmare', findSkill, isSkillEnabled, context.equipMap))
     : null;
   const actorCanUseNightmare = sleepingEnemies.length > 0
-    && isSkillUsableBy(character, 'nightmare', findSkill, isSkillEnabled);
+    && isSkillUsableBy(character, 'nightmare', findSkill, isSkillEnabled, context.equipMap);
 
   // ナイトメア担当以外は睡眠対象を候補から外す。単体技は起きている敵へ向け、
   // 全体・ランダム技は睡眠を巻き込むため候補から除外する。
