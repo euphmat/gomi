@@ -232,6 +232,22 @@ export function renderChangeJobTab() {
   };
 
   // ─── SPリセット処理 ────────────────────────────────────
+  const hasSpentJobSp = (char, jobId) => Object.values(char.jobSkills?.[jobId] || {})
+    .some(level => Number(level) > 0);
+
+  const getSpResetJobs = (char) => {
+    const jobLevels = new Map([[char.jobId, char.jobLevel]]);
+
+    for (const [jobId, data] of Object.entries(char.jobLevels || {})) {
+      if (jobId !== char.jobId) jobLevels.set(jobId, data.level);
+    }
+
+    return Array.from(jobLevels, ([jobId, level]) => ({
+      jobId,
+      level: Math.max(1, Math.floor(Number(level) || 1))
+    })).filter(({ level }) => level > 1);
+  };
+
   const executeSpReset = async (char, targetJobId) => {
     let targetJobLevel = 1;
     if (char.jobId === targetJobId) {
@@ -277,6 +293,45 @@ export function renderChangeJobTab() {
     characters = await getCharactersWithRanchBonus();
     const jobName = JOBS[targetJobId] ? JOBS[targetJobId].name : '対象ジョブ';
     showNotification(container, `${jobName}のSPをリセットしました！`, 'success');
+    render();
+  };
+
+  const executeAllSpReset = async (char, targetJobs) => {
+    const resetJobs = targetJobs.filter(({ jobId }) => hasSpentJobSp(char, jobId));
+    if (resetJobs.length === 0) return;
+
+    const cost = resetJobs.reduce((sum, { level }) => sum + getTotalJobSP(level) * 100, 0);
+    const gold = await GameDB.getGameState('gold') || 0;
+    if (gold < cost) {
+      showNotification(container, 'ゴールドが足りません！', 'error');
+      return;
+    }
+
+    currentGold = gold - cost;
+    await GameDB.setGameState('gold', currentGold);
+    const goldDisplay = document.getElementById('header-gold-display');
+    if (goldDisplay) goldDisplay.textContent = `${formatNumber(currentGold)}`;
+
+    const resetJobIds = new Set(resetJobs.map(({ jobId }) => jobId));
+    if (!char.jobSkills) char.jobSkills = {};
+    for (const jobId of resetJobIds) {
+      char.jobSkills[jobId] = {};
+    }
+
+    if (char.inheritedActiveSkill && resetJobIds.has(char.inheritedActiveSkill.jobId)) {
+      char.inheritedActiveSkill = null;
+    }
+    if (char.inheritedPassiveSkill && resetJobIds.has(char.inheritedPassiveSkill.jobId)) {
+      char.inheritedPassiveSkill = null;
+    }
+
+    if (resetJobIds.has(char.jobId)) {
+      char.sp = getTotalJobSP(char.jobLevel);
+    }
+
+    await GameDB.putCharacter(char);
+    characters = await getCharactersWithRanchBonus();
+    showNotification(container, `${char.name}の全職業のSPをリセットしました！`, 'success');
     render();
   };
 
@@ -669,6 +724,9 @@ export function renderChangeJobTab() {
     const wrapperContainer = document.createElement('div');
     wrapperContainer.className = 'flex flex-col h-full overflow-hidden';
 
+    const bulkActionContainer = document.createElement('div');
+    bulkActionContainer.className = 'shrink-0 mb-2';
+
     const listContainer = document.createElement('div');
     listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-2 pr-1';
 
@@ -715,18 +773,40 @@ export function renderChangeJobTab() {
       listContainer.innerHTML = '';
 
       // 獲得SPがあるジョブ (レベル > 1) を抽出
-      const spJobs = [];
-      
-      if (char.jobLevel > 1) {
-        spJobs.push({ jobId: char.jobId, level: char.jobLevel });
-      }
-      
-      if (char.jobLevels) {
-        for (const [jobId, data] of Object.entries(char.jobLevels)) {
-          if (jobId !== char.jobId && data.level > 1) {
-            spJobs.push({ jobId, level: data.level });
-          }
-        }
+      const spJobs = getSpResetJobs(char);
+
+      const resettableJobs = spJobs.filter(({ jobId }) => hasSpentJobSp(char, jobId));
+      const allResetCost = resettableJobs.reduce(
+        (sum, { level }) => sum + getTotalJobSP(level) * 100,
+        0
+      );
+      const canResetAll = resettableJobs.length > 0 && currentGold >= allResetCost;
+      bulkActionContainer.innerHTML = `
+        <button id="btn-all-sp-reset" class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border transition-all ${canResetAll ? 'bg-gradient-to-r from-rose-700/90 to-orange-700/90 border-rose-400/50 text-white active:from-rose-600 active:to-orange-600 shadow-[0_4px_16px_rgba(225,29,72,0.25)]' : 'bg-slate-900/70 border-slate-700/60 text-slate-500 cursor-not-allowed opacity-70'}" ${canResetAll ? '' : 'disabled'}>
+          <span class="flex items-center gap-2 min-w-0">
+            <span class="material-symbols-outlined text-[19px]" style="font-variation-settings: 'FILL' 1;">restart_alt</span>
+            <span class="text-left min-w-0">
+              <span class="block text-[12px] font-black tracking-wide truncate">${char.name}の全職業を一括リセット</span>
+              <span class="block text-[9px] font-bold opacity-75">${resettableJobs.length > 0 ? `対象 ${resettableJobs.length}職業` : 'リセット対象なし'}</span>
+            </span>
+          </span>
+          <span class="flex items-center gap-1 text-[11px] font-black shrink-0">
+            <span class="material-symbols-outlined text-[14px]">paid</span>${formatNumber(allResetCost)}
+          </span>
+        </button>
+      `;
+
+      if (canResetAll) {
+        bulkActionContainer.querySelector('#btn-all-sp-reset').onclick = () => {
+          showActionModal(
+            '全職業SPリセットの確認',
+            `${char.name} がSPを割り振った ${resettableJobs.length}職業をすべてリセットしますか？\n継承中の対象スキルも解除されます。`,
+            `<p class="text-xs text-rose-300 font-bold flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">paid</span>合計費用: ${formatNumber(allResetCost)} G</p>`,
+            () => executeAllSpReset(char, resettableJobs),
+            '一括リセット',
+            'rose'
+          );
+        };
       }
 
       if (spJobs.length === 0) {
@@ -757,10 +837,7 @@ export function renderChangeJobTab() {
       const spOffset = getJobSPOffset(char, jobDef, level);
       const cost = totalSp * 100;
       
-      let hasSpentSp = false;
-      if (char.jobSkills && char.jobSkills[jobId] && Object.keys(char.jobSkills[jobId]).length > 0) {
-        hasSpentSp = true;
-      }
+      const hasSpentSp = hasSpentJobSp(char, jobId);
       
       const canAfford = currentGold >= cost;
 
@@ -831,6 +908,7 @@ export function renderChangeJobTab() {
       );
     });
 
+    wrapperContainer.appendChild(bulkActionContainer);
     wrapperContainer.appendChild(listContainer);
     wrapperContainer.appendChild(paginationContainer);
 
