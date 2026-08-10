@@ -2,6 +2,7 @@
  * battle-passives.js
  * 戦闘開始時のパッシブスキル適用
  */
+import { sumMedalEquipmentEffect } from '../../utils/medal-equipment-effects.js';
 
 export const passiveMethods = {
   applyStartOfBattlePassives() {
@@ -16,6 +17,18 @@ export const passiveMethods = {
     aliveParty.forEach(p => {
       // Last Bastion can trigger once on every floor battle.
       p._guardianLastBastionUsed = false;
+      p._medalLethalSurvivalUsed = false;
+      const startingAtb = sumMedalEquipmentEffect(p, this.equipMap, 'startingAtb', 1000);
+      if (startingAtb > 0) p.atb = Math.max(p.atb || 0, startingAtb);
+      const startingBarrierPercent = sumMedalEquipmentEffect(p, this.equipMap, 'startingBarrierPercent', 60);
+      if (startingBarrierPercent > 0) {
+        p._barrierHp = Math.floor((p.stats?.hp || p.hp.max || 1) * startingBarrierPercent / 100);
+        p._barrierTurns = 9999;
+        p._battleBarrierMetric = {
+          actor: p,
+          skill: { id: 'medal_equipment_barrier', name: 'メダル装備・障壁', type: 'passive' },
+        };
+      }
       if (p.jobSkills) {
         // --- 贖罪の烙印 (Stigma of Atonement) ---
         const uw = this._findSkill(p, 'stigma_of_atonement');

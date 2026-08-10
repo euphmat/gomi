@@ -229,6 +229,7 @@ class BattleManager {
     this.currentGold = await GameDB.getGameState('gold') || 0;
     this.ranchData = await GameDB.getGameState('ranch_data') || {};
     const rawEquipment = await GameDB.getAllEquipment();
+    this.equipMap = buildEquipmentMap(rawEquipment);
     this._needsSave = false;
 
     // The page may have been replaced while the database reads above were in
@@ -272,7 +273,6 @@ class BattleManager {
 
     if (!this.party || this.party.length === 0) {
       const rawParty = await getCharactersWithRanchBonus();
-      this.equipMap = buildEquipmentMap(rawEquipment);
 
       this.party = rawParty.map((char, index) => {
         const stats = calcFinalStats(char, this.equipMap);
@@ -293,8 +293,12 @@ class BattleManager {
         };
       });
     } else {
-      // Re-use party in memory, just reset ATB for the next battle
+      // Re-use party in memory while refreshing equipment-derived stats. Medal
+      // shop equipment can grow after every cleared floor.
       this.party.forEach(char => {
+        char.stats = calcFinalStats(char, this.equipMap);
+        char.hp.current = Math.min(char.hp.current, char.stats.hp || char.hp.max);
+        char.mp.current = Math.min(char.mp.current, char.stats.mp || char.mp.max);
         char.atb = Math.floor(Math.random() * 501);
       });
     }

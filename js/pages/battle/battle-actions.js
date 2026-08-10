@@ -6,6 +6,12 @@ import {
 } from './magic-missile-animation.js';
 import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
 import { resolveBattleSkill } from './battle-statistics.js';
+import {
+  getMedalEquipmentEffects,
+  hasMedalEquipmentImmunity,
+  rollMedalEquipmentEffect,
+  sumMedalEquipmentEffect,
+} from '../../utils/medal-equipment-effects.js';
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
@@ -37,6 +43,28 @@ export function getStackedAttackNegationStep(
  */
 
 export const actionMethods = {
+  applyMedalEquipmentActionRecovery(entity) {
+    if (!entity?.hp || entity.isDead) return;
+    const hpPercent = sumMedalEquipmentEffect(entity, this.equipMap, 'actionHpRegenPercent', 25);
+    const mpPercent = sumMedalEquipmentEffect(entity, this.equipMap, 'actionMpRegenPercent', 25);
+    if (hpPercent > 0) {
+      const maxHp = entity.stats?.hp || entity.hp.max || 1;
+      const recovered = Math.min(Math.floor(maxHp * hpPercent / 100), Math.max(0, maxHp - entity.hp.current));
+      if (recovered > 0) {
+        entity.hp.current += recovered;
+        this._scheduleBattleTimeout(() => this.showDamage(entity.elementId, `+${recovered}`, 'text-emerald-300'), this.speedMult >= 5 ? 0 : 250 / this.speedMult);
+      }
+    }
+    if (mpPercent > 0 && entity.mp) {
+      const maxMp = entity.stats?.mp || entity.mp.max || 1;
+      const recovered = Math.min(Math.floor(maxMp * mpPercent / 100), Math.max(0, maxMp - entity.mp.current));
+      if (recovered > 0) {
+        entity.mp.current += recovered;
+        this._scheduleBattleTimeout(() => this.showDamage(entity.elementId, `+${recovered} MP`, 'text-cyan-300'), this.speedMult >= 5 ? 0 : 250 / this.speedMult);
+      }
+    }
+  },
+
   trySoulReaperDeathDenial(entity) {
     if ((entity?.jobId || entity?.job) !== 'soul_reaper' || !entity.hp || entity.isDead) return false;
     if (getSoulReaperCorpseStock(entity) < 1) return false;
@@ -162,13 +190,15 @@ export const actionMethods = {
 
   executeSkill(caster, skillDef, levelConfig, options = {}) {
     if (this.isStopped) return;
-    if (!options.isDoubleAct && caster.mp && caster.mp.current < levelConfig.mpCost) {
+    const mpCostReduction = sumMedalEquipmentEffect(caster, this.equipMap, 'mpCostReductionPercent', 80);
+    const effectiveMpCost = Math.max(0, Math.floor((Number(levelConfig.mpCost) || 0) * (1 - mpCostReduction / 100)));
+    if (!options.isDoubleAct && caster.mp && caster.mp.current < effectiveMpCost) {
       caster.atb = 0;
       this.activeCharacter = null;
       this.renderEntities();
       return;
     }
-    if (!options.isDoubleAct && levelConfig.mpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
+    if (!options.isDoubleAct && effectiveMpCost > 0 && caster.activeAilment && caster.activeAilment.type === 'silence') {
       // this.showActionName(caster.elementId, '沈黙', 'text-indigo-400', 'border-indigo-500/50');
       caster.atb = 0;
       this.activeCharacter = null;
@@ -177,7 +207,7 @@ export const actionMethods = {
     }
 
     if (!options.isDoubleAct && caster.mp) {
-      caster.mp.current -= levelConfig.mpCost;
+      caster.mp.current -= effectiveMpCost;
     }
 
     const telemetrySkill = { ...skillDef, type: skillDef.type || 'active' };
@@ -209,6 +239,17 @@ export const actionMethods = {
       } catch (err) {
         console.error(`Skill Execution Error [${skillDef.id}]:`, err);
       }
+    }
+
+    if (!options.isDoubleAct && !options.isEquipmentRepeat
+      && rollMedalEquipmentEffect(caster, this.equipMap, 'extraActionChance')) {
+      this._scheduleBattleTimeout(() => {
+        if (!caster.isDead) {
+          this.showActionName(caster.elementId, 'メダル装備・連続行動', 'text-amber-200', 'border-amber-400/60');
+          this.executeSkill(caster, skillDef, levelConfig, { ...options, isDoubleAct: true, isEquipmentRepeat: true });
+        }
+      }, this.speedMult >= 5 ? 0 : 450 / this.speedMult);
+      return;
     }
     
 
@@ -309,8 +350,9 @@ export const actionMethods = {
     }
 
     this.applyManaOrchestra(caster);
+    this.applyMedalEquipmentActionRecovery(caster);
 
-    caster.atb = 0;
+    caster.atb = sumMedalEquipmentEffect(caster, this.equipMap, 'atbRefundPercent', 50) * 10;
     this.activeCharacter = null;
     this.renderEntities();
     this.checkBattleEnd();
@@ -346,6 +388,13 @@ export const actionMethods = {
       cumulativeAttackNegationChance = step.combinedChance;
       return Math.random() * 100 < step.rollChance;
     };
+
+    if (isParty && attacker.hp !== undefined) {
+      options.defenseIgnorePercent = Math.max(
+        Number(options.defenseIgnorePercent) || 0,
+        sumMedalEquipmentEffect(attacker, this.equipMap, 'defenseIgnorePercent', 60)
+      );
+    }
 
     playSoundEffect(isMagic ? 'battleMagic' : 'battleAttack', {
       automatic: this.isAutoBattle,
@@ -409,6 +458,18 @@ export const actionMethods = {
       if (attacker.hp !== undefined) this.activeCharacter = null;
       else this.activeEnemy = null;
       this.renderEntities();
+      return;
+    }
+
+    // --- 影の身のこなし (Shadow Motion) の判定 ---
+    if (!isParty && defender.hp !== undefined
+      && rollAttackNegation(sumMedalEquipmentEffect(defender, this.equipMap, 'evadeChance', 40))) {
+      this.showActionName(defender.elementId, 'メダル装備・回避', 'text-amber-200', 'border-amber-400/60');
+      if (!options.skipAtbReset && !options.isAoEProcessed) {
+        attacker.atb = 0;
+        this.activeEnemy = null;
+        this.renderEntities();
+      }
       return;
     }
 
@@ -497,7 +558,7 @@ export const actionMethods = {
 
     // --- 物理防御貫通 ---
     // スキル側から割合を渡し、装備値と防御バフを含む最終DEFを軽減する。
-    if (!isMagic && !options.isHybrid && options.defenseIgnorePercent > 0) {
+    if (!options.isHybrid && options.defenseIgnorePercent > 0) {
       defStat = getDefenseAfterIgnore(defStat, options.defenseIgnorePercent);
     }
 
@@ -550,6 +611,35 @@ export const actionMethods = {
     
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
+
+    if (isParty && attacker.hp !== undefined) {
+      let equipmentDamagePercent = sumMedalEquipmentEffect(attacker, this.equipMap, 'outgoingDamagePercent', 100);
+      const attackerMaxHp = attacker.stats?.hp || attacker.hp.max || 1;
+      const hpRatio = attacker.hp.current / attackerMaxHp;
+      if (hpRatio >= 1) equipmentDamagePercent += sumMedalEquipmentEffect(attacker, this.equipMap, 'fullHpDamagePercent', 60);
+      if (hpRatio <= .5) equipmentDamagePercent += sumMedalEquipmentEffect(attacker, this.equipMap, 'lowHpDamagePercent', 80);
+      if (defender.activeAilment) equipmentDamagePercent += sumMedalEquipmentEffect(attacker, this.equipMap, 'afflictedTargetDamagePercent', 80);
+      if (options.element || Object.values(attacker.stats.attackElements || {}).some(value => value > 0)) {
+        equipmentDamagePercent += sumMedalEquipmentEffect(attacker, this.equipMap, 'elementDamagePercent', 80);
+      }
+      const lastFloor = this.dungeonDef?.floors?.at(-1)?.level;
+      if (Number(this.currentFloorNum) === Number(lastFloor)) {
+        equipmentDamagePercent += sumMedalEquipmentEffect(attacker, this.equipMap, 'bossDamagePercent', 100);
+      }
+      damage = Math.floor(damage * (1 + equipmentDamagePercent / 100));
+
+      const criticalChance = sumMedalEquipmentEffect(attacker, this.equipMap, 'criticalChance', 60);
+      if (criticalChance > 0 && Math.random() * 100 < criticalChance) {
+        const negated = defender.hp !== undefined
+          && rollMedalEquipmentEffect(defender, this.equipMap, 'criticalNegationChance');
+        if (!negated) {
+          const criticalMultiplier = Math.max(1.5, ...getMedalEquipmentEffects(attacker, this.equipMap)
+            .map(effect => Number(effect.criticalMultiplier) || 0));
+          damage = Math.floor(damage * criticalMultiplier);
+          if (!options.hideActionName) this.showActionName(attacker.elementId, 'MEDAL CRITICAL', 'text-amber-200', 'border-amber-400/60');
+        }
+      }
+    }
 
     // --- Passive: 死霊軍勢 (corpse stock damage amplification) ---
     if ((attacker.jobId || attacker.job) === 'soul_reaper' && attacker.hp !== undefined) {
@@ -698,6 +788,21 @@ export const actionMethods = {
       });
     }
 
+    if (!isParty && defender.hp !== undefined) {
+      let reduction = sumMedalEquipmentEffect(defender, this.equipMap, 'incomingDamageReductionPercent', 60);
+      reduction += isMagic
+        ? sumMedalEquipmentEffect(defender, this.equipMap, 'magicDamageReductionPercent', 50)
+        : sumMedalEquipmentEffect(defender, this.equipMap, 'physicalDamageReductionPercent', 50);
+      const defenderMaxHp = defender.stats?.hp || defender.hp.max || 1;
+      if (defender.hp.current / defenderMaxHp <= .5) {
+        reduction += sumMedalEquipmentEffect(defender, this.equipMap, 'lowHpDamageReductionPercent', 60);
+      }
+      if (defender.hp.current >= defenderMaxHp) {
+        reduction += sumMedalEquipmentEffect(defender, this.equipMap, 'fullHpDamageReductionPercent', 60);
+      }
+      damage = Math.max(1, Math.floor(damage * (1 - Math.min(75, reduction) / 100)));
+    }
+
     // --- Passive: Guard ---
     if (!isParty && defender.jobSkills) {
       const guardSkill = this._findSkill(defender, 'guard');
@@ -839,6 +944,10 @@ export const actionMethods = {
           ailmentImmune = true;
         }
       }
+      if (defender.hp !== undefined && hasMedalEquipmentImmunity(defender, this.equipMap, inflictedAilments[0])) {
+        ailmentImmune = true;
+        this.showActionName(defender.elementId, '状態異常無効', 'text-amber-200', 'border-amber-400/60');
+      }
       if (!ailmentImmune) {
         const ailment = inflictedAilments[0];
         defender.activeAilment = { type: ailment, duration: 10 };
@@ -860,7 +969,20 @@ export const actionMethods = {
     } else {
       let survivedBySlimeCore = false;
       let survivedByLastBastion = false;
-      if (defender.hp.current - damage <= 0 && defender.jobSkills) {
+      let survivedByMedalArmor = false;
+      const medalSurvivePercent = sumMedalEquipmentEffect(defender, this.equipMap, 'surviveLethalPercent', 80);
+      if (defender.hp.current - damage <= 0 && medalSurvivePercent > 0 && !defender._medalLethalSurvivalUsed) {
+        const maxHp = defender.stats?.hp || defender.hp.max;
+        const survivingHp = Math.max(1, Math.floor(maxHp * medalSurvivePercent / 100));
+        damage = Math.max(0, prevHp - survivingHp);
+        defender._medalLethalSurvivalUsed = true;
+        survivedByMedalArmor = true;
+        this._scheduleBattleTimeout(() => {
+          this.showActionName(defender.elementId, 'メダル装備・不屈', 'text-amber-200', 'border-amber-400/60');
+          this.showDamage(defender.elementId, `HP ${survivingHp}`, 'text-emerald-300');
+        }, this.speedMult >= 5 ? 0 : 250 / this.speedMult);
+      }
+      if (!survivedByMedalArmor && defender.hp.current - damage <= 0 && defender.jobSkills) {
         const lastBastion = this._findSkill(defender, 'last_bastion');
         if (lastBastion?.level > 0 && lastBastion.levelConfig && !defender._guardianLastBastionUsed) {
           const maxHp = defender.stats?.hp || defender.hp.max;
@@ -889,7 +1011,7 @@ export const actionMethods = {
       }
 
       defender.hp.current -= damage;
-      if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion) {
+      if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion && !survivedByMedalArmor) {
         if (!this.trySoulReaperDeathDenial(defender)) {
           defender.hp.current = 0;
           defender.isDead = true;
@@ -919,6 +1041,16 @@ export const actionMethods = {
           }
         }
       }
+
+      if (!defender.isDead && !attacker.isDead && !options.isCounter
+        && rollMedalEquipmentEffect(defender, this.equipMap, 'counterChance', 50)) {
+        this._scheduleBattleTimeout(() => {
+          if (!defender.isDead && !attacker.isDead) {
+            this.showActionName(defender.elementId, 'メダル装備・反撃', 'text-amber-200', 'border-amber-400/60');
+            this.executeAttack(defender, attacker, true, { actionName: '装備反撃', hideActionName: true, isCounter: true, skipAtbReset: true });
+          }
+        }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
+      }
     }
     
     const newHp = isDefenderParty ? defender.hp.current : defender.currentHp;
@@ -945,6 +1077,28 @@ export const actionMethods = {
             this.showDamage(attacker.elementId, `+${actualRecovery}`, 'text-green-400');
           }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
         }
+      }
+    }
+
+    if (attacker.hp !== undefined && damageDealt > 0) {
+      const drainPercent = sumMedalEquipmentEffect(attacker, this.equipMap, 'lifeStealPercent', 40);
+      if (drainPercent > 0) {
+        const maxHp = attacker.stats?.hp || attacker.hp.max;
+        const recovered = Math.min(Math.floor(damageDealt * drainPercent / 100), Math.max(0, maxHp - attacker.hp.current));
+        if (recovered > 0) {
+          attacker.hp.current += recovered;
+          this._scheduleBattleTimeout(() => this.showDamage(attacker.elementId, `+${recovered}`, 'text-emerald-300'), this.speedMult >= 5 ? 0 : 300 / this.speedMult);
+        }
+      }
+    }
+
+    if (isParty && !defender.isDead && defender.hp === undefined) {
+      const executeThreshold = sumMedalEquipmentEffect(attacker, this.equipMap, 'executeThresholdPercent', 20);
+      if (executeThreshold > 0 && defender.currentHp / Math.max(1, defender.maxHp || defender.stats?.hp) <= executeThreshold / 100) {
+        defender.currentHp = 0;
+        defender.isDead = true;
+        this.showActionName(attacker.elementId, '迷界断絶', 'text-fuchsia-200', 'border-fuchsia-400/60');
+        this.processEnemyDeath(defender);
       }
     }
 
@@ -986,12 +1140,46 @@ export const actionMethods = {
     }
 
     if (!options.skipAtbReset) {
-      attacker.atb = 0;
+      const atbRefund = attacker.hp !== undefined
+        ? sumMedalEquipmentEffect(attacker, this.equipMap, 'atbRefundPercent', 50)
+        : 0;
+      attacker.atb = atbRefund * 10;
       if (attacker.hp !== undefined) {
         if (this.activeCharacter === attacker) {
           this.activeCharacter = null;
         }
         
+        // --- Passive: Plus One ---
+        if (!options.damageType && !isMagic && !options.isEquipmentRepeat) {
+          const guaranteedHits = Math.floor(sumMedalEquipmentEffect(attacker, this.equipMap, 'normalAttackExtraHits', 3));
+          const chanceHit = rollMedalEquipmentEffect(attacker, this.equipMap, 'normalAttackExtraHitChance') ? 1 : 0;
+          const equipmentHits = guaranteedHits + chanceHit;
+          for (let i = 0; i < equipmentHits; i++) {
+            this._scheduleBattleTimeout(() => {
+              const currentTarget = defender.isDead ? this.enemies.find(enemy => !enemy.isDead) : defender;
+              if (currentTarget && !currentTarget.isDead && !attacker.isDead) {
+                this.executeAttack(attacker, currentTarget, true, {
+                  actionName: 'メダル装備・追撃', hideActionName: true, damageType: 'ability',
+                  isNormalAttack: true, skipAtbReset: true, isEquipmentRepeat: true,
+                });
+              }
+            }, normalAttackSequenceMs > 0 ? normalAttackSequenceMs * (i + 1) : (this.speedMult >= 5 ? 0 : (350 + i * 180) / this.speedMult));
+          }
+        }
+
+        if (!options.damageType && !options.isEquipmentRepeat
+          && rollMedalEquipmentEffect(attacker, this.equipMap, 'extraActionChance')) {
+          this._scheduleBattleTimeout(() => {
+            const currentTarget = defender.isDead ? this.enemies.find(enemy => !enemy.isDead) : defender;
+            if (currentTarget && !attacker.isDead) {
+              this.showActionName(attacker.elementId, 'メダル装備・連続行動', 'text-amber-200', 'border-amber-400/60');
+              this.executeAttack(attacker, currentTarget, true, {
+                actionName: '連続行動', hideActionName: true, isEquipmentRepeat: true, skipAtbReset: true,
+              });
+            }
+          }, normalAttackSequenceMs > 0 ? normalAttackSequenceMs : (this.speedMult >= 5 ? 0 : 400 / this.speedMult));
+        }
+
         // --- Passive: Plus One ---
         if (!options.damageType && !isMagic && !defender.isDead) {
           const plusOneSkill = this._findSkill(attacker, 'plus_one');
@@ -1116,6 +1304,7 @@ export const actionMethods = {
           }
 
           this.applyManaOrchestra(attacker);
+          this.applyMedalEquipmentActionRecovery(attacker);
         }
       } else {
         this.activeEnemy = null;

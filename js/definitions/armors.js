@@ -1,4 +1,5 @@
 import { ADVANCED_ARMORS } from './advanced-dungeon-content.js';
+import { MEDAL_SHOP_ARMORS } from './medal-shop-definitions.js';
 
 /**
  * このファイルは鎧（体防具）のデータをまとめたファイルです。
@@ -136,5 +137,6 @@ export const ARMORS = [
   { id: 'sanctum_plate'        , name: 'サンクトゥムプレート', stats: { def: 530, mdef: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
 
   ...ADVANCED_ARMORS,
+  ...MEDAL_SHOP_ARMORS,
 
 ].map(item => ({ ...item, slot: 'armor', image: `./assets/armor/${item.id}.webp` }));

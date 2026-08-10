@@ -189,6 +189,8 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
     return `
       <div class="flex gap-1 shrink-0">${statsChips}</div>
       ${(elSection || ailSection) ? `<div class="flex flex-col gap-1 mt-1">${elSection}${ailSection}</div>` : ''}
+      ${item.specialEffect?.description ? `<div class="mt-1 flex items-start gap-1.5 rounded-lg border border-amber-400/20 bg-amber-950/20 px-2 py-1.5"><span class="material-symbols-outlined text-[13px] text-amber-300">auto_awesome</span><p class="text-[9px] font-bold leading-snug text-amber-100/80">${item.specialEffect.description}</p></div>` : ''}
+      ${item.medalScaling ? `<div class="mt-1 flex items-center justify-between rounded-lg border border-cyan-400/20 bg-cyan-950/20 px-2 py-1"><span class="text-[8px] font-bold text-cyan-100/70">メダル ×${item.medalScaling.medalMultiplier.toFixed(2)}・進捗 ×${item.medalScaling.dungeonMultiplier.toFixed(2)}</span><span class="text-[9px] font-black text-cyan-300">合計 ×${item.medalScaling.totalMultiplier.toFixed(2)}</span></div>` : ''}
     `;
   };
 

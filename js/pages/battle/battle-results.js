@@ -21,6 +21,7 @@ import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
 import { getAvailableJobSP, getJobExpToNext, normalizeJobExpProgress } from '../../data/job-progression.js';
 import { addSoulReaperCorpses } from '../../jobs/soul_reaper.js';
+import { sumMedalEquipmentEffect } from '../../utils/medal-equipment-effects.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -98,7 +99,10 @@ export const resultMethods = {
     }
 
     // Add Gold
-    let gold = Math.floor((enemy.rewards.gold || 0) * (1 + getTreasureEffect('monsterGoldPercent') / 100));
+    const equipmentGoldPercent = Math.max(0, ...this.party
+      .filter(member => !member.isDead)
+      .map(member => sumMedalEquipmentEffect(member, this.equipMap, 'goldRewardPercent', 100)));
+    let gold = Math.floor((enemy.rewards.gold || 0) * (1 + (getTreasureEffect('monsterGoldPercent') + equipmentGoldPercent) / 100));
     if (gold > 0) {
       this.currentGold += gold;
       this.obtainedGold += gold;

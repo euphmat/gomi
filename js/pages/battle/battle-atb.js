@@ -4,6 +4,11 @@
  */
 
 import { isScreenLocked } from '../../utils/screen-lock.js';
+import {
+  getAtbSpeedMultiplier,
+  getAverageBattleSpd,
+  getEffectiveBattleSpd
+} from './atb-speed.js';
 
 export const atbMethods = {
   stopAtbLoop(invalidateInit = true, removeRouteHandler = true) {
@@ -116,22 +121,6 @@ export const atbMethods = {
       }
     };
     document.addEventListener('screenlockchange', this._screenLockHandler);
-    let totalSpd = 0;
-    let entityCount = 0;
-    this.party.forEach(p => { 
-      const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
-      const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
-      totalSpd += spd; 
-      entityCount++; 
-    });
-    this.enemies.forEach(e => { 
-      const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
-      const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
-      totalSpd += spd; 
-      entityCount++; 
-    });
-    const avgSpd = entityCount > 0 ? (totalSpd / entityCount) : 1;
-    
     // Doubled from 1000/70 to compensate for 100ms tick interval (was 50ms)
     const BASE_TICK_RATE = 1000 / 35;
 
@@ -176,15 +165,20 @@ export const atbMethods = {
       // Screen lock only suppresses presentation; treating it as fast-forward
       // multiplied both farming speed and CPU use while the display was off.
       const MAX_LOOPS = this._cachedFastForwardAtb ? 50 : (battleSpeed >= 5 ? 5 : 1);
+
+      // Recalculate from living combatants so deaths and in-battle SPD changes
+      // immediately affect the baseline. A guaranteed portion of ATB gain keeps
+      // low-SPD entities active while the SPD-scaled portion preserves the
+      // advantage of investing in speed.
+      const avgSpd = getAverageBattleSpd([...this.party, ...this.enemies]);
       
       while (!nextActor && loops < MAX_LOOPS) {
         loops++;
         
         this.party.forEach(p => {
           if (p.isDead) return;
-          const baseSpd = (p.stats && typeof p.stats.spd === 'number' && !isNaN(p.stats.spd)) ? p.stats.spd : 1;
-          const spd = Math.floor(baseSpd * (1 + (p._passiveSpdBuffPercent || 0) / 100));
-          const speedRatio = spd / avgSpd;
+          const spd = getEffectiveBattleSpd(p);
+          const speedRatio = getAtbSpeedMultiplier(spd, avgSpd);
           p.atb += speedRatio * BASE_TICK_RATE * battleSpeed;
           if (p.atb >= 1000 && (!nextActor || p.atb > nextActor.atb)) {
             nextActor = { type: 'party', entity: p, atb: p.atb };
@@ -206,9 +200,8 @@ export const atbMethods = {
         
         this.enemies.forEach(e => {
           if (e.isDead) return;
-          const baseSpd = (e.stats && typeof e.stats.spd === 'number' && !isNaN(e.stats.spd)) ? e.stats.spd : 1;
-          const spd = Math.floor(baseSpd * (1 + (e._passiveSpdBuffPercent || 0) / 100));
-          const speedRatio = spd / avgSpd;
+          const spd = getEffectiveBattleSpd(e);
+          const speedRatio = getAtbSpeedMultiplier(spd, avgSpd);
           e.atb += speedRatio * BASE_TICK_RATE * battleSpeed;
           if (e.atb >= 1000 && (!nextActor || e.atb > nextActor.atb)) {
             nextActor = { type: 'enemy', entity: e, atb: e.atb };

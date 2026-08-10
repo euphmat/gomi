@@ -22,6 +22,11 @@ import { WEAPONS } from '../definitions/weapons.js';
 import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
+import {
+  createMedalEquipmentScalingContext,
+  scaleMedalShopEquipment,
+  scaleMedalShopEquipmentList,
+} from '../utils/medal-equipment-scaling.js';
 
 const ALL_EQUIPMENT_DEFS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
 
@@ -557,7 +562,9 @@ class GameDatabase {
    */
   async getEquipment(id) {
     const item = await this._read('equipment', (store) => store.get(id));
-    return _mergeDef(item);
+    if (!item) return item;
+    const context = await this._getMedalEquipmentScalingContext();
+    return scaleMedalShopEquipment(_mergeDef(item), context);
   }
 
   /**
@@ -566,7 +573,34 @@ class GameDatabase {
    */
   async getAllEquipment() {
     const items = await this._read('equipment', (store) => store.getAll());
-    return items.map(_mergeDef);
+    const context = await this._getMedalEquipmentScalingContext();
+    return scaleMedalShopEquipmentList(items.map(_mergeDef), context);
+  }
+
+  async _getMedalEquipmentScalingContext() {
+    const [
+      playerMedals,
+      completedDungeons,
+      completedDungeonFloors,
+      unlockedDungeons,
+      currentDungeonId,
+      currentFloor,
+    ] = await Promise.all([
+      this.getGameState('player_medals'),
+      this.getGameState('completed_dungeons'),
+      this.getGameState('completed_dungeon_floors'),
+      this.getGameState('unlockedDungeons'),
+      this.getGameState('currentDungeon'),
+      this.getGameState('currentFloor'),
+    ]);
+    return createMedalEquipmentScalingContext({
+      playerMedals,
+      completedDungeons,
+      completedDungeonFloors,
+      unlockedDungeons,
+      currentDungeonId,
+      currentFloor,
+    });
   }
 
   /**

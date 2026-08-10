@@ -2,6 +2,7 @@ import { renderShopTab } from './shop-tabs/shop-tab.js';
 import { renderStorageTab } from './shop-tabs/storage-tab.js';
 import { renderMedalTab } from './shop-tabs/medal-tab.js';
 import { renderGachaTab } from './shop-tabs/gacha-tab.js';
+import { renderMedalShopTab } from './shop-tabs/medal-shop-tab.js';
 import { consumeHashRouteParam } from '../utils/route-params.js';
 
 /**
@@ -17,6 +18,7 @@ export function renderShopPage() {
     { id: 'shop', label: 'ショップ', icon: 'storefront', activeClass: 'border-cyan-400/45 bg-cyan-950/55 text-cyan-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(34,211,238,0.18)]', idleClass: 'active:border-cyan-500/35 active:bg-cyan-950/30 active:text-cyan-300' },
     { id: 'storage', label: '倉庫', icon: 'inventory_2', activeClass: 'border-sky-400/45 bg-sky-950/55 text-sky-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(56,189,248,0.18)]', idleClass: 'active:border-sky-500/35 active:bg-sky-950/30 active:text-sky-300' },
     { id: 'medal', label: 'メダル鋳造', icon: 'military_tech', activeClass: 'border-yellow-400/45 bg-yellow-950/55 text-yellow-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(250,204,21,0.18)]', idleClass: 'active:border-yellow-500/35 active:bg-yellow-950/30 active:text-yellow-300' },
+    { id: 'medal-shop', label: 'メダルショップ', icon: 'workspace_premium', activeClass: 'border-amber-300/50 bg-amber-950/55 text-amber-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_14px_rgba(251,191,36,0.2)]', idleClass: 'active:border-amber-400/35 active:bg-amber-950/30 active:text-amber-200' },
     { id: 'gacha', label: '秘宝ガチャ', icon: 'auto_awesome', activeClass: 'border-fuchsia-400/45 bg-fuchsia-950/55 text-fuchsia-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),_0_0_12px_rgba(217,70,239,0.18)]', idleClass: 'active:border-fuchsia-500/35 active:bg-fuchsia-950/30 active:text-fuchsia-300' }
   ];
   
@@ -83,6 +85,9 @@ export function renderShopPage() {
         break;
       case 'medal':
         tabContent = renderMedalTab();
+        break;
+      case 'medal-shop':
+        tabContent = renderMedalShopTab();
         break;
       case 'gacha':
         tabContent = renderGachaTab();

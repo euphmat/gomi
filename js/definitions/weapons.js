@@ -1,4 +1,5 @@
 import { ADVANCED_WEAPONS } from './advanced-dungeon-content.js';
+import { MEDAL_SHOP_WEAPONS } from './medal-shop-definitions.js';
 
 /**
  * このファイルは武器（右手に装備するアイテム）のデータをまとめたファイルです。
@@ -134,5 +135,6 @@ export const WEAPONS = [
   { id: 'sanctum_spear'        , name: 'サンクトゥムスピア'  , stats: { atk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_talos_armor_plate', amount: 10 }] } },
 
   ...ADVANCED_WEAPONS,
+  ...MEDAL_SHOP_WEAPONS,
 
 ].map(item => ({ ...item, slot: 'rightHand', image: `./assets/weapon/${item.id}.webp` }));

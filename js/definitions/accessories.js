@@ -1,4 +1,5 @@
 import { ADVANCED_ACCESSORIES } from './advanced-dungeon-content.js';
+import { MEDAL_SHOP_ACCESSORIES } from './medal-shop-definitions.js';
 
 /**
  * このファイルはアクセサリー（指輪やネックレスなど）のデータをまとめたファイルです。
@@ -134,5 +135,6 @@ export const ACCESSORIES = [
   { id: 'machina_gear_ring'    , name: 'マキナギアリング'    , stats: { matk: 520, spd: 260 }, elements:   { earth: 20 }, recipe: { price: 310000, materials: [{ id: 'mat_machina_gear', amount: 40 }, { id: 'mat_four_armed_joint', amount: 10 }] } },
   { id: 'sanctum_seal'         , name: '至聖所の印'          , stats: { matk: 530, spd: 265 }, elements:   { light: 20 }, recipe: { price: 315000, materials: [{ id: 'mat_sacred_bronze', amount: 40 }, { id: 'mat_sanctum_key_fragment', amount: 10 }] } },
 
-  ...ADVANCED_ACCESSORIES
+  ...ADVANCED_ACCESSORIES,
+  ...MEDAL_SHOP_ACCESSORIES
 ].map(item => ({ ...item, slot: 'accessory', image: `./assets/accessory/${item.id}.webp` }));

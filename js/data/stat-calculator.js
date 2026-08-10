@@ -37,6 +37,7 @@ import { clearLegacyJobSpBonus, normalizeJobExpProgress } from './job-progressio
  */
 export function calcFinalStats(character, equipmentMap) {
   const statKeys = STAT_KEYS.map(s => s.key);
+  const equipmentStatPercent = {};
 
   // Start with base stats
   const result = {
@@ -90,6 +91,12 @@ export function calcFinalStats(character, equipmentMap) {
           }
         }
       }
+
+      if (item.specialEffect?.statPercent) {
+        for (const [key, percent] of Object.entries(item.specialEffect.statPercent)) {
+          equipmentStatPercent[key] = (equipmentStatPercent[key] || 0) + (Number(percent) || 0);
+        }
+      }
     }
   }
 
@@ -109,6 +116,15 @@ export function calcFinalStats(character, equipmentMap) {
   let matkMultiplier = 1.0;
   let defMultiplier = 1.0;
   let mdefMultiplier = 1.0;
+  let spdMultiplier = 1.0;
+
+  hpMultiplier += (equipmentStatPercent.hp || 0) / 100;
+  mpMultiplier += (equipmentStatPercent.mp || 0) / 100;
+  atkMultiplier += (equipmentStatPercent.atk || 0) / 100;
+  matkMultiplier += (equipmentStatPercent.matk || 0) / 100;
+  defMultiplier += (equipmentStatPercent.def || 0) / 100;
+  mdefMultiplier += (equipmentStatPercent.mdef || 0) / 100;
+  spdMultiplier += (equipmentStatPercent.spd || 0) / 100;
 
   // Helper to apply passive skill bonuses
   const applyPassiveBonus = (skillMap, jobId, potencyMode) => {
@@ -189,6 +205,7 @@ export function calcFinalStats(character, equipmentMap) {
   result.matk = Math.floor(result.matk * matkMultiplier);
   result.def = Math.floor(result.def * defMultiplier);
   result.mdef = Math.floor(result.mdef * mdefMultiplier);
+  result.spd = Math.floor(result.spd * spdMultiplier);
 
   // Apply job specific stat multipliers
   const jobDef = JOBS[character.jobId];
