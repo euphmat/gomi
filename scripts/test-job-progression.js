@@ -10,7 +10,8 @@ import {
   getSpentJobSP,
   getTotalJobSP,
   hasMasteredAllJobSkills,
-  normalizeJobExpProgress
+  normalizeJobExpProgress,
+  planBalancedJobSkillAcquisition
 } from '../js/data/job-progression.js';
 import { getBaseExpToNext } from '../js/data/level-progression.js';
 
@@ -93,6 +94,22 @@ const partiallySpentCharacter = {
 };
 assert(!hasMasteredAllJobSkills(partiallySpentCharacter, testJob), 'partial mastery unlocked limit breaks');
 assert(getAvailableJobSP(partiallySpentCharacter, testJob) === 39, 'legacy unspent SP should be removed');
+
+const balancedPlan = planBalancedJobSkillAcquisition({ jobSkills: {} }, testJob, 35);
+assert(balancedPlan.spentSp === 35, 'balanced acquisition should spend every usable SP');
+assert(balancedPlan.levelsGained === 2, 'balanced acquisition level count is invalid');
+assert(balancedPlan.affectedSkills === 2, 'balanced acquisition should affect both skills');
+assert(balancedPlan.updates.skill_a === 1, 'balanced acquisition should raise skill A evenly');
+assert(balancedPlan.updates.skill_b === 1, 'balanced acquisition should raise skill B evenly');
+
+const affordablePlan = planBalancedJobSkillAcquisition({ jobSkills: {} }, testJob, 30);
+assert(affordablePlan.updates.skill_a === 2, 'unaffordable skills should not block usable SP');
+assert(!affordablePlan.updates.skill_b, 'unaffordable skill should remain unchanged');
+assert(affordablePlan.remainingSp === 0, 'balanced acquisition remaining SP is invalid');
+
+const masteredPlan = planBalancedJobSkillAcquisition(limitBrokenCharacter, testJob, 100);
+assert(masteredPlan.spentSp === 0, 'balanced acquisition must exclude limit breaks');
+assert(masteredPlan.levelsGained === 0, 'mastered skills should not gain authored levels');
 
 const previouslyMigratedCharacter = {
   jobSpProgressionVersion: 2,

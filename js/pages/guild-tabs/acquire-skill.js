@@ -8,7 +8,8 @@ import {
   getAvailableJobSP,
   getJobSkillLevelCost,
   getJobSkillMasterLevel,
-  hasMasteredAllJobSkills
+  hasMasteredAllJobSkills,
+  planBalancedJobSkillAcquisition
 } from '../../data/job-progression.js';
 import {
   canLimitBreakJobSkill,
@@ -64,6 +65,9 @@ export function renderAcquireSkillTab() {
   };
   renderTabs();
 
+  const bulkActionContainer = document.createElement('div');
+  bulkActionContainer.className = 'px-1 mb-2 shrink-0';
+
   const filterContainer = document.createElement('div');
   filterContainer.style.display = 'none';
   filterContainer.className = 'px-1 mb-2 shrink-0';
@@ -73,8 +77,70 @@ export function renderAcquireSkillTab() {
 
   container.appendChild(gridContainer);
   container.appendChild(tabContainer);
+  container.appendChild(bulkActionContainer);
   container.appendChild(filterContainer);
   container.appendChild(listContainer);
+
+  const executeBalancedAcquisition = async (selectedChar, job) => {
+    const plan = planBalancedJobSkillAcquisition(selectedChar, job, selectedChar.sp);
+    if (plan.spentSp <= 0) return;
+
+    if (!selectedChar.jobSkills) selectedChar.jobSkills = {};
+    if (!selectedChar.jobSkills[job.id]) selectedChar.jobSkills[job.id] = {};
+    for (const [skillId, level] of Object.entries(plan.updates)) {
+      selectedChar.jobSkills[job.id][skillId] = level;
+    }
+    selectedChar.sp -= plan.spentSp;
+
+    await GameDB.putCharacter(selectedChar);
+    render(false);
+  };
+
+  const showBalancedAcquisitionModal = (selectedChar, job, plan) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 bg-black/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in';
+    overlay.innerHTML = `
+      <div class="bg-gray-900 border border-gray-700/80 rounded-2xl w-full max-w-[300px] shadow-2xl overflow-hidden animate-fade-in">
+        <div class="p-5 text-center">
+          <span class="material-symbols-outlined text-3xl text-cyan-300 mb-2" style="font-variation-settings: 'FILL' 1;">balance</span>
+          <h3 class="text-base font-bold text-gray-100 mb-2">全スキルを均等習得</h3>
+          <p class="text-[11px] text-gray-400 leading-relaxed mb-3">${selectedChar.name}の${job.name}スキルを、現在レベルが低い順に均等に習得します。<br>限界突破は対象外です。</p>
+          <div class="grid grid-cols-3 gap-1.5 mb-5 text-center">
+            <div class="rounded-lg bg-slate-800/80 border border-slate-700 p-2">
+              <div class="text-[9px] text-slate-400 font-bold">対象</div>
+              <div class="text-sm text-cyan-300 font-black">${plan.affectedSkills}<span class="text-[9px] ml-0.5">種</span></div>
+            </div>
+            <div class="rounded-lg bg-slate-800/80 border border-slate-700 p-2">
+              <div class="text-[9px] text-slate-400 font-bold">強化</div>
+              <div class="text-sm text-emerald-300 font-black">${plan.levelsGained}<span class="text-[9px] ml-0.5">段階</span></div>
+            </div>
+            <div class="rounded-lg bg-slate-800/80 border border-slate-700 p-2">
+              <div class="text-[9px] text-slate-400 font-bold">消費</div>
+              <div class="text-sm text-amber-300 font-black">${plan.spentSp}<span class="text-[9px] ml-0.5">SP</span></div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-cancel-balanced" class="flex-1 py-2.5 bg-gray-800 active:bg-gray-700 text-gray-300 text-sm font-bold rounded-xl border border-gray-700 transition-colors">キャンセル</button>
+            <button id="btn-confirm-balanced" class="flex-1 py-2.5 bg-cyan-600 active:bg-cyan-500 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-cyan-900/50">均等習得</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    const close = () => {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 200);
+    };
+    overlay.querySelector('#btn-cancel-balanced').onclick = close;
+    overlay.querySelector('#btn-confirm-balanced').onclick = async () => {
+      const button = overlay.querySelector('#btn-confirm-balanced');
+      button.disabled = true;
+      button.textContent = '処理中...';
+      await executeBalancedAcquisition(selectedChar, job);
+      close();
+    };
+  };
 
   const updateSkillRow = (row, skill, selectedChar, index, isInitial) => {
     const currentLevel = (selectedChar.jobSkills && selectedChar.jobSkills[selectedChar.jobId] && selectedChar.jobSkills[selectedChar.jobId][skill.id]) || 0;
@@ -391,7 +457,36 @@ export function renderAcquireSkillTab() {
     }
 
     const selectedChar = characters.find(c => c.id === selectedCharId);
+    bulkActionContainer.style.display = 'none';
+    bulkActionContainer.innerHTML = '';
     if (selectedChar) {
+      const job = JOBS[selectedChar.jobId || 'norvice'];
+      if (currentTab !== 'inheritance' && job) {
+        const plan = planBalancedJobSkillAcquisition(selectedChar, job, selectedChar.sp);
+        const canAcquireBalanced = plan.spentSp > 0;
+        bulkActionContainer.style.display = 'block';
+        bulkActionContainer.innerHTML = `
+          <button id="btn-balanced-acquire" class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border transition-all ${canAcquireBalanced ? 'bg-gradient-to-r from-cyan-700/90 to-indigo-700/90 border-cyan-400/50 text-white active:from-cyan-600 active:to-indigo-600 shadow-[0_4px_16px_rgba(8,145,178,0.25)]' : 'bg-slate-900/70 border-slate-700/60 text-slate-500 cursor-not-allowed opacity-70'}" ${canAcquireBalanced ? '' : 'disabled'}>
+            <span class="flex items-center gap-2 min-w-0">
+              <span class="material-symbols-outlined text-[19px]" style="font-variation-settings: 'FILL' 1;">balance</span>
+              <span class="text-left min-w-0">
+                <span class="block text-[12px] font-black tracking-wide truncate">現職の全スキルを均等習得</span>
+                <span class="block text-[9px] font-bold opacity-75">${canAcquireBalanced ? `${plan.affectedSkills}種 / ${plan.levelsGained}段階強化` : '習得可能な通常スキルなし'}</span>
+              </span>
+            </span>
+            <span class="flex items-center gap-1 text-[11px] font-black shrink-0">
+              <span class="material-symbols-outlined text-[14px]">stars</span>${plan.spentSp} SP
+            </span>
+          </button>
+        `;
+
+        if (canAcquireBalanced) {
+          bulkActionContainer.querySelector('#btn-balanced-acquire').onclick = () => {
+            showBalancedAcquisitionModal(selectedChar, job, plan);
+          };
+        }
+      }
+
       if (currentTab === 'inheritance') {
         filterContainer.style.display = 'block';
         
@@ -511,7 +606,6 @@ export function renderAcquireSkillTab() {
         }
       } else {
         filterContainer.style.display = 'none';
-        const job = JOBS[selectedChar.jobId || 'norvice'];
         let skills = job ? job.skills : [];
         
         // 選択中のタブに合わせてスキルをフィルタリング

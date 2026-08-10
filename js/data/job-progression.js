@@ -154,6 +154,53 @@ export function getAvailableJobSP(character, job, jobLevel = character?.jobLevel
   return Math.max(0, getTotalJobSP(jobLevel) - getSpentJobSP(character, job));
 }
 
+/**
+ * Plan a balanced SP allocation across every authored skill in a job.
+ *
+ * Lower-level skills are raised first, one level at a time. Skills whose next
+ * level is currently unaffordable are skipped so the remaining SP can still be
+ * used. Limit-break levels are deliberately excluded because they have no cap.
+ */
+export function planBalancedJobSkillAcquisition(character, job, availableSp = character?.sp) {
+  const remainingSkills = Array.isArray(job?.skills)
+    ? job.skills.map((skill, index) => ({
+      skill,
+      index,
+      level: Math.max(0, Math.floor(Number(character?.jobSkills?.[job.id]?.[skill.id]) || 0)),
+      masterLevel: getJobSkillMasterLevel(skill)
+    }))
+    : [];
+  let remainingSp = Math.max(0, Math.floor(Number(availableSp) || 0));
+  let spentSp = 0;
+  let levelsGained = 0;
+  const updates = {};
+
+  while (remainingSp > 0) {
+    const candidates = remainingSkills
+      .filter(candidate => candidate.level < candidate.masterLevel)
+      .sort((a, b) => a.level - b.level || a.index - b.index);
+    const candidate = candidates.find(({ skill, level }) => (
+      getJobSkillLevelCost(skill, level + 1) <= remainingSp
+    ));
+    if (!candidate) break;
+
+    const cost = getJobSkillLevelCost(candidate.skill, candidate.level + 1);
+    candidate.level += 1;
+    remainingSp -= cost;
+    spentSp += cost;
+    levelsGained += 1;
+    updates[candidate.skill.id] = candidate.level;
+  }
+
+  return {
+    updates,
+    spentSp,
+    remainingSp,
+    levelsGained,
+    affectedSkills: Object.keys(updates).length
+  };
+}
+
 /** Remove legacy-bonus metadata written by the superseded migration. */
 export function clearLegacyJobSpBonus(character) {
   if (!character || typeof character !== 'object') return false;
