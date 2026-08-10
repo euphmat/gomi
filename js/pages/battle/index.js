@@ -8,11 +8,10 @@ import { GameDB } from '../../data/database.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { DUNGEONS } from '../../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
-import { MATERIALS } from '../../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
 import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-definitions.js';
-import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
+import { renderEnemyCardHtml, renderPartyCardHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
 import {
@@ -37,8 +36,6 @@ import { passiveMethods } from './battle-passives.js';
 import { ailmentMethods } from './battle-ailments.js';
 import { rendererMethods } from './battle-renderer.js';
 import { resultMethods } from './battle-results.js';
-
-const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
 const DEFAULT_BATTLE_PALETTE = ['42 58 76', '54 78 102', '76 112 142', '112 154 184'];
 
@@ -157,7 +154,6 @@ class BattleManager {
       btnResultOk: container.querySelector('#btn-result-ok'),
       tabBtnSkill: container.querySelector('#tab-btn-skill'),
       tabBtnStats: container.querySelector('#tab-btn-stats'),
-      tabBtnInfo: container.querySelector('#tab-btn-info'),
       tabBtnPet: container.querySelector('#tab-btn-pet'),
       tabBtnMedal: container.querySelector('#tab-btn-medal'),
       tabContent: container.querySelector('#tab-content')
@@ -169,7 +165,6 @@ class BattleManager {
     this.elements.btnAutoDungeon.disabled = false;
     this.autoSkillStates = {};
     this.monsterKills = {};
-    this.ownedItemIds = new Set();
 
     // Tab navigation must be usable as soon as the battle shell is visible.
     // Waiting for the asynchronous IndexedDB initialization made the first
@@ -233,18 +228,7 @@ class BattleManager {
     this.discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
     this.currentGold = await GameDB.getGameState('gold') || 0;
     this.ranchData = await GameDB.getGameState('ranch_data') || {};
-    const [allInventory, rawEquipment] = await Promise.all([
-      GameDB.getAllInventory(),
-      GameDB.getAllEquipment()
-    ]);
-    this.ownedItemIds = new Set(
-      (allInventory || [])
-        .filter(item => (item.quantity || 0) > 0)
-        .map(item => item.id)
-    );
-    (rawEquipment || []).forEach(item => {
-      this.ownedItemIds.add(item.baseId || item.id);
-    });
+    const rawEquipment = await GameDB.getAllEquipment();
     this._needsSave = false;
 
     // The page may have been replaced while the database reads above were in
@@ -728,7 +712,6 @@ class BattleManager {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill' },
       { btn: this.elements.tabBtnStats, id: 'stats' },
-      { btn: this.elements.tabBtnInfo, id: 'info' },
       { btn: this.elements.tabBtnPet, id: 'pet' },
       { btn: this.elements.tabBtnMedal, id: 'medal' }
     ];
@@ -878,7 +861,6 @@ class BattleManager {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'スキル' },
       { btn: this.elements.tabBtnStats, id: 'stats', icon: 'monitoring', palette: 2, label: '統計' },
-      { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', palette: 3, label: '情報' },
       { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: '仲間' },
       { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'メダル' }
     ];
@@ -899,8 +881,8 @@ class BattleManager {
 
   getSubTabMonsterIds(tab = this.currentTab) {
     // 自動戦闘中は戦闘の進行で階層が切り替わっても選択対象が欠けないよう、
-    // コレクション系の3タブには現在のダンジョンに登場する全種を並べる。
-    if (this.isAutoBattle && ['info', 'pet', 'medal'].includes(tab)) {
+    // コレクション系のタブには現在のダンジョンに登場する全種を並べる。
+    if (this.isAutoBattle && ['pet', 'medal'].includes(tab)) {
       return this.dungeonUniqueMonsterIds || [];
     }
 
@@ -957,9 +939,6 @@ class BattleManager {
     } else if (this.currentTab === 'stats') {
       this.elements.tabContent.dataset.renderedTab = 'stats';
       renderBattleStatisticsTab(this, force);
-    } else if (this.currentTab === 'info') {
-      this.elements.tabContent.dataset.renderedTab = 'info';
-      this.renderInfoTab();
     } else if (this.currentTab === 'pet') {
       const targetId = this.subTabSelectedMonsterId || 'none';
       const monsterScope = this.isAutoBattle ? 'auto-dungeon' : 'manual';
@@ -1045,23 +1024,16 @@ class BattleManager {
       const hasLegendaryCompanion = this.currentTab === 'pet' && Object.values(this.ranchData || {}).some(
         dungeonRanch => dungeonRanch?.[`${m.id}_legendary`]
       );
-      const isDiscovered = Array.isArray(this.discoveredMonsters) && this.discoveredMonsters.includes(m.id);
       const hasMedal = Object.prototype.hasOwnProperty.call(this.playerMedals || {}, m.id);
       const isLockedIcon = this.currentTab === 'pet'
         ? !isPetCompanion
-        : this.isAutoBattle && this.currentTab === 'info'
-          ? !isDiscovered
-          : this.isAutoBattle && this.currentTab === 'medal'
-            ? !hasMedal
-            : false;
+        : this.isAutoBattle && this.currentTab === 'medal'
+          ? !hasMedal
+          : false;
       const monsterImageStyle = isLockedIcon
         ? 'filter: brightness(0); opacity: 0.9;'
         : '';
-      const lockedLabel = this.currentTab === 'info'
-        ? '図鑑未登録'
-        : this.currentTab === 'pet'
-          ? '仲間未獲得'
-          : 'メダル未所持';
+      const lockedLabel = this.currentTab === 'pet' ? '仲間未獲得' : 'メダル未所持';
       const monsterAriaLabel = isLockedIcon ? `${m.name}（${lockedLabel}）` : m.name;
       const bgClass = medalStatus?.isMaxRank
         ? (isSelected
@@ -1141,18 +1113,6 @@ class BattleManager {
       elementResist: { fire: 0, water: 0, grass: 0, ice: 0, thunder: 0, wind: 0, earth: 0, light: 0, dark: 0, ...(monsterDef.elements || {}) },
       ailmentResist: { poison: 0, burn: 0, paralysis: 0, sleep: 0, confusion: 0, curse: 0, blind: 0, silence: 0, ...(monsterDef.ailments || {}) }
     };
-  }
-
-  renderInfoTab() {
-    const body = this.renderSubTabsUI();
-    const targetEntity = this.getSubTabTargetEntity();
-    if (!targetEntity) {
-      body.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が存在しません</div>';
-      return;
-    }
-
-    const html = renderInfoTabHtml(targetEntity, false, this.equipMap, this.currentFloorNum, MATERIALS, this.monsterKills, this.ranchData, this.playerMedals, this.ownedItemIds);
-    body.innerHTML = html;
   }
 
   async renderPetTab() {
@@ -1444,11 +1404,8 @@ export function renderBattlePage() {
         width: min(36px, 76%);
         aspect-ratio: 1;
       }
-      .battle-info-drop-grid {
-        grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-      }
       .battle-slider-shell {
-        height: 28px;
+        height: 24px;
         min-width: 0;
         touch-action: pan-x;
       }
@@ -1457,13 +1414,19 @@ export function renderBattlePage() {
         touch-action: pan-x;
       }
       .battle-quantity-input-shell {
-        width: 52px;
-        height: 36px;
+        width: 44px;
+        height: 28px;
+      }
+      .battle-max-button {
+        width: 36px;
+        height: 28px;
       }
       .battle-quantity-input-shell .quantity-input {
         min-height: 0;
       }
-      .battle-feed-button,
+      .battle-feed-button {
+        min-height: 30px;
+      }
       .battle-medal-button {
         min-height: 40px;
       }
@@ -1490,10 +1453,6 @@ export function renderBattlePage() {
       @media (max-width: 540px), (max-height: 760px) {
         #tab-content { padding: .3rem; }
         .sub-tab-header { padding: .2rem .2rem .1rem; margin-bottom: .15rem; }
-        .battle-info-stat { min-height: 18px; }
-        .battle-info-drop-card { height: 62px; padding: 3px; }
-        .battle-info-drop-image { width: 36px; height: 36px; }
-        .battle-info-drop-image img { width: 34px; height: 34px; }
       }
       @media (max-width: 540px) {
         .battle-tab {
@@ -1524,51 +1483,30 @@ export function renderBattlePage() {
         .battle-item-grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
         .battle-item-heading { min-height: 36px; }
 
-        /* Info: long action lists become a readable single column. */
-        .battle-info-root { gap: .375rem; }
-        .battle-info-action-list { grid-template-columns: minmax(0, 1fr); }
-        .battle-info-drop-grid { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); }
-        .battle-info-drop-card { min-height: 62px; }
-
-        /* Companion: rate cards can swipe horizontally instead of crushing text. */
+        /* Companion: status and feeding controls stay dense on phones. */
         .battle-pet-root { padding: .125rem; }
-        .battle-pet-rates {
-          display: flex;
-          overflow-x: auto;
-          gap: .25rem;
-          padding-bottom: 2px;
-          scrollbar-width: none;
-          overscroll-behavior-x: contain;
-        }
-        .battle-pet-rates::-webkit-scrollbar { display: none; }
-        .battle-pet-rates > div { min-width: 118px; min-height: 32px; }
         .battle-pet-title-row { gap: .25rem; }
-        .battle-legendary-toggle { min-height: 44px; }
-        .battle-pet-material { padding: .5rem; }
-        .battle-feed-button { min-height: 44px; }
+        .battle-feed-button { min-height: 32px; }
         .battle-quantity-control {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) 44px 52px;
-          gap: .375rem;
+          grid-template-columns: minmax(0, 1fr) 36px 44px;
+          gap: .25rem;
           padding-inline: 0;
         }
         .battle-quantity-min { display: none; }
-        .battle-max-button { width: 44px; height: 44px; }
-        .battle-quantity-input-shell { width: 52px; height: 44px; }
-        .battle-slider-shell { height: 44px; }
+        .battle-max-button { width: 36px; height: 32px; }
+        .battle-quantity-input-shell { width: 44px; height: 32px; }
+        .battle-slider-shell { height: 32px; }
 
         /* Medal requirements are easier to scan as full-width touch rows. */
         .battle-medal-materials { grid-template-columns: minmax(0, 1fr); }
         .battle-medal-button { min-height: 44px; font-size: 12px; }
       }
       @media (max-width: 380px) {
-        .battle-info-summary { gap: .25rem; }
-        .battle-info-portrait-column { width: 60px; }
-        .battle-info-stats { gap: .2rem; }
-        .battle-info-stat { padding-inline: .2rem; }
-        .battle-info-stat > span { font-size: 11px; }
-        .battle-pet-header { align-items: flex-start; }
+        .battle-pet-portrait-column { width: 52px; }
         .battle-pet-title-row { flex-wrap: wrap; }
+        .battle-pet-status-metric { padding-inline: .2rem; }
+        .battle-pet-status-metric .material-symbols-outlined { display: none; }
         .battle-skill-card { gap: .25rem; padding-inline: .375rem; }
         .battle-skill-icon { width: 32px; height: 32px; }
         .battle-skill-mp { min-width: 34px; }
@@ -1623,7 +1561,6 @@ export function renderBattlePage() {
         <div class="flex shrink-0 items-end gap-0.5 px-0.5" role="tablist" aria-label="戦闘メニュー">
           <button id="tab-btn-skill" role="tab" aria-selected="true" aria-label="スキル" class="battle-tab battle-tab--active relative z-10 flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none truncate">スキル</span></button>
           <button id="tab-btn-stats" role="tab" aria-selected="false" aria-label="統計" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">monitoring</span><span class="pointer-events-none truncate">統計</span></button>
-          <button id="tab-btn-info" role="tab" aria-selected="false" aria-label="情報" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">info</span><span class="pointer-events-none truncate">情報</span></button>
           <button id="tab-btn-pet" role="tab" aria-selected="false" aria-label="仲間" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">pets</span><span class="pointer-events-none truncate">仲間</span></button>
           <button id="tab-btn-medal" role="tab" aria-selected="false" aria-label="メダル" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">military_tech</span><span class="pointer-events-none truncate">メダル</span></button>
         </div>

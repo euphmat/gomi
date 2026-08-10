@@ -20,6 +20,47 @@ const globalSliderManualFlags = {};
 let isLegendaryToggleActive = false;
 let currentTargetEntityId = null;
 
+const ELEMENT_DISPLAY = {
+  fire: { label: '炎', color: 'text-red-400', icon: 'local_fire_department' },
+  water: { label: '水', color: 'text-blue-400', icon: 'water_drop' },
+  grass: { label: '草', color: 'text-emerald-400', icon: 'eco' },
+  ice: { label: '氷', color: 'text-cyan-300', icon: 'ac_unit' },
+  thunder: { label: '雷', color: 'text-yellow-400', icon: 'bolt' },
+  wind: { label: '風', color: 'text-green-300', icon: 'air' },
+  earth: { label: '土', color: 'text-amber-500', icon: 'landscape' },
+  light: { label: '光', color: 'text-yellow-200', icon: 'light_mode' },
+  dark: { label: '闇', color: 'text-purple-400', icon: 'dark_mode' }
+};
+
+function renderElementBadges(targetEntity) {
+  const elements = targetEntity.elementResist || targetEntity.elements || {};
+  const entries = Object.entries(elements).filter(([key, value]) => ELEMENT_DISPLAY[key] && Number(value) !== 0);
+
+  return entries.map(([key, value]) => {
+    const element = ELEMENT_DISPLAY[key];
+    const kind = Number(value) < 0 ? '弱' : '耐';
+    return `
+      <span class="battle-pet-element inline-flex items-center gap-px rounded border border-slate-600/60 bg-slate-950/70 px-1 py-px" aria-label="${element.label}${kind}性 ${Math.abs(value)}">
+        <span class="text-[7px] font-black text-slate-400">${kind}</span>
+        <span class="material-symbols-outlined ${element.color}" style="font-size: 11px; font-variation-settings: 'FILL' 1;">${element.icon}</span>
+        <span class="text-[8px] font-black ${element.color}">${Math.abs(value)}</span>
+      </span>
+    `;
+  }).join('');
+}
+
+function renderStatusMetric({ label, value, icon, color, background, valueClass = 'text-slate-100' }) {
+  return `
+    <div class="battle-pet-status-metric flex min-w-0 items-center justify-between gap-0.5 rounded border px-1 py-0.5 shadow-inner ${background}">
+      <span class="flex min-w-0 items-center gap-0.5">
+        <span class="material-symbols-outlined shrink-0 ${color}" style="font-size: 12px; font-variation-settings: 'FILL' 1;">${icon}</span>
+        <span class="truncate text-[8px] font-black text-slate-400">${label}</span>
+      </span>
+      <span class="shrink-0 whitespace-nowrap text-[10px] font-black tabular-nums ${valueClass}">${value}</span>
+    </div>
+  `;
+}
+
 /**
  * Pet タブの HTML を生成して tabContent に描画する
  * @param {HTMLElement} tabContent - タブコンテンツコンテナ
@@ -75,10 +116,6 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   const legCapRate = Math.min(1.0, (0.0001 + Math.floor(kills / 100) * 0.0001)
     * getTreasureEffect('captureMultiplier') * getTreasureEffect('legendaryCaptureMultiplier'));
 
-  const getCapBadge = (captured, rate) => captured
-    ? `<span class="text-pink-400 text-[9px] font-black shrink-0">捕獲済</span>`
-    : `<span class="text-emerald-400 text-[9px] font-black shrink-0">${(rate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>`;
-
   const hasAnyCompanion = isNormalCaptured || isLegendaryCaptured;
   const monsterImageStyle = hasAnyCompanion ? '' : 'filter: brightness(0); opacity: 0.9;';
 
@@ -112,57 +149,76 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
     }
   }
 
-  // --- ヘッダー (捕獲情報統合・3分割グリッド化) ---
+  // --- モンスターステータス + 捕獲情報 ---
   const isDisplayLegendary = targetEntity.isLegendary || isLegendaryToggleActive;
+  const stats = targetEntity.stats || {};
+  const rewards = targetEntity.rewards || {};
+  const elementBadgesHtml = renderElementBadges(targetEntity);
+  const statusMetrics = [
+    { label: 'HP', value: formatNumber(stats.hp || 0), icon: 'favorite', color: 'text-red-400', background: 'bg-red-950/30 border-red-900/40' },
+    { label: 'ATK', value: formatNumber(stats.atk || 0), icon: 'swords', color: 'text-orange-400', background: 'bg-orange-950/30 border-orange-900/40' },
+    { label: 'DEF', value: formatNumber(stats.def || 0), icon: 'shield', color: 'text-slate-300', background: 'bg-slate-800/30 border-slate-700/40' },
+    { label: 'MAT', value: formatNumber(stats.matk || 0), icon: 'auto_awesome', color: 'text-purple-400', background: 'bg-purple-950/30 border-purple-900/40' },
+    { label: 'MDF', value: formatNumber(stats.mdef || 0), icon: 'security', color: 'text-indigo-400', background: 'bg-indigo-950/30 border-indigo-900/40' },
+    { label: 'SPD', value: formatNumber(stats.spd || 0), icon: 'directions_run', color: 'text-amber-400', background: 'bg-amber-950/30 border-amber-900/40' },
+    {
+      label: '捕獲率',
+      value: isNormalCaptured ? '捕獲済' : `${(captureRate * 100).toFixed(3).replace(/\.?0+$/, '')}%`,
+      icon: 'pets',
+      color: 'text-pink-400',
+      background: 'bg-pink-950/30 border-pink-900/40',
+      valueClass: isNormalCaptured ? 'text-pink-300' : 'text-emerald-300'
+    },
+    {
+      label: '伝説出現',
+      value: `${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%`,
+      icon: 'auto_awesome',
+      color: 'text-yellow-400',
+      background: 'bg-yellow-950/30 border-yellow-900/40',
+      valueClass: 'text-yellow-300'
+    },
+    {
+      label: '伝説捕獲',
+      value: isLegendaryCaptured ? '捕獲済' : `${(legCapRate * 100).toFixed(3).replace(/\.?0+$/, '')}%`,
+      icon: 'pets',
+      color: 'text-yellow-400',
+      background: 'bg-yellow-950/30 border-yellow-900/40',
+      valueClass: isLegendaryCaptured ? 'text-pink-300' : 'text-yellow-300'
+    },
+    { label: 'EXP', value: formatNumber(rewards.exp || 0), icon: 'star', color: 'text-emerald-400', background: 'bg-emerald-950/30 border-emerald-900/40' },
+    { label: 'JP', value: formatNumber(rewards.jp || 0), icon: 'psychology', color: 'text-fuchsia-400', background: 'bg-fuchsia-950/30 border-fuchsia-900/40' },
+    { label: 'GOLD', value: formatNumber(rewards.gold || 0), icon: 'monetization_on', color: 'text-yellow-400', background: 'bg-yellow-950/30 border-yellow-900/40' }
+  ].map(renderStatusMetric).join('');
+
   const headerHtml = `
-    <div class="battle-pet-header flex items-center gap-2 bg-slate-900/60 border border-slate-700/60 rounded-xl p-1.5 shadow-inner shrink-0">
-      <div class="w-10 h-10 rounded-lg bg-slate-950 border border-slate-600 shadow-md relative flex items-center justify-center p-1 shrink-0">
-        ${isDisplayLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
-        <img src="${targetEntity.image}" class="w-full h-full object-contain relative z-10 ${isDisplayLegendary ? 'animate-rainbow' : ''}" style="${monsterImageStyle}" onerror="this.style.display='none'">
+    <section class="battle-pet-header flex gap-1.5 rounded-lg border border-slate-700/60 bg-slate-900/60 p-1 shadow-inner shrink-0" aria-label="${targetEntity.name}のステータスと捕獲情報">
+      <div class="battle-pet-portrait-column flex w-[64px] shrink-0 flex-col items-center gap-1">
+        <div class="relative flex h-11 w-11 items-center justify-center rounded-lg border border-slate-600 bg-slate-950 p-1 shadow-md">
+          ${isDisplayLegendary ? '<div class="absolute inset-0 bg-yellow-500/20 animate-pulse pointer-events-none rounded-lg"></div>' : ''}
+          <img src="${targetEntity.image}" class="relative z-10 h-full w-full object-contain ${isDisplayLegendary ? 'animate-rainbow' : ''}" style="${monsterImageStyle}" onerror="this.style.display='none'">
+        </div>
+        <div class="flex w-full flex-wrap justify-center gap-px">${elementBadgesHtml}</div>
       </div>
-      <div class="battle-pet-header-body flex flex-col min-w-0 flex-1">
-        <div class="battle-pet-title-row flex items-center justify-between border-b border-slate-700/50 pb-0.5 mb-1">
-          <div class="flex items-center gap-1.5 min-w-0">
+      <div class="battle-pet-header-body flex min-w-0 flex-1 flex-col">
+        <div class="battle-pet-title-row mb-1 flex min-h-[22px] items-center justify-between gap-1 border-b border-slate-700/50 pb-0.5">
+          <div class="flex min-w-0 items-center gap-1">
             ${currentLevel !== null ? `<span class="text-[10px] text-pink-300 font-black bg-pink-900/40 px-2 py-0.5 rounded border border-pink-500/40 shrink-0">Lv.${currentLevel}</span>` : ''}
-            <span class="font-black text-[13px] text-slate-100 drop-shadow truncate">${targetEntity.name}</span>
+            <span class="truncate text-[12px] font-black text-slate-100 drop-shadow">${targetEntity.name}</span>
             ${isLegendaryCaptured ? `
-              <label class="battle-legendary-toggle inline-flex min-h-11 items-center cursor-pointer shrink-0 px-1">
+              <label class="battle-legendary-toggle inline-flex items-center cursor-pointer shrink-0 px-0.5">
                 <input type="checkbox" class="sr-only peer" id="legendary-toggle" ${isLegendaryToggleActive ? 'checked' : ''}>
                 <div class="battle-legendary-track bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:bg-yellow-600/50 border border-slate-600 peer-checked:border-yellow-500/50 shadow-inner"><span class="battle-legendary-knob bg-slate-300 peer-checked:bg-yellow-400"></span></div>
                 <span class="ml-1 text-[8px] font-black ${isLegendaryToggleActive ? 'text-yellow-400 drop-shadow-[0_0_2px_rgba(250,204,21,0.5)]' : 'text-slate-500'}">伝説</span>
               </label>
             ` : ''}
           </div>
-          <span class="text-[9px] text-slate-400 font-bold shrink-0 ml-1">討伐数: <span class="text-red-400 font-black">${formatNumber(kills)}</span></span>
+          <span class="ml-1 shrink-0 text-[8px] font-bold text-slate-400">討伐 <span class="font-black text-red-400">${formatNumber(kills)}</span></span>
         </div>
-        <div class="battle-pet-rates grid grid-cols-3 gap-0.5 w-full">
-          <!-- 捕獲率 -->
-          <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
-            <span class="text-[8px] text-slate-400 font-black shrink-0">捕獲率:</span>
-            <div class="flex items-center gap-0.5">
-              <span class="material-symbols-outlined text-pink-400 shrink-0" style="font-size: 8px; font-variation-settings: 'FILL' 1;">pets</span>
-              ${getCapBadge(isNormalCaptured, captureRate)}
-            </div>
-          </div>
-          <!-- 伝説出現 -->
-          <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
-            <span class="text-[8px] text-slate-400 font-black shrink-0">伝説出現:</span>
-            <div class="flex items-center gap-0.5">
-              <span class="material-symbols-outlined text-yellow-400 shrink-0" style="font-size: 8px; font-variation-settings: 'FILL' 1;">auto_awesome</span>
-              <span class="text-[9px] text-yellow-400 font-black shrink-0">${(legAppRate * 100).toFixed(3).replace(/\.?0+$/, '')}%</span>
-            </div>
-          </div>
-          <!-- 伝説捕獲 -->
-          <div class="flex items-center justify-center gap-0.5 bg-slate-950/45 border border-slate-800/80 rounded py-1 px-0.5 min-w-0">
-            <span class="text-[8px] text-slate-400 font-black shrink-0">伝説捕獲:</span>
-            <div class="flex items-center gap-0.5">
-              <span class="material-symbols-outlined text-pink-400 shrink-0" style="font-size: 8px; font-variation-settings: 'FILL' 1;">pets</span>
-              ${getCapBadge(isLegendaryCaptured, legCapRate)}
-            </div>
-          </div>
+        <div class="battle-pet-status-grid grid w-full grid-cols-3 gap-0.5">
+          ${statusMetrics}
         </div>
       </div>
-    </div>
+    </section>
   `;
   container.innerHTML = headerHtml;
 
@@ -189,7 +245,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   if (variants.length > 0) {
     for (const variant of variants) {
       const feedSection = document.createElement('div');
-      feedSection.className = 'battle-pet-feed bg-slate-900/60 border border-slate-700/60 rounded-xl p-2 shadow-inner';
+      feedSection.className = 'battle-pet-feed rounded-lg border border-slate-700/60 bg-slate-900/60 p-1 shadow-inner';
       container.appendChild(feedSection);
       renderFeedSectionSync(feedSection, variant, targetEntity, ranchData, inventoryMap, onRanchDataUpdated, tabContent, monsterKills);
     }
@@ -271,7 +327,7 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
             if (btnFeed) {
               btnFeed.disabled = (quantity === 0);
             }
-            const parentFlex = input ? input.closest('.flex.items-center.gap-2.px-1') : null;
+            const parentFlex = input ? input.closest('.battle-quantity-control') : null;
             if (parentFlex) {
               if (quantity === 0) {
                 parentFlex.classList.add('opacity-50', 'pointer-events-none');
@@ -316,17 +372,17 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
   const pct = (info.currentLevelFed / info.nextLevelRequired) * 100;
 
   sectionEl.innerHTML = `
-    <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden relative shadow-inner border border-slate-700/50 flex items-center justify-center mb-2">
+    <div class="relative mb-1 flex h-2 w-full items-center justify-center overflow-hidden rounded-full border border-slate-700/50 bg-slate-900 shadow-inner">
       <div class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-pink-600 via-rose-500 to-pink-500 transition-all duration-500 ease-out" style="width: ${pct}%">
         <div class="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
       </div>
-      <span class="relative z-10 text-[8px] text-white font-black tracking-widest drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">${info.currentLevelFed} / ${info.nextLevelRequired}</span>
+      <span class="relative z-10 text-[7px] font-black tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">${info.currentLevelFed} / ${info.nextLevelRequired}</span>
     </div>
   `;
 
   // 素材リスト
   const itemsContainer = document.createElement('div');
-  itemsContainer.className = 'flex flex-col gap-1.5';
+  itemsContainer.className = 'flex flex-col gap-1';
 
   if (validDrops.length === 0) {
     itemsContainer.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-2">与えられる素材がありません。</p>';
@@ -350,36 +406,36 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
 
       const itemRow = document.createElement('div');
       itemRow.id = `battle-pet-mat-row-${variant.key}-${drop.itemId}`;
-      itemRow.className = 'battle-pet-material bg-slate-800/40 border border-slate-700/50 rounded-lg p-2 transition-colors flex flex-col gap-1.5';
+      itemRow.className = 'battle-pet-material flex flex-col gap-1 rounded-md border border-slate-700/50 bg-slate-800/40 p-1 transition-colors';
 
       itemRow.innerHTML = `
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <div class="w-8 h-8 bg-slate-900/80 rounded-lg border border-slate-700 flex items-center justify-center p-1 shrink-0">
+        <div class="flex items-center justify-between gap-1">
+          <div class="flex min-w-0 flex-1 items-center gap-1.5">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-900/80 p-0.5">
               <img src="${mat.image}" class="w-full h-full object-contain drop-shadow-sm">
             </div>
             <div class="min-w-0 flex-1">
-              <div class="text-[10px] font-black text-slate-100 truncate flex items-center gap-1.5">
+              <div class="flex items-center gap-1 truncate text-[9px] font-black text-slate-100">
                 ${mat.name}
-                <span class="text-[8px] bg-pink-900/50 text-pink-300 px-1 py-0.5 rounded border border-pink-700/50">${expMultiplier} EXP</span>
+                <span class="rounded border border-pink-700/50 bg-pink-900/50 px-1 py-px text-[7px] text-pink-300">${expMultiplier} EXP</span>
               </div>
-              <div class="text-[9px] font-bold text-slate-400 mt-0.5">所持: <span id="battle-pet-mat-owned-${variant.key}-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
+              <div class="text-[8px] font-bold text-slate-400">所持 <span id="battle-pet-mat-owned-${variant.key}-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
             </div>
           </div>
-          <button class="battle-feed-button px-3 bg-gradient-to-r from-pink-600 to-rose-600 active:from-pink-500 active:to-rose-500 disabled:opacity-50 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 rounded-lg text-[10px] font-black text-white transition-all active:scale-95 btn-feed shadow-[0_0_8px_rgba(236,72,153,0.3)] shrink-0" ${maxFeed === 0 ? 'disabled' : ''}>
+          <button class="battle-feed-button shrink-0 rounded-md bg-gradient-to-r from-pink-600 to-rose-600 px-2 text-[9px] font-black text-white shadow-[0_0_8px_rgba(236,72,153,0.3)] transition-all active:scale-95 active:from-pink-500 active:to-rose-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:opacity-50 btn-feed" ${maxFeed === 0 ? 'disabled' : ''}>
             与える
           </button>
         </div>
         <!-- スライダーエリア (牧場画面と統一) -->
-        <div class="battle-quantity-control flex items-center gap-2 px-1 pt-0.5 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
-          <span class="battle-quantity-min text-[9px] font-bold text-slate-400 w-4 text-right shrink-0">1</span>
+        <div class="battle-quantity-control flex items-center gap-1 ${maxFeed === 0 ? 'opacity-50 pointer-events-none' : ''}">
+          <span class="battle-quantity-min w-3 shrink-0 text-right text-[8px] font-bold text-slate-400">1</span>
           <div class="battle-slider-shell relative flex-1 flex items-center">
             <div class="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-800 rounded-full pointer-events-none shadow-inner border border-slate-700/50"></div>
             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full pointer-events-none slider-progress shadow-[0_0_8px_rgba(244,114,182,0.4)]" style="width: 0%"></div>
             <input type="range" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent appearance-none cursor-pointer outline-none quantity-slider z-10 m-0 absolute inset-0" data-item-id="${drop.itemId}">
           </div>
-          <button type="button" class="battle-max-button flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-700/60 bg-slate-900/60 text-[9px] font-black text-slate-300 cursor-pointer active:bg-slate-700 active:text-white btn-max">MAX</button>
-          <div class="battle-quantity-input-shell bg-slate-900 border border-slate-700 rounded-lg flex items-center justify-center shadow-inner shrink-0 relative overflow-hidden">
+          <button type="button" class="battle-max-button flex shrink-0 cursor-pointer items-center justify-center rounded-md border border-slate-700/60 bg-slate-900/60 text-[8px] font-black text-slate-300 active:bg-slate-700 active:text-white btn-max">MAX</button>
+          <div class="battle-quantity-input-shell relative flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-700 bg-slate-900 shadow-inner">
             <input type="number" min="1" max="${maxFeed || 1}" value="${initialVal}" ${maxFeed === 0 ? 'disabled' : ''} class="w-full h-full bg-transparent text-center text-[10px] font-black text-pink-300 outline-none quantity-input appearance-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none relative z-10">
           </div>
         </div>
