@@ -254,7 +254,7 @@ export function renderAcquireSkillTab() {
             ` : ''}
             ${nextMilestone ? `
               <div class="flex gap-1.5 items-start rounded-md border border-fuchsia-500/20 bg-fuchsia-950/25 px-1.5 py-1 text-[9px] leading-tight">
-                <span class="font-black text-fuchsia-300 shrink-0">次覚醒</span>
+                <span class="font-black text-fuchsia-300 shrink-0">次の追加効果</span>
                 <span class="font-bold text-fuchsia-100">Lv.${nextMilestone.level}：${nextMilestone.label}</span>
               </div>
             ` : ''}
@@ -270,7 +270,8 @@ export function renderAcquireSkillTab() {
           
           ${isLimitBreaking ? `
           <button class="w-full py-1 bg-fuchsia-950/40 border border-fuchsia-700/40 text-fuchsia-300 text-[10px] font-black tracking-wider rounded-lg cursor-default" disabled>
-            突破 +${currentLevel - masterLevel}${nextMilestone ? ` / 次覚醒 +${nextMilestone.breaks}` : ''}
+            <span class="block">突破 +${currentLevel - masterLevel}</span>
+            ${nextMilestone ? `<span class="block text-[8px] text-fuchsia-200/75">効果解放 +${nextMilestone.breaks}</span>` : ''}
           </button>
           ` : (!isMax && maxPossibleLevel > currentLevel ? `
           <button class="max-btn w-full relative overflow-hidden py-1 bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-500 active:to-indigo-500 text-white shadow-md shadow-purple-500/20 border border-purple-400/50 text-[11px] rounded-lg active:scale-[0.98] transition-all duration-200">

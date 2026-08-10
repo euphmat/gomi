@@ -41,23 +41,10 @@ const normalizeSkill = skill => ({
 
 const recordAmount = (metric, prefix, amount) => {
   metric[prefix] += amount;
-  metric[`${prefix}Events`] += 1;
-  metric[`max${prefix[0].toUpperCase()}${prefix.slice(1)}`] = Math.max(
-    metric[`max${prefix[0].toUpperCase()}${prefix.slice(1)}`],
-    amount
-  );
-  const minimumKey = `min${prefix[0].toUpperCase()}${prefix.slice(1)}`;
-  metric[minimumKey] = metric[minimumKey] === 0 ? amount : Math.min(metric[minimumKey], amount);
 };
 
-const recordActivation = (metric, eventTime) => {
+const recordActivation = metric => {
   metric.activations += 1;
-  if (metric.firstActivationAt === null) metric.firstActivationAt = eventTime;
-  if (metric.lastActivationAt !== null) {
-    metric.activationIntervalTotalMs += Math.max(0, eventTime - metric.lastActivationAt);
-    metric.activationIntervalSamples += 1;
-  }
-  metric.lastActivationAt = eventTime;
 };
 
 export class BattleTelemetry {
@@ -122,26 +109,10 @@ export class BattleTelemetry {
       metric = {
         ...normalized,
         activations: 0,
-        firstActivationAt: null,
-        lastActivationAt: null,
-        activationIntervalTotalMs: 0,
-        activationIntervalSamples: 0,
         damage: 0,
-        damageEvents: 0,
-        maxDamage: 0,
-        minDamage: 0,
         healing: 0,
-        healingEvents: 0,
-        maxHealing: 0,
-        minHealing: 0,
         mpRestored: 0,
-        mpRestoredEvents: 0,
-        maxMpRestored: 0,
-        minMpRestored: 0,
-        prevented: 0,
-        preventedEvents: 0,
-        maxPrevented: 0,
-        minPrevented: 0
+        prevented: 0
       };
       stat.skills.set(normalized.id, metric);
     }
@@ -155,7 +126,7 @@ export class BattleTelemetry {
     const metric = this._ensureSkill(stat, normalized);
     stat.actions += 1;
     const eventTime = now();
-    recordActivation(metric, eventTime - this.startedAt);
+    recordActivation(metric);
     this.recentSkillEvents.set(`${stat.key}:${normalized.id}`, eventTime);
     this._notify();
   }
@@ -169,7 +140,7 @@ export class BattleTelemetry {
     // executeSkill records the active skill immediately before its label popup.
     if (eventTime - (this.recentSkillEvents.get(signature) || -Infinity) < 80) return false;
     const metric = this._ensureSkill(stat, normalized);
-    recordActivation(metric, eventTime - this.startedAt);
+    recordActivation(metric);
     this.recentSkillEvents.set(signature, eventTime);
     this._notify();
     return true;
@@ -333,7 +304,6 @@ export function captureBattlePopup(manager, elementId, value) {
   manager.battleTelemetry?.recordRecovery(source, target, amount, skill, resource);
 }
 
-const average = (total, count) => count > 0 ? total / count : 0;
 const ratePerMinute = (count, elapsedMs) => count / Math.max(elapsedMs / 60000, 1 / 60);
 const formatDecimal = value => Number(value || 0).toFixed(value >= 100 ? 0 : 1);
 const formatSeconds = milliseconds => {
@@ -350,6 +320,40 @@ function getJobDisplay(manager, stat) {
   return {
     image: job?.image || `./assets/job/job_${jobId}.webp`,
     name: job?.name || jobId
+  };
+}
+
+function getCurrentSkillEffect(manager, stat, metric) {
+  const character = (manager.party || []).find(member => entityKey(member) === stat.key);
+  const skillCache = character?._skillCache;
+  let cached = skillCache?.get?.(metric.id) || null;
+  if (!cached && skillCache?.values) {
+    for (const candidate of skillCache.values()) {
+      if (candidate?.def?.name === metric.name) {
+        cached = candidate;
+        break;
+      }
+    }
+  }
+
+  let description = '';
+  if (cached?.def?.getDescription && cached.levelConfig) {
+    try {
+      description = cached.def.getDescription(cached.levelConfig);
+    } catch { /* Fall back to the static or generic description below. */ }
+  }
+  description ||= cached?.def?.description || '';
+  if (!description) {
+    if (metric.id === 'normal_attack') description = '敵単体に通常の物理攻撃を行う。';
+    else if (metric.id === 'hp_recovery') description = '味方のHPを回復する。';
+    else if (metric.id === 'mp_recovery') description = '味方のMPを回復する。';
+    else if (metric.id === 'barrier') description = '味方へのダメージを防ぐバリアを付与する。';
+    else description = `戦闘中に発生した「${metric.name}」の効果。`;
+  }
+
+  return {
+    description,
+    level: Number(cached?.level) > 0 ? Math.floor(Number(cached.level)) : null
   };
 }
 
@@ -402,83 +406,37 @@ function renderCharacterOverview(manager, stat, elapsedMs) {
   </section>`;
 }
 
-function renderMetricCell(label, value, color = 'text-slate-200') {
-  return `<div class="min-w-0 rounded-md border border-white/[0.06] bg-black/30 px-1.5 py-1.5 text-center"><div class="truncate text-[9px] font-medium text-slate-400">${label}</div><div class="mt-1 truncate text-[12px] font-black leading-none ${color}">${value}</div></div>`;
-}
-
-function renderMetricGroup(title, icon, titleClass, cells) {
-  return `<div class="mt-2 border-t border-white/10 pt-2">
-    <div class="mb-1.5 flex items-center gap-1 text-[10px] font-black ${titleClass}"><span class="material-symbols-outlined" style="font-size:13px">${icon}</span>${title}</div>
-    <div class="grid grid-cols-4 gap-1.5">${cells.map(cell => renderMetricCell(...cell)).join('')}</div>
+function renderContributionCell(label, value, share, icon, color, barColor) {
+  const width = Math.min(100, Math.max(0, Number(share) || 0));
+  return `<div class="min-w-0 rounded-lg border border-white/[0.08] bg-black/30 px-2 py-1.5">
+    <div class="flex items-center gap-1 text-[9px] font-bold text-slate-300"><span class="material-symbols-outlined ${color}" style="font-size:12px">${icon}</span>${label}<span class="ml-auto font-mono text-[9px] text-amber-200">${formatPercent(width)}</span></div>
+    <div class="mt-1 flex items-end justify-between gap-2"><span class="truncate text-[14px] font-black leading-none ${color}">${compactNumber(value)}</span><span class="shrink-0 text-[8px] text-slate-400">キャラ内貢献</span></div>
+    <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full ${barColor}" style="width:${width.toFixed(1)}%"></div></div>
   </div>`;
 }
 
-function renderSkillMetric(metric, stat, elapsedMs) {
-  const activityCells = [
-    ['発動回数', `${metric.activations}回`, 'text-violet-200'],
-    ['発動頻度', `${formatDecimal(ratePerMinute(metric.activations, elapsedMs))}/分`, 'text-violet-300'],
-    ['平均間隔', metric.activationIntervalSamples ? formatSeconds(metric.activationIntervalTotalMs / metric.activationIntervalSamples) : '—', 'text-slate-300'],
-    ['最終発動', metric.lastActivationAt === null ? '—' : `${formatSeconds(Math.max(0, elapsedMs - metric.lastActivationAt))}前`, 'text-slate-300']
-  ];
-  const groups = [renderMetricGroup('発動', 'timer', 'text-violet-300', activityCells)];
-
-  if (metric.damageEvents > 0) {
-    groups.push(renderMetricGroup('攻撃', 'swords', 'text-rose-300', [
-      ['合計', compactNumber(metric.damage), 'text-rose-200'],
-      ['最大 / Hit', compactNumber(metric.maxDamage), 'text-red-300'],
-      ['最小 / Hit', compactNumber(metric.minDamage), 'text-slate-300'],
-      ['平均 / Hit', compactNumber(average(metric.damage, metric.damageEvents)), 'text-rose-300'],
-      ['平均 / 発動', compactNumber(average(metric.damage, metric.activations)), 'text-pink-300'],
-      ['Hit数', `${metric.damageEvents}回`, 'text-slate-300'],
-      ['与ダメ比', formatPercent(metric.damage / Math.max(1, stat.damageDealt) * 100), 'text-amber-300'],
-      ['DPS', formatDecimal(metric.damage / Math.max(1, elapsedMs / 1000)), 'text-orange-300']
-    ]));
-  }
-  if (metric.healingEvents > 0) {
-    groups.push(renderMetricGroup('HP回復', 'healing', 'text-emerald-300', [
-      ['合計', compactNumber(metric.healing), 'text-emerald-200'],
-      ['最大 / 回', compactNumber(metric.maxHealing), 'text-green-300'],
-      ['最小 / 回', compactNumber(metric.minHealing), 'text-slate-300'],
-      ['平均 / 回', compactNumber(average(metric.healing, metric.healingEvents)), 'text-emerald-300'],
-      ['平均 / 発動', compactNumber(average(metric.healing, metric.activations)), 'text-lime-300'],
-      ['回復回数', `${metric.healingEvents}回`, 'text-slate-300'],
-      ['回復量比', formatPercent(metric.healing / Math.max(1, stat.healingDone) * 100), 'text-amber-300'],
-      ['HPS', formatDecimal(metric.healing / Math.max(1, elapsedMs / 1000)), 'text-green-300']
-    ]));
-  }
-  if (metric.mpRestoredEvents > 0) {
-    groups.push(renderMetricGroup('MP回復', 'water_drop', 'text-sky-300', [
-      ['合計', compactNumber(metric.mpRestored), 'text-sky-200'],
-      ['最大 / 回', compactNumber(metric.maxMpRestored), 'text-cyan-300'],
-      ['最小 / 回', compactNumber(metric.minMpRestored), 'text-slate-300'],
-      ['平均 / 回', compactNumber(average(metric.mpRestored, metric.mpRestoredEvents)), 'text-sky-300'],
-      ['平均 / 発動', compactNumber(average(metric.mpRestored, metric.activations)), 'text-blue-300'],
-      ['回復回数', `${metric.mpRestoredEvents}回`, 'text-slate-300'],
-      ['MP回復比', formatPercent(metric.mpRestored / Math.max(1, stat.mpRestored) * 100), 'text-amber-300'],
-      ['MPS', formatDecimal(metric.mpRestored / Math.max(1, elapsedMs / 1000)), 'text-cyan-300']
-    ]));
-  }
-  if (metric.preventedEvents > 0) {
-    groups.push(renderMetricGroup('防御・軽減', 'shield', 'text-cyan-300', [
-      ['合計軽減', compactNumber(metric.prevented), 'text-cyan-200'],
-      ['最大 / 回', compactNumber(metric.maxPrevented), 'text-sky-300'],
-      ['最小 / 回', compactNumber(metric.minPrevented), 'text-slate-300'],
-      ['平均 / 回', compactNumber(average(metric.prevented, metric.preventedEvents)), 'text-cyan-300'],
-      ['平均 / 発動', compactNumber(average(metric.prevented, metric.activations)), 'text-blue-300'],
-      ['軽減回数', `${metric.preventedEvents}回`, 'text-slate-300'],
-      ['軽減量比', formatPercent(metric.prevented / Math.max(1, stat.prevented) * 100), 'text-amber-300'],
-      ['軽減 / 秒', formatDecimal(metric.prevented / Math.max(1, elapsedMs / 1000)), 'text-teal-300']
-    ]));
-  }
+function renderSkillMetric(metric, stat, effect) {
+  const contributions = [];
+  if (metric.damage > 0) contributions.push(['与ダメージ', metric.damage, metric.damage / Math.max(1, stat.damageDealt) * 100, 'swords', 'text-rose-200', 'bg-rose-400']);
+  if (metric.healing > 0) contributions.push(['HP回復', metric.healing, metric.healing / Math.max(1, stat.healingDone) * 100, 'healing', 'text-emerald-200', 'bg-emerald-400']);
+  if (metric.mpRestored > 0) contributions.push(['MP回復', metric.mpRestored, metric.mpRestored / Math.max(1, stat.mpRestored) * 100, 'water_drop', 'text-sky-200', 'bg-sky-400']);
+  if (metric.prevented > 0) contributions.push(['ダメージ軽減', metric.prevented, metric.prevented / Math.max(1, stat.prevented) * 100, 'shield', 'text-cyan-200', 'bg-cyan-400']);
 
   const icon = String(metric.icon || '').includes('/') ? 'auto_awesome' : metric.icon;
   return `<article class="rounded-xl border border-slate-600/70 bg-slate-950/70 p-2.5">
     <div class="flex items-center gap-2">
       <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/30"><span class="material-symbols-outlined ${metric.type === 'passive' ? 'text-cyan-200' : 'text-violet-200'}" style="font-size:18px">${escapeHtml(icon)}</span></div>
       <div class="min-w-0 flex-1"><h3 class="truncate text-[12px] font-black text-white">${escapeHtml(metric.name)}</h3><span class="text-[9px] font-bold ${metric.type === 'passive' ? 'text-cyan-300' : 'text-violet-300'}">${metric.type === 'passive' ? 'PASSIVE SKILL' : 'ACTIVE SKILL'}</span></div>
-      <div class="text-right"><div class="text-[9px] font-bold text-slate-400">総合効果</div><div class="text-[12px] font-black text-slate-100">${compactNumber(metric.damage + metric.healing + metric.mpRestored + metric.prevented)}</div></div>
+      <div class="shrink-0 rounded-md border border-violet-700/40 bg-violet-950/40 px-2 py-1 text-[10px] font-black text-violet-200">${metric.activations}回発動</div>
     </div>
-    ${groups.join('')}
+    <div class="mt-2 rounded-lg border border-cyan-800/35 bg-cyan-950/20 px-2 py-1.5">
+      <div class="flex items-center gap-1 text-[9px] font-black text-cyan-200"><span class="material-symbols-outlined" style="font-size:12px">info</span>現在の効果${effect.level ? `<span class="ml-auto rounded bg-cyan-950/70 px-1.5 py-0.5 font-mono text-[9px] text-cyan-100">Lv.${effect.level}</span>` : ''}</div>
+      <p class="mt-1 text-[11px] font-medium leading-relaxed text-slate-200">${escapeHtml(effect.description)}</p>
+    </div>
+    <div class="mt-2 flex items-center gap-1 text-[10px] font-black text-slate-200"><span class="material-symbols-outlined text-amber-300" style="font-size:13px">military_tech</span>戦闘への貢献</div>
+    ${contributions.length
+      ? `<div class="mt-1.5 grid grid-cols-2 gap-1.5">${contributions.map(item => renderContributionCell(...item)).join('')}</div>`
+      : '<div class="mt-1.5 rounded-lg border border-dashed border-slate-600/60 bg-black/20 px-2 py-2 text-center text-[10px] text-slate-400">直接集計できるダメージ・回復・軽減効果はありません</div>'}
   </article>`;
 }
 
@@ -499,7 +457,11 @@ function renderStatistics(manager) {
     <div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list>
       ${renderCharacterOverview(manager, selected, elapsedMs)}
       <div class="flex items-center gap-1 px-0.5 pt-1 text-[11px] font-black text-slate-200"><span class="material-symbols-outlined text-slate-300" style="font-size:14px">query_stats</span>スキル詳細 <span class="ml-auto text-[10px] font-medium text-slate-400">${skills.length}件</span></div>
-      ${skills.length ? skills.map(metric => renderSkillMetric(metric, selected, elapsedMs)).join('') : '<div class="rounded-xl border border-slate-600/60 bg-slate-950/70 py-6 text-center text-[11px] text-slate-400">まだスキルデータがありません</div>'}
+      ${skills.length ? skills.map(metric => renderSkillMetric(
+        metric,
+        selected,
+        getCurrentSkillEffect(manager, selected, metric)
+      )).join('') : '<div class="rounded-xl border border-slate-600/60 bg-slate-950/70 py-6 text-center text-[11px] text-slate-400">まだスキルデータがありません</div>'}
     </div>`;
 }
 
