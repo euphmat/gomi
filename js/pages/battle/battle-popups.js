@@ -6,7 +6,7 @@
 
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { shouldSkipBattleAnimations } from '../../utils/battle-animation.js';
-import { captureBattleActionLabel, captureBattlePopup } from './battle-log.js';
+import { captureBattleActionLabel, captureBattlePopup } from './battle-statistics.js';
 
 const POPUP_POOL_LIMITS = { float: 150, label: 50 };
 

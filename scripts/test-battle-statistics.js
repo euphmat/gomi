@@ -3,7 +3,7 @@ import {
   captureBattleActionLabel,
   captureBattlePopup,
   resolveBattleSkill
-} from '../js/pages/battle/battle-log.js';
+} from '../js/pages/battle/battle-statistics.js';
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -30,15 +30,6 @@ const enemy = {
 };
 
 {
-  const telemetry = new BattleTelemetry({ limit: 20 });
-  for (let i = 0; i < 25; i += 1) telemetry.markEncounter(`event-${i}`);
-  const entries = telemetry.entries.newestFirst();
-  assert(entries.length === 20, 'ring buffer did not enforce its fixed limit');
-  assert(entries[0].message === 'event-24', 'newest log entry is not first');
-  assert(entries[19].message === 'event-5', 'ring buffer retained an expired entry');
-}
-
-{
   const telemetry = new BattleTelemetry();
   telemetry.recordAction(hero, { id: 'slash', name: '斬撃', type: 'active' });
   telemetry.recordDamage(hero, enemy, 75, { id: 'slash', name: '斬撃', type: 'active' });
@@ -56,6 +47,7 @@ const enemy = {
   assert(heroStat.skills.get('slash').damage === 75, 'skill damage was not counted');
   assert(healerStat.healingDone === 15, 'healing done was not attributed to its caster');
   assert(healerStat.skills.get('heal').healing === 15, 'skill healing was not counted');
+  assert(telemetry.actorStats.size === 2, 'enemy statistics should not be retained');
 }
 
 {
@@ -71,4 +63,4 @@ const enemy = {
   assert(healerStat.skills.get('heal').healing === 18, 'popup hook did not attribute healing');
 }
 
-console.log('battle log tests passed');
+console.log('battle statistics tests passed');

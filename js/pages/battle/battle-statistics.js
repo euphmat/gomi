@@ -1,14 +1,12 @@
 /**
- * Lightweight, session-only battle telemetry.
+ * Lightweight, session-only battle statistics telemetry.
  *
  * Hot-path rules:
- * - log entries use a fixed-size ring buffer (no unbounded arrays / storage I/O)
  * - statistics are incremented when an event happens (no history rescans)
- * - DOM work is requested only while the Log tab is visible
+ * - only party members are retained (enemy instances never accumulate)
+ * - DOM work is requested only while the Statistics tab is visible
  */
 
-const DEFAULT_LOG_LIMIT = 180;
-const LOG_RENDER_INTERVAL = 500;
 const STAT_RENDER_INTERVAL = 800;
 
 const now = () => globalThis.performance?.now?.() ?? Date.now();
@@ -31,8 +29,7 @@ const entityName = entity => entity?.name || entity?.displayName || '不明';
 const isPartyEntity = entity => Boolean(entity?.hp);
 const entityKey = entity => {
   if (!entity) return 'system';
-  if (isPartyEntity(entity)) return `party:${entity.id || entity.elementId || entityName(entity)}`;
-  return `enemy:${entity.uniqueId || entity.elementId || entity.id || entityName(entity)}`;
+  return `party:${entity.id || entity.elementId || entityName(entity)}`;
 };
 
 const normalizeSkill = skill => ({
@@ -41,40 +38,11 @@ const normalizeSkill = skill => ({
   type: skill?.type === 'passive' || skill?.isPassive ? 'passive' : (skill?.type || 'active')
 });
 
-class FixedRingBuffer {
-  constructor(limit) {
-    this.limit = Math.max(20, limit || DEFAULT_LOG_LIMIT);
-    this.items = new Array(this.limit);
-    this.start = 0;
-    this.size = 0;
-  }
-
-  push(value) {
-    const index = (this.start + this.size) % this.limit;
-    this.items[index] = value;
-    if (this.size < this.limit) {
-      this.size += 1;
-    } else {
-      this.start = (this.start + 1) % this.limit;
-    }
-  }
-
-  newestFirst() {
-    const result = new Array(this.size);
-    for (let i = 0; i < this.size; i += 1) {
-      result[i] = this.items[(this.start + this.size - 1 - i + this.limit) % this.limit];
-    }
-    return result;
-  }
-}
-
 export class BattleTelemetry {
-  constructor({ limit = DEFAULT_LOG_LIMIT, onChange = null } = {}) {
+  constructor({ onChange = null } = {}) {
     this.startedAt = now();
-    this.entries = new FixedRingBuffer(limit);
     this.actorStats = new Map();
     this.recentSkillEvents = new Map();
-    this.sequence = 0;
     this.onChange = onChange;
   }
 
@@ -86,17 +54,8 @@ export class BattleTelemetry {
     this.onChange?.();
   }
 
-  _append(entry) {
-    this.entries.push({
-      sequence: ++this.sequence,
-      elapsedMs: this.elapsedMs(),
-      ...entry
-    });
-    this._notify();
-  }
-
   _ensureActor(entity) {
-    if (!entity) return null;
+    if (!entity || !isPartyEntity(entity)) return null;
     const key = entityKey(entity);
     let stat = this.actorStats.get(key);
     if (!stat) {
@@ -139,28 +98,19 @@ export class BattleTelemetry {
     return metric;
   }
 
-  markEncounter(label) {
-    this._append({ type: 'encounter', message: label || '戦闘開始' });
-  }
-
   recordAction(actor, skill) {
-    if (!actor) return;
+    if (!actor || !isPartyEntity(actor)) return;
     const normalized = normalizeSkill(skill);
     const stat = this._ensureActor(actor);
     const metric = this._ensureSkill(stat, normalized);
     stat.actions += 1;
     metric.activations += 1;
     this.recentSkillEvents.set(`${stat.key}:${normalized.id}`, now());
-    this._append({
-      type: 'effect',
-      actorName: stat.name,
-      skillName: normalized.name,
-      skillType: normalized.type
-    });
+    this._notify();
   }
 
   recordEffect(actor, skill) {
-    if (!actor) return false;
+    if (!actor || !isPartyEntity(actor)) return false;
     const normalized = normalizeSkill(skill);
     const stat = this._ensureActor(actor);
     const signature = `${stat.key}:${normalized.id}`;
@@ -170,62 +120,47 @@ export class BattleTelemetry {
     const metric = this._ensureSkill(stat, normalized);
     metric.activations += 1;
     this.recentSkillEvents.set(signature, eventTime);
-    this._append({
-      type: 'effect',
-      actorName: stat.name,
-      skillName: normalized.name,
-      skillType: normalized.type
-    });
+    this._notify();
     return true;
   }
 
   recordDamage(source, target, amount, skill) {
     const dealt = Math.max(0, Math.floor(Number(amount) || 0));
     if (!target || dealt <= 0) return;
-    const targetStat = this._ensureActor(target);
-    targetStat.damageTaken += dealt;
-
-    let sourceStat = null;
-    if (source) {
-      sourceStat = this._ensureActor(source);
-      sourceStat.damageDealt += dealt;
-      this._ensureSkill(sourceStat, skill).damage += dealt;
+    let changed = false;
+    const targetStat = isPartyEntity(target) ? this._ensureActor(target) : null;
+    if (targetStat) {
+      targetStat.damageTaken += dealt;
+      changed = true;
     }
 
-    this._append({
-      type: 'damage',
-      direction: sourceStat?.isParty ? 'dealt' : (targetStat.isParty ? 'taken' : 'other'),
-      actorName: sourceStat?.name || normalizeSkill(skill).name,
-      targetName: targetStat.name,
-      skillName: normalizeSkill(skill).name,
-      amount: dealt
-    });
+    if (source && isPartyEntity(source)) {
+      const sourceStat = this._ensureActor(source);
+      sourceStat.damageDealt += dealt;
+      this._ensureSkill(sourceStat, skill).damage += dealt;
+      changed = true;
+    }
+    if (changed) this._notify();
   }
 
   recordRecovery(source, target, amount, skill, resource = 'hp') {
     const restored = Math.max(0, Math.floor(Number(amount) || 0));
     if (!target || restored <= 0) return;
-    const targetStat = this._ensureActor(target);
-    const sourceEntity = source || target;
-    const sourceStat = this._ensureActor(sourceEntity);
-    const metric = this._ensureSkill(sourceStat, skill);
+    const targetStat = isPartyEntity(target) ? this._ensureActor(target) : null;
+    const sourceEntity = source && isPartyEntity(source) ? source : (targetStat ? target : null);
+    const sourceStat = sourceEntity ? this._ensureActor(sourceEntity) : null;
+    const metric = sourceStat ? this._ensureSkill(sourceStat, skill) : null;
+    if (!targetStat && !sourceStat) return;
 
     if (resource === 'mp') {
-      sourceStat.mpRestored += restored;
-      metric.mpRestored += restored;
+      if (sourceStat) sourceStat.mpRestored += restored;
+      if (metric) metric.mpRestored += restored;
     } else {
-      sourceStat.healingDone += restored;
-      targetStat.healingReceived += restored;
-      metric.healing += restored;
+      if (sourceStat) sourceStat.healingDone += restored;
+      if (targetStat) targetStat.healingReceived += restored;
+      if (metric) metric.healing += restored;
     }
-
-    this._append({
-      type: resource === 'mp' ? 'mp' : 'heal',
-      actorName: sourceStat.name,
-      targetName: targetStat.name,
-      skillName: normalizeSkill(skill).name,
-      amount: restored
-    });
+    this._notify();
   }
 
   recordPrevented(provider, target, amount, skill) {
@@ -233,22 +168,16 @@ export class BattleTelemetry {
     if (!target || prevented <= 0) return;
     const providerEntity = provider || target;
     const stat = this._ensureActor(providerEntity);
+    if (!stat) return;
     stat.prevented += prevented;
     this._ensureSkill(stat, skill).prevented += prevented;
-    this._append({
-      type: 'prevent',
-      actorName: stat.name,
-      targetName: entityName(target),
-      skillName: normalizeSkill(skill).name,
-      amount: prevented
-    });
+    this._notify();
   }
 
   getPartyStats(party = []) {
     party.forEach(entity => this._ensureActor(entity));
     const order = new Map(party.map((entity, index) => [entityKey(entity), index]));
     return [...this.actorStats.values()]
-      .filter(stat => stat.isParty)
       .sort((a, b) => (order.get(a.key) ?? 999) - (order.get(b.key) ?? 999));
   }
 
@@ -335,13 +264,6 @@ export function captureBattlePopup(manager, elementId, value) {
   manager.battleTelemetry?.recordRecovery(source, target, amount, skill, resource);
 }
 
-function formatElapsed(milliseconds) {
-  const totalSeconds = Math.floor(Math.max(0, milliseconds) / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
 function renderSummary(telemetry, party) {
   const totals = telemetry.getTotals(party);
   const items = [
@@ -355,53 +277,6 @@ function renderSummary(telemetry, party) {
       <div class="flex items-center justify-center gap-0.5 text-[9px] text-slate-400"><span class="material-symbols-outlined" style="font-size:11px">${icon}</span>${label}</div>
       <div class="mt-0.5 truncate text-[11px] font-black ${color}">${compactNumber(value)}</div>
     </div>`).join('')}</div>`;
-}
-
-function renderLogEntry(entry) {
-  if (entry.type === 'encounter') {
-    return `<div class="flex items-center gap-2 py-1 text-[9px] text-slate-500"><span class="h-px flex-1 bg-slate-700/70"></span><span>${escapeHtml(entry.message)}</span><span class="h-px flex-1 bg-slate-700/70"></span></div>`;
-  }
-
-  const config = {
-    damage: { icon: 'swords', color: entry.direction === 'taken' ? 'text-orange-300' : 'text-rose-300', value: `-${compactNumber(entry.amount)}` },
-    heal: { icon: 'healing', color: 'text-emerald-300', value: `+${compactNumber(entry.amount)}` },
-    mp: { icon: 'water_drop', color: 'text-sky-300', value: `+${compactNumber(entry.amount)} MP` },
-    prevent: { icon: 'shield', color: 'text-cyan-300', value: `${compactNumber(entry.amount)} 軽減` },
-    effect: { icon: entry.skillType === 'passive' ? 'all_inclusive' : 'auto_awesome', color: 'text-violet-300', value: '発動' }
-  }[entry.type] || { icon: 'info', color: 'text-slate-300', value: '' };
-
-  const target = entry.targetName && entry.targetName !== entry.actorName
-    ? `<span class="text-slate-500"> → ${escapeHtml(entry.targetName)}</span>`
-    : '';
-  return `<div class="grid grid-cols-[32px_15px_minmax(0,1fr)_auto] items-center gap-1 border-b border-white/[0.05] py-1.5 text-[10px]">
-    <time class="font-mono text-[8px] text-slate-600">${formatElapsed(entry.elapsedMs)}</time>
-    <span class="material-symbols-outlined ${config.color}" style="font-size:13px">${config.icon}</span>
-    <div class="min-w-0 truncate"><span class="text-slate-200">${escapeHtml(entry.actorName)}</span>${target}<span class="ml-1 text-slate-500">${escapeHtml(entry.skillName || '')}</span></div>
-    <strong class="whitespace-nowrap ${config.color}">${config.value}</strong>
-  </div>`;
-}
-
-function renderEventLog(manager) {
-  const telemetry = manager.battleTelemetry;
-  const filter = manager.battleLogFilter || 'all';
-  const allowed = {
-    all: null,
-    damage: new Set(['damage']),
-    recovery: new Set(['heal', 'mp']),
-    effect: new Set(['effect', 'prevent'])
-  }[filter];
-  const entries = telemetry.entries.newestFirst()
-    .filter(entry => !allowed || allowed.has(entry.type))
-    .slice(0, 120);
-  const filters = [['all', 'すべて'], ['damage', 'ダメージ'], ['recovery', '回復'], ['effect', '効果']];
-
-  return `
-    <div class="mt-1.5 flex gap-1" role="group" aria-label="ログ絞り込み">
-      ${filters.map(([id, label]) => `<button type="button" data-battle-log-filter="${id}" class="flex-1 rounded-full border px-1.5 py-1 text-[9px] font-bold ${filter === id ? 'border-violet-300/70 bg-violet-500/25 text-violet-100' : 'border-slate-700/70 bg-slate-950/50 text-slate-400'}">${label}</button>`).join('')}
-    </div>
-    <div class="mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-log-list>
-      ${entries.length ? entries.map(renderLogEntry).join('') : '<div class="flex h-full items-center justify-center text-[10px] text-slate-500">該当するログはまだありません</div>'}
-    </div>`;
 }
 
 function renderSkillMetric(metric, elapsedMinutes) {
@@ -421,16 +296,29 @@ function renderSkillMetric(metric, elapsedMinutes) {
   </div>`;
 }
 
+function renderJobIcon(manager, stat) {
+  const character = (manager.party || []).find(member => entityKey(member) === stat.key);
+  const jobId = character?.jobId || character?.job || 'norvice';
+  const job = manager.jobDefinitions?.[jobId];
+  const image = job?.image || `./assets/job/job_${jobId}.webp`;
+  const icon = job?.icon && !String(job.icon).includes('/') ? job.icon : 'person';
+  const label = job?.name || jobId;
+  return `<div class="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-400/30 bg-violet-950/60 p-0.5">
+    <span class="material-symbols-outlined hidden text-xl text-violet-200">${escapeHtml(icon)}</span>
+    <img src="${escapeHtml(image)}" alt="${escapeHtml(label)}" class="h-full w-full object-contain drop-shadow-[0_0_5px_rgba(167,139,250,.5)]" onerror="this.style.display='none';this.previousElementSibling.classList.remove('hidden')">
+  </div>`;
+}
+
 function renderStatistics(manager) {
   const telemetry = manager.battleTelemetry;
   const elapsedMinutes = telemetry.elapsedMs() / 60000;
-  return `<div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-log-list>
+  return `<div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list>
     ${telemetry.getPartyStats(manager.party).map(stat => {
       const skills = [...stat.skills.values()]
         .sort((a, b) => (b.damage + b.healing + b.prevented + b.mpRestored) - (a.damage + a.healing + a.prevented + a.mpRestored) || b.activations - a.activations);
       return `<section class="rounded-xl border border-slate-700/60 bg-slate-950/55 p-2">
         <div class="flex items-center gap-2">
-          <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-violet-400/30 bg-violet-950/60 text-[11px] font-black text-violet-200">${escapeHtml(stat.name).slice(0, 1)}</div>
+          ${renderJobIcon(manager, stat)}
           <div class="min-w-0 flex-1"><h3 class="truncate text-[11px] font-black text-white">${escapeHtml(stat.name)}</h3><p class="text-[8px] text-slate-500">行動 ${stat.actions}回</p></div>
           <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-right text-[8px]">
             <span class="text-rose-300">与 ${compactNumber(stat.damageDealt)}</span><span class="text-orange-300">被 ${compactNumber(stat.damageTaken)}</span>
@@ -443,56 +331,37 @@ function renderStatistics(manager) {
   </div>`;
 }
 
-export function renderBattleLogTab(manager, force = false) {
+export function renderBattleStatisticsTab(manager, force = false) {
   const container = manager.elements?.tabContent;
-  if (!container || manager.currentTab !== 'log') return;
-  const view = manager.battleLogView === 'stats' ? 'stats' : 'events';
-  const previousScroll = container.querySelector('[data-battle-log-list]')?.scrollTop || 0;
-  const lastRender = Number(container.dataset.lastBattleLogRender || 0);
-  const interval = view === 'stats' ? STAT_RENDER_INTERVAL : LOG_RENDER_INTERVAL;
-  if (!force && now() - lastRender < interval) return;
+  if (!container || manager.currentTab !== 'stats') return;
+  const previousScroll = container.querySelector('[data-battle-statistics-list]')?.scrollTop || 0;
+  const lastRender = Number(container.dataset.lastBattleStatisticsRender || 0);
+  if (!force && now() - lastRender < STAT_RENDER_INTERVAL) return;
 
-  container.dataset.lastBattleLogRender = String(now());
-  container.innerHTML = `<div class="flex h-full min-h-0 flex-col" data-battle-log-root>
+  container.dataset.lastBattleStatisticsRender = String(now());
+  container.innerHTML = `<div class="flex h-full min-h-0 flex-col" data-battle-statistics-root>
     ${renderSummary(manager.battleTelemetry, manager.party)}
-    <div class="mt-1.5 grid grid-cols-2 rounded-lg border border-slate-700/60 bg-black/25 p-0.5" role="tablist" aria-label="ログ表示">
-      <button type="button" role="tab" data-battle-log-view="events" aria-selected="${view === 'events'}" class="rounded-md py-1 text-[10px] font-black ${view === 'events' ? 'bg-violet-500/25 text-violet-100 shadow-sm' : 'text-slate-500'}">戦闘ログ</button>
-      <button type="button" role="tab" data-battle-log-view="stats" aria-selected="${view === 'stats'}" class="rounded-md py-1 text-[10px] font-black ${view === 'stats' ? 'bg-cyan-500/20 text-cyan-100 shadow-sm' : 'text-slate-500'}">統計</button>
-    </div>
-    ${view === 'stats' ? renderStatistics(manager) : renderEventLog(manager)}
+    ${renderStatistics(manager)}
   </div>`;
 
-  const list = container.querySelector('[data-battle-log-list]');
+  const list = container.querySelector('[data-battle-statistics-list]');
   if (list && previousScroll > 0) list.scrollTop = previousScroll;
-  container.querySelectorAll('[data-battle-log-view]').forEach(button => {
-    button.addEventListener('click', () => {
-      manager.battleLogView = button.dataset.battleLogView;
-      renderBattleLogTab(manager, true);
-    });
-  });
-  container.querySelectorAll('[data-battle-log-filter]').forEach(button => {
-    button.addEventListener('click', () => {
-      manager.battleLogFilter = button.dataset.battleLogFilter;
-      renderBattleLogTab(manager, true);
-    });
-  });
 }
 
-export function scheduleBattleLogRender(manager) {
-  if (manager.currentTab !== 'log' || document.hidden || manager.isTabInteracting) return;
-  if (manager._battleLogRenderTimer) return;
-  const interval = manager.battleLogView === 'stats' ? STAT_RENDER_INTERVAL : LOG_RENDER_INTERVAL;
-  manager._battleLogRenderTimer = window.setTimeout(() => {
-    manager._battleLogRenderTimer = null;
-    if (manager.currentTab === 'log' && manager.container?.isConnected) {
-      renderBattleLogTab(manager);
+export function scheduleBattleStatisticsRender(manager) {
+  if (manager.currentTab !== 'stats' || document.hidden || manager.isTabInteracting) return;
+  if (manager._battleStatisticsRenderTimer) return;
+  manager._battleStatisticsRenderTimer = window.setTimeout(() => {
+    manager._battleStatisticsRenderTimer = null;
+    if (manager.currentTab === 'stats' && manager.container?.isConnected) {
+      renderBattleStatisticsTab(manager);
     }
-  }, interval);
+  }, STAT_RENDER_INTERVAL);
 }
 
-export function cleanupBattleLog(manager) {
-  if (manager._battleLogRenderTimer) {
-    clearTimeout(manager._battleLogRenderTimer);
-    manager._battleLogRenderTimer = null;
+export function cleanupBattleStatistics(manager) {
+  if (manager._battleStatisticsRenderTimer) {
+    clearTimeout(manager._battleStatisticsRenderTimer);
+    manager._battleStatisticsRenderTimer = null;
   }
 }

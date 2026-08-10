@@ -5,7 +5,7 @@ import {
   playMagicMissileAnimation
 } from './magic-missile-animation.js';
 import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
-import { resolveBattleSkill } from './battle-log.js';
+import { resolveBattleSkill } from './battle-statistics.js';
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
