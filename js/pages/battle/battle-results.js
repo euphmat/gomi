@@ -224,7 +224,6 @@ export const resultMethods = {
     }
 
     // Process Drops
-    let hasNewDrops = false;
     if (enemy.drops) {
       const kills = this.monsterKills[enemy.id] || 0;
       const bonus = Math.floor(kills / 100) * 0.1;
@@ -260,7 +259,6 @@ export const resultMethods = {
               this.obtainedItemsMap.set(mat.id, newDrop);
             }
             recordLockScreenProgress('battle', { materials: dropCount });
-            hasNewDrops = true;
           }
         }
       }
@@ -296,11 +294,6 @@ export const resultMethods = {
         this.obtainedItemsMap.set(obtainedKey, newEquipment);
       }
       recordLockScreenProgress('battle', { loot: 1 });
-      hasNewDrops = true;
-    }
-
-    if (hasNewDrops && this.currentTab === 'item' && !document.hidden) {
-      this.renderItemTab();
     }
 
     if (document.hidden || this._cachedDisableAnim) return;

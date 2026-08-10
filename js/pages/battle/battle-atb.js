@@ -151,7 +151,7 @@ export const atbMethods = {
       const battleSpeed = this.speedMult;
       if (!document.hidden && !this.wasVisible) {
         this.renderEntities();
-        if (this.currentTab === 'skill' || this.currentTab === 'item' || this.currentTab === 'info') {
+        if (this.currentTab === 'skill' || this.currentTab === 'info') {
           this.renderTabContent();
         }
       }

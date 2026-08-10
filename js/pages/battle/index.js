@@ -12,7 +12,7 @@ import { MATERIALS } from '../../definitions/materials.js';
 import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { JOBS } from '../../jobs/index.js';
 import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-definitions.js';
-import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderItemTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
+import { renderEnemyCardHtml, renderPartyCardHtml, renderInfoTabHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
 import { formatNumber } from '../../utils/format.js';
@@ -145,7 +145,6 @@ class BattleManager {
       resultText: container.querySelector('#result-text'),
       btnResultOk: container.querySelector('#btn-result-ok'),
       tabBtnSkill: container.querySelector('#tab-btn-skill'),
-      tabBtnItem: container.querySelector('#tab-btn-item'),
       tabBtnInfo: container.querySelector('#tab-btn-info'),
       tabBtnPet: container.querySelector('#tab-btn-pet'),
       tabBtnMedal: container.querySelector('#tab-btn-medal'),
@@ -715,7 +714,6 @@ class BattleManager {
   setupTabListeners() {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill' },
-      { btn: this.elements.tabBtnItem, id: 'item' },
       { btn: this.elements.tabBtnInfo, id: 'info' },
       { btn: this.elements.tabBtnPet, id: 'pet' },
       { btn: this.elements.tabBtnMedal, id: 'medal' }
@@ -738,7 +736,7 @@ class BattleManager {
 
       // Mobile Safari can defer or discard the synthesized click while the
       // surrounding battle UI is updating. Pointerdown provides a single,
-      // immediate activation for this fixed (non-scrollable) five-tab bar.
+      // immediate activation for this fixed (non-scrollable) four-tab bar.
       btn.addEventListener('pointerdown', event => {
         if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
         lastPointerActivation = Date.now();
@@ -865,7 +863,6 @@ class BattleManager {
   updateTabStyles() {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'スキル' },
-      { btn: this.elements.tabBtnItem, id: 'item', icon: 'backpack', palette: 2, label: '道具' },
       { btn: this.elements.tabBtnInfo, id: 'info', icon: 'info', palette: 3, label: '情報' },
       { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: '仲間' },
       { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'メダル' }
@@ -942,9 +939,6 @@ class BattleManager {
     if (this.currentTab === 'skill') {
       this.elements.tabContent.dataset.renderedTab = 'skill';
       this.renderSkillTab();
-    } else if (this.currentTab === 'item') {
-      this.elements.tabContent.dataset.renderedTab = 'item';
-      this.renderItemTab();
     } else if (this.currentTab === 'info') {
       this.elements.tabContent.dataset.renderedTab = 'info';
       this.renderInfoTab();
@@ -1244,11 +1238,6 @@ class BattleManager {
         }, 500);
       }
     );
-  }
-
-  renderItemTab() {
-    const html = renderItemTabHtml(this.obtainedItems);
-    this.elements.tabContent.innerHTML = html;
   }
 
   renderSkillTab() {
@@ -1615,7 +1604,6 @@ export function renderBattlePage() {
         <!-- Tabs -->
         <div class="flex shrink-0 items-end gap-0.5 px-0.5" role="tablist" aria-label="戦闘メニュー">
           <button id="tab-btn-skill" role="tab" aria-selected="true" aria-label="スキル" class="battle-tab battle-tab--active relative z-10 flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none truncate">スキル</span></button>
-          <button id="tab-btn-item" role="tab" aria-selected="false" aria-label="道具" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">backpack</span><span class="pointer-events-none truncate">道具</span></button>
           <button id="tab-btn-info" role="tab" aria-selected="false" aria-label="情報" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">info</span><span class="pointer-events-none truncate">情報</span></button>
           <button id="tab-btn-pet" role="tab" aria-selected="false" aria-label="仲間" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">pets</span><span class="pointer-events-none truncate">仲間</span></button>
           <button id="tab-btn-medal" role="tab" aria-selected="false" aria-label="メダル" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">military_tech</span><span class="pointer-events-none truncate">メダル</span></button>
