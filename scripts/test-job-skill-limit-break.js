@@ -39,7 +39,7 @@ assert(firstBreak.spCost === 5, 'resolved SP cost should stay at mastery value')
 
 const currentJobBreak = resolveJobSkillLevelConfig(skill, 11, 'current');
 assert(currentJobBreak.multiplier === 2.42, 'current-job potency and limit break did not combine');
-assert(currentJobBreak.chance === 96.8, 'current-job chance and limit break did not combine');
+assert(currentJobBreak.chance === 95, 'current-job chance exceeded its safe cap');
 
 const inheritedBreak = resolveJobSkillLevelConfig(skill, 11, 'inherited');
 assert(inheritedBreak.multiplier === 1.98, 'inherited potency and limit break did not combine');
@@ -47,7 +47,7 @@ assert(inheritedBreak.chance === 79.2, 'inherited chance and limit break did not
 
 const farBreak = resolveJobSkillLevelConfig(skill, 30, 'base');
 assert(farBreak.multiplier === 6, 'limit break growth should stay linear and uncapped');
-assert(farBreak.chance === 100, 'bounded probability exceeded 100%');
+assert(farBreak.chance === 95, 'generic proc chance became guaranteed');
 
 const drawbackSkill = {
   maxLevel: 10,
@@ -106,6 +106,39 @@ assert(variedBreak.threshold === 25, 'inverse threshold did not improve');
 assert(variedBreak.atkMatkMultiplier === 2, 'neutral multiplier did not improve correctly');
 assert(variedBreak.hpPercent === 25, 'HP sacrifice must not increase');
 assert(variedBreak.duration === 8, 'duration did not gain one turn per 5 limit breaks');
+
+const dangerousEffectSkill = {
+  maxLevel: 10,
+  levels: [{
+    level: 10,
+    spCost: 5,
+    evadeChance: 40,
+    guardChance: 35,
+    reduction: 45,
+    drainPercent: 20,
+    resistancePierce: 40,
+    statusResist: 25,
+    instantDeathChance: 35,
+    threshold: 30
+  }]
+};
+const safeDeepBreak = resolveJobSkillLevelConfig(dangerousEffectSkill, 1010, 'base');
+assert(safeDeepBreak.evadeChance === 75, 'evasion became effectively permanent');
+assert(safeDeepBreak.guardChance === 80, 'auto guard became guaranteed');
+assert(safeDeepBreak.reduction === 80, 'damage reduction reached immunity');
+assert(safeDeepBreak.drainPercent === 80, 'life drain reached full damage');
+assert(safeDeepBreak.resistancePierce === 80, 'resistance pierce erased all resistance');
+assert(safeDeepBreak.statusResist === 90, 'status resistance reached immunity');
+assert(safeDeepBreak.instantDeathChance === 60, 'instant death chance exceeded its safe cap');
+assert(safeDeepBreak.threshold === 10, 'survival threshold reached functional immortality');
+
+const authoredGuaranteedSkill = {
+  maxLevel: 10,
+  levels: [{ level: 10, spCost: 5, chance: 100, ailmentChance: 100 }]
+};
+const preservedAuthoredGuarantee = resolveJobSkillLevelConfig(authoredGuaranteedSkill, 20, 'base');
+assert(preservedAuthoredGuarantee.chance === 100, 'authored guaranteed chance was reduced');
+assert(preservedAuthoredGuarantee.ailmentChance === 100, 'authored guaranteed ailment was reduced');
 
 const compoundSkill = {
   maxLevel: 10,

@@ -105,6 +105,44 @@ const LIMIT_BREAK_PERCENTAGE_KEYS = new Set([
   'statusResist', 'waterResistPercent'
 ]);
 
+// Limit breaks must never turn a probabilistic or mitigating effect into a
+// permanent combat rule. Authored mastery values are preserved even when they
+// already exceed one of these caps; the caps only restrict additional growth.
+const LIMIT_BREAK_MAXIMUMS = new Map([
+  ['chance', 95],
+  ['evadeChance', 75],
+  ['guardChance', 80],
+  ['instantDeathChance', 60],
+  ['finisherChance', 60],
+  ['instantDeathBonus', 40],
+  ['reduction', 80],
+  ['reducePercent', 80],
+  ['atkReduce', 80],
+  ['defReduce', 80],
+  ['drainPercent', 80],
+  ['refundPercent', 80],
+  ['resistancePierce', 80],
+  ['statusResist', 90],
+  ['ailmentResistPercent', 90],
+  ['fireResistPercent', 90],
+  ['iceResistPercent', 90],
+  ['natureResistPercent', 90],
+  ['waterResistPercent', 90],
+  ['ailmentChance', 95],
+  ['bindChance', 95],
+  ['burnChance', 95],
+  ['curseChance', 95],
+  ['freezeChance', 95],
+  ['paralysisChance', 95],
+  ['spreadChance', 95]
+]);
+
+const LIMIT_BREAK_MINIMUMS = new Map([
+  // At zero, Slime Core would trigger again even from 1 HP and make its owner
+  // functionally immortal. Keeping a real HP threshold preserves counterplay.
+  ['threshold', 10]
+]);
+
 const round = (value, digits = 3) => {
   const scale = 10 ** digits;
   return Math.round((value + Number.EPSILON) * scale) / scale;
@@ -158,7 +196,8 @@ export function applyJobSkillPotency(levelConfig, mode = 'base') {
  * Scale the authored maximum config for levels beyond a skill's normal cap.
  * Each limit break adds 10% of the mastered effect, so growth stays linear and
  * remains useful indefinitely without making costs, durations, or hit counts
- * explode. Probabilities and percentage reductions are capped at 100%.
+ * explode. Effects that could become guaranteed prevention, control, or
+ * resource loops use stricter per-effect caps.
  */
 export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedKeys = []) {
   const breaks = Math.max(0, Math.floor(Number(limitBreakLevel) || 0));
@@ -178,7 +217,8 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedK
     }
 
     if (INVERSE_EFFECT_KEYS.has(key)) {
-      adjusted[key] = Math.min(100, Math.max(0, round(value / factor)));
+      const minimum = LIMIT_BREAK_MINIMUMS.get(key) ?? 0;
+      adjusted[key] = Math.min(100, Math.max(minimum, round(value / factor)));
       continue;
     }
 
@@ -195,9 +235,13 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedK
     const scaled = LIMIT_BREAK_INTEGER_KEYS.has(key)
       ? Math.max(0, Math.round(value * factor))
       : round(value * factor);
-    adjusted[key] = LIMIT_BREAK_PERCENTAGE_KEYS.has(key)
+    const bounded = LIMIT_BREAK_PERCENTAGE_KEYS.has(key)
       ? Math.min(100, Math.max(0, scaled))
       : scaled;
+    const configuredMaximum = LIMIT_BREAK_MAXIMUMS.get(key);
+    adjusted[key] = configuredMaximum === undefined
+      ? bounded
+      : Math.min(Math.max(value, configuredMaximum), bounded);
   }
 
   return adjusted;
