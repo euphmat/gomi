@@ -3,7 +3,7 @@
  * エンティティ描画・DOM更新 (renderEntities, updateEntities, cacheDOMElements)
  */
 
-import { renderEnemyCardHtml, renderPartyCardHtml, getActiveStateIconsHTML } from './battle-ui.js';
+import { renderEnemyCardHtml, renderPartyCardHtml, getActiveStateIconsHTML, getBarrierUiState } from './battle-ui.js';
 import {
   getJobResourceSignature,
   getJobResourceState,
@@ -20,6 +20,50 @@ const AUTO_BATTLE_HUD_INTERVAL = 1000 / 30;
 const PARTY_BG_CLASSES = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-cyan-950/80', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
 const STAT_TEXT_COLORS = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
 const ENEMY_EXIT_DURATION = 160;
+const BARRIER_FRAME_CLASSES = [
+  'border-violet-400/70', 'bg-violet-950/80',
+  'border-cyan-400/60', 'bg-cyan-950/70',
+  'border-gray-700/60', 'bg-gray-950/80', 'opacity-40'
+];
+const BARRIER_FILL_CLASSES = [
+  'from-cyan-500', 'from-cyan-400', 'via-blue-400', 'to-blue-400', 'to-violet-400'
+];
+
+function updateBarrierIndicator(cache, entity, maxHp, compact = false) {
+  const indicator = cache.barrierIndicator;
+  const meter = cache.barrierMeter;
+  const text = cache.barrierText;
+  if (!indicator || !meter || !text) return;
+
+  const barrier = getBarrierUiState(entity, maxHp);
+  const stateKey = `${barrier.amount}-${Math.floor(maxHp)}-${compact}`;
+  if (cache.uiState.barrier === stateKey) return;
+  cache.uiState.barrier = stateKey;
+
+  meter.style.transform = `scaleX(${barrier.fillPercent / 100})`;
+  meter.classList.remove(...BARRIER_FILL_CLASSES);
+  meter.classList.add('bg-gradient-to-r');
+  if (barrier.isOverflow) {
+    meter.classList.add('from-cyan-400', 'via-blue-400', 'to-violet-400');
+  } else {
+    meter.classList.add('from-cyan-500', 'to-blue-400');
+  }
+
+  indicator.classList.remove(...BARRIER_FRAME_CLASSES);
+  if (!barrier.isActive) {
+    indicator.classList.add('border-gray-700/60', 'bg-gray-950/80', 'opacity-40');
+  } else if (barrier.isOverflow) {
+    indicator.classList.add('border-violet-400/70', 'bg-violet-950/80');
+  } else {
+    indicator.classList.add('border-cyan-400/60', 'bg-cyan-950/70');
+  }
+
+  text.textContent = compact ? barrier.compactText : barrier.valueText;
+  indicator.title = barrier.ariaLabel;
+  indicator.setAttribute('aria-label', barrier.ariaLabel);
+  indicator.setAttribute('aria-valuenow', String(barrier.amount));
+  indicator.setAttribute('aria-valuemax', String(Math.max(1, Math.floor(maxHp), barrier.amount)));
+}
 
 function playEnemyDefeatAnimation(iconContainer) {
   if (!iconContainer || iconContainer.dataset.defeatAnimated === 'true') return;
@@ -295,19 +339,7 @@ export const rendererMethods = {
       if (hpBar.style.left !== '0px' && hpBar.style.left !== '0%') hpBar.style.left = '0';
       if (hpBar.style.transform) hpBar.style.transform = '';
 
-      if (cache.hpBarrierBar) {
-        const shieldPct = e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0;
-        if (shieldPct > 0) {
-          const shieldWidth = `${shieldPct}%`;
-          const shieldLeft = `${Math.min(100 - shieldPct, hpPct)}%`;
-          if (cache.hpBarrierBar.style.opacity !== '1') cache.hpBarrierBar.style.opacity = '1';
-          if (cache.hpBarrierBar.style.width !== shieldWidth) cache.hpBarrierBar.style.width = shieldWidth;
-          if (cache.hpBarrierBar.style.left !== shieldLeft) cache.hpBarrierBar.style.left = shieldLeft;
-        } else {
-          if (cache.hpBarrierBar.style.opacity !== '0') cache.hpBarrierBar.style.opacity = '0';
-          if (cache.hpBarrierBar.style.width !== '0%') cache.hpBarrierBar.style.width = '0%';
-        }
-      }
+      updateBarrierIndicator(cache, e, Math.max(1, e.maxHp), true);
 
       if (hpText) {
         const newHpText = `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`;
@@ -396,19 +428,7 @@ export const rendererMethods = {
         if (hpBar.style.left !== '0px' && hpBar.style.left !== '0%') hpBar.style.left = '0';
         if (hpBar.style.transform) hpBar.style.transform = '';
 
-        if (cache.hpBarrierBar) {
-          const shieldPct = p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, trueMaxHp)) * 100) : 0;
-          if (shieldPct > 0) {
-            const shieldWidth = `${shieldPct}%`;
-            const shieldLeft = `${Math.min(100 - shieldPct, hpPct)}%`;
-            if (cache.hpBarrierBar.style.opacity !== '1') cache.hpBarrierBar.style.opacity = '1';
-            if (cache.hpBarrierBar.style.width !== shieldWidth) cache.hpBarrierBar.style.width = shieldWidth;
-            if (cache.hpBarrierBar.style.left !== shieldLeft) cache.hpBarrierBar.style.left = shieldLeft;
-          } else {
-            if (cache.hpBarrierBar.style.opacity !== '0') cache.hpBarrierBar.style.opacity = '0';
-            if (cache.hpBarrierBar.style.width !== '0%') cache.hpBarrierBar.style.width = '0%';
-          }
-        }
+        updateBarrierIndicator(cache, p, Math.max(1, trueMaxHp));
 
         if (hpText) {
           const newHpText = `${formatNumber(Math.floor(p.hp.current))}/${formatNumber(trueMaxHp)}`;
@@ -525,11 +545,13 @@ export const rendererMethods = {
           root: el,
           iconContainer: el.children[0],
           stateIconsContainer: el.querySelector('.state-icons-container'),
-          hpContainer: el.children[1],
+          hpContainer: el.querySelector('.enemy-hp-container'),
           hpBar: el.querySelector('.bg-red-600'),
-          hpBarrierBar: el.querySelector('.hp-barrier-bar'),
           hpText: el.querySelector('.hp-text'),
-          atbContainer: el.children[2]
+          barrierIndicator: el.querySelector('.barrier-indicator'),
+          barrierMeter: el.querySelector('.barrier-meter'),
+          barrierText: el.querySelector('.barrier-text'),
+          atbContainer: el.querySelector('.enemy-atb-container')
         };
       }
     });
@@ -553,8 +575,10 @@ export const rendererMethods = {
           jlvEl: el.querySelector(`.${p.elementId}-jlv`),
           spEl: el.querySelector(`.${p.elementId}-sp`),
           hpBar: hpBarEl,
-          hpBarrierBar: el.querySelector('.hp-barrier-bar'),
           hpText: el.querySelector('.hp-text'),
+          barrierIndicator: el.querySelector('.barrier-indicator'),
+          barrierMeter: el.querySelector('.barrier-meter'),
+          barrierText: el.querySelector('.barrier-text'),
           mpBar: mpBarEl,
           mpText: mpBarEl ? mpBarEl.nextElementSibling : null,
           expBar: expBarEl,

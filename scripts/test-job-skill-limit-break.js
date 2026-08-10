@@ -1,7 +1,10 @@
 import {
   canLimitBreakJobSkill,
+  doesJobSkillLevelImprove,
   getJobSkillLimitBreakMilestones,
+  getNextUsefulJobSkillLevel,
   getNextJobSkillLimitBreakMilestone,
+  isJobSkillPotencyEffectKey,
   JOB_SKILL_LIMIT_BREAK_GROWTH,
   resolveJobSkillLevelConfig
 } from '../js/utils/job-skill-potency.js';
@@ -385,9 +388,99 @@ const masteredRestore = resolveJobSkillLevelConfig(restore, 10, 'base');
 const firstRestoreBreak = resolveJobSkillLevelConfig(restore, 11, 'base');
 const farRestoreBreak = resolveJobSkillLevelConfig(restore, 21, 'base');
 assert(masteredRestore.cleanseCount === 1, 'mastered restore target count changed');
+assert(masteredRestore.healAmount === 150, 'mastered restore recovery is invalid');
 assert(firstRestoreBreak.cleanseCount === 2, 'restore did not gain a second cleanse target');
+assert(firstRestoreBreak.healAmount === 165, 'restore recovery did not limit break');
 assert(farRestoreBreak.cleanseCount === 4, 'restore target growth exceeded its intended steps');
 assert(canLimitBreakJobSkill(restore, 11), 'a temporary stepped-effect plateau was treated as MAX');
+const originalDocument = globalThis.document;
+globalThis.document = { hidden: true };
+const restoreTarget = {
+  elementId: 'restore-target', isDead: false, activeAilment: { type: 'poison' },
+  hp: { current: 100, max: 300 }, stats: { hp: 300 }
+};
+let restoreRenderCount = 0;
+restore.execute({}, masteredRestore, {
+  party: [restoreTarget], enemies: [], selectedEnemyTarget: null,
+  showDamage() {},
+  renderEntities() { restoreRenderCount += 1; }
+}, { autoTarget: restoreTarget });
+assert(restoreTarget.activeAilment === null, 'restore did not cleanse its target');
+assert(restoreTarget.hp.current === 250, 'restore did not apply its level-scaled recovery');
+assert(restoreRenderCount === 1, 'restore did not render its resolved effects');
+if (originalDocument === undefined) delete globalThis.document;
+else globalThis.document = originalDocument;
+
+const shadowLance = JOBS.black_knight.skills.find(candidate => candidate.id === 'shadow_lance');
+const levelNineShadowLance = resolveJobSkillLevelConfig(shadowLance, 9, 'base');
+const masteredShadowLance = resolveJobSkillLevelConfig(shadowLance, 10, 'base');
+assert(masteredShadowLance.multiplier > levelNineShadowLance.multiplier,
+  'mastering shadow lance still increased MP cost without increasing damage');
+assert(masteredShadowLance.maxHits > levelNineShadowLance.maxHits,
+  'mastering shadow lance did not improve its attack count');
+
+const abyssalDominion = JOBS.poseidon.skills.find(candidate => candidate.id === 'abyssal_dominion');
+const oceanicBenediction = JOBS.poseidon.skills.find(candidate => candidate.id === 'oceanic_benediction');
+assert(resolveJobSkillLevelConfig(abyssalDominion, 10, 'current').barrierMatkPercent === 242,
+  'the current-job bonus weakened an authored barrier above 100%');
+assert(resolveJobSkillLevelConfig(oceanicBenediction, 10, 'current').healMatkPercent === 209,
+  'the current-job bonus weakened an authored heal above 100%');
+for (const [jobId, skillId] of [['dragoon', 'lance_mastery'], ['gunner', 'gun_mastery']]) {
+  const mastery = JOBS[jobId].skills.find(candidate => candidate.id === skillId);
+  const baseMastery = resolveJobSkillLevelConfig(mastery, 10, 'base');
+  const currentMastery = resolveJobSkillLevelConfig(mastery, 10, 'current');
+  assert(currentMastery.bonusAtkPercent > baseMastery.bonusAtkPercent,
+    `${jobId}/${skillId} did not receive current-job ATK potency`);
+  assert(currentMastery.skillDefenseIgnorePercent > baseMastery.skillDefenseIgnorePercent,
+    `${jobId}/${skillId} did not receive current-job defense-ignore potency`);
+}
+
+// No authored upgrade may consume SP while leaving every combat effect
+// unchanged. MP reductions count as an improvement; MP increases do not.
+for (const job of Object.values(JOBS)) {
+  for (const jobSkill of job.skills) {
+    const levels = [...jobSkill.levels].sort((a, b) => a.level - b.level);
+    for (let index = 1; index < levels.length; index += 1) {
+      const previous = resolveJobSkillLevelConfig(jobSkill, levels[index - 1].level, 'base');
+      const upgraded = resolveJobSkillLevelConfig(jobSkill, levels[index].level, 'base');
+      const effectKeys = new Set([...Object.keys(previous), ...Object.keys(upgraded)]);
+      effectKeys.delete('level');
+      effectKeys.delete('spCost');
+      effectKeys.delete('mpCost');
+      const changedEffect = [...effectKeys].some(key => previous[key] !== upgraded[key]);
+      const cheaper = Number(upgraded.mpCost) < Number(previous.mpCost);
+      assert(changedEffect || cheaper,
+        `${job.id}/${jobSkill.id} level ${upgraded.level} consumes SP without an improvement`);
+
+      if (Number.isFinite(previous.multiplier) && Number.isFinite(upgraded.multiplier)) {
+        const expectedHits = config => Number.isFinite(config.hits)
+          ? config.hits
+          : (Number.isFinite(config.minHits) && Number.isFinite(config.maxHits)
+            ? (config.minHits + config.maxHits) / 2
+            : 1);
+        assert(
+          upgraded.multiplier * expectedHits(upgraded) >= previous.multiplier * expectedHits(previous),
+          `${job.id}/${jobSkill.id} level ${upgraded.level} reduced expected attack damage`
+        );
+      }
+    }
+
+    const lowerIsBetter = new Set(['threshold', 'curseDamageMultiplier', 'curseRecoilMultiplier']);
+    for (const levelConfig of jobSkill.levels) {
+      const baseConfig = resolveJobSkillLevelConfig(jobSkill, levelConfig.level, 'base');
+      const currentConfig = resolveJobSkillLevelConfig(jobSkill, levelConfig.level, 'current');
+      for (const [key, baseValue] of Object.entries(baseConfig)) {
+        if (!Number.isFinite(baseValue) || !isJobSkillPotencyEffectKey(key)) continue;
+        const currentValue = currentConfig[key];
+        const didNotWeaken = lowerIsBetter.has(key)
+          ? currentValue <= baseValue
+          : currentValue >= baseValue;
+        assert(didNotWeaken,
+          `${job.id}/${jobSkill.id} current-job potency weakened ${key} at level ${levelConfig.level}`);
+      }
+    }
+  }
+}
 
 const timedSkill = {
   maxLevel: 10,
@@ -403,6 +496,32 @@ assert(fifthTimedBreak.freezeTurns === 1, 'hard control duration grew too early'
 assert(deepTimedBreak.turns === 10 && deepTimedBreak.duration === 9, 'timed effect bonus cap is invalid');
 assert(deepTimedBreak.burnTurns === 11, 'burn duration bonus cap is invalid');
 assert(deepTimedBreak.freezeTurns === 3, 'freeze duration milestone cap is invalid');
+assert(getNextUsefulJobSkillLevel(timedSkill, 10) === 15,
+  'a stepped-only skill did not skip empty limit-break levels');
+assert(getJobSkillLevelCost(timedSkill, 11) === 0,
+  'an empty stepped limit-break level still consumed SP');
+assert(getJobSkillLevelCost(timedSkill, 15) === 5,
+  'the first useful stepped limit break lost its SP cost');
+const timedJob = { id: 'timed_job', skills: [{ ...timedSkill, id: 'timed_skill' }] };
+const timedMaster = { jobSkills: { timed_job: { timed_skill: 10 } } };
+const timedAwakening = { jobSkills: { timed_job: { timed_skill: 15 } } };
+assert(getSpentJobSP(timedAwakening, timedJob) - getSpentJobSP(timedMaster, timedJob) === 5,
+  'empty levels between stepped awakenings still counted as spent SP');
+
+for (const job of Object.values(JOBS)) {
+  for (const jobSkill of job.skills) {
+    let currentLevel = getJobSkillMasterLevel(jobSkill);
+    for (let upgrade = 0; upgrade < 100 && canLimitBreakJobSkill(jobSkill, currentLevel); upgrade += 1) {
+      const nextLevel = getNextUsefulJobSkillLevel(jobSkill, currentLevel);
+      assert(nextLevel > currentLevel, `${job.id}/${jobSkill.id} could not find its next useful level`);
+      assert(doesJobSkillLevelImprove(jobSkill, nextLevel - 1, nextLevel),
+        `${job.id}/${jobSkill.id} selected an empty limit-break level`);
+      assert(getJobSkillLevelCost(jobSkill, nextLevel) > 0,
+        `${job.id}/${jobSkill.id} useful limit break had no SP cost`);
+      currentLevel = nextLevel;
+    }
+  }
+}
 
 const expectedMilestoneEffects = {
   'norvice/guard': { reduction: 45 },

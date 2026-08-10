@@ -15,15 +15,17 @@ export function getBarrierUiState(entity, maxHp) {
   const amount = Number.isFinite(rawAmount) ? Math.max(0, Math.floor(rawAmount)) : 0;
   const rawMaxHp = Number(maxHp);
   const safeMaxHp = Number.isFinite(rawMaxHp) && rawMaxHp > 0 ? rawMaxHp : 1;
-  const percent = amount > 0 ? Math.round((amount / safeMaxHp) * 100) : 0;
+  const rawPercent = amount > 0 ? (amount / safeMaxHp) * 100 : 0;
+  // 100%をわずかに超えた場合も「100%」と誤表示しない。
+  const percent = amount > safeMaxHp ? Math.ceil(rawPercent) : Math.round(rawPercent);
 
   return {
     amount,
     percent,
-    fillPercent: Math.min(100, percent),
+    fillPercent: Math.min(100, rawPercent),
     isActive: amount > 0,
-    isOverflow: percent > 100,
-    valueText: amount > 0 ? `+${formatNumber(amount)} · ${percent}%` : 'なし',
+    isOverflow: amount > safeMaxHp,
+    valueText: amount > 0 ? `${formatNumber(amount)} · ${percent}%` : 'なし',
     compactText: amount > 0 ? formatNumber(amount) : '—',
     ariaLabel: amount > 0
       ? `バリア残量 ${formatNumber(amount)}、最大HPの${percent}パーセント`
@@ -43,7 +45,7 @@ function renderBarrierIndicatorHtml(entity, maxHp, { compact = false, fastMode =
 
   if (compact) {
     return `
-      <div class="barrier-indicator relative h-3 w-full shrink-0 overflow-hidden rounded border ${frameTheme}" role="meter" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1))}" aria-valuenow="${barrier.amount}">
+      <div class="barrier-indicator relative h-3 w-full shrink-0 overflow-hidden rounded border ${frameTheme}" role="meter" title="${barrier.ariaLabel}" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1), barrier.amount)}" aria-valuenow="${barrier.amount}">
         <div class="barrier-meter absolute inset-0 w-full origin-left ${fillTheme}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}"></div>
         <div class="absolute inset-0 z-10 flex items-center justify-center gap-px whitespace-nowrap text-[7.5px] font-black text-cyan-50 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
           <span class="material-symbols-outlined leading-none" style="font-size: 8px; font-variation-settings: 'FILL' 1">shield</span>
@@ -53,7 +55,7 @@ function renderBarrierIndicatorHtml(entity, maxHp, { compact = false, fastMode =
   }
 
   return `
-    <div class="barrier-indicator flex h-3 items-center gap-0.5 rounded border px-0.5 ${frameTheme}" role="meter" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1))}" aria-valuenow="${barrier.amount}">
+    <div class="barrier-indicator flex h-3 items-center gap-0.5 rounded border px-0.5 ${frameTheme}" role="meter" title="${barrier.ariaLabel}" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1), barrier.amount)}" aria-valuenow="${barrier.amount}">
       <span class="material-symbols-outlined w-2.5 shrink-0 text-center leading-none text-cyan-200" style="font-size: 9px; font-variation-settings: 'FILL' 1" aria-hidden="true">shield</span>
       <div class="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-950/90">
         <div class="barrier-meter h-full w-full origin-left ${fillTheme}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}"></div>

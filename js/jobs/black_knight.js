@@ -485,7 +485,7 @@ export const black_knight = {
         { level:  7, spCost: 3, mpCost: 22, multiplier: 0.70, minHits: 5, maxHits: 9 },
         { level:  8, spCost: 3, mpCost: 24, multiplier: 0.75, minHits: 5, maxHits: 9 },
         { level:  9, spCost: 3, mpCost: 26, multiplier: 0.80, minHits: 6, maxHits: 10 },
-        { level: 10, spCost: 5, mpCost: 30, multiplier: 0.80, minHits: 6, maxHits: 10 }
+        { level: 10, spCost: 5, mpCost: 30, multiplier: 0.90, minHits: 6, maxHits: 11 }
       ],
       getDescription: (lc) => `自身の MP を ${lc.mpCost} 消費し、ランダムな敵に ${lc.multiplier.toFixed(2)} 倍の物理攻撃を ${lc.minHits}～${lc.maxHits} 回行う`,
       execute(caster, levelConfig, battle) {

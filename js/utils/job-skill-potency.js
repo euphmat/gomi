@@ -19,15 +19,18 @@ const INTEGER_EFFECT_KEYS = new Set([
 
 const DECIMAL_EFFECT_KEYS = new Set([
   'atkReduce', 'barrierMatkPercent', 'barrierPercent', 'bossMultiplier',
-  'bonusDefPercent', 'bonusHpPercent', 'bonusMatkPercent', 'bonusMdefPercent',
+  'bindChance', 'bonusAtkPercent', 'bonusDefPercent', 'bonusHpPercent',
+  'bonusMatkPercent', 'bonusMdefPercent',
   'bonusMpPercent', 'buffPercent', 'burnChance', 'burningTargetDamagePercent',
   'chainBonusPerHitPercent', 'chance', 'curseChance', 'defenseRatio', 'defPercent', 'defReduce',
-  'corpseDamagePercent',
+  'corpseDamagePercent', 'defenseIgnorePercent',
   'detonationMultiplier', 'drainPercent', 'evadeChance', 'finisherChance',
   'fireDamagePercent', 'fireResistPercent', 'freezeChance', 'frozenTargetDamagePercent',
   'guardChance', 'harmonyMultiplier', 'iceDamagePercent', 'iceResistPercent',
-  'healMatkPercent', 'instantDeathBonus', 'instantDeathChance',
+  'healMatkPercent', 'highHpMultiplier', 'hypeMultiplier', 'instantDeathBonus', 'instantDeathChance',
   'lowHpDamagePercent', 'matkRatio', 'maxChainBonusPercent', 'multiplier', 'shatterMultiplier',
+  'noteMultiplier', 'refundPercent', 'sigilBonus', 'skillDefenseIgnorePercent',
+  'spiritMultiplier', 'spillMultiplier',
   'ailmentChance', 'ailmentResistPercent', 'resistancePierce', 'statusDamagePercent',
   'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
   'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
@@ -35,20 +38,20 @@ const DECIMAL_EFFECT_KEYS = new Set([
   'waterResistPercent', 'natureDamagePercent', 'natureResistPercent'
 ]);
 
-const PERCENTAGE_KEYS = new Set([
-  'atkReduce', 'barrierMatkPercent', 'barrierPercent', 'bonusDefPercent',
-  'bonusHpPercent', 'bonusMatkPercent', 'bonusMdefPercent', 'bonusMpPercent',
-  'buffPercent', 'burnChance', 'burningTargetDamagePercent',
-  'chainBonusPerHitPercent', 'chance', 'curseChance', 'defPercent', 'defReduce',
-  'corpseDamagePercent',
-  'drainPercent', 'evadeChance', 'finisherChance', 'fireDamagePercent',
-  'fireResistPercent', 'freezeChance', 'frozenTargetDamagePercent', 'guardChance',
-  'healMatkPercent', 'iceDamagePercent', 'iceResistPercent', 'instantDeathBonus',
-  'instantDeathChance', 'lowHpDamagePercent', 'maxChainBonusPercent',
-  'ailmentChance', 'ailmentResistPercent', 'resistancePierce', 'statusDamagePercent', 'spreadChance',
-  'paralysisChance', 'percent', 'reducePercent', 'reduction', 'revivePercent',
-  'sleepingTargetDamagePercent', 'spdDown', 'spdPercent', 'statusResist', 'waterDamagePercent',
-  'waterResistPercent', 'natureDamagePercent', 'natureResistPercent'
+// Only probabilities, mitigation and other genuinely bounded percentages are
+// capped here. Healing, MATK barriers, stat bonuses and bonus damage may
+// legitimately exceed 100%; clamping them made the 10% current-job bonus
+// reduce an authored 190% heal or 220% barrier to 100%.
+const BOUNDED_POTENCY_PERCENTAGE_KEYS = new Set([
+  'atkReduce', 'barrierPercent', 'bindChance', 'buffPercent', 'burnChance', 'chance',
+  'curseChance', 'defenseIgnorePercent', 'defPercent', 'defReduce', 'drainPercent', 'evadeChance',
+  'finisherChance', 'fireResistPercent', 'freezeChance', 'guardChance',
+  'iceResistPercent', 'instantDeathBonus', 'instantDeathChance',
+  'ailmentChance', 'ailmentResistPercent', 'resistancePierce', 'spreadChance',
+  'paralysisChance', 'percent', 'reducePercent', 'reduction', 'refundPercent', 'revivePercent',
+  'skillDefenseIgnorePercent',
+  'spdDown', 'spdPercent', 'statusResist', 'waterResistPercent',
+  'natureResistPercent'
 ]);
 
 // These values describe improvement away from a neutral/default multiplier.
@@ -308,7 +311,9 @@ export function applyJobSkillPotency(levelConfig, mode = 'base') {
 
     if (DECIMAL_EFFECT_KEYS.has(key)) {
       const scaled = round(value * factor);
-      adjusted[key] = PERCENTAGE_KEYS.has(key) ? Math.min(100, Math.max(0, scaled)) : scaled;
+      adjusted[key] = BOUNDED_POTENCY_PERCENTAGE_KEYS.has(key)
+        ? Math.min(100, Math.max(0, scaled))
+        : scaled;
       continue;
     }
 
@@ -448,6 +453,42 @@ function resolveLimitBreakConfig(skillDef, level, mode) {
     skillDef.limitBreakMinimums
   );
   return applyJobSkillLimitBreakMilestones(scaledConfig, breaks, skillDef);
+}
+
+/** Return whether moving between two levels changes an actual combat effect. */
+export function doesJobSkillLevelImprove(skillDef, fromLevel, toLevel, mode = 'current') {
+  if (!skillDef?.levels?.length) return false;
+  const fromConfig = resolveLimitBreakConfig(skillDef, fromLevel, mode);
+  const toConfig = resolveLimitBreakConfig(skillDef, toLevel, mode);
+  const keys = new Set([...Object.keys(fromConfig), ...Object.keys(toConfig)]);
+  keys.delete('level');
+  keys.delete('spCost');
+  keys.delete('mpCost');
+  return [...keys].some(key => fromConfig[key] !== toConfig[key]);
+}
+
+/**
+ * Return the next level that immediately improves the resolved skill.
+ *
+ * Capped percentages and stepped duration awakenings can leave empty level
+ * numbers between useful limit breaks. The acquisition UI skips those empty
+ * numbers so the player never spends SP on an unchanged description/effect.
+ */
+export function getNextUsefulJobSkillLevel(skillDef, currentLevel, mode = 'current') {
+  if (!skillDef?.levels?.length) return null;
+  const maxLevel = Math.max(
+    1,
+    Math.floor(Number(skillDef.maxLevel) || skillDef.levels[skillDef.levels.length - 1].level || 1)
+  );
+  const normalizedLevel = Math.max(0, Math.floor(Number(currentLevel) || 0));
+  if (normalizedLevel < maxLevel) return normalizedLevel + 1;
+  if (!canLimitBreakJobSkill(skillDef, normalizedLevel)) return null;
+
+  const finalProbeLevel = normalizedLevel + LIMIT_BREAK_SATURATION_PROBE;
+  for (let candidate = normalizedLevel + 1; candidate <= finalProbeLevel; candidate += 1) {
+    if (doesJobSkillLevelImprove(skillDef, candidate - 1, candidate, mode)) return candidate;
+  }
+  return null;
 }
 
 export function resolveJobSkillLevelConfig(skillDef, level, mode = 'base') {

@@ -111,6 +111,34 @@ export async function claimMineGold(mineId) {
   return { data, amount, gold: gold + amount };
 }
 
+export async function claimAllMineGold() {
+  const data = await loadMineData();
+  const goldMultiplier = 1 + getTreasureEffect('mineGoldPercent') / 100;
+  const claimedAt = Date.now();
+  let amount = 0;
+  let claimedMineCount = 0;
+
+  for (const mine of MINES) {
+    const state = data[mine.id];
+    const storedAmount = Math.floor(state?.storedGold || 0);
+    if (!state?.unlocked || storedAmount <= 0) continue;
+
+    // 個別回収を順番に行った場合と獲得量が一致するよう、鉱山ごとに端数処理する。
+    amount += Math.floor(storedAmount * goldMultiplier);
+    state.storedGold -= storedAmount;
+    state.maxNotified = false;
+    state.lastAccruedAt = claimedAt;
+    claimedMineCount += 1;
+  }
+
+  if (claimedMineCount === 0) throw new Error('回収できるGoldがありません。');
+
+  const gold = await GameDB.getGameState('gold') || 0;
+  await GameDB.setGameState('gold', gold + amount);
+  await GameDB.setGameState(STATE_KEY, data);
+  return { data, amount, claimedMineCount, gold: gold + amount };
+}
+
 export async function upgradeMine(mineId, type) {
   const mine = MINES.find(item => item.id === mineId);
   if (!mine || !['machine', 'yield', 'capacity'].includes(type)) throw new Error('強化対象が不正です。');

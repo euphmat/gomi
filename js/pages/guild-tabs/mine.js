@@ -1,7 +1,7 @@
 import { GameDB } from '../../data/database.js';
 import { MINES, MINE_UPGRADE_TYPES, MINE_MAX_UPGRADE_LEVEL, getMineStats, getMineUpgradeCost } from '../../definitions/mines.js';
 import { MATERIALS } from '../../definitions/materials.js';
-import { accrueMine, claimMineGold, loadMineData, unlockMine, upgradeMine } from '../../data/mine-manager.js';
+import { accrueMine, claimAllMineGold, claimMineGold, loadMineData, unlockMine, upgradeMine } from '../../data/mine-manager.js';
 import { formatNumber } from '../../utils/format.js';
 
 const MATERIAL_MAP = new Map(MATERIALS.map(item => [item.id, item]));
@@ -110,6 +110,19 @@ function updateClaimButtonAppearance(button, canClaim) {
   button.innerHTML = canClaim
     ? '<span class="material-symbols-outlined mr-1 align-middle text-base">toll</span>Goldを回収'
     : '<span class="material-symbols-outlined mr-1 align-middle text-base">hourglass_empty</span>Goldを回収';
+}
+
+function updateClaimAllButtonAppearance(button, canClaim) {
+  if (!button) return;
+  if (button.dataset.canClaim === String(canClaim)) return;
+  button.dataset.canClaim = String(canClaim);
+  button.disabled = !canClaim;
+  button.className = `mb-2.5 flex w-full items-center justify-center gap-1 rounded-xl border py-2.5 text-sm font-black shadow transition-all ${canClaim
+    ? 'border-yellow-300/70 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-500 text-amber-950 shadow-[0_0_18px_rgba(250,204,21,.3)] active:scale-[.98] active:brightness-110'
+    : 'cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500 opacity-70 shadow-none'}`;
+  button.innerHTML = canClaim
+    ? '<span class="material-symbols-outlined text-lg">payments</span>全鉱山から一括回収'
+    : '<span class="material-symbols-outlined text-lg">hourglass_empty</span>全鉱山から一括回収';
 }
 
 async function showMineUnlockAnimation(mine) {
@@ -278,6 +291,7 @@ export async function renderMineTab() {
       <div class="mx-auto flex min-h-full max-w-xl flex-col">
         <div class="flex-1" data-mine-list></div>
         <nav data-theme-panel class="sticky bottom-0 z-10 mt-4 rounded-2xl border p-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.45)] backdrop-blur-md" aria-label="鉱山ページ">
+          <button data-claim-all></button>
           <div class="flex items-center gap-2">
             <button data-page-prev data-theme-action class="flex h-9 flex-1 items-center justify-center gap-1 rounded-lg border text-xs font-black text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-30" ${currentPage === 0 ? 'disabled' : ''}><span class="material-symbols-outlined text-lg">chevron_left</span>前へ</button>
             <div data-theme-text class="min-w-16 text-center text-[10px] font-black tracking-widest">${currentPage + 1} / ${MINES.length}</div>
@@ -289,6 +303,8 @@ export async function renderMineTab() {
     const currentMine = MINES[currentPage];
     const card = createMineCard(currentMine);
     list.appendChild(card);
+    const claimAllButton = container.querySelector('[data-claim-all]');
+    updateClaimAllButtonAppearance(claimAllButton, MINES.some(mine => mineData[mine.id]?.unlocked && Math.floor(mineData[mine.id].storedGold || 0) > 0));
     applyMineTheme(container, card);
 
     const changePage = (page) => {
@@ -299,6 +315,15 @@ export async function renderMineTab() {
     };
     container.querySelector('[data-page-prev]')?.addEventListener('click', () => changePage(currentPage - 1));
     container.querySelector('[data-page-next]')?.addEventListener('click', () => changePage(currentPage + 1));
+    claimAllButton?.addEventListener('click', () => runAction(async () => {
+      const originRect = claimAllButton.getBoundingClientRect();
+      const result = await claimAllMineGold();
+      mineData = result.data;
+      currentGold = result.gold;
+      updateHeader('header-gold-display', result.gold);
+      showGoldClaimAnimation(result.amount, originRect);
+      showMineMessage(container, `${formatNumber(result.claimedMineCount)}か所の鉱山から${formatNumber(result.amount)} Goldを回収しました。`);
+    }));
   };
 
   const createMineCard = (mine) => {
@@ -486,6 +511,10 @@ export async function renderMineTab() {
       if (storageLabel) storageLabel.textContent = getStorageProgress(state, stats) >= 100 ? '貯蔵状態' : '満杯まで';
       updateClaimButtonAppearance(claim, state.storedGold >= 1);
     }
+    updateClaimAllButtonAppearance(
+      container.querySelector('[data-claim-all]'),
+      MINES.some(mine => mineData[mine.id]?.unlocked && Math.floor(mineData[mine.id].storedGold || 0) > 0)
+    );
     if (notificationStateChanged) {
       GameDB.setGameState('mine_data', mineData).catch(error => console.warn('[Mine] Failed to save notification state:', error));
     }

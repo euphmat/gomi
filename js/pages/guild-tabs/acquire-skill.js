@@ -13,6 +13,7 @@ import {
 } from '../../data/job-progression.js';
 import {
   canLimitBreakJobSkill,
+  getNextUsefulJobSkillLevel,
   getNextJobSkillLimitBreakMilestone,
   resolveJobSkillLevelConfig
 } from '../../utils/job-skill-potency.js';
@@ -152,7 +153,9 @@ export function renderAcquireSkillTab() {
     const canLimitBreak = allSkillsMastered && isMastered && canLimitBreakJobSkill(skill, currentLevel);
     const isLimitBreaking = canLimitBreak && currentLevel >= masterLevel;
     const isMax = isMastered && !canLimitBreak;
-    const targetLevel = isMax ? currentLevel : currentLevel + 1;
+    const targetLevel = isMax
+      ? currentLevel
+      : (isLimitBreaking ? getNextUsefulJobSkillLevel(skill, currentLevel, 'current') : currentLevel + 1);
     const levelConfig = resolveJobSkillLevelConfig(skill, targetLevel, 'current');
     const currentDesc = currentLevel > 0 ? skill.getDescription(resolveJobSkillLevelConfig(skill, currentLevel, 'current')) : '未習得';
     const nextDesc = isMax ? '最大レベルに達しています' : skill.getDescription(levelConfig);

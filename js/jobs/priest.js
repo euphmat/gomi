@@ -337,20 +337,20 @@ export const priest = {
       id: 'restore', name: 'レストア', icon: 'health_metrics',
       maxLevel: 10,
       levels: [
-        { level:  1, spCost: 1, mpCost: 8 },
-        { level:  2, spCost: 1, mpCost: 8 },
-        { level:  3, spCost: 1, mpCost: 8 },
-        { level:  4, spCost: 2, mpCost: 8 },
-        { level:  5, spCost: 2, mpCost: 8 },
-        { level:  6, spCost: 2, mpCost: 8 },
-        { level:  7, spCost: 3, mpCost: 6 },
-        { level:  8, spCost: 3, mpCost: 6 },
-        { level:  9, spCost: 3, mpCost: 6 },
-        { level: 10, spCost: 5, mpCost: 4, cleanseCount: 1 }
+        { level:  1, spCost: 1, mpCost: 8, healAmount:  10 },
+        { level:  2, spCost: 1, mpCost: 8, healAmount:  20 },
+        { level:  3, spCost: 1, mpCost: 8, healAmount:  30 },
+        { level:  4, spCost: 2, mpCost: 8, healAmount:  40 },
+        { level:  5, spCost: 2, mpCost: 8, healAmount:  55 },
+        { level:  6, spCost: 2, mpCost: 8, healAmount:  70 },
+        { level:  7, spCost: 3, mpCost: 6, healAmount:  85 },
+        { level:  8, spCost: 3, mpCost: 6, healAmount: 105 },
+        { level:  9, spCost: 3, mpCost: 6, healAmount: 125 },
+        { level: 10, spCost: 5, mpCost: 4, healAmount: 150, cleanseCount: 1 }
       ],
       getDescription: (lc) => {
         const count = Math.max(1, lc.cleanseCount || 1);
-        return `MP を ${lc.mpCost} 消費し、状態異常の味方${count > 1 ? `最大${count}人` : '単体'}の状態異常を回復する`;
+        return `MP を ${lc.mpCost} 消費し、状態異常の味方${count > 1 ? `最大${count}人` : '単体'}の状態異常を回復して HP を ${lc.healAmount} 回復する`;
       },
       execute(caster, levelConfig, battle, options = {}) {
         if (!battle) return;
@@ -383,6 +383,14 @@ export const priest = {
         playSkillAnimation(caster, targets, 'restore', target => {
           if (target.isDead) return;
           target.activeAilment = null;
+          const hpBefore = target.hp !== undefined ? target.hp.current : target.currentHp;
+          if (target.hp !== undefined) {
+            target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+          } else {
+            target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + levelConfig.healAmount);
+          }
+          const hpAfter = target.hp !== undefined ? target.hp.current : target.currentHp;
+          if (hpAfter > hpBefore) battle.showDamage(target.elementId, `+${hpAfter - hpBefore}`, 'text-green-400');
           battle.renderEntities();
         });
       },
