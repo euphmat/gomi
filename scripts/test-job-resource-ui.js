@@ -57,4 +57,20 @@ assert(renderJobResourceHtml(makeCharacter('entertainer', null, 0, '_entertainer
 assert(getJobResourceState({ jobId: 'norvice' }) === null, '通常職に固有ゲージが表示されています');
 assert(getJobResourceSignature(entertainer) !== getJobResourceSignature({ ...entertainer, current: 3 }), 'ゲージ更新シグネチャが変化しません');
 
+globalThis.localStorage = { getItem: () => null };
+globalThis.window = { addEventListener() {} };
+const { renderPartyCardHtml } = await import('../js/pages/battle/battle-ui.js');
+const cardHtml = renderPartyCardHtml({
+  ...makeCharacter('soul_reaper', null, 0, '_soulReaperCorpses', 3),
+  id: 'reaper', elementId: 'reaper', name: 'ソウルリーパー', iconImage: '',
+  level: 1, jobLevel: 1, sp: 0, atb: 0, isDead: false,
+  hp: { current: 100, max: 100 }, mp: { current: 100, max: 100 },
+  exp: { current: 0, max: 1 }, jp: { current: 0, max: 1 },
+  stats: { hp: 100, mp: 100, atk: 10, def: 10, matk: 10, mdef: 10, spd: 10 }
+}, null, false, null);
+assert(
+  cardHtml.indexOf('job-resource-container') < cardHtml.indexOf('>HP</span>'),
+  '職業固有パネルがHPゲージの上に配置されていません'
+);
+
 console.log('Job resource UI tests passed');

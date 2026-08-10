@@ -197,6 +197,9 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
 
       <!-- Only battle-critical values stay full size. -->
       <div class="flex flex-col gap-0.5">
+        <!-- Current-job mechanics sit directly above HP for at-a-glance decisions. -->
+        ${renderJobResourceHtml(p)}
+
         <div class="flex items-center gap-0.5">
           <span class="w-3 shrink-0 text-[7px] font-black text-red-400">HP</span>
           <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
@@ -214,9 +217,6 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
             <div class="absolute inset-0 flex items-center justify-center text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">${formatNumber(Math.floor(p.mp.current))}/${formatNumber(p.stats.mp || p.mp.max)}</div>
           </div>
         </div>
-
-        <!-- Current-job mechanics use a dedicated, always-visible resource panel. -->
-        ${renderJobResourceHtml(p)}
 
         <!-- Long-term progress remains visible without competing with HP/MP. -->
         <div class="grid grid-cols-2 gap-1 pt-0.5">
