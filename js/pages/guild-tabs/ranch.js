@@ -20,6 +20,25 @@ const FISH_FEED_TILE_THEME = {
   mythic: 'border-fuchsia-300/65 from-fuchsia-300/30 via-fuchsia-950/50 to-slate-950',
 };
 
+export function setRanchFishSelectionAmount(selectedAmounts, fishId, amount, ownedAmount) {
+  const owned = Math.max(0, Math.floor(Number(ownedAmount) || 0));
+  const nextAmount = Math.min(owned, Math.max(0, Math.floor(Number(amount) || 0)));
+  if (!fishId || nextAmount <= 0) {
+    if (fishId) selectedAmounts.delete(fishId);
+    return 0;
+  }
+  selectedAmounts.set(fishId, nextAmount);
+  return nextAmount;
+}
+
+export function selectAllOwnedRanchFish(selectedAmounts, fishes, inventory) {
+  selectedAmounts.clear();
+  for (const fish of fishes || []) {
+    setRanchFishSelectionAmount(selectedAmounts, fish.id, inventory?.[fish.id], inventory?.[fish.id]);
+  }
+  return selectedAmounts;
+}
+
 function getRanchCompanionEntries(ranchData, dungeonId = null) {
   const dungeonEntries = dungeonId
     ? [[dungeonId, ranchData?.[dungeonId] || {}]]
@@ -385,28 +404,35 @@ async function showRanchFishModal(dungeonId, onUpdate) {
       else selectedAmounts.set(fishId, Math.min(owned, Math.max(1, amount)));
     }
     modal.innerHTML = `
-      <header class="shrink-0 border-b border-white/10 bg-gradient-to-br from-emerald-950/75 via-slate-950 to-cyan-950/45 px-4 pb-3 pt-4">
-        <div class="grid grid-cols-[4.5rem_1fr_4.5rem] items-center"><span></span><div class="text-center"><h3 class="text-base font-black text-white">魚餌工房</h3><p class="text-[8px] font-black tracking-[.18em] text-emerald-300/60">FISH LIBRARY</p></div><button data-close class="justify-self-end text-[11px] font-bold text-cyan-300">閉じる</button></div>
+      <header class="shrink-0 border-b border-white/10 bg-gradient-to-br from-emerald-950/75 via-slate-950 to-cyan-950/45 px-4 pb-3 pt-[max(1rem,env(safe-area-inset-top))]">
+        <div class="grid grid-cols-[4.5rem_1fr_4.5rem] items-center"><span></span><div class="text-center"><h3 class="text-base font-black text-white">魚餌工房</h3><p class="text-[8px] font-black tracking-[.18em] text-emerald-300/60">FISH LIBRARY</p></div><button data-close type="button" aria-label="魚餌工房を閉じる" class="relative z-10 flex h-11 min-w-[4.5rem] touch-manipulation items-center justify-center justify-self-end rounded-full border border-cyan-300/20 bg-black/25 px-2 text-[11px] font-bold text-cyan-300 active:scale-95 active:bg-cyan-950/70">閉じる</button></div>
         <div class="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/25 px-3 py-2"><div class="min-w-0"><div class="truncate text-[11px] font-black text-white">${dungeonName}</div><div class="mt-0.5 text-[8px] text-slate-400">育成対象 ${formatNumber(companions.length)}体</div></div><div class="shrink-0 text-right"><div class="text-[8px] text-slate-500">所持魚</div><div class="text-xs font-black text-cyan-300">${formatNumber(totalFish)}匹</div></div></div>
       </header>
       ${lastResult ? `<div class="shrink-0 border-b border-emerald-400/20 bg-emerald-950/45 px-4 py-2 text-[9px] text-emerald-100"><span class="material-symbols-outlined mr-1 align-middle text-sm text-emerald-300">task_alt</span>${formatNumber(lastResult.feedUsed)}匹を与え、1体あたり <span class="font-black">+${formatNumber(lastResult.expPerCompanion)} EXP</span>${lastResult.levelsGained ? ` ・ 合計 <span class="font-black">+${formatNumber(lastResult.levelsGained)} Lv</span>` : ''}</div>` : ''}
-      <div class="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/80 px-4 py-2"><div><div class="text-[10px] font-black text-slate-200">魚をタップして選択</div><div class="text-[8px] text-slate-500">選択した魚をまとめて与えられます</div></div><div class="flex gap-3"><button data-clear-selection class="hidden text-[10px] font-bold text-slate-400">解除</button><button data-select-all class="text-[10px] font-bold text-cyan-300">すべて選択</button></div></div>
+      <div class="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-950/80 px-4 py-2"><div><div class="text-[10px] font-black text-slate-200">魚をタップして選択</div><div class="text-[8px] text-slate-500">選択後、−／＋で同じ魚の個数を変更</div></div><div class="flex gap-3"><button data-clear-selection type="button" class="hidden min-h-11 touch-manipulation px-1 text-[10px] font-bold text-slate-400">解除</button><button data-select-all type="button" class="min-h-11 touch-manipulation px-1 text-[10px] font-bold text-cyan-300">全匹選択</button></div></div>
       <div class="no-scrollbar min-h-0 flex-1 overflow-y-auto bg-[#05090d] p-0.5"><div data-fish-grid class="grid grid-cols-3 gap-0.5 sm:grid-cols-4">${available.length ? available.map(fish => {
         const owned = fishing.inventory[fish.id] || 0;
         const rarity = FISH_RARITY[fish.rarity] || FISH_RARITY.common;
         const tileTheme = FISH_FEED_TILE_THEME[fish.rarity] || FISH_FEED_TILE_THEME.common;
-        return `<button data-fish-tile="${fish.id}" type="button" aria-pressed="false" class="group relative isolate flex aspect-square min-w-0 flex-col overflow-hidden border bg-gradient-to-b ${tileTheme} text-left active:brightness-125">
-          <div class="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/10 bg-black/70 px-1.5 py-0.5 text-[8px] font-black tabular-nums text-white">×${formatNumber(owned)}</div>
-          <img src="${fish.image}" onerror="this.remove()" class="absolute left-2 right-2 top-2 h-[68%] w-[calc(100%_-_1rem)] object-contain drop-shadow-[0_5px_7px_rgba(0,0,0,.65)] transition-transform group-active:scale-105" alt="${fish.name}">
-          <div class="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black via-black/85 to-transparent px-1.5 pb-1.5 pt-6"><div class="truncate text-[9px] font-black ${rarity.text}">${fish.name}</div><div class="truncate text-[7px] font-bold text-emerald-300">+${formatNumber(fish.ranchExp)} EXP</div></div>
-          <div data-selected-layer class="hidden absolute inset-0 z-20 border-[3px] border-cyan-300 bg-cyan-400/10 shadow-[inset_0_0_22px_rgba(34,211,238,.2)]"><span class="material-symbols-outlined absolute right-1.5 top-1.5 rounded-full bg-cyan-400 text-[20px] font-black text-slate-950 shadow-lg">check_circle</span><span data-selected-amount class="absolute bottom-1.5 right-1.5 rounded-full border border-cyan-200/50 bg-cyan-950/95 px-2 py-0.5 text-[9px] font-black text-cyan-100">1匹</span></div>
-        </button>`;
+        return `<article data-fish-tile="${fish.id}" data-owned="${owned}" class="group relative isolate aspect-square min-w-0 overflow-hidden border bg-gradient-to-b ${tileTheme}">
+          <button data-fish-toggle type="button" aria-pressed="false" aria-label="${fish.name}を選択" class="absolute inset-0 z-10 w-full touch-manipulation text-left active:brightness-125">
+            <div class="absolute left-1.5 top-1.5 z-10 rounded-full border border-white/10 bg-black/70 px-1.5 py-0.5 text-[8px] font-black tabular-nums text-white">×${formatNumber(owned)}</div>
+            <img src="${fish.image}" onerror="this.remove()" class="absolute left-2 right-2 top-2 h-[68%] w-[calc(100%_-_1rem)] object-contain drop-shadow-[0_5px_7px_rgba(0,0,0,.65)] transition-transform group-active:scale-105" alt="${fish.name}">
+            <div class="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black via-black/85 to-transparent px-1.5 pb-1.5 pt-6"><div class="truncate text-[9px] font-black ${rarity.text}">${fish.name}</div><div class="truncate text-[7px] font-bold text-emerald-300">+${formatNumber(fish.ranchExp)} EXP</div></div>
+            <div data-selected-layer class="pointer-events-none absolute inset-0 z-20 hidden border-[3px] border-cyan-300 bg-cyan-400/10 shadow-[inset_0_0_22px_rgba(34,211,238,.2)]"><span class="material-symbols-outlined absolute right-1.5 top-1.5 rounded-full bg-cyan-400 text-[20px] font-black text-slate-950 shadow-lg">check_circle</span></div>
+          </button>
+          <div data-tile-quantity class="absolute inset-x-1.5 bottom-1.5 z-30 hidden h-8 grid-cols-[2rem_1fr_2rem] overflow-hidden rounded-full border border-cyan-200/50 bg-cyan-950/95 shadow-lg">
+            <button data-tile-step="-1" type="button" aria-label="${fish.name}を1匹減らす" class="flex touch-manipulation items-center justify-center border-r border-cyan-200/20 text-lg font-black text-cyan-100 active:bg-cyan-800/70">−</button>
+            <span class="flex min-w-0 items-center justify-center px-1 text-[9px] font-black tabular-nums text-white"><span data-selected-amount>1</span><span class="ml-0.5 text-[7px] text-cyan-200">匹</span></span>
+            <button data-tile-step="1" type="button" aria-label="${fish.name}を1匹増やす" class="flex touch-manipulation items-center justify-center border-l border-cyan-200/20 text-lg font-black text-cyan-100 active:bg-cyan-800/70 disabled:text-slate-600">＋</button>
+          </div>
+        </article>`;
       }).join('') : '<div class="col-span-full py-16 text-center"><span class="material-symbols-outlined text-4xl text-slate-700">set_meal</span><p class="mt-2 text-xs font-bold text-slate-500">魚を所持していません</p><p class="mt-1 text-[9px] text-slate-600">釣り場で魚を入手してください</p></div>'}</div></div>
       <footer data-selection-dock class="shrink-0 border-t border-cyan-300/15 bg-slate-950/95 px-3 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-12px_35px_rgba(0,0,0,.5)]">
         <div class="mb-2 flex items-center justify-between px-1"><div><div data-selection-count class="text-[11px] font-black text-white">魚を選択してください</div><div data-selection-preview class="mt-0.5 text-[8px] text-slate-500">タイルをタップすると選択できます</div></div><button data-edit-amounts disabled class="rounded-full border border-slate-700 px-3 py-1.5 text-[9px] font-bold text-slate-500 disabled:opacity-40">個数を調整</button></div>
         <button data-feed-selected disabled class="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-emerald-300/30 bg-gradient-to-r from-emerald-600 to-teal-600 text-xs font-black text-white shadow-[0_0_22px_rgba(16,185,129,.18)] transition disabled:cursor-not-allowed disabled:grayscale disabled:opacity-35"><span class="material-symbols-outlined">bolt</span><span data-feed-label>選択した魚をまとめて与える</span></button>
       </footer>
-      <section data-amount-editor class="hidden absolute inset-0 z-40 flex flex-col bg-[#080e13]"><header class="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-950 px-4 py-3"><button data-close-editor class="text-[11px] font-bold text-cyan-300">戻る</button><div class="text-center"><h4 class="text-sm font-black text-white">個数を調整</h4><p class="text-[8px] text-slate-500">魚ごとに与える数を変更</p></div><button data-done-editor class="text-[11px] font-black text-cyan-300">完了</button></header><div data-editor-list class="no-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto p-3"></div><div class="shrink-0 border-t border-white/10 bg-slate-950 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))]"><div data-editor-summary class="mb-2 text-center text-[9px] font-bold text-emerald-300"></div><button data-done-editor class="h-11 w-full rounded-2xl bg-cyan-600 text-xs font-black text-white">この個数で決定</button></div></section>`;
+      <section data-amount-editor class="hidden absolute inset-0 z-40 flex flex-col bg-[#080e13]"><header class="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-950 px-4 pb-3 pt-[max(.75rem,env(safe-area-inset-top))]"><button data-close-editor type="button" class="min-h-11 min-w-11 touch-manipulation text-[11px] font-bold text-cyan-300">戻る</button><div class="text-center"><h4 class="text-sm font-black text-white">個数を調整</h4><p class="text-[8px] text-slate-500">魚ごとに与える数を変更</p></div><button data-done-editor type="button" class="min-h-11 min-w-11 touch-manipulation text-[11px] font-black text-cyan-300">完了</button></header><div data-editor-list class="no-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto p-3"></div><div class="shrink-0 border-t border-white/10 bg-slate-950 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))]"><div data-editor-summary class="mb-2 text-center text-[9px] font-bold text-emerald-300"></div><button data-done-editor type="button" class="h-11 w-full touch-manipulation rounded-2xl bg-cyan-600 text-xs font-black text-white">この個数で決定</button></div></section>`;
     modal.querySelector('[data-close]').onclick = close;
 
     const getSelectionPreview = () => {
@@ -431,9 +457,20 @@ async function showRanchFishModal(dungeonId, onUpdate) {
     const updateSelectionUi = () => {
       modal.querySelectorAll('[data-fish-tile]').forEach(tile => {
         const amount = selectedAmounts.get(tile.dataset.fishTile) || 0;
-        tile.setAttribute('aria-pressed', String(Boolean(amount)));
+        const owned = Number(tile.dataset.owned) || 0;
+        const toggle = tile.querySelector('[data-fish-toggle]');
+        toggle.setAttribute('aria-pressed', String(Boolean(amount)));
+        toggle.setAttribute('aria-label', `${toggle.querySelector('img')?.alt || '魚'}を${amount ? '選択解除' : '選択'}`);
+        toggle.disabled = busy;
         tile.querySelector('[data-selected-layer]').classList.toggle('hidden', !amount);
-        if (amount) tile.querySelector('[data-selected-amount]').textContent = `${formatNumber(amount)}匹`;
+        const quantity = tile.querySelector('[data-tile-quantity]');
+        quantity.classList.toggle('hidden', !amount);
+        quantity.classList.toggle('grid', Boolean(amount));
+        if (amount) tile.querySelector('[data-selected-amount]').textContent = formatNumber(amount);
+        tile.querySelectorAll('[data-tile-step]').forEach(button => {
+          const step = Number(button.dataset.tileStep);
+          button.disabled = busy || (step > 0 && amount >= owned);
+        });
       });
       const preview = getSelectionPreview();
       const hasSelection = selectedAmounts.size > 0;
@@ -483,16 +520,24 @@ async function showRanchFishModal(dungeonId, onUpdate) {
       });
     };
 
-    modal.querySelectorAll('[data-fish-tile]').forEach(tile => tile.onclick = () => {
-      if (busy) return;
+    modal.querySelectorAll('[data-fish-tile]').forEach(tile => {
       const fishId = tile.dataset.fishTile;
-      if (selectedAmounts.has(fishId)) selectedAmounts.delete(fishId);
-      else selectedAmounts.set(fishId, 1);
-      updateSelectionUi();
+      const owned = Number(tile.dataset.owned) || 0;
+      tile.querySelector('[data-fish-toggle]').onclick = () => {
+        if (busy) return;
+        setRanchFishSelectionAmount(selectedAmounts, fishId, selectedAmounts.has(fishId) ? 0 : 1, owned);
+        updateSelectionUi();
+      };
+      tile.querySelectorAll('[data-tile-step]').forEach(button => button.onclick = () => {
+        if (busy) return;
+        const next = (selectedAmounts.get(fishId) || 0) + Number(button.dataset.tileStep);
+        setRanchFishSelectionAmount(selectedAmounts, fishId, next, owned);
+        updateSelectionUi();
+      });
     });
     modal.querySelector('[data-select-all]').onclick = () => {
       if (busy) return;
-      for (const fish of available) if (!selectedAmounts.has(fish.id)) selectedAmounts.set(fish.id, 1);
+      selectAllOwnedRanchFish(selectedAmounts, available, fishing.inventory);
       updateSelectionUi();
     };
     modal.querySelector('[data-clear-selection]').onclick = () => {
