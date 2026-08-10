@@ -3,6 +3,7 @@ import { EQUIPMENT_DROP_RATE, getEquipmentDropsForMonster } from '../../definiti
 import { getTreasureEffect } from '../../data/treasure-manager.js';
 import { formatNumber } from '../../utils/format.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
+import { renderJobResourceHtml } from './job-resource-ui.js';
 
 export function getActiveStateIconsHTML(entity) {
   if (!entity) return '';
@@ -213,6 +214,9 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
             <div class="absolute inset-0 flex items-center justify-center text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">${formatNumber(Math.floor(p.mp.current))}/${formatNumber(p.stats.mp || p.mp.max)}</div>
           </div>
         </div>
+
+        <!-- Current-job mechanics use a dedicated, always-visible resource panel. -->
+        ${renderJobResourceHtml(p)}
 
         <!-- Long-term progress remains visible without competing with HP/MP. -->
         <div class="grid grid-cols-2 gap-1 pt-0.5">

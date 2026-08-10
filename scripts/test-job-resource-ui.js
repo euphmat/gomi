@@ -1,0 +1,56 @@
+import {
+  getJobResourceSignature,
+  getJobResourceState,
+  renderJobResourceHtml
+} from '../js/pages/battle/job-resource-ui.js';
+
+const assert = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+
+const makeCharacter = (jobId, skillId, skillLevel, field, value) => ({
+  jobId,
+  jobSkills: skillId ? { [jobId]: { [skillId]: skillLevel } } : { [jobId]: {} },
+  [field]: value
+});
+
+const entertainer = getJobResourceState(
+  makeCharacter('entertainer', 'showstopper', 4, '_entertainerHype', 2)
+);
+assert(entertainer?.current === 2 && entertainer.max === 3, '舞台熱の現在値または上限が不正です');
+assert(entertainer.slots.filter(slot => slot.filled).length === 2, '舞台熱の点灯数が不正です');
+assert(renderJobResourceHtml({
+  ...makeCharacter('entertainer', 'showstopper', 4, '_entertainerHype', 2)
+}).includes('舞台熱'), '舞台熱パネルが描画されません');
+
+const conductor = getJobResourceState(
+  makeCharacter('mana_conductor', 'conductor_core', 10, '_conductorHarmony', 5)
+);
+assert(conductor?.current === 5 && conductor.max === 5, '共鳴ゲージが不正です');
+
+const singer = getJobResourceState(
+  makeCharacter('slime_singer', 'resonant_gel', 7, '_slimeSingerNotes', 3)
+);
+assert(singer?.current === 3 && singer.max === 4, 'ぷるぷる音符ゲージが不正です');
+
+const dragoon = getJobResourceState(
+  makeCharacter('dragoon', 'dragon_heart', 1, '_dragoonSpirit', 99)
+);
+assert(dragoon?.current === 2 && dragoon.max === 2, '竜気が上限内に正規化されません');
+
+const sage = getJobResourceState({
+  jobId: 'shinra_sage',
+  _shinraSigils: ['grass', 'grass', 'invalid', 'earth']
+});
+assert(sage?.current === 2 && sage.max === 3, '三界印の種類が正規化されません');
+assert(sage.slots.find(slot => slot.id === 'grass')?.filled, '草の印が表示されません');
+assert(!sage.slots.find(slot => slot.id === 'wind')?.filled, '未獲得の風の印が点灯しています');
+
+const locked = getJobResourceState(makeCharacter('entertainer', null, 0, '_entertainerHype', 3));
+assert(locked && !locked.unlocked && locked.current === 0, '未習得の固有システムが有効表示されています');
+assert(renderJobResourceHtml(makeCharacter('entertainer', null, 0, '_entertainerHype', 3)).includes('未開放'), '未開放表示がありません');
+
+assert(getJobResourceState({ jobId: 'norvice' }) === null, '通常職に固有ゲージが表示されています');
+assert(getJobResourceSignature(entertainer) !== getJobResourceSignature({ ...entertainer, current: 3 }), 'ゲージ更新シグネチャが変化しません');
+
+console.log('Job resource UI tests passed');

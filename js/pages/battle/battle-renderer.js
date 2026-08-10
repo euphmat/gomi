@@ -4,6 +4,11 @@
  */
 
 import { renderEnemyCardHtml, renderPartyCardHtml, getActiveStateIconsHTML } from './battle-ui.js';
+import {
+  getJobResourceSignature,
+  getJobResourceState,
+  renderJobResourceContentHtml
+} from './job-resource-ui.js';
 import { formatNumber } from '../../utils/format.js';
 import { isScreenLocked } from '../../utils/screen-lock.js';
 import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
@@ -313,7 +318,7 @@ export const rendererMethods = {
     this.party.forEach(p => {
       const cache = this.domCache.party[p.elementId];
       if (!cache) return;
-      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, stateIconsContainer } = cache;
+      const { root: el, lvEl, jlvEl, spEl, hpBar, hpText, mpBar, mpText, expBar, expText, jpBar, jpText, stateIconsContainer, jobResourceContainer } = cache;
 
       if (stateIconsContainer && !p.isDead) {
         const newHtml = getActiveStateIconsHTML(p);
@@ -439,6 +444,19 @@ export const rendererMethods = {
         }
       }
 
+      if (jobResourceContainer) {
+        const resourceState = getJobResourceState(p);
+        const resourceSignature = getJobResourceSignature(resourceState);
+        if (resourceState && jobResourceContainer.dataset.resourceSignature !== resourceSignature) {
+          jobResourceContainer.dataset.resourceSignature = resourceSignature;
+          jobResourceContainer.setAttribute(
+            'aria-label',
+            `${resourceState.definition.fullLabel || resourceState.definition.label} ${resourceState.unlocked ? `${resourceState.current}/${resourceState.max}` : '未開放'}`
+          );
+          jobResourceContainer.innerHTML = renderJobResourceContentHtml(resourceState);
+        }
+      }
+
       const statVals = cache.statVals;
 
       if (statVals && statVals.atk) {
@@ -530,6 +548,7 @@ export const rendererMethods = {
           uiState: { statThemes: {} },
           root: el,
           stateIconsContainer: el.querySelector('.state-icons-container'),
+          jobResourceContainer: el.querySelector('.job-resource-container'),
           lvEl: el.querySelector(`.${p.elementId}-lv`),
           jlvEl: el.querySelector(`.${p.elementId}-jlv`),
           spEl: el.querySelector(`.${p.elementId}-sp`),
