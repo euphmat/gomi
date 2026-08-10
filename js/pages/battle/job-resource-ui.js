@@ -14,7 +14,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     valueField: '_entertainerHype',
     skillId: 'showstopper',
     maxField: 'maxHype',
-    panelClass: 'border-fuchsia-400/35 bg-fuchsia-950/45',
+    panelClass: 'border-fuchsia-400/35 bg-gradient-to-r from-fuchsia-950/70 via-purple-950/45 to-slate-950/70',
     textClass: 'text-fuchsia-200',
     mutedClass: 'text-fuchsia-300/60',
     slotClass: 'border-fuchsia-300/30 bg-fuchsia-950/80',
@@ -26,7 +26,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     valueField: '_conductorHarmony',
     skillId: 'conductor_core',
     maxField: 'maxHarmony',
-    panelClass: 'border-violet-400/35 bg-violet-950/45',
+    panelClass: 'border-violet-400/35 bg-gradient-to-r from-violet-950/70 via-indigo-950/45 to-slate-950/70',
     textClass: 'text-violet-200',
     mutedClass: 'text-violet-300/60',
     slotClass: 'border-violet-300/30 bg-violet-950/80',
@@ -39,7 +39,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     valueField: '_slimeSingerNotes',
     skillId: 'resonant_gel',
     maxField: 'maxNotes',
-    panelClass: 'border-cyan-400/35 bg-cyan-950/45',
+    panelClass: 'border-cyan-400/35 bg-gradient-to-r from-cyan-950/70 via-sky-950/45 to-slate-950/70',
     textClass: 'text-cyan-200',
     mutedClass: 'text-cyan-300/60',
     slotClass: 'border-cyan-300/30 bg-cyan-950/80',
@@ -51,7 +51,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     valueField: '_dragoonSpirit',
     skillId: 'dragon_heart',
     maxField: 'maxDragonSpirit',
-    panelClass: 'border-sky-400/35 bg-sky-950/45',
+    panelClass: 'border-sky-400/35 bg-gradient-to-r from-sky-950/70 via-blue-950/45 to-slate-950/70',
     textClass: 'text-sky-200',
     mutedClass: 'text-sky-300/60',
     slotClass: 'border-sky-300/30 bg-sky-950/80',
@@ -66,7 +66,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
       Object.freeze({ id: 'wind', label: '風' }),
       Object.freeze({ id: 'earth', label: '土' })
     ]),
-    panelClass: 'border-emerald-400/35 bg-emerald-950/45',
+    panelClass: 'border-emerald-400/35 bg-gradient-to-r from-emerald-950/70 via-lime-950/35 to-slate-950/70',
     textClass: 'text-emerald-200',
     mutedClass: 'text-emerald-300/60',
     slotClass: 'border-emerald-300/30 bg-emerald-950/80',
@@ -77,7 +77,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     icon: 'skull',
     valueField: '_soulReaperCorpses',
     fixedMax: 5,
-    panelClass: 'border-cyan-300/35 bg-violet-950/45',
+    panelClass: 'border-cyan-300/35 bg-gradient-to-r from-violet-950/75 via-slate-950/55 to-cyan-950/60',
     textClass: 'text-cyan-100',
     mutedClass: 'text-violet-300/60',
     slotClass: 'border-violet-300/30 bg-slate-950/80',
@@ -151,34 +151,46 @@ export function renderJobResourceContentHtml(state) {
   const columnCount = Math.max(1, slots.length);
 
   return `
-    <div class="flex min-w-0 items-center gap-0.5 leading-none">
-      <span class="material-symbols-outlined shrink-0 ${definition.textClass}" style="font-size: 10px; font-variation-settings: 'FILL' 1">${definition.icon}</span>
-      <span class="min-w-0 truncate text-[7px] font-black ${definition.textClass}">${definition.label}</span>
-      <span data-job-resource-value class="ml-auto shrink-0 text-[7px] font-black tabular-nums ${unlocked ? definition.textClass : definition.mutedClass}">${valueText}</span>
+    <div class="relative z-10 flex h-full min-w-0 items-center gap-0.5 leading-none">
+      <span class="material-symbols-outlined shrink-0 ${definition.textClass} drop-shadow-[0_0_4px_currentColor]" style="font-size: 9px; font-variation-settings: 'FILL' 1">${definition.icon}</span>
+      <span class="max-w-[24px] shrink-0 truncate text-[7px] font-black tracking-tight ${definition.textClass}">${definition.label}</span>
+      ${unlocked ? `
+        <div class="grid min-w-[8px] flex-1 gap-px" style="grid-template-columns: repeat(${columnCount}, minmax(0, 1fr));" aria-hidden="true">
+          ${slots.map(slot => `
+            <span data-job-resource-slot="${slot.id}" data-resource-filled="${slot.filled ? 'true' : 'false'}" class="flex h-[7px] min-w-0 items-center justify-center rounded-[2px] border text-[5px] font-black leading-none ${slot.filled ? definition.filledClass : definition.slotClass}">${slot.label}</span>
+          `).join('')}
+        </div>
+      ` : `
+        <span class="h-px min-w-[6px] flex-1 bg-gradient-to-r from-transparent via-slate-600/40 to-transparent" aria-hidden="true"></span>
+      `}
+      <span data-job-resource-value class="shrink-0 text-[7px] font-black tabular-nums tracking-tighter ${unlocked ? definition.textClass : definition.mutedClass}">${valueText}</span>
+      <span class="sr-only">${accessibleLabel} ${valueText}</span>
     </div>
-    ${unlocked ? `
-      <div class="mt-0.5 grid gap-px" style="grid-template-columns: repeat(${columnCount}, minmax(0, 1fr));" aria-hidden="true">
-        ${slots.map(slot => `
-          <span data-job-resource-slot="${slot.id}" data-resource-filled="${slot.filled ? 'true' : 'false'}" class="flex h-[7px] min-w-0 items-center justify-center rounded-[2px] border text-[6px] font-black leading-none ${slot.filled ? definition.filledClass : definition.slotClass}">${slot.label}</span>
-        `).join('')}
-      </div>
-    ` : `
-      <div class="mt-0.5 h-[3px] rounded-full bg-slate-950/80" aria-hidden="true"></div>
-    `}
-    <span class="sr-only">${accessibleLabel} ${valueText}</span>
   `;
 }
 
 export function renderJobResourceHtml(entity) {
   const state = getJobResourceState(entity);
-  if (!state) return '';
+  if (!state) {
+    return `
+      <div class="job-resource-shell relative flex h-[18px] shrink-0 items-center overflow-hidden rounded-[4px] border border-white/[0.04] bg-slate-950/20 px-1"
+           data-job-resource-shell data-has-job-resource="false" aria-hidden="true">
+        <span class="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600/20 to-slate-700/10"></span>
+        <span class="mx-1 h-1 w-1 rotate-45 rounded-[1px] border border-slate-600/25 bg-slate-800/30"></span>
+        <span class="h-px flex-1 bg-gradient-to-l from-transparent via-slate-600/20 to-slate-700/10"></span>
+      </div>
+    `;
+  }
   const accessibleLabel = state.definition.fullLabel || state.definition.label;
   return `
-    <div class="job-resource-container mt-0.5 rounded border px-1 py-0.5 ${state.definition.panelClass}"
+    <div class="job-resource-shell job-resource-container relative h-[18px] shrink-0 overflow-hidden rounded-[4px] border px-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${state.definition.panelClass}"
+         data-job-resource-shell
+         data-has-job-resource="true"
          data-job-resource="${state.jobId}"
          data-resource-signature="${getJobResourceSignature(state)}"
          role="status"
          aria-label="${accessibleLabel} ${state.unlocked ? `${state.current}/${state.max}` : '未開放'}">
+      <span class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true"></span>
       ${renderJobResourceContentHtml(state)}
     </div>
   `;

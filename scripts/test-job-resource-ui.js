@@ -73,4 +73,20 @@ assert(
   '職業固有パネルがHPゲージの上に配置されていません'
 );
 
+const standardCardHtml = renderPartyCardHtml({
+  ...makeCharacter('norvice', null, 0, '_unused', 0),
+  id: 'standard', elementId: 'standard', name: '見習い', iconImage: '',
+  level: 1, jobLevel: 1, sp: 0, atb: 0, isDead: false,
+  hp: { current: 100, max: 100 }, mp: { current: 100, max: 100 },
+  exp: { current: 0, max: 1 }, jp: { current: 0, max: 1 },
+  stats: { hp: 100, mp: 100, atk: 10, def: 10, matk: 10, mdef: 10, spd: 10 }
+}, null, false, null);
+assert(standardCardHtml.includes('data-has-job-resource="false"'), '通常職の固定リソーススロットがありません');
+assert(standardCardHtml.includes('job-resource-shell') && standardCardHtml.includes('h-[18px]'), '通常職のリソーススロット寸法が不正です');
+assert(cardHtml.includes('job-resource-shell') && cardHtml.includes('h-[18px]'), '固有職のリソーススロット寸法が不正です');
+assert(
+  standardCardHtml.indexOf('job-resource-shell') < standardCardHtml.indexOf('>HP</span>'),
+  '通常職の固定リソーススロットがHPゲージの上にありません'
+);
+
 console.log('Job resource UI tests passed');

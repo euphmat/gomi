@@ -1359,6 +1359,10 @@ export function renderBattlePage() {
       }
       #party-area {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: stretch;
+      }
+      #party-area .party-card {
+        height: 100%;
       }
       .battle-tab,
       #tab-content,
