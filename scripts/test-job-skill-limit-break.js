@@ -1,10 +1,12 @@
 import {
+  canLimitBreakJobSkill,
   JOB_SKILL_LIMIT_BREAK_GROWTH,
   resolveJobSkillLevelConfig
 } from '../js/utils/job-skill-potency.js';
 import {
   getJobSkillLevelCost,
   getJobSkillMasterLevel,
+  getSpentJobSP,
   hasMasteredAllJobSkills
 } from '../js/data/job-progression.js';
 import { JOBS } from '../js/jobs/index.js';
@@ -47,6 +49,38 @@ const farBreak = resolveJobSkillLevelConfig(skill, 30, 'base');
 assert(farBreak.multiplier === 6, 'limit break growth should stay linear and uncapped');
 assert(farBreak.chance === 100, 'bounded probability exceeded 100%');
 
+const drawbackSkill = {
+  maxLevel: 10,
+  levels: [{
+    level: 10,
+    spCost: 5,
+    mpCost: 0,
+    curseDamageMultiplier: 1,
+    curseRecoilMultiplier: .2
+  }]
+};
+for (const mode of ['base', 'current', 'inherited']) {
+  const removedDrawback = resolveJobSkillLevelConfig(drawbackSkill, 30, mode);
+  assert(removedDrawback.curseDamageMultiplier === 0, `${mode} curse damage multiplier became negative`);
+  assert(removedDrawback.curseRecoilMultiplier === 0, `${mode} curse recoil multiplier became negative`);
+}
+
+const fixedOnlySkill = {
+  id: 'fixed_only',
+  maxLevel: 10,
+  levels: [{ level: 10, spCost: 5, mpCost: 4 }]
+};
+assert(!canLimitBreakJobSkill(fixedOnlySkill), 'a skill with no scalable effect allowed SP to be wasted');
+assert(getJobSkillLevelCost(fixedOnlySkill, 11) === 0, 'a non-scaling limit break still had an SP cost');
+assert(resolveJobSkillLevelConfig(fixedOnlySkill, 11, 'base').level === 10, 'a non-scaling skill exceeded mastery');
+const fixedOnlyJob = { id: 'fixed_job', skills: [fixedOnlySkill] };
+const masteredFixedCharacter = { jobSkills: { fixed_job: { fixed_only: 10 } } };
+const overleveledFixedCharacter = { jobSkills: { fixed_job: { fixed_only: 20 } } };
+assert(
+  getSpentJobSP(overleveledFixedCharacter, fixedOnlyJob) === getSpentJobSP(masteredFixedCharacter, fixedOnlyJob),
+  'SP spent on a non-scaling limit break was not refunded'
+);
+
 const variedSkill = {
   maxLevel: 10,
   levels: [{
@@ -74,6 +108,7 @@ assert(variedBreak.hpPercent === 25, 'HP sacrifice must not increase');
 assert(variedBreak.duration === 6, 'duration must stay at mastery value');
 
 assert(Object.keys(JOBS).length === 25, 'the all-job limit break test is missing a job');
+const nonScalingSkills = [];
 for (const job of Object.values(JOBS)) {
   const masteredLevels = Object.fromEntries(
     job.skills.map(jobSkill => [jobSkill.id, getJobSkillMasterLevel(jobSkill)])
@@ -85,11 +120,23 @@ for (const job of Object.values(JOBS)) {
     const masterLevel = getJobSkillMasterLevel(jobSkill);
     const masterConfig = resolveJobSkillLevelConfig(jobSkill, masterLevel, 'base');
     const brokenConfig = resolveJobSkillLevelConfig(jobSkill, masterLevel + 1, 'base');
-    assert(getJobSkillLevelCost(jobSkill, masterLevel + 1) > 0, `${job.id}/${jobSkill.id} has no limit break cost`);
-    assert(brokenConfig.level === masterLevel + 1, `${job.id}/${jobSkill.id} lost its limit break level`);
+    const farBrokenConfig = resolveJobSkillLevelConfig(jobSkill, masterLevel + 100, 'current');
+    const canLimitBreak = canLimitBreakJobSkill(jobSkill);
+    if (canLimitBreak) {
+      assert(getJobSkillLevelCost(jobSkill, masterLevel + 1) > 0, `${job.id}/${jobSkill.id} has no limit break cost`);
+      assert(brokenConfig.level === masterLevel + 1, `${job.id}/${jobSkill.id} lost its limit break level`);
+    } else {
+      nonScalingSkills.push(`${job.id}/${jobSkill.id}`);
+      assert(getJobSkillLevelCost(jobSkill, masterLevel + 1) === 0, `${job.id}/${jobSkill.id} charges for no effect`);
+      assert(brokenConfig.level === masterLevel, `${job.id}/${jobSkill.id} exceeded mastery without an effect`);
+    }
     assert(
       Object.values(brokenConfig).every(value => typeof value !== 'number' || Number.isFinite(value)),
       `${job.id}/${jobSkill.id} produced a non-finite effect`
+    );
+    assert(
+      Object.values(farBrokenConfig).every(value => typeof value !== 'number' || (Number.isFinite(value) && value >= 0)),
+      `${job.id}/${jobSkill.id} produced an invalid effect after repeated limit breaks`
     );
     assert(brokenConfig.mpCost === masterConfig.mpCost, `${job.id}/${jobSkill.id} changed MP cost`);
     assert(brokenConfig.hits === masterConfig.hits, `${job.id}/${jobSkill.id} changed hit count`);
@@ -97,6 +144,10 @@ for (const job of Object.values(JOBS)) {
     assert(typeof jobSkill.getDescription(brokenConfig) === 'string', `${job.id}/${jobSkill.id} description failed`);
   }
 }
+assert(
+  nonScalingSkills.length === 1 && nonScalingSkills[0] === 'priest/restore',
+  `unexpected non-scaling skills: ${nonScalingSkills.join(', ')}`
+);
 
 if (typeof print === 'function') print('Job skill limit break tests passed.');
 else console.log('Job skill limit break tests passed.');

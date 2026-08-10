@@ -10,7 +10,10 @@ import {
   getJobSkillMasterLevel,
   hasMasteredAllJobSkills
 } from '../../data/job-progression.js';
-import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
+import {
+  canLimitBreakJobSkill,
+  resolveJobSkillLevelConfig
+} from '../../utils/job-skill-potency.js';
 
 /**
  * 「修練場」タブの画面
@@ -79,7 +82,7 @@ export function renderAcquireSkillTab() {
     const masterLevel = getJobSkillMasterLevel(skill);
     const allSkillsMastered = hasMasteredAllJobSkills(selectedChar, jobDef);
     const isMastered = currentLevel >= masterLevel;
-    const canLimitBreak = allSkillsMastered && isMastered;
+    const canLimitBreak = allSkillsMastered && isMastered && canLimitBreakJobSkill(skill);
     const isLimitBreaking = canLimitBreak && currentLevel >= masterLevel;
     const isMax = isMastered && !canLimitBreak;
     const targetLevel = isMax ? currentLevel : currentLevel + 1;
@@ -161,8 +164,8 @@ export function renderAcquireSkillTab() {
               ${skill.statDependency === 'MAT' ? `<span class="text-[9px] font-bold text-fuchsia-300 bg-fuchsia-900/40 border border-fuchsia-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">auto_awesome</span>魔法</span>` : ''}
               ${skill.statDependency === 'BOTH' ? `<span class="text-[9px] font-bold text-yellow-300 bg-yellow-900/40 border border-yellow-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">flare</span>複合</span>` : ''}
             </div>
-            <div class="text-[9px] font-bold ${allSkillsMastered ? 'text-fuchsia-300' : 'text-gray-500'} tracking-wider hidden sm:block">
-              ${allSkillsMastered ? `MASTER Lv.${masterLevel} / 限界突破 ∞` : `MAX Lv.${masterLevel}`}
+            <div class="text-[9px] font-bold ${canLimitBreak ? 'text-fuchsia-300' : 'text-gray-500'} tracking-wider hidden sm:block">
+              ${canLimitBreak ? `MASTER Lv.${masterLevel} / 限界突破 ∞` : `MAX Lv.${masterLevel}`}
             </div>
           </div>
           

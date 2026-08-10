@@ -1,4 +1,5 @@
 import { getBaseExpToNext } from './level-progression.js';
+import { canLimitBreakJobSkill } from '../utils/job-skill-potency.js';
 
 export const JOB_EXP_REQUIREMENT_MULTIPLIER = 1.2;
 
@@ -95,6 +96,7 @@ export function getJobSkillLevelCost(skill, level) {
   if (authoredConfig) return Math.max(0, Number(authoredConfig.spCost) || 0);
 
   if (normalizedLevel > getJobSkillMasterLevel(skill)) {
+    if (!canLimitBreakJobSkill(skill)) return 0;
     const masterConfig = skill.levels.find(candidate => candidate.level === getJobSkillMasterLevel(skill))
       || skill.levels[skill.levels.length - 1];
     return Math.max(0, Number(masterConfig?.spCost) || 0);

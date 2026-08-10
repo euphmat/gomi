@@ -127,7 +127,7 @@ export function applyJobSkillPotency(levelConfig, mode = 'base') {
 
     if (NEUTRAL_MULTIPLIER_KEYS.has(key)) {
       const neutral = NEUTRAL_MULTIPLIER_KEYS.get(key);
-      adjusted[key] = round(neutral + (value - neutral) * factor);
+      adjusted[key] = Math.max(0, round(neutral + (value - neutral) * factor));
       continue;
     }
 
@@ -162,7 +162,11 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0) {
 
     if (NEUTRAL_MULTIPLIER_KEYS.has(key)) {
       const neutral = NEUTRAL_MULTIPLIER_KEYS.get(key);
-      adjusted[key] = round(neutral + (value - neutral) * factor);
+      // Drawback multipliers such as Stigma of Atonement improve downward
+      // from their neutral value. Unlimited linear growth must stop at zero;
+      // a negative damage multiplier would otherwise turn the drawback into
+      // permanent minimum damage.
+      adjusted[key] = Math.max(0, round(neutral + (value - neutral) * factor));
       continue;
     }
 
@@ -177,6 +181,20 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0) {
   return adjusted;
 }
 
+/** Return whether a skill has at least one effect that limit breaks can improve. */
+export function canLimitBreakJobSkill(skillDef) {
+  if (!skillDef?.levels?.length) return false;
+  const maxLevel = Math.max(
+    1,
+    Math.floor(Number(skillDef.maxLevel) || skillDef.levels[skillDef.levels.length - 1].level || 1)
+  );
+  const masterConfig = skillDef.levels.find(candidate => candidate.level === maxLevel)
+    || skillDef.levels[skillDef.levels.length - 1];
+  return Object.entries(masterConfig).some(([key, value]) =>
+    Number.isFinite(value) && !LIMIT_BREAK_FIXED_KEYS.has(key)
+  );
+}
+
 export function resolveJobSkillLevelConfig(skillDef, level, mode = 'base') {
   if (!skillDef?.levels?.length) return null;
   const normalizedLevel = Math.max(1, Math.floor(Number(level) || 1));
@@ -184,9 +202,12 @@ export function resolveJobSkillLevelConfig(skillDef, level, mode = 'base') {
     1,
     Math.floor(Number(skillDef.maxLevel) || skillDef.levels[skillDef.levels.length - 1].level || 1)
   );
-  const authoredConfig = skillDef.levels.find(candidate => candidate.level === normalizedLevel)
+  const resolvedLevel = normalizedLevel > maxLevel && !canLimitBreakJobSkill(skillDef)
+    ? maxLevel
+    : normalizedLevel;
+  const authoredConfig = skillDef.levels.find(candidate => candidate.level === resolvedLevel)
     || skillDef.levels[skillDef.levels.length - 1];
-  const limitBreakLevel = Math.max(0, normalizedLevel - maxLevel);
-  const potentConfig = applyJobSkillPotency({ ...authoredConfig, level: normalizedLevel }, mode);
+  const limitBreakLevel = Math.max(0, resolvedLevel - maxLevel);
+  const potentConfig = applyJobSkillPotency({ ...authoredConfig, level: resolvedLevel }, mode);
   return applyJobSkillLimitBreak(potentConfig, limitBreakLevel);
 }
