@@ -59,7 +59,7 @@ assert(getTotalJobSP(51) === 50, 'level 51 total SP is invalid');
 const testJob = {
   id: 'test_job',
   skills: [
-    { id: 'skill_a', levels: [{ level: 1, spCost: 10 }, { level: 2, spCost: 20 }] },
+    { id: 'skill_a', levels: [{ level: 1, spCost: 10, multiplier: 1 }, { level: 2, spCost: 20, multiplier: 2 }] },
     { id: 'skill_b', levels: [{ level: 1, spCost: 25 }] }
   ]
 };

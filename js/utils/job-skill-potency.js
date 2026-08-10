@@ -63,20 +63,35 @@ const NEUTRAL_MULTIPLIER_KEYS = new Map([
 const INVERSE_EFFECT_KEYS = new Set(['threshold']);
 
 // Limit breaks deliberately leave resource costs, animation-heavy hit counts,
-// and durations at their authored maximum. Every other numeric field in a
-// level config represents skill potency and grows linearly without a level cap.
-// Keeping this as an exclusion list also lets future jobs participate without
-// having to register every new damage/status field here.
+// durations and structural combat rules at their authored maximum. Scaling a
+// primary damage multiplier together with another multiplier applied on top of
+// it makes the real result quadratic. Resource caps have the same problem when
+// both the cap and the per-resource bonus grow.
 const LIMIT_BREAK_FIXED_KEYS = new Set([
   'level', 'spCost', 'mpCost', 'hits', 'minHits', 'maxHits',
-  'turns', 'duration', 'burnTurns', 'freezeTurns', 'extensionTurns',
+  'bossMultiplier', 'detonationMultiplier', 'highHpMultiplier', 'shatterMultiplier',
+  'defenseIgnorePercent', 'skillDefenseIgnorePercent',
+  'maxDragonSpirit', 'maxHarmony', 'maxHype', 'maxNotes',
   // Blood-cost percentage: increasing it would make the skill worse.
   'hpPercent'
 ]);
 
+// Turn counts grow in small steps instead of with the full potency factor.
+// This keeps support limit breaks worthwhile without allowing long control or
+// defensive effects to scale multiplicatively with their strength.
+const LIMIT_BREAK_STEPPED_KEYS = new Map([
+  ['turns', { every: 5, maxBonus: 3 }],
+  ['duration', { every: 5, maxBonus: 3 }],
+  ['burnTurns', { every: 5, maxBonus: 3 }],
+  ['extensionTurns', { every: 5, maxBonus: 3 }],
+  ['freezeTurns', { every: 10, maxBonus: 1 }],
+  // Restore gains its first extra target immediately, then one every 5 breaks.
+  ['cleanseCount', { every: 5, maxBonus: 3, immediate: true }]
+]);
+
 const LIMIT_BREAK_INTEGER_KEYS = new Set([
   ...INTEGER_EFFECT_KEYS,
-  'bonusAtk', 'maxDragonSpirit', 'maxHarmony', 'maxHype', 'maxNotes'
+  'bonusAtk'
 ]);
 
 const LIMIT_BREAK_PERCENTAGE_KEYS = new Set([
@@ -145,7 +160,7 @@ export function applyJobSkillPotency(levelConfig, mode = 'base') {
  * remains useful indefinitely without making costs, durations, or hit counts
  * explode. Probabilities and percentage reductions are capped at 100%.
  */
-export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0) {
+export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0, fixedKeys = []) {
   const breaks = Math.max(0, Math.floor(Number(limitBreakLevel) || 0));
   if (!levelConfig || breaks === 0) return levelConfig;
 
@@ -153,7 +168,14 @@ export function applyJobSkillLimitBreak(levelConfig, limitBreakLevel = 0) {
   const adjusted = { ...levelConfig };
 
   for (const [key, value] of Object.entries(levelConfig)) {
-    if (!Number.isFinite(value) || LIMIT_BREAK_FIXED_KEYS.has(key)) continue;
+    if (!Number.isFinite(value) || LIMIT_BREAK_FIXED_KEYS.has(key) || fixedKeys.includes(key)) continue;
+
+    if (LIMIT_BREAK_STEPPED_KEYS.has(key)) {
+      const { every, maxBonus, immediate = false } = LIMIT_BREAK_STEPPED_KEYS.get(key);
+      const step = immediate ? Math.ceil(breaks / every) : Math.floor(breaks / every);
+      adjusted[key] = value + Math.min(maxBonus, step);
+      continue;
+    }
 
     if (INVERSE_EFFECT_KEYS.has(key)) {
       adjusted[key] = Math.min(100, Math.max(0, round(value / factor)));
@@ -190,8 +212,9 @@ export function canLimitBreakJobSkill(skillDef) {
   );
   const masterConfig = skillDef.levels.find(candidate => candidate.level === maxLevel)
     || skillDef.levels[skillDef.levels.length - 1];
+  const fixedKeys = skillDef.limitBreakFixedKeys || [];
   return Object.entries(masterConfig).some(([key, value]) =>
-    Number.isFinite(value) && !LIMIT_BREAK_FIXED_KEYS.has(key)
+    Number.isFinite(value) && !LIMIT_BREAK_FIXED_KEYS.has(key) && !fixedKeys.includes(key)
   );
 }
 
@@ -209,5 +232,5 @@ export function resolveJobSkillLevelConfig(skillDef, level, mode = 'base') {
     || skillDef.levels[skillDef.levels.length - 1];
   const limitBreakLevel = Math.max(0, resolvedLevel - maxLevel);
   const potentConfig = applyJobSkillPotency({ ...authoredConfig, level: resolvedLevel }, mode);
-  return applyJobSkillLimitBreak(potentConfig, limitBreakLevel);
+  return applyJobSkillLimitBreak(potentConfig, limitBreakLevel, skillDef.limitBreakFixedKeys);
 }

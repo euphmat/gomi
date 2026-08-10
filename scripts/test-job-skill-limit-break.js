@@ -101,11 +101,33 @@ const variedBreak = resolveJobSkillLevelConfig(variedSkill, 20, 'base');
 assert(variedBreak.bonusHp === 300, 'flat stat bonus did not limit break');
 assert(variedBreak.bonusAtkPercent === 240, 'stat percentage should grow without a 100% cap');
 assert(variedBreak.barrierPercent === 280, 'barrier strength should grow without a 100% cap');
-assert(variedBreak.maxDragonSpirit === 10, 'job resource maximum did not limit break');
+assert(variedBreak.maxDragonSpirit === 5, 'job resource maximum should stay structural');
 assert(variedBreak.threshold === 25, 'inverse threshold did not improve');
 assert(variedBreak.atkMatkMultiplier === 2, 'neutral multiplier did not improve correctly');
 assert(variedBreak.hpPercent === 25, 'HP sacrifice must not increase');
-assert(variedBreak.duration === 6, 'duration must stay at mastery value');
+assert(variedBreak.duration === 8, 'duration did not gain one turn per 5 limit breaks');
+
+const compoundSkill = {
+  maxLevel: 10,
+  limitBreakFixedKeys: ['reduction'],
+  levels: [{
+    level: 10,
+    spCost: 5,
+    chance: 25,
+    reduction: 40,
+    multiplier: 2,
+    defenseIgnorePercent: 50,
+    detonationMultiplier: 1.75,
+    maxHarmony: 5
+  }]
+};
+const compoundBreak = resolveJobSkillLevelConfig(compoundSkill, 20, 'base');
+assert(compoundBreak.chance === 50, 'primary proc chance did not limit break');
+assert(compoundBreak.multiplier === 4, 'primary damage did not limit break');
+assert(compoundBreak.reduction === 40, 'skill-specific secondary strength should stay fixed');
+assert(compoundBreak.defenseIgnorePercent === 50, 'defense bypass should stay fixed');
+assert(compoundBreak.detonationMultiplier === 1.75, 'conditional multiplier should stay fixed');
+assert(compoundBreak.maxHarmony === 5, 'resource cap should stay fixed');
 
 assert(Object.keys(JOBS).length === 25, 'the all-job limit break test is missing a job');
 const nonScalingSkills = [];
@@ -144,10 +166,49 @@ for (const job of Object.values(JOBS)) {
     assert(typeof jobSkill.getDescription(brokenConfig) === 'string', `${job.id}/${jobSkill.id} description failed`);
   }
 }
-assert(
-  nonScalingSkills.length === 1 && nonScalingSkills[0] === 'priest/restore',
-  `unexpected non-scaling skills: ${nonScalingSkills.join(', ')}`
-);
+assert(nonScalingSkills.length === 0, `unexpected non-scaling skills: ${nonScalingSkills.join(', ')}`);
+
+const restore = JOBS.priest.skills.find(candidate => candidate.id === 'restore');
+const masteredRestore = resolveJobSkillLevelConfig(restore, 10, 'base');
+const firstRestoreBreak = resolveJobSkillLevelConfig(restore, 11, 'base');
+const farRestoreBreak = resolveJobSkillLevelConfig(restore, 21, 'base');
+assert(masteredRestore.cleanseCount === 1, 'mastered restore target count changed');
+assert(firstRestoreBreak.cleanseCount === 2, 'restore did not gain a second cleanse target');
+assert(farRestoreBreak.cleanseCount === 4, 'restore target growth exceeded its intended steps');
+
+const timedSkill = {
+  maxLevel: 10,
+  levels: [{ level: 10, spCost: 5, turns: 5, duration: 4, burnTurns: 6, freezeTurns: 1 }]
+};
+const fourthTimedBreak = resolveJobSkillLevelConfig(timedSkill, 14, 'base');
+const fifthTimedBreak = resolveJobSkillLevelConfig(timedSkill, 15, 'base');
+const deepTimedBreak = resolveJobSkillLevelConfig(timedSkill, 30, 'base');
+assert(fourthTimedBreak.turns === 5, 'turn duration grew before its fifth break');
+assert(fifthTimedBreak.turns === 6 && fifthTimedBreak.duration === 5, 'timed effects did not grow at five breaks');
+assert(fifthTimedBreak.burnTurns === 7, 'burn duration did not grow at five breaks');
+assert(fifthTimedBreak.freezeTurns === 1, 'hard control duration grew too early');
+assert(deepTimedBreak.turns === 8 && deepTimedBreak.duration === 7, 'timed effect bonus cap is invalid');
+assert(deepTimedBreak.burnTurns === 9, 'burn duration bonus cap is invalid');
+assert(deepTimedBreak.freezeTurns === 2, 'freeze duration should cap at one extra turn');
+
+const expectedFixedEffects = {
+  'norvice/guard': { reduction: 40 },
+  'paladin/holy_smite': { drainPercent: 50 },
+  'gunner/penetrator': { spillMultiplier: .6 },
+  'gunner/quick_reload': { refundPercent: 50 },
+  'dragoon/dragon_heart': { maxDragonSpirit: 5 },
+  'mana_conductor/conductor_core': { maxHarmony: 5 },
+  'entertainer/showstopper': { maxHype: 5 },
+  'slime_singer/resonant_gel': { maxNotes: 5 }
+};
+for (const [skillPath, expected] of Object.entries(expectedFixedEffects)) {
+  const [jobId, skillId] = skillPath.split('/');
+  const jobSkill = JOBS[jobId].skills.find(candidate => candidate.id === skillId);
+  const brokenConfig = resolveJobSkillLevelConfig(jobSkill, getJobSkillMasterLevel(jobSkill) + 10, 'base');
+  for (const [key, value] of Object.entries(expected)) {
+    assert(brokenConfig[key] === value, `${skillPath} scaled compound effect ${key}`);
+  }
+}
 
 if (typeof print === 'function') print('Job skill limit break tests passed.');
 else console.log('Job skill limit break tests passed.');

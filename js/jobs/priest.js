@@ -344,9 +344,12 @@ export const priest = {
         { level:  7, spCost: 3, mpCost: 6 },
         { level:  8, spCost: 3, mpCost: 6 },
         { level:  9, spCost: 3, mpCost: 6 },
-        { level: 10, spCost: 5, mpCost: 4 }
+        { level: 10, spCost: 5, mpCost: 4, cleanseCount: 1 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、状態異常の味方単体の状態異常を回復する`,
+      getDescription: (lc) => {
+        const count = Math.max(1, lc.cleanseCount || 1);
+        return `MP を ${lc.mpCost} 消費し、状態異常の味方${count > 1 ? `最大${count}人` : '単体'}の状態異常を回復する`;
+      },
       execute(caster, levelConfig, battle, options = {}) {
         if (!battle) return;
         let targetGroup = battle.party;
@@ -369,10 +372,13 @@ export const priest = {
           return;
         }
         
-        const target = options.autoTarget && afflictedParty.includes(options.autoTarget)
+        const primaryTarget = options.autoTarget && afflictedParty.includes(options.autoTarget)
             ? options.autoTarget
             : afflictedParty[Math.floor(Math.random() * afflictedParty.length)];
-        playSkillAnimation(caster, [target], 'restore', () => {
+        const cleanseCount = Math.max(1, Math.floor(levelConfig.cleanseCount || 1));
+        const targets = [primaryTarget, ...afflictedParty.filter(member => member !== primaryTarget)]
+          .slice(0, cleanseCount);
+        playSkillAnimation(caster, targets, 'restore', target => {
           if (target.isDead) return;
           target.activeAilment = null;
           battle.renderEntities();

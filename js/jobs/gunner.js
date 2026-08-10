@@ -370,6 +370,8 @@ export const gunner = {
     {
       id: 'penetrator', name: 'ペネトレイター', icon: 'trending_flat', type: 'passive',
       maxLevel: 10,
+      // Proc chance and spill damage multiply together; keep total growth linear.
+      limitBreakFixedKeys: ['spillMultiplier'],
       levels: makeLevels([
         { mpCost: 0, chance: 15, spillMultiplier: .28 }, { mpCost: 0, chance: 20, spillMultiplier: .31 },
         { mpCost: 0, chance: 25, spillMultiplier: .34 }, { mpCost: 0, chance: 30, spillMultiplier: .37 },
@@ -382,6 +384,8 @@ export const gunner = {
     {
       id: 'quick_reload', name: 'クイックロード', icon: 'refresh', type: 'passive',
       maxLevel: 10,
+      // Proc chance is the scalable part of MP efficiency after mastery.
+      limitBreakFixedKeys: ['refundPercent'],
       levels: makeLevels([
         { mpCost: 0, bonusSpd: 2, chance: 10, refundPercent: 40 },
         { mpCost: 0, bonusSpd: 4, chance: 13, refundPercent: 40 },

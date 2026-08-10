@@ -391,6 +391,8 @@ export const norvice = {
     {
       id: 'guard', name: 'ガード', icon: 'shield', type: 'passive',
       maxLevel: 10,
+      // Chance and reduction multiply together; only chance grows after mastery.
+      limitBreakFixedKeys: ['reduction'],
       levels: [
         { level: 1, spCost: 1, mpCost: 0, chance: 10, reduction: 10 },
         { level: 2, spCost: 1, mpCost: 0, chance: 11, reduction: 12 },

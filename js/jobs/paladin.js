@@ -311,6 +311,8 @@ export const paladin = {
     {
       id: 'holy_smite', name: 'ホーリースマイト', icon: 'bolt', statDependency: 'ATK',
       maxLevel: 10,
+      // Damage growth already increases the amount drained.
+      limitBreakFixedKeys: ['drainPercent'],
       levels: [
         { level:  1, spCost: 1, mpCost: 14, multiplier: 1.0, matkRatio: 0.30, drainPercent: 20 },
         { level:  2, spCost: 1, mpCost: 16, multiplier: 1.1, matkRatio: 0.33, drainPercent: 22 },
