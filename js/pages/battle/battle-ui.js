@@ -5,6 +5,63 @@ import { formatNumber } from '../../utils/format.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { renderJobResourceHtml } from './job-resource-ui.js';
 
+/**
+ * HP とバリアを同じゲージに足し合わせないための表示モデル。
+ * バリアゲージは常に「最大 HP に対する割合」を示し、100% を超えた分は
+ * ゲージを伸ばさず、数値と割合で明示する。
+ */
+export function getBarrierUiState(entity, maxHp) {
+  const rawAmount = Number(entity?._barrierHp);
+  const amount = Number.isFinite(rawAmount) ? Math.max(0, Math.floor(rawAmount)) : 0;
+  const rawMaxHp = Number(maxHp);
+  const safeMaxHp = Number.isFinite(rawMaxHp) && rawMaxHp > 0 ? rawMaxHp : 1;
+  const percent = amount > 0 ? Math.round((amount / safeMaxHp) * 100) : 0;
+
+  return {
+    amount,
+    percent,
+    fillPercent: Math.min(100, percent),
+    isActive: amount > 0,
+    isOverflow: percent > 100,
+    valueText: amount > 0 ? `+${formatNumber(amount)} · ${percent}%` : 'なし',
+    compactText: amount > 0 ? formatNumber(amount) : '—',
+    ariaLabel: amount > 0
+      ? `バリア残量 ${formatNumber(amount)}、最大HPの${percent}パーセント`
+      : 'バリアなし'
+  };
+}
+
+function renderBarrierIndicatorHtml(entity, maxHp, { compact = false, fastMode = false } = {}) {
+  const barrier = getBarrierUiState(entity, maxHp);
+  const transitionStyle = fastMode ? '' : 'transition: transform 0.3s ease;';
+  const frameTheme = barrier.isActive
+    ? (barrier.isOverflow ? 'border-violet-400/70 bg-violet-950/80' : 'border-cyan-400/60 bg-cyan-950/70')
+    : 'border-gray-700/60 bg-gray-950/80 opacity-40';
+  const fillTheme = barrier.isOverflow
+    ? 'bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400'
+    : 'bg-gradient-to-r from-cyan-500 to-blue-400';
+
+  if (compact) {
+    return `
+      <div class="barrier-indicator relative h-3 w-full shrink-0 overflow-hidden rounded border ${frameTheme}" role="meter" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1))}" aria-valuenow="${barrier.amount}">
+        <div class="barrier-meter absolute inset-0 w-full origin-left ${fillTheme}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}"></div>
+        <div class="absolute inset-0 z-10 flex items-center justify-center gap-px whitespace-nowrap text-[7.5px] font-black text-cyan-50 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
+          <span class="material-symbols-outlined leading-none" style="font-size: 8px; font-variation-settings: 'FILL' 1">shield</span>
+          <span class="barrier-text tabular-nums">${barrier.compactText}</span>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="barrier-indicator flex h-3 items-center gap-0.5 rounded border px-0.5 ${frameTheme}" role="meter" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1))}" aria-valuenow="${barrier.amount}">
+      <span class="material-symbols-outlined w-2.5 shrink-0 text-center leading-none text-cyan-200" style="font-size: 9px; font-variation-settings: 'FILL' 1" aria-hidden="true">shield</span>
+      <div class="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-950/90">
+        <div class="barrier-meter h-full w-full origin-left ${fillTheme}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}"></div>
+      </div>
+      <span class="barrier-text min-w-[3.5rem] shrink-0 whitespace-nowrap text-right text-[7px] font-black tabular-nums text-cyan-50">${barrier.valueText}</span>
+    </div>`;
+}
+
 export function getActiveStateIconsHTML(entity) {
   if (!entity) return '';
   const icons = [];
@@ -49,8 +106,8 @@ export function getActiveStateIconsHTML(entity) {
     icons.push({ icon: 'all_inclusive', color: 'text-cyan-300', name: 'マナフロー' });
   }
 
-  if ((entity._barrierHp && entity._barrierHp > 0) || (entity._mdefBuffTurns && entity._mdefBuffTurns > 0)) {
-    icons.push({ icon: 'verified_user', color: 'text-amber-300', name: 'ディバインシールド' });
+  if (entity._barrierHp && entity._barrierHp > 0) {
+    icons.push({ icon: 'shield', color: 'text-cyan-300', name: `バリア ${formatNumber(Math.floor(entity._barrierHp))}` });
   }
 
   if (icons.length === 0) return '';
@@ -65,6 +122,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
   const fastMode = cachedBattleSpeed >= 5;
   const transitionClass = fastMode ? '' : 'transition-transform';
   const deadStyle = e.isDead ? 'min-width: 0px; max-width: 0px; opacity: 0; margin: 0 -0.125rem; pointer-events: none;' : '';
+  const maxHp = Math.max(1, e.maxHp || 1);
   return `
     <div id="${e.elementId}" class="enemy-card relative flex flex-col items-center gap-0.5 flex-1 min-w-[2.5rem] max-w-[4rem] ${e.isDead ? '' : `cursor-pointer active:scale-105 ${transitionClass}`}" style="${deadStyle}" data-id="${e.uniqueId}">
       <div class="relative w-full aspect-square ${isSelected ? 'drop-shadow-[0_0_8px_rgba(239,68,68,1)]' : 'drop-shadow-md'} ${e.isDead ? 'opacity-0' : ''}" style="${fastMode ? '' : 'transition: filter 0.3s ease;'}">
@@ -73,14 +131,16 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
         </div>
         <img src="${e.image}" class="w-full h-full object-contain p-1 ${e.isLegendary ? 'animate-rainbow' : ''}" onerror="this.style.display='none'">
       </div>
-      <div class="w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
-        <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (e.currentHp / Math.max(1, e.maxHp)) * 100)}%; ${fastMode ? '' : 'transition: width 0.3s ease;'}"></div>
-        <div class="hp-barrier-bar absolute shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100 - Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100), (e.currentHp / Math.max(1, e.maxHp)) * 100) : 0}%; width: ${e._barrierHp && e._barrierHp > 0 ? Math.min(100, (e._barrierHp / Math.max(1, e.maxHp)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${e._barrierHp && e._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px); ${fastMode ? '' : 'transition: width 0.3s ease, left 0.3s ease, opacity 0.3s ease;'}"></div>
+      <div class="enemy-hp-container w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
+        <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (e.currentHp / maxHp) * 100)}%; ${fastMode ? '' : 'transition: width 0.3s ease;'}"></div>
         <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
           ${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}
         </div>
       </div>
-      <div class="w-full bg-gray-900 h-1.5 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
+      <div class="w-full ${e.isDead ? 'opacity-0' : ''}">
+        ${renderBarrierIndicatorHtml(e, maxHp, { compact: true, fastMode })}
+      </div>
+      <div class="enemy-atb-container w-full bg-gray-900 h-1.5 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div id="${e.elementId}-atb" class="bg-orange-500 h-full w-full origin-left" style="transform: scaleX(${e.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
       </div>
     </div>
@@ -158,8 +218,8 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
   const transClass = fastMode ? '' : 'transition-transform';
   const transColorClass = fastMode ? '' : 'transition-colors';
   const hpTransStyle = fastMode ? '' : 'transition: width 0.3s ease;';
-  const barrierTransStyle = fastMode ? '' : 'transition: width 0.3s ease, left 0.3s ease, opacity 0.3s ease;';
   const barTransStyle = fastMode ? '' : 'transition: transform 0.3s ease;';
+  const maxHp = Math.max(1, p.stats.hp || p.hp.max || 1);
 
   return `
     <div id="${p.elementId}" class="party-card relative flex min-w-0 flex-col overflow-hidden ${bgClass} rounded-md border ${borderClass} p-1 ${p.isDead ? 'opacity-40 grayscale' : `${transClass} cursor-pointer active:scale-[1.02]`}" aria-label="${p.name} レベル${p.level || 1}">
@@ -203,13 +263,13 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
         <div class="flex items-center gap-0.5">
           <span class="w-3 shrink-0 text-[7px] font-black text-red-400">HP</span>
           <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
-            <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100)}%; ${hpTransStyle}"></div>
-            <div class="hp-barrier-bar absolute shadow-[0_0_8px_rgba(59,130,246,0.8)] z-10 border-l border-blue-300" style="left: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100 - Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100), (p.hp.current / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; width: ${p._barrierHp && p._barrierHp > 0 ? Math.min(100, (p._barrierHp / Math.max(1, p.stats.hp || p.hp.max)) * 100) : 0}%; top: 0; bottom: 0; opacity: ${p._barrierHp && p._barrierHp > 0 ? 1 : 0}; background-color: rgba(59, 130, 246, 0.6); background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px); ${barrierTransStyle}"></div>
+            <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (p.hp.current / maxHp) * 100)}%; ${hpTransStyle}"></div>
             <div class="hp-text absolute inset-0 z-20 flex items-center justify-center whitespace-nowrap text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
-              ${formatNumber(Math.floor(p.hp.current))}/${formatNumber(p.stats.hp || p.hp.max)}
+              ${formatNumber(Math.floor(p.hp.current))}/${formatNumber(maxHp)}
             </div>
           </div>
         </div>
+        ${renderBarrierIndicatorHtml(p, maxHp, { fastMode })}
         <div class="flex items-center gap-0.5">
           <span class="w-3 shrink-0 text-[7px] font-black text-blue-400">MP</span>
           <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
