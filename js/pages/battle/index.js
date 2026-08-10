@@ -118,6 +118,7 @@ class BattleManager {
     this.isDungeonClear = false;
     this.currentTab = 'skill';
     this.jobDefinitions = JOBS;
+    this.battleStatisticsCharacterKey = null;
     this.obtainedItems = [];
     this.obtainedGold = 0;
     this.obtainedExp = 0;

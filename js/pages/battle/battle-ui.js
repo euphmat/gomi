@@ -751,9 +751,6 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
             </div>
             <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[9px] font-bold bg-slate-900/50 px-1 py-[1px] rounded border border-slate-700/50">Lv${level}</div>
             ${typeBadgeHtml}
-            ${isInherited
-              ? `<div class="text-[9px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1 py-[1px] rounded tracking-wider">継承 90%</div>`
-              : `<div class="text-[9px] font-black text-emerald-300 bg-emerald-900/30 border border-emerald-500/30 px-1 py-[1px] rounded tracking-wider">現職 110%</div>`}
           </div>
           <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${useStateHtml}${desc}</div>
         </div>
