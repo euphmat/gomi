@@ -4,7 +4,12 @@ import { createCharacterSelectGrid } from '../../components/character-select-gri
 import { showInheritanceHelpModal } from '../../components/inheritance-help-modal.js';
 
 import { JOBS } from '../../jobs/index.js';
-import { getAvailableJobSP } from '../../data/job-progression.js';
+import {
+  getAvailableJobSP,
+  getJobSkillLevelCost,
+  getJobSkillMasterLevel,
+  hasMasteredAllJobSkills
+} from '../../data/job-progression.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 
 /**
@@ -70,18 +75,25 @@ export function renderAcquireSkillTab() {
 
   const updateSkillRow = (row, skill, selectedChar, index, isInitial) => {
     const currentLevel = (selectedChar.jobSkills && selectedChar.jobSkills[selectedChar.jobId] && selectedChar.jobSkills[selectedChar.jobId][skill.id]) || 0;
-    const isMax = currentLevel >= skill.maxLevel;
+    const jobDef = JOBS[selectedChar.jobId];
+    const masterLevel = getJobSkillMasterLevel(skill);
+    const allSkillsMastered = hasMasteredAllJobSkills(selectedChar, jobDef);
+    const isMastered = currentLevel >= masterLevel;
+    const canLimitBreak = allSkillsMastered && isMastered;
+    const isLimitBreaking = canLimitBreak && currentLevel >= masterLevel;
+    const isMax = isMastered && !canLimitBreak;
     const targetLevel = isMax ? currentLevel : currentLevel + 1;
     const levelConfig = resolveJobSkillLevelConfig(skill, targetLevel, 'current');
     const currentDesc = currentLevel > 0 ? skill.getDescription(resolveJobSkillLevelConfig(skill, currentLevel, 'current')) : '未習得';
     const nextDesc = isMax ? '最大レベルに達しています' : skill.getDescription(levelConfig);
-    const hasEnoughSP = !isMax && selectedChar.sp >= levelConfig.spCost;
+    const nextLevelCost = getJobSkillLevelCost(skill, targetLevel);
+    const hasEnoughSP = !isMax && selectedChar.sp >= nextLevelCost;
 
     let maxPossibleLevel = currentLevel;
     let totalMaxCost = 0;
     if (!isMax) {
-      for (let l = currentLevel + 1; l <= skill.maxLevel; l++) {
-        const cost = skill.levels.find(lvl => lvl.level === l)?.spCost || 0;
+      for (let l = currentLevel + 1; l <= masterLevel; l++) {
+        const cost = getJobSkillLevelCost(skill, l);
         if (selectedChar.sp >= totalMaxCost + cost) {
           totalMaxCost += cost;
           maxPossibleLevel = l;
@@ -106,28 +118,33 @@ export function renderAcquireSkillTab() {
     if (isMax) {
       btnClass = 'bg-gray-800/80 border-gray-600/50 text-gray-500 cursor-not-allowed';
       btnText = '<span class="font-black tracking-widest">MAX</span>';
+    } else if (isLimitBreaking) {
+      btnClass = hasEnoughSP
+        ? 'bg-gradient-to-r from-fuchsia-600 to-purple-600 active:from-fuchsia-500 active:to-purple-500 text-white shadow-md shadow-fuchsia-500/20 border-fuchsia-400/50'
+        : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">限界突破</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${nextLevelCost} SP</span></div>`;
     } else if (currentLevel === 0) {
       btnClass = hasEnoughSP 
         ? 'bg-gradient-to-r from-emerald-600 to-teal-500 active:from-emerald-500 active:to-teal-400 text-white shadow-md shadow-emerald-500/20 border-emerald-400/50'
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">修得</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">修得</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${nextLevelCost} SP</span></div>`;
     } else {
       btnClass = hasEnoughSP 
         ? 'bg-gradient-to-r from-orange-600 to-rose-500 active:from-orange-500 active:to-rose-400 text-white shadow-md shadow-orange-500/20 border-orange-400/50'
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">強化</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${levelConfig.spCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">強化</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${nextLevelCost} SP</span></div>`;
     }
 
     row.className = 'group relative p-2.5 bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl border border-white/10 active:border-white/20 shadow-lg transition-all duration-300 overflow-hidden';
 
     row.innerHTML = `
-      <div class="absolute inset-0 bg-gradient-to-br ${currentLevel === 0 ? 'from-emerald-500/5' : (isMax ? 'from-gray-500/5' : 'from-orange-500/5')} to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+      <div class="absolute inset-0 bg-gradient-to-br ${currentLevel === 0 ? 'from-emerald-500/5' : (isLimitBreaking ? 'from-fuchsia-500/10' : (isMax ? 'from-gray-500/5' : 'from-orange-500/5'))} to-transparent opacity-0 group-active:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
       
       <div class="flex items-center gap-3 relative z-10">
         <!-- Icon -->
         <div class="flex items-center justify-center w-11 h-11 bg-black/50 rounded-xl shrink-0 relative shadow-inner border border-white/10 group-active:border-white/20 transition-colors">
-          <span class="material-symbols-outlined text-2xl ${currentLevel === 0 ? 'text-gray-400' : (isMax ? 'text-yellow-400' : 'text-orange-400')} drop-shadow-md group-active:scale-110 transition-transform duration-300">${skill.icon}</span>
-          <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-br ${isMax ? 'from-yellow-500 to-amber-600' : (currentLevel === 0 ? 'from-gray-600 to-gray-700' : 'from-blue-600 to-indigo-600')} text-[9px] font-black ${currentLevel === 0 ? 'text-gray-300' : 'text-white'} px-1 py-0.5 rounded shadow-md border border-white/20">Lv.${currentLevel}</div>
+          <span class="material-symbols-outlined text-2xl ${currentLevel === 0 ? 'text-gray-400' : (isLimitBreaking ? 'text-fuchsia-300' : (isMax ? 'text-yellow-400' : 'text-orange-400'))} drop-shadow-md group-active:scale-110 transition-transform duration-300">${skill.icon}</span>
+          <div class="absolute -bottom-1.5 -right-1.5 bg-gradient-to-br ${isLimitBreaking ? 'from-fuchsia-500 to-purple-700' : (isMax ? 'from-yellow-500 to-amber-600' : (currentLevel === 0 ? 'from-gray-600 to-gray-700' : 'from-blue-600 to-indigo-600'))} text-[9px] font-black ${currentLevel === 0 ? 'text-gray-300' : 'text-white'} px-1 py-0.5 rounded shadow-md border border-white/20">Lv.${currentLevel}</div>
         </div>
 
         <!-- Info -->
@@ -144,8 +161,8 @@ export function renderAcquireSkillTab() {
               ${skill.statDependency === 'MAT' ? `<span class="text-[9px] font-bold text-fuchsia-300 bg-fuchsia-900/40 border border-fuchsia-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">auto_awesome</span>魔法</span>` : ''}
               ${skill.statDependency === 'BOTH' ? `<span class="text-[9px] font-bold text-yellow-300 bg-yellow-900/40 border border-yellow-700/50 px-1 py-px rounded flex items-center gap-0.5"><span class="material-symbols-outlined !text-[11px]">flare</span>複合</span>` : ''}
             </div>
-            <div class="text-[9px] font-bold text-gray-500 tracking-wider hidden sm:block">
-              MAX Lv.${skill.maxLevel}
+            <div class="text-[9px] font-bold ${allSkillsMastered ? 'text-fuchsia-300' : 'text-gray-500'} tracking-wider hidden sm:block">
+              ${allSkillsMastered ? `MASTER Lv.${masterLevel} / 限界突破 ∞` : `MAX Lv.${masterLevel}`}
             </div>
           </div>
           
@@ -153,12 +170,12 @@ export function renderAcquireSkillTab() {
             ${currentLevel > 0 ? `
               <div class="flex gap-1.5 items-start text-[10px] leading-tight">
                 <span class="font-black text-gray-500 shrink-0 w-7 mt-px">現在</span>
-                <span class="${isMax ? 'text-yellow-100/90' : 'text-gray-400'} break-words whitespace-pre-wrap flex-1">${currentDescHtml}</span>
+                <span class="${isLimitBreaking ? 'text-fuchsia-100/90' : (isMax ? 'text-yellow-100/90' : 'text-gray-400')} break-words whitespace-pre-wrap flex-1">${currentDescHtml}</span>
               </div>
             ` : ''}
             ${!isMax ? `
               <div class="flex gap-1.5 items-start text-[10px] leading-tight">
-                <span class="font-black ${currentLevel === 0 ? 'text-emerald-400' : 'text-orange-400'} shrink-0 w-7 mt-px">次Lv</span>
+                <span class="font-black ${currentLevel === 0 ? 'text-emerald-400' : (isLimitBreaking ? 'text-fuchsia-300' : 'text-orange-400')} shrink-0 w-7 mt-px">次Lv</span>
                 <span class="text-white break-words whitespace-pre-wrap font-medium flex-1">${nextDescHtml}</span>
               </div>
             ` : ''}
@@ -172,7 +189,11 @@ export function renderAcquireSkillTab() {
             <span class="relative z-10 flex items-center justify-center w-full">${btnText}</span>
           </button>
           
-          ${!isMax && maxPossibleLevel > currentLevel ? `
+          ${isLimitBreaking ? `
+          <button class="w-full py-1 bg-fuchsia-950/40 border border-fuchsia-700/40 text-fuchsia-300 text-[10px] font-black tracking-wider rounded-lg cursor-default" disabled>
+            突破 +${currentLevel - masterLevel} / ∞
+          </button>
+          ` : (!isMax && maxPossibleLevel > currentLevel ? `
           <button class="max-btn w-full relative overflow-hidden py-1 bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-500 active:to-indigo-500 text-white shadow-md shadow-purple-500/20 border border-purple-400/50 text-[11px] rounded-lg active:scale-[0.98] transition-all duration-200">
             <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-active:animate-[shimmer_1.5s_infinite] skew-x-12"></div>
             <span class="relative z-10 flex items-center justify-center w-full gap-1">
@@ -184,7 +205,7 @@ export function renderAcquireSkillTab() {
           <button class="w-full py-1 bg-gray-800/50 border border-gray-700/50 text-gray-600 text-[11px] font-black tracking-widest rounded-lg cursor-not-allowed" disabled>
             MAX
           </button>
-          `}
+          `)}
         </div>
       </div>
     `;
@@ -198,14 +219,14 @@ export function renderAcquireSkillTab() {
         btn.classList.add('scale-95', 'opacity-80');
         setTimeout(() => btn.classList.remove('scale-95', 'opacity-80'), 150);
 
-        if (selectedChar.sp >= levelConfig.spCost) {
+        if (selectedChar.sp >= nextLevelCost) {
           const isAcquire = currentLevel === 0;
           btn.disabled = true;
 
           // -------------------------------------------------------------
           // FIX: Deduct SP and save immediately to prevent spam click issues
           // -------------------------------------------------------------
-          selectedChar.sp -= levelConfig.spCost;
+          selectedChar.sp -= nextLevelCost;
           if (!selectedChar.jobSkills) selectedChar.jobSkills = {};
           if (!selectedChar.jobSkills[selectedChar.jobId]) selectedChar.jobSkills[selectedChar.jobId] = {};
           selectedChar.jobSkills[selectedChar.jobId][skill.id] = targetLevel;
@@ -216,9 +237,11 @@ export function renderAcquireSkillTab() {
           // Simple Flash effect on the row background
           const flashOverlay = document.createElement('div');
           flashOverlay.className = `absolute inset-0 z-20 pointer-events-none mix-blend-screen`;
-          flashOverlay.style.background = isAcquire 
-              ? 'linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.4) 50%, rgba(16,185,129,0) 100%)' 
-              : 'linear-gradient(90deg, rgba(249,115,22,0) 0%, rgba(249,115,22,0.4) 50%, rgba(249,115,22,0) 100%)';
+          flashOverlay.style.background = isAcquire
+              ? 'linear-gradient(90deg, rgba(16,185,129,0) 0%, rgba(16,185,129,0.4) 50%, rgba(16,185,129,0) 100%)'
+              : (isLimitBreaking
+                ? 'linear-gradient(90deg, rgba(217,70,239,0) 0%, rgba(217,70,239,0.55) 50%, rgba(217,70,239,0) 100%)'
+                : 'linear-gradient(90deg, rgba(249,115,22,0) 0%, rgba(249,115,22,0.4) 50%, rgba(249,115,22,0) 100%)');
           row.appendChild(flashOverlay);
 
           flashOverlay.animate([

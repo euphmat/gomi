@@ -73,6 +73,47 @@ export function getJobLevelUpSP() {
   return 1;
 }
 
+/** Return the authored mastery level for a job skill. */
+export function getJobSkillMasterLevel(skill) {
+  if (!skill?.levels?.length) return 0;
+  return Math.max(
+    0,
+    Math.floor(Number(skill.maxLevel) || skill.levels[skill.levels.length - 1]?.level || 0)
+  );
+}
+
+/**
+ * Return the SP cost of a skill level. Limit breaks reuse the mastered level's
+ * cost forever; this makes their SP accounting deterministic and uncapped.
+ */
+export function getJobSkillLevelCost(skill, level) {
+  if (!skill?.levels?.length) return 0;
+  const normalizedLevel = Math.max(0, Math.floor(Number(level) || 0));
+  if (normalizedLevel <= 0) return 0;
+
+  const authoredConfig = skill.levels.find(candidate => candidate.level === normalizedLevel);
+  if (authoredConfig) return Math.max(0, Number(authoredConfig.spCost) || 0);
+
+  if (normalizedLevel > getJobSkillMasterLevel(skill)) {
+    const masterConfig = skill.levels.find(candidate => candidate.level === getJobSkillMasterLevel(skill))
+      || skill.levels[skill.levels.length - 1];
+    return Math.max(0, Number(masterConfig?.spCost) || 0);
+  }
+
+  return 0;
+}
+
+/** Limit breaks unlock only after every skill belonging to the job is mastered. */
+export function hasMasteredAllJobSkills(character, job) {
+  if (!character || !job?.id || !Array.isArray(job.skills) || job.skills.length === 0) return false;
+  const acquiredSkills = character.jobSkills?.[job.id];
+  if (!acquiredSkills || typeof acquiredSkills !== 'object') return false;
+  return job.skills.every(skill => {
+    const level = Math.max(0, Math.floor(Number(acquiredSkills[skill.id]) || 0));
+    return level >= getJobSkillMasterLevel(skill);
+  });
+}
+
 /** Return SP already spent on the supplied job's acquired skill levels. */
 export function getSpentJobSP(character, job) {
   if (!character || !job?.id || !Array.isArray(job.skills)) return 0;
@@ -84,9 +125,13 @@ export function getSpentJobSP(character, job) {
     const skill = job.skills.find(candidate => candidate.id === skillId);
     if (!skill) continue;
     const normalizedLevel = Math.max(0, Math.floor(Number(acquiredLevel) || 0));
-    for (let level = 1; level <= normalizedLevel; level++) {
-      const levelConfig = skill.levels.find(candidate => candidate.level === level);
-      spentSP += Math.max(0, Number(levelConfig?.spCost) || 0);
+    const masterLevel = getJobSkillMasterLevel(skill);
+    for (const levelConfig of skill.levels) {
+      if (levelConfig.level > normalizedLevel || levelConfig.level > masterLevel) continue;
+      spentSP += Math.max(0, Number(levelConfig.spCost) || 0);
+    }
+    if (normalizedLevel > masterLevel) {
+      spentSP += (normalizedLevel - masterLevel) * getJobSkillLevelCost(skill, masterLevel + 1);
     }
   }
   return spentSP;

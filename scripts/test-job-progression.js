@@ -4,8 +4,11 @@ import {
   getAvailableJobSP,
   getJobExpToNext,
   getJobLevelUpSP,
+  getJobSkillLevelCost,
+  getJobSkillMasterLevel,
   getSpentJobSP,
   getTotalJobSP,
+  hasMasteredAllJobSkills,
   normalizeJobExpProgress
 } from '../js/data/job-progression.js';
 import { getBaseExpToNext } from '../js/data/level-progression.js';
@@ -60,19 +63,31 @@ const testJob = {
     { id: 'skill_b', levels: [{ level: 1, spCost: 25 }] }
   ]
 };
+assert(getJobSkillMasterLevel(testJob.skills[0]) === 2, 'authored mastery level is invalid');
+assert(getJobSkillLevelCost(testJob.skills[0], 1) === 10, 'authored skill cost is invalid');
+assert(getJobSkillLevelCost(testJob.skills[0], 3) === 20, 'limit break should reuse mastery cost');
 const existingCharacter = {
   jobLevel: 50,
   jobSkills: { test_job: { skill_a: 2, skill_b: 1 } }
 };
 assert(getSpentJobSP(existingCharacter, testJob) === 55, 'spent job SP is invalid');
+assert(hasMasteredAllJobSkills(existingCharacter, testJob), 'fully mastered job was not detected');
 assert(getAvailableJobSP(existingCharacter, testJob, 50) === 0, 'over-allocated skills should consume future SP');
 assert(getAvailableJobSP(existingCharacter, testJob, 56) === 0, 'SP debt should be settled before SP becomes available');
 assert(getAvailableJobSP(existingCharacter, testJob, 57) === 1, 'SP should become available after debt is settled');
+
+const limitBrokenCharacter = {
+  jobLevel: 80,
+  jobSkills: { test_job: { skill_a: 4, skill_b: 1 } }
+};
+assert(getSpentJobSP(limitBrokenCharacter, testJob) === 95, 'limit break SP was not counted');
+assert(hasMasteredAllJobSkills(limitBrokenCharacter, testJob), 'limit-broken job should remain mastered');
 
 const partiallySpentCharacter = {
   jobLevel: 50,
   jobSkills: { test_job: { skill_a: 1 } }
 };
+assert(!hasMasteredAllJobSkills(partiallySpentCharacter, testJob), 'partial mastery unlocked limit breaks');
 assert(getAvailableJobSP(partiallySpentCharacter, testJob) === 39, 'legacy unspent SP should be removed');
 
 const previouslyMigratedCharacter = {
