@@ -123,7 +123,7 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
         <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (e.currentHp / maxHp) * 100)}%; ${fastMode ? '' : 'transition: width 0.3s ease;'}"></div>
         ${renderBarrierIndicatorHtml(e, maxHp, { fastMode })}
         <div class="hp-text absolute inset-0 z-20 flex items-center ${e._barrierHp > 0 ? 'justify-start pl-0.5 pr-[45%]' : 'justify-center'} overflow-hidden text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap">
-          <span class="hp-value truncate">${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}</span>
+          <span class="hp-value truncate">${e.isDead ? '撃破' : `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`}</span>
         </div>
       </div>
       <div class="enemy-atb-container w-full bg-gray-900 h-1.5 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">

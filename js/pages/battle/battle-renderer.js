@@ -299,9 +299,21 @@ export const rendererMethods = {
 
       const enemyDeadState = `${e.isDead}-${fastMode}`;
       const isFinishingAttack = this._pendingAttackAnimationTargets?.has(e);
+
+      // A lethal hit can keep the enemy card mounted briefly so the impact
+      // animation still has a target. Hide battle gauges immediately, though:
+      // showing the already-defeated enemy as 0/max during that wait makes it
+      // look alive and can leave a conspicuous 0/x frame at lower speeds.
+      if (e.isDead) {
+        el.classList.remove('cursor-pointer', 'active:scale-105');
+        hpContainer.classList.add('opacity-0');
+        atbContainer.classList.add('opacity-0');
+        hpContainer.setAttribute('aria-hidden', 'true');
+        atbContainer.setAttribute('aria-hidden', 'true');
+      }
+
       if (e.isDead && !isFinishingAttack && cache.uiState.dead !== enemyDeadState) {
         cache.uiState.dead = enemyDeadState;
-        el.classList.remove('cursor-pointer', 'active:scale-105');
         if (!disableAnim) {
           playEnemyDefeatAnimation(iconContainer);
           el.classList.remove('transition-transform');
@@ -351,7 +363,9 @@ export const rendererMethods = {
       updateBarrierIndicator(cache, e, Math.max(1, e.maxHp));
 
       if (hpText) {
-        const newHpText = `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`;
+        const newHpText = e.isDead
+          ? '撃破'
+          : `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`;
         if (hpText.textContent !== newHpText) hpText.textContent = newHpText;
       }
     });
