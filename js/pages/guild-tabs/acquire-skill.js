@@ -13,6 +13,7 @@ import {
 } from '../../data/job-progression.js';
 import {
   canLimitBreakJobSkill,
+  getNextJobSkillLimitBreakMilestone,
   resolveJobSkillLevelConfig
 } from '../../utils/job-skill-potency.js';
 
@@ -157,6 +158,10 @@ export function renderAcquireSkillTab() {
     const nextDesc = isMax ? '最大レベルに達しています' : skill.getDescription(levelConfig);
     const nextLevelCost = getJobSkillLevelCost(skill, targetLevel);
     const hasEnoughSP = !isMax && selectedChar.sp >= nextLevelCost;
+    const nextMilestone = allSkillsMastered && isMastered
+      ? getNextJobSkillLimitBreakMilestone(skill, currentLevel)
+      : null;
+    const reachesMilestone = nextMilestone?.level === targetLevel;
 
     let maxPossibleLevel = currentLevel;
     let totalMaxCost = 0;
@@ -191,7 +196,7 @@ export function renderAcquireSkillTab() {
       btnClass = hasEnoughSP
         ? 'bg-gradient-to-r from-fuchsia-600 to-purple-600 active:from-fuchsia-500 active:to-purple-500 text-white shadow-md shadow-fuchsia-500/20 border-fuchsia-400/50'
         : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed';
-      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">限界突破</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${nextLevelCost} SP</span></div>`;
+      btnText = `<div class="flex items-center justify-center gap-1"><span class="font-bold">${reachesMilestone ? '覚醒' : '限界突破'}</span> <span class="ml-0.5 text-[9px] font-black bg-black/30 px-1 py-0.5 rounded">${nextLevelCost} SP</span></div>`;
     } else if (currentLevel === 0) {
       btnClass = hasEnoughSP 
         ? 'bg-gradient-to-r from-emerald-600 to-teal-500 active:from-emerald-500 active:to-teal-400 text-white shadow-md shadow-emerald-500/20 border-emerald-400/50'
@@ -247,6 +252,12 @@ export function renderAcquireSkillTab() {
                 <span class="text-white break-words whitespace-pre-wrap font-medium flex-1">${nextDescHtml}</span>
               </div>
             ` : ''}
+            ${nextMilestone ? `
+              <div class="flex gap-1.5 items-start rounded-md border border-fuchsia-500/20 bg-fuchsia-950/25 px-1.5 py-1 text-[9px] leading-tight">
+                <span class="font-black text-fuchsia-300 shrink-0">次覚醒</span>
+                <span class="font-bold text-fuchsia-100">Lv.${nextMilestone.level}：${nextMilestone.label}</span>
+              </div>
+            ` : ''}
           </div>
         </div>
 
@@ -259,7 +270,7 @@ export function renderAcquireSkillTab() {
           
           ${isLimitBreaking ? `
           <button class="w-full py-1 bg-fuchsia-950/40 border border-fuchsia-700/40 text-fuchsia-300 text-[10px] font-black tracking-wider rounded-lg cursor-default" disabled>
-            突破 +${currentLevel - masterLevel} / ∞
+            突破 +${currentLevel - masterLevel}${nextMilestone ? ` / 次覚醒 +${nextMilestone.breaks}` : ''}
           </button>
           ` : (!isMax && maxPossibleLevel > currentLevel ? `
           <button class="max-btn w-full relative overflow-hidden py-1 bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-500 active:to-indigo-500 text-white shadow-md shadow-purple-500/20 border border-purple-400/50 text-[11px] rounded-lg active:scale-[0.98] transition-all duration-200">

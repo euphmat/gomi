@@ -99,7 +99,9 @@ const enemy = {
   assert((container.innerHTML.match(/data-battle-stat-character=/g) || []).length === 2,
     'character tabs were not rendered');
   assert(container.innerHTML.includes('./assets/job/job_knight.webp'),
-    'current job icon was not rendered in statistics');
+    'current job image was not rendered in statistics');
+  assert(!container.innerHTML.includes("previousElementSibling.classList.remove('hidden')"),
+    'job material icon fallback should not overlap the job image');
   assert(container.innerHTML.includes('最大 / Hit') && container.innerHTML.includes('平均 / Hit'),
     'detailed damage statistics were not rendered');
   assert(container.innerHTML.includes('発動頻度') && container.innerHTML.includes('平均間隔'),

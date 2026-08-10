@@ -254,6 +254,10 @@ export const magic_knight = {
     {
       id: 'flame_tongue', name: 'フレイムタン', icon: 'local_fire_department', statDependency: 'BOTH',
       maxLevel: 10,
+      limitBreakMilestones: [
+        { breaks: 10, label: '複合防御貫通 10%', bonuses: { defenseIgnorePercent: 10 } },
+        { breaks: 25, label: '複合防御貫通 +10%', bonuses: { defenseIgnorePercent: 10 } }
+      ],
       levels: [
         { level:  1, spCost: 1, mpCost: 20, multiplier: 1.2 },
         { level:  2, spCost: 1, mpCost: 24, multiplier: 1.3 },
@@ -266,7 +270,7 @@ export const magic_knight = {
         { level:  9, spCost: 3, mpCost: 52, multiplier: 2.0 },
         { level: 10, spCost: 5, mpCost: 60, multiplier: 2.2 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、単体に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の炎属性複合攻撃を行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、単体に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の炎属性複合攻撃を行う${lc.defenseIgnorePercent ? `（複合防御を${lc.defenseIgnorePercent}%貫通）` : ''}`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let target = battle.selectedEnemyTarget;
@@ -279,6 +283,7 @@ export const magic_knight = {
             statDependency: this.statDependency,
             actionName: 'フレイムタン',
             damageMultiplier: levelConfig.multiplier,
+            defenseIgnorePercent: levelConfig.defenseIgnorePercent,
             damageType: 'skill',
             element: 'fire',
             hideActionName: true
@@ -307,6 +312,10 @@ export const magic_knight = {
     {
       id: 'ice_brand', name: 'アイスブランド', icon: 'ac_unit', statDependency: 'BOTH',
       maxLevel: 10,
+      limitBreakMilestones: [
+        { breaks: 10, label: '複合防御貫通 10%', bonuses: { defenseIgnorePercent: 10 } },
+        { breaks: 25, label: '複合防御貫通 +10%', bonuses: { defenseIgnorePercent: 10 } }
+      ],
       levels: [
         { level:  1, spCost: 1, mpCost: 30, multiplier: 0.6, hits: 2 },
         { level:  2, spCost: 1, mpCost: 34, multiplier: 0.65, hits: 2 },
@@ -319,7 +328,7 @@ export const magic_knight = {
         { level:  9, spCost: 3, mpCost: 62, multiplier: 1.0, hits: 6 },
         { level: 10, spCost: 5, mpCost: 72, multiplier: 1.1, hits: 6 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の氷属性複合攻撃を ${lc.hits} 回行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムな敵に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の氷属性複合攻撃を ${lc.hits} 回行う${lc.defenseIgnorePercent ? `（複合防御を${lc.defenseIgnorePercent}%貫通）` : ''}`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         const hits = levelConfig.hits;
@@ -348,6 +357,7 @@ export const magic_knight = {
             statDependency: this.statDependency,
               actionName: 'アイスブランド',
               damageMultiplier: levelConfig.multiplier,
+              defenseIgnorePercent: levelConfig.defenseIgnorePercent,
               damageType: 'skill',
               element: 'ice',
               hideActionName: true
@@ -377,6 +387,10 @@ export const magic_knight = {
     {
       id: 'thunder_slash', name: 'サンダースラッシュ', icon: 'bolt', statDependency: 'BOTH',
       maxLevel: 10,
+      limitBreakMilestones: [
+        { breaks: 10, label: '複合防御貫通 10%', bonuses: { defenseIgnorePercent: 10 } },
+        { breaks: 25, label: '複合防御貫通 +10%', bonuses: { defenseIgnorePercent: 10 } }
+      ],
       levels: [
         { level:  1, spCost: 1, mpCost: 50, multiplier: 1.0 },
         { level:  2, spCost: 1, mpCost: 56, multiplier: 1.1 },
@@ -389,7 +403,7 @@ export const magic_knight = {
         { level:  9, spCost: 3, mpCost: 98, multiplier: 1.8 },
         { level: 10, spCost: 5, mpCost: 110, multiplier: 2.0 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の雷属性複合攻撃を行う`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、敵全体に ATK と MATK を合わせた ${lc.multiplier.toFixed(2)} 倍の雷属性複合攻撃を行う${lc.defenseIgnorePercent ? `（複合防御を${lc.defenseIgnorePercent}%貫通）` : ''}`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let targetGroup = battle.enemies;
@@ -405,6 +419,7 @@ export const magic_knight = {
             statDependency: this.statDependency,
             actionName: '',
             damageMultiplier: levelConfig.multiplier,
+            defenseIgnorePercent: levelConfig.defenseIgnorePercent,
             damageType: 'skill',
             element: 'thunder',
             hideActionName: true,

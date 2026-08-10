@@ -27,6 +27,11 @@ const conductor = getJobResourceState(
   makeCharacter('mana_conductor', 'conductor_core', 10, '_conductorHarmony', 5)
 );
 assert(conductor?.current === 5 && conductor.max === 5, '共鳴ゲージが不正です');
+const awakenedConductor = getJobResourceState(
+  makeCharacter('mana_conductor', 'conductor_core', 20, '_conductorHarmony', 6)
+);
+assert(awakenedConductor?.current === 6 && awakenedConductor.max === 6,
+  '限界突破した共鳴上限がゲージへ反映されません');
 
 const singer = getJobResourceState(
   makeCharacter('slime_singer', 'resonant_gel', 7, '_slimeSingerNotes', 3)

@@ -163,6 +163,17 @@ const BASE_SLIMES = [
   'slime_thunder', 'slime_flower', 'slime_grass', 'slime_dark', 'slime_earth', 'slime_angel'
 ];
 
+const getSlimeThrowCount = levelConfig => (
+  Math.min(10, Math.max(1, Math.floor(Number(levelConfig.level) || 1)))
+  + Math.max(0, Math.floor(Number(levelConfig.slimeThrowsBonus) || 0))
+);
+
+const getSlimeHazardCount = levelConfig => {
+  const authoredLevel = Math.min(10, Math.max(1, Math.floor(Number(levelConfig.level) || 1)));
+  const baseCount = Math.round(10 + (authoredLevel - 1) * (20 / 9));
+  return baseCount + Math.max(0, Math.floor(Number(levelConfig.slimeHazardBonus) || 0));
+};
+
 export const slime_master = {
   id: 'slime_master',
   name: 'スライムマスター',
@@ -185,6 +196,10 @@ export const slime_master = {
     {
       id: 'slime_throw', name: 'スライム投げ', icon: 'water_drop', statDependency: 'MAT',
       maxLevel: 10,
+      limitBreakMilestones: [
+        { breaks: 5, label: '投げるスライム +1', bonuses: { slimeThrowsBonus: 1 } },
+        { breaks: 15, label: '投げるスライム +1', bonuses: { slimeThrowsBonus: 1 } }
+      ],
       levels: [
         { level:  1, spCost: 1, mpCost: 10, multiplier: 1.2 },
         { level:  2, spCost: 1, mpCost: 12, multiplier: 1.3 },
@@ -197,7 +212,7 @@ export const slime_master = {
         { level:  9, spCost: 3, mpCost: 26, multiplier: 2.0 },
         { level: 10, spCost: 5, mpCost: 30, multiplier: 2.5 }
       ],
-      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムなスライムを${lc.level}回投げる。スライムによって属性と追加効果が変わる。1撃の基本威力 ${lc.multiplier.toFixed(2)} 倍`,
+      getDescription: (lc) => `MP を ${lc.mpCost} 消費し、ランダムなスライムを${getSlimeThrowCount(lc)}回投げる。スライムによって属性と追加効果が変わる。1撃の基本威力 ${lc.multiplier.toFixed(2)} 倍`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
         let mainTarget = battle.selectedEnemyTarget;
@@ -205,7 +220,7 @@ export const slime_master = {
         if (!mainTarget || mainTarget.isDead) mainTarget = battle.enemies.find(e => !e.isDead);
         if (!mainTarget) return;
 
-        const numThrows = levelConfig.level;
+        const numThrows = getSlimeThrowCount(levelConfig);
         const targets = [];
         const slimeDataList = [];
         
@@ -268,13 +283,17 @@ export const slime_master = {
           if (aliveEnemies.length === 0) return null;
           let target = context.selectedEnemyTarget;
           if (!target || target.isDead) target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-          return { target, score: 30 * levelConfig.multiplier * levelConfig.level };
+          return { target, score: 30 * levelConfig.multiplier * getSlimeThrowCount(levelConfig) };
         }
       }
     },
     {
       id: 'slime_hazard', name: 'スライムハザード', icon: 'storm', statDependency: 'MAT',
       maxLevel: 10,
+      limitBreakMilestones: [
+        { breaks: 5, label: '落下スライム +5体', bonuses: { slimeHazardBonus: 5 } },
+        { breaks: 15, label: '落下スライム +5体', bonuses: { slimeHazardBonus: 5 } }
+      ],
       levels: [
         { level:  1, spCost: 2, mpCost: 60, multiplier: 1.5 },
         { level:  2, spCost: 2, mpCost: 70, multiplier: 1.6 },
@@ -288,7 +307,7 @@ export const slime_master = {
         { level: 10, spCost: 6, mpCost: 160, multiplier: 3.0 }
       ],
       getDescription: (lc) => {
-        const numSlimes = Math.round(10 + (lc.level - 1) * (20 / 9));
+        const numSlimes = getSlimeHazardCount(lc);
         return `MP を ${lc.mpCost} 消費し、ランダムな敵に${numSlimes}体のスライムを落下させる無属性魔法攻撃。1撃の威力 ${(lc.multiplier * 0.30).toFixed(2)} 倍`;
       },
       execute(caster, levelConfig, battle) {
@@ -300,7 +319,7 @@ export const slime_master = {
         const aliveEnemies = targetGroup.filter(e => !e.isDead);
         if (aliveEnemies.length === 0) return;
 
-        const numSlimes = Math.round(10 + (levelConfig.level - 1) * (20 / 9));
+        const numSlimes = getSlimeHazardCount(levelConfig);
         const targets = [];
         for (let i = 0; i < numSlimes; i++) {
           targets.push(aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)]);
@@ -332,7 +351,7 @@ export const slime_master = {
         check: (caster, levelConfig, context) => {
           const aliveEnemies = context.enemies.filter(e => !e.isDead);
           if (aliveEnemies.length >= 2) {
-             const numSlimes = Math.round(10 + (levelConfig.level - 1) * (20 / 9));
+             const numSlimes = getSlimeHazardCount(levelConfig);
              return { target: caster, score: 35 * (levelConfig.multiplier * 0.30) * numSlimes };
           }
           return null;

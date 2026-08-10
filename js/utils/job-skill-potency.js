@@ -71,6 +71,8 @@ const INVERSE_EFFECT_KEYS = new Set(['threshold']);
 const LIMIT_BREAK_FIXED_KEYS = new Set([
   'level', 'spCost', 'mpCost', 'hits', 'minHits', 'maxHits',
   'bossMultiplier', 'detonationMultiplier', 'highHpMultiplier', 'shatterMultiplier',
+  'matkRatio', 'defenseRatio', 'harmonyMultiplier', 'hypeMultiplier',
+  'noteMultiplier', 'spiritMultiplier', 'sigilBonus',
   'defenseIgnorePercent', 'skillDefenseIgnorePercent',
   'maxDragonSpirit', 'maxHarmony', 'maxHype', 'maxNotes',
   // Blood-cost percentage: increasing it would make the skill worse.
@@ -81,13 +83,52 @@ const LIMIT_BREAK_FIXED_KEYS = new Set([
 // This keeps support limit breaks worthwhile without allowing long control or
 // defensive effects to scale multiplicatively with their strength.
 const LIMIT_BREAK_STEPPED_KEYS = new Map([
-  ['turns', { every: 5, maxBonus: 3 }],
-  ['duration', { every: 5, maxBonus: 3 }],
-  ['burnTurns', { every: 5, maxBonus: 3 }],
-  ['extensionTurns', { every: 5, maxBonus: 3 }],
-  ['freezeTurns', { every: 10, maxBonus: 1 }],
+  ['turns', { every: 5, maxBonus: 5 }],
+  ['duration', { every: 5, maxBonus: 5 }],
+  ['burnTurns', { every: 5, maxBonus: 5 }],
+  ['extensionTurns', { every: 5, maxBonus: 4 }],
+  ['freezeTurns', { every: 10, maxBonus: 2 }],
   // Restore gains its first extra target immediately, then one every 5 breaks.
   ['cleanseCount', { every: 5, maxBonus: 3, immediate: true }]
+]);
+
+const LIMIT_BREAK_MILESTONE_LABELS = Object.freeze({
+  turns: '効果時間 +1ターン',
+  duration: '持続回数 +1',
+  burnTurns: '火傷時間 +1ターン',
+  extensionTurns: '病勢延長 +1ターン',
+  freezeTurns: '凍結時間 +1ターン',
+  cleanseCount: '状態異常解除数 +1'
+});
+
+// Milestones make structural and compound effects grow at memorable break
+// points instead of scaling them every level. Values here are cumulative: each
+// reached entry is added once to the mastered configuration.
+const LIMIT_BREAK_MILESTONE_RULES = Object.freeze([
+  { key: 'hits', entries: [[5, 1, '攻撃回数 +1'], [15, 1, '攻撃回数 +1']] },
+  { key: 'maxHits', entries: [[5, 1, '最大攻撃回数 +1'], [25, 1, '最大攻撃回数 +1']] },
+  { key: 'minHits', entries: [[15, 1, '最低攻撃回数 +1']] },
+  { key: 'maxDragonSpirit', entries: [[10, 1, '竜気上限 +1'], [25, 1, '竜気上限 +1']] },
+  { key: 'maxHarmony', entries: [[10, 1, '共鳴上限 +1'], [25, 1, '共鳴上限 +1']] },
+  { key: 'maxHype', entries: [[10, 1, '舞台熱上限 +1'], [25, 1, '舞台熱上限 +1']] },
+  { key: 'maxNotes', entries: [[10, 1, 'ぷるぷる音符上限 +1'], [25, 1, 'ぷるぷる音符上限 +1']] },
+  { key: 'detonationMultiplier', entries: [[10, .25, '燃焼爆発倍率 +0.25'], [25, .25, '燃焼爆発倍率 +0.25']] },
+  { key: 'shatterMultiplier', entries: [[10, .25, '凍結粉砕倍率 +0.25'], [25, .25, '凍結粉砕倍率 +0.25']] },
+  { key: 'highHpMultiplier', entries: [[10, .15, '高HP特効倍率 +0.15'], [25, .15, '高HP特効倍率 +0.15']] },
+  { key: 'matkRatio', entries: [[10, .10, 'MATK複合比率 +10%'], [25, .10, 'MATK複合比率 +10%']] },
+  { key: 'defenseRatio', entries: [[10, .10, '防御攻撃変換率 +10%'], [25, .10, '防御攻撃変換率 +10%']] },
+  { key: 'harmonyMultiplier', entries: [[10, .05, '共鳴1個の威力 +5%'], [25, .05, '共鳴1個の威力 +5%']] },
+  { key: 'hypeMultiplier', entries: [[10, .05, '舞台熱1個の威力 +5%'], [25, .05, '舞台熱1個の威力 +5%']] },
+  { key: 'noteMultiplier', entries: [[10, .08, '音符1個の威力 +0.08倍'], [25, .08, '音符1個の威力 +0.08倍']] },
+  { key: 'spiritMultiplier', entries: [[10, .10, '竜気1個の威力 +0.10倍'], [25, .10, '竜気1個の威力 +0.10倍']] },
+  { key: 'sigilBonus', entries: [[10, .05, '属性印の威力 +5%'], [25, .05, '属性印の威力 +5%']] },
+  { key: 'defenseIgnorePercent', entries: [[10, 5, '防御無視 +5%'], [25, 5, '防御無視 +5%']] },
+  { key: 'skillDefenseIgnorePercent', entries: [[10, 5, 'スキル防御無視 +5%'], [25, 5, 'スキル防御無視 +5%']] },
+  { key: 'bossMultiplier', entries: [[10, .10, '即死無効への倍率 +0.10'], [25, .10, '即死無効への倍率 +0.10']] },
+  { key: 'spillMultiplier', requiresFixed: true, entries: [[10, .10, '貫通ダメージ +10%'], [25, .10, '貫通ダメージ +10%']] },
+  { key: 'refundPercent', requiresFixed: true, entries: [[10, 10, 'MP再装填率 +10%'], [25, 10, 'MP再装填率 +10%']] },
+  { key: 'drainPercent', requiresFixed: true, entries: [[10, 10, 'HP吸収率 +10%'], [25, 10, 'HP吸収率 +10%']] },
+  { key: 'reduction', requiresFixed: true, entries: [[10, 5, 'ガード軽減率 +5%'], [25, 5, 'ガード軽減率 +5%']] }
 ]);
 
 const LIMIT_BREAK_INTEGER_KEYS = new Set([
@@ -162,6 +203,84 @@ const round = (value, digits = 3) => {
   const scale = 10 ** digits;
   return Math.round((value + Number.EPSILON) * scale) / scale;
 };
+
+function getMasteredJobSkillConfig(skillDef) {
+  if (!skillDef?.levels?.length) return null;
+  const maxLevel = Math.max(
+    1,
+    Math.floor(Number(skillDef.maxLevel) || skillDef.levels[skillDef.levels.length - 1].level || 1)
+  );
+  return skillDef.levels.find(candidate => candidate.level === maxLevel)
+    || skillDef.levels[skillDef.levels.length - 1];
+}
+
+/** Return every structural/unique bonus unlocked at limit-break milestones. */
+export function getJobSkillLimitBreakMilestones(skillDef) {
+  const masterConfig = getMasteredJobSkillConfig(skillDef);
+  if (!masterConfig) return [];
+  const milestones = [];
+
+  for (const [key, rule] of LIMIT_BREAK_STEPPED_KEYS) {
+    if (!Number.isFinite(masterConfig[key])) continue;
+    for (let bonus = 1; bonus <= rule.maxBonus; bonus += 1) {
+      const breaks = rule.immediate ? 1 + (bonus - 1) * rule.every : bonus * rule.every;
+      milestones.push({
+        breaks,
+        label: LIMIT_BREAK_MILESTONE_LABELS[key] || `${key} +1`,
+        bonuses: null
+      });
+    }
+  }
+
+  for (const rule of LIMIT_BREAK_MILESTONE_RULES) {
+    if (!Number.isFinite(masterConfig[rule.key])) continue;
+    if (rule.requiresFixed && !(skillDef.limitBreakFixedKeys || []).includes(rule.key)) continue;
+    for (const [breaks, amount, label] of rule.entries) {
+      milestones.push({ breaks, label, bonuses: { [rule.key]: amount } });
+    }
+  }
+
+  for (const milestone of skillDef.limitBreakMilestones || []) {
+    const breaks = Math.max(1, Math.floor(Number(milestone.breaks) || 0));
+    const bonuses = milestone.bonuses && typeof milestone.bonuses === 'object'
+      ? { ...milestone.bonuses }
+      : null;
+    if (!breaks || (!bonuses && !milestone.label)) continue;
+    milestones.push({ breaks, label: milestone.label || '固有効果解放', bonuses });
+  }
+
+  return milestones.sort((a, b) => a.breaks - b.breaks || a.label.localeCompare(b.label, 'ja'));
+}
+
+/** Return the next visible awakening milestone after the supplied skill level. */
+export function getNextJobSkillLimitBreakMilestone(skillDef, currentLevel) {
+  if (!skillDef?.levels?.length) return null;
+  const maxLevel = Math.max(
+    1,
+    Math.floor(Number(skillDef.maxLevel) || skillDef.levels[skillDef.levels.length - 1].level || 1)
+  );
+  const currentBreaks = Math.max(0, Math.floor(Number(currentLevel) || maxLevel) - maxLevel);
+  const milestones = getJobSkillLimitBreakMilestones(skillDef);
+  const nextBreaks = milestones.find(milestone => milestone.breaks > currentBreaks)?.breaks;
+  if (!nextBreaks) return null;
+  const labels = milestones
+    .filter(milestone => milestone.breaks === nextBreaks)
+    .map(milestone => milestone.label);
+  return { breaks: nextBreaks, level: maxLevel + nextBreaks, label: labels.join(' / ') };
+}
+
+function applyJobSkillLimitBreakMilestones(levelConfig, breaks, skillDef) {
+  if (!levelConfig || breaks <= 0) return levelConfig;
+  const adjusted = { ...levelConfig };
+  for (const milestone of getJobSkillLimitBreakMilestones(skillDef)) {
+    if (milestone.breaks > breaks || !milestone.bonuses) continue;
+    for (const [key, amount] of Object.entries(milestone.bonuses)) {
+      if (!Number.isFinite(amount)) continue;
+      adjusted[key] = round((Number(adjusted[key]) || 0) + amount);
+    }
+  }
+  return adjusted;
+}
 
 export function getJobSkillPotency(mode) {
   return POTENCY_BY_MODE[mode] || 1;
@@ -291,7 +410,7 @@ export function canLimitBreakJobSkill(skillDef, currentLevel = null) {
   const fixedKeys = skillDef.limitBreakFixedKeys || [];
   const hasScalableEffect = Object.entries(masterConfig).some(([key, value]) =>
     Number.isFinite(value) && !LIMIT_BREAK_FIXED_KEYS.has(key) && !fixedKeys.includes(key)
-  );
+  ) || getJobSkillLimitBreakMilestones(skillDef).some(milestone => milestone.bonuses);
   if (!hasScalableEffect || currentLevel === null || currentLevel === undefined) {
     return hasScalableEffect;
   }
@@ -320,13 +439,15 @@ function resolveLimitBreakConfig(skillDef, level, mode) {
     || skillDef.levels.find(candidate => candidate.level === maxLevel)
     || skillDef.levels[skillDef.levels.length - 1];
   const potentConfig = applyJobSkillPotency({ ...authoredConfig, level }, mode);
-  return applyJobSkillLimitBreak(
+  const breaks = Math.max(0, level - maxLevel);
+  const scaledConfig = applyJobSkillLimitBreak(
     potentConfig,
-    Math.max(0, level - maxLevel),
+    breaks,
     skillDef.limitBreakFixedKeys,
     skillDef.limitBreakMaximums,
     skillDef.limitBreakMinimums
   );
+  return applyJobSkillLimitBreakMilestones(scaledConfig, breaks, skillDef);
 }
 
 export function resolveJobSkillLevelConfig(skillDef, level, mode = 'base') {

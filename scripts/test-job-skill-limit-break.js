@@ -1,5 +1,7 @@
 import {
   canLimitBreakJobSkill,
+  getJobSkillLimitBreakMilestones,
+  getNextJobSkillLimitBreakMilestone,
   JOB_SKILL_LIMIT_BREAK_GROWTH,
   resolveJobSkillLevelConfig
 } from '../js/utils/job-skill-potency.js';
@@ -12,6 +14,7 @@ import {
 import { JOBS } from '../js/jobs/index.js';
 import { calcFinalStats } from '../js/data/stat-calculator.js';
 import {
+  getDefenseAfterIgnore,
   getStackedAttackNegationStep,
   MAX_STACKED_ATTACK_NEGATION_CHANCE
 } from '../js/pages/battle/battle-actions.js';
@@ -53,6 +56,7 @@ assert(inheritedBreak.chance === 79.2, 'inherited chance and limit break did not
 const farBreak = resolveJobSkillLevelConfig(skill, 30, 'base');
 assert(farBreak.multiplier === 6, 'limit break growth should stay linear and uncapped');
 assert(farBreak.chance === 95, 'generic proc chance became guaranteed');
+assert(farBreak.hits === 10, 'multi-hit milestones did not add attacks');
 
 const drawbackSkill = {
   maxLevel: 10,
@@ -106,7 +110,7 @@ const variedBreak = resolveJobSkillLevelConfig(variedSkill, 20, 'base');
 assert(variedBreak.bonusHp === 300, 'flat stat bonus did not limit break');
 assert(variedBreak.bonusAtkPercent === 240, 'stat percentage should grow without a 100% cap');
 assert(variedBreak.barrierPercent === 100, 'maximum-HP barrier exceeded its safe cap');
-assert(variedBreak.maxDragonSpirit === 5, 'job resource maximum should stay structural');
+assert(variedBreak.maxDragonSpirit === 6, 'job resource awakening did not increase its cap');
 assert(variedBreak.threshold === 25, 'inverse threshold did not improve');
 assert(variedBreak.atkMatkMultiplier === 2, 'neutral multiplier did not improve correctly');
 assert(variedBreak.hpPercent === 25, 'HP sacrifice must not increase');
@@ -179,6 +183,8 @@ negationStep = getStackedAttackNegationStep(negationStep.combinedChance, 95);
 assert(negationStep.rollChance === 40, 'stacked attack-negation conditional chance is invalid');
 assert(negationStep.combinedChance === MAX_STACKED_ATTACK_NEGATION_CHANCE,
   'stacked attack-negation skills exceeded the combined cap');
+assert(getDefenseAfterIgnore(100, 20) === 80, 'hybrid defense penetration was not applied');
+assert(getDefenseAfterIgnore(100, 150) === 0, 'defense penetration exceeded its safe range');
 
 const authoredGuaranteedSkill = {
   maxLevel: 10,
@@ -205,10 +211,10 @@ const compoundSkill = {
 const compoundBreak = resolveJobSkillLevelConfig(compoundSkill, 20, 'base');
 assert(compoundBreak.chance === 50, 'primary proc chance did not limit break');
 assert(compoundBreak.multiplier === 4, 'primary damage did not limit break');
-assert(compoundBreak.reduction === 40, 'skill-specific secondary strength should stay fixed');
-assert(compoundBreak.defenseIgnorePercent === 50, 'defense bypass should stay fixed');
-assert(compoundBreak.detonationMultiplier === 1.75, 'conditional multiplier should stay fixed');
-assert(compoundBreak.maxHarmony === 5, 'resource cap should stay fixed');
+assert(compoundBreak.reduction === 45, 'guard awakening did not improve fixed reduction');
+assert(compoundBreak.defenseIgnorePercent === 55, 'defense bypass awakening is invalid');
+assert(compoundBreak.detonationMultiplier === 2, 'conditional multiplier awakening is invalid');
+assert(compoundBreak.maxHarmony === 6, 'resource cap awakening is invalid');
 
 assert(Object.keys(JOBS).length === 25, 'the all-job limit break test is missing a job');
 const nonScalingSkills = [];
@@ -248,6 +254,64 @@ for (const job of Object.values(JOBS)) {
   }
 }
 assert(nonScalingSkills.length === 0, `unexpected non-scaling skills: ${nonScalingSkills.join(', ')}`);
+
+let milestoneSkillCount = 0;
+let milestoneCount = 0;
+for (const job of Object.values(JOBS)) {
+  for (const jobSkill of job.skills) {
+    const milestones = getJobSkillLimitBreakMilestones(jobSkill);
+    if (milestones.length > 0) milestoneSkillCount += 1;
+    milestoneCount += milestones.length;
+    const masterLevel = getJobSkillMasterLevel(jobSkill);
+    for (const milestone of milestones.filter(candidate => candidate.bonuses)) {
+      const beforeConfig = resolveJobSkillLevelConfig(jobSkill, masterLevel + milestone.breaks - 1, 'base');
+      const awakenedConfig = resolveJobSkillLevelConfig(jobSkill, masterLevel + milestone.breaks, 'base');
+      for (const key of Object.keys(milestone.bonuses)) {
+        assert(
+          (Number(awakenedConfig[key]) || 0) > (Number(beforeConfig[key]) || 0),
+          `${job.id}/${jobSkill.id} did not apply milestone ${milestone.label}`
+        );
+      }
+      assert(typeof jobSkill.getDescription(awakenedConfig) === 'string',
+        `${job.id}/${jobSkill.id} milestone description failed`);
+    }
+  }
+}
+assert(milestoneSkillCount >= 75, 'too few skills received awakening milestones');
+assert(milestoneCount >= 250, 'the awakening milestone catalogue is incomplete');
+
+const doubleArrow = JOBS.ranger.skills.find(candidate => candidate.id === 'double_arrow');
+assert(resolveJobSkillLevelConfig(doubleArrow, 14, 'base').hits === 5,
+  'double arrow awakened before its milestone');
+assert(resolveJobSkillLevelConfig(doubleArrow, 15, 'base').hits === 6,
+  'double arrow did not unlock its first extra hit');
+assert(resolveJobSkillLevelConfig(doubleArrow, 25, 'base').hits === 7,
+  'double arrow did not unlock its second extra hit');
+const nextDoubleArrowMilestone = getNextJobSkillLimitBreakMilestone(doubleArrow, 10);
+assert(nextDoubleArrowMilestone?.level === 15 && nextDoubleArrowMilestone.label.includes('攻撃回数'),
+  'the next awakening milestone is not visible to the UI');
+
+const slimeThrow = JOBS.slime_master.skills.find(candidate => candidate.id === 'slime_throw');
+const awakenedSlimeThrow = resolveJobSkillLevelConfig(slimeThrow, 25, 'base');
+assert(awakenedSlimeThrow.slimeThrowsBonus === 2, 'slime throw did not unlock its unique throws');
+assert(slimeThrow.getDescription(awakenedSlimeThrow).includes('12回'),
+  'slime throw still used the unbounded skill level as its throw count');
+const slimeHazard = JOBS.slime_master.skills.find(candidate => candidate.id === 'slime_hazard');
+const awakenedSlimeHazard = resolveJobSkillLevelConfig(slimeHazard, 25, 'base');
+assert(slimeHazard.getDescription(awakenedSlimeHazard).includes('40体'),
+  'slime hazard did not unlock its unique swarm milestone');
+
+const flameTongue = JOBS.magic_knight.skills.find(candidate => candidate.id === 'flame_tongue');
+assert(!resolveJobSkillLevelConfig(flameTongue, 19, 'base').defenseIgnorePercent,
+  'hybrid defense penetration unlocked before its awakening');
+assert(resolveJobSkillLevelConfig(flameTongue, 20, 'base').defenseIgnorePercent === 10,
+  'hybrid defense penetration did not unlock');
+assert(resolveJobSkillLevelConfig(flameTongue, 35, 'base').defenseIgnorePercent === 20,
+  'hybrid defense penetration did not receive its second awakening');
+
+const skyfallDive = JOBS.dragoon.skills.find(candidate => candidate.id === 'skyfall_dive');
+assert(resolveJobSkillLevelConfig(skyfallDive, 20, 'base').spiritMultiplier === .78,
+  'dragon-spirit finisher did not receive its unique milestone');
 
 let saturatedSkillCount = 0;
 for (const job of Object.values(JOBS)) {
@@ -331,26 +395,26 @@ const timedSkill = {
 };
 const fourthTimedBreak = resolveJobSkillLevelConfig(timedSkill, 14, 'base');
 const fifthTimedBreak = resolveJobSkillLevelConfig(timedSkill, 15, 'base');
-const deepTimedBreak = resolveJobSkillLevelConfig(timedSkill, 30, 'base');
+const deepTimedBreak = resolveJobSkillLevelConfig(timedSkill, 40, 'base');
 assert(fourthTimedBreak.turns === 5, 'turn duration grew before its fifth break');
 assert(fifthTimedBreak.turns === 6 && fifthTimedBreak.duration === 5, 'timed effects did not grow at five breaks');
 assert(fifthTimedBreak.burnTurns === 7, 'burn duration did not grow at five breaks');
 assert(fifthTimedBreak.freezeTurns === 1, 'hard control duration grew too early');
-assert(deepTimedBreak.turns === 8 && deepTimedBreak.duration === 7, 'timed effect bonus cap is invalid');
-assert(deepTimedBreak.burnTurns === 9, 'burn duration bonus cap is invalid');
-assert(deepTimedBreak.freezeTurns === 2, 'freeze duration should cap at one extra turn');
+assert(deepTimedBreak.turns === 10 && deepTimedBreak.duration === 9, 'timed effect bonus cap is invalid');
+assert(deepTimedBreak.burnTurns === 11, 'burn duration bonus cap is invalid');
+assert(deepTimedBreak.freezeTurns === 3, 'freeze duration milestone cap is invalid');
 
-const expectedFixedEffects = {
-  'norvice/guard': { reduction: 40 },
-  'paladin/holy_smite': { drainPercent: 50 },
-  'gunner/penetrator': { spillMultiplier: .6 },
-  'gunner/quick_reload': { refundPercent: 50 },
-  'dragoon/dragon_heart': { maxDragonSpirit: 5 },
-  'mana_conductor/conductor_core': { maxHarmony: 5 },
-  'entertainer/showstopper': { maxHype: 5 },
-  'slime_singer/resonant_gel': { maxNotes: 5 }
+const expectedMilestoneEffects = {
+  'norvice/guard': { reduction: 45 },
+  'paladin/holy_smite': { drainPercent: 60 },
+  'gunner/penetrator': { spillMultiplier: .7 },
+  'gunner/quick_reload': { refundPercent: 60 },
+  'dragoon/dragon_heart': { maxDragonSpirit: 6 },
+  'mana_conductor/conductor_core': { maxHarmony: 6 },
+  'entertainer/showstopper': { maxHype: 6 },
+  'slime_singer/resonant_gel': { maxNotes: 6 }
 };
-for (const [skillPath, expected] of Object.entries(expectedFixedEffects)) {
+for (const [skillPath, expected] of Object.entries(expectedMilestoneEffects)) {
   const [jobId, skillId] = skillPath.split('/');
   const jobSkill = JOBS[jobId].skills.find(candidate => candidate.id === skillId);
   const brokenConfig = resolveJobSkillLevelConfig(jobSkill, getJobSkillMasterLevel(jobSkill) + 10, 'base');

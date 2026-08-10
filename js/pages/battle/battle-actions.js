@@ -9,6 +9,12 @@ import { resolveBattleSkill } from './battle-statistics.js';
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
+export function getDefenseAfterIgnore(defense, ignorePercent) {
+  const normalizedDefense = Math.max(0, Number(defense) || 0);
+  const normalizedIgnore = Math.min(100, Math.max(0, Number(ignorePercent) || 0));
+  return Math.floor(normalizedDefense * (1 - normalizedIgnore / 100));
+}
+
 export function getStackedAttackNegationStep(
   cumulativeChance,
   nextChance,
@@ -492,8 +498,7 @@ export const actionMethods = {
     // --- 物理防御貫通 ---
     // スキル側から割合を渡し、装備値と防御バフを含む最終DEFを軽減する。
     if (!isMagic && !options.isHybrid && options.defenseIgnorePercent > 0) {
-      const ignorePercent = Math.min(100, Math.max(0, Number(options.defenseIgnorePercent) || 0));
-      defStat = Math.floor(defStat * (1 - ignorePercent / 100));
+      defStat = getDefenseAfterIgnore(defStat, options.defenseIgnorePercent);
     }
 
     let damage = 0;
@@ -524,6 +529,15 @@ export const actionMethods = {
       }
       if (hTotalMdefAmount !== 0) {
         magDef = magDef + hTotalMdefAmount;
+      }
+
+      const hybridIgnorePercent = Math.min(
+        100,
+        Math.max(0, Number(options.defenseIgnorePercent) || 0)
+      );
+      if (hybridIgnorePercent > 0) {
+        physDef = getDefenseAfterIgnore(physDef, hybridIgnorePercent);
+        magDef = getDefenseAfterIgnore(magDef, hybridIgnorePercent);
       }
       
       const physDamage = Math.max(0, physAtk - Math.floor(physDef / 2));

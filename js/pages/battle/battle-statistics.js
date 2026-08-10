@@ -349,16 +349,14 @@ function getJobDisplay(manager, stat) {
   const job = manager.jobDefinitions?.[jobId];
   return {
     image: job?.image || `./assets/job/job_${jobId}.webp`,
-    icon: job?.icon && !String(job.icon).includes('/') ? job.icon : 'person',
     name: job?.name || jobId
   };
 }
 
-function renderJobIcon(manager, stat, sizeClass = 'h-9 w-9', iconSize = 'text-xl') {
+function renderJobIcon(manager, stat, sizeClass = 'h-9 w-9') {
   const job = getJobDisplay(manager, stat);
   return `<div class="relative flex ${sizeClass} shrink-0 items-center justify-center overflow-hidden rounded-lg border border-violet-400/30 bg-violet-950/60 p-0.5">
-    <span class="material-symbols-outlined hidden ${iconSize} text-violet-200">${escapeHtml(job.icon)}</span>
-    <img src="${escapeHtml(job.image)}" alt="${escapeHtml(job.name)}" class="h-full w-full object-contain drop-shadow-[0_0_5px_rgba(167,139,250,.5)]" onerror="this.style.display='none';this.previousElementSibling.classList.remove('hidden')">
+    <img src="${escapeHtml(job.image)}" alt="${escapeHtml(job.name)}" class="h-full w-full object-contain drop-shadow-[0_0_5px_rgba(167,139,250,.5)]" onerror="this.style.display='none'">
   </div>`;
 }
 
@@ -366,19 +364,19 @@ function renderCharacterTabs(manager, stats, selectedKey) {
   return `<div class="grid shrink-0 grid-cols-4 gap-1" role="tablist" aria-label="キャラクター統計">
     ${stats.map((stat, index) => {
       const selected = stat.key === selectedKey;
-      return `<button type="button" role="tab" data-battle-stat-character="${index}" aria-selected="${selected}" class="flex min-w-0 flex-col items-center gap-0.5 rounded-lg border px-0.5 py-1 transition-colors ${selected ? 'border-cyan-300/70 bg-cyan-500/20 text-white shadow-[0_0_10px_rgba(34,211,238,.18)]' : 'border-slate-700/60 bg-black/25 text-slate-500'}">
-        ${renderJobIcon(manager, stat, 'h-7 w-7', 'text-base')}
-        <span class="w-full truncate text-[8px] font-black">${escapeHtml(stat.name)}</span>
+      return `<button type="button" role="tab" data-battle-stat-character="${index}" aria-selected="${selected}" class="flex min-w-0 flex-col items-center gap-1 rounded-lg border px-1 py-1.5 transition-colors ${selected ? 'border-cyan-300/80 bg-cyan-500/25 text-white shadow-[0_0_10px_rgba(34,211,238,.2)]' : 'border-slate-600/70 bg-slate-950/60 text-slate-300'}">
+        ${renderJobIcon(manager, stat, 'h-8 w-8')}
+        <span class="w-full truncate text-[10px] font-black">${escapeHtml(stat.name)}</span>
       </button>`;
     }).join('')}
   </div>`;
 }
 
 function renderOverviewCell(label, value, detail, color, icon) {
-  return `<div class="min-w-0 rounded-lg border border-white/[0.07] bg-black/25 px-1 py-1.5 text-center">
-    <div class="flex items-center justify-center gap-0.5 truncate text-[8px] text-slate-500"><span class="material-symbols-outlined" style="font-size:10px">${icon}</span>${label}</div>
-    <div class="mt-0.5 truncate text-[11px] font-black ${color}">${value}</div>
-    <div class="mt-0.5 truncate text-[7px] text-slate-600">${detail}</div>
+  return `<div class="min-w-0 rounded-lg border border-slate-600/55 bg-slate-950/70 px-1.5 py-2 text-center">
+    <div class="flex items-center justify-center gap-0.5 truncate text-[10px] font-bold text-slate-300"><span class="material-symbols-outlined text-slate-400" style="font-size:12px">${icon}</span>${label}</div>
+    <div class="mt-1 truncate text-[15px] font-black leading-none ${color}">${value}</div>
+    <div class="mt-1 truncate text-[9px] font-medium text-slate-400">${detail}</div>
   </div>`;
 }
 
@@ -394,24 +392,24 @@ function renderCharacterOverview(manager, stat, elapsedMs) {
     ['MP回復', compactNumber(stat.mpRestored), `最大 ${compactNumber(stat.maxMpRestored)}`, 'text-sky-300', 'water_drop'],
     ['行動回数', `${stat.actions}回`, `${formatDecimal(ratePerMinute(stat.actions, elapsedMs))}/分`, 'text-violet-300', 'directions_run']
   ];
-  return `<section class="rounded-xl border border-slate-700/60 bg-slate-950/55 p-2">
+  return `<section class="rounded-xl border border-slate-600/70 bg-slate-950/70 p-2.5">
     <div class="flex items-center gap-2">
-      ${renderJobIcon(manager, stat, 'h-10 w-10', 'text-2xl')}
-      <div class="min-w-0 flex-1"><h2 class="truncate text-[12px] font-black text-white">${escapeHtml(stat.name)}</h2><p class="truncate text-[8px] text-violet-300">${escapeHtml(job.name)}</p></div>
-      <div class="text-right"><div class="text-[7px] text-slate-600">計測時間</div><div class="font-mono text-[9px] font-bold text-slate-400">${formatSeconds(elapsedMs)}</div></div>
+      ${renderJobIcon(manager, stat, 'h-11 w-11')}
+      <div class="min-w-0 flex-1"><h2 class="truncate text-[14px] font-black text-white">${escapeHtml(stat.name)}</h2><p class="truncate text-[10px] font-bold text-violet-200">${escapeHtml(job.name)}</p></div>
+      <div class="text-right"><div class="text-[9px] font-bold text-slate-400">計測時間</div><div class="font-mono text-[11px] font-bold text-slate-200">${formatSeconds(elapsedMs)}</div></div>
     </div>
-    <div class="mt-2 grid grid-cols-4 gap-1">${cells.map(cell => renderOverviewCell(...cell)).join('')}</div>
+    <div class="mt-2.5 grid grid-cols-4 gap-1.5">${cells.map(cell => renderOverviewCell(...cell)).join('')}</div>
   </section>`;
 }
 
 function renderMetricCell(label, value, color = 'text-slate-200') {
-  return `<div class="min-w-0 rounded-md bg-black/20 px-1 py-1 text-center"><div class="truncate text-[7px] text-slate-600">${label}</div><div class="mt-0.5 truncate text-[9px] font-black ${color}">${value}</div></div>`;
+  return `<div class="min-w-0 rounded-md border border-white/[0.06] bg-black/30 px-1.5 py-1.5 text-center"><div class="truncate text-[9px] font-medium text-slate-400">${label}</div><div class="mt-1 truncate text-[12px] font-black leading-none ${color}">${value}</div></div>`;
 }
 
 function renderMetricGroup(title, icon, titleClass, cells) {
-  return `<div class="mt-1.5 border-t border-white/[0.06] pt-1.5">
-    <div class="mb-1 flex items-center gap-1 text-[8px] font-black ${titleClass}"><span class="material-symbols-outlined" style="font-size:11px">${icon}</span>${title}</div>
-    <div class="grid grid-cols-4 gap-1">${cells.map(cell => renderMetricCell(...cell)).join('')}</div>
+  return `<div class="mt-2 border-t border-white/10 pt-2">
+    <div class="mb-1.5 flex items-center gap-1 text-[10px] font-black ${titleClass}"><span class="material-symbols-outlined" style="font-size:13px">${icon}</span>${title}</div>
+    <div class="grid grid-cols-4 gap-1.5">${cells.map(cell => renderMetricCell(...cell)).join('')}</div>
   </div>`;
 }
 
@@ -474,11 +472,11 @@ function renderSkillMetric(metric, stat, elapsedMs) {
   }
 
   const icon = String(metric.icon || '').includes('/') ? 'auto_awesome' : metric.icon;
-  return `<article class="rounded-xl border border-slate-700/60 bg-slate-950/55 p-2">
-    <div class="flex items-center gap-1.5">
-      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/25"><span class="material-symbols-outlined ${metric.type === 'passive' ? 'text-cyan-300' : 'text-violet-300'}" style="font-size:16px">${escapeHtml(icon)}</span></div>
-      <div class="min-w-0 flex-1"><h3 class="truncate text-[10px] font-black text-white">${escapeHtml(metric.name)}</h3><span class="text-[7px] font-bold ${metric.type === 'passive' ? 'text-cyan-400' : 'text-violet-400'}">${metric.type === 'passive' ? 'PASSIVE SKILL' : 'ACTIVE SKILL'}</span></div>
-      <div class="text-right"><div class="text-[7px] text-slate-600">総合効果</div><div class="text-[9px] font-black text-slate-300">${compactNumber(metric.damage + metric.healing + metric.mpRestored + metric.prevented)}</div></div>
+  return `<article class="rounded-xl border border-slate-600/70 bg-slate-950/70 p-2.5">
+    <div class="flex items-center gap-2">
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/30"><span class="material-symbols-outlined ${metric.type === 'passive' ? 'text-cyan-200' : 'text-violet-200'}" style="font-size:18px">${escapeHtml(icon)}</span></div>
+      <div class="min-w-0 flex-1"><h3 class="truncate text-[12px] font-black text-white">${escapeHtml(metric.name)}</h3><span class="text-[9px] font-bold ${metric.type === 'passive' ? 'text-cyan-300' : 'text-violet-300'}">${metric.type === 'passive' ? 'PASSIVE SKILL' : 'ACTIVE SKILL'}</span></div>
+      <div class="text-right"><div class="text-[9px] font-bold text-slate-400">総合効果</div><div class="text-[12px] font-black text-slate-100">${compactNumber(metric.damage + metric.healing + metric.mpRestored + metric.prevented)}</div></div>
     </div>
     ${groups.join('')}
   </article>`;
@@ -500,8 +498,8 @@ function renderStatistics(manager) {
   return `${renderCharacterTabs(manager, stats, selected.key)}
     <div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list>
       ${renderCharacterOverview(manager, selected, elapsedMs)}
-      <div class="flex items-center gap-1 px-0.5 pt-1 text-[9px] font-black text-slate-400"><span class="material-symbols-outlined" style="font-size:12px">query_stats</span>スキル詳細 <span class="ml-auto text-[8px] font-normal text-slate-600">${skills.length}件</span></div>
-      ${skills.length ? skills.map(metric => renderSkillMetric(metric, selected, elapsedMs)).join('') : '<div class="rounded-xl border border-slate-700/50 bg-slate-950/50 py-6 text-center text-[9px] text-slate-600">まだスキルデータがありません</div>'}
+      <div class="flex items-center gap-1 px-0.5 pt-1 text-[11px] font-black text-slate-200"><span class="material-symbols-outlined text-slate-300" style="font-size:14px">query_stats</span>スキル詳細 <span class="ml-auto text-[10px] font-medium text-slate-400">${skills.length}件</span></div>
+      ${skills.length ? skills.map(metric => renderSkillMetric(metric, selected, elapsedMs)).join('') : '<div class="rounded-xl border border-slate-600/60 bg-slate-950/70 py-6 text-center text-[11px] text-slate-400">まだスキルデータがありません</div>'}
     </div>`;
 }
 
