@@ -8,7 +8,7 @@ import { getBaseExpToNext } from '../../data/level-progression.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
-import { getAvailableJobSP, getJobExpToNext, getTotalJobSP } from '../../data/job-progression.js';
+import { getAvailableJobSP, getJobExpToNext, getJobSPOffset, getTotalJobSP } from '../../data/job-progression.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -754,6 +754,7 @@ export function renderChangeJobTab() {
         if (!jobDef) return;
 
       const totalSp = getTotalJobSP(level);
+      const spOffset = getJobSPOffset(char, jobDef, level);
       const cost = totalSp * 100;
       
       let hasSpentSp = false;
@@ -793,8 +794,13 @@ export function renderChangeJobTab() {
             <h3 class="text-[14px] font-black tracking-wider whitespace-nowrap text-gray-100">${jobDef.name}</h3>
             <span class="text-[9px] font-black text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-600/50 shadow-inner uppercase tracking-widest">JLv.${level}</span>
           </div>
-          <div class="text-[11px] text-amber-400/90 font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[12px]">stars</span>獲得SP: ${totalSp}
+          <div class="flex items-center gap-x-2 gap-y-0.5 flex-wrap text-[11px] font-bold">
+            <span class="text-amber-400/90 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">stars</span>獲得SP: ${totalSp}
+            </span>
+            ${spOffset > 0 ? `<span class="text-rose-300 flex items-center gap-1 bg-rose-950/50 border border-rose-700/40 rounded-md px-1.5 py-0.5" title="今後のジョブレベルアップで相殺されるSP">
+              <span class="material-symbols-outlined text-[12px]">balance</span>相殺中SP: ${spOffset}
+            </span>` : ''}
           </div>
         </div>
         <div class="relative z-10 flex items-center">

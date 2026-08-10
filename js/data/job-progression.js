@@ -139,6 +139,11 @@ export function getSpentJobSP(character, job) {
   return spentSP;
 }
 
+/** Return the remaining spent-SP excess that future job levels must offset. */
+export function getJobSPOffset(character, job, jobLevel = character?.jobLevel) {
+  return Math.max(0, getSpentJobSP(character, job) - getTotalJobSP(jobLevel));
+}
+
 /**
  * Return currently spendable SP under the 1-SP-per-level rule.
  *

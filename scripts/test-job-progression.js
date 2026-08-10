@@ -3,6 +3,7 @@ import {
   clearLegacyJobSpBonus,
   getAvailableJobSP,
   getJobExpToNext,
+  getJobSPOffset,
   getJobLevelUpSP,
   getJobSkillLevelCost,
   getJobSkillMasterLevel,
@@ -72,6 +73,9 @@ const existingCharacter = {
 };
 assert(getSpentJobSP(existingCharacter, testJob) === 55, 'spent job SP is invalid');
 assert(hasMasteredAllJobSkills(existingCharacter, testJob), 'fully mastered job was not detected');
+assert(getJobSPOffset(existingCharacter, testJob, 50) === 6, 'remaining SP offset is invalid');
+assert(getJobSPOffset(existingCharacter, testJob, 55) === 1, 'SP offset should shrink on level up');
+assert(getJobSPOffset(existingCharacter, testJob, 56) === 0, 'SP offset should clear when debt is settled');
 assert(getAvailableJobSP(existingCharacter, testJob, 50) === 0, 'over-allocated skills should consume future SP');
 assert(getAvailableJobSP(existingCharacter, testJob, 56) === 0, 'SP debt should be settled before SP becomes available');
 assert(getAvailableJobSP(existingCharacter, testJob, 57) === 1, 'SP should become available after debt is settled');
