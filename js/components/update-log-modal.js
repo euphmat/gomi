@@ -115,48 +115,6 @@ function formatDate(date) {
   };
 }
 
-function getDayItems(day) {
-  return day.entries.flatMap(entry => Array.isArray(entry.items) && entry.items.length ? entry.items : ['更新内容は現在整理中です。']);
-}
-
-function renderDailyMap(day) {
-  const items = getDayItems(day);
-  const categoryMap = new Map();
-  items.forEach(item => {
-    const category = getCategory(item);
-    categoryMap.set(category.id, { ...category, count: (categoryMap.get(category.id)?.count || 0) + 1 });
-  });
-  const categories = [...categoryMap.values()].sort((left, right) => right.count - left.count);
-  const shown = categories.slice(0, 4);
-  const hiddenCount = categories.slice(4).reduce((total, category) => total + category.count, 0);
-
-  return `
-    <section class="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/[.12] via-slate-950/80 to-cyan-500/[.08] p-3.5 shadow-[inset_0_1px_rgba(255,255,255,.04)]" aria-label="この日のアップデート概要">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <p class="text-[9px] font-black tracking-[.18em] text-violet-300">TODAY'S MAP</p>
-          <h3 class="mt-0.5 text-[13px] font-black text-white">この日の変化をひと目で</h3>
-        </div>
-        <div class="rounded-xl border border-white/10 bg-black/20 px-2.5 py-1.5 text-center">
-          <div class="text-lg font-black leading-none text-white">${items.length}</div>
-          <div class="mt-0.5 text-[7px] font-bold tracking-wider text-slate-500">CHANGES</div>
-        </div>
-      </div>
-      <div class="mt-3 flex items-stretch gap-1 overflow-x-auto pb-1">
-        ${shown.map((category, index) => {
-          const tone = CATEGORY_TONES[category.tone] || CATEGORY_TONES.slate;
-          return `${index ? '<div class="flex shrink-0 items-center text-slate-700"><span class="material-symbols-outlined text-sm">arrow_right_alt</span></div>' : ''}
-            <div class="min-w-[74px] flex-1 rounded-xl border border-white/[.08] bg-slate-950/65 p-2 text-center">
-              <span class="material-symbols-outlined inline-flex h-8 w-8 items-center justify-center rounded-full border text-base ${tone.icon}">${category.icon}</span>
-              <div class="mt-1.5 whitespace-nowrap text-[8px] font-black text-slate-200">${category.label}</div>
-              <div class="mt-0.5 text-[8px] font-bold text-slate-500">${category.count}件</div>
-            </div>`;
-        }).join('')}
-      </div>
-      ${hiddenCount ? `<p class="mt-1 text-right text-[8px] font-bold text-slate-500">ほか ${hiddenCount}件の変更</p>` : ''}
-    </section>`;
-}
-
 function renderCloudSaveGuide() {
   return `
     <section class="my-4 overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-br from-sky-950/80 via-slate-950 to-violet-950/70" aria-labelledby="cloud-save-guide-title">
@@ -240,10 +198,9 @@ function renderItemCard(item) {
   const description = isPlaceholder ? '内容が未記入の更新も省略せず、確認中の記録として表示しています。' : item;
 
   return `
-    <article class="grid grid-cols-[38px_1fr] gap-2.5 rounded-xl border border-white/[.08] bg-slate-900/65 p-2.5 shadow-[0_5px_18px_rgba(0,0,0,.12)]">
-      <div class="relative">
-        <span class="material-symbols-outlined flex h-9 w-9 items-center justify-center rounded-xl border text-lg ${tone.icon}">${category.icon}</span>
-        <span class="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full ${tone.line}"></span>
+    <article class="grid grid-cols-[42px_1fr] items-center gap-2.5 rounded-xl border border-white/[.08] bg-slate-900/65 p-2.5 shadow-[0_5px_18px_rgba(0,0,0,.12)]">
+      <div class="flex h-full min-h-10 items-center justify-center">
+        <span class="material-symbols-outlined inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl leading-none ${tone.icon}">${category.icon}</span>
       </div>
       <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-1.5">
@@ -287,8 +244,7 @@ function renderDayPage(day, dayIndex) {
         </div>
         ${dayIndex === 0 ? '<span class="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 text-[8px] font-black text-emerald-300">LATEST</span>' : ''}
       </div>
-      ${renderDailyMap(day)}
-      <div class="mt-5 space-y-4">${day.entries.map((entry, index) => renderVersionSection(entry, index === day.entries.length - 1)).join('')}</div>
+      <div class="mt-4 space-y-4">${day.entries.map((entry, index) => renderVersionSection(entry, index === day.entries.length - 1)).join('')}</div>
       <div class="mt-5 flex items-center justify-center gap-2 text-[8px] font-bold text-slate-600"><span class="h-px w-8 bg-slate-800"></span>この日の記録はここまで<span class="h-px w-8 bg-slate-800"></span></div>
     </div>`;
 }
@@ -333,14 +289,13 @@ export function showUpdateLogModal() {
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'update-log-title');
   overlay.innerHTML = `
-    <div data-update-panel class="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-[22px] border border-white/10 bg-[#0a0c14] shadow-[0_28px_100px_rgba(0,0,0,.8)]">
+    <div data-update-panel class="flex h-[92dvh] max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-[22px] border border-white/10 bg-[#0a0c14] shadow-[0_28px_100px_rgba(0,0,0,.8)] sm:h-[86dvh] sm:max-h-[86dvh]">
       <header class="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-violet-950/80 via-[#101322] to-cyan-950/55 px-4 pb-3 pt-3.5">
         <div class="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full bg-violet-500/10 blur-2xl"></div>
         <div class="relative flex items-center gap-3">
           <span class="material-symbols-outlined flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-violet-400/10 text-xl text-violet-300 shadow-[0_0_24px_rgba(139,92,246,.12)]">rocket_launch</span>
           <div class="min-w-0 flex-1">
-            <p class="text-[8px] font-black tracking-[.2em] text-violet-400">ADVENTURE CHANGELOG</p>
-            <h2 id="update-log-title" class="mt-0.5 text-[15px] font-black text-white">冒険の更新記録</h2>
+            <h2 id="update-log-title" class="text-[15px] font-black text-white">アップデート履歴</h2>
             <p class="mt-0.5 text-[8px] text-slate-500">最新 v${APP_VERSION} ・ ${APP_RELEASE_DATE} ・ 全${days.length}日分</p>
           </div>
           <button data-update-close class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[.06] bg-black/10 text-slate-400 active:scale-95 active:bg-white/10 active:text-white" aria-label="更新記録を閉じる"><span class="material-symbols-outlined text-lg">close</span></button>
@@ -353,7 +308,7 @@ export function showUpdateLogModal() {
         </nav>
       </header>
       <main data-update-page class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3.5 sm:p-5"></main>
-      <footer class="grid grid-cols-[44px_1fr_44px] items-center gap-2 border-t border-white/10 bg-slate-950/90 p-2.5">
+      <footer class="sticky bottom-0 z-10 grid shrink-0 grid-cols-[44px_1fr_44px] items-center gap-2 border-t border-white/10 bg-slate-950/95 p-2.5 backdrop-blur-md">
         <button data-page-prev class="flex h-10 w-11 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900 text-slate-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25" aria-label="新しい日付へ"><span class="material-symbols-outlined text-lg">arrow_back</span></button>
         <div class="text-center"><div data-page-indicator class="font-mono text-[9px] font-black text-slate-300"></div><div class="mt-0.5 text-[7px] font-bold tracking-wider text-slate-600">SELECT A DATE ABOVE</div></div>
         <button data-page-next class="flex h-10 w-11 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900 text-slate-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-25" aria-label="古い日付へ"><span class="material-symbols-outlined text-lg">arrow_forward</span></button>
