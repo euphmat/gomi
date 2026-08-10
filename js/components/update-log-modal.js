@@ -200,7 +200,9 @@ function renderItemCard(item) {
   return `
     <article class="grid grid-cols-[42px_1fr] items-center gap-2.5 rounded-xl border border-white/[.08] bg-slate-900/65 p-2.5 shadow-[0_5px_18px_rgba(0,0,0,.12)]">
       <div class="flex h-full min-h-10 items-center justify-center">
-        <span class="material-symbols-outlined inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xl leading-none ${tone.icon}">${category.icon}</span>
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl border ${tone.icon}">
+          <span class="material-symbols-outlined block text-xl leading-none">${category.icon}</span>
+        </span>
       </div>
       <div class="min-w-0">
         <div class="flex flex-wrap items-center gap-1.5">
@@ -293,7 +295,9 @@ export function showUpdateLogModal() {
       <header class="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-violet-950/80 via-[#101322] to-cyan-950/55 px-4 pb-3 pt-3.5">
         <div class="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full bg-violet-500/10 blur-2xl"></div>
         <div class="relative flex items-center gap-3">
-          <span class="material-symbols-outlined flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-violet-400/10 text-xl text-violet-300 shadow-[0_0_24px_rgba(139,92,246,.12)]">rocket_launch</span>
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-violet-400/10 text-violet-300 shadow-[0_0_24px_rgba(139,92,246,.12)]">
+            <span class="material-symbols-outlined block text-xl leading-none">rocket_launch</span>
+          </span>
           <div class="min-w-0 flex-1">
             <h2 id="update-log-title" class="text-[15px] font-black text-white">アップデート履歴</h2>
             <p class="mt-0.5 text-[8px] text-slate-500">最新 v${APP_VERSION} ・ ${APP_RELEASE_DATE} ・ 全${days.length}日分</p>
