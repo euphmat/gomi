@@ -137,6 +137,13 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     virulent_mutation: skill(ROLE.COMBO_FINISHER),
     pandemic: skill(ROLE.COMBO_FINISHER, 'area'),
     black_death: skill(ROLE.COMBO_FINISHER, 'area')
+  }),
+  soul_reaper: Object.freeze({
+    soul_harvest: skill(ROLE.COMBO_SETUP),
+    corpse_vanguard: skill(ROLE.COMBO_FINISHER, 'random'),
+    ossuary_aegis: skill(ROLE.MAINTENANCE, 'party'),
+    march_of_dead: skill(ROLE.COMBO_FINISHER, 'area'),
+    last_requiem: skill(ROLE.COMBO_FINISHER, 'area')
   })
 });
 
@@ -499,6 +506,34 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
         dive.priority = 475;
         dive.score += 400 + spirit * 70;
         if (!existing) candidates.push(dive);
+      }
+    }
+  }
+
+  // ソウルリーパー: 亡骸を5体まで蓄え、状況に応じて防御・行軍・葬列へ振り分ける。
+  if (currentJob === 'soul_reaper') {
+    const corpses = Math.min(5, Math.max(0, Number(character._soulReaperCorpses) || 0));
+    const fallenAllies = context.party.filter(member => member.isDead).length;
+    const livingAllies = context.party.filter(member => !member.isDead);
+    const harvest = byId.get('soul_harvest');
+    if (harvest && corpses < 3) harvest.score += (3 - corpses) * 110;
+
+    const requiem = byId.get('last_requiem');
+    if (requiem && corpses >= 5) {
+      requiem.priority = 510;
+      requiem.score += 520 + fallenAllies * 600 + aliveEnemies.length * 120;
+    } else {
+      const march = byId.get('march_of_dead');
+      if (march && corpses >= 3 && aliveEnemies.length >= 2) {
+        march.priority = 470;
+        march.score += corpses * 90 + aliveEnemies.length * 100;
+      }
+
+      const aegis = byId.get('ossuary_aegis');
+      const exposedAllies = livingAllies.filter(member => !(member._barrierHp > 0)).length;
+      if (aegis && corpses >= 1 && exposedAllies >= Math.ceil(livingAllies.length / 2)) {
+        aegis.priority = 455;
+        aegis.score += exposedAllies * 120;
       }
     }
   }

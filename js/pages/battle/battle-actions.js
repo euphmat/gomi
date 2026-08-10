@@ -4,6 +4,7 @@ import {
   getMagicMissileAnimationTiming,
   playMagicMissileAnimation
 } from './magic-missile-animation.js';
+import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
 
 /**
  * battle-actions.js
@@ -11,6 +12,21 @@ import {
  */
 
 export const actionMethods = {
+  trySoulReaperDeathDenial(entity) {
+    if ((entity?.jobId || entity?.job) !== 'soul_reaper' || !entity.hp || entity.isDead) return false;
+    if (getSoulReaperCorpseStock(entity) < 1) return false;
+    const denial = this._findSkill?.(entity, 'death_denial');
+    if (!denial?.levelConfig?.revivePercent) return false;
+    if (consumeSoulReaperCorpses(entity, 1, this, { announce: false }) < 1) return false;
+
+    const maxHp = entity.stats?.hp || entity.hp.max || 1;
+    entity.hp.current = Math.max(1, Math.floor(maxHp * denial.levelConfig.revivePercent / 100));
+    this.showActionName?.(entity.elementId, '死の拒絶', 'text-cyan-100', 'border-violet-400/80');
+    this.showDamage?.(entity.elementId, `HP ${entity.hp.current}`, 'text-cyan-200');
+    this.renderEntities?.();
+    return true;
+  },
+
   _waitForAttackAnimation(target, completionDuration, cadenceDuration = completionDuration) {
     const completionWait = Math.max(0, Math.ceil(Number(completionDuration) || 0));
     if (completionWait === 0) return;
@@ -78,6 +94,7 @@ export const actionMethods = {
     entity._slimeSingerNotes = 0;
     entity._dragoonSpirit = 0;
     entity._shinraSigils = [];
+    entity._soulReaperCorpses = 0;
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -475,6 +492,15 @@ export const actionMethods = {
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
 
+    // --- Passive: 死霊軍勢 (corpse stock damage amplification) ---
+    if ((attacker.jobId || attacker.job) === 'soul_reaper' && attacker.hp !== undefined) {
+      const legion = this._findSkill(attacker, 'legion_of_dead');
+      const corpses = getSoulReaperCorpseStock(attacker);
+      if (legion?.levelConfig?.corpseDamagePercent && corpses > 0) {
+        damage = Math.floor(damage * (1 + corpses * legion.levelConfig.corpseDamagePercent / 100));
+      }
+    }
+
     // --- Passive: 急所看破 (Anatomy Mastery) ---
     if (attacker.hp !== undefined) {
       const anatomyMastery = this._findSkill(attacker, 'anatomy_mastery');
@@ -778,16 +804,18 @@ export const actionMethods = {
 
       defender.hp.current -= damage;
       if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion) {
-        defender.hp.current = 0;
-        defender.isDead = true;
-        playSoundEffect('enemyDown', { automatic: this.isAutoBattle, rate: .78 });
-        this.clearEntityStatuses(defender);
-        this.lastKilledBy = {
-          monsterId: attacker.id,
-          monsterName: attacker.name,
-          monsterImage: attacker.image,
-          actionName: actionName
-        };
+        if (!this.trySoulReaperDeathDenial(defender)) {
+          defender.hp.current = 0;
+          defender.isDead = true;
+          playSoundEffect('enemyDown', { automatic: this.isAutoBattle, rate: .78 });
+          this.clearEntityStatuses(defender);
+          this.lastKilledBy = {
+            monsterId: attacker.id,
+            monsterName: attacker.name,
+            monsterImage: attacker.image,
+            actionName: actionName
+          };
+        }
       } else if (defender.jobSkills) {
         // --- Passive: Counter ---
         const counterSkill = this._findSkill(defender, 'counter');

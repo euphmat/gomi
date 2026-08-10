@@ -485,6 +485,7 @@ export function renderChangeJobTab() {
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="text-[9px] font-black text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-600/50 shadow-inner uppercase tracking-widest flex items-center gap-0.5 shrink-0"><span class="material-symbols-outlined text-[10px] text-slate-400">military_tech</span>JLv.${savedLevel}</span>
               ${isUnlocked && !isCurrent ? '<span class="flex items-center gap-0.5 text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/30 shadow-[0_0_5px_rgba(16,185,129,0.1)] uppercase tracking-wider shrink-0"><span class="material-symbols-outlined text-[10px]">lock_open</span>解放済</span>' : ''}
+              ${job.tier === 'super_advanced' ? '<span class="flex items-center gap-0.5 text-[9px] font-black text-cyan-200 bg-violet-950/70 px-1.5 py-0.5 rounded-md border border-cyan-300/40 shadow-[0_0_8px_rgba(34,211,238,0.2)] tracking-wider shrink-0"><span class="material-symbols-outlined text-[10px]">skull</span>超上級職</span>' : ''}
             </div>
           </div>
           ${requirementsHtml}

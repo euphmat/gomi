@@ -641,8 +641,12 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
   learnedSkills.forEach(({ skillDef, level, isInherited }) => {
     const levelConfig = resolveJobSkillLevelConfig(skillDef, level, isInherited ? 'inherited' : 'current');
     const isSilenced = levelConfig.mpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
-    const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced;
+    const useState = skillDef.getUseState?.(p, levelConfig) || { canUse: true };
+    const canCast = p.mp.current >= levelConfig.mpCost && !isSilenced && useState.canUse !== false;
     const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
+    const useStateHtml = useState.canUse === false && useState.message
+      ? `<span class="font-black text-rose-300">${useState.message}。</span>`
+      : '';
 
     let typeLabel = '特殊';
     let typeBadgeClass = 'text-slate-300 bg-slate-800/80 border-slate-600/50';
@@ -728,7 +732,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
     }
 
     skillListHtml += `
-      <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}" ${isAutoBattle ? `role="switch" aria-checked="${autoEnabled}" aria-label="${skillDef.name}の自動使用"` : ''}>
+      <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}" aria-disabled="${canCast ? 'false' : 'true'}" ${isAutoBattle ? `role="switch" aria-checked="${autoEnabled}" aria-label="${skillDef.name}の自動使用"` : ''}>
         <!-- Touch press feedback -->
         <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-active:opacity-100 transition-opacity duration-500"></div>
         
@@ -751,7 +755,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs) {
               ? `<div class="text-[9px] font-black text-fuchsia-300 bg-fuchsia-900/30 border border-fuchsia-500/30 px-1 py-[1px] rounded tracking-wider">継承 90%</div>`
               : `<div class="text-[9px] font-black text-emerald-300 bg-emerald-900/30 border border-emerald-500/30 px-1 py-[1px] rounded tracking-wider">現職 110%</div>`}
           </div>
-          <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${desc}</div>
+          <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${useStateHtml}${desc}</div>
         </div>
 
         <!-- Right: MP Cost & Auto Switch (Horizontal Layout) -->

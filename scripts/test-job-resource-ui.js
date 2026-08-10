@@ -46,6 +46,10 @@ assert(sage?.current === 2 && sage.max === 3, '三界印の種類が正規化さ
 assert(sage.slots.find(slot => slot.id === 'grass')?.filled, '草の印が表示されません');
 assert(!sage.slots.find(slot => slot.id === 'wind')?.filled, '未獲得の風の印が点灯しています');
 
+const reaper = getJobResourceState({ jobId: 'soul_reaper', _soulReaperCorpses: 9 });
+assert(reaper?.current === 5 && reaper.max === 5, 'ソウルリーパーの亡骸ストック上限が不正です');
+assert(renderJobResourceHtml({ jobId: 'soul_reaper', _soulReaperCorpses: 3 }).includes('亡骸'), '亡骸パネルが描画されません');
+
 const locked = getJobResourceState(makeCharacter('entertainer', null, 0, '_entertainerHype', 3));
 assert(locked && !locked.unlocked && locked.current === 0, '未習得の固有システムが有効表示されています');
 assert(renderJobResourceHtml(makeCharacter('entertainer', null, 0, '_entertainerHype', 3)).includes('未開放'), '未開放表示がありません');

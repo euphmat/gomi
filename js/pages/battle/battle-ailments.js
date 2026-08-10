@@ -62,12 +62,14 @@ export const ailmentMethods = {
       if (entity.hp) {
         entity.hp.current -= damage;
         if (entity.hp.current <= 0) {
-           entity.hp.current = 0;
-           entity.isDead = true;
-           this.clearEntityStatuses(entity);
-           this.lastKilledBy = {
-             monsterId: 'ailment', monsterName: ailmentName, monsterImage: '', actionName: ailmentName
-           };
+           if (!this.trySoulReaperDeathDenial?.(entity)) {
+             entity.hp.current = 0;
+             entity.isDead = true;
+             this.clearEntityStatuses(entity);
+             this.lastKilledBy = {
+               monsterId: 'ailment', monsterName: ailmentName, monsterImage: '', actionName: ailmentName
+             };
+           }
         }
       } else {
         entity.currentHp -= damage;
@@ -103,7 +105,8 @@ export const ailmentMethods = {
           for (const [skillId, cacheData] of entity._skillCache.entries()) {
             const { level, def, levelConfig } = cacheData;
             if (level > 0 && def && levelConfig && def.type !== 'passive' && !def.isPassive) {
-              if (entity.mp && entity.mp.current >= levelConfig.mpCost) {
+              const useState = def.getUseState?.(entity, levelConfig) || { canUse: true };
+              if (entity.mp && entity.mp.current >= levelConfig.mpCost && useState.canUse !== false) {
                 usableSkills.push({ skillId, def, levelConfig });
               }
             }

@@ -20,6 +20,7 @@ import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
 import { getAvailableJobSP, getJobExpToNext, normalizeJobExpProgress } from '../../data/job-progression.js';
+import { addSoulReaperCorpses } from '../../jobs/soul_reaper.js';
 
 const MATERIALS_MAP = new Map(MATERIALS.map(m => [m.id, m]));
 
@@ -65,6 +66,15 @@ export const resultMethods = {
 
   async processEnemyDeath(enemy) {
     let drops = [];
+
+    // 墓標の王: every defeated enemy leaves one usable corpse behind.
+    for (const member of this.party) {
+      if (member.isDead || member.jobId !== 'soul_reaper') continue;
+      const sovereignty = this._findSkill?.(member, 'grave_sovereignty');
+      if (sovereignty?.level > 0 && sovereignty.levelConfig) {
+        addSoulReaperCorpses(member, 1, this);
+      }
+    }
 
     // Track that this monster has been encountered/defeated (for monster library)
     if (this.discoveredMonsters && !this.discoveredMonsters.includes(enemy.id)) {
@@ -646,7 +656,7 @@ export const resultMethods = {
       'defDebuffTurns', 'defDebuffPercent',
       '_regenTurns', '_regenHp',
       '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype', '_slimeSingerNotes',
-      '_dragoonSpirit', '_shinraSigils'
+      '_dragoonSpirit', '_shinraSigils', '_soulReaperCorpses'
     ];
 
     for (const p of this.party) {

@@ -22,6 +22,7 @@ import { dragoon } from './dragoon.js';
 import { gunner } from './gunner.js';
 import { shinra_sage } from './shinra_sage.js';
 import { plague_doctor } from './plague_doctor.js';
+import { soul_reaper } from './soul_reaper.js';
 
 export const JOB_STAT_GROWTH = {
   // HP/MP are weighted at 25% when budgeting growth because equipment grants
@@ -52,7 +53,9 @@ export const JOB_STAT_GROWTH = {
   [dragoon.id]:     { hp: [2, 4], mp: [1, 3], atk: [2, 3], def: [1, 2], matk: [0, 0], mdef: [0, 2], spd: [1, 3] },
   [gunner.id]:      { hp: [1, 3], mp: [1, 3], atk: [2, 4], def: [0, 2], matk: [0, 0], mdef: [1, 2], spd: [1, 2] },
   [shinra_sage.id]: { hp: [1, 3], mp: [2, 4], atk: [0, 0], def: [1, 2], matk: [2, 3], mdef: [1, 2], spd: [1, 2] },
-  [plague_doctor.id]: { hp: [1, 3], mp: [3, 5], atk: [0, 0], def: [0, 2], matk: [3, 4], mdef: [2, 3], spd: [1, 2] }
+  [plague_doctor.id]: { hp: [1, 3], mp: [3, 5], atk: [0, 0], def: [0, 2], matk: [3, 4], mdef: [2, 3], spd: [1, 2] },
+  // Super-advanced jobs intentionally sit above the normal growth budget.
+  [soul_reaper.id]: { hp: [2, 4], mp: [3, 5], atk: [1, 3], def: [0, 2], matk: [3, 5], mdef: [1, 3], spd: [1, 3] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -82,7 +85,8 @@ export const JOB_STAT_MULTIPLIER = {
   [dragoon.id]:     { hp: 1.35, mp: 0.85, atk: 1.50, def: 1.15, matk: 0.30, mdef: 0.90, spd: 1.15 },
   [gunner.id]:      { hp: 0.95, mp: 1.10, atk: 1.65, def: 0.75, matk: 0.30, mdef: 1.00, spd: 0.95 },
   [shinra_sage.id]: { hp: 1.00, mp: 1.65, atk: 0.40, def: 1.10, matk: 1.70, mdef: 1.35, spd: 1.05 },
-  [plague_doctor.id]: { hp: 0.95, mp: 1.85, atk: 0.30, def: 0.80, matk: 1.95, mdef: 1.50, spd: 1.15 }
+  [plague_doctor.id]: { hp: 0.95, mp: 1.85, atk: 0.30, def: 0.80, matk: 1.95, mdef: 1.50, spd: 1.15 },
+  [soul_reaper.id]: { hp: 1.10, mp: 1.90, atk: 1.15, def: 0.75, matk: 2.10, mdef: 1.25, spd: 1.15 }
 };
 
 export const JOBS = {
@@ -109,5 +113,6 @@ export const JOBS = {
   [dragoon.id]: { ...dragoon, statGrowth: JOB_STAT_GROWTH[dragoon.id], statMultiplier: JOB_STAT_MULTIPLIER[dragoon.id] },
   [gunner.id]: { ...gunner, statGrowth: JOB_STAT_GROWTH[gunner.id], statMultiplier: JOB_STAT_MULTIPLIER[gunner.id] },
   [shinra_sage.id]: { ...shinra_sage, statGrowth: JOB_STAT_GROWTH[shinra_sage.id], statMultiplier: JOB_STAT_MULTIPLIER[shinra_sage.id] },
-  [plague_doctor.id]: { ...plague_doctor, statGrowth: JOB_STAT_GROWTH[plague_doctor.id], statMultiplier: JOB_STAT_MULTIPLIER[plague_doctor.id] }
+  [plague_doctor.id]: { ...plague_doctor, statGrowth: JOB_STAT_GROWTH[plague_doctor.id], statMultiplier: JOB_STAT_MULTIPLIER[plague_doctor.id] },
+  [soul_reaper.id]: { ...soul_reaper, statGrowth: JOB_STAT_GROWTH[soul_reaper.id], statMultiplier: JOB_STAT_MULTIPLIER[soul_reaper.id] }
 };

@@ -153,11 +153,24 @@ const select = (character, usableSkills, enemies, party = [character]) =>
     '緊急行動やコンボがなければ通常攻撃の確殺を維持する');
 }
 
-assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 24,
-  '全24職業の自動戦闘プロファイルを定義する');
+{
+  const enemy = makeEnemy();
+  const requiem = makeUsable('last_requiem', (_caster, _lc, context) => ({ target: context.enemies[0], score: 1 }));
+  const harvest = makeUsable('soul_harvest', (_caster, _lc, context) => ({ target: context.enemies[0], score: 80 }));
+  const reaper = makeCharacter({ jobId: 'soul_reaper', _soulReaperCorpses: 5 });
+  assert(select(reaper, [requiem, harvest], [enemy]).skill?.id === 'last_requiem',
+    '亡骸が5体なら終焉の葬列を最優先する');
+
+  reaper._soulReaperCorpses = 1;
+  assert(select(reaper, [harvest], [enemy]).skill?.id === 'soul_harvest',
+    '亡骸が少ない時は魂魄刈りで補充する');
+}
+
+assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 25,
+  '全25職業の自動戦闘プロファイルを定義する');
 assert(Object.values(AUTO_BATTLE_JOB_TACTICS)
-  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 101,
-  '全101アクティブスキルの役割を定義する');
+  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 106,
+  '全106アクティブスキルの役割を定義する');
 
 if (typeof print === 'function') print('auto-battle-ai: all tests passed');
 else console.log('auto-battle-ai: all tests passed');

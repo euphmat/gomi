@@ -805,7 +805,8 @@ class BattleManager {
             if (level > 0 && def && levelConfig && def.type !== 'passive') {
               const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
               const isBlockedBySilence = character.activeAilment?.type === 'silence' && levelConfig.mpCost > 0;
-              if (isAutoEnabled && !isBlockedBySilence && character.mp.current >= levelConfig.mpCost) {
+              const useState = def.getUseState?.(character, levelConfig) || { canUse: true };
+              if (isAutoEnabled && !isBlockedBySilence && character.mp.current >= levelConfig.mpCost && useState.canUse !== false) {
                 if (def.autoBattle && typeof def.autoBattle.check === 'function') {
                   usableSkills.push({
                     id: skillId,
@@ -1289,6 +1290,11 @@ class BattleManager {
           const levelConfig = found.levelConfig;
           if (this.activeCharacter.mp.current < levelConfig.mpCost) {
             this.showDamage(this.activeCharacter.elementId, 'MP不足', 'text-blue-400');
+            return;
+          }
+          const useState = found.def.getUseState?.(this.activeCharacter, levelConfig) || { canUse: true };
+          if (useState.canUse === false) {
+            this.showDamage(this.activeCharacter.elementId, useState.message || '使用不可', 'text-violet-300');
             return;
           }
           this.executeSkill(this.activeCharacter, found.def, levelConfig);

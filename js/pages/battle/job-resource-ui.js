@@ -71,6 +71,17 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     mutedClass: 'text-emerald-300/60',
     slotClass: 'border-emerald-300/30 bg-emerald-950/80',
     filledClass: 'border-lime-100 bg-emerald-400 text-emerald-950 shadow-[0_0_5px_rgba(52,211,153,0.8)]'
+  }),
+  soul_reaper: Object.freeze({
+    label: '亡骸',
+    icon: 'skull',
+    valueField: '_soulReaperCorpses',
+    fixedMax: 5,
+    panelClass: 'border-cyan-300/35 bg-violet-950/45',
+    textClass: 'text-cyan-100',
+    mutedClass: 'text-violet-300/60',
+    slotClass: 'border-violet-300/30 bg-slate-950/80',
+    filledClass: 'border-cyan-100 bg-violet-500 shadow-[0_0_6px_rgba(34,211,238,0.85)]'
   })
 });
 
@@ -111,7 +122,7 @@ export function getJobResourceState(entity) {
   }
 
   const levelConfig = getCurrentSkillConfig(entity, definition);
-  const max = normalizeCount(levelConfig?.[definition.maxField]);
+  const max = normalizeCount(definition.fixedMax || levelConfig?.[definition.maxField]);
   const current = Math.min(max, normalizeCount(entity?.[definition.valueField]));
   return {
     jobId,
@@ -172,4 +183,3 @@ export function renderJobResourceHtml(entity) {
     </div>
   `;
 }
-
