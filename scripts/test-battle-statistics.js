@@ -88,7 +88,7 @@ const enemy = {
 {
   const telemetry = new BattleTelemetry();
   telemetry.recordAction(hero, { id: 'slash', name: '斬撃', type: 'active', icon: 'swords' });
-  telemetry.recordDamage(hero, enemy, 80, { id: 'slash', name: '斬撃', type: 'active', icon: 'swords' });
+  telemetry.recordDamage(hero, enemy, 12500, { id: 'slash', name: '斬撃', type: 'active', icon: 'swords' });
   telemetry.recordEffect(hero, { id: 'guard', name: 'ガード', type: 'passive', icon: 'shield' });
   telemetry.recordPrevented(hero, hero, 10, { id: 'guard', name: 'ガード', type: 'passive', icon: 'shield' });
   const container = {
@@ -118,18 +118,28 @@ const enemy = {
       && !container.innerHTML.includes('最終発動')
       && !container.innerHTML.includes('軽減回数'),
     'unnecessary detailed skill statistics were rendered');
-  assert(container.innerHTML.includes('戦闘への貢献')
-      && container.innerHTML.includes('キャラ内貢献')
+  assert(container.innerHTML.includes('data-skill-contributions')
       && container.innerHTML.includes('100.0%')
-      && container.innerHTML.includes('1回発動'),
+      && container.innerHTML.includes('1回'),
     'compact skill contribution summary was not rendered');
-  assert(container.innerHTML.includes('現在の効果')
+  assert(container.innerHTML.includes('data-skill-effect-inline')
       && container.innerHTML.includes('MPを4消費し、敵単体へ1.5倍の物理攻撃を行う。')
       && container.innerHTML.includes('Lv.3'),
-    'current skill level effect description was not rendered');
+    'current skill effect was not rendered inline with its name');
+  assert(container.innerHTML.includes('12.5k')
+      && !container.innerHTML.includes('万')
+      && !container.innerHTML.includes('億'),
+    'statistics did not use compact k/m/b notation');
   assert(container.innerHTML.includes('被攻撃時、20%の確率でダメージを15%軽減する。')
       && container.innerHTML.includes('Lv.2'),
     'current passive skill effect description was not rendered');
+  assert(container.innerHTML.includes('data-skill-purpose-chart')
+      && container.innerHTML.includes('conic-gradient(')
+      && container.innerHTML.includes('用途別発動割合')
+      && container.innerHTML.includes('攻撃')
+      && container.innerHTML.includes('防御')
+      && container.innerHTML.includes('50.0%'),
+    'skill purpose activation pie chart was not rendered');
 }
 
 console.log('battle statistics tests passed');

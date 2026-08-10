@@ -21,26 +21,28 @@ const PARTY_BG_CLASSES = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70
 const STAT_TEXT_COLORS = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
 const ENEMY_EXIT_DURATION = 160;
 const BARRIER_FRAME_CLASSES = [
-  'border-violet-400/70', 'bg-violet-950/80',
-  'border-cyan-400/60', 'bg-cyan-950/70',
-  'border-gray-700/60', 'bg-gray-950/80', 'opacity-40'
+  'hidden', 'inline-flex',
+  'border-violet-300/80', 'bg-violet-950/95', 'text-violet-50',
+  'border-cyan-300/80', 'bg-cyan-950/95', 'text-cyan-50'
 ];
 const BARRIER_FILL_CLASSES = [
   'from-cyan-500', 'from-cyan-400', 'via-blue-400', 'to-blue-400', 'to-violet-400'
 ];
 
-function updateBarrierIndicator(cache, entity, maxHp, compact = false) {
+function updateBarrierIndicator(cache, entity, maxHp) {
   const indicator = cache.barrierIndicator;
   const meter = cache.barrierMeter;
   const text = cache.barrierText;
   if (!indicator || !meter || !text) return;
 
   const barrier = getBarrierUiState(entity, maxHp);
-  const stateKey = `${barrier.amount}-${Math.floor(maxHp)}-${compact}`;
+  const stateKey = `${barrier.amount}-${Math.floor(maxHp)}`;
   if (cache.uiState.barrier === stateKey) return;
   cache.uiState.barrier = stateKey;
 
   meter.style.transform = `scaleX(${barrier.fillPercent / 100})`;
+  meter.classList.toggle('opacity-100', barrier.isActive);
+  meter.classList.toggle('opacity-0', !barrier.isActive);
   meter.classList.remove(...BARRIER_FILL_CLASSES);
   meter.classList.add('bg-gradient-to-r');
   if (barrier.isOverflow) {
@@ -51,14 +53,21 @@ function updateBarrierIndicator(cache, entity, maxHp, compact = false) {
 
   indicator.classList.remove(...BARRIER_FRAME_CLASSES);
   if (!barrier.isActive) {
-    indicator.classList.add('border-gray-700/60', 'bg-gray-950/80', 'opacity-40');
+    indicator.classList.add('hidden', 'border-cyan-300/80', 'bg-cyan-950/95', 'text-cyan-50');
   } else if (barrier.isOverflow) {
-    indicator.classList.add('border-violet-400/70', 'bg-violet-950/80');
+    indicator.classList.add('inline-flex', 'border-violet-300/80', 'bg-violet-950/95', 'text-violet-50');
   } else {
-    indicator.classList.add('border-cyan-400/60', 'bg-cyan-950/70');
+    indicator.classList.add('inline-flex', 'border-cyan-300/80', 'bg-cyan-950/95', 'text-cyan-50');
   }
 
-  text.textContent = compact ? barrier.compactText : barrier.valueText;
+  if (cache.hpTextContainer) {
+    cache.hpTextContainer.classList.remove('justify-center', 'justify-start', 'pl-0.5', 'pr-[45%]');
+    cache.hpTextContainer.classList.add(...(barrier.isActive
+      ? ['justify-start', 'pl-0.5', 'pr-[45%]']
+      : ['justify-center']));
+  }
+
+  text.textContent = barrier.compactText;
   indicator.title = barrier.ariaLabel;
   indicator.setAttribute('aria-label', barrier.ariaLabel);
   indicator.setAttribute('aria-valuenow', String(barrier.amount));
@@ -339,7 +348,7 @@ export const rendererMethods = {
       if (hpBar.style.left !== '0px' && hpBar.style.left !== '0%') hpBar.style.left = '0';
       if (hpBar.style.transform) hpBar.style.transform = '';
 
-      updateBarrierIndicator(cache, e, Math.max(1, e.maxHp), true);
+      updateBarrierIndicator(cache, e, Math.max(1, e.maxHp));
 
       if (hpText) {
         const newHpText = `${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}`;
@@ -547,7 +556,8 @@ export const rendererMethods = {
           stateIconsContainer: el.querySelector('.state-icons-container'),
           hpContainer: el.querySelector('.enemy-hp-container'),
           hpBar: el.querySelector('.bg-red-600'),
-          hpText: el.querySelector('.hp-text'),
+          hpTextContainer: el.querySelector('.hp-text'),
+          hpText: el.querySelector('.hp-value'),
           barrierIndicator: el.querySelector('.barrier-indicator'),
           barrierMeter: el.querySelector('.barrier-meter'),
           barrierText: el.querySelector('.barrier-text'),
@@ -575,7 +585,8 @@ export const rendererMethods = {
           jlvEl: el.querySelector(`.${p.elementId}-jlv`),
           spEl: el.querySelector(`.${p.elementId}-sp`),
           hpBar: hpBarEl,
-          hpText: el.querySelector('.hp-text'),
+          hpTextContainer: el.querySelector('.hp-text'),
+          hpText: el.querySelector('.hp-value'),
           barrierIndicator: el.querySelector('.barrier-indicator'),
           barrierMeter: el.querySelector('.barrier-meter'),
           barrierText: el.querySelector('.barrier-text'),

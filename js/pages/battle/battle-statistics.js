@@ -18,11 +18,16 @@ const escapeHtml = value => String(value ?? '')
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;');
 
+const compactNumberFormatter = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  compactDisplay: 'short',
+  maximumFractionDigits: 1
+});
+
 const compactNumber = value => {
   const amount = Math.max(0, Math.floor(Number(value) || 0));
-  if (amount < 10000) return amount.toLocaleString('ja-JP');
-  if (amount < 100000000) return `${(amount / 10000).toFixed(amount < 100000 ? 1 : 0)}万`;
-  return `${(amount / 100000000).toFixed(amount < 1000000000 ? 1 : 0)}億`;
+  if (amount < 1000) return amount.toLocaleString('ja-JP');
+  return compactNumberFormatter.format(amount).toLowerCase();
 };
 
 const entityName = entity => entity?.name || entity?.displayName || '不明';
@@ -408,14 +413,77 @@ function renderCharacterOverview(manager, stat, elapsedMs) {
 
 function renderContributionCell(label, value, share, icon, color, barColor) {
   const width = Math.min(100, Math.max(0, Number(share) || 0));
-  return `<div class="min-w-0 rounded-lg border border-white/[0.08] bg-black/30 px-2 py-1.5">
-    <div class="flex items-center gap-1 text-[9px] font-bold text-slate-300"><span class="material-symbols-outlined ${color}" style="font-size:12px">${icon}</span>${label}<span class="ml-auto font-mono text-[9px] text-amber-200">${formatPercent(width)}</span></div>
-    <div class="mt-1 flex items-end justify-between gap-2"><span class="truncate text-[14px] font-black leading-none ${color}">${compactNumber(value)}</span><span class="shrink-0 text-[8px] text-slate-400">キャラ内貢献</span></div>
-    <div class="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full ${barColor}" style="width:${width.toFixed(1)}%"></div></div>
+  return `<div class="min-w-0 rounded-md border border-white/[0.08] bg-black/30 px-1.5 py-1">
+    <div class="flex items-center gap-1 text-[9px] font-bold text-slate-300"><span class="material-symbols-outlined ${color}" style="font-size:11px">${icon}</span><span class="truncate">${label}</span><span class="ml-auto shrink-0 font-mono text-[8px] text-amber-200">${formatPercent(width)}</span></div>
+    <div class="mt-0.5 truncate text-[13px] font-black leading-none ${color}">${compactNumber(value)}</div>
+    <div class="mt-1 h-0.5 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full ${barColor}" style="width:${width.toFixed(1)}%"></div></div>
   </div>`;
 }
 
-function renderSkillMetric(metric, stat, effect) {
+const SKILL_PURPOSES = [
+  { id: 'attack', label: '攻撃', icon: 'swords', hex: '#fb7185', textClass: 'text-rose-300' },
+  { id: 'defense', label: '防御', icon: 'shield', hex: '#22d3ee', textClass: 'text-cyan-300' },
+  { id: 'recovery', label: '回復', icon: 'healing', hex: '#34d399', textClass: 'text-emerald-300' },
+  { id: 'support', label: '補助', icon: 'auto_awesome', hex: '#a78bfa', textClass: 'text-violet-300' }
+];
+
+function getSkillPurpose(metric, effect) {
+  const recovery = metric.healing + metric.mpRestored;
+  if (metric.damage > 0 || metric.prevented > 0 || recovery > 0) {
+    if (metric.prevented > metric.damage && metric.prevented >= recovery) return SKILL_PURPOSES[1];
+    if (recovery > metric.damage && recovery > metric.prevented) return SKILL_PURPOSES[2];
+    return SKILL_PURPOSES[0];
+  }
+
+  const description = String(effect.description || '');
+  if (/回復|蘇生|吸収|ヒール|治療/u.test(description)) return SKILL_PURPOSES[2];
+  if (/軽減|防御|バリア|無効|庇|守護|耐性|DEF|MDEF/iu.test(description)) return SKILL_PURPOSES[1];
+  if (/攻撃|ダメージ|追撃|反撃|ATK|MATK/iu.test(description)) return SKILL_PURPOSES[0];
+  return SKILL_PURPOSES[3];
+}
+
+function renderSkillPurposeChart(skillDisplays) {
+  const activations = new Map(SKILL_PURPOSES.map(purpose => [purpose.id, 0]));
+  skillDisplays.forEach(({ metric, purpose }) => {
+    activations.set(purpose.id, activations.get(purpose.id) + metric.activations);
+  });
+  const total = [...activations.values()].reduce((sum, count) => sum + count, 0);
+  if (total <= 0) return '';
+
+  let cursor = 0;
+  const entries = SKILL_PURPOSES.map(purpose => {
+    const count = activations.get(purpose.id);
+    const percent = count / total * 100;
+    const start = cursor;
+    cursor += percent;
+    return { ...purpose, count, percent, start, end: cursor };
+  }).filter(entry => entry.count > 0);
+  const gradient = entries
+    .map(entry => `${entry.hex} ${entry.start.toFixed(2)}% ${entry.end.toFixed(2)}%`)
+    .join(',');
+
+  return `<section class="flex items-center gap-2 rounded-lg border border-slate-600/70 bg-slate-950/70 p-2" data-skill-purpose-chart>
+    <div class="relative h-16 w-16 shrink-0 rounded-full" role="img" aria-label="用途別スキル発動割合" style="background:conic-gradient(${gradient})">
+      <div class="absolute inset-2 flex flex-col items-center justify-center rounded-full bg-slate-950 shadow-inner"><span class="text-[15px] font-black leading-none text-white">${compactNumber(total)}</span><span class="mt-0.5 text-[8px] font-bold text-slate-400">発動</span></div>
+    </div>
+    <div class="min-w-0 flex-1">
+      <div class="mb-1.5 flex items-center gap-1 text-[10px] font-black text-slate-200"><span class="material-symbols-outlined text-amber-300" style="font-size:13px">donut_large</span>用途別発動割合</div>
+      <div class="grid grid-cols-4 gap-1">
+        ${SKILL_PURPOSES.map(purpose => {
+          const count = activations.get(purpose.id);
+          const percent = count / total * 100;
+          return `<div class="min-w-0 rounded border border-white/[0.06] bg-black/25 px-1 py-1 text-center ${count > 0 ? '' : 'opacity-40'}">
+            <div class="flex items-center justify-center gap-0.5 truncate text-[9px] font-bold ${purpose.textClass}"><span class="h-1.5 w-1.5 shrink-0 rounded-full" style="background:${purpose.hex}"></span>${purpose.label}</div>
+            <div class="mt-0.5 font-mono text-[10px] font-black text-white">${formatPercent(percent)}</div>
+            <div class="text-[8px] text-slate-400">${count}回</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderSkillMetric(metric, stat, effect, purpose) {
   const contributions = [];
   if (metric.damage > 0) contributions.push(['与ダメージ', metric.damage, metric.damage / Math.max(1, stat.damageDealt) * 100, 'swords', 'text-rose-200', 'bg-rose-400']);
   if (metric.healing > 0) contributions.push(['HP回復', metric.healing, metric.healing / Math.max(1, stat.healingDone) * 100, 'healing', 'text-emerald-200', 'bg-emerald-400']);
@@ -423,20 +491,20 @@ function renderSkillMetric(metric, stat, effect) {
   if (metric.prevented > 0) contributions.push(['ダメージ軽減', metric.prevented, metric.prevented / Math.max(1, stat.prevented) * 100, 'shield', 'text-cyan-200', 'bg-cyan-400']);
 
   const icon = String(metric.icon || '').includes('/') ? 'auto_awesome' : metric.icon;
-  return `<article class="rounded-xl border border-slate-600/70 bg-slate-950/70 p-2.5">
-    <div class="flex items-center gap-2">
-      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/30"><span class="material-symbols-outlined ${metric.type === 'passive' ? 'text-cyan-200' : 'text-violet-200'}" style="font-size:18px">${escapeHtml(icon)}</span></div>
-      <div class="min-w-0 flex-1"><h3 class="truncate text-[12px] font-black text-white">${escapeHtml(metric.name)}</h3><span class="text-[9px] font-bold ${metric.type === 'passive' ? 'text-cyan-300' : 'text-violet-300'}">${metric.type === 'passive' ? 'PASSIVE SKILL' : 'ACTIVE SKILL'}</span></div>
-      <div class="shrink-0 rounded-md border border-violet-700/40 bg-violet-950/40 px-2 py-1 text-[10px] font-black text-violet-200">${metric.activations}回発動</div>
+  const contributionColumns = Math.min(4, Math.max(1, contributions.length));
+  return `<article class="rounded-lg border border-slate-600/70 bg-slate-950/70 p-2" data-battle-stat-skill>
+    <div class="flex min-w-0 items-center gap-1.5">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/15 bg-black/30"><span class="material-symbols-outlined ${metric.type === 'passive' ? 'text-cyan-200' : 'text-violet-200'}" style="font-size:16px">${escapeHtml(icon)}</span></div>
+      <div class="w-[22%] min-w-[72px] shrink-0">
+        <h3 class="truncate text-[11px] font-black text-white">${escapeHtml(metric.name)}</h3>
+        <span class="text-[8px] font-bold ${metric.type === 'passive' ? 'text-cyan-300' : 'text-violet-300'}">${metric.type === 'passive' ? 'PASSIVE' : 'ACTIVE'}</span><span class="ml-1 text-[8px] font-bold ${purpose.textClass}">· ${purpose.label}</span>
+      </div>
+      <p class="line-clamp-2 min-w-0 flex-1 border-l border-cyan-800/35 pl-1.5 text-[10px] font-medium leading-snug text-slate-200" data-skill-effect-inline>${effect.level ? `<span class="mr-1 font-mono font-black text-cyan-200">Lv.${effect.level}</span>` : ''}${escapeHtml(effect.description)}</p>
+      <div class="shrink-0 rounded border border-violet-700/40 bg-violet-950/40 px-1.5 py-0.5 text-[9px] font-black text-violet-200">${metric.activations}回</div>
     </div>
-    <div class="mt-2 rounded-lg border border-cyan-800/35 bg-cyan-950/20 px-2 py-1.5">
-      <div class="flex items-center gap-1 text-[9px] font-black text-cyan-200"><span class="material-symbols-outlined" style="font-size:12px">info</span>現在の効果${effect.level ? `<span class="ml-auto rounded bg-cyan-950/70 px-1.5 py-0.5 font-mono text-[9px] text-cyan-100">Lv.${effect.level}</span>` : ''}</div>
-      <p class="mt-1 text-[11px] font-medium leading-relaxed text-slate-200">${escapeHtml(effect.description)}</p>
-    </div>
-    <div class="mt-2 flex items-center gap-1 text-[10px] font-black text-slate-200"><span class="material-symbols-outlined text-amber-300" style="font-size:13px">military_tech</span>戦闘への貢献</div>
     ${contributions.length
-      ? `<div class="mt-1.5 grid grid-cols-2 gap-1.5">${contributions.map(item => renderContributionCell(...item)).join('')}</div>`
-      : '<div class="mt-1.5 rounded-lg border border-dashed border-slate-600/60 bg-black/20 px-2 py-2 text-center text-[10px] text-slate-400">直接集計できるダメージ・回復・軽減効果はありません</div>'}
+      ? `<div class="mt-1.5 grid gap-1" data-skill-contributions style="grid-template-columns:repeat(${contributionColumns},minmax(0,1fr))">${contributions.map(item => renderContributionCell(...item)).join('')}</div>`
+      : '<div class="mt-1 rounded border border-dashed border-slate-600/50 bg-black/20 px-2 py-1 text-center text-[9px] text-slate-400">直接集計できる数値効果なし</div>'}
   </article>`;
 }
 
@@ -453,14 +521,20 @@ function renderStatistics(manager) {
     return (b.damage + b.healing + b.prevented + b.mpRestored) - (a.damage + a.healing + a.prevented + a.mpRestored)
       || b.activations - a.activations;
   });
+  const skillDisplays = skills.map(metric => {
+    const effect = getCurrentSkillEffect(manager, selected, metric);
+    return { metric, effect, purpose: getSkillPurpose(metric, effect) };
+  });
   return `${renderCharacterTabs(manager, stats, selected.key)}
     <div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list>
       ${renderCharacterOverview(manager, selected, elapsedMs)}
+      ${renderSkillPurposeChart(skillDisplays)}
       <div class="flex items-center gap-1 px-0.5 pt-1 text-[11px] font-black text-slate-200"><span class="material-symbols-outlined text-slate-300" style="font-size:14px">query_stats</span>スキル詳細 <span class="ml-auto text-[10px] font-medium text-slate-400">${skills.length}件</span></div>
-      ${skills.length ? skills.map(metric => renderSkillMetric(
+      ${skillDisplays.length ? skillDisplays.map(({ metric, effect, purpose }) => renderSkillMetric(
         metric,
         selected,
-        getCurrentSkillEffect(manager, selected, metric)
+        effect,
+        purpose
       )).join('') : '<div class="rounded-xl border border-slate-600/60 bg-slate-950/70 py-6 text-center text-[11px] text-slate-400">まだスキルデータがありません</div>'}
     </div>`;
 }

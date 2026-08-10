@@ -6,9 +6,8 @@ import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { renderJobResourceHtml } from './job-resource-ui.js';
 
 /**
- * HP とバリアを同じゲージに足し合わせないための表示モデル。
- * バリアゲージは常に「最大 HP に対する割合」を示し、100% を超えた分は
- * ゲージを伸ばさず、数値と割合で明示する。
+ * HP バー内のバリア表示モデル。
+ * HP の赤い残量とは合算せず、細いラインだけを最大 HP 比で描画する。
  */
 export function getBarrierUiState(entity, maxHp) {
   const rawAmount = Number(entity?._barrierHp);
@@ -33,34 +32,21 @@ export function getBarrierUiState(entity, maxHp) {
   };
 }
 
-function renderBarrierIndicatorHtml(entity, maxHp, { compact = false, fastMode = false } = {}) {
+function renderBarrierIndicatorHtml(entity, maxHp, { fastMode = false } = {}) {
   const barrier = getBarrierUiState(entity, maxHp);
   const transitionStyle = fastMode ? '' : 'transition: transform 0.3s ease;';
   const frameTheme = barrier.isActive
-    ? (barrier.isOverflow ? 'border-violet-400/70 bg-violet-950/80' : 'border-cyan-400/60 bg-cyan-950/70')
-    : 'border-gray-700/60 bg-gray-950/80 opacity-40';
+    ? (barrier.isOverflow ? 'inline-flex border-violet-300/80 bg-violet-950/95 text-violet-50' : 'inline-flex border-cyan-300/80 bg-cyan-950/95 text-cyan-50')
+    : 'hidden border-cyan-300/80 bg-cyan-950/95 text-cyan-50';
   const fillTheme = barrier.isOverflow
     ? 'bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400'
     : 'bg-gradient-to-r from-cyan-500 to-blue-400';
 
-  if (compact) {
-    return `
-      <div class="barrier-indicator relative h-3 w-full shrink-0 overflow-hidden rounded border ${frameTheme}" role="meter" title="${barrier.ariaLabel}" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1), barrier.amount)}" aria-valuenow="${barrier.amount}">
-        <div class="barrier-meter absolute inset-0 w-full origin-left ${fillTheme}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}"></div>
-        <div class="absolute inset-0 z-10 flex items-center justify-center gap-px whitespace-nowrap text-[7.5px] font-black text-cyan-50 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
-          <span class="material-symbols-outlined leading-none" style="font-size: 8px; font-variation-settings: 'FILL' 1">shield</span>
-          <span class="barrier-text tabular-nums">${barrier.compactText}</span>
-        </div>
-      </div>`;
-  }
-
   return `
-    <div class="barrier-indicator flex h-3 items-center gap-0.5 rounded border px-0.5 ${frameTheme}" role="meter" title="${barrier.ariaLabel}" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1), barrier.amount)}" aria-valuenow="${barrier.amount}">
-      <span class="material-symbols-outlined w-2.5 shrink-0 text-center leading-none text-cyan-200" style="font-size: 9px; font-variation-settings: 'FILL' 1" aria-hidden="true">shield</span>
-      <div class="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-gray-950/90">
-        <div class="barrier-meter h-full w-full origin-left ${fillTheme}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}"></div>
-      </div>
-      <span class="barrier-text min-w-[3.5rem] shrink-0 whitespace-nowrap text-right text-[7px] font-black tabular-nums text-cyan-50">${barrier.valueText}</span>
+    <div class="barrier-meter pointer-events-none absolute bottom-0 left-0 z-10 h-[2px] w-full origin-left ${fillTheme} ${barrier.isActive ? 'opacity-100' : 'opacity-0'}" style="transform: scaleX(${barrier.fillPercent / 100}); ${transitionStyle}" aria-hidden="true"></div>
+    <div class="barrier-indicator absolute right-px top-1/2 z-30 max-w-[45%] -translate-y-1/2 items-center gap-px overflow-hidden rounded-sm border px-px leading-none shadow-[0_0_5px_rgba(34,211,238,0.45)] ${frameTheme}" role="meter" title="${barrier.ariaLabel}" aria-label="${barrier.ariaLabel}" aria-valuemin="0" aria-valuemax="${Math.max(1, Math.floor(maxHp || 1), barrier.amount)}" aria-valuenow="${barrier.amount}">
+      <span class="material-symbols-outlined shrink-0 leading-none" style="font-size: 8px; font-variation-settings: 'FILL' 1" aria-hidden="true">shield</span>
+      <span class="barrier-text truncate text-[7px] font-black tabular-nums">${barrier.compactText}</span>
     </div>`;
 }
 
@@ -135,12 +121,10 @@ export function renderEnemyCardHtml(e, selectedEnemyTarget) {
       </div>
       <div class="enemy-hp-container w-full relative h-3.5 bg-gray-900 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (e.currentHp / maxHp) * 100)}%; ${fastMode ? '' : 'transition: width 0.3s ease;'}"></div>
-        <div class="hp-text absolute inset-0 flex items-center justify-center text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap z-20">
-          ${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}
+        ${renderBarrierIndicatorHtml(e, maxHp, { fastMode })}
+        <div class="hp-text absolute inset-0 z-20 flex items-center ${e._barrierHp > 0 ? 'justify-start pl-0.5 pr-[45%]' : 'justify-center'} overflow-hidden text-[8.5px] text-gray-100 font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,1)] tracking-tighter whitespace-nowrap">
+          <span class="hp-value truncate">${formatNumber(Math.floor(e.currentHp))}/${formatNumber(e.maxHp)}</span>
         </div>
-      </div>
-      <div class="w-full ${e.isDead ? 'opacity-0' : ''}">
-        ${renderBarrierIndicatorHtml(e, maxHp, { compact: true, fastMode })}
       </div>
       <div class="enemy-atb-container w-full bg-gray-900 h-1.5 rounded overflow-hidden shadow-inner border border-gray-700/50 shrink-0 ${e.isDead ? 'opacity-0' : ''}">
         <div id="${e.elementId}-atb" class="bg-orange-500 h-full w-full origin-left" style="transform: scaleX(${e.atb / 1000}); will-change: transform; transition: transform 100ms linear;"></div>
@@ -266,12 +250,12 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
           <span class="w-3 shrink-0 text-[7px] font-black text-red-400">HP</span>
           <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
             <div class="absolute bg-red-600" style="left: 0; top: 0; bottom: 0; width: ${Math.min(100, (p.hp.current / maxHp) * 100)}%; ${hpTransStyle}"></div>
-            <div class="hp-text absolute inset-0 z-20 flex items-center justify-center whitespace-nowrap text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
-              ${formatNumber(Math.floor(p.hp.current))}/${formatNumber(maxHp)}
+            ${renderBarrierIndicatorHtml(p, maxHp, { fastMode })}
+            <div class="hp-text absolute inset-0 z-20 flex items-center ${p._barrierHp > 0 ? 'justify-start pl-0.5 pr-[45%]' : 'justify-center'} overflow-hidden whitespace-nowrap text-[7.5px] font-bold tracking-tighter text-gray-100 drop-shadow-[0_1px_1px_rgba(0,0,0,1)]">
+              <span class="hp-value truncate">${formatNumber(Math.floor(p.hp.current))}/${formatNumber(maxHp)}</span>
             </div>
           </div>
         </div>
-        ${renderBarrierIndicatorHtml(p, maxHp, { fastMode })}
         <div class="flex items-center gap-0.5">
           <span class="w-3 shrink-0 text-[7px] font-black text-blue-400">MP</span>
           <div class="relative h-3 flex-1 overflow-hidden rounded bg-gray-950 shadow-inner ring-1 ring-gray-700/60">
