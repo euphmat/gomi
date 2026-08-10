@@ -40,7 +40,7 @@ const dragoonStats = calcFinalStats({
   jobSkills: { dragoon: { lance_mastery: 10 } },
   equipment: {}
 }, new Map());
-assert(dragoonStats.atk === 195, 'lance mastery ATK multiplier was not applied before the job multiplier');
+assert(dragoonStats.atk === 199, 'current-job lance mastery ATK potency was not applied before the job multiplier');
 
 const caster = {
   jobId: 'dragoon', elementId: 'dragoon', isDead: false, activeAilment: null,

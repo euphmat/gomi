@@ -34,7 +34,7 @@ const gunnerStats = calcFinalStats({
   jobSkills: { gunner: { gun_mastery: 10, quick_reload: 10 } },
   equipment: {}
 }, new Map());
-assert(gunnerStats.atk === 214, `gun mastery ATK bonus or gunner multiplier is invalid: ${gunnerStats.atk}`);
+assert(gunnerStats.atk === 219, `current-job gun mastery ATK bonus or gunner multiplier is invalid: ${gunnerStats.atk}`);
 assert(gunnerStats.spd === 64, `quick reload SPD bonus or gunner multiplier is invalid: ${gunnerStats.spd}`);
 
 const caster = {
