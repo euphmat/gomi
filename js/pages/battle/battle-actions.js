@@ -53,7 +53,20 @@ export function getStackedAttackNegationStep(
 
 export const actionMethods = {
   applyMedalEquipmentIncomingDamage(entity, damage, options = {}) {
-    return calculateMedalEquipmentIncomingDamage(entity, this.equipMap, damage, options);
+    const reducedDamage = calculateMedalEquipmentIncomingDamage(entity, this.equipMap, damage, options);
+    const prevented = Math.max(0, Math.floor((Number(damage) || 0) - reducedDamage));
+    if (prevented > 0) {
+      const skill = {
+        id: 'medal_equipment:被ダメージ軽減',
+        name: 'メダル装備・被ダメージ軽減',
+        type: 'passive',
+        icon: 'workspace_premium',
+        description: 'メダル装備の効果により、受けるダメージを軽減する。'
+      };
+      this.battleTelemetry?.recordEffect?.(entity, skill);
+      this.battleTelemetry?.recordPrevented?.(entity, entity, prevented, skill);
+    }
+    return reducedDamage;
   },
 
   applyMedalEquipmentLethalSurvival(entity, damage) {
@@ -1085,7 +1098,7 @@ export const actionMethods = {
         this._scheduleBattleTimeout(() => {
           if (!defender.isDead && !attacker.isDead) {
             this.showActionName(defender.elementId, 'メダル装備・反撃', 'text-amber-200', 'border-amber-400/60');
-            this.executeAttack(defender, attacker, true, { actionName: '装備反撃', hideActionName: true, isCounter: true, skipAtbReset: true });
+            this.executeAttack(defender, attacker, true, { actionName: 'メダル装備・反撃', hideActionName: true, isCounter: true, skipAtbReset: true });
           }
         }, this.speedMult >= 5 ? 0 : 400 / this.speedMult);
       }

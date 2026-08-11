@@ -8,6 +8,7 @@ import { EQUIPMENT_SLOTS, STAT_KEYS } from '../data/constants.js';
 import { calcFinalStats, buildEquipmentMap } from '../data/stat-calculator.js';
 import { calcItemsPerPage, observePageSize } from '../data/page-utils.js';
 import { formatNumber } from '../utils/format.js';
+import { isMedalShopEquipment } from '../utils/medal-equipment-scaling.js';
 
 const ELEMENT_ICONS = {
   fire: { icon: 'local_fire_department', color: 'text-red-500', label: 'Fire' },
@@ -38,6 +39,7 @@ const AILMENT_ICONS = {
  * Falls back to the full id if no suffix pattern found.
  */
 function getBaseId(item) {
+  if (item.baseId) return item.baseId;
   const id = item.id;
   const lastUnderscore = id.lastIndexOf('_');
   if (lastUnderscore > 0) {
@@ -47,6 +49,11 @@ function getBaseId(item) {
     }
   }
   return id;
+}
+
+export function filterEquipmentGroups(groups, filter = 'all') {
+  if (filter !== 'medal') return groups;
+  return groups.filter(group => isMedalShopEquipment(group.representative));
 }
 
 /**
@@ -101,6 +108,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
   let currentPage = 1;
   let sortKey = null;
   let sortOrder = 'desc';
+  let equipmentFilter = 'all';
   let itemsPerPage = 30;
   let totalPages = Math.max(1, Math.ceil(groupedItems.length / itemsPerPage));
   
@@ -205,9 +213,6 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       gridCols: 5,
       minItems: 5,
     });
-    totalPages = Math.max(1, Math.ceil(groupedItems.length / itemsPerPage));
-    currentPage = Math.min(currentPage, totalPages);
-
     // --- Sort groupedItems ---
     groupedItems.sort((a, b) => {
       if (sortKey) {
@@ -221,8 +226,13 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       return a.baseId.localeCompare(b.baseId);
     });
 
+    const visibleGroups = filterEquipmentGroups(groupedItems, equipmentFilter);
+    const medalGroupCount = filterEquipmentGroups(groupedItems, 'medal').length;
+    totalPages = Math.max(1, Math.ceil(visibleGroups.length / itemsPerPage));
+    currentPage = Math.min(currentPage, totalPages);
+
     const startIdx = (currentPage - 1) * itemsPerPage;
-    const pageItems = groupedItems.slice(startIdx, startIdx + itemsPerPage);
+    const pageItems = visibleGroups.slice(startIdx, startIdx + itemsPerPage);
     
     // Fill empty slots for grid consistency
     const gridItems = [...pageItems];
@@ -237,6 +247,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       
       const item = group.representative;
       const isSelected = selectedGroup && selectedGroup.baseId === group.baseId;
+      const isMedalEquipment = isMedalShopEquipment(item);
       
       let innerContent = '';
       if (item.image) {
@@ -255,6 +266,10 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
         ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-gray-900 shadow-sm z-10"></div>' 
         : '';
 
+      const medalBadge = isMedalEquipment
+        ? '<div class="absolute -left-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full border border-amber-200/70 bg-amber-500 text-slate-950 shadow-[0_0_8px_rgba(251,191,36,.45)]" title="メダル装備"><span class="material-symbols-outlined text-[10px]" style="font-variation-settings: \'FILL\' 1">workspace_premium</span></div>'
+        : '';
+
       return `
         <div data-idx="${startIdx + idx}" 
              class="item-slot relative aspect-square rounded-lg cursor-pointer transition-all duration-200
@@ -263,6 +278,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
                       ? 'bg-blue-900/40 border-2 border-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.4)] scale-105 z-10' 
                       : 'bg-gray-800/60 border border-gray-600/50 active:bg-gray-700/80 active:border-gray-400'}">
           ${innerContent}
+          ${medalBadge}
           ${countBadge}
           ${equippedBadge}
         </div>
@@ -331,7 +347,7 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
                   ${selectedGroup && selectedGroup.count > 1 ? `<span class="text-[10px] text-gray-400 ml-1 font-normal">x${formatNumber(selectedGroup.count)}</span>` : ''}
                 </div>
               </div>
-              ${selectedItem ? `<div class="text-[10px] text-gray-500 leading-tight mt-0.5">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</div>` : ''}
+              ${selectedItem ? `<div class="mt-0.5 flex items-center gap-1.5 text-[10px] leading-tight"><span class="text-gray-500">${EQUIPMENT_SLOTS.find(s => s.key === selectedItem.slot || (selectedItem.slot === 'accessory' && s.key.startsWith('accessory')))?.label || selectedItem.slot}</span>${isMedalShopEquipment(selectedItem) ? '<span class="inline-flex items-center gap-0.5 rounded-full border border-amber-300/30 bg-amber-400/10 px-1.5 py-0.5 text-[8px] font-black text-amber-300"><span class="material-symbols-outlined text-[9px]" style="font-variation-settings: \'FILL\' 1">workspace_premium</span>メダル装備</span>' : ''}</div>` : ''}
             </div>
             <div class="flex items-center gap-1 shrink-0">
               ${actionBtns}
@@ -340,6 +356,19 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
           <!-- Ability Info Removed -->
           <!-- Row 2: Stats + element/ailment chips -->
           ${renderDetailPanel(selectedGroup)}
+        </div>
+
+        <!-- Equipment Type Filter -->
+        <div class="flex items-center justify-between gap-2 border-b border-gray-700/30 bg-gray-900/55 px-3 py-1.5 shrink-0">
+          <span class="text-[9px] font-bold text-gray-500">表示</span>
+          <div class="flex items-center gap-1 rounded-lg border border-gray-700/60 bg-black/20 p-0.5" role="group" aria-label="装備の表示切り替え">
+            <button type="button" data-equipment-filter="all" aria-pressed="${equipmentFilter === 'all'}" class="equipment-filter-btn flex items-center gap-1 rounded-md px-2 py-1 text-[9px] font-bold transition-colors ${equipmentFilter === 'all' ? 'bg-gray-600 text-white shadow' : 'text-gray-500 active:bg-gray-800 active:text-gray-300'}">
+              すべて <span class="tabular-nums opacity-75">${groupedItems.length}</span>
+            </button>
+            <button type="button" data-equipment-filter="medal" aria-pressed="${equipmentFilter === 'medal'}" class="equipment-filter-btn flex items-center gap-1 rounded-md px-2 py-1 text-[9px] font-black transition-colors ${equipmentFilter === 'medal' ? 'bg-amber-400/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,.15)]' : 'text-amber-300/55 active:bg-amber-400/10 active:text-amber-200'}">
+              <span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'FILL' 1">workspace_premium</span>メダル <span class="tabular-nums opacity-75">${medalGroupCount}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Sort Buttons (Middle Area) -->
@@ -363,9 +392,9 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
 
         <!-- Grid (Bottom Area) -->
         <div data-equipment-grid-scroll class="flex-1 min-h-0 p-3 overflow-hidden custom-scrollbar bg-[#0b0b19]">
-          <div data-equipment-grid class="grid grid-cols-5 gap-2 content-start">
-            ${gridHtml}
-          </div>
+          ${visibleGroups.length > 0
+            ? `<div data-equipment-grid class="grid grid-cols-5 gap-2 content-start">${gridHtml}</div>`
+            : `<div class="flex h-full flex-col items-center justify-center gap-1 text-center"><span class="material-symbols-outlined text-3xl text-amber-300/25">workspace_premium</span><span class="text-[11px] font-bold text-gray-500">この枠のメダル装備はありません</span></div>`}
         </div>
 
         <!-- Pagination (Bottom Bar) -->
@@ -405,12 +434,26 @@ export async function showEquipmentModal(character, targetSlot, onEquipmentChang
       });
     });
 
+    overlay.querySelectorAll('.equipment-filter-btn').forEach(btn => {
+      btn.addEventListener('click', event => {
+        const nextFilter = event.currentTarget.getAttribute('data-equipment-filter');
+        if (nextFilter === equipmentFilter) return;
+        equipmentFilter = nextFilter;
+        currentPage = 1;
+        const nextVisibleGroups = filterEquipmentGroups(groupedItems, equipmentFilter);
+        if (!nextVisibleGroups.includes(selectedGroup)) {
+          selectedGroup = nextVisibleGroups[0] || null;
+        }
+        renderContent();
+      });
+    });
+
     const slots = overlay.querySelectorAll('.item-slot');
     slots.forEach(slot => {
       slot.addEventListener('click', (e) => {
         const idx = parseInt(e.currentTarget.getAttribute('data-idx'), 10);
-        if (!isNaN(idx) && groupedItems[idx]) {
-          selectedGroup = groupedItems[idx];
+        if (!isNaN(idx) && visibleGroups[idx]) {
+          selectedGroup = visibleGroups[idx];
           renderContent();
         }
       });

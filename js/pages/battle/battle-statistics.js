@@ -1,3 +1,5 @@
+import { getEquippedMedalRewardItems } from '../../utils/medal-equipment-effects.js';
+
 /**
  * Lightweight, session-only battle statistics telemetry.
  *
@@ -41,7 +43,8 @@ const normalizeSkill = skill => ({
   id: skill?.id || 'other',
   name: skill?.name || 'その他の効果',
   type: skill?.type === 'passive' || skill?.isPassive ? 'passive' : (skill?.type || 'active'),
-  icon: skill?.icon || (skill?.id === 'normal_attack' ? 'swords' : 'auto_awesome')
+  icon: skill?.icon || (skill?.id === 'normal_attack' ? 'swords' : 'auto_awesome'),
+  description: skill?.description || ''
 });
 
 const recordAmount = (metric, prefix, amount) => {
@@ -259,6 +262,16 @@ export function resolveBattleSkill(manager, actor, actionName, options = {}) {
       if (data?.def?.name === actionName || id === actionName) return normalizeSkill(data.def);
     }
   }
+  if (String(actionName || '').startsWith('メダル装備')) {
+    const name = String(actionName).replace(/\s*×\d+\s*$/u, '');
+    const effectId = name.replace(/^メダル装備[・\s]*/u, '') || 'effect';
+    return normalizeSkill({
+      id: `medal_equipment:${effectId}`,
+      name,
+      type: 'passive',
+      icon: 'workspace_premium'
+    });
+  }
   if (actionName && actionName !== '攻撃' && !options.damageType) {
     return normalizeSkill({ id: `action:${actionName}`, name: actionName, type: 'effect' });
   }
@@ -347,7 +360,7 @@ function getCurrentSkillEffect(manager, stat, metric) {
       description = cached.def.getDescription(cached.levelConfig);
     } catch { /* Fall back to the static or generic description below. */ }
   }
-  description ||= cached?.def?.description || '';
+  description ||= cached?.def?.description || metric.description || '';
   if (!description) {
     if (metric.id === 'normal_attack') description = '敵単体に通常の物理攻撃を行う。';
     else if (metric.id === 'hp_recovery') description = '味方のHPを回復する。';
@@ -360,6 +373,29 @@ function getCurrentSkillEffect(manager, stat, metric) {
     description,
     level: Number(cached?.level) > 0 ? Math.floor(Number(cached.level)) : null
   };
+}
+
+function renderMedalEquipmentEffects(manager, stat) {
+  const character = (manager.party || []).find(member => entityKey(member) === stat.key);
+  const items = getEquippedMedalRewardItems(character, manager.equipMap);
+  if (!items.length) return '';
+
+  return `<section class="rounded-xl border border-amber-400/35 bg-amber-950/20 p-2.5" data-medal-equipment-effects>
+    <div class="flex items-center gap-1 text-[11px] font-black text-amber-200">
+      <span class="material-symbols-outlined text-amber-300" style="font-size:15px;font-variation-settings:'FILL' 1">workspace_premium</span>
+      メダル装備効果
+      <span class="ml-auto text-[9px] font-medium text-amber-100/60">${items.length}件</span>
+    </div>
+    <div class="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      ${items.map(item => `<article class="min-w-0 rounded-lg border border-amber-300/20 bg-slate-950/65 px-2 py-1.5" data-medal-equipment-effect>
+        <div class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined shrink-0 text-amber-300" style="font-size:14px">${escapeHtml(item.icon || 'workspace_premium')}</span>
+          <h3 class="truncate text-[10px] font-black text-amber-100">${escapeHtml(item.name || 'メダル装備')}</h3>
+        </div>
+        <p class="mt-1 text-[9px] font-medium leading-snug text-slate-200">${escapeHtml(item.specialEffect?.description || '戦闘中に特殊効果を発揮する。')}</p>
+      </article>`).join('')}
+    </div>
+  </section>`;
 }
 
 function renderJobIcon(manager, stat, sizeClass = 'h-9 w-9') {
@@ -528,6 +564,7 @@ function renderStatistics(manager) {
   return `${renderCharacterTabs(manager, stats, selected.key)}
     <div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list>
       ${renderCharacterOverview(manager, selected, elapsedMs)}
+      ${renderMedalEquipmentEffects(manager, selected)}
       ${renderSkillPurposeChart(skillDisplays)}
       <div class="flex items-center gap-1 px-0.5 pt-1 text-[11px] font-black text-slate-200"><span class="material-symbols-outlined text-slate-300" style="font-size:14px">query_stats</span>スキル詳細 <span class="ml-auto text-[10px] font-medium text-slate-400">${skills.length}件</span></div>
       ${skillDisplays.length ? skillDisplays.map(({ metric, effect, purpose }) => renderSkillMetric(

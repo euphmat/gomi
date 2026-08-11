@@ -5,6 +5,7 @@ import {
   renderBattleStatisticsTab,
   resolveBattleSkill
 } from '../js/pages/battle/battle-statistics.js';
+import { actionMethods } from '../js/pages/battle/battle-actions.js';
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -74,6 +75,29 @@ const enemy = {
 
 {
   const telemetry = new BattleTelemetry();
+  const medalHero = {
+    ...hero,
+    equipment: { armor: 'medal-armor' },
+    stats: { hp: 100 },
+    hp: { current: 100, max: 100 }
+  };
+  const battle = {
+    equipMap: new Map([['medal-armor', {
+      id: 'medal-armor', name: '守護のメダル鎧', icon: 'shield',
+      specialEffect: { incomingDamageReductionPercent: 20, description: '受けるダメージを20%軽減する。' }
+    }]]),
+    battleTelemetry: telemetry
+  };
+  const reduced = actionMethods.applyMedalEquipmentIncomingDamage.call(battle, medalHero, 100);
+  const stat = telemetry.getPartyStats([medalHero])[0];
+  assert(reduced === 80, 'medal equipment did not reduce incoming damage');
+  assert(stat.prevented === 20, 'medal equipment damage prevention was not included in statistics');
+  assert(stat.skills.get('medal_equipment:被ダメージ軽減')?.prevented === 20,
+    'medal equipment prevention was not attributed to its effect');
+}
+
+{
+  const telemetry = new BattleTelemetry();
   const manager = { party: [hero, healer], enemies: [enemy], battleTelemetry: telemetry };
   const slash = resolveBattleSkill(manager, hero, '斬撃');
   assert(slash.id === 'slash', 'action label did not resolve to the learned skill');
@@ -83,6 +107,11 @@ const enemy = {
   const healerStat = telemetry.getPartyStats([hero, healer]).find(stat => stat.entityId === 'healer');
   assert(healerStat.skills.get('heal').activations === 1, 'popup hook did not count skill activation');
   assert(healerStat.skills.get('heal').healing === 18, 'popup hook did not attribute healing');
+
+  captureBattleActionLabel(manager, hero.elementId, 'メダル装備・会心');
+  const heroStat = telemetry.getPartyStats([hero, healer]).find(stat => stat.entityId === 'hero');
+  assert(heroStat.skills.get('medal_equipment:会心')?.activations === 1,
+    'medal equipment activation was not included in statistics');
 }
 
 {
@@ -97,8 +126,12 @@ const enemy = {
     querySelectorAll: () => []
   };
   const manager = {
-    party: [{ ...hero, jobId: 'knight' }, { ...healer, jobId: 'priest' }],
+    party: [{ ...hero, jobId: 'knight', equipment: { rightHand: 'medal-sword' } }, { ...healer, jobId: 'priest' }],
     enemies: [enemy], battleTelemetry: telemetry,
+    equipMap: new Map([['medal-sword', {
+      id: 'medal-sword', name: '統計のメダル剣', icon: 'swords',
+      specialEffect: { outgoingDamagePercent: 15, description: '与えるダメージ+15%。' }
+    }]]),
     currentTab: 'stats', elements: { tabContent: container },
     jobDefinitions: {
       knight: { id: 'knight', name: 'ナイト', image: './assets/job/job_knight.webp', icon: 'shield' },
@@ -130,6 +163,10 @@ const enemy = {
       && !container.innerHTML.includes('万')
       && !container.innerHTML.includes('億'),
     'statistics did not use compact k/m/b notation');
+  assert(container.innerHTML.includes('data-medal-equipment-effects')
+      && container.innerHTML.includes('統計のメダル剣')
+      && container.innerHTML.includes('与えるダメージ+15%。'),
+    'equipped medal equipment effects were not rendered in statistics');
   assert(container.innerHTML.includes('被攻撃時、20%の確率でダメージを15%軽減する。')
       && container.innerHTML.includes('Lv.2'),
     'current passive skill effect description was not rendered');
