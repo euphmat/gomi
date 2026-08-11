@@ -14,6 +14,7 @@ import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-defini
 import { renderEnemyCardHtml, renderPartyCardHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
+import { renderBattleControlsTab } from './battle-controls.js';
 import {
   BattleTelemetry,
   cleanupBattleStatistics,
@@ -155,6 +156,7 @@ class BattleManager {
       btnResultOk: container.querySelector('#btn-result-ok'),
       tabBtnSkill: container.querySelector('#tab-btn-skill'),
       tabBtnStats: container.querySelector('#tab-btn-stats'),
+      tabBtnControls: container.querySelector('#tab-btn-controls'),
       tabBtnPet: container.querySelector('#tab-btn-pet'),
       tabBtnMedal: container.querySelector('#tab-btn-medal'),
       tabContent: container.querySelector('#tab-content')
@@ -717,6 +719,7 @@ class BattleManager {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill' },
       { btn: this.elements.tabBtnStats, id: 'stats' },
+      { btn: this.elements.tabBtnControls, id: 'controls' },
       { btn: this.elements.tabBtnPet, id: 'pet' },
       { btn: this.elements.tabBtnMedal, id: 'medal' }
     ];
@@ -738,7 +741,7 @@ class BattleManager {
 
       // Mobile Safari can defer or discard the synthesized click while the
       // surrounding battle UI is updating. Pointerdown provides a single,
-      // immediate activation for this fixed (non-scrollable) four-tab bar.
+      // immediate activation for this fixed (non-scrollable) tab bar.
       btn.addEventListener('pointerdown', event => {
         if (event.isPrimary === false || (event.pointerType === 'mouse' && event.button !== 0)) return;
         lastPointerActivation = Date.now();
@@ -869,20 +872,22 @@ class BattleManager {
     const tabs = [
       { btn: this.elements.tabBtnSkill, id: 'skill', icon: 'auto_awesome', palette: 1, label: 'スキル' },
       { btn: this.elements.tabBtnStats, id: 'stats', icon: 'monitoring', palette: 2, label: '統計' },
+      { btn: this.elements.tabBtnControls, id: 'controls', icon: 'tune', palette: 3, label: 'コントロール' },
       { btn: this.elements.tabBtnPet, id: 'pet', icon: 'pets', palette: 4, label: '仲間' },
       { btn: this.elements.tabBtnMedal, id: 'medal', icon: 'military_tech', palette: 2, label: 'メダル' }
     ];
 
     tabs.forEach(({btn, id, icon, palette, label}) => {
+      const labelSize = id === 'controls' ? 'text-[8px]' : '';
       btn.style.setProperty('--tab-color', `var(--battle-palette-${palette})`);
       btn.setAttribute('aria-selected', String(this.currentTab === id));
       btn.setAttribute('aria-label', label);
       if (this.currentTab === id) {
         btn.className = `battle-tab battle-tab--active flex-1 min-w-0 px-0.5 border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold relative z-10 flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
-        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
+        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">${icon}</span><span class="pointer-events-none truncate ${labelSize}">${label}</span>`;
       } else {
         btn.className = `battle-tab flex-1 min-w-0 px-0.5 backdrop-blur-sm border-t-2 border-x border-b rounded-t-lg text-[9px] font-bold flex items-center justify-center gap-0.5 transition-all duration-200 cursor-pointer`;
-        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">${icon}</span><span class="pointer-events-none truncate">${label}</span>`;
+        btn.innerHTML = `<span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">${icon}</span><span class="pointer-events-none truncate ${labelSize}">${label}</span>`;
       }
     });
   }
@@ -947,6 +952,10 @@ class BattleManager {
     } else if (this.currentTab === 'stats') {
       this.elements.tabContent.dataset.renderedTab = 'stats';
       renderBattleStatisticsTab(this, force);
+    } else if (this.currentTab === 'controls') {
+      if (!force && this.elements.tabContent.dataset.renderedTab === 'controls') return;
+      this.elements.tabContent.dataset.renderedTab = 'controls';
+      renderBattleControlsTab(this.elements.tabContent);
     } else if (this.currentTab === 'pet') {
       const targetId = this.subTabSelectedMonsterId || 'none';
       const monsterScope = this.isAutoBattle ? 'auto-dungeon' : 'manual';
@@ -1570,6 +1579,7 @@ export function renderBattlePage() {
         <div class="flex shrink-0 items-end gap-0.5 px-0.5" role="tablist" aria-label="戦闘メニュー">
           <button id="tab-btn-skill" role="tab" aria-selected="true" aria-label="スキル" class="battle-tab battle-tab--active relative z-10 flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-1)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="pointer-events-none truncate">スキル</span></button>
           <button id="tab-btn-stats" role="tab" aria-selected="false" aria-label="統計" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">monitoring</span><span class="pointer-events-none truncate">統計</span></button>
+          <button id="tab-btn-controls" role="tab" aria-selected="false" aria-label="コントロール" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-3)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">tune</span><span class="pointer-events-none truncate text-[8px]">コントロール</span></button>
           <button id="tab-btn-pet" role="tab" aria-selected="false" aria-label="仲間" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-4)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">pets</span><span class="pointer-events-none truncate">仲間</span></button>
           <button id="tab-btn-medal" role="tab" aria-selected="false" aria-label="メダル" class="battle-tab flex min-w-0 flex-1 items-center justify-center gap-0.5 rounded-t-lg border-x border-b border-t-2 px-0.5 text-[9px] font-bold" style="--tab-color: var(--battle-palette-2)"><span class="material-symbols-outlined pointer-events-none" style="font-size: 14px;">military_tech</span><span class="pointer-events-none truncate">メダル</span></button>
         </div>

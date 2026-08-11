@@ -8,7 +8,17 @@ import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { FISH } from '../definitions/fish.js';
+import { MINES } from '../definitions/mines.js';
+import {
+  FISHING_TACKLE_MAX_LEVEL,
+  FISHING_TACKLE_MIN_LEVEL,
+  FISHING_TACKLE_ORDER,
+} from '../definitions/fishing-tackle.js';
+import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
+import { TREASURES, TREASURE_STATE_KEY } from '../definitions/treasures.js';
 import { JOBS } from '../jobs/index.js';
+import { getRanchLevelInfo } from './stat-calculator.js';
+import { getMemoryLevel, MEMORY_PROGRESS_STATE_KEY } from './memory-game-progression.js';
 
 const STATE_KEY = 'quest_special_progress';
 const COMPLETED_DUNGEONS_KEY = 'completed_dungeons';
@@ -16,14 +26,32 @@ const JOB_CHANGE_HISTORY_KEY = 'job_change_history';
 const ALL_DUNGEONS = [...DUNGEONS, ...SPECIAL_DUNGEONS];
 const ALL_ITEMS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
 
-const MONSTER_LIBRARY_TARGETS = [30, 50, 75, 100];
+const MONSTER_LIBRARY_TARGETS = [10, 20, 30, 50, 75, 100, 125, 150, 176];
 const FISH_LIBRARY_TARGETS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
-const ITEM_LIBRARY_TARGETS = [50, 100, 150, 200, 300, 400, 500, 600, 700];
-const MEDAL_TARGETS = [10, 20, 30, 50, 75, 100];
+const ITEM_LIBRARY_TARGETS = [25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1286];
+const MEDAL_TARGETS = [1, 5, 10, 20, 30, 50, 75, 100, 125, 150, 176];
+
+const TOTAL_KILL_TARGETS = [100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000];
+const TOTAL_CATCH_TARGETS = [10, 100, 1000, 10000, 100000, 1000000];
+const CLEARED_FLOOR_TARGETS = [10, 25, 50, 75, 100, 125, 150, 174];
+const UNLOCKED_MINE_TARGETS = [3, 5, 8, 10, 15];
+const MINE_UPGRADE_TARGETS = [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
+const COMPANION_TARGETS = [1, 5, 10, 25, 50, 100, 150];
+const LEGENDARY_COMPANION_TARGETS = [1, 3, 5, 10, 25, 50];
+const COMPANION_LEVEL_TARGETS = [5, 10, 25, 50, 100, 250, 500, 1000];
+const JOB_LEVEL_TARGETS = [10, 25, 50, 100, 250, 500, 1000];
+const CHANGED_JOB_TARGETS = [3, 5, 10, 15, 20, 25];
+const TACKLE_UPGRADE_TARGETS = [3, 6, 12, 21, 30, 42];
+const MEMORY_GAME_TARGETS = [1, 10, 50, 100, 500, 1000];
+const MEMORY_WIN_TARGETS = [1, 10, 50, 100, 500];
+const MEMORY_LEVEL_TARGETS = [5, 10, 20, 30];
+const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21];
+const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 250, 500, 1000];
 
 const makeMilestoneQuests = (type, targets, options) => targets.map((target, index) => ({
   id: `${type}_${target}`,
   category: type,
+  metricKey: type,
   target,
   reward: 1,
   prerequisiteId: index > 0 ? `${type}_${targets[index - 1]}` : null,
@@ -32,10 +60,36 @@ const makeMilestoneQuests = (type, targets, options) => targets.map((target, ind
   description: `${options.descriptionPrefix}${target}種類集める`,
 }));
 
+const makeMetricMilestoneQuests = (idPrefix, metricKey, targets, options) => targets.map((target, index) => {
+  const formattedTarget = target.toLocaleString('ja-JP');
+  return {
+    id: `${idPrefix}_${target}`,
+    category: options.category,
+    metricKey,
+    target,
+    reward: options.reward || 1,
+    prerequisiteId: index > 0 ? `${idPrefix}_${targets[index - 1]}` : null,
+    title: `${options.titlePrefix}${formattedTarget}${options.titleSuffix || ''}`,
+    description: `${options.descriptionPrefix}${formattedTarget}${options.descriptionSuffix}`,
+    icon: options.icon,
+    destination: options.destination,
+  };
+});
+
+const metricQuestOptions = (category, titlePrefix, titleSuffix, descriptionPrefix, descriptionSuffix, icon, path, label) => ({
+  category,
+  titlePrefix,
+  titleSuffix,
+  descriptionPrefix,
+  descriptionSuffix,
+  icon,
+  destination: { path, label },
+});
+
 export const SPECIAL_QUESTS = [
   {
     id: 'mineFirstUnlock',
-    category: 'other',
+    category: 'mine',
     title: '鉱山を初めて解放する',
     description: 'いずれかの鉱山をPrismで解放する',
     icon: 'landscape',
@@ -102,7 +156,45 @@ export const SPECIAL_QUESTS = [
     titlePrefix: 'メダル',
     descriptionPrefix: '異なるモンスターのメダルを',
     icon: 'military_tech',
-    destination: { path: '/dungeon?tab=normal', label: 'ダンジョンへ' },
+    destination: { path: '/shop?tab=medal', label: 'メダル鋳造へ' },
+  }),
+  ...makeMetricMilestoneQuests('total_kills', 'totalKills', TOTAL_KILL_TARGETS,
+    metricQuestOptions('battle', '累計討伐 ', '体', 'モンスターの討伐記録を合計', '体にする', 'swords', '/dungeon?tab=normal', 'ダンジョンへ')),
+  ...makeMetricMilestoneQuests('cleared_floors', 'clearedFloors', CLEARED_FLOOR_TARGETS,
+    metricQuestOptions('battle', 'フロア攻略 ', '階', '異なるダンジョンフロアを', '階クリアする', 'stairs', '/dungeon?tab=normal', 'ダンジョンへ')),
+  ...makeMetricMilestoneQuests('total_catches', 'totalCaught', TOTAL_CATCH_TARGETS,
+    metricQuestOptions('fish', '累計釣果 ', '匹', '魚を累計', '匹釣り上げる', 'set_meal', '/fishing', '釣り場へ')),
+  ...makeMetricMilestoneQuests('unlocked_mines', 'unlockedMines', UNLOCKED_MINE_TARGETS,
+    metricQuestOptions('mine', '鉱山解放 ', 'か所', '異なる鉱山を', 'か所解放する', 'landscape', '/guild?tab=mine', '鉱山へ')),
+  ...makeMetricMilestoneQuests('mine_upgrades', 'mineUpgrades', MINE_UPGRADE_TARGETS,
+    metricQuestOptions('mine', '鉱山強化 ', '回', '全鉱山の強化回数を合計', '回にする', 'precision_manufacturing', '/guild?tab=mine', '鉱山へ')),
+  ...makeMetricMilestoneQuests('companions', 'companions', COMPANION_TARGETS,
+    metricQuestOptions('ranch', '牧場の仲間 ', '体', '牧場に仲間を', '体迎える', 'pets', '/guild?tab=ranch', '牧場へ')),
+  ...makeMetricMilestoneQuests('legendary_companions', 'legendaryCompanions', LEGENDARY_COMPANION_TARGETS,
+    metricQuestOptions('ranch', '伝説の仲間 ', '体', '伝説モンスターを', '体仲間にする', 'hotel_class', '/guild?tab=ranch', '牧場へ')),
+  ...makeMetricMilestoneQuests('companion_level', 'companionLevel', COMPANION_LEVEL_TARGETS,
+    metricQuestOptions('ranch', '仲間育成 Lv.', '', 'いずれかの仲間をLv.', 'まで育てる', 'trending_up', '/guild?tab=ranch', '牧場へ')),
+  ...makeMetricMilestoneQuests('job_level', 'jobLevel', JOB_LEVEL_TARGETS,
+    metricQuestOptions('growth', 'ジョブ熟練 Lv.', '', 'いずれかのキャラクターのジョブをLv.', 'まで育てる', 'school', '/status', 'ステータスへ')),
+  ...makeMetricMilestoneQuests('changed_jobs', 'changedJobs', CHANGED_JOB_TARGETS,
+    metricQuestOptions('job', '転職経験 ', '職', '異なるジョブへ', '職転職する', 'badge', '/guild?tab=job', '神殿へ')),
+  ...makeMetricMilestoneQuests('tackle_upgrades', 'tackleUpgrades', TACKLE_UPGRADE_TARGETS,
+    metricQuestOptions('fish', '釣具強化 ', '段階', '釣竿・エサ・ルアーを合計', '段階強化する', 'construction', '/fishing', '釣り場へ')),
+  ...makeMetricMilestoneQuests('memory_games', 'memoryGames', MEMORY_GAME_TARGETS,
+    metricQuestOptions('memory', '神経衰弱プレイ ', '回', '神経衰弱を', '回プレイする', 'neurology', '/memory-game', '神経衰弱へ')),
+  ...makeMetricMilestoneQuests('memory_wins', 'memoryWins', MEMORY_WIN_TARGETS,
+    metricQuestOptions('memory', '神経衰弱勝利 ', '回', '神経衰弱で', '回勝利する', 'emoji_events', '/memory-game', '神経衰弱へ')),
+  ...makeMetricMilestoneQuests('memory_level', 'memoryLevel', MEMORY_LEVEL_TARGETS,
+    metricQuestOptions('memory', '神経衰弱 Lv.', '', '神経衰弱レベルをLv.', 'まで上げる', 'psychology', '/memory-game', '神経衰弱へ')),
+  ...makeMetricMilestoneQuests('treasure_kinds', 'treasureKinds', TREASURE_KIND_TARGETS,
+    metricQuestOptions('treasure', '秘宝収集 ', '種類', '異なる秘宝を', '種類獲得する', 'deployed_code', '/shop?tab=gacha', 'ガチャへ')),
+  ...makeMetricMilestoneQuests('treasure_levels', 'treasureLevels', TREASURE_LEVEL_TARGETS,
+    metricQuestOptions('treasure', '秘宝合計 Lv.', '', '全秘宝のレベル合計を', 'にする', 'auto_awesome', '/shop?tab=gacha', 'ガチャへ')),
+  ...MEDAL_RANKS.slice(1).flatMap((rank, rankOffset) => {
+    const rankIndex = rankOffset + 1;
+    const rankName = rank.name.replace('メダル', '');
+    return makeMetricMilestoneQuests(`medal_rank_${rank.id}`, `medalRank${rankIndex}`, [1, 10, 50, 100, 176],
+      metricQuestOptions('medal', `${rankName}以上 `, '種類', `${rank.name}以上を`, '種類鋳造する', 'workspace_premium', '/shop?tab=medal', 'メダル鋳造へ'));
   }),
 ];
 
@@ -134,10 +226,122 @@ function getFinalFloorMonsterIds(dungeon) {
   return [...ids];
 }
 
+function nonNegativeInteger(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.floor(number)) : 0;
+}
+
+function savedFloorLevels(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') {
+    return Object.entries(value).filter(([, cleared]) => Boolean(cleared)).map(([level]) => level);
+  }
+  return [];
+}
+
+export function calculateExtendedSpecialQuestMetrics({
+  monsterKills = {},
+  playerMedals = {},
+  fishingData = {},
+  mineData = {},
+  completedDungeons = new Set(),
+  completedDungeonFloors = {},
+  ranchData = {},
+  characters = [],
+  memoryProgress = {},
+  treasureLevels = {},
+} = {}) {
+  const validMonsterIds = new Set(MONSTERS.map(monster => monster.id));
+  const totalKills = Object.entries(monsterKills || {}).reduce(
+    (total, [monsterId, count]) => total + (validMonsterIds.has(monsterId) ? nonNegativeInteger(count) : 0),
+    0
+  );
+
+  const completedDungeonIds = completedDungeons instanceof Set
+    ? completedDungeons
+    : new Set(Array.isArray(completedDungeons) ? completedDungeons : []);
+  const clearedFloorKeys = new Set();
+  for (const dungeon of ALL_DUNGEONS) {
+    const validLevels = new Set((dungeon.floors || []).map(floor => Number(floor.level)));
+    const levels = completedDungeonIds.has(dungeon.id)
+      ? validLevels
+      : new Set(savedFloorLevels(completedDungeonFloors?.[dungeon.id]).map(Number));
+    for (const level of levels) {
+      if (validLevels.has(level)) clearedFloorKeys.add(`${dungeon.id}:${level}`);
+    }
+  }
+
+  const mineStates = MINES.map(mine => mineData?.[mine.id] || {});
+  const unlockedMines = mineStates.filter(state => Boolean(state.unlocked)).length;
+  const mineUpgrades = mineStates.reduce((total, state) => total
+    + Math.max(0, nonNegativeInteger(state.machineLevel || 1) - 1)
+    + Math.max(0, nonNegativeInteger(state.yieldLevel || 1) - 1)
+    + Math.max(0, nonNegativeInteger(state.capacityLevel || 1) - 1), 0);
+
+  const companionEntries = Object.values(ranchData || {}).flatMap(monsters => Object.entries(monsters || {}));
+  const legendaryCompanions = companionEntries.filter(([monsterId]) => monsterId.endsWith('_legendary')).length;
+  const companionLevel = companionEntries.reduce((highest, [monsterId, data]) => Math.max(
+    highest,
+    getRanchLevelInfo(data?.fedMaterials || 0, monsterId.endsWith('_legendary')).level
+  ), 0);
+
+  const jobLevel = (characters || []).reduce((highest, character) => {
+    const savedLevels = Object.values(character?.jobLevels || {}).map(saved => nonNegativeInteger(saved?.level));
+    return Math.max(highest, nonNegativeInteger(character?.jobLevel), ...savedLevels);
+  }, 0);
+
+  const tackleUpgrades = FISHING_TACKLE_ORDER.reduce((total, type) => {
+    const levelKey = `${type}Level`;
+    const level = Math.max(
+      FISHING_TACKLE_MIN_LEVEL,
+      Math.min(FISHING_TACKLE_MAX_LEVEL, nonNegativeInteger(fishingData?.tackle?.[levelKey]) || FISHING_TACKLE_MIN_LEVEL)
+    );
+    return total + level - FISHING_TACKLE_MIN_LEVEL;
+  }, 0);
+
+  const validTreasureIds = new Set(TREASURES.map(treasure => treasure.id));
+  const normalizedTreasureLevels = Object.entries(treasureLevels || {})
+    .filter(([id]) => validTreasureIds.has(id))
+    .map(([, level]) => nonNegativeInteger(level));
+
+  const metrics = {
+    totalKills,
+    totalCaught: nonNegativeInteger(fishingData?.totalCaught),
+    clearedFloors: clearedFloorKeys.size,
+    unlockedMines,
+    mineUpgrades,
+    companions: companionEntries.length,
+    legendaryCompanions,
+    companionLevel,
+    jobLevel,
+    tackleUpgrades,
+    memoryGames: nonNegativeInteger(memoryProgress?.gamesPlayed),
+    memoryWins: nonNegativeInteger(memoryProgress?.wins),
+    memoryLevel: getMemoryLevel(memoryProgress?.xp),
+    treasureKinds: normalizedTreasureLevels.filter(level => level > 0).length,
+    treasureLevels: normalizedTreasureLevels.reduce((total, level) => total + level, 0),
+  };
+  MEDAL_RANKS.slice(1).forEach((_, rankOffset) => {
+    const rankIndex = rankOffset + 1;
+    metrics[`medalRank${rankIndex}`] = Object.entries(playerMedals || {}).filter(
+      ([monsterId, medalRank]) => validMonsterIds.has(monsterId) && nonNegativeInteger(medalRank) >= rankIndex
+    ).length;
+  });
+  return metrics;
+}
+
 class SpecialQuestManagerClass {
   constructor() {
     this.progress = structuredClone(DEFAULT_PROGRESS);
-    this.metrics = { monster: 0, fish: 0, item: 0, medal: 0, completedDungeons: new Set(), changedJobs: new Set() };
+    this.metrics = {
+      monster: 0,
+      fish: 0,
+      item: 0,
+      medal: 0,
+      completedDungeons: new Set(),
+      changedJobs: 0,
+      changedJobIds: new Set(),
+    };
     this.listenersReady = false;
     this.claimQueue = Promise.resolve();
   }
@@ -176,6 +380,10 @@ class SpecialQuestManagerClass {
       inventory,
       jobChangeHistoryValue,
       characters,
+      completedDungeonFloorsValue,
+      ranchDataValue,
+      memoryProgressValue,
+      treasureLevelsValue,
     ] = await Promise.all([
       GameDB.getGameState('mine_data'),
       GameDB.getGameState(COMPLETED_DUNGEONS_KEY),
@@ -189,6 +397,10 @@ class SpecialQuestManagerClass {
       GameDB.getAllInventory(),
       GameDB.getGameState(JOB_CHANGE_HISTORY_KEY),
       GameDB.getAllCharacters(),
+      GameDB.getGameState('completed_dungeon_floors'),
+      GameDB.getGameState('ranch_data'),
+      GameDB.getGameState(MEMORY_PROGRESS_STATE_KEY),
+      GameDB.getGameState(TREASURE_STATE_KEY),
     ]);
 
     const completedDungeons = new Set(Array.isArray(completedDungeonsValue) ? completedDungeonsValue : []);
@@ -271,13 +483,28 @@ class SpecialQuestManagerClass {
     const jobHistoryChanged = JSON.stringify([...storedChangedJobs].sort()) !== JSON.stringify([...normalizedChangedJobs].sort());
     if (jobHistoryChanged) await GameDB.setGameState(JOB_CHANGE_HISTORY_KEY, normalizedChangedJobs);
 
+    const extendedMetrics = calculateExtendedSpecialQuestMetrics({
+      monsterKills,
+      playerMedals: playerMedalsValue,
+      fishingData: fishingDataValue,
+      mineData,
+      completedDungeons,
+      completedDungeonFloors: completedDungeonFloorsValue,
+      ranchData: ranchDataValue,
+      characters,
+      memoryProgress: memoryProgressValue,
+      treasureLevels: treasureLevelsValue,
+    });
+
     this.metrics = {
       monster: discoveredMonsters.size,
       fish: fishCount,
       item: acquiredItemIds.size,
       medal: medalCount,
       completedDungeons,
-      changedJobs,
+      changedJobs: changedJobs.size,
+      changedJobIds: changedJobs,
+      ...extendedMetrics,
     };
 
     let changed = false;
@@ -287,9 +514,9 @@ class SpecialQuestManagerClass {
     for (const quest of SPECIAL_QUESTS) {
       if (quest.category === 'dungeon' && completedDungeons.has(quest.dungeonId)) {
         changed = this.markCompleted(quest.id) || changed;
-      } else if (quest.category === 'job' && changedJobs.has(quest.jobId)) {
+      } else if (quest.category === 'job' && quest.jobId && changedJobs.has(quest.jobId)) {
         changed = this.markCompleted(quest.id) || changed;
-      } else if (['monster', 'fish', 'item', 'medal'].includes(quest.category) && this.metrics[quest.category] >= quest.target) {
+      } else if (quest.metricKey && (this.metrics[quest.metricKey] || 0) >= quest.target) {
         changed = this.markCompleted(quest.id) || changed;
       }
     }
@@ -324,11 +551,12 @@ class SpecialQuestManagerClass {
     const storedHistory = await GameDB.getGameState(JOB_CHANGE_HISTORY_KEY);
     const changedJobs = new Set([
       ...(Array.isArray(storedHistory) ? storedHistory : []),
-      ...this.metrics.changedJobs,
+      ...this.metrics.changedJobIds,
     ].filter(id => JOBS[id]));
     const historyChanged = !changedJobs.has(jobId);
     changedJobs.add(jobId);
-    this.metrics.changedJobs = changedJobs;
+    this.metrics.changedJobIds = changedJobs;
+    this.metrics.changedJobs = changedJobs.size;
 
     if (historyChanged) await GameDB.setGameState(JOB_CHANGE_HISTORY_KEY, [...changedJobs]);
     const questChanged = this.markCompleted(`job_first_change_${jobId}`);
@@ -360,6 +588,12 @@ class SpecialQuestManagerClass {
       // Keep achieved quests visible until their Prism has been received, then
       // remove them from every list and page count.
       return matchesCategory && prerequisiteCompleted && !state.claimed;
+    }).sort((first, second) => {
+      // Array#sort is stable, so the catalog order remains unchanged inside
+      // each group while every immediately claimable achievement moves first.
+      const firstClaimable = this.getState(first.id).completed ? 1 : 0;
+      const secondClaimable = this.getState(second.id).completed ? 1 : 0;
+      return secondClaimable - firstClaimable;
     });
   }
 
@@ -368,9 +602,10 @@ class SpecialQuestManagerClass {
   }
 
   getCurrentValue(quest) {
+    if (this.getState(quest.id).completed) return quest.target;
     if (quest.category === 'dungeon') return this.metrics.completedDungeons.has(quest.dungeonId) ? 1 : 0;
-    if (quest.category === 'job') return this.metrics.changedJobs.has(quest.jobId) ? 1 : 0;
-    if (['monster', 'fish', 'item', 'medal'].includes(quest.category)) return this.metrics[quest.category] || 0;
+    if (quest.category === 'job' && quest.jobId) return this.metrics.changedJobIds.has(quest.jobId) ? 1 : 0;
+    if (quest.metricKey) return this.metrics[quest.metricKey] || 0;
     return this.getState(quest.id).completed ? 1 : 0;
   }
 

@@ -6,6 +6,7 @@ import {
 } from './magic-missile-animation.js';
 import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
 import { resolveBattleSkill } from './battle-statistics.js';
+import { resolveAttackValueType } from './battle-popups.js';
 import {
   calculateMedalEquipmentIncomingDamage,
   getEffectiveMedalEquipmentMpCost,
@@ -420,6 +421,7 @@ export const actionMethods = {
       return Math.random() * 100 < step.rollChance;
     };
 
+    let isCriticalHit = false;
     if (isParty && attacker.hp !== undefined) {
       options.defenseIgnorePercent = Math.max(
         Number(options.defenseIgnorePercent) || 0,
@@ -667,6 +669,7 @@ export const actionMethods = {
           const criticalMultiplier = Math.max(1.5, ...getMedalEquipmentEffects(attacker, this.equipMap)
             .map(effect => Number(effect.criticalMultiplier) || 0));
           damage = Math.floor(damage * criticalMultiplier);
+          isCriticalHit = true;
           if (!options.hideActionName) this.showActionName(attacker.elementId, 'MEDAL CRITICAL', 'text-amber-200', 'border-amber-400/60');
         }
       }
@@ -890,7 +893,7 @@ export const actionMethods = {
       if (!(defender._barrierHp > 0)) defender._battleBarrierMetric = null;
     }
 
-    let dmgColor = 'text-white';
+    let elementDamageMultiplier = 1;
     if (totalElementPercent > 0) {
       let sumMultiplier = 0;
       for (const [el, val] of Object.entries(attackElements)) {
@@ -902,13 +905,9 @@ export const actionMethods = {
         }
       }
       sumMultiplier += 1.0 * (nonElementalPercent / 100);
-      
-      if (sumMultiplier < 0.999) {
-        dmgColor = 'text-purple-400';
-      } else if (sumMultiplier > 1.001) {
-        dmgColor = 'text-red-500';
-      }
+      elementDamageMultiplier = sumMultiplier;
     }
+    const damagePopupType = resolveAttackValueType(isParty, elementDamageMultiplier, isCriticalHit);
 
     // --- 攻撃アニメーション ---
     let delayDamageMs = 0;
@@ -930,9 +929,9 @@ export const actionMethods = {
       // Delay the popup animation itself instead of using a managed battle
       // timer. A killing blow stops the ATB loop immediately, which clears
       // those timers before the final damage number can be shown.
-      this.showDamage(defender.elementId, damage, dmgColor, delayDamageMs);
+      this.showDamage(defender.elementId, damage, damagePopupType, delayDamageMs);
     } else if (delayDamageMs === 0) {
-      this.showDamage(defender.elementId, damage, dmgColor);
+      this.showDamage(defender.elementId, damage, damagePopupType);
     }
 
     // --- 状態異常付与判定 ---

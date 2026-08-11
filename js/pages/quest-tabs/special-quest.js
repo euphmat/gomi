@@ -1,14 +1,20 @@
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
+import { formatNumber } from '../../utils/format.js';
 
 const CATEGORIES = [
   { id: 'all', label: 'すべて', icon: 'apps' },
   { id: 'job', label: '職業', icon: 'badge' },
   { id: 'dungeon', label: '踏破', icon: 'swords' },
+  { id: 'battle', label: '冒険', icon: 'explore' },
   { id: 'monster', label: 'モンスター', icon: 'pets' },
-  { id: 'fish', label: '魚図鑑', icon: 'phishing' },
+  { id: 'fish', label: '釣り', icon: 'phishing' },
   { id: 'item', label: 'アイテム', icon: 'auto_stories' },
   { id: 'medal', label: 'メダル', icon: 'military_tech' },
-  { id: 'other', label: 'その他', icon: 'stars' },
+  { id: 'ranch', label: '牧場', icon: 'cruelty_free' },
+  { id: 'mine', label: '鉱山', icon: 'landscape' },
+  { id: 'growth', label: '育成', icon: 'trending_up' },
+  { id: 'memory', label: '神経衰弱', icon: 'neurology' },
+  { id: 'treasure', label: '秘宝', icon: 'deployed_code' },
 ];
 const QUESTS_PER_PAGE = 6;
 
@@ -72,7 +78,7 @@ export async function renderSpecialQuestTab() {
                     <p class="mt-0.5 line-clamp-2 text-[9px] leading-snug text-slate-500">${quest.description}</p>
                     <div class="mt-1.5 flex items-center gap-1.5">
                       <div class="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-950"><div class="h-full rounded-full ${state.completed ? 'bg-emerald-400' : 'bg-fuchsia-500'}" style="width:${progress}%"></div></div>
-                      <span class="min-w-[42px] text-right font-mono text-[8px] font-bold tabular-nums ${state.completed ? 'text-emerald-300' : 'text-slate-500'}">${current}/${quest.target}</span>
+                      <span class="min-w-[54px] text-right font-mono text-[8px] font-bold tabular-nums ${state.completed ? 'text-emerald-300' : 'text-slate-500'}">${formatNumber(current)}/${formatNumber(quest.target)}</span>
                     </div>
                   </div>
                   <div class="flex w-[70px] shrink-0 flex-col items-stretch gap-1">

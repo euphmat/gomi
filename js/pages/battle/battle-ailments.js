@@ -4,6 +4,13 @@
  */
 
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+import { BATTLE_VALUE_TYPES } from './battle-popups.js';
+
+const AILMENT_POPUP_TYPES = Object.freeze({
+  POISON: BATTLE_VALUE_TYPES.POISON_DAMAGE,
+  CURSE: BATTLE_VALUE_TYPES.CURSE_DAMAGE,
+  BURN: BATTLE_VALUE_TYPES.BURN_DAMAGE
+});
 
 export const ailmentMethods = {
   processPreActionAilment(entity) {
@@ -109,7 +116,11 @@ export const ailmentMethods = {
       name: ailmentName,
       type: 'ailment'
     });
-    this.showDamage(entity.elementId, originalDamage, 'text-purple-400');
+    this.showDamage(
+      entity.elementId,
+      originalDamage,
+      AILMENT_POPUP_TYPES[ailmentName] || BATTLE_VALUE_TYPES.ENEMY_DAMAGE
+    );
   },
 
   executeConfusionTurn(entity, isParty) {

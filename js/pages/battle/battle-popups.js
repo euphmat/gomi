@@ -10,6 +10,85 @@ import { captureBattleActionLabel, captureBattlePopup } from './battle-statistic
 
 const POPUP_POOL_LIMITS = { float: 150, label: 50 };
 
+export const BATTLE_VALUE_TYPES = Object.freeze({
+  PLAYER_DAMAGE: 'player-damage',
+  ENEMY_DAMAGE: 'enemy-damage',
+  WEAKNESS_DAMAGE: 'weakness-damage',
+  RESISTED_DAMAGE: 'resisted-damage',
+  CRITICAL_DAMAGE: 'critical-damage',
+  POISON_DAMAGE: 'poison-damage',
+  CURSE_DAMAGE: 'curse-damage',
+  BURN_DAMAGE: 'burn-damage',
+  HP_RECOVERY: 'hp-recovery',
+  MP_RECOVERY: 'mp-recovery',
+  HP_COST: 'hp-cost',
+  MP_DAMAGE: 'mp-damage',
+  BARRIER: 'barrier'
+});
+
+const DEFAULT_TEXT_SHADOW = '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 6px rgba(0,0,0,0.8)';
+const LIGHT_OUTLINE_SHADOW = '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 4px 6px rgba(0,0,0,0.8)';
+
+export const BATTLE_VALUE_STYLES = Object.freeze({
+  [BATTLE_VALUE_TYPES.PLAYER_DAMAGE]: { color: '#ffffff' },
+  [BATTLE_VALUE_TYPES.ENEMY_DAMAGE]: { color: '#ef4444' },
+  [BATTLE_VALUE_TYPES.HP_RECOVERY]: { color: '#22c55e', textShadow: '-2px -2px 0 #14532d, 2px -2px 0 #14532d, -2px 2px 0 #14532d, 2px 2px 0 #14532d, 0 4px 6px rgba(0,0,0,0.8)', sound: 'heal' },
+  [BATTLE_VALUE_TYPES.MP_RECOVERY]: { color: '#3b82f6', textShadow: '-2px -2px 0 #172554, 2px -2px 0 #172554, -2px 2px 0 #172554, 2px 2px 0 #172554, 0 4px 6px rgba(0,0,0,0.8)', sound: 'heal' },
+  [BATTLE_VALUE_TYPES.POISON_DAMAGE]: { color: '#a855f7' },
+  [BATTLE_VALUE_TYPES.CURSE_DAMAGE]: { color: '#111111', textShadow: LIGHT_OUTLINE_SHADOW },
+  [BATTLE_VALUE_TYPES.BURN_DAMAGE]: { color: '#c2410c', textShadow: LIGHT_OUTLINE_SHADOW },
+  [BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE]: { color: '#f97316', fontSize: '42px', scale: 1.25, duration: 900, italic: true },
+  [BATTLE_VALUE_TYPES.RESISTED_DAMAGE]: { color: '#6366f1', fontSize: '26px', scale: 0.85, textShadow: LIGHT_OUTLINE_SHADOW },
+  [BATTLE_VALUE_TYPES.CRITICAL_DAMAGE]: { color: '#facc15' },
+  // Additional battle values use their own hues so they cannot be mistaken for
+  // the requested damage/recovery categories.
+  [BATTLE_VALUE_TYPES.HP_COST]: { color: '#fb7185' },
+  [BATTLE_VALUE_TYPES.MP_DAMAGE]: { color: '#06b6d4' },
+  [BATTLE_VALUE_TYPES.BARRIER]: { color: '#2dd4bf' }
+});
+
+const LEGACY_STATUS_COLORS = Object.freeze({
+  red: '#f87171', orange: '#fb923c', amber: '#fbbf24', yellow: '#facc15',
+  lime: '#a3e635', green: '#4ade80', emerald: '#34d399', teal: '#2dd4bf',
+  cyan: '#22d3ee', sky: '#38bdf8', blue: '#60a5fa', indigo: '#818cf8',
+  violet: '#a78bfa', purple: '#c084fc', fuchsia: '#e879f9', pink: '#f472b6',
+  rose: '#fb7185', gray: '#9ca3af', white: '#ffffff', black: '#111111'
+});
+
+export function resolveBattleValueType(elementId, value, typeOrColorClass) {
+  if (BATTLE_VALUE_STYLES[typeOrColorClass]) return typeOrColorClass;
+
+  const text = String(value ?? '').trim();
+  const isNumeric = /^-?[\d,]+(?:\.\d+)?$/.test(text);
+  if (/^\+[\d,]+(?:\.\d+)?\s*MP$/i.test(text)) return BATTLE_VALUE_TYPES.MP_RECOVERY;
+  if (/^MP\s*-[\d,]+(?:\.\d+)?$/i.test(text)) return BATTLE_VALUE_TYPES.MP_DAMAGE;
+  if (/^BARRIER\s*\+[\d,]+/i.test(text)) return BATTLE_VALUE_TYPES.BARRIER;
+  if (/^\+[\d,]+(?:\.\d+)?$/.test(text) || /^HP\s+[\d,]+$/i.test(text)) {
+    return BATTLE_VALUE_TYPES.HP_RECOVERY;
+  }
+  if (/^-[\d,]+(?:\.\d+)?\s*HP$/i.test(text)) return BATTLE_VALUE_TYPES.HP_COST;
+
+  // Older direct-damage calls did not carry a semantic type. Party card IDs
+  // identify incoming enemy damage; bare values over enemies are outgoing damage.
+  if (isNumeric && String(elementId).startsWith('party-')) return BATTLE_VALUE_TYPES.ENEMY_DAMAGE;
+  if (isNumeric && /text-red-/.test(typeOrColorClass || '')) return BATTLE_VALUE_TYPES.HP_COST;
+  if (isNumeric) return BATTLE_VALUE_TYPES.PLAYER_DAMAGE;
+  return null;
+}
+
+export function resolveAttackValueType(isPartyAttack, elementMultiplier = 1, isCritical = false) {
+  if (!isPartyAttack) return BATTLE_VALUE_TYPES.ENEMY_DAMAGE;
+  if (isCritical) return BATTLE_VALUE_TYPES.CRITICAL_DAMAGE;
+  if (elementMultiplier > 1.001) return BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE;
+  if (elementMultiplier < 0.999) return BATTLE_VALUE_TYPES.RESISTED_DAMAGE;
+  return BATTLE_VALUE_TYPES.PLAYER_DAMAGE;
+}
+
+function getLegacyStatusColor(colorClass) {
+  const match = String(colorClass || '').match(/text-([a-z]+)(?:-|$)/);
+  return match ? LEGACY_STATUS_COLORS[match[1]] : null;
+}
+
 export const popupMethods = {
   _initPopupPool() {
     if (this._popupLayer) return;
@@ -294,10 +373,11 @@ export const popupMethods = {
   },
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
-  showDamage(elementId, damage, customColorClass = 'text-red-500', delay = 0) {
+  showDamage(elementId, damage, valueTypeOrColorClass = BATTLE_VALUE_TYPES.PLAYER_DAMAGE, delay = 0) {
     captureBattlePopup(this, elementId, damage);
-    const isRecovery = customColorClass.includes('text-green-') || customColorClass.includes('text-blue-');
-    const playPopupSound = () => playSoundEffect(isRecovery ? 'heal' : 'battleHit', { automatic: this.isAutoBattle });
+    const valueType = resolveBattleValueType(elementId, damage, valueTypeOrColorClass);
+    const valueStyle = BATTLE_VALUE_STYLES[valueType] || {};
+    const playPopupSound = () => playSoundEffect(valueStyle.sound || 'battleHit', { automatic: this.isAutoBattle });
     if (delay > 0) {
       // This timer is intentionally independent from the combat timer list:
       // the killing blow still needs its impact sound after endBattle stops ATB.
@@ -309,36 +389,16 @@ export const popupMethods = {
     }
     if (shouldSkipBattleAnimations()) return;
     
-    let color = '#ffffff';
-    let textShadow = '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 4px 6px rgba(0,0,0,0.8)';
-    let scale = 1.0;
-    let fontSize = '32px';
-    let duration = 800;
+    let color = valueStyle.color || getLegacyStatusColor(valueTypeOrColorClass) || '#ffffff';
+    let textShadow = valueStyle.textShadow || DEFAULT_TEXT_SHADOW;
+    let scale = valueStyle.scale || 1.0;
+    let fontSize = valueStyle.fontSize || '32px';
+    let duration = valueStyle.duration || 800;
     let className = 'fixed z-[9999] pointer-events-none select-none flex items-center justify-center tracking-wide';
     let fontFamily = "'Anton', sans-serif";
 
-    if (customColorClass.includes('text-red-500')) {
-      // 弱点 (Weakness)
+    if (valueStyle.italic) {
       className += ' italic tracking-tighter';
-      color = '#ef4444';
-      textShadow = '-2.5px -2.5px 0 #fff, 2.5px -2.5px 0 #fff, -2.5px 2.5px 0 #fff, 2.5px 2.5px 0 #fff, 0 6px 8px rgba(0,0,0,0.8)';
-      fontSize = '42px';
-      scale = 1.25;
-      duration = 900;
-    } else if (customColorClass.includes('text-purple-400')) {
-      // 耐性軽減 (Resist)
-      color = '#a855f7';
-      textShadow = '-1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff, 0 3px 6px rgba(0,0,0,0.8)';
-      scale = 0.85;
-      fontSize = '26px';
-    } else if (customColorClass.includes('text-green-')) {
-      // HP回復
-      color = '#4ade80';
-      textShadow = '-2px -2px 0 #14532d, 2px -2px 0 #14532d, -2px 2px 0 #14532d, 2px 2px 0 #14532d, 0 4px 6px rgba(0,0,0,0.8)';
-    } else if (customColorClass.includes('text-blue-400')) {
-      // MP回復
-      color = '#60a5fa';
-      textShadow = '-2px -2px 0 #1e3a8a, 2px -2px 0 #1e3a8a, -2px 2px 0 #1e3a8a, 2px 2px 0 #1e3a8a, 0 4px 6px rgba(0,0,0,0.8)';
     }
 
     this._showFloatingPopup(elementId, {
