@@ -1,7 +1,7 @@
 /** ホームタウンから遊べるマインスイーパー。報酬は他の町ゲームと共有する。 */
 import { GameDB } from '../data/database.js';
 import {
-  createMinefield,
+  createLogicalMinefield,
   getMinefieldNeighbors,
   isMinefieldCleared,
   revealMinefieldCells,
@@ -157,7 +157,7 @@ export function renderMinesweeperPage() {
 
         <section class="mb-3 rounded-2xl border border-amber-300/20 bg-amber-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-amber-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
-          数字は周囲8マスにある地雷の数です。「旗」モードで地雷候補に印を付け、地雷以外の全マスを開けばクリア。最初に開くマスとその周囲は必ず安全です。
+          数字は周囲8マスにある地雷の数です。「旗」モードで地雷候補に印を付け、地雷以外の全マスを開けばクリア。初手周囲は安全で、すべての盤面が推測なしで論理的に解けます。
           <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-fuchsia-100/85">報酬は神経衰弱・数独と共有で1日1回。受取後も何度でも遊べます。</div>
         </section>
 
@@ -223,11 +223,19 @@ export function renderMinesweeperPage() {
   };
 
   const ensureBoard = safeIndex => {
-    if (game.board) return;
-    game.board = createMinefield(game.config, safeIndex);
+    if (game.board) return true;
+    const generated = createLogicalMinefield(game.config, safeIndex);
+    if (!generated) {
+      console.warn('[Minesweeper] Could not generate a no-guess board.');
+      setStatus('論理的に解ける盤面を生成できませんでした。もう一度マスを選んでください', 'rose');
+      return false;
+    }
+    game.board = generated.board;
+    game.generationAttempts = generated.attempts;
     game.startedAt = Date.now();
     stopTimer();
     timerId = window.setInterval(updateTimer, 1000);
+    return true;
   };
 
   const claimReward = async () => {
@@ -298,7 +306,7 @@ export function renderMinesweeperPage() {
 
   const openCell = index => {
     if (!game || game.over || game.flags.has(index)) return;
-    ensureBoard(index);
+    if (!ensureBoard(index)) return;
     const value = game.board[index];
     if (game.revealed.has(index)) {
       if (value <= 0) return;
@@ -341,7 +349,7 @@ export function renderMinesweeperPage() {
 
   const useHint = () => {
     if (!game || game.over || game.hintsRemaining <= 0) return;
-    if (!game.board) ensureBoard(Math.floor((game.config.rows * game.config.columns) / 2));
+    if (!game.board && !ensureBoard(Math.floor((game.config.rows * game.config.columns) / 2))) return;
     const safeCells = game.board.map((value, index) => ({ value, index })).filter(cell => cell.value !== -1 && !game.revealed.has(cell.index));
     const target = safeCells.find(cell => cell.value === 0) || safeCells[0];
     if (!target) return;
@@ -376,7 +384,7 @@ export function renderMinesweeperPage() {
     stopTimer();
     clearTimers();
     game = {
-      config, board: null, revealed: new Set(), flags: new Set(), mode: 'open',
+      config, board: null, revealed: new Set(), flags: new Set(), mode: 'open', generationAttempts: 0,
       hintsRemaining: config.hints, startedAt: 0, finishedAt: 0,
       over: false, outcome: null, rewardClaimed: false,
     };
@@ -392,7 +400,7 @@ export function renderMinesweeperPage() {
           <div class="flex items-center gap-1.5 text-[9px]"><span class="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 px-1.5 py-1 font-mono"><span class="material-symbols-outlined text-[13px]">timer</span><span data-timer>00:00</span></span><span class="flex items-center gap-0.5 rounded-lg border border-fuchsia-300/25 bg-fuchsia-500/10 px-1.5 py-1 font-black text-fuchsia-200"><span class="material-symbols-outlined text-[13px]">diamond</span>${config.reward}</span></div>
         </header>
 
-        <section class="mb-2 grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-slate-950/65 px-3 py-2 text-center text-[9px] text-slate-400"><span><span class="material-symbols-outlined mr-0.5 align-middle text-[13px] text-amber-300">flag</span>残り <b data-mines-left class="font-mono text-white">${config.mines}</b></span><span>安全マス <b data-safe-left class="font-mono text-white">${config.rows * config.columns - config.mines}</b></span><span>初手安全</span></section>
+        <section class="mb-2 grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-slate-950/65 px-3 py-2 text-center text-[9px] text-slate-400"><span><span class="material-symbols-outlined mr-0.5 align-middle text-[13px] text-amber-300">flag</span>残り <b data-mines-left class="font-mono text-white">${config.mines}</b></span><span>安全マス <b data-safe-left class="font-mono text-white">${config.rows * config.columns - config.mines}</b></span><span class="font-black text-emerald-300">推測不要</span></section>
         <div data-status class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-950/25 px-3 text-center text-[10px] font-black text-amber-100" role="status" aria-live="polite">最初に開くマスを選んでください</div>
 
         <section class="mine-board mx-auto aspect-square w-full" style="grid-template-columns:repeat(${config.columns},minmax(0,1fr));max-width:${config.columns <= 8 ? '400px' : config.columns <= 10 ? '440px' : '500px'}" aria-label="${config.rows}かける${config.columns}の地雷原">

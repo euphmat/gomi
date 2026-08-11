@@ -61,6 +61,59 @@ export function createMinefield(config, safeIndex, random = Math.random) {
   return board;
 }
 
+/**
+ * 数字だけから確定できる基本2規則を反復し、推測なしで完走できるか調べる。
+ * 1. 数字と旗数が同じなら、残りの隣接マスはすべて安全。
+ * 2. 数字から旗数を引いた値と未確定マス数が同じなら、残りはすべて地雷。
+ */
+export function solveMinefieldLogically(board, safeIndex, config) {
+  assertConfig(config);
+  let revealed = revealMinefieldCells(board, new Set(), safeIndex, config);
+  const flags = new Set();
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const index of [...revealed]) {
+      const value = board[index];
+      if (value <= 0) continue;
+      const neighbors = getMinefieldNeighbors(index, config);
+      const flaggedCount = neighbors.filter(neighbor => flags.has(neighbor)).length;
+      const unknown = neighbors.filter(neighbor => !revealed.has(neighbor) && !flags.has(neighbor));
+      if (!unknown.length) continue;
+
+      if (flaggedCount === value) {
+        for (const target of unknown) {
+          if (board[target] === -1) return { solved: false, revealed, flags };
+          const nextRevealed = revealMinefieldCells(board, revealed, target, config, flags);
+          if (nextRevealed.size > revealed.size) changed = true;
+          revealed = nextRevealed;
+        }
+      } else if (value - flaggedCount === unknown.length) {
+        for (const target of unknown) {
+          if (board[target] !== -1) return { solved: false, revealed, flags };
+          if (!flags.has(target)) {
+            flags.add(target);
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
+  return { solved: isMinefieldCleared(board, revealed), revealed, flags };
+}
+
+/** 推測なしで解ける配置だけを返す。見つからなければnull。 */
+export function createLogicalMinefield(config, safeIndex, random = Math.random, maxAttempts = 2000) {
+  assertConfig(config);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const board = createMinefield(config, safeIndex, random);
+    if (solveMinefieldLogically(board, safeIndex, config).solved) return { board, attempts: attempt };
+  }
+  return null;
+}
+
 /** 空白マスから境界の数字までを連鎖開放した、新しいSetを返す。 */
 export function revealMinefieldCells(board, revealedCells, startIndex, config, blockedCells = new Set()) {
   assertConfig(config);

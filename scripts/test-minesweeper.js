@@ -1,8 +1,10 @@
 import {
+  createLogicalMinefield,
   createMinefield,
   getMinefieldNeighbors,
   isMinefieldCleared,
   revealMinefieldCells,
+  solveMinefieldLogically,
 } from '../js/data/minesweeper-engine.js';
 
 const assert = (condition, message) => {
@@ -38,5 +40,12 @@ assert(revealed.size === 8 && !revealed.has(8), 'blank-cell flood reveal failed'
 assert(isMinefieldCleared(emptyBoard, revealed), 'cleared board was not recognized');
 const blockedReveal = revealMinefieldCells(emptyBoard, new Set(), 0, emptyConfig, new Set([1]));
 assert(!blockedReveal.has(1), 'flagged cell was opened by flood reveal');
+
+configs.forEach(config => {
+  const safeIndex = Math.floor((config.rows * config.columns) / 2);
+  const generated = createLogicalMinefield(config, safeIndex, Math.random, 5000);
+  assert(generated, `${config.rows}x${config.columns} no-guess board could not be generated`);
+  assert(solveMinefieldLogically(generated.board, safeIndex, config).solved, 'generated board requires guessing');
+});
 
 console.log('Minesweeper engine tests passed.');
