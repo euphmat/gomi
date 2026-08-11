@@ -9,6 +9,7 @@ import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { getAvailableJobSP, getJobExpToNext, getJobSPOffset, getTotalJobSP } from '../../data/job-progression.js';
+import { renderJobUniqueSkillSummary } from '../../components/job-unique-skill-cards.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -371,6 +372,11 @@ export function renderChangeJobTab() {
     const wrapperContainer = document.createElement('div');
     wrapperContainer.className = 'flex flex-col h-full overflow-hidden';
 
+    const uniqueSummaryContainer = document.createElement('div');
+    uniqueSummaryContainer.className = 'mb-1 max-h-[32%] shrink-0 overflow-y-auto pr-1';
+    const job = JOBS[char.jobId];
+    uniqueSummaryContainer.innerHTML = job ? renderJobUniqueSkillSummary(job) : '';
+
     const listContainer = document.createElement('div');
     listContainer.className = 'grid flex-1 auto-rows-max grid-cols-4 content-start gap-1.5 overflow-y-auto pb-2 pr-1';
 
@@ -516,6 +522,7 @@ export function renderChangeJobTab() {
       await changeJob(char, jobDef);
     });
 
+    wrapperContainer.appendChild(uniqueSummaryContainer);
     wrapperContainer.appendChild(listContainer);
     wrapperContainer.appendChild(paginationContainer);
 

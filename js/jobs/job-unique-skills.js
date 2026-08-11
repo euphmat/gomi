@@ -2,10 +2,43 @@ const freezeMechanics = mechanics => Object.freeze(
   mechanics.map(({ label, text }) => Object.freeze({ label, text }))
 );
 
+const UNIQUE_RELEASE_DESCRIPTIONS = Object.freeze({
+  novice_inspiration: '起死回生：最大解放時、自身の状態異常を解除し、最大HP・MPの20%を回復する。',
+  resolve_bash: '不落の布陣：解放した防衛意志1つごとにDEFの15%分、味方全体へ3ターンのバリアを張る。',
+  elemental_chain: '三元素暴走：最大解放時に最大MPの15%を回復し、最後の属性に応じて敵全体へ燃焼・凍結・麻痺を付与する。',
+  prayer_miracle: '聖域顕現：解放時、味方全体の状態異常を解除し、3ターン状態異常を無効化する。',
+  perfect_aim: '拘束矢雨：最大解放した五月雨矢は、状態異常のない敵全体を2ターン麻痺させる。',
+  spellblade_sync: '魔装覚醒：最大解放時、自身にATK・MATK+35%と最大HP25%分のバリアを4ターン付与する。',
+  giant_slime: '分裂増殖：質量解放時、味方全体の最大HP20%を回復し、自身の最大HP15%分のバリアを張る。',
+  dance_finale: 'アンコールステップ：最大解放時、味方の混乱を解除し、自分以外のATBを最大50%進める。',
+  dream_reverberation: '癒やしの残響：旋律の解放量に応じて、味方全体のHP・MPを最大15%回復する。',
+  blood_release: '血装再生：渇血の解放量に応じて最大HP40%まで回復し、3ターンATKを最大30%上昇させる。',
+  holy_seal_release: '絶対聖域：解放時、味方全体の状態異常を解除・3ターン無効化し、自身の最大HP20%分のバリアを張る。',
+  high_tide_release: '生命の大潮：潮位の解放量に応じて、味方全体のHPを最大12%、MPを最大18%回復する。',
+  furnace_release: '劫火炉心：解放時、敵全体を燃焼させ、炉心の解放量に応じて3ターンMATKを最大40%上昇させる。',
+  execution_aim: '影纏い：解放時に自身の状態異常を解除し、殺意の解放量に応じて3ターンATKを最大50%上昇させる。',
+  fortress_break: '不落城塞：解放時、自身が2ターン味方をかばって被ダメージを60%軽減し、味方全体へ最大HP20%分のバリアを張る。',
+  crystal_shatter: '永久凍土：解放量に応じて、状態異常のない敵全体を最大3ターン凍結させる。',
+  mana_arrow_volley: 'マナ還流：魔矢の解放量に応じて、味方全体のMPを最大8%回復する。',
+  full_burst: '薬莢再錬成：フルバースト後、消費弾の半数を即時再装填し、次の射撃スキルの威力を35%上昇させる。',
+  pathogen_release: '変異感染：パンデミックは消費培養数だけ既存の状態異常を延長し、黒死病は状態異常のない敵全体へ毒を付与する。',
+  grand_finale_unique: '喝采の余韻：解放時、味方全体のATK・MATKを3ターン25%上昇させ、自分以外のATBを解放量に応じて最大60%進める。',
+  resonance_release_unique: '生命交響：共鳴の解放1つごとに、味方全体の最大HP5%・最大MP3%を回復する。',
+  king_chorus_unique: 'ぷるぷる加護：解放時、味方全体の状態異常を解除して2ターン無効化し、音符1つごとに最大HP8%分のバリアを張る。',
+  dragon_spirit_release_unique: '竜血覚醒：解放した竜気1つごとに、3ターンATK+10%と最大HP6%分のバリアを自身へ付与する。',
+  three_realms_wheel_unique: '森羅の祝福：解放時、味方全体の状態異常を解除して3ターン無効化し、印1つごとにHP7%回復とMATK15%分のバリアを与える。',
+  corpse_arts_unique: '魂命還元：消費した亡骸1体ごとに、味方全体の最大HP4%・最大MP2%を回復する。'
+});
+
 const unique = (id, name, icon, activation, description, sourceSkills, options = {}) => Object.freeze({
   id, name, icon, activation, description,
   sourceSkills: Object.freeze(sourceSkills),
-  mechanics: freezeMechanics(options.mechanics || []),
+  mechanics: freezeMechanics([
+    ...(options.mechanics || []),
+    ...(UNIQUE_RELEASE_DESCRIPTIONS[id]
+      ? [{ label: '強力な固有解放', text: UNIQUE_RELEASE_DESCRIPTIONS[id] }]
+      : [])
+  ]),
   mode: options.mode || 'automatic',
   unlockSkillId: options.unlockSkillId || null
 });

@@ -31,6 +31,7 @@ import {
   makeJobGaugeReloadEvent,
   playJobGaugeAnimation,
 } from './job-gauge-animation.js';
+import { applyJobUniqueReleaseEffect } from './job-unique-effects.js';
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
@@ -332,8 +333,10 @@ export const actionMethods = {
     }
 
     if (!options.isDoubleAct && !options.isEquipmentRepeat) {
+      const gaugeAfter = getJobGaugeAnimationSnapshot(caster);
       const gaugeAnimationEvent = resolveJobGaugeAnimationEvent(gaugeAnimationBefore, caster, skillDef.id);
       if (gaugeAnimationEvent) playJobGaugeAnimation(caster, gaugeAnimationEvent);
+      applyJobUniqueReleaseEffect(this, caster, skillDef.id, gaugeAnimationBefore, gaugeAfter);
     }
 
     if (!options.isDoubleAct && !options.isEquipmentRepeat
