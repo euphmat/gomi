@@ -9,7 +9,6 @@ import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { getAvailableJobSP, getJobExpToNext, getJobSPOffset, getTotalJobSP } from '../../data/job-progression.js';
-import { renderJobUniqueSkillSummary } from '../../components/job-unique-skill-cards.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -373,7 +372,7 @@ export function renderChangeJobTab() {
     wrapperContainer.className = 'flex flex-col h-full overflow-hidden';
 
     const listContainer = document.createElement('div');
-    listContainer.className = 'flex-1 overflow-y-auto space-y-2 pb-2 pr-1';
+    listContainer.className = 'grid flex-1 auto-rows-max grid-cols-2 content-start gap-2 overflow-y-auto pb-2 pr-1 sm:grid-cols-3';
 
     const paginationContainer = document.createElement('div');
     paginationContainer.className = 'flex items-center justify-center gap-4 py-2 shrink-0 bg-slate-950/80 border-t border-slate-800 pb-4';
@@ -415,15 +414,16 @@ export function renderChangeJobTab() {
 
     const renderList = () => {
       const measuredItemContainer = listContainer.children.length > 0 ? listContainer : null;
-      listContainer.innerHTML = '';
       const allJobs = Object.values(JOBS);
       
       const ITEMS_PER_PAGE = calcItemsPerPage({
-        viewMode: 'list',
+        viewMode: 'grid',
         scrollContainer: listContainer,
         itemContainer: measuredItemContainer,
-        listItemHeight: 76
+        gridItemHeight: 164,
+        gridCols: 2
       });
+      listContainer.innerHTML = '';
       
       const totalPages = Math.ceil(allJobs.length / ITEMS_PER_PAGE) || 1;
       if (changeJobCurrentPage > totalPages) changeJobCurrentPage = totalPages;
@@ -441,138 +441,58 @@ export function renderChangeJobTab() {
       const savedLevel = isCurrent ? char.jobLevel : (savedJob ? savedJob.level : 1);
       const cost = job.changeCost !== undefined ? job.changeCost : 30000;
 
-      const requirementItems = [];
-      if (!isUnlocked && !isCurrent) {
-        for (const req of job.requirements || []) {
-          if (req.type === 'custom') {
-            const isMet = req.check(currentCapturedMonsters);
-            requirementItems.push({
-              isMet,
-              icon: 'military_tech',
-              label: req.description,
-              current: isMet ? '達成済み' : '未達成',
-              target: '達成が必要',
-              fullWidth: true
-            });
-          } else if (req.type === 'fishLibrary') {
-            const required = Math.max(1, Number(req.discoveredSpecies) || 1);
-            const discovered = getDiscoveredFishCount(currentFishingData);
-            requirementItems.push({
-              isMet: discovered >= required,
-              icon: 'phishing',
-              label: '魚図鑑',
-              current: `現在 ${formatNumber(discovered)}種類`,
-              target: `${formatNumber(required)}種類`
-            });
-          } else {
-            const reqJobName = JOBS[req.jobId] ? JOBS[req.jobId].name : req.jobId;
-            const savedLv = char.jobLevels && char.jobLevels[req.jobId] ? char.jobLevels[req.jobId].level : 0;
-            const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
-            requirementItems.push({
-              isMet: currentLv >= req.level,
-              image: getJobImagePath(req.jobId),
-              imageAlt: reqJobName,
-              label: reqJobName,
-              current: `現在 JLv.${formatNumber(currentLv)}`,
-              target: `JLv.${formatNumber(req.level)}`
-            });
-          }
+      const jobRequirementsMet = (job.requirements || []).every(req => {
+        if (req.type === 'custom') return req.check(currentCapturedMonsters);
+        if (req.type === 'fishLibrary') {
+          const required = Math.max(1, Number(req.discoveredSpecies) || 1);
+          return getDiscoveredFishCount(currentFishingData) >= required;
         }
-
-        requirementItems.push({
-          isMet: currentGold >= cost,
-          icon: 'paid',
-          label: '所持ゴールド',
-          current: `現在 ${formatNumber(currentGold)} G`,
-          target: `${formatNumber(cost)} G`
-        });
-      }
-
-      const metRequirementCount = requirementItems.filter(item => item.isMet).length;
-      const allReqsMet = requirementItems.every(item => item.isMet);
-      const remainingRequirementCount = requirementItems.length - metRequirementCount;
-      const requirementsHtml = requirementItems.length > 0 ? `
-        <div class="mt-2.5 rounded-xl border ${allReqsMet ? 'border-emerald-500/30 bg-emerald-950/20' : 'border-slate-700/70 bg-slate-950/55'} p-2.5">
-          <div class="mb-2 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-1.5">
-              <span class="material-symbols-outlined text-[16px] ${allReqsMet ? 'text-emerald-300' : 'text-indigo-300'}">${allReqsMet ? 'task_alt' : 'checklist'}</span>
-              <span class="text-[11px] font-black tracking-wide text-slate-200">初回解放条件</span>
-            </div>
-            <span class="rounded-full border px-2 py-0.5 text-[9px] font-black tabular-nums ${allReqsMet ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300' : 'border-amber-400/25 bg-amber-500/10 text-amber-200'}">
-              ${allReqsMet ? 'すべて達成' : `あと ${remainingRequirementCount}件`}
-            </span>
-          </div>
-          <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-            ${requirementItems.map(item => `
-              <div class="flex min-w-0 items-center gap-2 rounded-lg border px-2 py-1.5 ${item.fullWidth ? 'sm:col-span-2' : ''} ${item.isMet ? 'border-emerald-500/20 bg-emerald-500/[0.06]' : 'border-rose-500/20 bg-rose-500/[0.06]'}">
-                <span class="material-symbols-outlined shrink-0 text-[17px] ${item.isMet ? 'text-emerald-400' : 'text-rose-400'}" style="font-variation-settings: 'FILL' 1">${item.isMet ? 'check_circle' : 'radio_button_unchecked'}</span>
-                ${item.image
-                  ? `<img src="${item.image}" class="h-6 w-6 shrink-0 object-contain" alt="${item.imageAlt}" onerror="this.style.display='none'">`
-                  : `<span class="material-symbols-outlined flex h-6 w-6 shrink-0 items-center justify-center text-[16px] ${item.isMet ? 'text-emerald-300' : 'text-slate-400'}">${item.icon}</span>`}
-                <div class="min-w-0 flex-1">
-                  <div class="break-words text-[10px] font-black leading-snug ${item.isMet ? 'text-emerald-200' : 'text-slate-200'}">${item.label}</div>
-                  <div class="truncate text-[9px] font-bold tabular-nums ${item.isMet ? 'text-emerald-400/75' : 'text-rose-300/80'}">${item.current}</div>
-                </div>
-                <div class="shrink-0 text-right">
-                  <div class="text-[8px] font-bold text-slate-500">必要</div>
-                  <div class="text-[10px] font-black tabular-nums ${item.isMet ? 'text-emerald-300' : 'text-rose-300'}">${item.target}</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : '';
+        const savedLv = char.jobLevels?.[req.jobId]?.level || 0;
+        const currentLv = Math.max(savedLv, char.jobId === req.jobId ? char.jobLevel : 0);
+        return currentLv >= req.level;
+      });
+      const allReqsMet = jobRequirementsMet && currentGold >= cost;
 
       const row = document.createElement('div');
-      row.className = `group p-3 rounded-2xl border transition-all duration-300 relative overflow-hidden backdrop-blur-md ${
+      row.className = `group relative flex min-h-[164px] flex-col items-center overflow-hidden rounded-2xl border p-2.5 text-center backdrop-blur-md transition-all duration-300 ${
         isCurrent
-          ? 'bg-emerald-950/20 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-inset ring-emerald-500/20'
-          : 'bg-slate-900/60 border-slate-700/60 ring-1 ring-inset ring-white/5'
+          ? 'border-emerald-500/50 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-inset ring-emerald-500/20'
+          : 'border-slate-700/60 bg-slate-900/60 ring-1 ring-inset ring-white/5'
       }`;
       if (!isCurrent && (isUnlocked || allReqsMet)) {
         row.classList.add('active:bg-slate-800/80', 'active:border-indigo-500/50', 'cursor-pointer', 'btn-change-job-container');
         row.dataset.jobId = job.id;
       }
 
-      const glow = isCurrent 
-        ? `<div class="absolute -inset-2 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent blur-2xl opacity-60 pointer-events-none"></div>`
-        : `<div class="absolute -inset-2 bg-gradient-to-r from-indigo-500/0 via-purple-500/0 to-indigo-500/0 group-active:from-indigo-500/10 group-active:via-purple-500/5 transition-all duration-700 blur-2xl pointer-events-none"></div>`;
-
       const buttonHtml = isCurrent
-        ? `<div class="relative px-3 py-1.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-black tracking-widest rounded-lg border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)] flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified</span>適用中</div>`
+        ? `<div class="flex w-full items-center justify-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[10px] font-black tracking-widest text-emerald-400"><span class="material-symbols-outlined text-[14px]">verified</span>適用中</div>`
         : isUnlocked
-          ? `<button class="btn-change-job relative px-4 py-1.5 bg-gradient-to-br from-indigo-500 to-purple-600 active:from-indigo-400 active:to-purple-500 text-white text-[11px] font-black rounded-lg shadow-[0_0_15px_rgba(99,102,241,0.4)] active:shadow-[0_0_20px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 shrink-0 overflow-hidden active:scale-105 active:scale-95 group/btn" data-job-id="${job.id}">
-              <div class="absolute inset-0 bg-white/20 translate-y-full group-active/btn:translate-y-0 transition-transform duration-300 ease-out"></div>
-              <span class="relative tracking-widest flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swap_horiz</span>転職</span>
+          ? `<button class="btn-change-job flex w-full items-center justify-center gap-1 rounded-lg border border-white/20 bg-gradient-to-br from-indigo-500 to-purple-600 px-2 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all active:scale-95 active:from-indigo-400 active:to-purple-500" data-job-id="${job.id}">
+              <span class="material-symbols-outlined text-[14px]">swap_horiz</span><span data-action-label>転職</span>
             </button>`
           : allReqsMet
-            ? `<button class="btn-change-job relative px-3 py-2 bg-gradient-to-br from-amber-500 to-orange-600 active:from-amber-400 active:to-orange-500 text-white text-[11px] font-black rounded-lg shadow-[0_4px_15px_rgba(245,158,11,0.4)] active:shadow-[0_4px_20px_rgba(245,158,11,0.6)] border border-amber-300/40 transition-all duration-300 shrink-0 flex items-center gap-1 overflow-hidden active:scale-95 group/btn" data-job-id="${job.id}">
-                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-active/btn:animate-[shimmer_1.5s_infinite]"></div>
-                <span class="relative material-symbols-outlined text-[14px] drop-shadow-md" style="font-variation-settings: 'FILL' 1;">lock_open</span>
-                <span class="relative tracking-wide drop-shadow-md">解放して転職</span>
+            ? `<button class="btn-change-job flex w-full items-center justify-center gap-1 rounded-lg border border-amber-300/40 bg-gradient-to-br from-amber-500 to-orange-600 px-2 py-1.5 text-[10px] font-black text-white shadow-[0_4px_12px_rgba(245,158,11,0.3)] transition-all active:scale-95 active:from-amber-400 active:to-orange-500" data-job-id="${job.id}">
+                <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">lock_open</span>
+                <span data-action-label>解放 ${formatNumber(cost)} G</span>
               </button>`
-            : `<button class="relative px-3 py-2 bg-slate-800/80 text-slate-500 text-[11px] font-black rounded-lg shrink-0 flex items-center gap-1 border border-slate-700/80 cursor-not-allowed opacity-70 backdrop-blur-sm" disabled>
+            : `<button class="flex w-full cursor-not-allowed items-center justify-center gap-1 rounded-lg border border-slate-700/80 bg-slate-800/80 px-2 py-1.5 text-[10px] font-black text-slate-500 opacity-70" disabled>
                 <span class="material-symbols-outlined text-[14px]">lock</span>
-                <span class="tracking-wide">条件不足</span>
+                <span>条件不足</span>
               </button>`;
 
       row.innerHTML = `
-        ${glow}
-        <div class="relative z-10 flex items-center gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-inner transition-all duration-300 group-active:border-indigo-400/40 group-active:shadow-[0_0_10px_rgba(99,102,241,0.2)]">
-            <img src="${getJobImagePath(job)}" class="h-full w-full object-contain ${isCurrent ? 'scale-110 opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-85 transition-transform duration-500 group-active:scale-110 group-active:opacity-100'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
-          </div>
-          <div class="min-w-0 flex-1">
-            <h3 class="truncate text-[14px] font-black tracking-wider transition-colors duration-300 ${isCurrent ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400' : 'text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-300 group-active:from-white group-active:to-indigo-200'}">${job.name}</h3>
-            <div class="mt-1 flex flex-wrap items-center gap-1.5">
-              <span class="flex shrink-0 items-center gap-0.5 rounded-md border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-300 shadow-inner"><span class="material-symbols-outlined text-[11px] text-slate-400">military_tech</span>JLv.${savedLevel}</span>
-              ${isUnlocked && !isCurrent ? '<span class="flex shrink-0 items-center gap-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-emerald-400"><span class="material-symbols-outlined text-[11px]">lock_open</span>解放済み</span>' : ''}
-            </div>
-          </div>
-          <div class="flex shrink-0 items-center">${buttonHtml}</div>
+        <div class="absolute inset-0 bg-gradient-to-b ${isCurrent ? 'from-emerald-500/10' : 'from-indigo-500/[0.06]'} to-transparent pointer-events-none"></div>
+        <div class="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-inner">
+          <img src="${getJobImagePath(job)}" class="h-full w-full object-contain ${isCurrent ? 'scale-110 opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-90 transition-transform duration-300 group-active:scale-110'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
-        <div class="relative z-10">${renderJobUniqueSkillSummary(job)}</div>
-        <div class="relative z-10">${requirementsHtml}</div>
+        <div class="relative z-10 mt-1.5 min-w-0 w-full">
+          <h3 class="truncate text-[12px] font-black tracking-wide ${isCurrent ? 'text-emerald-300' : 'text-slate-100'}">${job.name}</h3>
+          <div class="mt-1 flex items-center justify-center gap-1">
+            <span class="flex items-center gap-0.5 rounded-md border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[8px] font-black tracking-wider text-slate-300"><span class="material-symbols-outlined text-[10px] text-slate-400">military_tech</span>JLv.${formatNumber(savedLevel)}</span>
+            ${isUnlocked && !isCurrent ? '<span class="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-black text-emerald-400">解放済み</span>' : ''}
+          </div>
+        </div>
+        <div class="relative z-10 mt-auto w-full pt-2">${buttonHtml}</div>
       `;
       listContainer.appendChild(row);
       });
@@ -595,7 +515,7 @@ export function renderChangeJobTab() {
       const targetBtn = btn || row.querySelector('.btn-change-job');
       if (targetBtn) {
         targetBtn.disabled = true;
-        const span = targetBtn.querySelector('span.tracking-wider') || targetBtn.querySelector('span.tracking-wide');
+        const span = targetBtn.querySelector('[data-action-label]');
         if (span) span.textContent = '転職中...';
       }
 
