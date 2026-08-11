@@ -232,6 +232,10 @@ export function renderMinesweeperPage() {
     }
     game.board = generated.board;
     game.generationAttempts = generated.attempts;
+    if (!game.questPlayRecorded) {
+      game.questPlayRecorded = true;
+      window.dispatchEvent(new CustomEvent('quest:mini-game-play'));
+    }
     game.startedAt = Date.now();
     stopTimer();
     timerId = window.setInterval(updateTimer, 1000);
@@ -386,7 +390,7 @@ export function renderMinesweeperPage() {
     game = {
       config, board: null, revealed: new Set(), flags: new Set(), mode: 'open', generationAttempts: 0,
       hintsRemaining: config.hints, startedAt: 0, finishedAt: 0,
-      over: false, outcome: null, rewardClaimed: false,
+      over: false, outcome: null, rewardClaimed: false, questPlayRecorded: false,
     };
 
     container.innerHTML = `

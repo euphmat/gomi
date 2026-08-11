@@ -301,6 +301,12 @@ export function renderSudokuPage() {
     }
   };
 
+  const recordMiniGamePlay = () => {
+    if (!game || game.questPlayRecorded) return;
+    game.questPlayRecorded = true;
+    window.dispatchEvent(new CustomEvent('quest:mini-game-play'));
+  };
+
   const enterNumber = value => {
     if (!game || game.completed || game.selectedIndex < 0 || game.puzzle[game.selectedIndex]) return;
     const index = game.selectedIndex;
@@ -309,6 +315,7 @@ export function renderSudokuPage() {
         setStatus('確定数字を消してから仮数字を入力してください', 'rose');
         return;
       }
+      recordMiniGamePlay();
       game.notes[index] = toggleSudokuNote(game.notes[index], value);
       updateBoard();
       setStatus(game.notes[index].has(value) ? `仮数字 ${value} を追加しました` : `仮数字 ${value} を外しました`);
@@ -316,6 +323,7 @@ export function renderSudokuPage() {
     }
     const hadValue = Boolean(game.values[index]);
     const hadNotes = game.notes[index].size > 0;
+    if (value || hadValue || hadNotes) recordMiniGamePlay();
     game.values[index] = value;
     game.notes[index] = new Set();
     if (value) game.notes = clearSudokuPeerNotes(game.notes, index, value, game.config);
@@ -331,6 +339,7 @@ export function renderSudokuPage() {
     let target = game.selectedIndex;
     if (target < 0 || game.puzzle[target] || game.values[target]) target = game.values.findIndex(value => !value);
     if (target < 0) return;
+    recordMiniGamePlay();
     game.values[target] = game.solution[target];
     game.notes[target] = new Set();
     game.notes = clearSudokuPeerNotes(game.notes, target, game.solution[target], game.config);
@@ -377,6 +386,7 @@ export function renderSudokuPage() {
       startedAt: Date.now(),
       completed: false,
       rewardClaimed: false,
+      questPlayRecorded: false,
       showErrors: false,
     };
 

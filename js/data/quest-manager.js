@@ -53,13 +53,13 @@ export const DAILY_QUESTS = [
     destination: { path: '/fishing', label: '釣り場へ' },
   },
   {
-    id: 'daily_play_memory_game',
-    label: '神経衰弱で1回遊ぶ',
-    icon: 'neurology',
-    eventType: 'quest:memory-game-play',
+    id: 'daily_play_mini_game',
+    label: 'ミニゲームで1回遊ぶ',
+    icon: 'sports_esports',
+    eventType: 'quest:mini-game-play',
     target: 1,
-    progressKey: 'memoryGamesPlayed',
-    destination: { path: '/memory-game', label: '神経衰弱へ' },
+    progressKey: 'miniGamesPlayed',
+    destination: { path: '/status', label: 'ミニゲームへ' },
   },
 ];
 
@@ -78,7 +78,7 @@ class QuestManagerClass {
       crafts: 0,
       mineUpgrades: 0,
       fishCaught: 0,
-      memoryGamesPlayed: 0,
+      miniGamesPlayed: 0,
       claimed: false,
     };
   }
@@ -88,7 +88,14 @@ class QuestManagerClass {
     const today = getJSTDateString();
 
     if (saved && saved.date === today) {
-      this.dailyProgress = { ...this.dailyProgress, ...saved };
+      // 旧「神経衰弱で1回遊ぶ」の当日進捗を、共通ミニゲーム進捗へ引き継ぐ。
+      const { memoryGamesPlayed, ...savedProgress } = saved;
+      this.dailyProgress = {
+        ...this.dailyProgress,
+        ...savedProgress,
+        miniGamesPlayed: Math.max(0, Number(saved.miniGamesPlayed ?? memoryGamesPlayed) || 0),
+      };
+      if (!Object.prototype.hasOwnProperty.call(saved, 'miniGamesPlayed')) await this.saveProgress();
     } else {
       // Reset for a new day (or first time)
       this.dailyProgress = this._createDailyProgress(today);
@@ -124,8 +131,8 @@ class QuestManagerClass {
       this.addProgress('fishCaught', count);
     });
 
-    window.addEventListener('quest:memory-game-play', () => {
-      this.addProgress('memoryGamesPlayed', 1);
+    window.addEventListener('quest:mini-game-play', () => {
+      this.addProgress('miniGamesPlayed', 1);
     });
   }
 

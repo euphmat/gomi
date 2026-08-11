@@ -434,6 +434,7 @@ export function renderMemoryGamePage() {
       locked: true,
       over: false,
       rewardClaimed: false,
+      questPlayRecorded: false,
       progressionRecorded: false,
       progressionResult: null,
       progressionFailed: false,
@@ -746,7 +747,6 @@ export function renderMemoryGamePage() {
     if (!game || game.over) return;
     game.over = true;
     game.locked = true;
-    window.dispatchEvent(new CustomEvent('quest:memory-game-play'));
     const outcome = decidedOutcome || (game.scores.player > game.scores.cpu ? 'win' : game.scores.player < game.scores.cpu ? 'lose' : 'draw');
     if (!game.progressionRecorded) {
       game.progressionRecorded = true;
@@ -852,6 +852,10 @@ export function renderMemoryGamePage() {
     if (!game || game.over || game.locked || game.turn !== 'player') return;
     if (game.matched.has(index)) return;
     if (game.selected.includes(index)) return;
+    if (!game.questPlayRecorded) {
+      game.questPlayRecorded = true;
+      window.dispatchEvent(new CustomEvent('quest:mini-game-play'));
+    }
     revealCard(index);
     game.selected.push(index);
     if (game.selected.length === 1) {
