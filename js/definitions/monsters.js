@@ -1,5 +1,22 @@
 import { ADVANCED_MONSTERS } from './advanced-dungeon-content.js';
 
+const getEntityCurrentHp = entity => {
+  const value = entity?.hp ? entity.hp.current : entity?.currentHp;
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
+};
+
+const restoreMonsterHp = (monster, requestedAmount, battle) => {
+  const maxHp = Math.max(0, Number(monster?.stats?.hp || monster?.maxHp) || 0);
+  const currentHp = Number.isFinite(Number(monster?.currentHp)) ? Number(monster.currentHp) : 0;
+  const restored = Math.min(
+    Math.max(0, Math.floor(Number(requestedAmount) || 0)),
+    Math.max(0, maxHp - currentHp)
+  );
+  monster.currentHp = Math.min(maxHp, currentHp + restored);
+  if (restored > 0) battle?.showDamage?.(monster.elementId, `+${restored}`, 'text-green-400');
+  return restored;
+};
+
 /**
  * このファイルは敵として登場するモンスターの強さや、落とすアイテムなどのデータをまとめたファイルです。
  * 
@@ -165,7 +182,36 @@ export const MONSTERS = [
   { id: 'flute_lizard'       , name: 'フルート・リザード'  , stats: { hp:  35000, atk:  2800, def:  3200, matk:  1500, mdef:  2500, spd: 320 }, elements:               { earth:  50, wind: -50 }, ailments:                                                       {}, rewards: { exp:   460, jp:  250, gold:   160 }, drops: [{ itemId: 'mat_flute_scale', rate: 5 }, { itemId: 'mat_lizard_throat', rate: 1 }, { itemId: 'mat_wind_dragon_horn', rate: 0.1 }], actions: [{ name: '低音の咆哮', chance: 30, description: '全体に物理ダメージを与え、防御力を一時的に下げる。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, '低音の咆哮', 'text-yellow-600', 'border-yellow-800/50'); battle.party.forEach(p => { if (!p.isDead) { battle.executeAttack(attacker, p, false, { actionName: '低音の咆哮', damageMultiplier: 0.9, isMagic: false, damageType: 'skill', hideActionName: true }); p._defBuffPercent = (p._defBuffPercent || 0) - 20; p._defBuffTurns = 3; battle.showDamage(p.elementId, 'DEF DOWN', 'text-red-400'); } }); } }] },
   { id: 'melody_sylph'       , name: '旋律のシルフ'        , stats: { hp:  38000, atk:  1800, def:  2400, matk:  3500, mdef:  3800, spd: 600 }, elements:               { wind:  80, earth: -80 }, ailments:                                        { paralysis: 40 }, rewards: { exp:   520, jp:  280, gold:   100 }, drops: [{ itemId: 'mat_sylph_garment', rate: 5 }, { itemId: 'mat_melody_orb', rate: 1 }, { itemId: 'mat_sylphid_heart', rate: 0.1 }], actions: [{ name: 'ウィンドカッター', chance: 45, description: '全体に風属性の強力な魔法攻撃。確率で麻痺を付与する。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, 'ウィンドカッター', 'text-green-300', 'border-green-500/50'); const origE = attacker.stats.attackElements; const origA = attacker.stats.attackAilments; attacker.stats.attackElements = { wind: 100 }; attacker.stats.attackAilments = { paralysis: 40 }; battle.party.forEach(p => { if (!p.isDead) battle.executeAttack(attacker, p, false, { actionName: 'ウィンドカッター', damageMultiplier: 0.9, isMagic: true, damageType: 'skill', hideActionName: true }); }); attacker.stats.attackElements = origE; attacker.stats.attackAilments = origA; } }] },
   { id: 'suikinkutsu_slime'  , name: '水琴窟のスライム'    , stats: { hp:  45000, atk:  1500, def:  3500, matk:  3800, mdef:  4200, spd: 280 }, elements:             { water: 80, thunder: -80 }, ailments:                                                       {}, rewards: { exp:   580, jp:  120, gold:   180 }, drops: [{ itemId: 'mat_water_chime_jelly', rate: 5 }, { itemId: 'mat_echo_water', rate: 1 }, { itemId: 'mat_suikinkutsu_core', rate: 0.1 }], actions: [{ name: '清らかな水音', chance: 35, description: '生存している全ての味方のHPを回復する。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, '清らかな水音', 'text-blue-300', 'border-blue-500/50'); battle.enemies.forEach(e => { if (!e.isDead) { const heal = Math.floor(e.stats.hp * 0.15); e.currentHp = Math.min(e.stats.hp, e.currentHp + heal); battle.showDamage(e.elementId, `+${heal}`, 'text-green-400'); } }); } }] },
-  { id: 'kodama_treant'      , name: '木魂のトレント'      , stats: { hp:  75000, atk:  3500, def:  4500, matk:  2200, mdef:  3800, spd: 200 }, elements:                { grass: 80, fire: -80 }, ailments:                                           { poison: 40 }, rewards: { exp:   550, jp:  180, gold:   100 }, drops: [{ itemId: 'mat_treant_bark', rate: 5 }, { itemId: 'mat_kodama_branch', rate: 1 }, { itemId: 'mat_spirit_wood_heart', rate: 0.1 }], actions: [{ name: '大地の共鳴', chance: 30, description: '全体に物理ダメージを与え、自身のHPを回復する。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, '大地の共鳴', 'text-green-600', 'border-green-800/50'); let totalDmg = 0; battle.party.forEach(p => { if (!p.isDead) { const prevHp = p.currentHp; battle.executeAttack(attacker, p, false, { actionName: '大地の共鳴', damageMultiplier: 1.1, isMagic: false, damageType: 'skill', hideActionName: true }); totalDmg += Math.max(0, prevHp - p.currentHp); } }); const heal = Math.floor(totalDmg * 0.5); attacker.currentHp = Math.min(attacker.stats.hp, attacker.currentHp + heal); battle.showDamage(attacker.elementId, `+${heal}`, 'text-green-400'); } }] },
+  {
+    id: 'kodama_treant', name: '木魂のトレント',
+    stats: { hp: 75000, atk: 3500, def: 4500, matk: 2200, mdef: 3800, spd: 200 },
+    elements: { grass: 80, fire: -80 }, ailments: { poison: 40 },
+    rewards: { exp: 550, jp: 180, gold: 100 },
+    drops: [
+      { itemId: 'mat_treant_bark', rate: 5 },
+      { itemId: 'mat_kodama_branch', rate: 1 },
+      { itemId: 'mat_spirit_wood_heart', rate: 0.1 }
+    ],
+    actions: [{
+      name: '大地の共鳴', chance: 30,
+      description: '全体に物理ダメージを与え、自身のHPを回復する。',
+      execute: (attacker, defender, battle) => {
+        battle.showActionName(attacker.elementId, '大地の共鳴', 'text-green-600', 'border-green-800/50');
+        let totalDamage = 0;
+        battle.party.forEach(member => {
+          if (member.isDead) return;
+          const hpBefore = getEntityCurrentHp(member);
+          battle.executeAttack(attacker, member, false, {
+            actionName: '大地の共鳴', damageMultiplier: 1.1, isMagic: false,
+            damageType: 'skill', hideActionName: true
+          });
+          const hpAfter = getEntityCurrentHp(member);
+          totalDamage += Math.max(0, hpBefore - hpAfter);
+        });
+        restoreMonsterHp(attacker, totalDamage * .5, battle);
+      }
+    }]
+  },
   { id: 'chanting_griffon'   , name: '詠唱のグリフォン'    , stats: { hp:  60000, atk:  4200, def:  3200, matk:  4500, mdef:  4000, spd: 650 }, elements:                { wind:  50, light: 50 }, ailments:                                          { silence: 50 }, rewards: { exp:   550, jp:  150, gold:   100 }, drops: [{ itemId: 'mat_griffon_feather', rate: 5 }, { itemId: 'mat_chanting_beak', rate: 1 }, { itemId: 'mat_hymn_talon', rate: 0.1 }], actions: [{ name: 'ホーリーダイブ', chance: 35, description: '全体に光属性の物理攻撃。確率で沈黙を付与する。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, 'ホーリーダイブ', 'text-indigo-300', 'border-indigo-500/50'); const origE = attacker.stats.attackElements; const origA = attacker.stats.attackAilments; attacker.stats.attackElements = { light: 100 }; attacker.stats.attackAilments = { silence: 50 }; battle.party.forEach(p => { if (!p.isDead) battle.executeAttack(attacker, p, false, { actionName: 'ホーリーダイブ', damageMultiplier: 1.0, isMagic: false, damageType: 'skill', hideActionName: true }); }); attacker.stats.attackElements = origE; attacker.stats.attackAilments = origA; } }] },
   { id: 'phantom_siren'      , name: '幻声のセイレーン'    , stats: { hp:  55000, atk:  2000, def:  3000, matk:  5500, mdef:  5200, spd: 500 }, elements:                { water: 50, dark:  50 }, ailments:                             { sleep: 50, confusion: 50 }, rewards: { exp:   550, jp:  100, gold:   100 }, drops: [{ itemId: 'mat_siren_scale', rate: 5 }, { itemId: 'mat_phantom_tear', rate: 1 }, { itemId: 'mat_mermaid_voice_jewel', rate: 0.1 }], actions: [{ name: '誘惑の歌声', chance: 40, description: '全体に水属性の魔法ダメージを与え、睡眠と混乱を付与する。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, '誘惑の歌声', 'text-pink-300', 'border-pink-500/50'); const origE = attacker.stats.attackElements; const origA = attacker.stats.attackAilments; attacker.stats.attackElements = { water: 100 }; attacker.stats.attackAilments = { sleep: 60, confusion: 60 }; battle.party.forEach(p => { if (!p.isDead) battle.executeAttack(attacker, p, false, { actionName: '誘惑の歌声', damageMultiplier: 1.0, isMagic: true, damageType: 'skill', hideActionName: true }); }); attacker.stats.attackElements = origE; attacker.stats.attackAilments = origA; } }] },
   { id: 'resonance_golem'    , name: '共鳴石のゴーレム'    , stats: { hp: 100000, atk:  5000, def:  6500, matk:  2500, mdef:  5000, spd: 200 }, elements:               { earth:  80, wind: -80 }, ailments:                                        { paralysis: 40 }, rewards: { exp:   600, jp:  100, gold:   100 }, drops: [{ itemId: 'mat_resonance_stone', rate: 5 }, { itemId: 'mat_golem_joint', rate: 1 }, { itemId: 'mat_vibrating_core', rate: 0.1 }], actions: [{ name: 'アースクエイク', chance: 35, description: '全体に土属性の大ダメージを与え、確率で麻痺を付与する。', execute: (attacker, defender, battle) => { battle.showActionName(attacker.elementId, 'アースクエイク', 'text-yellow-700', 'border-yellow-900/50'); const origE = attacker.stats.attackElements; const origA = attacker.stats.attackAilments; attacker.stats.attackElements = { earth: 100 }; attacker.stats.attackAilments = { paralysis: 50 }; battle.party.forEach(p => { if (!p.isDead) battle.executeAttack(attacker, p, false, { actionName: 'アースクエイク', damageMultiplier: 1.3, isMagic: false, damageType: 'skill', hideActionName: true }); }); attacker.stats.attackElements = origE; attacker.stats.attackAilments = origA; } }] },
