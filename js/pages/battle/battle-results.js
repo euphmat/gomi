@@ -668,7 +668,8 @@ export const resultMethods = {
       '_dragoonSpirit', '_shinraSigils', '_soulReaperCorpses',
       ...STANDARD_JOB_GAUGE_FIELDS,
       '_jobGaugeActionMultiplier', '_jobGaugeHealingMultiplier', '_jobGaugeCapacityMax', '_jobGaugeActionSkill', '_jobGaugeLastSkill',
-      '_jobGaugeLastElement', '_jobGaugeUsedSkills', '_assassinMarkTarget', '_gunnerReloadBonus'
+      '_jobGaugeLastElement', '_jobGaugeUsedSkills', '_assassinMarkTarget', '_gunnerReloadBonus',
+      '_assassinPerfectEvasionCharges', '_dragoonLandingAtb', '_soulReaperDeathWard'
     ];
 
     for (const p of this.party) {

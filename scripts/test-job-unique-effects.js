@@ -1,7 +1,10 @@
 import { JOBS } from '../js/jobs/index.js';
 import {
   JOB_UNIQUE_RELEASE_EFFECTS,
-  applyJobUniqueReleaseEffect
+  applyJobUniqueReleaseEffect,
+  consumeAssassinPerfectEvasion,
+  consumeDragoonLandingAtb,
+  consumeSoulReaperDeathWard,
 } from '../js/pages/battle/job-unique-effects.js';
 
 const assert = (condition, message) => {
@@ -12,6 +15,8 @@ const jobIds = Object.keys(JOBS);
 assert(jobIds.length === 25, '全職業の固有解放テストが職業一覧と一致しません');
 assert(Object.keys(JOB_UNIQUE_RELEASE_EFFECTS).length === jobIds.length,
   '強力な固有解放効果が全職業を網羅していません');
+assert(new Set(Object.values(JOB_UNIQUE_RELEASE_EFFECTS).map(definition => definition.mechanicId)).size === jobIds.length,
+  '複数職業が同じ固有メカニクス分類を使い回しています');
 
 const legacyMax = {
   entertainer: 5, mana_conductor: 5, slime_singer: 5,
@@ -20,7 +25,7 @@ const legacyMax = {
 
 for (const jobId of jobIds) {
   const definition = JOB_UNIQUE_RELEASE_EFFECTS[jobId];
-  assert(definition?.name && definition.skillIds.length > 0 && typeof definition.apply === 'function',
+  assert(definition?.name && definition.mechanicId && definition.skillIds.length > 0 && typeof definition.apply === 'function',
     `${jobId} の固有解放定義が不完全です`);
 
   const actor = {
@@ -78,6 +83,29 @@ applyJobUniqueReleaseEffect(
 );
 assert(gunner._gunnerAmmo === 4 && gunner._gunnerReloadBonus === .35,
   '薬莢再錬成が拡張弾倉の半数と次弾強化を返しません');
+
+const assassin = {
+  jobId: 'assassin', elementId: 'assassin', activeAilment: null,
+  hp: { current: 1000, max: 1000 }, mp: { current: 500, max: 500 }, stats: { hp: 1000, mp: 500 }
+};
+applyJobUniqueReleaseEffect(
+  { party: [assassin], enemies: [], showActionName() {}, renderEntities() {} }, assassin, 'assassinate',
+  { jobId: 'assassin', current: 5, max: 5 }, { jobId: 'assassin', current: 0, max: 5 }
+);
+assert(consumeAssassinPerfectEvasion(assassin) && !consumeAssassinPerfectEvasion(assassin),
+  '影纏いの確定回避が1回だけ攻撃を無効化しません');
+
+const dragoon = { jobId: 'dragoon', elementId: 'dragoon' };
+applyJobUniqueReleaseEffect(
+  { party: [dragoon], enemies: [], showActionName() {}, renderEntities() {} }, dragoon, 'skyfall_dive',
+  { jobId: 'dragoon', current: 5, max: 5 }, { jobId: 'dragoon', current: 0, max: 5 }
+);
+assert(consumeDragoonLandingAtb(dragoon) === 800 && consumeDragoonLandingAtb(dragoon) === 0,
+  '天翔返しの着地ATBが一度だけ80%還元されません');
+
+const warded = { stats: { hp: 1000 }, hp: { current: 1000, max: 1000 }, _soulReaperDeathWard: 3 };
+assert(consumeSoulReaperDeathWard(warded) === 150 && warded._soulReaperDeathWard === 2,
+  '魂の身代わりが1回分を消費してHP15%を残しません');
 
 assert(applyJobUniqueReleaseEffect(
   {}, { jobId: 'knight' }, 'shield_attack',

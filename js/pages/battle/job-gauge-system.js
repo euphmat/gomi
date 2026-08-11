@@ -122,6 +122,7 @@ export function resetStandardJobGauge(entity) {
   entity._jobGaugeLastElement = null;
   entity._jobGaugeUsedSkills = [];
   entity._assassinMarkTarget = null;
+  entity._assassinPerfectEvasionCharges = 0;
   entity._gunnerReloadBonus = 0;
 }
 

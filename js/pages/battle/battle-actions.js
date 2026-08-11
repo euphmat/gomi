@@ -31,7 +31,12 @@ import {
   makeJobGaugeReloadEvent,
   playJobGaugeAnimation,
 } from './job-gauge-animation.js';
-import { applyJobUniqueReleaseEffect } from './job-unique-effects.js';
+import {
+  applyJobUniqueReleaseEffect,
+  consumeAssassinPerfectEvasion,
+  consumeDragoonLandingAtb,
+  consumeSoulReaperDeathWard,
+} from './job-unique-effects.js';
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
@@ -222,8 +227,11 @@ export const actionMethods = {
     entity._entertainerHype = 0;
     entity._slimeSingerNotes = 0;
     entity._dragoonSpirit = 0;
+    entity._dragoonLandingAtb = 0;
     entity._shinraSigils = [];
     entity._soulReaperCorpses = 0;
+    entity._soulReaperDeathWard = 0;
+    entity._assassinPerfectEvasionCharges = 0;
     resetStandardJobGauge(entity);
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
@@ -450,7 +458,9 @@ export const actionMethods = {
     this.applyManaOrchestra(caster);
     this.applyMedalEquipmentActionRecovery(caster);
 
-    caster.atb = sumMedalEquipmentEffect(caster, this.equipMap, 'atbRefundPercent', 50) * 10;
+    const equipmentAtbRefund = sumMedalEquipmentEffect(caster, this.equipMap, 'atbRefundPercent', 50) * 10;
+    const dragoonLandingAtb = consumeDragoonLandingAtb(caster);
+    caster.atb = Math.min(950, equipmentAtbRefund + dragoonLandingAtb);
     this.activeCharacter = null;
     this.renderEntities();
     this.checkBattleEnd();
@@ -530,6 +540,19 @@ export const actionMethods = {
         }
         options.guardianCoverReduction = guardian._guardianCoverReduction || 0;
       }
+    }
+
+    // --- Assassin unique release: the shadow left by Assassinate negates
+    // exactly one incoming hit.  It is deterministic and charge-based, not a
+    // generic evasion percentage shared with equipment/passives. ---
+    if (!isParty && defender.hp !== undefined && consumeAssassinPerfectEvasion(defender)) {
+      this.showActionName(defender.elementId, '影纏い・完全回避', 'text-violet-200', 'border-violet-400/70');
+      if (!options.skipAtbReset && !options.isAoEProcessed) {
+        attacker.atb = 0;
+        this.activeEnemy = null;
+        this.renderEntities();
+      }
+      return;
     }
 
     // --- Passive: Auto Guard (オートガード) ---
@@ -1098,10 +1121,19 @@ export const actionMethods = {
       let survivedBySlimeCore = false;
       let survivedByLastBastion = false;
       let survivedByMedalArmor = false;
+      let survivedBySoulWard = false;
       const medalSurvival = this.applyMedalEquipmentLethalSurvival(defender, damage);
       damage = medalSurvival.damage;
       survivedByMedalArmor = medalSurvival.survived;
-      if (!survivedByMedalArmor && defender.hp.current - damage <= 0 && defender.jobSkills) {
+      if (!survivedByMedalArmor && defender.hp.current - damage <= 0 && defender._soulReaperDeathWard > 0) {
+        const survivingHp = consumeSoulReaperDeathWard(defender);
+        defender.hp.current = Math.max(defender.hp.current, survivingHp);
+        damage = Math.max(0, defender.hp.current - survivingHp);
+        survivedBySoulWard = true;
+        this.showActionName(defender.elementId, '魂の身代わり', 'text-cyan-100', 'border-violet-400/80');
+        this.showDamage(defender.elementId, `HP ${survivingHp}`, 'text-cyan-200');
+      }
+      if (!survivedByMedalArmor && !survivedBySoulWard && defender.hp.current - damage <= 0 && defender.jobSkills) {
         const lastBastion = this._findSkill(defender, 'last_bastion');
         if (lastBastion?.level > 0 && lastBastion.levelConfig && !defender._guardianLastBastionUsed) {
           const maxHp = defender.stats?.hp || defender.hp.max;
@@ -1130,7 +1162,8 @@ export const actionMethods = {
       }
 
       defender.hp.current -= damage;
-      if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion && !survivedByMedalArmor) {
+      if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion
+        && !survivedByMedalArmor && !survivedBySoulWard) {
         if (!this.trySoulReaperDeathDenial(defender)) {
           defender.hp.current = 0;
           defender.isDead = true;
