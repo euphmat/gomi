@@ -667,7 +667,7 @@ export const resultMethods = {
       '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype', '_slimeSingerNotes',
       '_dragoonSpirit', '_shinraSigils', '_soulReaperCorpses',
       ...STANDARD_JOB_GAUGE_FIELDS,
-      '_jobGaugeActionMultiplier', '_jobGaugeActionSkill', '_jobGaugeLastSkill',
+      '_jobGaugeActionMultiplier', '_jobGaugeHealingMultiplier', '_jobGaugeCapacityMax', '_jobGaugeActionSkill', '_jobGaugeLastSkill',
       '_jobGaugeLastElement', '_jobGaugeUsedSkills', '_assassinMarkTarget', '_gunnerReloadBonus'
     ];
 

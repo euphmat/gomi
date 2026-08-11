@@ -129,6 +129,10 @@ const select = (character, usableSkills, enemies, party = [character]) =>
   conductor.mp.current = 900;
   assert(select(conductor, [crescendo, recharge], [enemy]).skill?.id === 'arcane_crescendo',
     '共鳴が最大なら単体用の共鳴技を放つ');
+
+  const symphony = makeUsable('grand_symphony', () => null);
+  assert(select(conductor, [crescendo, symphony], [enemy, makeEnemy({ id: 'enemy-2' })]).skill?.id === 'grand_symphony',
+    '共鳴最大の複数戦でグランド・シンフォニーを最優先にしない');
 }
 
 {
@@ -146,6 +150,21 @@ const select = (character, usableSkills, enemies, party = [character]) =>
   chorus.def.autoBattle.check = () => null;
   assert(select(singer, [chorus, jellyNote], [enemy]).skill?.id === 'king_slime_chorus',
     'ぷるぷる音符が最大なら単体戦でもキングスライム大合唱を使う');
+}
+
+{
+  const enemy = makeEnemy();
+  const requiem = makeUsable('last_requiem', (_caster, _lc, context) => ({ target: context.enemies[0], score: 999 }));
+  const harvest = makeUsable('soul_harvest', (_caster, _lc, context) => ({ target: context.enemies[0], score: 50 }));
+  const reaper = makeCharacter({
+    jobId: 'soul_reaper', _soulReaperCorpses: 5,
+    jobSkills: { soul_reaper: { grave_sovereignty: 35 } }
+  });
+  assert(select(reaper, [requiem, harvest], [enemy]).skill?.id === 'soul_harvest',
+    '上限覚醒したソウルリーパーAIが旧上限5体で終焉の葬列を使う');
+  reaper._soulReaperCorpses = 7;
+  assert(select(reaper, [requiem, harvest], [enemy]).skill?.id === 'last_requiem',
+    '上限覚醒したソウルリーパーAIが亡骸7体で終焉の葬列を使わない');
 }
 
 {

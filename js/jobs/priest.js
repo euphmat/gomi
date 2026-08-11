@@ -480,6 +480,9 @@ export const priest = {
       getDescription: (lc) => `MP を ${lc.mpCost} 消費し、味方全体の HP を ${lc.healAmount} 回復する`,
       execute(caster, levelConfig, battle) {
         if (!battle) return;
+        const gaugeHealingMultiplier = Math.max(1, Number(caster._jobGaugeHealingMultiplier) || 1);
+        caster._jobGaugeHealingMultiplier = 1;
+        const gaugeHealAmount = Math.max(1, Math.floor(levelConfig.healAmount * gaugeHealingMultiplier));
         let targetGroup = battle.party;
         if (battle.selectedEnemyTarget && battle.enemies.includes(battle.selectedEnemyTarget)) {
           targetGroup = battle.enemies;
@@ -491,9 +494,9 @@ export const priest = {
           if (target.isDead) return;
           const hpBefore = target.hp !== undefined ? target.hp.current : target.currentHp;
           if (target.hp !== undefined) {
-            target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + levelConfig.healAmount);
+            target.hp.current = Math.min(target.stats?.hp || target.hp.max, target.hp.current + gaugeHealAmount);
           } else {
-            target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + levelConfig.healAmount);
+            target.currentHp = Math.min(target.stats?.hp || target.maxHp, target.currentHp + gaugeHealAmount);
           }
           const hpAfter = target.hp !== undefined ? target.hp.current : target.currentHp;
           if (hpAfter > hpBefore) battle.showDamage(target.elementId, `+${hpAfter - hpBefore}`, 'text-green-400');

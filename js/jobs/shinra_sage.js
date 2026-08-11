@@ -278,7 +278,7 @@ export const shinra_sage = {
         { mpCost: 178, multiplier: .99, sigilBonus: .18, healMatkPercent: 40 },
         { mpCost: 198, multiplier: 1.09, sigilBonus: .20, healMatkPercent: 45 }
       ]),
-      getDescription: lc => `敵全体へ草・風・土それぞれMATK ${lc.multiplier.toFixed(2)}倍の3連撃。印を全消費し、対応する属性の威力+${Math.round(lc.sigilBonus * 100)}%。3印時は味方全体をMATKの${lc.healMatkPercent}%回復`,
+      getDescription: lc => `敵全体へ草・風・土それぞれMATK ${lc.multiplier.toFixed(2)}倍の3連撃。印を全消費し、対応属性の威力+${Math.round(lc.sigilBonus * 100)}%。3印完成時は各連撃をさらに+0.75倍し、味方全体をMATKの${lc.healMatkPercent}%回復`,
       execute(caster, lc, battle) {
         if (!battle) return;
         const targets = getOffensiveTargets(caster, battle);
@@ -291,7 +291,7 @@ export const shinra_sage = {
             if (target.isDead) return;
             battle.executeAttack(caster, target, true, {
               statDependency: 'MAT', actionName: '', damageType: 'skill', hideActionName: true,
-              damageMultiplier: lc.multiplier + (sigils.includes(element) ? lc.sigilBonus : 0),
+              damageMultiplier: lc.multiplier + (sigils.includes(element) ? lc.sigilBonus : 0) + (isTrinity ? .75 : 0),
               element, isAoEProcessed: true,
               skipAtbReset: targetIndex < targets.length - 1 || elementIndex < SHINRA_ELEMENTS.length - 1
             });
@@ -310,7 +310,7 @@ export const shinra_sage = {
           if (!targets.length) return null;
           const sigilCount = isShinraSage(caster) ? getSigils(caster).length : 0;
           if (isShinraSage(caster) && sigilCount < SHINRA_ELEMENTS.length) return null;
-          return { target: targets[0], score: 55 * 3 * (lc.multiplier + sigilCount * lc.sigilBonus / 3) * Math.max(1, targets.length * .72) + sigilCount * 38 };
+          return { target: targets[0], score: 55 * 3 * (lc.multiplier + sigilCount * lc.sigilBonus / 3 + (sigilCount === 3 ? .75 : 0)) * Math.max(1, targets.length * .72) + sigilCount * 38 };
         }
       }
     },

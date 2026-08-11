@@ -38,9 +38,10 @@ export function getJobGaugeAnimationSpec(event) {
 }
 
 export function makeJobGaugeReloadEvent(entity) {
+  const max = Math.max(1, Math.floor(Number(entity?._jobGaugeCapacityMax) || 6));
   return {
     type: 'reload', jobId: entity?.jobId || entity?.job || 'gunner',
-    label: 'リロード完了', icon: 'refresh', amount: 6, max: 6
+    label: 'リロード完了', icon: 'refresh', amount: max, max
   };
 }
 

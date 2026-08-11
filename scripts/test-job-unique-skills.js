@@ -38,31 +38,31 @@ for (const [jobId, gaugeDefinition] of Object.entries(STANDARD_JOB_GAUGES)) {
 }
 
 const requiredMechanicFragments = {
-  norvice: ['初めて使った時だけ+1', '威力1.5倍'],
-  knight: ['被ダメージ2%軽減', '威力10%上昇'],
-  mage: ['同じ属性を続けると1', '威力35%上昇'],
-  priest: ['ヒール+20', 'MPの半分を還元'],
-  ranger: ['与ダメージ2%上昇', '威力1.5倍'],
-  magic_knight: ['異なる属性剣なら+2', '威力1.5倍'],
-  slime_master: ['被ダメージ0.1%軽減', '威力5%上昇'],
-  dancer: ['同じスキルを続けると1', '威力1.4倍'],
-  bird: ['使用で+2', '威力6%上昇'],
-  black_knight: ['受けるたび+10', '与ダメージ0.2%上昇', '威力0.5%上昇'],
-  paladin: ['被ダメージ2%軽減', '威力15%上昇'],
-  poseidon: ['与ダメージ4%上昇', '威力15%上昇'],
-  pyromancer: ['インフェルノ+35', '与ダメージ0.3%上昇', '最大約66.7%'],
-  assassin: ['別の標的を攻撃すると1', '与ダメージ4%上昇', '威力12%上昇'],
-  guardian: ['ダメージを受けた時にも+1', '被ダメージ3%軽減', '威力12%上昇'],
-  cryomancer: ['ホワイトアウトは+2', '与ダメージ2.5%上昇', '威力8%上昇'],
-  magic_archer: ['実消費MP40ごとに+1', '威力25%上昇', '威力8%上昇'],
-  gunner: ['戦闘開始時6', 'ラピッドファイア3', '攻撃せず自動リロード'],
-  plague_doctor: ['腐蝕ミアズマ+2', '与ダメージ2%上昇', '威力7%上昇'],
+  norvice: ['初めて使った時だけ+1', '与ダメージ4%上昇', '2.5倍'],
+  knight: ['被ダメージ2%軽減', '威力25%上昇'],
+  mage: ['同じ属性を続けると1', '与ダメージ5%上昇', '威力42%上昇', '約2.26倍'],
+  priest: ['ヒール+20', '被ダメージ0.05%軽減', '実消費MPを全額還元'],
+  ranger: ['与ダメージ2%上昇', '2.5倍'],
+  magic_knight: ['異なる属性剣なら+2', '与ダメージ3%上昇', '2.5倍'],
+  slime_master: ['被ダメージ0.1%軽減', '威力1%上昇'],
+  dancer: ['同じスキルを続けると1', '与ダメージ4%上昇', '威力32%上昇', '約2.28倍'],
+  bird: ['使用で+2', '与ダメージ3%上昇', '威力15%上昇'],
+  black_knight: ['受けるたび+10', '与ダメージ0.2%上昇', '威力1%上昇'],
+  paladin: ['被ダメージ2%軽減', '威力40%上昇'],
+  poseidon: ['与ダメージ4%上昇', '威力50%上昇'],
+  pyromancer: ['インフェルノ+35', '与ダメージ0.3%上昇', '最大100%'],
+  assassin: ['別の標的を攻撃すると1', '与ダメージ4%上昇', '威力25%上昇'],
+  guardian: ['ダメージを受けた時にも+1', '被ダメージ3%軽減', '威力30%上昇'],
+  cryomancer: ['ホワイトアウトは+2', '与ダメージ2.5%上昇', '威力20%上昇'],
+  magic_archer: ['実消費MP40ごとに+1', '与ダメージ3%上昇', '威力20%上昇'],
+  gunner: ['戦闘開始時は現在上限', 'ラピッドファイア3', '攻撃せず自動リロード'],
+  plague_doctor: ['腐蝕ミアズマ+2', '与ダメージ2%上昇', '威力15%上昇'],
   entertainer: ['ショーストッパーのLv', '4つのアクティブスキル', '16～22%'],
-  mana_conductor: ['マナリレー', '威力+0.24倍', '追加効果はない'],
+  mana_conductor: ['マナリレー', '威力+0.24倍', '威力+0.20倍'],
   slime_singer: ['共鳴ジェルのLv', '4つのアクティブスキル', '+0.22～0.42倍'],
   dragoon: ['竜騎士の魂のLv', 'ドラゴンスイープ', '+0.35～0.68倍'],
-  shinra_sage: ['同じ印は重複しない', '3印すべて', '18～45%回復'],
-  soul_reaper: ['魂魄刈り', '骸骨城塞', '亡者大行軍', '終焉の葬列']
+  shinra_sage: ['同じ印は重複しない', '3印完成時', '+0.75倍', '18～45%回復'],
+  soul_reaper: ['魂魄刈り', '敵撃破時にも+1', '死霊軍勢', '骸骨城塞', '亡者大行軍', '終焉の葬列']
 };
 for (const [jobId, fragments] of Object.entries(requiredMechanicFragments)) {
   const fullText = JOBS[jobId].uniqueSkills.flatMap(skill => skill.mechanics.map(item => item.text)).join(' ');
@@ -84,8 +84,9 @@ const summaryHtml = renderJobUniqueSkillSummary(gunner);
 assert(summaryHtml.includes('data-job-unique-skill-summary="gunner"') && summaryHtml.includes('発動：') && summaryHtml.includes('弾薬消費'), '職業ページ用の固有スキル全仕様が表示されません');
 
 const guardianHtml = renderJobUniqueSkillCards(JOBS.guardian, { jobSkills: { guardian: {} } });
-assert(guardianHtml.includes('イージスバッシュ以外') && guardianHtml.includes('被ダメージ3%軽減') && guardianHtml.includes('威力12%上昇'), 'ガーディアンの蓄積・常時効果・解放効果を網羅できていません');
-assert(guardianHtml.includes('最大15%') && guardianHtml.includes('最大60%'), 'ガーディアンの効果上限が表示されません');
+assert(guardianHtml.includes('イージスバッシュ以外') && guardianHtml.includes('被ダメージ3%軽減') && guardianHtml.includes('威力30%上昇'), 'ガーディアンの蓄積・常時効果・解放効果を網羅できていません');
+assert(guardianHtml.includes('最大15%') && guardianHtml.includes('最大150%'), 'ガーディアンの効果上限が表示されません');
+assert(guardianHtml.includes('限界突破+10') && guardianHtml.includes('固有ゲージ上限 +1枠'), 'ガーディアンの上限覚醒が表示されません');
 
 const acquireSource = fs.readFileSync(new URL('../js/pages/guild-tabs/acquire-skill.js', import.meta.url), 'utf8');
 assert(acquireSource.includes('btn-tab-unique') && acquireSource.includes('renderJobUniqueSkillCards'), '修練場の固有スキルタブが接続されていません');

@@ -63,6 +63,12 @@ const novice = getJobResourceState({ jobId: 'norvice' });
 assert(novice?.current === 0 && novice.max === 5, 'ノービスの経験ゲージが表示されません');
 const gunner = getJobResourceState({ jobId: 'gunner' });
 assert(gunner?.current === 6 && gunner.max === 6, 'ガンナーの弾倉が装填状態で初期化されません');
+const awakenedGunner = getJobResourceState(makeCharacter('gunner', 'bullet_storm', 35, '_gunnerAmmo', 8));
+assert(awakenedGunner?.current === 8 && awakenedGunner.max === 8, '限界突破した拡張弾倉がHUDへ反映されません');
+const awakenedGuardian = getJobResourceState(makeCharacter('guardian', 'aegis_bash', 20, '_guardianWall', 6));
+assert(awakenedGuardian?.current === 6 && awakenedGuardian.max === 6, '限界突破した城壁上限がHUDへ反映されません');
+const awakenedReaper = getJobResourceState(makeCharacter('soul_reaper', 'grave_sovereignty', 35, '_soulReaperCorpses', 7));
+assert(awakenedReaper?.current === 7 && awakenedReaper.max === 7, '限界突破した亡骸上限がHUDへ反映されません');
 assert(getJobResourceSignature(entertainer) !== getJobResourceSignature({ ...entertainer, current: 3 }), 'ゲージ更新シグネチャが変化しません');
 
 globalThis.localStorage = { getItem: () => null };

@@ -2,6 +2,7 @@ import {
   SOUL_REAPER_MAX_CORPSES,
   addSoulReaperCorpses,
   consumeSoulReaperCorpses,
+  getSoulReaperCorpseMax,
   getSoulReaperCorpseStock,
   soul_reaper
 } from '../js/jobs/soul_reaper.js';
@@ -127,6 +128,17 @@ const skill = id => soul_reaper.skills.find(candidate => candidate.id === id);
   assert(getSoulReaperCorpseStock(caster) === 0, 'last requiem did not consume all corpses');
   assert(battle.attacks.length === 10, 'last requiem should hit two enemies five times');
   assert(!fallen.isDead && fallen.hp.current === 560, 'last requiem did not revive the fallen ally at 70% HP');
+}
+
+{
+  const caster = makeCaster(7);
+  caster.jobSkills = { soul_reaper: { grave_sovereignty: 35 } };
+  assert(getSoulReaperCorpseMax(caster) === 7, '墓標の王の限界突破で亡骸上限が拡張されません');
+  const { battle } = makeBattle(caster);
+  const def = skill('last_requiem');
+  def.execute(caster, def.levels[9], battle);
+  assert(getSoulReaperCorpseStock(caster) === 0, '拡張分を含む亡骸を全解放していません');
+  assert(battle.attacks.length === 14, '上限拡張分が終焉の葬列の攻撃回数へ反映されません');
 }
 
 {

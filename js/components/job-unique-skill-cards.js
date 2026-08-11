@@ -1,3 +1,5 @@
+import { getJobGaugeCapacityProgressionText } from '../jobs/job-gauge-progression.js';
+
 const escapeHtml = value => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -10,8 +12,9 @@ export function isJobUniqueSkillUnlocked(skill, character, jobId) {
   return (Number(character?.jobSkills?.[jobId]?.[skill.unlockSkillId]) || 0) > 0;
 }
 
-const renderMechanicsHtml = (skill, { compact = false, summary = false } = {}) => {
-  const mechanics = Array.isArray(skill?.mechanics) ? skill.mechanics : [];
+const renderMechanicsHtml = (skill, { compact = false, summary = false, capacityText = '' } = {}) => {
+  const mechanics = Array.isArray(skill?.mechanics) ? [...skill.mechanics] : [];
+  if (capacityText) mechanics.push({ label: '上限覚醒', text: capacityText });
   if (!mechanics.length) return '';
   return `<dl class="${summary ? 'mt-1' : 'mt-2 rounded-lg border border-slate-700/55 bg-slate-950/50 p-1.5'} flex flex-col ${compact || summary ? 'gap-1' : 'gap-1.5'}" data-unique-mechanics>
     ${mechanics.map(item => `<div class="grid grid-cols-[${summary ? '48px' : compact ? '52px' : '60px'}_minmax(0,1fr)] gap-1.5 ${summary ? 'text-[8px]' : compact ? 'text-[9px]' : 'text-[10px]'} leading-relaxed">
@@ -23,12 +26,13 @@ const renderMechanicsHtml = (skill, { compact = false, summary = false } = {}) =
 
 export function renderJobUniqueSkillCards(job, character = null, { compact = false } = {}) {
   const skills = Array.isArray(job?.uniqueSkills) ? job.uniqueSkills : [];
+  const capacityText = getJobGaugeCapacityProgressionText(job?.id);
   if (!skills.length) {
     return '<div class="flex min-h-28 items-center justify-center text-xs text-slate-500">固有スキルはありません</div>';
   }
 
   return `<div class="job-unique-skill-list flex flex-col ${compact ? 'gap-1.5' : 'gap-2.5'}" data-job-unique-skill-list="${escapeHtml(job.id)}">
-    ${skills.map(skill => {
+    ${skills.map((skill, index) => {
       const unlocked = isJobUniqueSkillUnlocked(skill, character, job.id);
       const modeLabel = skill.mode === 'command' ? 'コマンド' : '自動発動';
       return `
@@ -55,7 +59,7 @@ export function renderJobUniqueSkillCards(job, character = null, { compact = fal
                 <span class="text-[8px] font-black text-cyan-400">連携</span>
                 ${skill.sourceSkills.map(source => `<span class="rounded border border-slate-600/50 bg-slate-950/65 px-1.5 py-px text-[8px] font-bold text-slate-300">${escapeHtml(source)}</span>`).join('')}
               </div>
-              ${renderMechanicsHtml(skill, { compact })}
+              ${renderMechanicsHtml(skill, { compact, capacityText: index === 0 ? capacityText : '' })}
             </div>
           </div>
         </article>`;
@@ -65,6 +69,7 @@ export function renderJobUniqueSkillCards(job, character = null, { compact = fal
 
 export function renderJobUniqueSkillSummary(job) {
   const skills = Array.isArray(job?.uniqueSkills) ? job.uniqueSkills : [];
+  const capacityText = getJobGaugeCapacityProgressionText(job?.id);
   if (!skills.length) return '';
 
   return `<div class="mt-2 rounded-lg border border-amber-500/20 bg-amber-950/20 px-2 py-1.5" data-job-unique-skill-summary="${escapeHtml(job.id)}">
@@ -72,7 +77,7 @@ export function renderJobUniqueSkillSummary(job) {
       <span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">stars</span>固有スキル
     </div>
     <div class="flex flex-col gap-1.5">
-      ${skills.map(skill => `<div class="min-w-0">
+      ${skills.map((skill, index) => `<div class="min-w-0">
         <div class="flex items-center gap-1.5">
           <span class="material-symbols-outlined shrink-0 text-[13px] text-amber-200" style="font-variation-settings:'FILL' 1">${escapeHtml(skill.icon)}</span>
           <span class="text-[10px] font-black text-amber-50">${escapeHtml(skill.name)}</span>
@@ -81,7 +86,7 @@ export function renderJobUniqueSkillSummary(job) {
         <div class="mt-0.5 pl-[19px] text-[9px] font-bold leading-relaxed text-slate-300">
           <span class="text-amber-300">発動：</span>${escapeHtml(skill.activation)}<span class="mx-1 text-slate-600">/</span>${escapeHtml(skill.description)}
         </div>
-        <div class="pl-[19px]">${renderMechanicsHtml(skill, { summary: true })}</div>
+        <div class="pl-[19px]">${renderMechanicsHtml(skill, { summary: true, capacityText: index === 0 ? capacityText : '' })}</div>
       </div>`).join('')}
     </div>
   </div>`;

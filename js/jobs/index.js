@@ -24,6 +24,7 @@ import { shinra_sage } from './shinra_sage.js';
 import { plague_doctor } from './plague_doctor.js';
 import { soul_reaper } from './soul_reaper.js';
 import { getJobUniqueSkills } from './job-unique-skills.js';
+import { installJobGaugeCapacityMilestones } from './job-gauge-progression.js';
 
 export const JOB_STAT_GROWTH = {
   // HP/MP are weighted at 25% when budgeting growth because equipment grants
@@ -121,3 +122,5 @@ export const JOBS = {
 Object.values(JOBS).forEach(job => {
   job.uniqueSkills = getJobUniqueSkills(job.id);
 });
+
+installJobGaugeCapacityMilestones(JOBS);

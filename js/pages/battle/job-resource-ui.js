@@ -1,6 +1,7 @@
 import { JOBS } from '../../jobs/index.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
-import { STANDARD_JOB_GAUGES } from './job-gauge-system.js';
+import { STANDARD_JOB_GAUGES, getStandardJobGaugeMax } from './job-gauge-system.js';
+import { getJobGaugeCapacityBonus } from '../../jobs/job-gauge-progression.js';
 
 const makeStandardResourceDefinition = gauge => Object.freeze({
   label: gauge.label,
@@ -9,6 +10,8 @@ const makeStandardResourceDefinition = gauge => Object.freeze({
   valueField: gauge.field,
   fixedMax: gauge.max,
   initial: gauge.initial ?? 0,
+  startsFull: gauge.startsFull === true,
+  standard: true,
   continuous: gauge.max > 10,
   panelClass: 'border-amber-400/35 bg-gradient-to-r from-amber-950/70 via-slate-950/55 to-cyan-950/45',
   textClass: 'text-amber-100',
@@ -98,6 +101,7 @@ const JOB_RESOURCE_DEFINITIONS = Object.freeze({
     icon: 'skull',
     valueField: '_soulReaperCorpses',
     fixedMax: 5,
+    capacityJobId: 'soul_reaper',
     panelClass: 'border-cyan-300/35 bg-gradient-to-r from-violet-950/75 via-slate-950/55 to-cyan-950/60',
     textClass: 'text-cyan-100',
     mutedClass: 'text-violet-300/60',
@@ -143,8 +147,11 @@ export function getJobResourceState(entity) {
   }
 
   const levelConfig = getCurrentSkillConfig(entity, definition);
-  const max = normalizeCount(definition.fixedMax || levelConfig?.[definition.maxField]);
-  const current = Math.min(max, normalizeCount(entity?.[definition.valueField] ?? definition.initial));
+  const max = normalizeCount(definition.standard
+    ? getStandardJobGaugeMax(entity)
+    : (definition.fixedMax || levelConfig?.[definition.maxField]) + (definition.capacityJobId ? getJobGaugeCapacityBonus(entity, definition.capacityJobId) : 0));
+  const initial = definition.standard && definition.startsFull ? max : definition.initial;
+  const current = Math.min(max, normalizeCount(entity?.[definition.valueField] ?? initial));
   return {
     jobId,
     definition,

@@ -64,7 +64,7 @@ const beforeHeal = ally.hp.current;
 skill('shinra_mandala').execute(caster, { multiplier: 1, sigilBonus: .2, healMatkPercent: 40 }, battle);
 assert(caster._shinraSigils.length === 0, 'trinity sigils were not consumed');
 assert(attacks.slice(-3).map(attack => attack.element).join(',') === 'grass,wind,earth', 'mandala elements are invalid');
-assert(attacks.slice(-3).every(attack => attack.damageMultiplier === 1.2), 'mandala sigil bonus is invalid');
+assert(attacks.slice(-3).every(attack => attack.damageMultiplier === 1.95), 'mandala trinity release bonus is invalid');
 assert(ally.hp.current === beforeHeal + 200, 'mandala trinity heal is invalid');
 
 const usable = ['verdant_spear', 'sylph_cyclone', 'gaia_rampart', 'shinra_mandala'].map(id => {

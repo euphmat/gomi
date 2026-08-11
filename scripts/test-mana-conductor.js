@@ -47,5 +47,21 @@ caster.mp.current = 180;
 assert(recharge.autoBattle.check(caster, recharge.levels[9]) === null,
   'MPに余裕があるのに自動戦闘AIが共鳴を消費します');
 
+const symphony = mana_conductor.skills.find(skill => skill.id === 'grand_symphony');
+const enemy = { id: 'enemy', elementId: 'enemy', isDead: false };
+const ally = { id: 'ally', elementId: 'ally', isDead: false, mp: { current: 0, max: 500 }, stats: { mp: 500 } };
+const attacks = [];
+caster._conductorHarmony = 5;
+caster.mp.current = 0;
+battle.party = [caster, ally];
+battle.enemies = [enemy];
+battle.executeAttack = (_caster, _target, _partySide, options) => attacks.push(options);
+symphony.execute(caster, symphony.levels[9], battle);
+assert(caster._conductorHarmony === 0, 'グランド・シンフォニーが共鳴を解放しません');
+assert(attacks[0]?.damageMultiplier === symphony.levels[9].multiplier + 1,
+  'グランド・シンフォニーの最大共鳴解放が威力へ反映されません');
+assert(ally.mp.current === symphony.levels[9].restoreMp + 20 && ally._manaFlowAmount === symphony.levels[9].recoverMp + 10,
+  'グランド・シンフォニーの共鳴解放がMP支援へ反映されません');
+
 if (typeof print === 'function') print('Mana Conductor tests passed.');
 else console.log('Mana Conductor tests passed.');

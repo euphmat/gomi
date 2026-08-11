@@ -179,11 +179,12 @@ export const gunner = {
         { mpCost: 0, nextShotBonus: .16 }, { mpCost: 0, nextShotBonus: .18 },
         { mpCost: 0, nextShotBonus: .20 }, { mpCost: 0, nextShotBonus: .22 }
       ], RELOAD_LEVEL_COSTS),
-      getDescription: lc => `弾倉を6発まで即時補充し、次の射撃スキルの威力を${Math.round(lc.nextShotBonus * 100)}%上昇させる`,
+      getDescription: lc => `弾倉を現在の上限まで即時補充し、次の射撃スキルの威力を${Math.round(lc.nextShotBonus * 100)}%上昇させる`,
       execute(caster, lc, battle) {
-        caster._gunnerAmmo = 6;
+        const magazineMax = Math.max(6, Math.floor(Number(caster._jobGaugeCapacityMax) || 6));
+        caster._gunnerAmmo = magazineMax;
         caster._gunnerReloadBonus = lc.nextShotBonus;
-        battle?.showDamage?.(caster.elementId, `6/6  次弾+${Math.round(lc.nextShotBonus * 100)}%`, 'text-amber-200');
+        battle?.showDamage?.(caster.elementId, `${magazineMax}/${magazineMax}  次弾+${Math.round(lc.nextShotBonus * 100)}%`, 'text-amber-200');
         battle?.renderEntities?.();
       },
       autoBattle: {

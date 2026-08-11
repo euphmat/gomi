@@ -7,6 +7,7 @@
  */
 
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+import { getJobGaugeCapacityBonus } from '../../jobs/job-gauge-progression.js';
 import { applyStandardJobGaugeAi } from './job-gauge-system.js';
 
 const ROLE = Object.freeze({
@@ -451,10 +452,12 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
       relay.priority = 220;
       relay.score += (maxHarmony - harmony) * 55;
     } else if (maxHarmony > 0 && harmony >= maxHarmony) {
-      // グランド・シンフォニーは共鳴を消すが共鳴自体では強化されない。
-      const symphonyIndex = candidates.findIndex(candidate => candidate.skill.id === 'grand_symphony');
-      if (symphonyIndex >= 0) candidates.splice(symphonyIndex, 1);
-      const finisherId = aliveEnemies.length >= 2 ? 'resonance_storm' : 'arcane_crescendo';
+      const missingMana = context.party.filter(member => !member.isDead && member.mp)
+        .reduce((total, member) => total + 1 - member.mp.current / Math.max(1, member.stats?.mp || member.mp.max || 1), 0);
+      const canUseSymphony = Boolean(getUsableSkill(usableSkills, 'grand_symphony'));
+      const finisherId = canUseSymphony && (aliveEnemies.length >= 2 || missingMana >= .8)
+        ? 'grand_symphony'
+        : aliveEnemies.length >= 2 ? 'resonance_storm' : 'arcane_crescendo';
       const finisherSkill = getUsableSkill(usableSkills, finisherId);
       const existing = byId.get(finisherId);
       const finisher = existing || makeCandidate(finisherSkill, aliveEnemies[0], 0);
@@ -522,16 +525,22 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
     }
   }
 
-  // ソウルリーパー: 亡骸を5体まで蓄え、状況に応じて防御・行軍・葬列へ振り分ける。
+  // ソウルリーパー: 覚醒後を含む現在上限まで蓄え、状況に応じて防御・行軍・葬列へ振り分ける。
   if (currentJob === 'soul_reaper') {
-    const corpses = Math.min(5, Math.max(0, Number(character._soulReaperCorpses) || 0));
+    const corpseMax = 5 + getJobGaugeCapacityBonus(character, 'soul_reaper');
+    const corpses = Math.min(corpseMax, Math.max(0, Number(character._soulReaperCorpses) || 0));
     const fallenAllies = context.party.filter(member => member.isDead).length;
     const livingAllies = context.party.filter(member => !member.isDead);
     const harvest = byId.get('soul_harvest');
     if (harvest && corpses < 3) harvest.score += (3 - corpses) * 110;
 
-    const requiem = byId.get('last_requiem');
-    if (requiem && corpses >= 5) {
+    let requiem = byId.get('last_requiem');
+    if (requiem && corpses < corpseMax) {
+      const requiemIndex = candidates.indexOf(requiem);
+      if (requiemIndex >= 0) candidates.splice(requiemIndex, 1);
+      requiem = null;
+    }
+    if (requiem && corpses >= corpseMax) {
       requiem.priority = 510;
       requiem.score += 520 + fallenAllies * 600 + aliveEnemies.length * 120;
     } else {

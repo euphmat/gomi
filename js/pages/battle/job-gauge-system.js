@@ -4,6 +4,8 @@
  * owns resource lifecycle, damage modifiers, ammo validation and AI hints.
  */
 
+import { getJobGaugeCapacityBonus } from '../../jobs/job-gauge-progression.js';
+
 const numeric = value => Math.max(0, Math.floor(Number(value) || 0));
 const jobIdOf = entity => entity?.jobId || entity?.job || '';
 
@@ -25,7 +27,7 @@ export const STANDARD_JOB_GAUGES = Object.freeze({
   guardian:      Object.freeze({ label: '城壁', icon: 'fort', field: '_guardianWall', max: 5, description: '守護行動と被弾で築き、軽減と盾撃を強化' }),
   cryomancer:    Object.freeze({ label: '氷晶', icon: 'diamond', field: '_cryomancerCrystals', max: 6, description: '氷魔法で結晶を蓄え、絶対零度で粉砕' }),
   magic_archer:  Object.freeze({ label: '魔矢', icon: 'arrow_right_alt', field: '_magicArcherArrows', max: 6, description: 'MPを魔矢に変換し、通常攻撃や大技で放つ' }),
-  gunner:        Object.freeze({ label: '弾倉', icon: 'radio_button_checked', field: '_gunnerAmmo', max: 6, initial: 6, description: '射撃で弾丸を消費し、弾切れ後の通常攻撃でリロード' }),
+  gunner:        Object.freeze({ label: '弾倉', icon: 'radio_button_checked', field: '_gunnerAmmo', max: 6, initial: 6, startsFull: true, description: '射撃で弾丸を消費し、弾切れ後の通常攻撃でリロード' }),
   plague_doctor: Object.freeze({ label: '培養', icon: 'biotech', field: '_plagueCulture', max: 9, description: '病原スキルで培養し、パンデミック・黒死病で消費' })
 });
 
@@ -39,48 +41,57 @@ const GUNNER_AMMO_COST = Object.freeze({
 
 const GAUGE_SKILL_HINTS = Object.freeze({
   norvice: {
-    heavy_strike: '経験MAX時は経験を全消費して威力1.5倍',
-    cleave: '経験MAX時は経験を全消費して威力1.5倍'
+    heavy_strike: '経験MAX時は全消費し、1つごとに威力+30%',
+    cleave: '経験MAX時は全消費し、1つごとに威力+30%'
   },
-  knight: { shield_attack: '防衛意志を全消費し、1つごとに威力+10%' },
+  knight: { shield_attack: '防衛意志を全消費し、1つごとに威力+25%' },
   mage: {
-    fireball: '元素連環MAX時は連環を消費して威力+35%', ice_lance: '元素連環MAX時は連環を消費して威力+35%',
-    thunder: '元素連環MAX時は連環を消費して威力+35%', blizzard: '元素連環MAX時は連環を消費して威力+35%',
-    volcano: '元素連環MAX時は連環を消費して威力+35%', thunderstorm: '元素連環MAX時は連環を消費して威力+35%'
+    fireball: '元素連環MAX時は全消費し、1つごとに威力+42%', ice_lance: '元素連環MAX時は全消費し、1つごとに威力+42%',
+    thunder: '元素連環MAX時は全消費し、1つごとに威力+42%', blizzard: '元素連環MAX時は全消費し、1つごとに威力+42%',
+    volcano: '元素連環MAX時は全消費し、1つごとに威力+42%', thunderstorm: '元素連環MAX時は全消費し、1つごとに威力+42%'
   },
-  priest: { all_heal: '信仰50以上で50消費し、消費MPの半分を還元' },
-  ranger: { rain_of_arrows: '照準MAX時は全消費し、威力1.5倍' },
-  magic_knight: { flame_tongue: '魔刃同調MAX時は全消費して威力1.5倍', ice_brand: '魔刃同調MAX時は全消費して威力1.5倍', thunder_slash: '魔刃同調MAX時は全消費して威力1.5倍' },
-  slime_master: { slime_hazard: '質量を全消費し、10ごとに威力+5%' },
+  priest: { all_heal: '信仰50以上を全消費し、MP全額還元・回復量を大幅強化' },
+  ranger: { rain_of_arrows: '照準MAX時は全消費し、1つごとに威力+30%' },
+  magic_knight: { flame_tongue: '魔刃同調MAX時は全消費し、1つごとに威力+25%', ice_brand: '魔刃同調MAX時は全消費し、1つごとに威力+25%', thunder_slash: '魔刃同調MAX時は全消費し、1つごとに威力+25%' },
+  slime_master: { slime_hazard: '質量を全消費し、1ごとに威力+1%' },
   dancer: {
-    poison_salsa: 'ステップMAX時はフィナーレとなり威力1.4倍', juggling_dagger: 'ステップMAX時はフィナーレとなり威力1.4倍',
-    confusion_tarantella: 'ステップMAX時はフィナーレとなり威力1.4倍', curse_step: 'ステップMAX時はフィナーレとなり威力1.4倍'
+    poison_salsa: 'ステップMAX時は全消費し、1つごとに威力+32%', juggling_dagger: 'ステップMAX時は全消費し、1つごとに威力+32%',
+    confusion_tarantella: 'ステップMAX時は全消費し、1つごとに威力+32%', curse_step: 'ステップMAX時は全消費し、1つごとに威力+32%'
   },
-  bird: { nightmare: '旋律3以上を全消費し、1音ごとに威力+6%' },
-  black_knight: { blood_saber: '渇血75以上で全消費して強化', hell_gate: '渇血50以上で全消費して強化' },
-  paladin: { holy_smite: '聖印を全消費し、1つごとに威力+15%' },
-  poseidon: { tidal_wave: '潮位2以上を全消費して強化', leviathan_judgment: '潮位2以上を全消費して強化' },
-  pyromancer: { meteor_catastrophe: '炉心温度を全消費し、温度に応じて威力上昇' },
-  assassin: { assassinate: '殺意を全消費し、1つごとに威力+12%' },
-  guardian: { aegis_bash: '城壁を全消費し、1層ごとに威力+12%' },
-  cryomancer: { absolute_zero: '氷晶を全消費し、1つごとに威力+8%' },
-  magic_archer: { mana_barrage: '魔矢を全消費し、1本ごとに威力+8%', astral_arrow_rain: '魔矢を全消費し、1本ごとに威力+8%' },
+  bird: { nightmare: '旋律3以上を全消費し、1音ごとに威力+15%' },
+  black_knight: { blood_saber: '渇血75以上で全消費し、1ごとに威力+1%', hell_gate: '渇血50以上で全消費し、1ごとに威力+1%' },
+  paladin: { holy_smite: '聖印を全消費し、1つごとに威力+40%' },
+  poseidon: { tidal_wave: '潮位2以上を全消費し、1段階ごとに威力+50%', leviathan_judgment: '潮位2以上を全消費し、1段階ごとに威力+50%' },
+  pyromancer: { meteor_catastrophe: '炉心温度を全消費し、温度1ごとに威力+1%' },
+  assassin: { assassinate: '殺意を全消費し、1つごとに威力+25%' },
+  guardian: { aegis_bash: '城壁を全消費し、1層ごとに威力+30%' },
+  cryomancer: { absolute_zero: '氷晶を全消費し、1つごとに威力+20%' },
+  magic_archer: { mana_barrage: '魔矢を全消費し、1本ごとに威力+20%', astral_arrow_rain: '魔矢を全消費し、1本ごとに威力+20%' },
   gunner: {
     reload: '弾倉を6発まで補充し、次の射撃を強化', charged_shot: '弾丸1発消費', elemental_charge: '弾丸1発消費',
-    arm_snipe: '弾丸2発消費', rapid_fire: '弾丸3発消費', bullet_storm: '弾丸6発消費'
+    arm_snipe: '弾丸2発消費', rapid_fire: '弾丸3発消費', bullet_storm: '弾丸6発以上で全弾消費し、6発で威力2倍（拡張分も加算）'
   },
-  plague_doctor: { pandemic: '培養を最大3消費して強化', black_death: '培養を全消費し、1つごとに威力+7%' }
+  plague_doctor: { pandemic: '培養を最大3消費し、1つごとに威力+35%', black_death: '培養を全消費し、1つごとに威力+15%' }
 });
 
 const getDefinition = entity => STANDARD_JOB_GAUGES[jobIdOf(entity)] || null;
 
+export function getStandardJobGaugeMax(entity) {
+  const definition = getDefinition(entity);
+  if (!definition) return 0;
+  const max = definition.max + getJobGaugeCapacityBonus(entity, jobIdOf(entity));
+  if (entity && typeof entity === 'object') entity._jobGaugeCapacityMax = max;
+  return max;
+}
+
 export function ensureStandardJobGauge(entity) {
   const definition = getDefinition(entity);
   if (!definition) return null;
+  const max = getStandardJobGaugeMax(entity);
   if (!Number.isFinite(Number(entity[definition.field]))) {
-    entity[definition.field] = definition.initial ?? 0;
+    entity[definition.field] = definition.startsFull ? max : (definition.initial ?? 0);
   }
-  entity[definition.field] = Math.min(definition.max, numeric(entity[definition.field]));
+  entity[definition.field] = Math.min(max, numeric(entity[definition.field]));
   return definition;
 }
 
@@ -92,7 +103,7 @@ export function getStandardJobGaugeValue(entity) {
 export function setStandardJobGaugeValue(entity, value) {
   const definition = ensureStandardJobGauge(entity);
   if (!definition) return 0;
-  entity[definition.field] = Math.min(definition.max, numeric(value));
+  entity[definition.field] = Math.min(getStandardJobGaugeMax(entity), numeric(value));
   return entity[definition.field];
 }
 
@@ -103,8 +114,9 @@ export function addStandardJobGauge(entity, amount) {
 export function resetStandardJobGauge(entity) {
   const definition = getDefinition(entity);
   if (!definition) return;
-  entity[definition.field] = definition.initial ?? 0;
+  entity[definition.field] = definition.startsFull ? getStandardJobGaugeMax(entity) : (definition.initial ?? 0);
   entity._jobGaugeActionMultiplier = 1;
+  entity._jobGaugeHealingMultiplier = 1;
   entity._jobGaugeActionSkill = null;
   entity._jobGaugeLastSkill = null;
   entity._jobGaugeLastElement = null;
@@ -116,8 +128,9 @@ export function resetStandardJobGauge(entity) {
 export function getJobGaugeSkillUseState(caster, skillId) {
   if (jobIdOf(caster) !== 'gunner') return { canUse: true };
   const ammo = getStandardJobGaugeValue(caster);
+  const max = getStandardJobGaugeMax(caster);
   if (skillId === 'reload') {
-    return ammo < STANDARD_JOB_GAUGES.gunner.max
+    return ammo < max
       ? { canUse: true }
       : { canUse: false, message: '弾倉は装填済み' };
   }
@@ -146,6 +159,7 @@ const consumeAll = caster => {
 function setActionMultiplier(caster, multiplier, skillId) {
   caster._jobGaugeActionMultiplier = Math.max(1, Number(multiplier) || 1);
   caster._jobGaugeActionSkill = skillId || null;
+  caster._jobGaugeHealingMultiplier = 1;
 }
 
 /** Called after MP payment and immediately before the authored skill effect. */
@@ -154,13 +168,13 @@ export function beginJobGaugeSkillAction(caster, skillId, effectiveMpCost = 0) {
   if (!definition) return;
   const jobId = jobIdOf(caster);
   const current = getStandardJobGaugeValue(caster);
+  const max = getStandardJobGaugeMax(caster);
   setActionMultiplier(caster, 1, skillId);
 
   switch (jobId) {
     case 'norvice': {
-      if (current >= definition.max && ['heavy_strike', 'cleave'].includes(skillId)) {
-        consumeAll(caster);
-        setActionMultiplier(caster, 1.5, skillId);
+      if (current >= max && ['heavy_strike', 'cleave'].includes(skillId)) {
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .3, skillId);
         break;
       }
       const used = Array.isArray(caster._jobGaugeUsedSkills) ? caster._jobGaugeUsedSkills : [];
@@ -171,16 +185,15 @@ export function beginJobGaugeSkillAction(caster, skillId, effectiveMpCost = 0) {
       break;
     }
     case 'knight':
-      if (skillId === 'shield_attack') setActionMultiplier(caster, 1 + consumeAll(caster) * .1, skillId);
+      if (skillId === 'shield_attack') setActionMultiplier(caster, 1 + consumeAll(caster) * .25, skillId);
       else if (['provoke', 'defense_formation'].includes(skillId)) addStandardJobGauge(caster, 1);
       break;
     case 'mage': {
       const elements = { fireball: 'fire', volcano: 'fire', ice_lance: 'ice', blizzard: 'ice', thunder: 'thunder', thunderstorm: 'thunder' };
       const element = elements[skillId];
       if (!element) break;
-      if (current >= definition.max) {
-        consumeAll(caster);
-        setActionMultiplier(caster, 1.35, skillId);
+      if (current >= max) {
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .42, skillId);
       } else {
         setStandardJobGaugeValue(caster, caster._jobGaugeLastElement && caster._jobGaugeLastElement === element ? 1 : current + 1);
       }
@@ -189,80 +202,84 @@ export function beginJobGaugeSkillAction(caster, skillId, effectiveMpCost = 0) {
     }
     case 'priest':
       if (skillId === 'all_heal' && current >= 50) {
-        spend(caster, 50);
-        if (caster.mp) caster.mp.current += Math.floor(effectiveMpCost / 2);
+        const faith = consumeAll(caster);
+        caster._jobGaugeHealingMultiplier = 1 + faith / 50;
+        if (caster.mp) caster.mp.current += effectiveMpCost;
       } else {
         addStandardJobGauge(caster, ({ heal: 20, restore: 15, raise: 35, holy: 5 }[skillId] || 0));
       }
       break;
     case 'ranger':
-      if (skillId === 'rain_of_arrows' && current >= definition.max) {
-        consumeAll(caster); setActionMultiplier(caster, 1.5, skillId);
+      if (skillId === 'rain_of_arrows' && current >= max) {
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .3, skillId);
       } else addStandardJobGauge(caster, 1);
       break;
     case 'magic_knight': {
       const element = { flame_tongue: 'fire', ice_brand: 'ice', thunder_slash: 'thunder' }[skillId];
       if (!element) break;
-      if (current >= definition.max) {
-        consumeAll(caster); setActionMultiplier(caster, 1.5, skillId);
+      if (current >= max) {
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .25, skillId);
       } else if (caster._jobGaugeLastElement !== element) addStandardJobGauge(caster, 2);
       else setStandardJobGaugeValue(caster, Math.max(1, current - 1));
       caster._jobGaugeLastElement = element;
       break;
     }
     case 'slime_master':
-      if (skillId === 'slime_hazard') setActionMultiplier(caster, 1 + consumeAll(caster) / 200, skillId);
+      if (skillId === 'slime_hazard') setActionMultiplier(caster, 1 + consumeAll(caster) / 100, skillId);
       else addStandardJobGauge(caster, 25);
       break;
     case 'dancer':
-      if (current >= definition.max) {
-        consumeAll(caster); setActionMultiplier(caster, 1.4, skillId);
+      if (current >= max) {
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .32, skillId);
       } else {
         setStandardJobGaugeValue(caster, caster._jobGaugeLastSkill === skillId ? 1 : current + 1);
       }
       caster._jobGaugeLastSkill = skillId;
       break;
     case 'bird':
-      if (skillId === 'nightmare' && current >= 3) setActionMultiplier(caster, 1 + consumeAll(caster) * .06, skillId);
+      if (skillId === 'nightmare' && current >= 3) setActionMultiplier(caster, 1 + consumeAll(caster) * .15, skillId);
       else addStandardJobGauge(caster, 2);
       break;
     case 'black_knight':
       if ((skillId === 'blood_saber' && current >= 75) || (skillId === 'hell_gate' && current >= 50)) {
-        setActionMultiplier(caster, 1 + consumeAll(caster) / 200, skillId);
+        setActionMultiplier(caster, 1 + consumeAll(caster) / 100, skillId);
       }
       break;
     case 'paladin':
-      if (skillId === 'holy_smite') setActionMultiplier(caster, 1 + consumeAll(caster) * .15, skillId);
+      if (skillId === 'holy_smite') setActionMultiplier(caster, 1 + consumeAll(caster) * .4, skillId);
       else addStandardJobGauge(caster, 1);
       break;
     case 'poseidon':
       if (['tidal_wave', 'leviathan_judgment'].includes(skillId) && current >= 2) {
-        setActionMultiplier(caster, 1 + consumeAll(caster) * .15, skillId);
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .5, skillId);
       } else addStandardJobGauge(caster, 1);
       break;
     case 'pyromancer':
-      if (skillId === 'meteor_catastrophe') setActionMultiplier(caster, 1 + consumeAll(caster) / 150, skillId);
+      if (skillId === 'meteor_catastrophe') setActionMultiplier(caster, 1 + consumeAll(caster) / 100, skillId);
       else addStandardJobGauge(caster, ({ flare_lance: 20, ember_barrage: 20, inferno: 35 }[skillId] || 0));
       break;
     case 'assassin':
-      if (skillId === 'assassinate' && current > 0) setActionMultiplier(caster, 1 + consumeAll(caster) * .12, skillId);
+      if (skillId === 'assassinate' && current > 0) setActionMultiplier(caster, 1 + consumeAll(caster) * .25, skillId);
       break;
     case 'guardian':
-      if (skillId === 'aegis_bash') setActionMultiplier(caster, 1 + consumeAll(caster) * .12, skillId);
+      if (skillId === 'aegis_bash') setActionMultiplier(caster, 1 + consumeAll(caster) * .3, skillId);
       else addStandardJobGauge(caster, 1);
       break;
     case 'cryomancer':
-      if (skillId === 'absolute_zero') setActionMultiplier(caster, 1 + consumeAll(caster) * .08, skillId);
+      if (skillId === 'absolute_zero') setActionMultiplier(caster, 1 + consumeAll(caster) * .2, skillId);
       else addStandardJobGauge(caster, skillId === 'whiteout' ? 2 : 1);
       break;
     case 'magic_archer':
       if (['mana_barrage', 'astral_arrow_rain'].includes(skillId)) {
-        setActionMultiplier(caster, 1 + consumeAll(caster) * .08, skillId);
+        setActionMultiplier(caster, 1 + consumeAll(caster) * .2, skillId);
       } else addStandardJobGauge(caster, Math.max(1, Math.ceil(effectiveMpCost / 40)));
       break;
     case 'gunner':
       if (skillId === 'reload') {
-        setStandardJobGaugeValue(caster, definition.max);
+        setStandardJobGaugeValue(caster, max);
+      } else if (skillId === 'bullet_storm') {
+        const ammo = consumeAll(caster);
+        setActionMultiplier(caster, 1 + ammo / STANDARD_JOB_GAUGES.gunner.max, skillId);
       } else {
         const reloadBonus = Math.max(0, Number(caster._gunnerReloadBonus) || 0);
         spend(caster, GUNNER_AMMO_COST[skillId] || 0);
@@ -273,8 +290,8 @@ export function beginJobGaugeSkillAction(caster, skillId, effectiveMpCost = 0) {
       }
       break;
     case 'plague_doctor':
-      if (skillId === 'black_death') setActionMultiplier(caster, 1 + consumeAll(caster) * .07, skillId);
-      else if (skillId === 'pandemic') setActionMultiplier(caster, 1 + spend(caster, 3) * .06, skillId);
+      if (skillId === 'black_death') setActionMultiplier(caster, 1 + consumeAll(caster) * .15, skillId);
+      else if (skillId === 'pandemic') setActionMultiplier(caster, 1 + spend(caster, 3) * .35, skillId);
       else addStandardJobGauge(caster, ({ pathogen_injection: 1, corrosive_miasma: 2, virulent_mutation: 2 }[skillId] || 0));
       break;
   }
@@ -289,7 +306,7 @@ export function beginJobGaugeNormalAttack(attacker) {
 
   if (jobId === 'gunner') {
     if (getStandardJobGaugeValue(attacker) <= 0) {
-      setStandardJobGaugeValue(attacker, definition.max);
+      setStandardJobGaugeValue(attacker, getStandardJobGaugeMax(attacker));
       return { cancel: true, label: 'リロード' };
     }
     spend(attacker, 1);
@@ -312,11 +329,18 @@ export function getJobGaugeOutgoingMultiplier(attacker, defender) {
   const jobId = jobIdOf(attacker);
   const value = getStandardJobGaugeValue(attacker);
   let multiplier = Math.max(1, Number(attacker?._jobGaugeActionMultiplier) || 1);
+  if (jobId === 'norvice') multiplier *= 1 + value * .04;
+  if (jobId === 'mage') multiplier *= 1 + value * .05;
   if (jobId === 'ranger') multiplier *= 1 + value * .02;
+  if (jobId === 'magic_knight') multiplier *= 1 + value * .03;
+  if (jobId === 'dancer') multiplier *= 1 + value * .04;
+  if (jobId === 'bird') multiplier *= 1 + value * .03;
   if (jobId === 'black_knight') multiplier *= 1 + value * .002;
   if (jobId === 'poseidon') multiplier *= 1 + value * .04;
   if (jobId === 'pyromancer') multiplier *= 1 + value * .003;
   if (jobId === 'cryomancer') multiplier *= 1 + value * .025;
+  if (jobId === 'magic_archer') multiplier *= 1 + value * .03;
+  if (jobId === 'gunner') multiplier *= 1 + value * .02;
   if (jobId === 'plague_doctor') multiplier *= 1 + value * .02;
   if (jobId === 'assassin' && attacker._assassinMarkTarget === defender?.id) multiplier *= 1 + value * .04;
   return multiplier;
@@ -325,10 +349,11 @@ export function getJobGaugeOutgoingMultiplier(attacker, defender) {
 export function getJobGaugeIncomingMultiplier(defender) {
   const value = getStandardJobGaugeValue(defender);
   switch (jobIdOf(defender)) {
-    case 'knight': return 1 - Math.min(.1, value * .02);
-    case 'slime_master': return 1 - Math.min(.1, value * .001);
-    case 'paladin': return 1 - Math.min(.06, value * .02);
-    case 'guardian': return 1 - Math.min(.15, value * .03);
+    case 'knight': return Math.max(.65, 1 - value * .02);
+    case 'priest': return Math.max(.85, 1 - value * .0005);
+    case 'slime_master': return Math.max(.65, 1 - value * .001);
+    case 'paladin': return Math.max(.65, 1 - value * .02);
+    case 'guardian': return Math.max(.55, 1 - value * .03);
     default: return 1;
   }
 }
@@ -356,9 +381,10 @@ export function applyStandardJobGaugeAi(character, candidates) {
   const definition = ensureStandardJobGauge(character);
   if (!definition) return;
   const value = getStandardJobGaugeValue(character);
+  const max = getStandardJobGaugeMax(character);
   const byId = new Map(candidates.map(candidate => [candidate.skill.id, candidate]));
   const boost = (ids, score) => ids.forEach(id => { if (byId.has(id)) byId.get(id).score += score; });
-  const finish = (id, threshold = definition.max) => {
+  const finish = (id, threshold = max) => {
     const candidate = byId.get(id);
     if (candidate && value >= threshold) {
       candidate.priority = Math.max(candidate.priority, 465);
@@ -367,29 +393,33 @@ export function applyStandardJobGaugeAi(character, candidates) {
   };
 
   switch (jobIdOf(character)) {
-    case 'norvice': finish('cleave'); boost(['first_aid', 'heavy_strike', 'focus', 'intimidate'], value < definition.max ? 35 : 0); break;
-    case 'knight': finish('shield_attack'); boost(['provoke', 'defense_formation'], value < definition.max ? 40 : 0); break;
-    case 'mage': boost(['fireball', 'ice_lance', 'thunder'], value < definition.max ? 45 : 90); break;
-    case 'priest': finish('all_heal', 50); boost(['heal', 'restore', 'raise'], value < 50 ? 25 : 0); break;
-    case 'ranger': finish('rain_of_arrows'); boost(['double_arrow', 'arrow_rain'], value < definition.max ? 30 : 0); break;
-    case 'magic_knight': finish('thunder_slash'); boost(['flame_tongue', 'ice_brand'], value < definition.max ? 40 : 0); break;
-    case 'slime_master': finish('slime_hazard', 75); boost(['slime_throw'], value < 75 ? 45 : 0); break;
-    case 'dancer': finish('curse_step'); boost(['poison_salsa', 'juggling_dagger', 'confusion_tarantella'], value < definition.max ? 35 : 0); break;
-    case 'bird': finish('nightmare', 3); boost(['lullaby', 'warding_song'], value < 3 ? 35 : 0); break;
-    case 'black_knight': finish('hell_gate', 50); finish('blood_saber', 75); break;
-    case 'paladin': finish('holy_smite'); boost(['divine_shield', 'sanctuary'], value < definition.max ? 35 : 0); break;
-    case 'poseidon': finish('leviathan_judgment', 2); boost(['trident_tempest', 'abyssal_dominion'], value < 2 ? 30 : 0); break;
-    case 'pyromancer': finish('meteor_catastrophe', 80); boost(['flare_lance', 'ember_barrage', 'inferno'], value < 80 ? 40 : 0); break;
-    case 'assassin': finish('assassinate', 4); boost(['razor_rush', 'phantom_barrage'], value < 4 ? 35 : 0); break;
-    case 'guardian': finish('aegis_bash'); boost(['guardian_oath', 'impregnable_wall'], value < definition.max ? 40 : 0); break;
-    case 'cryomancer': finish('absolute_zero', 4); boost(['frost_spear', 'hail_barrage', 'whiteout'], value < 4 ? 35 : 0); break;
-    case 'magic_archer': finish('astral_arrow_rain', 4); boost(['arcane_arrow', 'elemental_arrow'], value < 4 ? 35 : 0); break;
+    case 'norvice': finish('cleave'); boost(['first_aid', 'heavy_strike', 'focus', 'intimidate'], value < max ? 35 : 0); break;
+    case 'knight': finish('shield_attack'); boost(['provoke', 'defense_formation'], value < max ? 40 : 0); break;
+    case 'mage': boost(['fireball', 'ice_lance', 'thunder'], value < max ? 45 : 90); break;
+    case 'priest':
+      finish('all_heal');
+      boost(['all_heal'], value >= 50 && value < max ? 150 + value * 2 : 0);
+      boost(['heal', 'restore', 'raise'], value < max ? 25 : 0);
+      break;
+    case 'ranger': finish('rain_of_arrows'); boost(['double_arrow', 'arrow_rain'], value < max ? 30 : 0); break;
+    case 'magic_knight': finish('thunder_slash'); boost(['flame_tongue', 'ice_brand'], value < max ? 40 : 0); break;
+    case 'slime_master': finish('slime_hazard'); boost(['slime_throw'], value < max ? 45 : 0); break;
+    case 'dancer': finish('curse_step'); boost(['poison_salsa', 'juggling_dagger', 'confusion_tarantella'], value < max ? 35 : 0); break;
+    case 'bird': finish('nightmare'); boost(['lullaby', 'warding_song'], value < max ? 35 : 0); break;
+    case 'black_knight': finish('hell_gate'); finish('blood_saber'); break;
+    case 'paladin': finish('holy_smite'); boost(['divine_shield', 'sanctuary'], value < max ? 35 : 0); break;
+    case 'poseidon': finish('leviathan_judgment'); boost(['trident_tempest', 'abyssal_dominion'], value < max ? 30 : 0); break;
+    case 'pyromancer': finish('meteor_catastrophe'); boost(['flare_lance', 'ember_barrage', 'inferno'], value < max ? 40 : 0); break;
+    case 'assassin': finish('assassinate'); boost(['razor_rush', 'phantom_barrage'], value < max ? 35 : 0); break;
+    case 'guardian': finish('aegis_bash'); boost(['guardian_oath', 'impregnable_wall'], value < max ? 40 : 0); break;
+    case 'cryomancer': finish('absolute_zero'); boost(['frost_spear', 'hail_barrage', 'whiteout'], value < max ? 35 : 0); break;
+    case 'magic_archer': finish('astral_arrow_rain'); boost(['arcane_arrow', 'elemental_arrow'], value < max ? 35 : 0); break;
     case 'gunner':
       boost(['charged_shot', 'elemental_charge'], value <= 2 ? 90 : 0);
       boost(['reload'], value <= 2 ? 220 : 0);
       finish('bullet_storm');
       break;
-    case 'plague_doctor': finish('black_death', 6); boost(['pathogen_injection', 'corrosive_miasma', 'virulent_mutation'], value < 6 ? 35 : 0); break;
+    case 'plague_doctor': finish('black_death'); boost(['pathogen_injection', 'corrosive_miasma', 'virulent_mutation'], value < max ? 35 : 0); break;
   }
 }
 
@@ -446,14 +476,16 @@ export function getJobGaugeAnimationSnapshot(entity) {
   const jobId = jobIdOf(entity);
   const standard = STANDARD_JOB_GAUGES[jobId];
   if (standard) {
-    return { jobId, current: getStandardJobGaugeValue(entity), max: standard.max, label: standard.label, icon: standard.icon };
+    return { jobId, current: getStandardJobGaugeValue(entity), max: getStandardJobGaugeMax(entity), label: standard.label, icon: standard.icon };
   }
   const legacy = LEGACY_GAUGE_SNAPSHOTS[jobId];
   if (!legacy) return null;
   const value = legacy.array
     ? new Set(Array.isArray(entity?.[legacy.field]) ? entity[legacy.field] : []).size
     : numeric(entity?.[legacy.field]);
-  const max = legacy.passiveId ? getCachedGaugeMax(entity, legacy) : legacy.max;
+  const max = legacy.passiveId
+    ? getCachedGaugeMax(entity, legacy)
+    : legacy.max + getJobGaugeCapacityBonus(entity, jobId);
   return { jobId, current: Math.min(max, value), max, label: legacy.label, icon: legacy.icon };
 }
 

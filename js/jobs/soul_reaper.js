@@ -1,4 +1,5 @@
 import { getBattleAnimationSpeed, getBattleSpeed, shouldSkipBattleAnimations } from '../utils/battle-animation.js';
+import { getJobGaugeCapacityBonus } from './job-gauge-progression.js';
 
 export const SOUL_REAPER_MAX_CORPSES = 5;
 
@@ -23,15 +24,17 @@ const getPrimaryTarget = (caster, battle) => {
   return targets.includes(battle.selectedEnemyTarget) ? battle.selectedEnemyTarget : targets[0] || null;
 };
 
+export const getSoulReaperCorpseMax = caster => SOUL_REAPER_MAX_CORPSES + getJobGaugeCapacityBonus(caster, 'soul_reaper');
+
 export const getSoulReaperCorpseStock = caster => Math.min(
-  SOUL_REAPER_MAX_CORPSES,
+  getSoulReaperCorpseMax(caster),
   Math.max(0, Math.floor(Number(caster?._soulReaperCorpses) || 0))
 );
 
 export function addSoulReaperCorpses(caster, amount, battle, options = {}) {
   if (!isSoulReaper(caster) || amount <= 0) return 0;
   const before = getSoulReaperCorpseStock(caster);
-  caster._soulReaperCorpses = Math.min(SOUL_REAPER_MAX_CORPSES, before + Math.floor(amount));
+  caster._soulReaperCorpses = Math.min(getSoulReaperCorpseMax(caster), before + Math.floor(amount));
   const added = caster._soulReaperCorpses - before;
   if (added > 0 && options.announce !== false) {
     battle?.showDamage?.(caster.elementId, `亡骸 +${added}`, 'text-cyan-200');
@@ -146,7 +149,7 @@ export const soul_reaper = {
         { mpCost: 71, multiplier: 3.27 }, { mpCost: 82, multiplier: 3.56 },
         { mpCost: 95, multiplier: 3.87 }, { mpCost: 110, multiplier: 4.20 }
       ]),
-      getDescription: lc => `敵単体へ闇属性MATK ${lc.multiplier.toFixed(2)}倍。【現職時】亡骸を1体召喚する（最大${SOUL_REAPER_MAX_CORPSES}体）`,
+      getDescription: lc => `敵単体へ闇属性MATK ${lc.multiplier.toFixed(2)}倍。【現職時】亡骸を1体召喚する（基本上限${SOUL_REAPER_MAX_CORPSES}体、墓標の王の限界突破で拡張）`,
       execute(caster, lc, battle) {
         if (!battle) return;
         const target = getPrimaryTarget(caster, battle);
@@ -291,14 +294,16 @@ export const soul_reaper = {
         { mpCost: 363, multiplier: 1.09, revivePercent: 51 }, { mpCost: 420, multiplier: 1.18, revivePercent: 57 },
         { mpCost: 486, multiplier: 1.28, revivePercent: 63 }, { mpCost: 560, multiplier: 1.40, revivePercent: 70 }
       ]),
-      getDescription: lc => `亡骸5体を全消費。敵全体へ5回の闇属性MATK ${lc.multiplier.toFixed(2)}倍攻撃。戦闘不能の味方全員をHP${lc.revivePercent}%で蘇生`,
+      getDescription: lc => `亡骸5体以上を全消費。敵全体へ消費数と同じ回数の闇属性MATK ${lc.multiplier.toFixed(2)}倍攻撃。戦闘不能の味方全員をHP${lc.revivePercent}%で蘇生`,
       execute(caster, lc, battle) {
         if (!battle) return;
         const targets = getLivingEnemies(caster, battle);
         if (!targets.length) return;
-        if (isSoulReaper(caster)
-          && consumeSoulReaperCorpses(caster, SOUL_REAPER_MAX_CORPSES, battle) < SOUL_REAPER_MAX_CORPSES) return;
-        const waves = isSoulReaper(caster) ? SOUL_REAPER_MAX_CORPSES : 1;
+        const corpseStock = getSoulReaperCorpseStock(caster);
+        if (isSoulReaper(caster) && corpseStock < SOUL_REAPER_MAX_CORPSES) return;
+        const waves = isSoulReaper(caster)
+          ? consumeSoulReaperCorpses(caster, corpseStock, battle)
+          : 1;
         reviveFallenParty(caster, battle, lc.revivePercent);
         animateSoulSkill(caster, targets, 'requiem', (target, targetIndex) => {
           for (let wave = 0; wave < waves; wave += 1) {
@@ -313,9 +318,10 @@ export const soul_reaper = {
       autoBattle: {
         check: (caster, lc, context) => {
           const targets = context.enemies.filter(enemy => !enemy.isDead);
-          if (!targets.length || (isSoulReaper(caster) && getSoulReaperCorpseStock(caster) < SOUL_REAPER_MAX_CORPSES)) return null;
+          if (!targets.length || (isSoulReaper(caster) && getSoulReaperCorpseStock(caster) < getSoulReaperCorpseMax(caster))) return null;
           const fallen = context.party.filter(member => member.isDead).length;
-          return { target: targets[0], score: 58 * lc.multiplier * SOUL_REAPER_MAX_CORPSES * targets.length + fallen * 500 };
+          const corpses = isSoulReaper(caster) ? getSoulReaperCorpseStock(caster) : 1;
+          return { target: targets[0], score: 58 * lc.multiplier * corpses * targets.length + fallen * 500 };
         }
       }
     },

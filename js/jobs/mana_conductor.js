@@ -297,21 +297,22 @@ export const mana_conductor = {
         [70, 78, 86, 94, 104, 114, 126, 138, 152, 170],
         [1.25, 1.38, 1.51, 1.64, 1.78, 1.92, 2.08, 2.24, 2.42, 2.65].map((multiplier, i) => ({ multiplier, restoreMp: 18 + i * 6, recoverMp: 5 + Math.floor(i * 1.5), duration: 2 }))
       ),
-      getDescription: lc => `敵全体へ${lc.multiplier.toFixed(2)}倍の光属性魔法攻撃。【現職時】味方全体のMPを${lc.restoreMp}回復し、マナフローも付与する`,
+      getDescription: lc => `敵全体へ${lc.multiplier.toFixed(2)}倍の光属性魔法攻撃。【現職時】共鳴を全消費し、1つごとに威力+0.20倍・味方全体の即時MP回復+4・マナフロー回復+2`,
       execute(caster, levelConfig, battle) {
         const targets = battle.enemies.filter(enemy => !enemy.isDead);
         if (targets.length === 0) return;
+        const harmony = isConductor(caster) ? (caster._conductorHarmony || 0) : 0;
         if (isConductor(caster)) caster._conductorHarmony = 0;
         getLivingAllies(caster, battle).forEach(ally => {
-          restoreMp(ally, levelConfig.restoreMp, battle);
-          ally._manaFlowAmount = Math.max(ally._manaFlowAmount || 0, levelConfig.recoverMp);
+          restoreMp(ally, levelConfig.restoreMp + harmony * 4, battle);
+          ally._manaFlowAmount = Math.max(ally._manaFlowAmount || 0, levelConfig.recoverMp + harmony * 2);
           ally._manaFlowTurns = Math.max(ally._manaFlowTurns || 0, levelConfig.duration);
         });
         animateSkill(caster, targets, 'finale', target => {
           if (target.isDead) return;
           battle.executeAttack(caster, target, true, {
             statDependency: 'MAT', actionName: '', damageType: 'skill', hideActionName: true,
-            damageMultiplier: levelConfig.multiplier, element: 'light', isAoEProcessed: true
+            damageMultiplier: levelConfig.multiplier + harmony * .2, element: 'light', isAoEProcessed: true
           });
         });
       },
@@ -321,8 +322,9 @@ export const mana_conductor = {
           if (targets.length === 0) return null;
           const missingMana = context.party.filter(member => !member.isDead && member.mp)
             .reduce((total, member) => total + 1 - currentMpOf(member) / Math.max(1, maxMpOf(member)), 0);
+          const harmony = isConductor(caster) ? (caster._conductorHarmony || 0) : 0;
           if (targets.length >= 2 || (isConductor(caster) && missingMana >= 1.2)) {
-            return { target: targets[0], score: 72 + targets.length * 15 + missingMana * 25 };
+            return { target: targets[0], score: 72 + targets.length * (15 + harmony * 12) + missingMana * (25 + harmony * 4) };
           }
           return null;
         }
