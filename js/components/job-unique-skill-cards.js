@@ -10,6 +10,17 @@ export function isJobUniqueSkillUnlocked(skill, character, jobId) {
   return (Number(character?.jobSkills?.[jobId]?.[skill.unlockSkillId]) || 0) > 0;
 }
 
+const renderMechanicsHtml = (skill, { compact = false, summary = false } = {}) => {
+  const mechanics = Array.isArray(skill?.mechanics) ? skill.mechanics : [];
+  if (!mechanics.length) return '';
+  return `<dl class="${summary ? 'mt-1' : 'mt-2 rounded-lg border border-slate-700/55 bg-slate-950/50 p-1.5'} flex flex-col ${compact || summary ? 'gap-1' : 'gap-1.5'}" data-unique-mechanics>
+    ${mechanics.map(item => `<div class="grid grid-cols-[${summary ? '48px' : compact ? '52px' : '60px'}_minmax(0,1fr)] gap-1.5 ${summary ? 'text-[8px]' : compact ? 'text-[9px]' : 'text-[10px]'} leading-relaxed">
+      <dt class="font-black text-amber-300">${escapeHtml(item.label)}</dt>
+      <dd class="font-bold text-slate-300">${escapeHtml(item.text)}</dd>
+    </div>`).join('')}
+  </dl>`;
+};
+
 export function renderJobUniqueSkillCards(job, character = null, { compact = false } = {}) {
   const skills = Array.isArray(job?.uniqueSkills) ? job.uniqueSkills : [];
   if (!skills.length) {
@@ -44,6 +55,7 @@ export function renderJobUniqueSkillCards(job, character = null, { compact = fal
                 <span class="text-[8px] font-black text-cyan-400">連携</span>
                 ${skill.sourceSkills.map(source => `<span class="rounded border border-slate-600/50 bg-slate-950/65 px-1.5 py-px text-[8px] font-bold text-slate-300">${escapeHtml(source)}</span>`).join('')}
               </div>
+              ${renderMechanicsHtml(skill, { compact })}
             </div>
           </div>
         </article>`;
@@ -69,6 +81,7 @@ export function renderJobUniqueSkillSummary(job) {
         <div class="mt-0.5 pl-[19px] text-[9px] font-bold leading-relaxed text-slate-300">
           <span class="text-amber-300">発動：</span>${escapeHtml(skill.activation)}<span class="mx-1 text-slate-600">/</span>${escapeHtml(skill.description)}
         </div>
+        <div class="pl-[19px]">${renderMechanicsHtml(skill, { summary: true })}</div>
       </div>`).join('')}
     </div>
   </div>`;
