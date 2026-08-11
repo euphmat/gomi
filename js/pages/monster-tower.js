@@ -11,6 +11,7 @@ import {
   createTowerWorld,
   getDropRange,
   getFallenBodies,
+  getMonsterPhysicsTraits,
   getTowerMotion,
   normalizeAngle,
   stepTowerWorld,
@@ -204,6 +205,18 @@ export function renderMonsterTowerPage() {
       </div>`;
   };
 
+  const renderPhysicsError = () => {
+    container.innerHTML = `
+      ${pageStyles()}
+      <div class="mx-auto flex min-h-[360px] max-w-sm flex-col items-center justify-center p-5 text-center">
+        <span class="material-symbols-outlined text-5xl text-violet-300">deployed_code_alert</span>
+        <h1 class="mt-2 text-base font-black">高精度物理を読み込めません</h1>
+        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">画像に沿った当たり判定を保証できないため、モンスタータワーを開始しませんでした。通信状態を確認して再読み込みしてください。</p>
+        <button data-reload-app class="mt-4 w-full rounded-xl border border-violet-300/40 bg-violet-500/15 py-2.5 text-xs font-black text-violet-100">ゲームを再読み込み</button>
+        <button data-home class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">ホームタウンへ戻る</button>
+      </div>`;
+  };
+
   const renderSelect = async () => {
     stopAnimation();
     clearTimers();
@@ -270,6 +283,12 @@ export function renderMonsterTowerPage() {
     if (turn) turn.textContent = `${game.turn}手目`;
     const currentName = container.querySelector('[data-current-name]');
     if (currentName) currentName.textContent = game.currentMonster?.name || '読み込み中…';
+    const currentPhysics = container.querySelector('[data-current-physics]');
+    if (currentPhysics) {
+      currentPhysics.textContent = game.currentMonster && game.currentProfile
+        ? getMonsterPhysicsTraits(game.currentMonster.id, game.currentProfile).label
+        : '形状を解析中';
+    }
     const currentImage = container.querySelector('[data-current-image]');
     if (currentImage && game.currentMonster) {
       currentImage.src = game.currentMonster.image;
@@ -581,7 +600,7 @@ export function renderMonsterTowerPage() {
           <canvas data-tower-canvas class="tower-canvas" width="360" height="520" aria-label="モンスターを積み上げる対戦フィールド"></canvas>
           <div class="pointer-events-none absolute left-2 top-2 flex max-w-[145px] items-center gap-1.5 rounded-xl border border-cyan-300/25 bg-slate-950/75 p-1.5 backdrop-blur-sm">
             <img data-current-image class="h-9 w-9 shrink-0 object-contain" alt="">
-            <span class="min-w-0"><span class="block text-[7px] font-black tracking-wider text-cyan-300">CURRENT</span><span data-current-name class="block truncate text-[9px] font-black">読み込み中…</span></span>
+            <span class="min-w-0"><span class="block text-[7px] font-black tracking-wider text-cyan-300">CURRENT</span><span data-current-name class="block truncate text-[9px] font-black">読み込み中…</span><span data-current-physics class="block truncate text-[7px] text-slate-400">形状を解析中</span></span>
           </div>
           <div class="pointer-events-none absolute right-2 top-2 flex max-w-[125px] items-center gap-1 rounded-xl border border-white/10 bg-slate-950/70 p-1 backdrop-blur-sm">
             <img data-next-image class="h-7 w-7 shrink-0 object-contain opacity-75" alt="">
@@ -625,8 +644,12 @@ export function renderMonsterTowerPage() {
       return;
     }
     if (disposed) return;
-    await waitForMatterRuntime();
+    const matterReady = await waitForMatterRuntime();
     if (disposed) return;
+    if (!matterReady) {
+      renderPhysicsError();
+      return;
+    }
     stopAnimation();
     clearTimers();
     game = {
@@ -669,6 +692,10 @@ export function renderMonsterTowerPage() {
     }
     if (event.target.closest('[data-reload]')) {
       renderSelect();
+      return;
+    }
+    if (event.target.closest('[data-reload-app]')) {
+      window.location.reload();
       return;
     }
     const move = event.target.closest('[data-move]');

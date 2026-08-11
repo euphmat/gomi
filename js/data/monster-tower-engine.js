@@ -1,6 +1,6 @@
 /**
  * モンスタータワー用の軽量2D物理エンジン。
- * 外部ライブラリに依存せず、複数の円で構成した剛体を固定時間刻みで計算する。
+ * Matter.jsでは画像アルファ由来の複合剛体を使い、未読込時は軽量物理へフォールバックする。
  */
 
 export const TOWER_WORLD = Object.freeze({
@@ -47,27 +47,64 @@ function exposeMatterBodyCoordinates(body, Matter) {
 
 function createMatterTowerBody(options, Matter) {
   const profile = options.profile || createFallbackCollisionProfile();
+  const traits = getMonsterPhysicsTraits(options.monsterId, profile);
   const baseOptions = {
-    friction: .88,
-    frictionStatic: 1.15,
-    frictionAir: .008,
-    restitution: .035,
-    density: .0018,
-    slop: .02,
+    friction: traits.friction,
+    frictionStatic: traits.frictionStatic,
+    frictionAir: traits.frictionAir,
+    restitution: traits.restitution,
+    density: traits.density,
+    slop: .012,
   };
-  const parts = profile.parts.map(part => Matter.Bodies.circle(
-    options.x + part.x,
-    (options.y ?? 48) + part.y,
-    part.r,
-    baseOptions,
-  ));
-  const body = Matter.Body.create({ ...baseOptions, parts });
+  const collisionRectangles = options.useCoarseGeometry
+    ? profile.cpuCollisionRects
+    : profile.collisionRects;
+  const parts = traits.roundBody
+    ? [Matter.Bodies.circle(
+      options.x,
+      options.y ?? 48,
+      Math.max(10, Math.min(profile.width * .47, profile.height * .49)),
+      baseOptions,
+    )]
+    : traits.smoothHull && profile.convexHull?.length >= 3
+    ? [Matter.Bodies.fromVertices(
+      options.x,
+      options.y ?? 48,
+      [profile.convexHull],
+      baseOptions,
+      true,
+    )]
+    : collisionRectangles?.length
+    ? collisionRectangles.map(rectangle => Matter.Bodies.rectangle(
+      options.x + rectangle.x,
+      (options.y ?? 48) + rectangle.y,
+      rectangle.width,
+      rectangle.height,
+      {
+        ...baseOptions,
+        // 完全な直角の集合は角同士が噛みやすいため、1px未満だけ丸める。
+        chamfer: { radius: Math.min(.7, rectangle.width * .06, rectangle.height * .06) },
+      },
+    ))
+    : profile.parts.map(part => Matter.Bodies.circle(
+      options.x + part.x,
+      (options.y ?? 48) + part.y,
+      part.r,
+      baseOptions,
+    ));
+  const body = traits.roundBody || traits.smoothHull
+    ? parts[0]
+    : Matter.Body.create({ ...baseOptions, parts });
   Matter.Body.setPosition(body, { x: options.x, y: options.y ?? 48 });
   Matter.Body.setAngle(body, options.angle || 0);
+  if (!traits.roundBody && traits.inertiaScale !== 1 && Number.isFinite(body.inertia)) {
+    Matter.Body.setInertia(body, body.inertia * traits.inertiaScale);
+  }
   body.towerId = options.id;
   body.monsterId = options.monsterId;
   body.owner = options.owner;
   body.profile = profile;
+  body.physicsTraits = traits;
   return exposeMatterBodyCoordinates(body, Matter);
 }
 
@@ -78,7 +115,192 @@ export function normalizeAngle(angle) {
   return result;
 }
 
-/** 画像内の不透明領域から、描画範囲と複合円当たり判定を作る。 */
+function crossProduct(origin, first, second) {
+  return (first.x - origin.x) * (second.y - origin.y) - (first.y - origin.y) * (second.x - origin.x);
+}
+
+function createConvexHull(points) {
+  const unique = Array.from(new Map(points.map(point => [`${point.x}:${point.y}`, point])).values())
+    .sort((first, second) => first.x - second.x || first.y - second.y);
+  if (unique.length <= 3) return unique;
+  const lower = [];
+  unique.forEach(point => {
+    while (lower.length >= 2 && crossProduct(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) lower.pop();
+    lower.push(point);
+  });
+  const upper = [];
+  for (let index = unique.length - 1; index >= 0; index -= 1) {
+    const point = unique[index];
+    while (upper.length >= 2 && crossProduct(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) upper.pop();
+    upper.push(point);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
+function getPolygonArea(vertices) {
+  let twiceArea = 0;
+  for (let index = 0; index < vertices.length; index += 1) {
+    const next = vertices[(index + 1) % vertices.length];
+    twiceArea += vertices[index].x * next.y - next.x * vertices[index].y;
+  }
+  return Math.abs(twiceArea) / 2;
+}
+
+const HEAVY_MONSTER_WORDS = [
+  'golem', 'titan', 'gigas', 'colossus', 'talos', 'armor', 'guardian',
+  'behemoth', 'machina', 'tortoise', 'turtle', 'keeper', 'minotaur',
+];
+const LIGHT_MONSTER_WORDS = [
+  'wisp', 'pixie', 'sylph', 'moth', 'papillon', 'firefly', 'sprite',
+  'echoes', 'jellyfish', 'harpy', 'swallow', 'manta', 'lantern',
+];
+const GRIPPY_MONSTER_WORDS = [
+  'spider', 'arachn', 'mantis', 'scarab', 'beetle', 'scorpion', 'crawler',
+];
+
+/** モンスター名と画像形状から、Matter.jsへ渡す材質・剛体特性を決める。 */
+export function getMonsterPhysicsTraits(monsterId = '', profile = {}) {
+  const id = String(monsterId).toLowerCase();
+  const aspect = (Number(profile.width) || 1) / (Number(profile.height) || 1);
+  const ellipseFit = Number(profile.ellipseFit) || 0;
+  const convexity = Number(profile.convexity) || 0;
+  const isSlime = id.includes('slime');
+  const roundBody = ellipseFit >= .965 && convexity >= .94 && aspect >= .9 && aspect <= 1.1;
+  const smoothHull = !roundBody && ellipseFit >= .86 && convexity >= .88 && aspect >= .65 && aspect <= 1.55;
+  const geometry = { roundBody, smoothHull };
+  const isHeavy = HEAVY_MONSTER_WORDS.some(word => id.includes(word));
+  const isLight = LIGHT_MONSTER_WORDS.some(word => id.includes(word));
+  const isGrippy = GRIPPY_MONSTER_WORDS.some(word => id.includes(word));
+
+  if (isSlime) {
+    return Object.freeze({
+      kind: 'slime', label: smoothHull || roundBody ? '丸みのあるスライム質' : '画像形状のスライム質', ...geometry,
+      density: .0012, friction: .055, frictionStatic: .075,
+      frictionAir: .0025, restitution: .22, inertiaScale: .82,
+    });
+  }
+  if (isHeavy) {
+    return Object.freeze({
+      kind: 'heavy', label: '重く安定した体格', ...geometry,
+      density: .0031, friction: .88, frictionStatic: 1.12,
+      frictionAir: .005, restitution: .012, inertiaScale: 1.18,
+    });
+  }
+  if (isLight) {
+    return Object.freeze({
+      kind: 'light', label: '軽量な体格', ...geometry,
+      density: .0009, friction: .34, frictionStatic: .43,
+      frictionAir: .011, restitution: .075, inertiaScale: .78,
+    });
+  }
+  if (isGrippy) {
+    return Object.freeze({
+      kind: 'grippy', label: '踏ん張りの強い体型', ...geometry,
+      density: .0018, friction: .96, frictionStatic: 1.24,
+      frictionAir: .006, restitution: .018, inertiaScale: 1.08,
+    });
+  }
+  if (roundBody || smoothHull) {
+    return Object.freeze({
+      kind: 'round', label: '画像から判定した丸い体型', ...geometry,
+      density: .00165, friction: .14, frictionStatic: .2,
+      frictionAir: .0035, restitution: .09, inertiaScale: .9,
+    });
+  }
+  return Object.freeze({
+    kind: 'standard', label: '標準的な体格', ...geometry,
+    density: .00175, friction: .58, frictionStatic: .76,
+    frictionAir: .006, restitution: .035, inertiaScale: 1,
+  });
+}
+
+/**
+ * アルファマスクを最大18×18セルへ縮約し、横方向の連続セルを長方形へまとめる。
+ * 長方形の和集合が画像の不透明領域になるため、凹形状や離れた部位も保持できる。
+ */
+function createAlphaCollisionRectangles(alpha, sourceWidth, minX, minY, opaqueWidth, opaqueHeight, displayWidth, displayHeight, longestGridSide = 18) {
+  const aspect = opaqueWidth / opaqueHeight;
+  const columns = aspect >= 1
+    ? longestGridSide
+    : Math.max(6, Math.round(longestGridSide * aspect));
+  const rows = aspect >= 1
+    ? Math.max(6, Math.round(longestGridSide / aspect))
+    : longestGridSide;
+  const occupied = Array.from({ length: rows }, () => Array(columns).fill(false));
+
+  for (let row = 0; row < rows; row += 1) {
+    const startY = minY + Math.floor((row / rows) * opaqueHeight);
+    const endY = minY + Math.max(Math.floor(((row + 1) / rows) * opaqueHeight), Math.floor((row / rows) * opaqueHeight) + 1);
+    for (let column = 0; column < columns; column += 1) {
+      const startX = minX + Math.floor((column / columns) * opaqueWidth);
+      const endX = minX + Math.max(Math.floor(((column + 1) / columns) * opaqueWidth), Math.floor((column / columns) * opaqueWidth) + 1);
+      let solidPixels = 0;
+      let totalPixels = 0;
+      let strongestAlpha = 0;
+      for (let y = startY; y < endY; y += 1) {
+        for (let x = startX; x < endX; x += 1) {
+          const value = alpha[y * sourceWidth + x];
+          strongestAlpha = Math.max(strongestAlpha, value);
+          if (value >= 40) solidPixels += 1;
+          totalPixels += 1;
+        }
+      }
+      // 輪郭の細い角や脚は、面積が小さくても十分に不透明なら残す。
+      occupied[row][column] = totalPixels > 0
+        && (solidPixels / totalPixels >= .16 || strongestAlpha >= 210);
+    }
+  }
+
+  const rectangles = [];
+  let active = new Map();
+  for (let row = 0; row < rows; row += 1) {
+    const runs = [];
+    let column = 0;
+    while (column < columns) {
+      if (!occupied[row][column]) {
+        column += 1;
+        continue;
+      }
+      const start = column;
+      while (column < columns && occupied[row][column]) column += 1;
+      runs.push({ start, end: column });
+    }
+
+    const nextActive = new Map();
+    runs.forEach(run => {
+      const key = `${run.start}:${run.end}`;
+      const existing = active.get(key);
+      if (existing) {
+        existing.endRow = row + 1;
+        nextActive.set(key, existing);
+      } else {
+        nextActive.set(key, { startColumn: run.start, endColumn: run.end, startRow: row, endRow: row + 1 });
+      }
+    });
+    active.forEach((rectangle, key) => {
+      if (!nextActive.has(key)) rectangles.push(rectangle);
+    });
+    active = nextActive;
+  }
+  active.forEach(rectangle => rectangles.push(rectangle));
+
+  return rectangles.map(rectangle => {
+    const left = -displayWidth / 2 + (rectangle.startColumn / columns) * displayWidth;
+    const right = -displayWidth / 2 + (rectangle.endColumn / columns) * displayWidth;
+    const top = -displayHeight / 2 + (rectangle.startRow / rows) * displayHeight;
+    const bottom = -displayHeight / 2 + (rectangle.endRow / rows) * displayHeight;
+    return {
+      x: (left + right) / 2,
+      y: (top + bottom) / 2,
+      width: Math.max(1.5, right - left),
+      height: Math.max(1.5, bottom - top),
+    };
+  });
+}
+
+/** 画像内の不透明領域から、描画範囲と高精細・CPU予測用の複合当たり判定を作る。 */
 export function createMonsterCollisionProfile(alpha, sourceWidth, sourceHeight, targetSize = 64) {
   if (!alpha || alpha.length !== sourceWidth * sourceHeight || sourceWidth <= 0 || sourceHeight <= 0) {
     return createFallbackCollisionProfile(1, targetSize);
@@ -102,9 +324,66 @@ export function createMonsterCollisionProfile(alpha, sourceWidth, sourceHeight, 
 
   const opaqueWidth = Math.max(1, maxX - minX + 1);
   const opaqueHeight = Math.max(1, maxY - minY + 1);
+  let ellipseIntersection = 0;
+  let ellipseUnion = 0;
+  let opaquePixelCount = 0;
+  const hullPoints = [];
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      const normalizedX = (((x - minX) + .5) / opaqueWidth) * 2 - 1;
+      const normalizedY = (((y - minY) + .5) / opaqueHeight) * 2 - 1;
+      const insideEllipse = normalizedX * normalizedX + normalizedY * normalizedY <= 1;
+      const isOpaque = alpha[y * sourceWidth + x] >= 40;
+      if (isOpaque) {
+        opaquePixelCount += 1;
+        const touchesTransparency = x === minX || x === maxX || y === minY || y === maxY
+          || alpha[y * sourceWidth + Math.max(0, x - 1)] < 40
+          || alpha[y * sourceWidth + Math.min(sourceWidth - 1, x + 1)] < 40
+          || alpha[Math.max(0, y - 1) * sourceWidth + x] < 40
+          || alpha[Math.min(sourceHeight - 1, y + 1) * sourceWidth + x] < 40;
+        if (touchesTransparency) {
+          hullPoints.push(
+            { x, y }, { x: x + 1, y },
+            { x: x + 1, y: y + 1 }, { x, y: y + 1 },
+          );
+        }
+      }
+      if (insideEllipse && isOpaque) ellipseIntersection += 1;
+      if (insideEllipse || isOpaque) ellipseUnion += 1;
+    }
+  }
+  const ellipseFit = ellipseUnion ? ellipseIntersection / ellipseUnion : 0;
+  const sourceHull = createConvexHull(hullPoints);
+  const hullArea = getPolygonArea(sourceHull);
+  const convexity = hullArea ? Math.min(1, opaquePixelCount / hullArea) : 0;
   const scale = targetSize / Math.max(opaqueWidth, opaqueHeight);
   const width = clamp(opaqueWidth * scale, 30, targetSize);
   const height = clamp(opaqueHeight * scale, 30, targetSize);
+  const convexHull = sourceHull.map(point => ({
+    x: -width / 2 + ((point.x - minX) / opaqueWidth) * width,
+    y: -height / 2 + ((point.y - minY) / opaqueHeight) * height,
+  }));
+  const collisionRects = createAlphaCollisionRectangles(
+    alpha,
+    sourceWidth,
+    minX,
+    minY,
+    opaqueWidth,
+    opaqueHeight,
+    width,
+    height,
+  );
+  const cpuCollisionRects = createAlphaCollisionRectangles(
+    alpha,
+    sourceWidth,
+    minX,
+    minY,
+    opaqueWidth,
+    opaqueHeight,
+    width,
+    height,
+    10,
+  );
   const aspect = width / height;
   let parts;
 
@@ -137,6 +416,11 @@ export function createMonsterCollisionProfile(alpha, sourceWidth, sourceHeight, 
     width,
     height,
     parts,
+    collisionRects,
+    cpuCollisionRects,
+    ellipseFit,
+    convexity,
+    convexHull,
     crop: {
       x: minX / sourceWidth,
       y: minY / sourceHeight,
@@ -167,9 +451,9 @@ function calculateInertia(profile, mass) {
   }, 0);
 }
 
-export function createTowerBody({ id, monsterId, owner, profile, x, y = 48, angle = 0 }) {
+export function createTowerBody({ id, monsterId, owner, profile, x, y = 48, angle = 0, useCoarseGeometry = false }) {
   const Matter = getMatter();
-  if (Matter) return createMatterTowerBody({ id, monsterId, owner, profile, x, y, angle }, Matter);
+  if (Matter) return createMatterTowerBody({ id, monsterId, owner, profile, x, y, angle, useCoarseGeometry }, Matter);
   const safeProfile = profile || createFallbackCollisionProfile();
   const mass = calculateMass(safeProfile);
   const inertia = calculateInertia(safeProfile, mass);
@@ -226,7 +510,7 @@ export function createTowerWorld(bodies = []) {
   return { bodies: [...bodies], elapsed: 0 };
 }
 
-export function cloneTowerWorld(world) {
+export function cloneTowerWorld(world, useCoarseGeometry = false) {
   if (world.usingMatter) {
     const Matter = getMatter();
     const clone = createTowerWorld();
@@ -239,6 +523,7 @@ export function cloneTowerWorld(world) {
         x: source.position.x,
         y: source.position.y,
         angle: source.angle,
+        useCoarseGeometry,
       }, Matter);
       Matter.Body.setVelocity(body, { x: source.velocity.x, y: source.velocity.y });
       Matter.Body.setAngularVelocity(body, source.angularVelocity);
@@ -255,6 +540,9 @@ export function cloneTowerWorld(world) {
         ...body.profile,
         crop: body.profile.crop ? { ...body.profile.crop } : undefined,
         parts: body.profile.parts.map(part => ({ ...part })),
+        collisionRects: body.profile.collisionRects?.map(rectangle => ({ ...rectangle })),
+        cpuCollisionRects: body.profile.cpuCollisionRects?.map(rectangle => ({ ...rectangle })),
+        convexHull: body.profile.convexHull?.map(vertex => ({ ...vertex })),
       },
     })),
   };
@@ -498,7 +786,7 @@ export function chooseCpuPlacement(world, profile, options = {}) {
   let best = candidates[0];
   let bestScore = -Infinity;
   candidates.forEach((candidate, index) => {
-    const simulation = cloneTowerWorld(world);
+    const simulation = cloneTowerWorld(world, true);
     const id = `cpu-preview-${index}`;
     const previewBody = addTowerBody(simulation, createTowerBody({
       id,
@@ -508,6 +796,7 @@ export function chooseCpuPlacement(world, profile, options = {}) {
       x: candidate.x,
       y: 42,
       angle: candidate.angle,
+      useCoarseGeometry: simulation.usingMatter,
     }));
     for (let frame = 0; frame < 180; frame += 1) {
       stepTowerWorld(simulation, 1 / 60, 2);
