@@ -14,7 +14,7 @@ import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-defini
 import { renderEnemyCardHtml, renderPartyCardHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
 import { renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
-import { renderBattleControlsTab } from './battle-controls.js';
+import { renderBattleControlsTab, syncBattleControlsFloor } from './battle-controls.js';
 import {
   BattleTelemetry,
   cleanupBattleStatistics,
@@ -255,12 +255,6 @@ class BattleManager {
     this.currentFloorNum = await GameDB.getGameState('currentFloor') || 1;
     this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId) || SPECIAL_DUNGEONS.find(d => d.id === this.currentDungeonId);
     this.floorDef = this.dungeonDef.floors.find(f => f.level === this.currentFloorNum) || this.dungeonDef.floors[this.dungeonDef.floors.length - 1];
-    // Floor changes happen without replacing the battle page. Force the
-    // controls tab to rebuild so its current-floor marker never goes stale.
-    if (this.currentTab === 'controls') {
-      this.elements.tabContent.removeAttribute('data-rendered-tab');
-    }
-
     // Update Header Location
     const headerLoc = document.getElementById('header-location');
     const headerLocName = document.getElementById('header-location-name');
@@ -998,13 +992,18 @@ class BattleManager {
       this.elements.tabContent.dataset.renderedTab = 'stats';
       renderBattleStatisticsTab(this, force);
     } else if (this.currentTab === 'controls') {
-      if (!force && this.elements.tabContent.dataset.renderedTab === 'controls') return;
+      if (!force && this.elements.tabContent.dataset.renderedTab === 'controls') {
+        syncBattleControlsFloor(this.elements.tabContent, this.currentFloorNum);
+        return;
+      }
       this.elements.tabContent.dataset.renderedTab = 'controls';
       renderBattleControlsTab(this.elements.tabContent, {
         dungeonDef: this.dungeonDef,
         currentFloorNum: this.currentFloorNum,
         canJumpFloors: Array.isArray(this.completedDungeonIds)
           && this.completedDungeonIds.includes(this.currentDungeonId),
+        ranchData: this.ranchData,
+        playerMedals: this.playerMedals,
         onFloorJump: floorLevel => this.jumpToFloor(floorLevel),
       });
     } else if (this.currentTab === 'pet') {

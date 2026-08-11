@@ -118,7 +118,64 @@ function getFloorMonsterIds(floor) {
   return [...monsterIds];
 }
 
-function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) {
+function getOwnedMonsterState(ranchData, monsterId) {
+  const ranches = Object.values(ranchData || {});
+  return {
+    companion: ranches.some(ranch => Boolean(ranch?.[monsterId])),
+    legendary: ranches.some(ranch => Boolean(ranch?.[`${monsterId}_legendary`])),
+  };
+}
+
+function getFloorJumpButtonClass(isCurrentFloor) {
+  return `group flex min-h-[46px] min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition ${isCurrentFloor
+    ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_10px_rgba(34,211,238,0.12)]'
+    : 'border-white/10 bg-slate-950/55 text-slate-300 active:scale-[0.97] active:border-cyan-300/45 active:bg-cyan-950/60'}`;
+}
+
+function getFloorJumpBadgeClass(isCurrentFloor) {
+  return `flex h-8 w-10 shrink-0 flex-col items-center justify-center rounded-md border ${isCurrentFloor
+    ? 'border-cyan-300/35 bg-cyan-400/10'
+    : 'border-slate-700 bg-slate-900'}`;
+}
+
+function getFloorJumpActionClass(isCurrentFloor, isBossFloor) {
+  return `flex w-7 shrink-0 flex-col items-center text-[7px] font-black ${isCurrentFloor
+    ? 'text-cyan-300'
+    : isBossFloor ? 'text-amber-300' : 'text-slate-500'}`;
+}
+
+export function syncBattleControlsFloor(container, currentFloorNum) {
+  const section = container.querySelector('[data-battle-floor-jump-section]');
+  if (!section || section.dataset.currentFloor === String(currentFloorNum)) return;
+  section.dataset.currentFloor = String(currentFloorNum);
+
+  section.querySelectorAll('[data-battle-floor-jump]').forEach(button => {
+    const floorLevel = Number(button.dataset.battleFloorJump);
+    const isBossFloor = button.dataset.battleFloorBoss === 'true';
+    const isCurrentFloor = floorLevel === Number(currentFloorNum);
+    button.disabled = isCurrentFloor;
+    button.className = getFloorJumpButtonClass(isCurrentFloor);
+    button.setAttribute('aria-label', isCurrentFloor
+      ? `${floorLevel}階（現在地）`
+      : `${floorLevel}階へジャンプ${isBossFloor ? '（最深部）' : ''}`);
+    if (isCurrentFloor) button.setAttribute('aria-current', 'location');
+    else button.removeAttribute('aria-current');
+
+    const badge = button.querySelector('[data-battle-floor-badge]');
+    if (badge) badge.className = getFloorJumpBadgeClass(isCurrentFloor);
+    const action = button.querySelector('[data-battle-floor-action]');
+    if (action) action.className = getFloorJumpActionClass(isCurrentFloor, isBossFloor);
+    const actionIcon = button.querySelector('[data-battle-floor-action-icon]');
+    if (actionIcon) actionIcon.textContent = isCurrentFloor ? 'location_on' : 'login';
+    const actionLabel = button.querySelector('[data-battle-floor-action-label]');
+    if (actionLabel) actionLabel.textContent = isCurrentFloor ? '現在地' : 'GO';
+  });
+
+  const status = section.querySelector('[data-battle-floor-jump-status]');
+  if (status) status.textContent = '現在の戦闘を中断して選択階へ移動します';
+}
+
+function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors, ranchData, playerMedals }) {
   if (!canJumpFloors || !dungeonDef?.floors?.length) return '';
 
   const floorButtons = dungeonDef.floors.map((floor, index) => {
@@ -129,17 +186,25 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) 
     const visibleMonsters = monsterIds.slice(0, 4).map(monsterId => {
       const monster = MONSTERS.find(item => item.id === monsterId);
       const image = monster?.image || `./assets/monster/${monsterId}.webp`;
-      return `<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-black/35 p-0.5"><img src="${image}" alt="" class="h-full w-full object-contain" loading="lazy"></span>`;
+      const owned = getOwnedMonsterState(ranchData, monsterId);
+      const hasMedal = Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId);
+      return `
+        <span class="w-7 shrink-0" title="${monster?.name || monsterId}｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${hasMedal ? '獲得済み' : '未獲得'}">
+          <span class="flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-black/35 p-0.5"><img src="${image}" alt="" class="h-full w-full object-contain" loading="lazy"></span>
+          <span class="mt-0.5 grid grid-cols-3 gap-px px-px">
+            <span class="h-[2px] rounded-full ${owned.companion ? 'bg-emerald-300' : 'bg-slate-700'}"></span>
+            <span class="h-[2px] rounded-full ${owned.legendary ? 'bg-amber-300' : 'bg-slate-700'}"></span>
+            <span class="h-[2px] rounded-full ${hasMedal ? 'bg-cyan-300' : 'bg-slate-700'}"></span>
+          </span>
+        </span>`;
     }).join('');
     const remainingMonsterCount = Math.max(0, monsterIds.length - 4);
     return `
-      <button type="button" data-battle-floor-jump="${floorLevel}"
+      <button type="button" data-battle-floor-jump="${floorLevel}" data-battle-floor-boss="${isBossFloor}"
               ${isCurrentFloor ? 'disabled aria-current="location"' : ''}
               aria-label="${isCurrentFloor ? `${floorLevel}階（現在地）` : `${floorLevel}階へジャンプ${isBossFloor ? '（最深部）' : ''}`}"
-              class="group flex min-h-[46px] min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition ${isCurrentFloor
-                ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_10px_rgba(34,211,238,0.12)]'
-                : 'border-white/10 bg-slate-950/55 text-slate-300 active:scale-[0.97] active:border-cyan-300/45 active:bg-cyan-950/60'}">
-        <span class="flex h-8 w-10 shrink-0 flex-col items-center justify-center rounded-md border ${isCurrentFloor ? 'border-cyan-300/35 bg-cyan-400/10' : 'border-slate-700 bg-slate-900'}">
+              class="${getFloorJumpButtonClass(isCurrentFloor)}">
+        <span data-battle-floor-badge class="${getFloorJumpBadgeClass(isCurrentFloor)}">
           <span class="material-symbols-outlined leading-none ${isBossFloor ? 'text-amber-300' : ''}" style="font-size: 11px">${isBossFloor ? 'skull' : 'layers'}</span>
           <span class="text-[9px] font-black leading-none tabular-nums">${String(floorLevel).padStart(2, '0')}F</span>
         </span>
@@ -147,15 +212,15 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) 
           ${visibleMonsters || '<span class="truncate text-[7px] font-bold text-slate-600">敵情報なし</span>'}
           ${remainingMonsterCount ? `<span class="shrink-0 text-[7px] font-black text-slate-500">+${remainingMonsterCount}</span>` : ''}
         </span>
-        <span class="flex w-7 shrink-0 flex-col items-center text-[7px] font-black ${isCurrentFloor ? 'text-cyan-300' : isBossFloor ? 'text-amber-300' : 'text-slate-500'}" aria-hidden="true">
-          <span class="material-symbols-outlined leading-none" style="font-size: 14px">${isCurrentFloor ? 'location_on' : 'login'}</span>
-          ${isCurrentFloor ? '現在地' : 'GO'}
+        <span data-battle-floor-action class="${getFloorJumpActionClass(isCurrentFloor, isBossFloor)}" aria-hidden="true">
+          <span data-battle-floor-action-icon class="material-symbols-outlined leading-none" style="font-size: 14px">${isCurrentFloor ? 'location_on' : 'login'}</span>
+          <span data-battle-floor-action-label>${isCurrentFloor ? '現在地' : 'GO'}</span>
         </span>
       </button>`;
   }).join('');
 
   return `
-    <section class="rounded-xl border border-cyan-300/20 bg-gradient-to-r from-cyan-950/35 to-slate-950/50 p-2 shadow-sm" aria-labelledby="battle-floor-jump-label">
+    <section data-battle-floor-jump-section data-current-floor="${Number(currentFloorNum)}" class="rounded-xl border border-cyan-300/20 bg-gradient-to-r from-cyan-950/35 to-slate-950/50 p-2 shadow-sm" aria-labelledby="battle-floor-jump-label">
       <div class="mb-2 flex items-center gap-2 px-0.5">
         <span class="battle-control-icon h-8 w-8 shrink-0 rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-cyan-300" style="display: grid; place-items: center">
           <span class="material-symbols-outlined block leading-none" style="font-size: 18px">route</span>
