@@ -47,6 +47,21 @@ export const BATTLE_VALUE_STYLES = Object.freeze({
   [BATTLE_VALUE_TYPES.BARRIER]: { color: '#2dd4bf' }
 });
 
+export const ATTACK_DAMAGE_ICONS = Object.freeze({
+  physical: { icon: 'explosion', color: '#fb923c', label: '物理' },
+  magic: { icon: 'auto_awesome', color: '#c084fc', label: '魔法' },
+  hybrid: { icon: 'join_inner', color: '#f0abfc', label: '複合' },
+  fire: { icon: 'local_fire_department', color: '#ef4444', label: '炎' },
+  water: { icon: 'water_drop', color: '#3b82f6', label: '水' },
+  grass: { icon: 'eco', color: '#22c55e', label: '草' },
+  ice: { icon: 'ac_unit', color: '#67e8f9', label: '氷' },
+  thunder: { icon: 'bolt', color: '#facc15', label: '雷' },
+  wind: { icon: 'air', color: '#34d399', label: '風' },
+  earth: { icon: 'landscape', color: '#d97706', label: '土' },
+  light: { icon: 'light_mode', color: '#fde047', label: '光' },
+  dark: { icon: 'dark_mode', color: '#a855f7', label: '闇' }
+});
+
 const LEGACY_STATUS_COLORS = Object.freeze({
   red: '#f87171', orange: '#fb923c', amber: '#fbbf24', yellow: '#facc15',
   lime: '#a3e635', green: '#4ade80', emerald: '#34d399', teal: '#2dd4bf',
@@ -156,6 +171,28 @@ export function resolveAttackValueType(isPartyAttack, elementMultiplier = 1, isC
   if (elementMultiplier > 1.001) return BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE;
   if (elementMultiplier < 0.999) return BATTLE_VALUE_TYPES.RESISTED_DAMAGE;
   return BATTLE_VALUE_TYPES.PLAYER_DAMAGE;
+}
+
+export function resolveAttackDamageIconType(
+  isPartyAttack,
+  attackElements = {},
+  elementPortionScale = 1,
+  nonElementalPercent = 100,
+  fallbackType = 'physical'
+) {
+  if (!isPartyAttack) return null;
+
+  let dominantType = ATTACK_DAMAGE_ICONS[fallbackType] ? fallbackType : 'physical';
+  let dominantPercent = Math.max(0, Number(nonElementalPercent) || 0);
+  for (const [element, rawPercent] of Object.entries(attackElements || {})) {
+    if (!ATTACK_DAMAGE_ICONS[element]) continue;
+    const percent = Math.max(0, Number(rawPercent) || 0) * elementPortionScale;
+    if (percent >= dominantPercent) {
+      dominantType = element;
+      dominantPercent = percent;
+    }
+  }
+  return dominantType;
 }
 
 function getLegacyStatusColor(colorClass) {
@@ -313,8 +350,24 @@ export const popupMethods = {
     if (config.textShadow) popup.style.textShadow = config.textShadow;
     if (config.fontSize) popup.style.fontSize = config.fontSize;
     
-    // Most efficient text insertion
-    if (config.text !== undefined && config.text !== null) {
+    if (config.damageIcon && config.text !== undefined && config.text !== null) {
+      const icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined shrink-0';
+      icon.textContent = config.damageIcon.icon;
+      icon.setAttribute('aria-hidden', 'true');
+      icon.style.color = config.damageIcon.color;
+      icon.style.fontSize = '0.78em';
+      icon.style.lineHeight = '1';
+      icon.style.fontVariationSettings = "'FILL' 1, 'wght' 650, 'GRAD' 0, 'opsz' 24";
+      icon.style.textShadow = `0 0 8px ${config.damageIcon.color}, 1px 2px 2px rgba(0,0,0,0.95)`;
+
+      const value = document.createElement('span');
+      value.textContent = config.text;
+      value.style.lineHeight = '1';
+      popup.append(icon, value);
+      popup.style.gap = '4px';
+    } else if (config.text !== undefined && config.text !== null) {
+      // Most efficient text insertion when an icon is not needed.
       popup.textContent = config.text;
     } else if (config.html) {
       popup.innerHTML = config.html; // fallback if needed
@@ -446,7 +499,7 @@ export const popupMethods = {
   },
 
   // --- showDamage: ダメージポップアップ (上方向に浮遊) ---
-  showDamage(elementId, damage, valueTypeOrColorClass = BATTLE_VALUE_TYPES.PLAYER_DAMAGE, delay = 0) {
+  showDamage(elementId, damage, valueTypeOrColorClass = BATTLE_VALUE_TYPES.PLAYER_DAMAGE, delay = 0, damageIconType = null) {
     captureBattlePopup(this, elementId, damage);
     const valueType = resolveBattleValueType(elementId, damage, valueTypeOrColorClass);
     if (!valueType || valueType === BATTLE_VALUE_TYPES.BARRIER) {
@@ -476,6 +529,7 @@ export const popupMethods = {
     let duration = valueStyle.duration || 800;
     let className = 'fixed z-[9999] pointer-events-none select-none flex items-center justify-center tracking-wide';
     let fontFamily = "'Anton', sans-serif";
+    const damageIcon = ATTACK_DAMAGE_ICONS[damageIconType] || null;
 
     if (valueStyle.italic) {
       className += ' italic tracking-tighter';
@@ -490,7 +544,8 @@ export const popupMethods = {
       fontSize,
       scale,
       duration,
-      delay
+      delay,
+      damageIcon
     });
   },
 

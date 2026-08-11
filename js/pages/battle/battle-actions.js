@@ -7,7 +7,7 @@ import {
 } from './magic-missile-animation.js';
 import { consumeSoulReaperCorpses, getSoulReaperCorpseStock } from '../../jobs/soul_reaper.js';
 import { resolveBattleSkill } from './battle-statistics.js';
-import { resolveAttackValueType } from './battle-popups.js';
+import { resolveAttackDamageIconType, resolveAttackValueType } from './battle-popups.js';
 import {
   calculateMedalEquipmentIncomingDamage,
   getEffectiveMedalEquipmentMpCost,
@@ -937,6 +937,13 @@ export const actionMethods = {
       elementDamageMultiplier = sumMultiplier;
     }
     const damagePopupType = resolveAttackValueType(isParty, elementDamageMultiplier, isCriticalHit);
+    const damageIconType = resolveAttackDamageIconType(
+      isParty,
+      attackElements,
+      elementPortionScale,
+      nonElementalPercent,
+      options.isHybrid ? 'hybrid' : (isMagic ? 'magic' : 'physical')
+    );
 
     // --- 攻撃アニメーション ---
     let delayDamageMs = 0;
@@ -965,9 +972,9 @@ export const actionMethods = {
       // Delay the popup animation itself instead of using a managed battle
       // timer. A killing blow stops the ATB loop immediately, which clears
       // those timers before the final damage number can be shown.
-      this.showDamage(defender.elementId, damage, damagePopupType, delayDamageMs);
+      this.showDamage(defender.elementId, damage, damagePopupType, delayDamageMs, damageIconType);
     } else if (delayDamageMs === 0) {
-      this.showDamage(defender.elementId, damage, damagePopupType);
+      this.showDamage(defender.elementId, damage, damagePopupType, 0, damageIconType);
     }
 
     // --- 状態異常付与判定 ---

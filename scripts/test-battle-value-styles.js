@@ -4,8 +4,10 @@ globalThis.document = { hidden: false, body: { classList: { contains: () => fals
 const {
   BATTLE_VALUE_STYLES,
   BATTLE_VALUE_TYPES,
+  ATTACK_DAMAGE_ICONS,
   normalizeBattleLabel,
   popupMethods,
+  resolveAttackDamageIconType,
   resolveAttackValueType,
   resolveBattleValueType
 } = await import('../js/pages/battle/battle-popups.js');
@@ -70,6 +72,25 @@ for (const [isPartyAttack, elementMultiplier, isCritical, expected] of attackTyp
   );
 }
 
+const attackIconTypes = [
+  [false, { fire: 100 }, 1, 0, 'physical', null],
+  [true, {}, 1, 100, 'physical', 'physical'],
+  [true, {}, 1, 100, 'magic', 'magic'],
+  [true, { fire: 100 }, 1, 0, 'magic', 'fire'],
+  [true, { fire: 30 }, 1, 70, 'physical', 'physical'],
+  [true, { water: 60, thunder: 40 }, 1, 0, 'magic', 'water']
+];
+
+for (const [isPartyAttack, elements, scale, nonElemental, fallback, expected] of attackIconTypes) {
+  assert(
+    resolveAttackDamageIconType(isPartyAttack, elements, scale, nonElemental, fallback) === expected,
+    `攻撃属性アイコンを ${expected} として判定できません`
+  );
+}
+
+assert(ATTACK_DAMAGE_ICONS.physical.icon === 'explosion' && ATTACK_DAMAGE_ICONS.physical.color === '#fb923c', '物理ダメージがオレンジの爆発アイコンではありません');
+assert(ATTACK_DAMAGE_ICONS.fire.icon === 'local_fire_department' && ATTACK_DAMAGE_ICONS.fire.color === '#ef4444', '炎ダメージが赤い炎アイコンではありません');
+
 const renderedConfigs = [];
 const badgeConfigs = [];
 const battleStub = {
@@ -82,10 +103,12 @@ const battleStub = {
 popupMethods.showDamage.call(battleStub, 'enemy-0', 999, BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE);
 popupMethods.showDamage.call(battleStub, 'enemy-0', 100, BATTLE_VALUE_TYPES.RESISTED_DAMAGE);
 popupMethods.showDamage.call(battleStub, 'party-0', 50, BATTLE_VALUE_TYPES.CURSE_DAMAGE);
+popupMethods.showDamage.call(battleStub, 'enemy-0', 321, BATTLE_VALUE_TYPES.PLAYER_DAMAGE, 0, 'fire');
 
 assert(renderedConfigs[0].color === '#f97316' && renderedConfigs[0].fontSize === '42px', '抜群ダメージが大きいオレンジで描画されません');
 assert(renderedConfigs[1].color === '#6366f1' && renderedConfigs[1].fontSize === '26px', '効果今ひとつダメージが小さい青紫で描画されません');
 assert(renderedConfigs[2].color === '#111111' && renderedConfigs[2].textShadow.includes('#fff'), '呪いダメージが判読可能な黒で描画されません');
+assert(renderedConfigs[3].damageIcon === ATTACK_DAMAGE_ICONS.fire, 'プレイヤーダメージに属性アイコンが渡されません');
 
 const translatedLabels = {
   'DEF UP': '防御力アップ',
