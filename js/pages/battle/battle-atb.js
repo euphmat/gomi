@@ -267,11 +267,10 @@ export const atbMethods = {
             this.executeEnemyTurn(nextActor.entity);
           };
 
-          if (battleSpeed >= 5) {
-            executeEnemy();
-          } else {
-            this._scheduleBattleTimeout(executeEnemy, enemyDelay);
-          }
+          // Even at 5x, yield the timer task before calculating damage and
+          // constructing effects. This lets the active-state HUD commit first
+          // and avoids a single long task immediately before every attack.
+          this._scheduleBattleTimeout(executeEnemy, battleSpeed >= 5 ? 16 : enemyDelay);
         }
       }
     };

@@ -1,4 +1,6 @@
 import {
+  beginBattleEffectBatch,
+  canCreateBattleEffect,
   getBattleAnimationDuration,
   shouldSkipBattleAnimations
 } from '../../utils/battle-animation.js';
@@ -51,6 +53,7 @@ const directionBetween = (origin, target) => {
 };
 
 const addEffect = (layer, cssText, keyframes, timing) => {
+  if (!canCreateBattleEffect(layer)) return null;
   const effect = document.createElement('div');
   effect.setAttribute('aria-hidden', 'true');
   effect.className = 'battle-normal-attack-effect';
@@ -121,7 +124,7 @@ const addGlyph = (layer, point, profile, duration, glyph, delay = 0, options = {
     ],
     { duration, delay, easing: 'cubic-bezier(.16,.75,.25,1)' }
   );
-  effect.textContent = glyph;
+  if (effect) effect.textContent = glyph;
 };
 
 const addMagicCircle = (layer, point, profile, duration, delay = 0, glyph = '✦') => {
@@ -403,6 +406,7 @@ export function playNormalAttackAnimation(attacker, defender) {
   if (!attackerEl || !defenderEl) return { impactDelay: 0, cadenceDelay: 0, completionDelay: 0 };
 
   const layer = document.getElementById('battle-effects-layer') || document.body;
+  beginBattleEffectBatch(layer);
   const origin = centerOf(attackerEl.getBoundingClientRect());
   const target = centerOf(defenderEl.getBoundingClientRect());
   const direction = directionBetween(origin, target);

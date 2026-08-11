@@ -1,4 +1,6 @@
 import {
+  beginBattleEffectBatch,
+  canCreateBattleEffect,
   getBattleAnimationDuration,
   shouldSkipBattleAnimations
 } from '../../utils/battle-animation.js';
@@ -40,6 +42,7 @@ const centerOf = rect => ({
 });
 
 const addEffect = (layer, cssText, keyframes, timing) => {
+  if (!canCreateBattleEffect(layer)) return null;
   const effect = document.createElement('div');
   effect.setAttribute('aria-hidden', 'true');
   effect.className = 'battle-magic-missile-effect';
@@ -150,6 +153,7 @@ export function playMagicMissileAnimation(attacker, defender) {
   if (!attackerEl || !defenderEl) return emptyTiming();
 
   const layer = document.getElementById('battle-effects-layer') || document.body;
+  beginBattleEffectBatch(layer);
   const origin = centerOf(attackerEl.getBoundingClientRect());
   const target = centerOf(defenderEl.getBoundingClientRect());
   const dx = target.x - origin.x;

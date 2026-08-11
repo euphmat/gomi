@@ -1,4 +1,6 @@
 import {
+  beginBattleEffectBatch,
+  canCreateBattleEffect,
   getBattleAnimationDuration,
   shouldSkipBattleAnimations
 } from '../../utils/battle-animation.js';
@@ -15,6 +17,7 @@ const centerOf = rect => ({
 });
 
 const addEffect = (layer, className, cssText, keyframes, timing, text = '') => {
+  if (!canCreateBattleEffect(layer)) return null;
   const effect = document.createElement('div');
   effect.setAttribute('aria-hidden', 'true');
   effect.className = className;
@@ -48,6 +51,7 @@ export function playMonsterAttackAnimation(attacker, defender) {
   }
 
   const layer = document.getElementById('battle-effects-layer') || document.body;
+  beginBattleEffectBatch(layer);
   const origin = centerOf(originRect);
   const target = centerOf(targetRect);
   const dx = target.x - origin.x;
@@ -84,7 +88,7 @@ export function playMonsterAttackAnimation(attacker, defender) {
   const label = document.createElement('span');
   label.style.cssText = 'position:absolute;left:50%;top:-2px;transform:translate(-50%,-100%);padding:1px 5px;border-radius:999px;background:rgba(136,19,55,.96);border:1px solid rgba(253,164,175,.9);color:#fff1f2;font:900 9px/14px sans-serif;letter-spacing:.08em;white-space:nowrap;text-shadow:0 1px 2px #000;box-shadow:0 0 8px rgba(244,63,94,.75)';
   label.textContent = '攻撃対象';
-  marker.appendChild(label);
+  marker?.appendChild(label);
 
   if (!reducedMotion) {
     // The enemy image leans toward the chosen card, while the card-sized frame

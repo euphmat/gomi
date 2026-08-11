@@ -17,6 +17,7 @@ import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 // The HUD itself does not need to recalculate styles on every animation frame,
 // especially during unattended auto battle.
 const AUTO_BATTLE_HUD_INTERVAL = 1000 / 30;
+const FAST_AUTO_BATTLE_HUD_INTERVAL = 1000 / 20;
 const PARTY_BG_CLASSES = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-cyan-950/80', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
 const STAT_TEXT_COLORS = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
 const ENEMY_EXIT_DURATION = 160;
@@ -261,7 +262,10 @@ export const rendererMethods = {
     // Keep manual input immediate. During auto battle, coalesce bursts from
     // skills, passives and multi-hit attacks into one lightweight HUD update.
     const elapsed = performance.now() - (this._lastEntityUpdateAt || 0);
-    const wait = this.isAutoBattle ? Math.max(0, AUTO_BATTLE_HUD_INTERVAL - elapsed) : 0;
+    const hudInterval = this.speedMult >= 5
+      ? FAST_AUTO_BATTLE_HUD_INTERVAL
+      : AUTO_BATTLE_HUD_INTERVAL;
+    const wait = this.isAutoBattle ? Math.max(0, hudInterval - elapsed) : 0;
     if (wait > 1) {
       this._entityUpdateDelayTimer = setTimeout(requestHudFrame, wait);
     } else {

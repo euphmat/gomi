@@ -912,11 +912,10 @@ class BattleManager {
       }
     };
 
-    if (this.speedMult >= 5) {
-      executeAuto();
-    } else {
-      this._scheduleBattleTimeout(executeAuto, delay);
-    }
+    // At maximum speed, keep the simulation fast but split actor selection and
+    // AI/effect work across event-loop turns. A single display-frame yield is
+    // enough to prevent the visible pre-attack hitch on mobile devices.
+    this._scheduleBattleTimeout(executeAuto, this.speedMult >= 5 ? 16 : delay);
   }
 
   updateTabStyles() {
