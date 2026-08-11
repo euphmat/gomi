@@ -3,7 +3,6 @@ import { formatNumber } from '../../utils/format.js';
 import {
   MEDAL_SHOP_DUNGEON_REWARDS,
   calculateMedalPoints,
-  getMedalPointRows,
 } from '../../definitions/medal-shop-definitions.js';
 
 const TYPE_META = {
@@ -70,11 +69,6 @@ export async function renderMedalShopTab() {
     await GameDB.setGameState('medal_shop_claimed_rewards', [...claimed]);
   }
 
-  const rankRows = getMedalPointRows();
-  const medalCounts = rankRows.map((rank, index) => ({
-    ...rank,
-    count: Object.values(playerMedals).filter(rankIndex => Number(rankIndex) === index).length,
-  }));
   const allRewards = MEDAL_SHOP_DUNGEON_REWARDS
     .flatMap(dungeon => dungeon.rewards)
     .sort((a, b) => a.points - b.points);
@@ -82,13 +76,15 @@ export async function renderMedalShopTab() {
   let claiming = false;
 
   const render = () => {
-    const acquiredCount = allRewards.filter(reward => claimed.has(reward.id)).length;
     const claimableRewards = allRewards.filter(reward => !claimed.has(reward.id) && reward.points <= points);
     const nextLockedReward = allRewards.find(reward => !claimed.has(reward.id) && reward.points > points);
     const spotlightReward = claimableRewards[0] || nextLockedReward || allRewards.at(-1);
     const spotlightMeta = TYPE_META[spotlightReward.type];
     const remainingPoints = Math.max(0, (nextLockedReward?.points || maxPoints) - points);
-    const overallProgress = Math.min(100, points / maxPoints * 100);
+    const nextMilestonePoints = nextLockedReward?.points || maxPoints;
+    const milestoneProgress = nextLockedReward
+      ? Math.min(100, points / Math.max(1, nextMilestonePoints) * 100)
+      : 100;
 
     container.innerHTML = `
       <header class="relative shrink-0 overflow-hidden border-b border-amber-300/15 bg-[radial-gradient(circle_at_85%_0%,rgba(251,191,36,.18),transparent_38%),linear-gradient(135deg,rgba(69,26,3,.82),rgba(2,6,23,.96)_52%,rgba(46,16,101,.55))] px-3 pb-3 pt-3 shadow-xl">
@@ -98,14 +94,12 @@ export async function renderMedalShopTab() {
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-2xl text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,.6)]" style="font-variation-settings:'FILL' 1">route</span>
               <div>
-                <div class="text-[8px] font-black tracking-[.28em] text-amber-200/60">MEDAL ROAD</div>
                 <h2 class="text-sm font-black tracking-wide text-white">伝説装備へのロードマップ</h2>
               </div>
             </div>
-            <p class="mt-1 text-[9px] font-bold text-slate-400">到達した報酬を順番に受け取ろう。</p>
           </div>
           <div class="shrink-0 rounded-2xl border border-amber-300/30 bg-black/35 px-3 py-2 text-right shadow-[0_0_22px_rgba(251,191,36,.13)]">
-            <div class="text-[7px] font-black tracking-widest text-amber-200/65">TOTAL POINT</div>
+            <div class="text-[10px] font-bold text-amber-100/70">メダルポイント</div>
             <div class="text-xl font-black tabular-nums text-amber-300">${formatNumber(points)}<span class="ml-1 text-[9px]">P</span></div>
           </div>
         </div>
@@ -117,8 +111,8 @@ export async function renderMedalShopTab() {
           </div>
           <div class="min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-[8px] font-black tracking-[.2em] ${claimableRewards.length ? 'text-amber-300' : 'text-cyan-300'}">${claimableRewards.length ? `REWARD READY ×${claimableRewards.length}` : nextLockedReward ? 'NEXT MILESTONE' : 'ROAD COMPLETE'}</span>
-              <span class="text-[9px] font-black tabular-nums text-white">${formatNumber(spotlightReward.points)}P</span>
+              <span class="text-[10px] font-black ${claimableRewards.length ? 'text-amber-300' : 'text-cyan-300'}">${claimableRewards.length ? `受け取り可能 ×${claimableRewards.length}` : nextLockedReward ? '次の報酬' : 'すべて達成'}</span>
+              <span class="text-[10px] font-black tabular-nums text-white">${formatNumber(spotlightReward.points)}P</span>
             </div>
             <div class="mt-0.5 truncate text-[11px] font-black text-white">${spotlightReward.name}</div>
             <div class="mt-1 flex items-start gap-1.5 text-[10px] font-bold leading-snug text-slate-300"><span class="material-symbols-outlined ${spotlightMeta.color}" style="font-size:14px">auto_awesome</span><span>${spotlightReward.specialEffect.description}</span></div>
@@ -126,26 +120,22 @@ export async function renderMedalShopTab() {
           </div>
         </div>
 
-        <div class="relative mt-2.5">
-          <div class="mb-1 flex items-center justify-between text-[8px] font-black text-slate-500"><span>JOURNEY PROGRESS</span><span>${acquiredCount} / ${allRewards.length} 獲得</span></div>
-          <div class="h-2 overflow-hidden rounded-full border border-white/5 bg-black/55">
-            <div class="relative h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-300 to-fuchsia-300 transition-all duration-500" style="width:${overallProgress}%"><span class="absolute right-0 top-1/2 h-2.5 w-2.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-white shadow-[0_0_10px_white]"></span></div>
+        <div class="relative mt-3" aria-label="次の報酬までの進捗">
+          <div class="mb-1.5 flex items-end justify-between gap-3">
+            <span class="text-[11px] font-black text-slate-300">${nextLockedReward ? '次の報酬まで' : 'すべての報酬に到達'}</span>
+            <span class="text-[11px] font-black tabular-nums text-cyan-300">${nextLockedReward ? `${formatNumber(points)} / ${formatNumber(nextMilestonePoints)}P` : 'COMPLETE'}</span>
           </div>
-          <div class="mt-1 flex items-center justify-between text-[7px] font-bold text-slate-600"><span>0P</span><button type="button" data-jump-current class="flex items-center gap-0.5 text-amber-300/80 active:text-amber-200"><span class="material-symbols-outlined text-[11px]">my_location</span>現在地へ</button><span>${formatNumber(maxPoints)}P</span></div>
+          <div class="h-3 overflow-hidden rounded-full border border-white/10 bg-black/55">
+            <div class="relative h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-300 to-fuchsia-300 transition-all duration-500" style="width:${milestoneProgress}%"><span class="absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 translate-x-1/2 rounded-full bg-white shadow-[0_0_10px_white]"></span></div>
+          </div>
+          ${nextLockedReward ? `<div class="mt-1.5 flex items-center justify-between text-[10px] font-bold tabular-nums text-slate-400"><span>${formatNumber(points)}P</span><span>目標 ${formatNumber(nextMilestonePoints)}P</span></div>` : ''}
         </div>
-
-        <details class="relative mt-2 rounded-xl border border-white/5 bg-black/20 px-2 py-1.5">
-          <summary class="cursor-pointer text-[8px] font-bold text-slate-500">ポイント内訳 ・ 所持メダル ${Object.keys(playerMedals).length}枚</summary>
-          <div class="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-4">
-            ${medalCounts.map(rank => `<div class="flex items-center justify-between rounded-lg border border-white/5 bg-slate-950/60 px-2 py-1 text-[8px]"><span style="color:${rank.color}">${rank.name.replace('メダル', '')}</span><span class="font-black tabular-nums text-white">${rank.count} × ${rank.points}P</span></div>`).join('')}
-          </div>
-        </details>
       </header>
 
       <div data-roadmap-scroll class="no-scrollbar min-h-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,.08),transparent_32%)] px-3 py-4">
         <div class="mx-auto max-w-2xl">
           <div class="mb-3 flex items-end justify-between">
-            <div><div class="text-[8px] font-black tracking-[.25em] text-violet-300/60">51 MILESTONES</div><h3 class="text-xs font-black text-white">ポイント達成報酬</h3></div>
+            <h3 class="text-xs font-black text-white">ポイント達成報酬</h3>
           </div>
 
           <ol class="relative" aria-label="メダルポイント報酬ロードマップ">
@@ -208,10 +198,6 @@ export async function renderMedalShopTab() {
           </div>
         </div>
       </div>`;
-
-    container.querySelector('[data-jump-current]')?.addEventListener('click', () => {
-      container.querySelector('[data-current-milestone]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
 
     container.querySelectorAll('[data-medal-reward-id]').forEach(button => {
       button.addEventListener('click', async () => {
