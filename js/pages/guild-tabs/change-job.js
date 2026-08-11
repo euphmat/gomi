@@ -420,7 +420,7 @@ export function renderChangeJobTab() {
         viewMode: 'grid',
         scrollContainer: listContainer,
         itemContainer: measuredItemContainer,
-        gridItemHeight: 126,
+        gridItemHeight: 112,
         gridCols: 4
       });
       listContainer.innerHTML = '';
@@ -453,45 +453,47 @@ export function renderChangeJobTab() {
       });
       const allReqsMet = jobRequirementsMet && currentGold >= cost;
 
-      const row = document.createElement('div');
-      row.className = `group relative flex min-h-[126px] flex-col items-center overflow-hidden rounded-xl border p-1.5 text-center backdrop-blur-md transition-all duration-300 ${
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = `group relative flex min-h-[112px] flex-col items-center justify-center overflow-hidden rounded-xl border px-1.5 py-2 text-center backdrop-blur-md transition-all duration-200 ${
         isCurrent
           ? 'border-emerald-500/50 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-inset ring-emerald-500/20'
           : 'border-slate-700/60 bg-slate-900/60 ring-1 ring-inset ring-white/5'
       }`;
       if (!isCurrent && (isUnlocked || allReqsMet)) {
-        row.classList.add('active:bg-slate-800/80', 'active:border-indigo-500/50', 'cursor-pointer', 'btn-change-job-container');
+        row.classList.add('active:scale-[0.98]', 'active:bg-slate-800/80', 'active:border-indigo-500/50', 'cursor-pointer', 'btn-change-job');
         row.dataset.jobId = job.id;
+        row.setAttribute('aria-label', `${job.name}へ${isUnlocked ? '転職' : '解放して転職'}`);
+      } else {
+        row.disabled = true;
       }
 
-      const buttonHtml = isCurrent
-        ? `<div class="inline-flex items-center justify-center gap-0.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-1 text-[8px] font-black tracking-wide text-emerald-400"><span class="material-symbols-outlined text-[11px]">verified</span>適用中</div>`
+      const statusHtml = isCurrent
+        ? `<span class="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-950/90 text-emerald-400" title="適用中"><span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span></span>`
         : isUnlocked
-          ? `<button class="btn-change-job inline-flex items-center justify-center gap-0.5 rounded-md border border-white/20 bg-gradient-to-br from-indigo-500 to-purple-600 px-2 py-1 text-[8px] font-black tracking-wide text-white shadow-[0_0_8px_rgba(99,102,241,0.3)] transition-all active:scale-95 active:from-indigo-400 active:to-purple-500" data-job-id="${job.id}">
-              <span class="material-symbols-outlined text-[11px]">swap_horiz</span><span data-action-label>転職</span>
-            </button>`
+          ? `<span class="material-symbols-outlined absolute right-1 top-1 z-20 text-[15px] text-indigo-300/70">swap_horiz</span>`
           : allReqsMet
-            ? `<button class="btn-change-job inline-flex items-center justify-center gap-0.5 rounded-md border border-amber-300/40 bg-gradient-to-br from-amber-500 to-orange-600 px-1.5 py-1 text-[8px] font-black text-white shadow-[0_3px_8px_rgba(245,158,11,0.25)] transition-all active:scale-95 active:from-amber-400 active:to-orange-500" data-job-id="${job.id}">
-                <span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">lock_open</span>
-                <span data-action-label>解放 ${formatNumber(cost)}G</span>
-              </button>`
-            : `<button class="inline-flex cursor-not-allowed items-center justify-center gap-0.5 rounded-md border border-slate-700/80 bg-slate-800/80 px-1.5 py-1 text-[8px] font-black text-slate-500 opacity-70" disabled>
-                <span class="material-symbols-outlined text-[11px]">lock</span>
-                <span>条件不足</span>
-              </button>`;
+            ? `<span class="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full border border-amber-400/40 bg-amber-950/90 text-amber-300" title="解放して転職"><span class="material-symbols-outlined text-[13px]">lock_open</span></span>`
+            : `<span class="absolute right-1 top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full border border-slate-700 bg-slate-950/80 text-slate-500" title="条件不足"><span class="material-symbols-outlined text-[13px]">lock</span></span>`;
+      const unlockMetaHtml = !isUnlocked && !isCurrent
+        ? allReqsMet
+          ? `<span class="rounded border border-amber-500/30 bg-amber-500/10 px-1 py-px text-[7px] font-black leading-tight text-amber-300">${formatNumber(cost)}G</span>`
+          : '<span class="text-[7px] font-black leading-tight text-slate-600">条件不足</span>'
+        : '';
 
       row.innerHTML = `
         <div class="absolute inset-0 bg-gradient-to-b ${isCurrent ? 'from-emerald-500/10' : 'from-indigo-500/[0.06]'} to-transparent pointer-events-none"></div>
-        <div class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-0.5 shadow-inner">
+        ${statusHtml}
+        <div class="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-0.5 shadow-inner transition-transform duration-200 group-active:scale-95">
           <img src="${getJobImagePath(job)}" class="h-full w-full object-contain ${isCurrent ? 'scale-110 opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-90 transition-transform duration-300 group-active:scale-110'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
         <div class="relative z-10 mt-1 min-w-0 w-full">
           <h3 class="truncate text-[10px] font-black tracking-wide ${isCurrent ? 'text-emerald-300' : 'text-slate-100'}">${job.name}</h3>
-          <div class="mt-0.5 flex items-center justify-center">
+          <div class="mt-0.5 flex items-center justify-center gap-0.5">
             <span class="rounded border border-slate-600/50 bg-slate-800/80 px-1 py-px text-[7px] font-black leading-tight tracking-tight text-slate-400">JLv.${formatNumber(savedLevel)}</span>
+            ${unlockMetaHtml}
           </div>
         </div>
-        <div class="relative z-10 mt-auto flex min-h-[22px] w-full items-end justify-center pt-1.5">${buttonHtml}</div>
       `;
       listContainer.appendChild(row);
       });
@@ -502,21 +504,14 @@ export function renderChangeJobTab() {
 
     listContainer.addEventListener('click', async (e) => {
       const btn = e.target.closest('.btn-change-job');
-      const row = e.target.closest('.btn-change-job-container');
-      let jobId = null;
-      if (btn) jobId = btn.dataset.jobId;
-      else if (row) jobId = row.dataset.jobId;
+      const jobId = btn?.dataset.jobId;
       if (!jobId) return;
 
       const jobDef = JOBS[jobId];
       if (!jobDef || char.jobId === jobId) return;
 
-      const targetBtn = btn || row.querySelector('.btn-change-job');
-      if (targetBtn) {
-        targetBtn.disabled = true;
-        const span = targetBtn.querySelector('[data-action-label]');
-        if (span) span.textContent = '転職中...';
-      }
+      btn.disabled = true;
+      btn.classList.add('opacity-60');
 
       await changeJob(char, jobDef);
     });
