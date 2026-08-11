@@ -1,8 +1,19 @@
-export const APP_VERSION = '0.1.44';
+export const APP_VERSION = '0.1.45';
 export const APP_RELEASE_DATE = '2026.08.11';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.11',
+    version: '0.1.45',
+    items: [
+      'ホームタウンに、CPUと交互にモンスターを積み上げる「モンスタータワー」を追加しました。',
+      '全モンスターを抽選対象にし、全種類が一巡するまで同じモンスターが再登場しない専用デッキを追加しました。',
+      'モンスター画像の透明領域から形状を自動解析し、Matter.jsによる摩擦・回転・衝突を使った物理演算で積み重なるようにしました。',
+      'CPUは難易度に応じて複数の位置と角度を内部シミュレーションし、塔を崩しにくい配置を判断します。',
+      'モンスタータワーの難易度別勝利報酬は、ほかのホームタウンゲームと共有されます。',
+    ],
+  },
   {
     date: '2026.08.11',
     version: '0.1.44',

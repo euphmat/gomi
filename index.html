@@ -114,6 +114,15 @@
   <!-- TailwindCSS v4 Browser CDN -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
+  <!-- Monster Tower physics (the game has a built-in offline fallback) -->
+  <script id="matter-js-runtime"
+          defer
+          src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"
+          integrity="sha384-ZRKYEXtLBVeqs9z1WxyeKutCqnkqolS/r1EUWuoUpG4ZKbnRAIXnHhHdnNuiB6CL"
+          crossorigin="anonymous"
+          onload="this.dataset.ready='true'"
+          onerror="this.dataset.ready='error'"></script>
+
   <!-- Google Fonts: DotGothic16 + Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
