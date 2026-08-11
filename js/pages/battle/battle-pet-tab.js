@@ -5,7 +5,6 @@
  */
 
 import { GameDB } from '../../data/database.js';
-import { isScreenLocked } from '../../utils/screen-lock.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 import { getRanchLevelInfo } from '../../data/stat-calculator.js';
@@ -265,96 +264,6 @@ export async function renderBattlePetTab(tabContent, targetEntity, monsterKills,
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
 
-  if (tabContent._petSyncTimer) {
-    clearInterval(tabContent._petSyncTimer);
-    tabContent._petSyncTimer = null;
-  }
-
-  // 餌UIがない未捕獲モンスターでは所持品の監視も不要。
-  if (variants.length === 0) return;
-
-  // --- リアルタイム反映 (ポーリング) ---
-  let syncInProgress = false;
-  const petSyncTimer = setInterval(async () => {
-    if (!document.body.contains(container)) {
-      clearInterval(petSyncTimer);
-      if (tabContent._petSyncTimer === petSyncTimer) tabContent._petSyncTimer = null;
-      return;
-    }
-    if (document.hidden || isScreenLocked()) return;
-    if (syncInProgress) return;
-    syncInProgress = true;
-
-    try {
-      const allInvSync = await GameDB.getAllInventory();
-      const newInvMap = {};
-      if (allInvSync) {
-        allInvSync.forEach(item => newInvMap[item.id] = item.quantity);
-      }
-    
-    // update inventoryMap reference for click handlers
-    Object.keys(newInvMap).forEach(k => inventoryMap[k] = newInvMap[k]);
-
-    for (const variant of variants) {
-      const monsterDef = MONSTERS.find(m => m.id === targetEntity.id);
-      if (!monsterDef) continue;
-      const validDrops = monsterDef.drops || [];
-      
-      for (const drop of validDrops) {
-        const quantity = newInvMap[drop.itemId] || 0;
-        const ownedSpan = container.querySelector(`#battle-pet-mat-owned-${variant.key}-${drop.itemId}`);
-        if (ownedSpan && parseInt(ownedSpan.textContent) !== quantity) {
-          ownedSpan.textContent = quantity;
-          ownedSpan.className = quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500';
-
-          const itemRow = container.querySelector(`#battle-pet-mat-row-${variant.key}-${drop.itemId}`);
-          if (itemRow) {
-            const slider = itemRow.querySelector('.quantity-slider');
-            const input = itemRow.querySelector('.quantity-input');
-            const btnFeed = itemRow.querySelector('.btn-feed');
-            
-            if (slider) slider.max = quantity || 1;
-            if (input) input.max = quantity || 1;
-            
-            if (!globalSliderManualFlags[drop.itemId] && quantity > 0) {
-              if (slider) slider.value = quantity;
-              if (input) input.value = quantity;
-            } else {
-              if (slider && parseInt(slider.value) > quantity) slider.value = quantity || 1;
-              if (input && parseInt(input.value) > quantity) input.value = quantity || 1;
-            }
-            
-            if (btnFeed) {
-              btnFeed.disabled = (quantity === 0);
-            }
-            const parentFlex = input ? input.closest('.battle-quantity-control') : null;
-            if (parentFlex) {
-              if (quantity === 0) {
-                parentFlex.classList.add('opacity-50', 'pointer-events-none');
-                input.disabled = true;
-                if (slider) slider.disabled = true;
-              } else {
-                parentFlex.classList.remove('opacity-50', 'pointer-events-none');
-                input.disabled = false;
-                if (slider) slider.disabled = false;
-              }
-            }
-            const sliderProgress = itemRow.querySelector('.slider-progress');
-            if (sliderProgress) {
-              const currentVal = parseInt(input ? input.value : 1) || 1;
-              const maxFeed = quantity || 1;
-              const percentage = maxFeed > 1 ? ((currentVal - 1) / (maxFeed - 1)) * 100 : 100;
-              sliderProgress.style.width = `${percentage}%`;
-            }
-          }
-        }
-      }
-    }
-    } finally {
-      syncInProgress = false;
-    }
-  }, 500);
-  tabContent._petSyncTimer = petSyncTimer;
 }
 
 /**

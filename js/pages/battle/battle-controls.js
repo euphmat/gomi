@@ -8,6 +8,7 @@ import { activateScreenLock } from '../../utils/screen-lock.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 
 const SPEED_OPTIONS = [1, 2, 3, 4, 5];
+const MONSTERS_BY_ID = new Map(MONSTERS.map(monster => [monster.id, monster]));
 
 const CONTROL_SETTINGS = [
   {
@@ -118,8 +119,7 @@ function getFloorMonsterIds(floor) {
   return [...monsterIds];
 }
 
-function getOwnedMonsterState(ranchData, monsterId) {
-  const ranches = Object.values(ranchData || {});
+function getOwnedMonsterState(ranches, monsterId) {
   return {
     companion: ranches.some(ranch => Boolean(ranch?.[monsterId])),
     legendary: ranches.some(ranch => Boolean(ranch?.[`${monsterId}_legendary`])),
@@ -177,6 +177,14 @@ export function syncBattleControlsFloor(container, currentFloorNum) {
 
 function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors, ranchData, playerMedals }) {
   if (!canJumpFloors || !dungeonDef?.floors?.length) return '';
+  const ranches = Object.values(ranchData || {});
+  const ownedMonsterStates = new Map();
+  const getOwnedState = monsterId => {
+    if (!ownedMonsterStates.has(monsterId)) {
+      ownedMonsterStates.set(monsterId, getOwnedMonsterState(ranches, monsterId));
+    }
+    return ownedMonsterStates.get(monsterId);
+  };
 
   const floorButtons = dungeonDef.floors.map((floor, index) => {
     const floorLevel = Number(floor.level);
@@ -184,9 +192,9 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors, ra
     const isBossFloor = index === dungeonDef.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
     const visibleMonsters = monsterIds.slice(0, 4).map(monsterId => {
-      const monster = MONSTERS.find(item => item.id === monsterId);
+      const monster = MONSTERS_BY_ID.get(monsterId);
       const image = monster?.image || `./assets/monster/${monsterId}.webp`;
-      const owned = getOwnedMonsterState(ranchData, monsterId);
+      const owned = getOwnedState(monsterId);
       const hasMedal = Object.prototype.hasOwnProperty.call(playerMedals || {}, monsterId);
       return `
         <span class="w-7 shrink-0" title="${monster?.name || monsterId}｜仲間: ${owned.companion ? '獲得済み' : '未獲得'}・伝説: ${owned.legendary ? '獲得済み' : '未獲得'}・メダル: ${hasMedal ? '獲得済み' : '未獲得'}">

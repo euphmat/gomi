@@ -9,7 +9,13 @@ import { getEquippedMedalRewardItems } from '../../utils/medal-equipment-effects
  * - DOM work is requested only while the Statistics tab is visible
  */
 
-const STAT_RENDER_INTERVAL = 800;
+const STAT_RENDER_INTERVAL = 1200;
+const AUTO_STAT_RENDER_INTERVAL = 2000;
+const PARTY_OVERVIEW_KEY = 'party:overview';
+
+const getRenderInterval = manager => manager?.isAutoBattle
+  ? AUTO_STAT_RENDER_INTERVAL
+  : STAT_RENDER_INTERVAL;
 
 const now = () => globalThis.performance?.now?.() ?? Date.now();
 
@@ -406,7 +412,12 @@ function renderJobIcon(manager, stat, sizeClass = 'h-9 w-9') {
 }
 
 function renderCharacterTabs(manager, stats, selectedKey) {
-  return `<div class="grid shrink-0 grid-cols-4 gap-1" role="tablist" aria-label="キャラクター統計">
+  const overviewSelected = selectedKey === PARTY_OVERVIEW_KEY;
+  return `<div class="grid shrink-0 grid-cols-5 gap-1" role="tablist" aria-label="パーティー統計">
+    <button type="button" role="tab" data-battle-stat-overview aria-selected="${overviewSelected}" class="flex min-w-0 flex-col items-center gap-1 rounded-lg border px-1 py-1.5 transition-colors ${overviewSelected ? 'border-amber-300/80 bg-amber-500/20 text-white shadow-[0_0_10px_rgba(251,191,36,.18)]' : 'border-slate-600/70 bg-slate-950/60 text-slate-300'}">
+      <span class="flex h-8 w-8 items-center justify-center rounded-lg border ${overviewSelected ? 'border-amber-300/50 bg-amber-950/70 text-amber-200' : 'border-slate-600/70 bg-slate-900/80 text-slate-300'}"><span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1">groups</span></span>
+      <span class="w-full truncate text-[10px] font-black">全体</span>
+    </button>
     ${stats.map((stat, index) => {
       const selected = stat.key === selectedKey;
       return `<button type="button" role="tab" data-battle-stat-character="${index}" aria-selected="${selected}" class="flex min-w-0 flex-col items-center gap-1 rounded-lg border px-1 py-1.5 transition-colors ${selected ? 'border-cyan-300/80 bg-cyan-500/25 text-white shadow-[0_0_10px_rgba(34,211,238,.2)]' : 'border-slate-600/70 bg-slate-950/60 text-slate-300'}">
@@ -414,6 +425,83 @@ function renderCharacterTabs(manager, stats, selectedKey) {
         <span class="w-full truncate text-[10px] font-black">${escapeHtml(stat.name)}</span>
       </button>`;
     }).join('')}
+  </div>`;
+}
+
+const PARTY_COMPARISON_METRICS = [
+  { key: 'damageDealt', label: '与ダメージ', shortLabel: '総与ダメージ', icon: 'swords', color: 'text-rose-300', barColor: '#fb7185' },
+  { key: 'healingDone', label: 'HP回復', shortLabel: '総HP回復', icon: 'healing', color: 'text-emerald-300', barColor: '#34d399' },
+  { key: 'prevented', label: 'ダメージ軽減', shortLabel: '総軽減', icon: 'shield', color: 'text-cyan-300', barColor: '#22d3ee' },
+  { key: 'damageTaken', label: '被ダメージ', shortLabel: '総被ダメージ', icon: 'heart_broken', color: 'text-orange-300', barColor: '#fb923c' },
+  { key: 'mpRestored', label: 'MP回復', shortLabel: '総MP回復', icon: 'water_drop', color: 'text-sky-300', barColor: '#38bdf8' },
+  { key: 'actions', label: '行動回数', shortLabel: '総行動回数', icon: 'directions_run', color: 'text-violet-300', barColor: '#a78bfa', suffix: '回' }
+];
+
+function renderPartyComparisonChart(manager, stats, metric) {
+  const values = stats.map(stat => Math.max(0, Number(stat[metric.key]) || 0));
+  const total = values.reduce((sum, value) => sum + value, 0);
+  const maximum = Math.max(0, ...values);
+
+  return `<section class="rounded-xl border border-slate-600/70 bg-slate-950/70 p-2.5" data-party-comparison="${metric.key}">
+    <div class="flex items-center gap-1.5">
+      <span class="material-symbols-outlined ${metric.color}" style="font-size:15px">${metric.icon}</span>
+      <h3 class="text-[11px] font-black text-slate-100">${metric.label}</h3>
+      <span class="ml-auto font-mono text-[11px] font-black ${metric.color}">${compactNumber(total)}${metric.suffix || ''}</span>
+    </div>
+    <div class="mt-2 space-y-1.5" role="img" aria-label="キャラクター別${metric.label}比較">
+      ${stats.map((stat, index) => {
+        const value = values[index];
+        const share = total > 0 ? value / total * 100 : 0;
+        const width = maximum > 0 ? value / maximum * 100 : 0;
+        return `<div class="grid min-w-0 grid-cols-[minmax(60px,25%)_minmax(0,1fr)_auto] items-center gap-1.5" data-party-comparison-character="${index}">
+          <div class="flex min-w-0 items-center gap-1">
+            ${renderJobIcon(manager, stat, 'h-5 w-5')}
+            <span class="truncate text-[9px] font-bold text-slate-200">${escapeHtml(stat.name)}</span>
+          </div>
+          <div class="h-2.5 overflow-hidden rounded-full border border-white/[0.06] bg-slate-800/90" title="${formatPercent(share)}">
+            <div class="h-full min-w-0 rounded-full transition-[width] duration-300" style="width:${width.toFixed(1)}%;background:${metric.barColor};box-shadow:0 0 7px ${metric.barColor}80"></div>
+          </div>
+          <div class="min-w-[55px] text-right"><span class="font-mono text-[9px] font-black text-white">${compactNumber(value)}${metric.suffix || ''}</span><span class="ml-1 font-mono text-[8px] text-slate-400">${formatPercent(share)}</span></div>
+        </div>`;
+      }).join('')}
+    </div>
+  </section>`;
+}
+
+function renderPartyOverview(manager, stats, elapsedMs) {
+  const totals = Object.fromEntries(PARTY_COMPARISON_METRICS.map(metric => [
+    metric.key,
+    stats.reduce((sum, stat) => sum + Math.max(0, Number(stat[metric.key]) || 0), 0)
+  ]));
+  const elapsedSeconds = Math.max(1, elapsedMs / 1000);
+  const summaryCells = PARTY_COMPARISON_METRICS.map(metric => {
+    let detail = `${formatDecimal(totals[metric.key] / elapsedSeconds)}/秒`;
+    if (metric.key === 'actions') detail = `${formatDecimal(ratePerMinute(totals.actions, elapsedMs))}/分`;
+    else if (metric.key === 'damageTaken') detail = `${stats.length}人の合計`;
+    return renderOverviewCell(
+      metric.shortLabel,
+      `${compactNumber(totals[metric.key])}${metric.suffix || ''}`,
+      detail,
+      metric.color,
+      metric.icon
+    );
+  }).join('');
+
+  return `<div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list data-party-overview>
+    <section class="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-950/35 via-slate-950/80 to-cyan-950/30 p-2.5">
+      <div class="flex items-center gap-2">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/40 bg-amber-950/60 text-amber-200"><span class="material-symbols-outlined" style="font-size:24px;font-variation-settings:'FILL' 1">groups</span></div>
+        <div class="min-w-0 flex-1"><h2 class="text-[14px] font-black text-white">パーティー全体</h2><p class="text-[9px] font-bold text-slate-300">${stats.length}名の戦闘貢献を比較</p></div>
+        <div class="text-right"><div class="text-[9px] font-bold text-slate-400">計測時間</div><div class="font-mono text-[11px] font-bold text-slate-200">${formatSeconds(elapsedMs)}</div></div>
+      </div>
+      <div class="mt-2.5 grid grid-cols-3 gap-1.5">${summaryCells}</div>
+    </section>
+    <div class="flex items-end gap-2 px-0.5 pt-1">
+      <div><div class="flex items-center gap-1 text-[11px] font-black text-slate-200"><span class="material-symbols-outlined text-amber-300" style="font-size:14px">leaderboard</span>キャラクター比較</div><p class="mt-0.5 text-[8px] text-slate-400">棒の長さは項目内の最大値、%はパーティー合計に占める割合</p></div>
+    </div>
+    <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2" data-party-comparison-charts>
+      ${PARTY_COMPARISON_METRICS.map(metric => renderPartyComparisonChart(manager, stats, metric)).join('')}
+    </div>
   </div>`;
 }
 
@@ -548,8 +636,13 @@ function renderStatistics(manager) {
   const telemetry = manager.battleTelemetry;
   const elapsedMs = telemetry.elapsedMs();
   const stats = telemetry.getPartyStats(manager.party);
-  const selected = stats.find(stat => stat.key === manager.battleStatisticsCharacterKey) || stats[0];
-  if (!selected) return '<div class="flex h-full items-center justify-center text-[10px] text-slate-500">パーティーが存在しません</div>';
+  if (!stats.length) return '<div class="flex h-full items-center justify-center text-[10px] text-slate-500">パーティーが存在しません</div>';
+  const selectedKey = manager.battleStatisticsCharacterKey || PARTY_OVERVIEW_KEY;
+  const selected = stats.find(stat => stat.key === selectedKey);
+  if (!selected) {
+    manager.battleStatisticsCharacterKey = PARTY_OVERVIEW_KEY;
+    return `${renderCharacterTabs(manager, stats, PARTY_OVERVIEW_KEY)}${renderPartyOverview(manager, stats, elapsedMs)}`;
+  }
   manager.battleStatisticsCharacterKey = selected.key;
 
   const skills = [...selected.skills.values()].sort((a, b) => {
@@ -584,7 +677,7 @@ export function renderBattleStatisticsTab(manager, force = false) {
     : (container.querySelector('[data-battle-statistics-list]')?.scrollTop || 0);
   manager._battleStatisticsResetScroll = false;
   const lastRender = Number(container.dataset.lastBattleStatisticsRender || 0);
-  if (!force && now() - lastRender < STAT_RENDER_INTERVAL) return;
+  if (!force && now() - lastRender < getRenderInterval(manager)) return;
 
   container.dataset.lastBattleStatisticsRender = String(now());
   container.innerHTML = `<div class="flex h-full min-h-0 flex-col" data-battle-statistics-root>
@@ -593,6 +686,12 @@ export function renderBattleStatisticsTab(manager, force = false) {
 
   const list = container.querySelector('[data-battle-statistics-list]');
   if (list && previousScroll > 0) list.scrollTop = previousScroll;
+  container.querySelector('[data-battle-stat-overview]')?.addEventListener('click', () => {
+    if (manager.battleStatisticsCharacterKey === PARTY_OVERVIEW_KEY) return;
+    manager.battleStatisticsCharacterKey = PARTY_OVERVIEW_KEY;
+    manager._battleStatisticsResetScroll = true;
+    renderBattleStatisticsTab(manager, true);
+  });
   container.querySelectorAll('[data-battle-stat-character]').forEach(button => {
     button.addEventListener('click', () => {
       const index = Number(button.dataset.battleStatCharacter);
@@ -608,12 +707,16 @@ export function renderBattleStatisticsTab(manager, force = false) {
 export function scheduleBattleStatisticsRender(manager) {
   if (manager.currentTab !== 'stats' || document.hidden || manager.isTabInteracting) return;
   if (manager._battleStatisticsRenderTimer) return;
+  const interval = getRenderInterval(manager);
   manager._battleStatisticsRenderTimer = window.setTimeout(() => {
     manager._battleStatisticsRenderTimer = null;
-    if (manager.currentTab === 'stats' && manager.container?.isConnected) {
+    if (manager.currentTab === 'stats'
+        && !document.hidden
+        && !manager.isTabInteracting
+        && manager.container?.isConnected) {
       renderBattleStatisticsTab(manager);
     }
-  }, STAT_RENDER_INTERVAL);
+  }, interval);
 }
 
 export function cleanupBattleStatistics(manager) {

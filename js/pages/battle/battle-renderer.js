@@ -545,13 +545,16 @@ export const rendererMethods = {
 
     // Refresh tab content only when the target character changes or auto-battle toggles
     const targetCharForTab = this.isAutoBattle ? this.selectedPartyMember : this.activeCharacter;
-    if (this._lastRenderedTabChar !== targetCharForTab || this._lastRenderedAutoBattle !== this.isAutoBattle) {
+    const targetCharacterChanged = this._lastRenderedTabChar !== targetCharForTab;
+    const autoBattleChanged = this._lastRenderedAutoBattle !== this.isAutoBattle;
+    if (targetCharacterChanged || autoBattleChanged) {
       this._lastRenderedTabChar = targetCharForTab;
       this._lastRenderedAutoBattle = this.isAutoBattle;
-      // Yield slightly so that current animations (popups, ATB) aren't interrupted by heavy DOM rendering
-      setTimeout(() => {
-        this.renderTabContent();
-      }, 0);
+      // Actor turns affect only the skill commands. Collection/control tabs
+      // remain static during combat; statistics have their own throttled feed.
+      if (autoBattleChanged || this.currentTab === 'skill') {
+        this.scheduleTabContentRender();
+      }
     }
   },
 

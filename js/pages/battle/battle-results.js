@@ -366,6 +366,8 @@ export const resultMethods = {
 
   async saveDeferredData() {
     if (!this._needsSave) return;
+    const resourcesChanged = this.currentGold !== undefined
+      || Object.keys(this._pendingItemDrops || {}).length > 0;
     if (this.discoveredMonsters) await GameDB.setGameState('discovered_monsters', this.discoveredMonsters);
     if (this.monsterKills) await GameDB.setGameState('monster_kills', this.monsterKills);
     if (this._pendingRanchSave) {
@@ -397,6 +399,12 @@ export const resultMethods = {
       this._pendingEquipmentDrops = [];
     }
     this._needsSave = false;
+    // Collection tabs read resources once when rendered. Invalidate their
+    // snapshot after rewards are persisted instead of polling IndexedDB while
+    // combat is running.
+    if (resourcesChanged && ['pet', 'medal'].includes(this.currentTab)) {
+      this.elements?.tabContent?.removeAttribute('data-rendered-tab');
+    }
   },
 
   async endBattle(isWin, text, showModal = true) {

@@ -5,7 +5,6 @@
  */
 
 import { GameDB } from '../../data/database.js';
-import { isScreenLocked } from '../../utils/screen-lock.js';
 import { MATERIALS } from '../../definitions/materials.js';
 import { MEDAL_RANKS, getMedalImageFilter } from '../../definitions/medal-definitions.js';
 import { formatNumber } from '../../utils/format.js';
@@ -17,12 +16,9 @@ import { formatNumber } from '../../utils/format.js';
  * @param {object} playerMedals - プレイヤーメダルマップ
  * @param {number} currentGold - 現在のゴールド
  * @param {Function} onMedalUpdated - メダル更新時コールバック (updatedMedals, updatedGold) => void
+ * @param {?Array<object>} inventoryItems - 呼び出し元で取得済みの所持品
  */
-export async function renderBattleMedalTab(tabContent, targetEntity, playerMedals, currentGold, onMedalUpdated) {
-  if (tabContent._medalSyncTimer) {
-    clearInterval(tabContent._medalSyncTimer);
-  }
-
+export async function renderBattleMedalTab(tabContent, targetEntity, playerMedals, currentGold, onMedalUpdated, inventoryItems = null) {
   if (!targetEntity || !targetEntity.id) {
     tabContent.innerHTML = '<div class="text-xs text-slate-500 flex items-center justify-center h-full">対象が選択されていません</div>';
     return;
@@ -117,7 +113,7 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
 
     // 素材チェック
     let canCraft = true;
-    const allInv = await GameDB.getAllInventory();
+    const allInv = inventoryItems || await GameDB.getAllInventory();
     (allInv || []).forEach(item => { inventoryMap[item.id] = item.quantity || 0; });
 
     const materialRequirements = materialDrops.map(drop => {
@@ -286,75 +282,6 @@ export async function renderBattleMedalTab(tabContent, targetEntity, playerMedal
   tabContent.innerHTML = '';
   tabContent.appendChild(container);
 
-  // --- リアルタイム反映 (ポーリング) ---
-  let syncInProgress = false;
-  const medalSyncTimer = setInterval(async () => {
-    if (!document.body.contains(container)) {
-      clearInterval(medalSyncTimer);
-      if (tabContent._medalSyncTimer === medalSyncTimer) tabContent._medalSyncTimer = null;
-      return;
-    }
-
-    if (document.hidden || isScreenLocked()) return;
-    if (isMaxRank || !nextRank) return;
-    if (syncInProgress) return;
-    syncInProgress = true;
-
-    try {
-      const [gold, allInv] = await Promise.all([
-        GameDB.getGameState('gold'),
-        GameDB.getAllInventory()
-      ]);
-    
-    let currentGoldSync = gold || 0;
-    currentGold = currentGoldSync; // Update upper scope
-
-    const newInvMap = {};
-    (allInv || []).forEach(item => { newInvMap[item.id] = item.quantity || 0; });
-    
-    const materialDrops = targetEntity.drops || [];
-    const goldCost = (targetEntity.rewards?.gold || 0) * nextRank.goldMultiplier;
-    
-    let canCraftSync = true;
-    materialDrops.forEach(drop => {
-      const owned = newInvMap[drop.itemId] || 0;
-      const required = nextRank.materialQty;
-      const sufficient = owned >= required;
-      if (!sufficient) canCraftSync = false;
-      
-      const row = container.querySelector(`#battle-medal-mat-row-${drop.itemId}`);
-      const valEl = container.querySelector(`#battle-medal-mat-owned-${drop.itemId}`);
-      if (row && valEl) {
-        row.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${sufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'}`;
-        valEl.className = `text-[11px] font-black ${sufficient ? 'text-emerald-400' : 'text-red-400'}`;
-        valEl.textContent = formatNumber(owned);
-      }
-      inventoryMap[drop.itemId] = owned; // update outer scope
-    });
-    
-    const goldSufficient = currentGoldSync >= goldCost;
-    if (!goldSufficient) canCraftSync = false;
-    
-    const goldRow = container.querySelector('#battle-medal-gold-row');
-    const goldValEl = container.querySelector('#battle-medal-gold-owned');
-    if (goldRow && goldValEl) {
-      goldRow.className = `flex items-center justify-between p-1.5 rounded-lg border transition-colors ${goldSufficient ? 'bg-slate-950/40 border-slate-800/50' : 'bg-red-950/20 border-red-800/30'}`;
-      goldValEl.className = `text-[11px] font-black ${goldSufficient ? 'text-emerald-400' : 'text-red-400'}`;
-      goldValEl.textContent = formatNumber(currentGoldSync);
-    }
-    
-    const btn = container.querySelector('#battle-medal-craft-btn');
-    if (btn && !btn.disabled && !canCraftSync || btn && btn.disabled && canCraftSync) {
-      // update style
-      btn.disabled = !canCraftSync;
-      btn.className = `battle-medal-button w-full py-2 rounded-lg text-[11px] font-black tracking-wide transition-all duration-200 ${canCraftSync ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white border border-amber-400/40 shadow-[0_0_12px_rgba(245,158,11,0.3)] active:from-amber-500 active:to-amber-400 active:scale-[0.98] cursor-pointer' : 'bg-slate-800/60 text-slate-500 border border-slate-700/40 cursor-not-allowed'}`;
-    }
-
-    } finally {
-      syncInProgress = false;
-    }
-  }, 500);
-  tabContent._medalSyncTimer = medalSyncTimer;
 }
 
 /**

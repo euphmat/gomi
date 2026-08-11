@@ -120,13 +120,21 @@ const enemy = {
   telemetry.recordDamage(hero, enemy, 12500, { id: 'slash', name: '斬撃', type: 'active', icon: 'swords' });
   telemetry.recordEffect(hero, { id: 'guard', name: 'ガード', type: 'passive', icon: 'shield' });
   telemetry.recordPrevented(hero, hero, 10, { id: 'guard', name: 'ガード', type: 'passive', icon: 'shield' });
+  const listeners = {};
   const container = {
     dataset: {}, innerHTML: '',
-    querySelector: () => null,
+    querySelector: selector => selector === '[data-battle-stat-overview]'
+      ? { addEventListener: (_event, handler) => { listeners.overview = handler; } }
+      : null,
     querySelectorAll: () => []
   };
   const manager = {
-    party: [{ ...hero, jobId: 'knight', equipment: { rightHand: 'medal-sword' } }, { ...healer, jobId: 'priest' }],
+    party: [
+      { ...hero, jobId: 'knight', equipment: { rightHand: 'medal-sword' } },
+      { ...healer, jobId: 'priest' },
+      { ...hero, id: 'ranger', elementId: 'party-2', name: '狩人', jobId: 'ranger', _skillCache: new Map() },
+      { ...hero, id: 'mage', elementId: 'party-3', name: '魔術師', jobId: 'mage', _skillCache: new Map() }
+    ],
     enemies: [enemy], battleTelemetry: telemetry,
     equipMap: new Map([['medal-sword', {
       id: 'medal-sword', name: '統計のメダル剣', icon: 'swords',
@@ -139,7 +147,23 @@ const enemy = {
     }
   };
   renderBattleStatisticsTab(manager, true);
-  assert((container.innerHTML.match(/data-battle-stat-character=/g) || []).length === 2,
+  assert(container.innerHTML.includes('data-battle-stat-overview')
+      && container.innerHTML.indexOf('data-battle-stat-overview') < container.innerHTML.indexOf('data-battle-stat-character='),
+    'party overview tab was not rendered before character tabs');
+  assert(container.innerHTML.includes('data-party-overview')
+      && (container.innerHTML.match(/data-party-comparison=/g) || []).length === 6
+      && (container.innerHTML.match(/data-party-comparison-character=/g) || []).length === 24
+      && container.innerHTML.includes('キャラクター比較')
+      && container.innerHTML.includes('与ダメージ')
+      && container.innerHTML.includes('HP回復'),
+    'party comparison charts were not rendered');
+  assert(container.innerHTML.includes('12.5k')
+      && container.innerHTML.includes('100.0%'),
+    'party comparison values or contribution percentages were not rendered');
+
+  manager.battleStatisticsCharacterKey = 'party:hero';
+  renderBattleStatisticsTab(manager, true);
+  assert((container.innerHTML.match(/data-battle-stat-character=/g) || []).length === 4,
     'character tabs were not rendered');
   assert(container.innerHTML.includes('./assets/job/job_knight.webp'),
     'current job image was not rendered in statistics');
@@ -177,6 +201,10 @@ const enemy = {
       && container.innerHTML.includes('防御')
       && container.innerHTML.includes('50.0%'),
     'skill purpose activation pie chart was not rendered');
+  listeners.overview();
+  assert(manager.battleStatisticsCharacterKey === 'party:overview'
+      && container.innerHTML.includes('data-party-overview'),
+    'party overview tab did not switch back from a character tab');
 }
 
 console.log('battle statistics tests passed');

@@ -136,6 +136,8 @@ class BattleManager {
     this._tabInteractionTimer = null;
     this._battleReady = false;
     this._pendingTabRender = false;
+    this._scheduledTabRenderTimer = null;
+    this._lastSkillRenderKey = null;
     this.battleTelemetry = new BattleTelemetry({
       onChange: () => scheduleBattleStatisticsRender(this)
     });
@@ -606,6 +608,8 @@ class BattleManager {
 
   cleanupBattleDOM() {
     cleanupBattleStatistics(this);
+    clearTimeout(this._scheduledTabRenderTimer);
+    this._scheduledTabRenderTimer = null;
     clearTimeout(this._tabInteractionTimer);
     this._tabInteractionTimer = null;
     this.isTabInteracting = false;
@@ -971,21 +975,26 @@ class BattleManager {
   }
 
   renderTabContent(force = false) {
-    // Polling belongs only to its visible tab. Stop it immediately on a tab
-    // change instead of retaining detached containers until the next tick.
-    const tabBodies = [this.elements.tabContent, ...this.elements.tabContent.querySelectorAll('.sub-tab-body')];
-    tabBodies.forEach(body => {
-      if (this.currentTab !== 'pet' && body._petSyncTimer) {
-        clearInterval(body._petSyncTimer);
-        body._petSyncTimer = null;
-      }
-      if (this.currentTab !== 'medal' && body._medalSyncTimer) {
-        clearInterval(body._medalSyncTimer);
-        body._medalSyncTimer = null;
-      }
-    });
+    if (this.currentTab !== 'stats') cleanupBattleStatistics(this);
 
     if (this.currentTab === 'skill') {
+      const p = this.isAutoBattle
+        ? (this.selectedPartyMember || this.party.find(char => !char.isDead))
+        : (this.activeCharacter || this.selectedPartyMember || this.party.find(char => !char.isDead));
+      const canAct = this.isAutoBattle || this.activeCharacter === p;
+      const autoState = p ? this.autoSkillStates[p.id] || {} : {};
+      const skillRenderKey = [
+        p?.id || 'none',
+        this.isAutoBattle ? 'auto' : 'manual',
+        canAct ? 'act' : 'view',
+        this.skillSubTab,
+        p?.mp?.current ?? 0,
+        p?.activeAilment?.type || '',
+        Object.entries(autoState).sort(([a], [b]) => a.localeCompare(b)).map(([id, enabled]) => `${id}:${enabled}`).join(',')
+      ].join('|');
+      if (this.elements.tabContent.dataset.renderedTab === 'skill'
+          && this._lastSkillRenderKey === skillRenderKey) return;
+      this._lastSkillRenderKey = skillRenderKey;
       this.elements.tabContent.dataset.renderedTab = 'skill';
       this.renderSkillTab();
     } else if (this.currentTab === 'stats') {
@@ -1029,23 +1038,27 @@ class BattleManager {
     } else if (this.currentTab === 'medal') {
       const targetId = this.subTabSelectedMonsterId || 'none';
       const monsterScope = this.isAutoBattle ? 'auto-dungeon' : 'manual';
-      const now = Date.now();
-      const lastRendered = parseInt(this.elements.tabContent.dataset.lastMedalRenderTime || '0');
 
       if (!force &&
           this.elements.tabContent.dataset.renderedTab === 'medal' &&
           this.elements.tabContent.dataset.medalTargetId === targetId &&
           this.elements.tabContent.dataset.medalMonsterScope === monsterScope) {
-        if (this.isTabInteracting) return;
-        if (now - lastRendered < 1000) return;
+        return;
       }
       
       this.elements.tabContent.dataset.renderedTab = 'medal';
       this.elements.tabContent.dataset.medalTargetId = targetId;
       this.elements.tabContent.dataset.medalMonsterScope = monsterScope;
-      this.elements.tabContent.dataset.lastMedalRenderTime = now;
       this.renderMedalTab();
     }
+  }
+
+  scheduleTabContentRender() {
+    if (this._scheduledTabRenderTimer != null) return;
+    this._scheduledTabRenderTimer = setTimeout(() => {
+      this._scheduledTabRenderTimer = null;
+      if (!document.hidden && this.container?.isConnected) this.renderTabContent();
+    }, 0);
   }
 
   renderSubTabsUI(medalAvailability = {}) {
@@ -1064,8 +1077,6 @@ class BattleManager {
 
     // Pet / Medal render asynchronously. Give every render its own body so a
     // slower, older render can only update a detached node after a tab change.
-    if (previousBody?._petSyncTimer) clearInterval(previousBody._petSyncTimer);
-    if (previousBody?._medalSyncTimer) clearInterval(previousBody._medalSyncTimer);
     const body = document.createElement('div');
     body.className = 'sub-tab-body flex-1 min-h-0 overflow-y-auto custom-scrollbar relative bg-transparent pr-1';
     // The Pet / Medal renderers receive this inner body and use its marker to
@@ -1259,7 +1270,6 @@ class BattleManager {
 
     this.currentGold = latestGold || 0;
     const medalAvailability = this.getDungeonMedalAvailability(allInventory, this.currentGold);
-    this.updateTabStyles();
 
     const body = this.renderSubTabsUI(medalAvailability);
     const targetEntity = this.getSubTabTargetEntity();
@@ -1281,7 +1291,8 @@ class BattleManager {
             this.renderTabContent(true);
           }
         }, 500);
-      }
+      },
+      allInventory
     );
   }
 
@@ -1299,7 +1310,7 @@ class BattleManager {
         const nextKind = btn.dataset.skillKind;
         if (!['active', 'passive'].includes(nextKind) || this.skillSubTab === nextKind) return;
         this.skillSubTab = nextKind;
-        this.renderSkillTab();
+        this.renderTabContent();
       });
     });
 

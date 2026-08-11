@@ -29,15 +29,9 @@ export const atbMethods = {
     this._pendingAttackAnimations = 0;
     this._pendingAttackCadenceLocks = 0;
     this._pendingAttackAnimationTargets?.clear();
-    if (this.elements?.tabContent) {
-      if (this.elements.tabContent._petSyncTimer) {
-        clearInterval(this.elements.tabContent._petSyncTimer);
-        this.elements.tabContent._petSyncTimer = null;
-      }
-      if (this.elements.tabContent._medalSyncTimer) {
-        clearInterval(this.elements.tabContent._medalSyncTimer);
-        this.elements.tabContent._medalSyncTimer = null;
-      }
+    if (this._scheduledTabRenderTimer != null) {
+      clearTimeout(this._scheduledTabRenderTimer);
+      this._scheduledTabRenderTimer = null;
     }
     if (this._pendingTimers) {
       this._pendingTimers.forEach(id => clearTimeout(id));
@@ -105,16 +99,7 @@ export const atbMethods = {
     this._screenLockHandler = event => {
       this._cachedScreenLocked = Boolean(event.detail?.locked);
       this._cachedDisableAnim = this._cachedFastForwardAtb || this._cachedScreenLocked;
-      if (this._cachedScreenLocked) {
-        if (this.elements?.tabContent?._petSyncTimer) {
-          clearInterval(this.elements.tabContent._petSyncTimer);
-          this.elements.tabContent._petSyncTimer = null;
-        }
-        if (this.elements?.tabContent?._medalSyncTimer) {
-          clearInterval(this.elements.tabContent._medalSyncTimer);
-          this.elements.tabContent._medalSyncTimer = null;
-        }
-      } else if (!document.hidden && !this.isStopped && window.location.hash === '#/battle') {
+      if (!this._cachedScreenLocked && !document.hidden && !this.isStopped && window.location.hash === '#/battle') {
         this.cacheDOMElements();
         this.renderEntities();
         this.renderTabContent();
