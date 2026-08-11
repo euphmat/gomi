@@ -22,6 +22,33 @@ export function getSudokuBoxIndex(row, column, rules) {
   return Math.floor(row / boxRows) * (size / boxColumns) + Math.floor(column / boxColumns);
 }
 
+/** 1マス分の仮数字をオン・オフした新しいSetを返す。 */
+export function toggleSudokuNote(notes, value) {
+  if (!Number.isInteger(value) || value < 1 || value > 9) throw new Error('Invalid Sudoku note.');
+  const next = new Set(notes);
+  if (next.has(value)) next.delete(value);
+  else next.add(value);
+  return next;
+}
+
+/** 確定数字と同じ行・列・ブロックにある同じ仮数字を取り除く。 */
+export function clearSudokuPeerNotes(notesByCell, cellIndex, value, rules) {
+  assertRules(rules);
+  const row = Math.floor(cellIndex / rules.size);
+  const column = cellIndex % rules.size;
+  const box = getSudokuBoxIndex(row, column, rules);
+  return notesByCell.map((notes, index) => {
+    const next = new Set(notes);
+    const peerRow = Math.floor(index / rules.size);
+    const peerColumn = index % rules.size;
+    if (index === cellIndex || peerRow === row || peerColumn === column
+        || getSudokuBoxIndex(peerRow, peerColumn, rules) === box) {
+      next.delete(value);
+    }
+    return next;
+  });
+}
+
 /** ランダム化した完成盤を作る。2x2、2x3、3x3ブロックに対応。 */
 export function createSudokuSolution(rules, random = Math.random) {
   assertRules(rules);

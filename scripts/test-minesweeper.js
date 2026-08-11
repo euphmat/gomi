@@ -1,0 +1,42 @@
+import {
+  createMinefield,
+  getMinefieldNeighbors,
+  isMinefieldCleared,
+  revealMinefieldCells,
+} from '../js/data/minesweeper-engine.js';
+
+const assert = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+
+const configs = [
+  { rows: 8, columns: 8, mines: 10 },
+  { rows: 10, columns: 10, mines: 18 },
+  { rows: 12, columns: 12, mines: 28 },
+  { rows: 14, columns: 14, mines: 40 },
+];
+
+configs.forEach(config => {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const safeIndex = (attempt * 11) % (config.rows * config.columns);
+    const board = createMinefield(config, safeIndex);
+    assert(board.length === config.rows * config.columns, 'minefield has the wrong size');
+    assert(board.filter(value => value === -1).length === config.mines, 'mine count is incorrect');
+    assert(board[safeIndex] === 0, 'first cell is not a safe blank cell');
+    board.forEach((value, index) => {
+      if (value === -1) return;
+      const expected = getMinefieldNeighbors(index, config).filter(neighbor => board[neighbor] === -1).length;
+      assert(value === expected, 'adjacent mine count is incorrect');
+    });
+  }
+});
+
+const emptyConfig = { rows: 3, columns: 3, mines: 1 };
+const emptyBoard = [0, 0, 0, 0, 1, 1, 0, 1, -1];
+const revealed = revealMinefieldCells(emptyBoard, new Set(), 0, emptyConfig);
+assert(revealed.size === 8 && !revealed.has(8), 'blank-cell flood reveal failed');
+assert(isMinefieldCleared(emptyBoard, revealed), 'cleared board was not recognized');
+const blockedReveal = revealMinefieldCells(emptyBoard, new Set(), 0, emptyConfig, new Set([1]));
+assert(!blockedReveal.has(1), 'flagged cell was opened by flood reveal');
+
+console.log('Minesweeper engine tests passed.');

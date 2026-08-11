@@ -370,7 +370,7 @@ export function renderMemoryGamePage() {
         <section class="mb-3 rounded-2xl border border-amber-300/20 bg-amber-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-amber-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
           同じ画像を2枚揃えると1ポイント。揃えた側は続けてカードをめくり、すべてのペアを取るか、途中で敗北または引き分けが確定した時点でゲーム終了です。
-          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は数独と共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
+          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は数独・マインスイーパーと共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
         </section>
 
         ${memoryLevelPanel(memoryProgress)}

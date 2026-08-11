@@ -109,6 +109,15 @@ async function _loadStatusData(container) {
           <span class="min-w-0 flex-1"><span class="block text-[7px] font-black tracking-[.16em] text-cyan-300">NUMBER PUZZLE</span><span class="block text-xs font-black text-white">数独</span><span class="block truncate text-[8px] text-slate-400">報酬は共通</span></span>
           <span class="material-symbols-outlined text-base text-slate-500 transition-transform group-active:translate-x-1">chevron_right</span>
         </button>
+
+        <button data-minesweeper
+                class="group col-span-2 flex min-w-0 items-center gap-2 overflow-hidden rounded-2xl border border-amber-400/35 bg-gradient-to-r from-amber-950/80 via-slate-950 to-rose-950/80 px-2.5 py-2.5 text-left shadow-[0_8px_24px_rgba(0,0,0,.28)] active:scale-[.98]"
+                aria-label="マインスイーパーで遊ぶ">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-500/15" aria-hidden="true"><span class="material-symbols-outlined text-2xl text-amber-100">bomb</span></span>
+          <span class="min-w-0 flex-1"><span class="block text-[7px] font-black tracking-[.16em] text-amber-300">MINE HUNTER</span><span class="block text-xs font-black text-white">マインスイーパー</span><span class="block truncate text-[8px] text-slate-400">初手安全・報酬は共通</span></span>
+          <span class="flex items-center gap-0.5 rounded-full border border-fuchsia-300/30 bg-fuchsia-500/10 px-2 py-1 text-[8px] font-black text-fuchsia-200"><span class="material-symbols-outlined text-[12px]">diamond</span>1〜10</span>
+          <span class="material-symbols-outlined text-base text-slate-500 transition-transform group-active:translate-x-1">chevron_right</span>
+        </button>
       </section>
 
       <div class="grid grid-cols-2 gap-2">
@@ -121,6 +130,9 @@ async function _loadStatusData(container) {
     });
     container.querySelector('[data-sudoku]')?.addEventListener('click', () => {
       window.location.hash = '/sudoku';
+    });
+    container.querySelector('[data-minesweeper]')?.addEventListener('click', () => {
+      window.location.hash = '/minesweeper';
     });
 
     // Bind equipment modal click events

@@ -3,10 +3,12 @@
  */
 import { GameDB } from '../data/database.js';
 import {
+  clearSudokuPeerNotes,
   createSudokuPuzzle,
   findSudokuConflicts,
   getSudokuBoxIndex,
   getSudokuCandidates,
+  toggleSudokuNote,
 } from '../data/sudoku-engine.js';
 import {
   TOWN_GAME_REWARDS,
@@ -55,6 +57,9 @@ const pageStyles = () => `
     .sudoku-cell.is-same { background:#164e63; color:#cffafe; }
     .sudoku-cell.is-selected { position:relative; z-index:2; background:#075985; box-shadow:inset 0 0 0 3px #67e8f9; color:white; }
     .sudoku-cell.is-conflict, .sudoku-cell.is-wrong { background:#7f1d1d; color:#fecdd3; }
+    .sudoku-notes { display:grid; width:100%; height:100%; grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:repeat(3,minmax(0,1fr)); padding:2px; color:#a5f3fc; font-size:clamp(.38rem,1.65vw,.68rem); font-weight:700; line-height:1; }
+    .sudoku-notes > span { display:flex; min-width:0; align-items:center; justify-content:center; }
+    .sudoku-cell.is-selected .sudoku-notes { color:#ecfeff; }
     .sudoku-cell:focus-visible { position:relative; z-index:3; }
     .sudoku-result { animation:sudoku-result-in .25s ease-out both; }
     @keyframes sudoku-result-in { from { opacity:0; transform:translateY(10px) scale(.96); } to { opacity:1; transform:none; } }
@@ -149,8 +154,8 @@ export function renderSudokuPage() {
 
         <section class="mb-3 rounded-2xl border border-cyan-300/20 bg-cyan-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-cyan-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
-          縦・横・太線で囲まれたブロックに、同じ数字が重ならないよう全マスを埋めます。数字を選ぶと同じ数字と関連マスが光ります。
-          <div class="mt-1.5 border-t border-cyan-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬は神経衰弱と共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
+          縦・横・太線で囲まれたブロックに、同じ数字が重ならないよう全マスを埋めます。「仮数字」へ切り替えると、1マス内に最大9個の候補を記録できます。
+          <div class="mt-1.5 border-t border-cyan-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬は神経衰弱・マインスイーパーと共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
         </section>
 
         <div class="grid gap-2" aria-label="数独の難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id))).join('')}</div>
@@ -180,9 +185,20 @@ export function renderSudokuPage() {
     status.textContent = message;
   };
 
+  const updateInputMode = () => {
+    if (!game) return;
+    container.querySelectorAll('[data-input-mode]').forEach(button => {
+      const selected = button.dataset.inputMode === game.inputMode;
+      button.className = `flex items-center justify-center gap-1 rounded-xl border py-2 text-[10px] font-black ${selected ? 'border-cyan-200/60 bg-cyan-500/25 text-cyan-50 shadow-[0_0_12px_rgba(34,211,238,.18)]' : 'border-white/10 bg-white/5 text-slate-400'}`;
+      button.setAttribute('aria-pressed', String(selected));
+    });
+  };
+
+  const renderNotes = notes => `<span class="sudoku-notes" aria-hidden="true">${Array.from({ length: 9 }, (_, index) => `<span>${notes.has(index + 1) ? index + 1 : ''}</span>`).join('')}</span>`;
+
   const updateBoard = () => {
     if (!game || game.completed) return;
-    const { config, values, puzzle, selectedIndex } = game;
+    const { config, values, puzzle, notes, selectedIndex } = game;
     const conflicts = findSudokuConflicts(values, config);
     const selectedValue = selectedIndex >= 0 ? values[selectedIndex] : 0;
     const selectedRow = selectedIndex >= 0 ? Math.floor(selectedIndex / config.size) : -1;
@@ -195,13 +211,14 @@ export function renderSudokuPage() {
       const column = index % config.size;
       const value = values[index];
       const related = selectedIndex >= 0 && (row === selectedRow || column === selectedColumn || getSudokuBoxIndex(row, column, config) === selectedBox);
-      cell.textContent = value || '';
+      cell.innerHTML = value ? String(value) : renderNotes(notes[index]);
       cell.classList.toggle('is-related', related);
       cell.classList.toggle('is-same', Boolean(selectedValue && value === selectedValue));
       cell.classList.toggle('is-selected', index === selectedIndex);
       cell.classList.toggle('is-conflict', conflicts.has(index));
       cell.classList.toggle('is-wrong', Boolean(game.showErrors && value && value !== game.solution[index]));
-      cell.setAttribute('aria-label', `行${row + 1} 列${column + 1}${value ? ` 数字${value}` : ' 空欄'}${puzzle[index] ? ' 初期配置' : ''}`);
+      const noteLabel = notes[index].size ? ` 仮数字${[...notes[index]].sort((a, b) => a - b).join('、')}` : '';
+      cell.setAttribute('aria-label', `行${row + 1} 列${column + 1}${value ? ` 数字${value}` : ` 空欄${noteLabel}`}${puzzle[index] ? ' 初期配置' : ''}`);
     });
 
     container.querySelectorAll('[data-number]').forEach(button => {
@@ -215,7 +232,7 @@ export function renderSudokuPage() {
       ? getSudokuCandidates(values, selectedIndex, config)
       : [];
     const candidateDisplay = container.querySelector('[data-candidates]');
-    if (candidateDisplay) candidateDisplay.textContent = candidates.length ? `候補: ${candidates.join('・')}` : '空いているマスを選んでください';
+    if (candidateDisplay) candidateDisplay.textContent = candidates.length ? `${game.inputMode === 'note' ? '仮数字 ・ ' : ''}候補: ${candidates.join('・')}` : '空いているマスを選んでください';
     const filledDisplay = container.querySelector('[data-filled]');
     if (filledDisplay) filledDisplay.textContent = `${values.filter(Boolean).length} / ${values.length}`;
   };
@@ -246,7 +263,7 @@ export function renderSudokuPage() {
         <h2 id="sudoku-result-title" class="mt-1 text-xl font-black">数独クリア！</h2>
         <div class="mx-auto mt-3 flex max-w-[220px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/25 p-3"><span class="material-symbols-outlined text-slate-400">timer</span><span class="font-mono text-xl font-black">${formatTime(elapsedSeconds)}</span></div>
         <div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '共通報酬は受取済み' : '報酬を保存できませんでした'}</div>
-        <p class="mt-2 text-[9px] leading-relaxed text-slate-400">神経衰弱と共通の${game.config.label}報酬です。次の報酬は翌日ですが、数独は何度でも遊べます。</p>
+        <p class="mt-2 text-[9px] leading-relaxed text-slate-400">ホームタウンゲーム共通の${game.config.label}報酬です。次の報酬は翌日ですが、数独は何度でも遊べます。</p>
         <div class="mt-4 grid gap-2">
           ${rewardStatus === 'failed' ? '<button data-claim-reward class="rounded-xl border border-fuchsia-300/50 bg-fuchsia-600 py-2.5 text-xs font-black">報酬の保存を再試行</button>' : ''}
           <button data-select class="rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">難易度選択へ戻る</button>
@@ -286,11 +303,26 @@ export function renderSudokuPage() {
 
   const enterNumber = value => {
     if (!game || game.completed || game.selectedIndex < 0 || game.puzzle[game.selectedIndex]) return;
-    game.values[game.selectedIndex] = value;
+    const index = game.selectedIndex;
+    if (game.inputMode === 'note' && value) {
+      if (game.values[index]) {
+        setStatus('確定数字を消してから仮数字を入力してください', 'rose');
+        return;
+      }
+      game.notes[index] = toggleSudokuNote(game.notes[index], value);
+      updateBoard();
+      setStatus(game.notes[index].has(value) ? `仮数字 ${value} を追加しました` : `仮数字 ${value} を外しました`);
+      return;
+    }
+    const hadValue = Boolean(game.values[index]);
+    const hadNotes = game.notes[index].size > 0;
+    game.values[index] = value;
+    game.notes[index] = new Set();
+    if (value) game.notes = clearSudokuPeerNotes(game.notes, index, value, game.config);
     game.showErrors = false;
     updateBoard();
     if (findSudokuConflicts(game.values, game.config).size) setStatus('同じ列・行・ブロックに重複があります', 'rose');
-    else setStatus(value ? '数字を入力しました' : '数字を消しました');
+    else setStatus(value ? '数字を入力しました' : hadValue ? '数字を消しました' : hadNotes ? '仮数字をすべて消しました' : '選択マスを消去しました');
     checkCompletion();
   };
 
@@ -300,6 +332,8 @@ export function renderSudokuPage() {
     if (target < 0 || game.puzzle[target] || game.values[target]) target = game.values.findIndex(value => !value);
     if (target < 0) return;
     game.values[target] = game.solution[target];
+    game.notes[target] = new Set();
+    game.notes = clearSudokuPeerNotes(game.notes, target, game.solution[target], game.config);
     game.selectedIndex = target;
     game.hintsRemaining -= 1;
     const hintButton = container.querySelector('[data-hint]');
@@ -336,6 +370,8 @@ export function renderSudokuPage() {
       puzzle: generated.puzzle,
       solution: generated.solution,
       values: [...generated.puzzle],
+      notes: Array.from({ length: generated.puzzle.length }, () => new Set()),
+      inputMode: 'number',
       selectedIndex: generated.puzzle.findIndex(value => !value),
       hintsRemaining: config.hints,
       startedAt: Date.now(),
@@ -359,18 +395,23 @@ export function renderSudokuPage() {
         <div data-status class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-950/25 px-3 text-center text-[10px] font-black text-cyan-100" role="status" aria-live="polite">空いているマスを選び、数字を入力してください</div>
 
         <section class="sudoku-board mx-auto aspect-square w-full" style="grid-template-columns:repeat(${config.size},minmax(0,1fr));max-width:${config.size <= 4 ? '340px' : config.size <= 6 ? '400px' : '460px'}" aria-label="${config.size}かける${config.size}の数独盤面">
-          ${game.values.map((value, index) => `<button data-cell-index="${index}" class="sudoku-cell aspect-square ${game.puzzle[index] ? 'is-given' : ''}" style="${cellBorderStyle(index, config)}" aria-label="数独のマス">${value || ''}</button>`).join('')}
+          ${game.values.map((value, index) => `<button data-cell-index="${index}" class="sudoku-cell aspect-square h-full w-full ${game.puzzle[index] ? 'is-given' : ''}" style="${cellBorderStyle(index, config)}" aria-label="数独のマス">${value || ''}</button>`).join('')}
         </section>
 
         <section class="mx-auto mt-2 grid gap-1.5" style="grid-template-columns:repeat(${config.size},minmax(0,1fr));max-width:${config.size <= 4 ? '340px' : config.size <= 6 ? '400px' : '460px'}" aria-label="数字入力">
           ${Array.from({ length: config.size }, (_, index) => `<button data-number="${index + 1}" class="aspect-square rounded-xl border border-cyan-300/20 bg-cyan-500/10 font-mono text-lg font-black text-cyan-100 active:scale-95">${index + 1}</button>`).join('')}
         </section>
+        <div class="mx-auto mt-2 grid grid-cols-2 gap-2" style="max-width:${config.size <= 4 ? '340px' : config.size <= 6 ? '400px' : '460px'}" aria-label="入力方法">
+          <button data-input-mode="number" class="flex items-center justify-center gap-1 rounded-xl border py-2 text-[10px] font-black"><span class="material-symbols-outlined text-base">pin</span>確定数字</button>
+          <button data-input-mode="note" class="flex items-center justify-center gap-1 rounded-xl border py-2 text-[10px] font-black"><span class="material-symbols-outlined text-base">edit_note</span>仮数字</button>
+        </div>
         <div class="mx-auto mt-2 grid grid-cols-2 gap-2" style="max-width:${config.size <= 4 ? '340px' : config.size <= 6 ? '400px' : '460px'}">
           <button data-erase class="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 py-2 text-[10px] font-black text-slate-300"><span class="material-symbols-outlined text-base">backspace</span>消す</button>
           <button data-hint ${config.hints ? '' : 'disabled'} class="flex items-center justify-center gap-1 rounded-xl border border-amber-300/25 bg-amber-500/10 py-2 text-[10px] font-black text-amber-100 disabled:opacity-35"><span class="material-symbols-outlined text-base">auto_awesome</span>ヒント ${config.hints}</button>
         </div>
       </div>`;
     updateBoard();
+    updateInputMode();
     stopTimer();
     timerId = window.setInterval(updateTimer, 1000);
   };
@@ -400,6 +441,14 @@ export function renderSudokuPage() {
     const numberButton = event.target.closest('[data-number]');
     if (numberButton) {
       enterNumber(Number(numberButton.dataset.number));
+      return;
+    }
+    const inputModeButton = event.target.closest('[data-input-mode]');
+    if (inputModeButton && game && !game.completed) {
+      game.inputMode = inputModeButton.dataset.inputMode;
+      updateInputMode();
+      updateBoard();
+      setStatus(game.inputMode === 'note' ? '仮数字モード：候補を複数記録できます' : '確定数字モードに切り替えました');
       return;
     }
     if (event.target.closest('[data-erase]')) {
@@ -432,22 +481,9 @@ export function renderSudokuPage() {
     }
   });
 
-  const handleKeydown = event => {
-    if (!game || game.completed) return;
-    if (/^[1-9]$/.test(event.key) && Number(event.key) <= game.config.size) {
-      event.preventDefault();
-      enterNumber(Number(event.key));
-    } else if (event.key === 'Backspace' || event.key === 'Delete' || event.key === '0') {
-      event.preventDefault();
-      enterNumber(0);
-    }
-  };
-  window.addEventListener('keydown', handleKeydown);
-
   container.cleanup = () => {
     disposed = true;
     stopTimer();
-    window.removeEventListener('keydown', handleKeydown);
     container.querySelector('[data-result]')?.remove();
   };
 

@@ -1,9 +1,11 @@
 import {
   countSudokuSolutions,
+  clearSudokuPeerNotes,
   createSudokuPuzzle,
   createSudokuSolution,
   findSudokuConflicts,
   getSudokuCandidates,
+  toggleSudokuNote,
 } from '../js/data/sudoku-engine.js';
 import {
   TOWN_GAME_REWARDS,
@@ -45,5 +47,15 @@ assert(conflicts.has(0) && conflicts.has(1), 'duplicate row values were not mark
 assert(TOWN_GAME_REWARDS.easy === 1 && TOWN_GAME_REWARDS.very_hard === 10, 'shared reward amounts changed unexpectedly');
 assert(getTownGameRewardStateKey('normal') === 'memoryGameLastWin:normal', 'shared reward key is not save-compatible');
 assert(getLocalDateKey(new Date(2026, 7, 11, 23, 59)) === '2026-08-11', 'reward date key is not based on the local date');
+
+let notes = toggleSudokuNote(new Set(), 5);
+assert(notes.has(5), 'a provisional number could not be added');
+notes = toggleSudokuNote(notes, 5);
+assert(!notes.has(5), 'a provisional number could not be removed');
+const noteRules = { size: 9, boxRows: 3, boxColumns: 3 };
+const noteGrid = Array.from({ length: 81 }, () => new Set([5]));
+const clearedNotes = clearSudokuPeerNotes(noteGrid, 0, 5, noteRules);
+assert(!clearedNotes[1].has(5) && !clearedNotes[9].has(5) && !clearedNotes[10].has(5), 'peer provisional numbers were not cleared');
+assert(clearedNotes[40].has(5), 'an unrelated provisional number was cleared');
 
 console.log('Sudoku engine tests passed.');
