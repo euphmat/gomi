@@ -243,17 +243,16 @@ const pageStyles = () => `
 function difficultyCard(config, cleared) {
   return `
     <button data-difficulty="${config.id}"
-            ${cleared ? 'disabled aria-disabled="true"' : ''}
-            class="flex min-h-[92px] items-center gap-3 rounded-2xl border bg-gradient-to-br p-3 text-left shadow-lg active:scale-[.98] ${cleared ? 'border-slate-700 from-slate-900/70 to-slate-950 text-slate-500 opacity-65' : ACCENT_CLASSES[config.accent]}">
+            class="flex min-h-[92px] items-center gap-3 rounded-2xl border bg-gradient-to-br p-3 text-left shadow-lg active:scale-[.98] ${ACCENT_CLASSES[config.accent]}">
       <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/25">
         <span class="material-symbols-outlined text-2xl">${cleared ? 'check_circle' : config.icon}</span>
       </span>
       <span class="min-w-0 flex-1">
-        <span class="block text-sm font-black tracking-[.16em] ${cleared ? 'text-slate-400' : 'text-white'}">${config.label}</span>
+        <span class="block text-sm font-black tracking-[.16em] text-white">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.category} ・ ${config.pairs}ペア</span>
-        <span class="mt-1 flex items-center gap-1 text-[10px] font-black ${cleared ? 'text-emerald-400' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[14px]">${cleared ? 'event_busy' : 'diamond'}</span>${cleared ? '本日の共通報酬は受取済み' : `勝利報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[10px] font-black ${cleared ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[14px]">${cleared ? 'task_alt' : 'diamond'}</span>${cleared ? '本日の共通報酬は受取済み ・ プレイ可能' : `勝利報酬 ${config.reward} Prism`}</span>
       </span>
-      <span class="material-symbols-outlined text-white/45">${cleared ? 'lock_clock' : 'chevron_right'}</span>
+      <span class="material-symbols-outlined text-white/45">chevron_right</span>
     </button>
   `;
 }
@@ -371,7 +370,7 @@ export function renderMemoryGamePage() {
         <section class="mb-3 rounded-2xl border border-amber-300/20 bg-amber-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-amber-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
           同じ画像を2枚揃えると1ポイント。揃えた側は続けてカードをめくり、すべてのペアを取るか、途中で敗北または引き分けが確定した時点でゲーム終了です。
-          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は数独と共有です。どちらかで受け取ると翌日までプレイできません。</div>
+          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は数独と共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
         </section>
 
         ${memoryLevelPanel(memoryProgress)}
@@ -392,7 +391,7 @@ export function renderMemoryGamePage() {
 
   const startGame = async (difficultyId) => {
     const baseConfig = DIFFICULTIES[difficultyId];
-    if (!baseConfig || dailyWins.has(difficultyId) || startingGame) return;
+    if (!baseConfig || startingGame) return;
     const config = baseConfig;
 
     startingGame = true;
@@ -401,8 +400,6 @@ export function renderMemoryGamePage() {
       const latestWin = await GameDB.getGameState(dailyWinKey(difficultyId));
       if (latestWin === dateKey) {
         dailyWins.add(difficultyId);
-        await renderSelect();
-        return;
       }
     } catch (error) {
       console.error('[MemoryGame] Failed to verify daily win.', error);
@@ -734,7 +731,7 @@ export function renderMemoryGamePage() {
         <div class="mt-3 rounded-xl border ${leveledUp ? 'border-cyan-300/40 bg-cyan-500/10' : 'border-violet-300/20 bg-violet-500/10'} px-3 py-2">
           ${progression ? `<div class="flex items-center justify-center gap-1 text-sm font-black text-violet-100"><span class="material-symbols-outlined text-lg">neurology</span>神経衰弱EXP +${progression.xpGained}</div>${leveledUp ? `<div class="mt-1 text-xs font-black text-cyan-200">LEVEL UP! LV.${progression.previousLevel} → LV.${progression.level}</div>` : `<div class="mt-0.5 text-[8px] text-slate-400">神経衰弱 LV.${progression.level}</div>`}` : '<div class="text-[9px] font-black text-rose-300">EXPを保存できませんでした</div>'}
         </div>
-        ${isWin ? `<div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の報酬は受取済み' : '報酬を保存できませんでした'}</div><p class="mt-2 text-[10px] text-slate-400">この難易度は翌日また遊べます。</p>` : '<p class="mt-3 text-[10px] leading-relaxed text-slate-400">勝利するまで何度でも挑戦できます。</p>'}
+        ${isWin ? `<div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の報酬は受取済み' : '報酬を保存できませんでした'}</div><p class="mt-2 text-[10px] text-slate-400">報酬受取後も、この難易度で何度でも遊べます。</p>` : '<p class="mt-3 text-[10px] leading-relaxed text-slate-400">勝利するまで何度でも挑戦できます。</p>'}
         <div class="mt-4 grid gap-2">
           ${isWin && rewardStatus === 'failed' ? '<button data-claim-reward class="rounded-xl border border-fuchsia-300/50 bg-fuchsia-600 py-2.5 text-xs font-black">報酬の保存を再試行</button>' : ''}
           ${isWin ? '' : '<button data-retry class="rounded-xl border border-indigo-300/40 bg-indigo-600 py-2.5 text-xs font-black text-white active:scale-[.98]">勝つまで再挑戦</button>'}
