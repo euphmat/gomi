@@ -97,7 +97,51 @@ function syncSettingButton(button, setting) {
   if (icon) icon.style.fontVariationSettings = `'FILL' ${enabled ? 1 : 0}`;
 }
 
-export function renderBattleControlsTab(container) {
+function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) {
+  if (!canJumpFloors || !dungeonDef?.floors?.length) return '';
+
+  const floorButtons = dungeonDef.floors.map((floor, index) => {
+    const floorLevel = Number(floor.level);
+    const isCurrentFloor = floorLevel === Number(currentFloorNum);
+    const isBossFloor = index === dungeonDef.floors.length - 1;
+    return `
+      <button type="button" data-battle-floor-jump="${floorLevel}"
+              ${isCurrentFloor ? 'disabled aria-current="location"' : ''}
+              aria-label="${floorLevel}階へジャンプ${isBossFloor ? '（最深部）' : ''}"
+              class="group flex min-h-[46px] min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition ${isCurrentFloor
+                ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_10px_rgb(34_211_238/.12)]'
+                : 'border-white/10 bg-slate-950/55 text-slate-300 active:scale-[0.97] active:border-cyan-300/45 active:bg-cyan-950/60'}">
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${isCurrentFloor ? 'border-cyan-300/35 bg-cyan-400/10' : 'border-slate-700 bg-slate-900'}">
+          <span class="material-symbols-outlined leading-none ${isBossFloor ? 'text-amber-300' : ''}" style="font-size: 14px">${isBossFloor ? 'skull' : 'layers'}</span>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[10px] font-black tabular-nums">${String(floorLevel).padStart(2, '0')}F</span>
+          <span class="block truncate text-[7px] font-bold ${isCurrentFloor ? 'text-cyan-300' : 'text-slate-600'}">${isCurrentFloor ? '現在地' : isBossFloor ? '最深部' : 'ジャンプ'}</span>
+        </span>
+        ${isCurrentFloor ? '<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" aria-hidden="true"></span>' : ''}
+      </button>`;
+  }).join('');
+
+  return `
+    <section class="rounded-xl border border-cyan-300/20 bg-gradient-to-r from-cyan-950/35 to-slate-950/50 p-2 shadow-sm" aria-labelledby="battle-floor-jump-label">
+      <div class="mb-2 flex items-center gap-2 px-0.5">
+        <span class="battle-control-icon h-8 w-8 shrink-0 rounded-lg border border-cyan-300/20 bg-cyan-400/10 text-cyan-300" style="display: grid; place-items: center">
+          <span class="material-symbols-outlined block leading-none" style="font-size: 18px">route</span>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span id="battle-floor-jump-label" class="block text-[11px] font-black text-slate-100">階層ジャンプ</span>
+          <span class="block truncate text-[8px] font-bold text-slate-500">踏破済み｜移動先を選択</span>
+        </span>
+        <span class="rounded-full border border-amber-300/30 bg-amber-400/10 px-2 py-0.5 text-[7px] font-black text-amber-200">COMPLETE</span>
+      </div>
+      <div class="grid grid-cols-3 gap-1.5 min-[420px]:grid-cols-4" aria-label="ジャンプ先の階層">
+        ${floorButtons}
+      </div>
+      <p class="mt-1.5 min-h-[12px] px-0.5 text-[8px] font-bold text-cyan-200/70" data-battle-floor-jump-status aria-live="polite">現在の戦闘を中断して選択階へ移動します</p>
+    </section>`;
+}
+
+export function renderBattleControlsTab(container, battleContext = {}) {
   const speed = getBattleSpeed();
   container.innerHTML = `
     <div class="battle-controls-root mx-auto flex h-full w-full max-w-2xl flex-col gap-2 overflow-y-auto p-0.5">
@@ -136,6 +180,8 @@ export function renderBattleControlsTab(container) {
       <section class="grid grid-cols-1 gap-1.5 min-[420px]:grid-cols-2" aria-label="戦闘設定">
         ${CONTROL_SETTINGS.map(renderSettingButton).join('')}
       </section>
+
+      ${renderFloorJumpSection(battleContext)}
     </div>
   `;
 
@@ -162,6 +208,33 @@ export function renderBattleControlsTab(container) {
       if (setting.id === 'stats') updateStatsVisibility();
       syncSettingButton(button, setting);
       dispatchBattleSettingsChanged();
+    });
+  });
+
+  const floorJumpStatus = container.querySelector('[data-battle-floor-jump-status]');
+  container.querySelectorAll('[data-battle-floor-jump]').forEach(button => {
+    button.addEventListener('click', async () => {
+      if (typeof battleContext.onFloorJump !== 'function') return;
+      const targetFloor = Number(button.dataset.battleFloorJump);
+      const jumpButtons = container.querySelectorAll('[data-battle-floor-jump]');
+      const restoreJumpButtons = () => {
+        jumpButtons.forEach(item => {
+          item.disabled = item.hasAttribute('aria-current');
+        });
+      };
+      jumpButtons.forEach(item => { item.disabled = true; });
+      if (floorJumpStatus) floorJumpStatus.textContent = `${targetFloor}Fへ移動しています…`;
+      try {
+        const didJump = await battleContext.onFloorJump(targetFloor);
+        if (!didJump) {
+          if (floorJumpStatus) floorJumpStatus.textContent = 'この階層には移動できません';
+          restoreJumpButtons();
+        }
+      } catch (error) {
+        console.error('Battle floor jump failed:', error);
+        if (floorJumpStatus) floorJumpStatus.textContent = '移動に失敗しました。もう一度お試しください';
+        restoreJumpButtons();
+      }
     });
   });
 }

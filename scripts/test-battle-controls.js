@@ -13,7 +13,7 @@ const petPosition = indexSource.indexOf('id="tab-btn-pet"');
 
 assert(statsPosition >= 0 && controlsPosition > statsPosition && petPosition > controlsPosition,
   'control tab must be rendered between statistics and companion tabs');
-assert(indexSource.includes("id: 'controls'") && indexSource.includes('renderBattleControlsTab(this.elements.tabContent)'),
+assert(indexSource.includes("id: 'controls'") && indexSource.includes('renderBattleControlsTab(this.elements.tabContent, {'),
   'control tab is not wired into battle tab navigation');
 assert(controlsSource.includes("localStorage.setItem('autoBattleSpeed'")
     && controlsSource.includes("localStorage.setItem('disableBattleAnimations'")
@@ -30,5 +30,14 @@ assert(controlsSource.includes("import { activateScreenLock }")
 assert(controlsSource.includes('class="battle-control-icon')
     && controlsSource.includes('style="display: grid; place-items: center"'),
   'control icons do not use an independent centered wrapper');
+assert(controlsSource.includes('data-battle-floor-jump=')
+    && controlsSource.includes('階層ジャンプ')
+    && controlsSource.includes('battleContext.onFloorJump(targetFloor)'),
+  'completed dungeon floor jump controls are not rendered or connected');
+assert(indexSource.includes("GameDB.getGameState('completed_dungeons')")
+    && indexSource.includes('async jumpToFloor(floorLevel)')
+    && indexSource.includes("GameDB.setGameState('currentFloor', targetFloor)")
+    && indexSource.includes("removeAttribute('data-rendered-tab')"),
+  'battle floor jump does not validate completion and update the selected floor');
 
 console.log('battle controls tests passed');

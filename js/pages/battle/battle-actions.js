@@ -1,5 +1,6 @@
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { playNormalAttackAnimation } from './normal-attack-animations.js';
+import { playMonsterAttackAnimation } from './monster-attack-animation.js';
 import {
   getMagicMissileAnimationTiming,
   playMagicMissileAnimation
@@ -926,7 +927,14 @@ export const actionMethods = {
 
     // --- 攻撃アニメーション ---
     let delayDamageMs = 0;
-    if (isParty && isNormalAttack && !this._cachedDisableAnim && !document.hidden) {
+    if (!isParty && !this._cachedDisableAnim && !document.hidden) {
+      // Monster attacks share a strong source-to-target cue so the recipient
+      // stays readable even with four compact party cards or overlapping hits.
+      const timing = playMonsterAttackAnimation(attacker, defender);
+      delayDamageMs = timing.impactDelay;
+      attackAnimationMs = Math.max(attackAnimationMs, timing.completionDelay);
+      attackCadenceMs = Math.max(attackCadenceMs, timing.cadenceDelay);
+    } else if (isParty && isNormalAttack && !this._cachedDisableAnim && !document.hidden) {
       // Party normal attacks have a distinct visual for every job. Counter
       // attacks intentionally come through this path as normal attacks too.
       const timing = playNormalAttackAnimation(attacker, defender);

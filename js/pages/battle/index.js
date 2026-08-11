@@ -115,7 +115,10 @@ class BattleManager {
     });
     this.equipMap = {};
     this.isDungeonClear = false;
+    this.completedDungeonIds = [];
+    this._floorJumpPending = false;
     this.currentTab = 'skill';
+    this.skillSubTab = 'active';
     this.jobDefinitions = JOBS;
     this.battleStatisticsCharacterKey = null;
     this.obtainedItems = [];
@@ -231,6 +234,7 @@ class BattleManager {
     this.discoveredMonsters = await GameDB.getGameState('discovered_monsters') || [];
     this.currentGold = await GameDB.getGameState('gold') || 0;
     this.ranchData = await GameDB.getGameState('ranch_data') || {};
+    this.completedDungeonIds = await GameDB.getGameState('completed_dungeons') || [];
     const rawEquipment = await GameDB.getAllEquipment();
     this.equipMap = buildEquipmentMap(rawEquipment);
     this._needsSave = false;
@@ -251,6 +255,11 @@ class BattleManager {
     this.currentFloorNum = await GameDB.getGameState('currentFloor') || 1;
     this.dungeonDef = DUNGEONS.find(d => d.id === this.currentDungeonId) || SPECIAL_DUNGEONS.find(d => d.id === this.currentDungeonId);
     this.floorDef = this.dungeonDef.floors.find(f => f.level === this.currentFloorNum) || this.dungeonDef.floors[this.dungeonDef.floors.length - 1];
+    // Floor changes happen without replacing the battle page. Force the
+    // controls tab to rebuild so its current-floor marker never goes stale.
+    if (this.currentTab === 'controls') {
+      this.elements.tabContent.removeAttribute('data-rendered-tab');
+    }
 
     // Update Header Location
     const headerLoc = document.getElementById('header-location');
@@ -532,6 +541,42 @@ class BattleManager {
     this.activeEnemy = null;
     this.selectedEnemyTarget = null;
     this.lastKilledBy = null;
+  }
+
+  async jumpToFloor(floorLevel) {
+    const targetFloor = Number(floorLevel);
+    const floorExists = this.dungeonDef?.floors?.some(floor => Number(floor.level) === targetFloor);
+    const canJumpFloors = Array.isArray(this.completedDungeonIds)
+      && this.completedDungeonIds.includes(this.currentDungeonId);
+    if (this._floorJumpPending || !canJumpFloors || !floorExists || targetFloor === Number(this.currentFloorNum)) {
+      return false;
+    }
+
+    this._floorJumpPending = true;
+    this._battleReady = false;
+    this.stopAtbLoop();
+
+    try {
+      const completedDungeonIds = await GameDB.getGameState('completed_dungeons') || [];
+      if (!Array.isArray(completedDungeonIds) || !completedDungeonIds.includes(this.currentDungeonId)) {
+        throw new Error('Dungeon is not completed');
+      }
+
+      await this.saveDeferredData();
+      await this.savePartyState();
+      await GameDB.setGameState('currentFloor', targetFloor);
+      this.elements.resultOverlay.classList.add('hidden');
+      this.resetBattleState(true);
+      await this.init();
+      return true;
+    } catch (error) {
+      if (this.container.isConnected && window.location.hash === '#/battle') {
+        this.init();
+      }
+      throw error;
+    } finally {
+      this._floorJumpPending = false;
+    }
   }
 
   _scheduleBattleTimeout(fn, delay, allowWhenStopped = false) {
@@ -955,7 +1000,13 @@ class BattleManager {
     } else if (this.currentTab === 'controls') {
       if (!force && this.elements.tabContent.dataset.renderedTab === 'controls') return;
       this.elements.tabContent.dataset.renderedTab = 'controls';
-      renderBattleControlsTab(this.elements.tabContent);
+      renderBattleControlsTab(this.elements.tabContent, {
+        dungeonDef: this.dungeonDef,
+        currentFloorNum: this.currentFloorNum,
+        canJumpFloors: Array.isArray(this.completedDungeonIds)
+          && this.completedDungeonIds.includes(this.currentDungeonId),
+        onFloorJump: floorLevel => this.jumpToFloor(floorLevel),
+      });
     } else if (this.currentTab === 'pet') {
       const targetId = this.subTabSelectedMonsterId || 'none';
       const monsterScope = this.isAutoBattle ? 'auto-dungeon' : 'manual';
@@ -1236,15 +1287,22 @@ class BattleManager {
   }
 
   renderSkillTab() {
-    if (!this.activeCharacter && !this.isAutoBattle) {
-      this.elements.tabContent.innerHTML = '<div class="text-xs text-gray-500 flex items-center justify-center h-full">行動順を待っています...</div>';
-      return;
-    }
-
-    const p = this.isAutoBattle ? (this.selectedPartyMember || this.party.find(char => !char.isDead)) : this.activeCharacter;
+    const p = this.isAutoBattle
+      ? (this.selectedPartyMember || this.party.find(char => !char.isDead))
+      : (this.activeCharacter || this.selectedPartyMember || this.party.find(char => !char.isDead));
+    const canAct = this.isAutoBattle || this.activeCharacter === p;
     
-    const html = renderSkillTabHtml(p, this.isAutoBattle, this.autoSkillStates, JOBS, this.equipMap);
+    const html = renderSkillTabHtml(p, this.isAutoBattle, this.autoSkillStates, JOBS, this.equipMap, this.skillSubTab, canAct);
     this.elements.tabContent.innerHTML = html;
+
+    this.elements.tabContent.querySelectorAll('.skill-subtab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const nextKind = btn.dataset.skillKind;
+        if (!['active', 'passive'].includes(nextKind) || this.skillSubTab === nextKind) return;
+        this.skillSubTab = nextKind;
+        this.renderSkillTab();
+      });
+    });
 
     this.elements.tabContent.querySelectorAll('.skill-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1495,6 +1553,7 @@ export function renderBattlePage() {
         .battle-skill-mp { min-width: 38px; padding-inline: .25rem; }
         .battle-skill-mp > span:last-child { font-size: 15px; }
         .battle-skill-auto { min-width: 46px; padding-left: .375rem; }
+        .battle-skill-passive-state { min-width: 46px; padding-left: .375rem; }
 
         /* Items: use the full phone width and never leave 40px-only tiles. */
         .battle-item-root { padding: .25rem; }
@@ -1529,6 +1588,7 @@ export function renderBattlePage() {
         .battle-skill-icon { width: 32px; height: 32px; }
         .battle-skill-mp { min-width: 34px; }
         .battle-skill-auto { min-width: 42px; padding-left: .25rem; }
+        .battle-skill-passive-state { min-width: 42px; padding-left: .25rem; }
       }
       #command-area {
         box-sizing: border-box;

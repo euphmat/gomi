@@ -1,6 +1,7 @@
 import { formatNumber } from '../../utils/format.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+import { formatSkillDescriptionHtml } from '../../utils/skill-description.js';
 import { renderJobResourceHtml } from './job-resource-ui.js';
 
 /**
@@ -346,13 +347,19 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
   </div>`;
 }
 
-export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equipmentMap) {
+export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equipmentMap, selectedKind = 'active', canAct = true) {
   if (!p || !p.jobSkills) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
   }
 
   let skillListHtml = '';
-  const learnedSkills = [];
+  const learnedSkills = { active: [], passive: [] };
+
+  const addLearnedSkill = (skillDef, level, jobId, isInherited = false) => {
+    if (!skillDef || level <= 0) return;
+    const kind = skillDef.type === 'passive' ? 'passive' : 'active';
+    learnedSkills[kind].push({ skillDef, level, jobId, isInherited });
+  };
 
   if (p.jobId && p.jobSkills[p.jobId]) {
     const jobId = p.jobId;
@@ -363,167 +370,124 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equip
       for (const [skillId, level] of Object.entries(skillsMap)) {
         if (level > 0) {
           const skillDef = jobDef.skills.find(s => s.id === skillId);
-          if (skillDef && skillDef.type !== 'passive') {
-            learnedSkills.push({ skillDef, level, jobId });
-          }
+          addLearnedSkill(skillDef, level, jobId);
         }
       }
     }
   }
 
-  // Add inherited active skill
-  if (p.inheritedActiveSkill && p.jobSkills) {
-    const { jobId, skillId } = p.inheritedActiveSkill;
+  // Add the equipped inherited active/passive skills.
+  [p.inheritedActiveSkill, p.inheritedPassiveSkill].forEach(inheritedSkill => {
+    if (!inheritedSkill || !p.jobSkills) return;
+    const { jobId, skillId } = inheritedSkill;
     if (jobId !== p.jobId) {
       const level = p.jobSkills[jobId] && p.jobSkills[jobId][skillId];
       if (level > 0) {
         const jobDef = jobs[jobId];
         if (jobDef) {
           const skillDef = jobDef.skills.find(s => s.id === skillId);
-          if (skillDef && skillDef.type !== 'passive') {
-            learnedSkills.push({ skillDef, level, jobId, isInherited: true });
-          }
+          addLearnedSkill(skillDef, level, jobId, true);
         }
       }
     }
-  }
-
-  // ジョブID、スキルIDの順でソートし、並び順を統一する
-  learnedSkills.sort((a, b) => {
-    if (a.jobId !== b.jobId) return a.jobId.localeCompare(b.jobId);
-    return a.skillDef.id.localeCompare(b.skillDef.id);
   });
 
-  if (learnedSkills.length === 0) {
-    return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
+  // ジョブID、スキルIDの順でソートし、並び順を統一する
+  Object.values(learnedSkills).forEach(skills => skills.sort((a, b) => {
+    if (a.isInherited !== b.isInherited) return a.isInherited ? 1 : -1;
+    if (a.jobId !== b.jobId) return a.jobId.localeCompare(b.jobId);
+    return a.skillDef.id.localeCompare(b.skillDef.id);
+  }));
+
+  const activeSelected = selectedKind !== 'passive';
+  const currentSkills = learnedSkills[activeSelected ? 'active' : 'passive'];
+  const subTabHtml = `
+    <div class="battle-skill-subtabs sticky top-0 z-20 grid grid-cols-2 gap-1 rounded-lg border border-slate-700/70 bg-slate-950/95 p-1 shadow-lg backdrop-blur" role="tablist" aria-label="スキル種別">
+      <button type="button" class="skill-subtab flex min-h-9 items-center justify-center gap-1 rounded-md border px-2 text-[11px] font-black ${activeSelected ? 'border-cyan-400/60 bg-cyan-900/55 text-cyan-100 shadow-[0_0_12px_rgba(34,211,238,.18)]' : 'border-transparent bg-slate-900/70 text-slate-400'}" data-skill-kind="active" role="tab" aria-selected="${activeSelected}">
+        <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${activeSelected ? 1 : 0}" aria-hidden="true">bolt</span>
+        <span>アクティブ</span><span class="rounded-full bg-black/30 px-1.5 text-[9px] tabular-nums">${learnedSkills.active.length}</span>
+      </button>
+      <button type="button" class="skill-subtab flex min-h-9 items-center justify-center gap-1 rounded-md border px-2 text-[11px] font-black ${!activeSelected ? 'border-emerald-400/60 bg-emerald-900/55 text-emerald-100 shadow-[0_0_12px_rgba(52,211,153,.18)]' : 'border-transparent bg-slate-900/70 text-slate-400'}" data-skill-kind="passive" role="tab" aria-selected="${!activeSelected}">
+        <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${!activeSelected ? 1 : 0}" aria-hidden="true">psychology</span>
+        <span>パッシブ</span><span class="rounded-full bg-black/30 px-1.5 text-[9px] tabular-nums">${learnedSkills.passive.length}</span>
+      </button>
+    </div>`;
+
+  if (currentSkills.length === 0) {
+    return `<div class="flex min-h-full flex-col gap-2 p-1">${subTabHtml}<div class="flex flex-1 items-center justify-center gap-1 text-xs text-slate-500"><span class="material-symbols-outlined" style="font-size:16px">search_off</span>${activeSelected ? 'アクティブ' : 'パッシブ'}スキルを覚えていません</div></div>`;
   }
 
-  skillListHtml += '<div class="flex flex-col gap-2 p-1.5">';
-  learnedSkills.forEach(({ skillDef, level, isInherited }) => {
+  skillListHtml += `<div class="flex flex-col gap-2 p-1">${subTabHtml}`;
+  if (!isAutoBattle && !canAct) {
+    skillListHtml += '<div class="flex items-center justify-center gap-1 rounded-md border border-amber-700/40 bg-amber-950/35 px-2 py-1 text-[9px] font-bold text-amber-200"><span class="material-symbols-outlined" style="font-size:12px">visibility</span>行動順待ちのため閲覧のみ</div>';
+  }
+
+  currentSkills.forEach(({ skillDef, level, isInherited }) => {
+    const isPassive = skillDef.type === 'passive';
     const levelConfig = resolveJobSkillLevelConfig(skillDef, level, isInherited ? 'inherited' : 'current');
-    const effectiveMpCost = getEffectiveMedalEquipmentMpCost(p, equipmentMap, levelConfig.mpCost);
-    const isSilenced = effectiveMpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
-    const useState = skillDef.getUseState?.(p, levelConfig) || { canUse: true };
-    const canCast = p.mp.current >= effectiveMpCost && !isSilenced && useState.canUse !== false;
+    const effectiveMpCost = isPassive ? 0 : getEffectiveMedalEquipmentMpCost(p, equipmentMap, levelConfig.mpCost);
+    const isSilenced = !isPassive && effectiveMpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
+    const useState = isPassive ? { canUse: true } : (skillDef.getUseState?.(p, levelConfig) || { canUse: true });
+    const canCast = isPassive || (canAct && p.mp.current >= effectiveMpCost && !isSilenced && useState.canUse !== false);
     const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
-    const useStateHtml = useState.canUse === false && useState.message
-      ? `<span class="font-black text-rose-300">${useState.message}。</span>`
+    const descriptionHtml = formatSkillDescriptionHtml(desc);
+    const useStateHtml = !isPassive && useState.canUse === false && useState.message
+      ? `<span class="mr-1 font-black text-rose-300">${useState.message}。</span>`
       : '';
 
-    let typeLabel = '特殊';
-    let typeBadgeClass = 'text-slate-300 bg-slate-800/80 border-slate-600/50';
-    if (desc.includes('回復') || desc.includes('蘇生') || desc.includes('吸収')) {
+    let typeLabel = isPassive ? 'パッシブ' : '特殊';
+    let typeBadgeClass = isPassive ? 'text-emerald-300 bg-emerald-950/60 border-emerald-800/50' : 'text-slate-300 bg-slate-800/80 border-slate-600/50';
+    if (!isPassive && (desc.includes('回復') || desc.includes('蘇生') || desc.includes('吸収'))) {
       typeLabel = '回復'; typeBadgeClass = 'text-emerald-300 bg-emerald-950/60 border-emerald-800/50';
-    } else if (desc.includes('アップ') || desc.includes('ダウン') || desc.includes('挑発') || desc.includes('庇う') || desc.includes('軽減') || desc.includes('状態異常')) {
+    } else if (!isPassive && (desc.includes('アップ') || desc.includes('ダウン') || desc.includes('挑発') || desc.includes('庇う') || desc.includes('軽減') || desc.includes('状態異常'))) {
       typeLabel = '補助'; typeBadgeClass = 'text-cyan-300 bg-cyan-950/60 border-cyan-800/50';
-    } else if (skillDef.statDependency === 'BOTH' || desc.includes('複合攻撃')) {
+    } else if (!isPassive && (skillDef.statDependency === 'BOTH' || desc.includes('複合攻撃'))) {
       typeLabel = '複合'; typeBadgeClass = 'text-yellow-300 bg-yellow-950/60 border-yellow-800/50';
-    } else if (skillDef.statDependency === 'MAT' || desc.includes('魔法攻撃')) {
+    } else if (!isPassive && (skillDef.statDependency === 'MAT' || desc.includes('魔法攻撃'))) {
       typeLabel = '魔法'; typeBadgeClass = 'text-purple-300 bg-purple-950/60 border-purple-800/50';
-    } else if (skillDef.statDependency === 'ATK' || desc.includes('物理攻撃')) {
+    } else if (!isPassive && (skillDef.statDependency === 'ATK' || desc.includes('物理攻撃'))) {
       typeLabel = '物理'; typeBadgeClass = 'text-orange-300 bg-orange-950/60 border-orange-800/50';
     }
-    const typeBadgeHtml = `<div class="text-[9px] font-bold px-1 py-[1px] rounded border ${typeBadgeClass} ml-0.5 leading-none shadow-inner shrink-0">${typeLabel}</div>`;
+    const typeBadgeHtml = `<div class="ml-0.5 shrink-0 rounded border px-1 py-[1px] text-[9px] font-bold leading-none shadow-inner ${typeBadgeClass}">${typeLabel}</div>`;
+    const inheritedBadgeHtml = isInherited
+      ? '<div class="flex shrink-0 items-center gap-px rounded border border-fuchsia-700/50 bg-fuchsia-950/50 px-1 py-[1px] text-[9px] font-bold leading-none text-fuchsia-200"><span class="material-symbols-outlined" style="font-size:10px">link</span>継承</div>'
+      : '';
 
     const autoEnabled = autoSkillStates[p.id]?.[skillDef.id] !== false;
-    
-    // Aesthetic states
-    const grayscaleClass = (!canCast && !isAutoBattle) ? 'opacity-50 saturate-50 cursor-not-allowed' : '';
-    
-    // Core Card Design
-    let btnClass = "battle-skill-card skill-btn relative w-full flex items-stretch gap-2.5 p-2 border rounded-xl transition-all duration-300 group overflow-hidden ";
-    
+    const grayscaleClass = (!canCast && !isAutoBattle) ? 'opacity-60 saturate-50 cursor-not-allowed' : '';
+    let cardClass = `battle-skill-card relative w-full flex items-stretch gap-2.5 p-2 border rounded-xl transition-all duration-300 group overflow-hidden ${isPassive ? 'bg-emerald-950/25 border-emerald-700/40' : ''} `;
     let toggleHtml = '';
-    
-    if (isAutoBattle) {
+
+    if (isPassive) {
+      cardClass += 'shadow-[inset_0_1px_0_rgba(52,211,153,.06)] ';
+      toggleHtml = '<div class="battle-skill-passive-state flex min-w-[54px] shrink-0 flex-col items-center justify-center border-l border-emerald-700/30 pl-2 text-emerald-300"><span class="material-symbols-outlined" style="font-size:18px; font-variation-settings: \'FILL\' 1">verified</span><span class="text-[8px] font-black tracking-wider">常時有効</span></div>';
+    } else if (isAutoBattle) {
       if (autoEnabled) {
-        // Active Auto state: Glassmorphism blue/cyan, glowing borders
-        btnClass += "bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] active:border-cyan-400/80 active:shadow-[0_0_25px_rgba(34,211,238,0.25)] active:-translate-y-0.5 active:scale-[0.98] ";
-        
-        toggleHtml = `
-          <div class="battle-skill-auto flex flex-col items-center justify-center pl-2 border-l border-cyan-500/20 shrink-0 min-w-[60px]">
-            <span class="text-[9px] text-cyan-300 font-bold tracking-wider mb-0.5 uppercase drop-shadow-[0_0_2px_rgba(34,211,238,0.5)]">Auto</span>
-            <div class="battle-switch is-active bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.4)]" aria-hidden="true">
-              <span class="battle-switch-knob bg-white"></span>
-            </div>
-          </div>
-        `;
+        cardClass += 'bg-slate-900/60 backdrop-blur-md border-cyan-500/40 shadow-[0_0_20px_rgba(34,211,238,0.1)] active:border-cyan-400/80 active:shadow-[0_0_25px_rgba(34,211,238,0.25)] active:-translate-y-0.5 active:scale-[0.98] ';
+        toggleHtml = '<div class="battle-skill-auto flex min-w-[60px] shrink-0 flex-col items-center justify-center border-l border-cyan-500/20 pl-2"><span class="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-cyan-300">Auto</span><div class="battle-switch is-active bg-cyan-500" aria-hidden="true"><span class="battle-switch-knob bg-white"></span></div></div>';
       } else {
-        // Disabled Auto state: Muted glassmorphism
-        btnClass += "bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 active:opacity-100 active:border-slate-500/80 active:-translate-y-0.5 active:scale-[0.98] ";
-        
-        toggleHtml = `
-          <div class="battle-skill-auto flex flex-col items-center justify-center pl-2 border-l border-slate-700/50 shrink-0 min-w-[60px]">
-            <span class="text-[9px] text-slate-500 font-bold tracking-wider mb-0.5 uppercase">Manual</span>
-            <div class="battle-switch bg-slate-700" aria-hidden="true">
-              <span class="battle-switch-knob bg-slate-400"></span>
-            </div>
-          </div>
-        `;
+        cardClass += 'bg-slate-900/40 backdrop-blur-md border-slate-700/50 opacity-80 active:opacity-100 active:border-slate-500/80 active:-translate-y-0.5 active:scale-[0.98] ';
+        toggleHtml = '<div class="battle-skill-auto flex min-w-[60px] shrink-0 flex-col items-center justify-center border-l border-slate-700/50 pl-2"><span class="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">Manual</span><div class="battle-switch bg-slate-700" aria-hidden="true"><span class="battle-switch-knob bg-slate-400"></span></div></div>';
       }
     } else {
-      // Manual battle state
-      btnClass += "bg-slate-900/60 backdrop-blur-md border-slate-700/60 active:border-cyan-400/50 active:shadow-[0_0_20px_rgba(34,211,238,0.15)] active:-translate-y-0.5 active:scale-[0.98] " + grayscaleClass;
+      cardClass += `bg-slate-900/60 backdrop-blur-md border-slate-700/60 active:border-cyan-400/50 active:shadow-[0_0_20px_rgba(34,211,238,0.15)] active:-translate-y-0.5 active:scale-[0.98] ${grayscaleClass}`;
     }
 
-    // MP Cost Display
-    let mpCostHtml = '';
-    if (effectiveMpCost > 0) {
-      if (canCast) {
-        mpCostHtml = `
-          <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
-            <span class="text-[9px] text-cyan-400/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
-            <span class="text-lg font-mono font-black text-cyan-100 drop-shadow-[0_0_5px_rgba(34,211,238,0.3)] leading-none">${effectiveMpCost}</span>
-          </div>
-        `;
-      } else {
-        mpCostHtml = `
-          <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
-            <span class="text-[9px] text-rose-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
-            <span class="text-lg font-mono font-black text-rose-400 drop-shadow-[0_0_5px_rgba(244,63,94,0.3)] leading-none">${effectiveMpCost}</span>
-          </div>
-        `;
-      }
-    } else {
-      mpCostHtml = `
-        <div class="battle-skill-mp flex flex-col items-end justify-center px-2 min-w-[50px]">
-          <span class="text-[9px] text-slate-500/80 font-bold tracking-wider uppercase mb-[1px]">MP</span>
-          <span class="text-lg font-mono font-black text-slate-400 leading-none">0</span>
-        </div>
-      `;
-    }
+    const mpCostHtml = isPassive ? '' : `<div class="battle-skill-mp flex min-w-[50px] flex-col items-end justify-center px-2"><span class="mb-[1px] text-[9px] font-bold uppercase tracking-wider ${canCast ? 'text-cyan-400/80' : 'text-rose-500/80'}">MP</span><span class="font-mono text-lg font-black leading-none ${canCast ? 'text-cyan-100' : 'text-rose-400'}">${effectiveMpCost}</span></div>`;
+    const wrapperTag = isPassive ? 'article' : 'button';
+    const interactiveAttributes = isPassive
+      ? 'aria-label="パッシブスキル"'
+      : `type="button" data-skill-id="${skillDef.id}" data-level="${level}" aria-disabled="${canCast ? 'false' : 'true'}" ${isAutoBattle ? `role="switch" aria-checked="${autoEnabled}" aria-label="${skillDef.name}の自動使用"` : ''}`;
 
     skillListHtml += `
-      <button class="${btnClass}" data-skill-id="${skillDef.id}" data-level="${level}" aria-disabled="${canCast ? 'false' : 'true'}" ${isAutoBattle ? `role="switch" aria-checked="${autoEnabled}" aria-label="${skillDef.name}の自動使用"` : ''}>
-        <!-- Touch press feedback -->
-        <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-cyan-500/0 opacity-0 group-active:opacity-100 transition-opacity duration-500"></div>
-        
-        <!-- Left: Icon -->
-        <div class="battle-skill-icon-wrap flex items-center justify-center shrink-0 z-10">
-          <div class="battle-skill-icon w-10 h-10 rounded-lg bg-slate-950/80 flex items-center justify-center border border-slate-700/80 shadow-inner group-active:border-cyan-500/50 group-active:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
-            <span class="material-symbols-outlined ${canCast ? 'text-cyan-400 drop-shadow-[0_0_3px_rgba(34,211,238,0.5)]' : 'text-slate-500'} text-[22px] group-active:scale-110 transition-transform duration-300" style="font-variation-settings: 'FILL' 1">${skillDef.icon || 'star'}</span>
-          </div>
+      <${wrapperTag} class="${cardClass} ${isPassive ? '' : 'skill-btn'}" ${interactiveAttributes}>
+        <div class="battle-skill-icon-wrap z-10 flex shrink-0 items-center justify-center"><div class="battle-skill-icon flex h-10 w-10 items-center justify-center rounded-lg border ${isPassive ? 'border-emerald-700/60 bg-emerald-950/70' : 'border-slate-700/80 bg-slate-950/80'} shadow-inner"><span class="material-symbols-outlined ${isPassive ? 'text-emerald-300' : (canCast ? 'text-cyan-400' : 'text-slate-500')} text-[22px]" style="font-variation-settings: 'FILL' 1">${skillDef.icon || (isPassive ? 'psychology' : 'star')}</span></div></div>
+        <div class="battle-skill-info z-10 flex min-w-0 flex-1 flex-col justify-center py-0 text-left">
+          <div class="mb-1 flex flex-wrap items-center gap-1.5"><div class="text-[13px] font-bold leading-tight tracking-wide ${isPassive ? 'text-emerald-50' : (canCast ? 'text-slate-50' : 'text-slate-400')}">${skillDef.name}</div><div class="rounded border border-slate-700/50 bg-slate-900/50 px-1 py-[1px] text-[9px] font-bold ${isPassive ? 'text-emerald-300' : (canCast ? 'text-cyan-400' : 'text-slate-500')}">Lv${level}</div>${typeBadgeHtml}${inheritedBadgeHtml}</div>
+          <div class="skill-description text-[11px] leading-[1.55] whitespace-normal pr-1 text-slate-300">${useStateHtml}${descriptionHtml}</div>
         </div>
-        
-        <!-- Middle: Info -->
-        <div class="battle-skill-info flex flex-col text-left flex-1 min-w-0 justify-center z-10 py-0">
-          <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
-            <div class="text-[13px] font-bold tracking-wide ${canCast ? 'text-slate-50' : 'text-slate-400'} leading-tight">
-              ${skillDef.name}
-            </div>
-            <div class="${canCast ? 'text-cyan-400' : 'text-slate-500'} text-[9px] font-bold bg-slate-900/50 px-1 py-[1px] rounded border border-slate-700/50">Lv${level}</div>
-            ${typeBadgeHtml}
-          </div>
-          <div class="text-[11px] ${canCast ? 'text-slate-300' : 'text-slate-500'} leading-tight whitespace-normal pr-1 opacity-90">${useStateHtml}${desc}</div>
-        </div>
-
-        <!-- Right: MP Cost & Auto Switch (Horizontal Layout) -->
-        <div class="battle-skill-controls flex items-stretch justify-end shrink-0 z-10">
-          ${mpCostHtml}
-          ${toggleHtml}
-        </div>
-      </button>
-    `;
+        <div class="battle-skill-controls z-10 flex shrink-0 items-stretch justify-end">${mpCostHtml}${toggleHtml}</div>
+      </${wrapperTag}>`;
   });
   skillListHtml += '</div>';
 
