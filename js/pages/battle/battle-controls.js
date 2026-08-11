@@ -5,6 +5,7 @@
 
 import { areSoundEffectsEnabled, setSoundEffectsEnabled } from '../../utils/sound-effects.js';
 import { activateScreenLock } from '../../utils/screen-lock.js';
+import { MONSTERS } from '../../definitions/monsters.js';
 
 const SPEED_OPTIONS = [1, 2, 3, 4, 5];
 
@@ -97,6 +98,26 @@ function syncSettingButton(button, setting) {
   if (icon) icon.style.fontVariationSettings = `'FILL' ${enabled ? 1 : 0}`;
 }
 
+function getFloorMonsterIds(floor) {
+  const monsterIds = new Set();
+  for (const encounter of floor?.monsters || []) {
+    if (typeof encounter === 'string') {
+      monsterIds.add(encounter);
+    } else if (Array.isArray(encounter?.members)) {
+      encounter.members.forEach(member => {
+        if (member?.id && Number(member.count ?? 1) > 0) monsterIds.add(member.id);
+      });
+    } else if (encounter?.id) {
+      if (Number(encounter.count ?? 1) > 0) monsterIds.add(encounter.id);
+    } else {
+      Object.entries(encounter || {}).forEach(([monsterId, count]) => {
+        if (monsterId !== 'weight' && Number(count) > 0) monsterIds.add(monsterId);
+      });
+    }
+  }
+  return [...monsterIds];
+}
+
 function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) {
   if (!canJumpFloors || !dungeonDef?.floors?.length) return '';
 
@@ -104,21 +125,32 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) 
     const floorLevel = Number(floor.level);
     const isCurrentFloor = floorLevel === Number(currentFloorNum);
     const isBossFloor = index === dungeonDef.floors.length - 1;
+    const monsterIds = getFloorMonsterIds(floor);
+    const visibleMonsters = monsterIds.slice(0, 4).map(monsterId => {
+      const monster = MONSTERS.find(item => item.id === monsterId);
+      const image = monster?.image || `./assets/monster/${monsterId}.webp`;
+      return `<span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-black/35 p-0.5"><img src="${image}" alt="" class="h-full w-full object-contain" loading="lazy"></span>`;
+    }).join('');
+    const remainingMonsterCount = Math.max(0, monsterIds.length - 4);
     return `
       <button type="button" data-battle-floor-jump="${floorLevel}"
               ${isCurrentFloor ? 'disabled aria-current="location"' : ''}
-              aria-label="${floorLevel}階へジャンプ${isBossFloor ? '（最深部）' : ''}"
+              aria-label="${isCurrentFloor ? `${floorLevel}階（現在地）` : `${floorLevel}階へジャンプ${isBossFloor ? '（最深部）' : ''}`}"
               class="group flex min-h-[46px] min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left transition ${isCurrentFloor
-                ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_10px_rgb(34_211_238/.12)]'
+                ? 'border-cyan-300/50 bg-cyan-400/15 text-cyan-100 shadow-[0_0_10px_rgba(34,211,238,0.12)]'
                 : 'border-white/10 bg-slate-950/55 text-slate-300 active:scale-[0.97] active:border-cyan-300/45 active:bg-cyan-950/60'}">
-        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${isCurrentFloor ? 'border-cyan-300/35 bg-cyan-400/10' : 'border-slate-700 bg-slate-900'}">
-          <span class="material-symbols-outlined leading-none ${isBossFloor ? 'text-amber-300' : ''}" style="font-size: 14px">${isBossFloor ? 'skull' : 'layers'}</span>
+        <span class="flex h-8 w-10 shrink-0 flex-col items-center justify-center rounded-md border ${isCurrentFloor ? 'border-cyan-300/35 bg-cyan-400/10' : 'border-slate-700 bg-slate-900'}">
+          <span class="material-symbols-outlined leading-none ${isBossFloor ? 'text-amber-300' : ''}" style="font-size: 11px">${isBossFloor ? 'skull' : 'layers'}</span>
+          <span class="text-[9px] font-black leading-none tabular-nums">${String(floorLevel).padStart(2, '0')}F</span>
         </span>
-        <span class="min-w-0 flex-1">
-          <span class="block text-[10px] font-black tabular-nums">${String(floorLevel).padStart(2, '0')}F</span>
-          <span class="block truncate text-[7px] font-bold ${isCurrentFloor ? 'text-cyan-300' : 'text-slate-600'}">${isCurrentFloor ? '現在地' : isBossFloor ? '最深部' : 'ジャンプ'}</span>
+        <span class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden" aria-hidden="true">
+          ${visibleMonsters || '<span class="truncate text-[7px] font-bold text-slate-600">敵情報なし</span>'}
+          ${remainingMonsterCount ? `<span class="shrink-0 text-[7px] font-black text-slate-500">+${remainingMonsterCount}</span>` : ''}
         </span>
-        ${isCurrentFloor ? '<span class="h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-300" aria-hidden="true"></span>' : ''}
+        <span class="flex w-7 shrink-0 flex-col items-center text-[7px] font-black ${isCurrentFloor ? 'text-cyan-300' : isBossFloor ? 'text-amber-300' : 'text-slate-500'}" aria-hidden="true">
+          <span class="material-symbols-outlined leading-none" style="font-size: 14px">${isCurrentFloor ? 'location_on' : 'login'}</span>
+          ${isCurrentFloor ? '現在地' : 'GO'}
+        </span>
       </button>`;
   }).join('');
 
@@ -134,7 +166,7 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors }) 
         </span>
         <span class="rounded-full border border-amber-300/30 bg-amber-400/10 px-2 py-0.5 text-[7px] font-black text-amber-200">COMPLETE</span>
       </div>
-      <div class="grid grid-cols-3 gap-1.5 min-[420px]:grid-cols-4" aria-label="ジャンプ先の階層">
+      <div class="grid grid-cols-1 gap-1.5 min-[540px]:grid-cols-2" aria-label="ジャンプ先の階層">
         ${floorButtons}
       </div>
       <p class="mt-1.5 min-h-[12px] px-0.5 text-[8px] font-bold text-cyan-200/70" data-battle-floor-jump-status aria-live="polite">現在の戦闘を中断して選択階へ移動します</p>
