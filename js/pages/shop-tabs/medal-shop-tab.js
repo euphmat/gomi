@@ -5,24 +5,12 @@ import {
   calculateMedalPoints,
   getMedalPointRows,
 } from '../../definitions/medal-shop-definitions.js';
-import {
-  createMedalEquipmentScalingContext,
-  scaleMedalShopEquipment,
-} from '../../utils/medal-equipment-scaling.js';
 
 const TYPE_META = {
-  accessory: { label: 'アクセサリ', icon: 'diamond', color: 'text-fuchsia-300', border: 'border-fuchsia-400/25', glow: 'rgba(232,121,249,.2)' },
-  armor: { label: '防具', icon: 'shield', color: 'text-sky-300', border: 'border-sky-400/25', glow: 'rgba(125,211,252,.2)' },
-  weapon: { label: '武器', icon: 'swords', color: 'text-rose-300', border: 'border-rose-400/25', glow: 'rgba(253,164,175,.2)' },
+  accessory: { color: 'text-fuchsia-300', border: 'border-fuchsia-400/25', glow: 'rgba(232,121,249,.2)' },
+  armor: { color: 'text-sky-300', border: 'border-sky-400/25', glow: 'rgba(125,211,252,.2)' },
+  weapon: { color: 'text-rose-300', border: 'border-rose-400/25', glow: 'rgba(253,164,175,.2)' },
 };
-
-function statSummary(stats = {}) {
-  const labels = { hp: 'HP', mp: 'MP', atk: 'ATK', def: 'DEF', matk: 'MAT', mdef: 'MDF', spd: 'SPD' };
-  return Object.entries(stats)
-    .filter(([, value]) => Number(value) !== 0)
-    .map(([key, value]) => `${labels[key] || key.toUpperCase()} +${formatNumber(value)}`)
-    .join(' / ');
-}
 
 function rewardImage(reward) {
   return `./assets/${reward.type}/${reward.id}.webp`;
@@ -65,20 +53,10 @@ export async function renderMedalShopTab() {
     playerMedalsValue,
     claimedValue,
     ownedEquipment,
-    completedDungeons,
-    completedDungeonFloors,
-    unlockedDungeons,
-    currentDungeonId,
-    currentFloor,
   ] = await Promise.all([
     GameDB.getGameState('player_medals'),
     GameDB.getGameState('medal_shop_claimed_rewards'),
     GameDB.getAllEquipment(),
-    GameDB.getGameState('completed_dungeons'),
-    GameDB.getGameState('completed_dungeon_floors'),
-    GameDB.getGameState('unlockedDungeons'),
-    GameDB.getGameState('currentDungeon'),
-    GameDB.getGameState('currentFloor'),
   ]);
   const playerMedals = playerMedalsValue || {};
   const points = calculateMedalPoints(playerMedals);
@@ -97,14 +75,6 @@ export async function renderMedalShopTab() {
     ...rank,
     count: Object.values(playerMedals).filter(rankIndex => Number(rankIndex) === index).length,
   }));
-  const scalingContext = createMedalEquipmentScalingContext({
-    playerMedals,
-    completedDungeons,
-    completedDungeonFloors,
-    unlockedDungeons,
-    currentDungeonId,
-    currentFloor,
-  });
   const allRewards = MEDAL_SHOP_DUNGEON_REWARDS
     .flatMap(dungeon => dungeon.rewards)
     .sort((a, b) => a.points - b.points);
@@ -132,7 +102,7 @@ export async function renderMedalShopTab() {
                 <h2 class="text-sm font-black tracking-wide text-white">伝説装備へのロードマップ</h2>
               </div>
             </div>
-            <p class="mt-1 text-[9px] font-bold text-slate-400">集めたポイントは減りません。到達した報酬を順番に受け取ろう。</p>
+            <p class="mt-1 text-[9px] font-bold text-slate-400">到達した報酬を順番に受け取ろう。</p>
           </div>
           <div class="shrink-0 rounded-2xl border border-amber-300/30 bg-black/35 px-3 py-2 text-right shadow-[0_0_22px_rgba(251,191,36,.13)]">
             <div class="text-[7px] font-black tracking-widest text-amber-200/65">TOTAL POINT</div>
@@ -151,7 +121,8 @@ export async function renderMedalShopTab() {
               <span class="text-[9px] font-black tabular-nums text-white">${formatNumber(spotlightReward.points)}P</span>
             </div>
             <div class="mt-0.5 truncate text-[11px] font-black text-white">${spotlightReward.name}</div>
-            <div class="mt-1 flex items-center gap-1 text-[8px] font-bold text-slate-400"><span class="material-symbols-outlined ${spotlightMeta.color}" style="font-size:12px">${spotlightMeta.icon}</span>${spotlightMeta.label}${nextLockedReward && !claimableRewards.length ? ` ・ あと ${formatNumber(remainingPoints)}P` : ''}</div>
+            <div class="mt-1 flex items-start gap-1.5 text-[10px] font-bold leading-snug text-slate-300"><span class="material-symbols-outlined ${spotlightMeta.color}" style="font-size:14px">auto_awesome</span><span>${spotlightReward.specialEffect.description}</span></div>
+            ${nextLockedReward && !claimableRewards.length ? `<div class="mt-1 text-[9px] font-black text-cyan-300">あと ${formatNumber(remainingPoints)}P</div>` : ''}
           </div>
         </div>
 
@@ -175,13 +146,11 @@ export async function renderMedalShopTab() {
         <div class="mx-auto max-w-2xl">
           <div class="mb-3 flex items-end justify-between">
             <div><div class="text-[8px] font-black tracking-[.25em] text-violet-300/60">51 MILESTONES</div><h3 class="text-xs font-black text-white">ポイント達成報酬</h3></div>
-            <div class="text-right text-[8px] font-bold text-slate-500">輝く装備が<br>あなたを待っている</div>
           </div>
 
           <ol class="relative" aria-label="メダルポイント報酬ロードマップ">
             ${allRewards.map((reward, index) => {
               const meta = TYPE_META[reward.type];
-              const scaledReward = scaleMedalShopEquipment(reward, scalingContext);
               const isClaimed = claimed.has(reward.id);
               const canClaim = points >= reward.points && !isClaimed;
               const isReached = points >= reward.points;
@@ -207,16 +176,20 @@ export async function renderMedalShopTab() {
                       <div class="min-w-0 pr-1">
                         <div class="flex items-center gap-1.5">
                           <span class="rounded-full border ${isReached ? 'border-amber-300/25 bg-amber-300/10 text-amber-300' : 'border-slate-700 bg-slate-900 text-slate-500'} px-2 py-0.5 text-[8px] font-black tabular-nums">${formatNumber(reward.points)}P</span>
-                          <span class="flex items-center gap-0.5 text-[7px] font-black ${meta.color}"><span class="material-symbols-outlined text-[11px]">${meta.icon}</span>${meta.label}</span>
                         </div>
-                        <h4 class="mt-1.5 break-words text-[11px] font-black leading-tight ${isReached ? 'text-white' : 'text-slate-400'}">${reward.name}</h4>
-                        <p class="mt-1 text-[8px] font-bold leading-snug text-cyan-100/70">${statSummary(scaledReward.stats)}</p>
-                        <p class="mt-1 text-[7px] font-black text-amber-300/65">成長倍率 ×${scaledReward.medalScaling.totalMultiplier.toFixed(2)}</p>
+                        <h4 class="mt-2 break-words text-[13px] font-black leading-snug ${isReached ? 'text-white' : 'text-slate-400'}">${reward.name}</h4>
                       </div>
                     </div>
 
-                    <div class="mt-2 rounded-xl border border-white/5 bg-black/25 px-2.5 py-2">
-                      <div class="flex gap-1.5"><span class="material-symbols-outlined mt-px text-[13px] ${meta.color}">auto_awesome</span><p class="text-[8px] leading-relaxed ${isReached ? 'text-slate-300' : 'text-slate-500'}">${reward.specialEffect.description}</p></div>
+                    <div class="relative mt-2.5 overflow-hidden rounded-xl border ${isReached ? meta.border : 'border-slate-800'} bg-gradient-to-br ${isReached ? 'from-white/[.08] via-black/35 to-black/55' : 'from-slate-900/70 to-black/45'} px-3 py-3">
+                      <div class="absolute -right-5 -top-7 h-20 w-20 rounded-full bg-white/[.04] blur-xl"></div>
+                      <div class="relative flex items-start gap-2.5">
+                        <span class="material-symbols-outlined flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${isReached ? `${meta.border} bg-white/[.07] ${meta.color}` : 'border-slate-800 bg-slate-900 text-slate-600'} text-[18px]" style="font-variation-settings:'FILL' 1">auto_awesome</span>
+                        <div class="min-w-0">
+                          <div class="text-[8px] font-black tracking-[.18em] ${isReached ? meta.color : 'text-slate-600'}">UNIQUE EFFECT</div>
+                          <p class="mt-1 text-[11px] font-bold leading-[1.65] ${isReached ? 'text-slate-100' : 'text-slate-500'}">${reward.specialEffect.description}</p>
+                        </div>
+                      </div>
                     </div>
 
                     <button type="button" data-medal-reward-id="${reward.id}" ${canClaim ? '' : 'disabled'} aria-label="${reward.name}を受け取る" class="mt-2 flex min-h-10 w-full items-center justify-center gap-1 rounded-xl border px-2 py-2 text-[10px] font-black transition-all ${isClaimed ? 'border-emerald-500/20 bg-emerald-950/40 text-emerald-400' : canClaim ? 'border-amber-200/50 bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-400 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,.25)] active:scale-[.98]' : 'border-slate-800 bg-slate-900/60 text-slate-600'}">

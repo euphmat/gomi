@@ -4,6 +4,7 @@ const CATEGORY_RULES = [
   { id: 'cloud', label: 'データ保存', icon: 'cloud_sync', tone: 'sky', words: ['クラウド', 'Firebase', 'Firestore', 'ログイン', 'セーブデータ'] },
   { id: 'memory', label: '神経衰弱', icon: 'style', tone: 'fuchsia', words: ['神経衰弱', '記憶術', '勝負術', '盤面術'] },
   { id: 'job', label: 'ジョブ・育成', icon: 'shield_person', tone: 'violet', words: ['職「', '職業', 'ジョブ', 'スキル', 'SP', 'JP', '限界突破', '転職'] },
+  { id: 'equipment', label: '装備・ショップ', icon: 'inventory_2', tone: 'amber', words: ['メダル報酬装備', 'メダル」タブ', '装備枠', '最強装備', '武器・防具・アクセサリ'] },
   { id: 'fishing', label: '釣り・魚図鑑', icon: 'phishing', tone: 'cyan', words: ['釣り', '魚', 'ルアー', '釣竿', 'エサ'] },
   { id: 'quest', label: 'クエスト', icon: 'task_alt', tone: 'amber', words: ['クエスト', '報酬', 'Prism'] },
   { id: 'ranch', label: 'モンスター牧場', icon: 'pets', tone: 'emerald', words: ['牧場', '魚餌', '仲間になったモンスター'] },
@@ -80,6 +81,9 @@ function getItemTitle(item, category, type) {
   if (text.includes('釣具工房')) return '釣具工房をアップデート';
   if (text.includes('魚図鑑')) return '魚図鑑の楽しみを拡張';
   if (text.includes('神経衰弱')) return '神経衰弱をアップデート';
+  if (text.includes('メダル」タブ')) return 'メダルロードが登場';
+  if (text.includes('自動装備ロック')) return '残したい装備をロック';
+  if (text.includes('牧場の魚餌')) return '魚餌をまとめて選択';
   const action = {
     NEW: 'に新しい要素', FIX: 'の問題を修正', RENEW: 'を全面リニューアル', TUNE: 'をバランス調整',
     BETTER: 'をもっと快適に', CHANGE: 'の仕組みを整理', UPDATE: 'をアップデート',
@@ -189,6 +193,56 @@ function renderCloudSaveGuide() {
     </section>`;
 }
 
+function renderMedalRoadGuide() {
+  const steps = [
+    { number: '1', icon: 'military_tech', title: 'メダルを集める', note: '討伐してランクアップ', tone: 'text-rose-300', border: 'border-rose-400/30 bg-rose-400/10' },
+    { number: '2', icon: 'toll', title: 'ポイントが貯まる', note: '所持メダルから自動計算', tone: 'text-amber-300', border: 'border-amber-400/30 bg-amber-400/10' },
+    { number: '3', icon: 'redeem', title: '装備を受け取る', note: '光る到達報酬をタップ', tone: 'text-emerald-300', border: 'border-emerald-400/30 bg-emerald-400/10' },
+  ];
+  return `
+    <section class="my-4 overflow-hidden rounded-2xl border border-amber-300/25 bg-gradient-to-br from-amber-950/65 via-slate-950 to-violet-950/60" aria-labelledby="medal-road-guide-title">
+      <div class="flex items-start gap-2.5 border-b border-amber-200/10 bg-amber-300/[.06] p-3.5">
+        <span class="material-symbols-outlined flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-300/10 text-xl text-amber-300">route</span>
+        <div>
+          <p class="text-[8px] font-black tracking-[.16em] text-amber-400">NEW FEATURE</p>
+          <h3 id="medal-road-guide-title" class="mt-0.5 text-xs font-black text-white">メダルロードは3ステップ</h3>
+          <p class="mt-1 text-[9px] leading-relaxed text-slate-400">ショップの「メダル」タブで、集めた実績に応じて伝説装備を受け取れます。</p>
+        </div>
+      </div>
+
+      <div class="p-3.5">
+        <div class="grid grid-cols-[1fr_14px_1fr_14px_1fr] items-stretch gap-1">
+          ${steps.map((step, index) => `
+            <div class="flex min-w-0 flex-col items-center rounded-xl border ${step.border} px-1.5 py-2.5 text-center">
+              <span class="material-symbols-outlined text-xl ${step.tone}">${step.icon}</span>
+              <div class="mt-1 text-[8px] font-black leading-tight text-white"><span class="mr-0.5 ${step.tone}">${step.number}</span>${step.title}</div>
+              <div class="mt-1 text-[7px] leading-snug text-slate-500">${step.note}</div>
+            </div>
+            ${index < steps.length - 1 ? '<span class="material-symbols-outlined self-center text-center text-sm text-amber-500">arrow_forward</span>' : ''}
+          `).join('')}
+        </div>
+
+        <div class="mt-3 grid grid-cols-3 gap-1.5" aria-label="メダルロードの報酬内訳">
+          <div class="rounded-lg border border-fuchsia-400/20 bg-fuchsia-400/[.07] px-2 py-1.5 text-center"><span class="material-symbols-outlined text-base text-fuchsia-300">diamond</span><div class="text-[8px] font-black text-fuchsia-100">アクセサリ</div></div>
+          <div class="rounded-lg border border-sky-400/20 bg-sky-400/[.07] px-2 py-1.5 text-center"><span class="material-symbols-outlined text-base text-sky-300">shield</span><div class="text-[8px] font-black text-sky-100">防具</div></div>
+          <div class="rounded-lg border border-rose-400/20 bg-rose-400/[.07] px-2 py-1.5 text-center"><span class="material-symbols-outlined text-base text-rose-300">swords</span><div class="text-[8px] font-black text-rose-100">武器</div></div>
+        </div>
+        <p class="mt-1.5 text-center text-[8px] font-bold text-slate-500">17エリア × 3種類 ＝ 全51個</p>
+      </div>
+
+      <div class="mx-3.5 mb-3.5 flex items-start gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/[.07] p-2.5 text-[8px] leading-relaxed text-emerald-100/80">
+        <span class="material-symbols-outlined text-sm text-emerald-300">verified</span>
+        <span><strong class="text-emerald-200">ポイントは通貨ではありません。</strong> 報酬を受け取っても減らず、メダルを育てるほど次の報酬へ近づきます。</span>
+      </div>
+    </section>`;
+}
+
+function renderEntryGuide(guide) {
+  if (guide === 'cloud-save') return renderCloudSaveGuide();
+  if (guide === 'medal-road') return renderMedalRoadGuide();
+  return '';
+}
+
 function renderItemCard(item) {
   const isPlaceholder = !item || item === '更新内容は現在整理中です。';
   const category = isPlaceholder ? { ...FALLBACK_CATEGORY, label: '記録準備中', icon: 'edit_note' } : getCategory(item);
@@ -229,7 +283,7 @@ function renderVersionSection(entry, isLast) {
         <div class="h-px flex-1 bg-white/[.07]"></div>
         <span class="text-[8px] font-bold text-slate-600">${items.length} changes</span>
       </div>
-      ${entry.guide === 'cloud-save' ? renderCloudSaveGuide() : ''}
+      ${renderEntryGuide(entry.guide)}
       <div class="mt-2.5 space-y-2">${items.map(renderItemCard).join('')}</div>
     </section>`;
 }
