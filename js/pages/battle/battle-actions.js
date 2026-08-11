@@ -18,6 +18,11 @@ import {
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
+const AILMENT_DISPLAY_NAMES = Object.freeze({
+  poison: '毒', burn: '燃焼', paralysis: '麻痺', freeze: '凍結', sleep: '睡眠',
+  confusion: '混乱', curse: '呪い', blind: '暗闇', silence: '沈黙'
+});
+
 export function getDefenseAfterIgnore(defense, ignorePercent) {
   const normalizedDefense = Math.max(0, Number(defense) || 0);
   const normalizedIgnore = Math.min(100, Math.max(0, Number(ignorePercent) || 0));
@@ -71,7 +76,7 @@ export const actionMethods = {
   isMedalEquipmentAilmentImmune(entity, ailment, { announce = true } = {}) {
     const immune = hasMedalEquipmentImmunity(entity, this.equipMap, ailment);
     if (immune && announce) {
-      this.showActionName(entity.elementId, '状態異常無効', 'text-amber-200', 'border-amber-400/60');
+      this.showActionName(entity.elementId, 'メダル装備・状態異常無効', 'text-amber-200', 'border-amber-400/60');
     }
     return immune;
   },
@@ -80,11 +85,18 @@ export const actionMethods = {
     if (!entity?.hp || entity.isDead) return;
     const hpPercent = sumMedalEquipmentEffect(entity, this.equipMap, 'actionHpRegenPercent', 25);
     const mpPercent = sumMedalEquipmentEffect(entity, this.equipMap, 'actionMpRegenPercent', 25);
+    let recoveryAnnounced = false;
+    const announceRecovery = () => {
+      if (recoveryAnnounced) return;
+      recoveryAnnounced = true;
+      this.showActionName?.(entity.elementId, 'メダル装備・自動回復', 'text-amber-200', 'border-amber-400/60');
+    };
     if (hpPercent > 0) {
       const maxHp = entity.stats?.hp || entity.hp.max || 1;
       const recovered = Math.min(Math.floor(maxHp * hpPercent / 100), Math.max(0, maxHp - entity.hp.current));
       if (recovered > 0) {
         entity.hp.current += recovered;
+        announceRecovery();
         this._scheduleBattleTimeout(() => this.showDamage(entity.elementId, `+${recovered}`, 'text-emerald-300'), this.speedMult >= 5 ? 0 : 250 / this.speedMult);
       }
     }
@@ -93,6 +105,7 @@ export const actionMethods = {
       const recovered = Math.min(Math.floor(maxMp * mpPercent / 100), Math.max(0, maxMp - entity.mp.current));
       if (recovered > 0) {
         entity.mp.current += recovered;
+        announceRecovery();
         this._scheduleBattleTimeout(() => this.showDamage(entity.elementId, `+${recovered} MP`, 'text-cyan-300'), this.speedMult >= 5 ? 0 : 250 / this.speedMult);
       }
     }
@@ -665,12 +678,14 @@ export const actionMethods = {
       if (criticalChance > 0 && Math.random() * 100 < criticalChance) {
         const negated = defender.hp !== undefined
           && rollMedalEquipmentEffect(defender, this.equipMap, 'criticalNegationChance');
-        if (!negated) {
+        if (negated) {
+          this.showActionName?.(defender.elementId, 'メダル装備・会心無効', 'text-amber-200', 'border-amber-400/60');
+        } else {
           const criticalMultiplier = Math.max(1.5, ...getMedalEquipmentEffects(attacker, this.equipMap)
             .map(effect => Number(effect.criticalMultiplier) || 0));
           damage = Math.floor(damage * criticalMultiplier);
           isCriticalHit = true;
-          if (!options.hideActionName) this.showActionName(attacker.elementId, 'MEDAL CRITICAL', 'text-amber-200', 'border-amber-400/60');
+          this.showActionName?.(attacker.elementId, 'メダル装備・会心', 'text-amber-200', 'border-amber-400/60');
         }
       }
     }
@@ -969,6 +984,12 @@ export const actionMethods = {
       if (!ailmentImmune) {
         const ailment = inflictedAilments[0];
         defender.activeAilment = { type: ailment, duration: 10 };
+        this.showEffectBadge?.(
+          defender.elementId,
+          `${AILMENT_DISPLAY_NAMES[ailment] || '状態異常'}付与`,
+          'text-fuchsia-200',
+          'border-fuchsia-400/60'
+        );
       }
     }
 
@@ -1096,6 +1117,7 @@ export const actionMethods = {
         const recovered = Math.min(Math.floor(damageDealt * drainPercent / 100), Math.max(0, maxHp - attacker.hp.current));
         if (recovered > 0) {
           attacker.hp.current += recovered;
+          this.showActionName?.(attacker.elementId, 'メダル装備・HP吸収', 'text-amber-200', 'border-amber-400/60');
           this._scheduleBattleTimeout(() => this.showDamage(attacker.elementId, `+${recovered}`, 'text-emerald-300'), this.speedMult >= 5 ? 0 : 300 / this.speedMult);
         }
       }
@@ -1106,7 +1128,7 @@ export const actionMethods = {
       if (executeThreshold > 0 && defender.currentHp / Math.max(1, defender.maxHp || defender.stats?.hp) <= executeThreshold / 100) {
         defender.currentHp = 0;
         defender.isDead = true;
-        this.showActionName(attacker.elementId, '迷界断絶', 'text-fuchsia-200', 'border-fuchsia-400/60');
+        this.showActionName(attacker.elementId, 'メダル装備・とどめ', 'text-fuchsia-200', 'border-fuchsia-400/60');
         this.processEnemyDeath(defender);
       }
     }
@@ -1163,6 +1185,9 @@ export const actionMethods = {
           const guaranteedHits = Math.floor(sumMedalEquipmentEffect(attacker, this.equipMap, 'normalAttackExtraHits', 3));
           const chanceHit = rollMedalEquipmentEffect(attacker, this.equipMap, 'normalAttackExtraHitChance') ? 1 : 0;
           const equipmentHits = guaranteedHits + chanceHit;
+          if (equipmentHits > 0) {
+            this.showActionName?.(attacker.elementId, `メダル装備・追撃 ×${equipmentHits}`, 'text-amber-200', 'border-amber-400/60');
+          }
           for (let i = 0; i < equipmentHits; i++) {
             this._scheduleBattleTimeout(() => {
               const currentTarget = defender.isDead ? this.enemies.find(enemy => !enemy.isDead) : defender;

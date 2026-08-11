@@ -23,5 +23,12 @@ assert(controlsSource.includes("localStorage.setItem('autoBattleSpeed'")
   'battle controls do not share all relevant settings with the settings modal');
 assert(controlsSource.includes("new Event('settingsChanged')"),
   'control changes are not dispatched to the running battle');
+assert(controlsSource.includes("import { activateScreenLock }")
+    && controlsSource.includes("data-battle-screen-lock")
+    && controlsSource.includes("addEventListener('click', activateScreenLock)"),
+  'screen lock button is not connected to the existing screen lock');
+assert(controlsSource.includes('class="battle-control-icon')
+    && controlsSource.includes('style="display: grid; place-items: center"'),
+  'control icons do not use an independent centered wrapper');
 
 console.log('battle controls tests passed');

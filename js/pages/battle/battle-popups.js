@@ -55,6 +55,80 @@ const LEGACY_STATUS_COLORS = Object.freeze({
   rose: '#fb7185', gray: '#9ca3af', white: '#ffffff', black: '#111111'
 });
 
+const BATTLE_LABEL_TRANSLATIONS = Object.freeze({
+  'ATK/MATK UP': '攻撃・魔攻アップ',
+  'ENEMY ATK/MATK UP': '敵の攻撃・魔攻アップ',
+  'DEF/MDEF UP': '防御・魔防アップ',
+  'ATK UP': '攻撃力アップ',
+  'MATK UP': '魔法攻撃アップ',
+  'DEF UP': '防御力アップ',
+  'MDEF UP': '魔法防御アップ',
+  'SPD UP': '素早さアップ',
+  'ALL UP': '全能力アップ',
+  'RESIST UP': '状態異常耐性アップ',
+  'ATK DOWN': '攻撃力ダウン',
+  'MATK DOWN': '魔法攻撃ダウン',
+  'DEF DOWN': '防御力ダウン',
+  'MDEF DOWN': '魔法防御ダウン',
+  'SPD DOWN': '素早さダウン',
+  'ATB UP': '行動ゲージ上昇',
+  'ATB DOWN': '行動ゲージ低下',
+  'ATB RESET': '行動ゲージリセット',
+  'BUFF BREAK': '強化効果解除',
+  'BUFF CLEARED': '強化効果解除',
+  'BARRIER BLOCK': 'バリア防御',
+  'BARRIER BREAK': 'バリア破壊',
+  'MEDAL CRITICAL': 'メダル装備・会心',
+  'MISS': 'ミス',
+  'CLEANSE': '状態異常回復',
+  'REGEN': 'HP自動回復',
+  'FREEZE': '凍結',
+  'SHATTER': '氷砕',
+  'BURN': '燃焼',
+  'DETONATE': '爆発',
+  'RAISE': '蘇生',
+  'INSTANT KILL': '即死',
+  'DEATH RESIST': '即死無効',
+  'SOUL RETURN': '魂の帰還',
+  'MANA FLOW': 'マナフロー',
+  'ALL COVER': '全体かばう'
+});
+
+export function normalizeBattleLabel(value) {
+  const label = String(value ?? '').trim();
+  if (BATTLE_LABEL_TRANSLATIONS[label]) return BATTLE_LABEL_TRANSLATIONS[label];
+
+  const barrier = label.match(/^BARRIER\s*\+(.+)$/i);
+  if (barrier) return `バリア +${barrier[1]}`;
+  const gaiaBarrier = label.match(/^GAIA\s*\+(.+)$/i);
+  if (gaiaBarrier) return `ガイア障壁 +${gaiaBarrier[1]}`;
+  return label;
+}
+
+function escapeBattleBadgeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function getBattleBadgeIcon(label, kind) {
+  if (label.includes('メダル装備')) return 'workspace_premium';
+  if (kind === 'action') return 'auto_awesome';
+  if (/アップ|上昇|回復|蘇生|帰還|バリア|かばう|付与/.test(label)) return 'add_circle';
+  if (/ダウン|低下|解除|破壊|封じ|不足|不可|ミス|即死|無効/.test(label)) return 'warning';
+  if (/毒|呪|燃焼|凍結|麻痺|睡眠|混乱|暗闇|沈黙|病勢/.test(label)) return 'crisis_alert';
+  return 'flare';
+}
+
+function getBattleBadgeBorderClass(textClass) {
+  const match = String(textClass || '').match(/(?:^|\s)text-([a-z]+)(?:-(\d+))?/);
+  if (!match) return 'border-cyan-400/50';
+  return match[2] ? `border-${match[1]}-${match[2]}/60` : `border-${match[1]}/60`;
+}
+
 export function resolveBattleValueType(elementId, value, typeOrColorClass) {
   if (BATTLE_VALUE_STYLES[typeOrColorClass]) return typeOrColorClass;
 
@@ -291,7 +365,7 @@ export const popupMethods = {
     const stack = this._labelStacks[elementId];
     
     // limit stack size — tighter at high speed to prevent severe layout thrashing
-    const maxStack = speed >= 5 ? 3 : 8;
+    const maxStack = speed >= 5 ? 5 : 10;
     while (stack.length >= maxStack) {
       const oldest = stack.shift();
       if (oldest.anim) oldest.anim.cancel();
@@ -332,21 +406,20 @@ export const popupMethods = {
     wrapper.style.left = `${centerX}px`;
     wrapper.style.top = `${baseY}px`;
     wrapper.style.transform = `translate(-50%, -10px)`;
-    wrapper.style.transition = `transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1)`;
+    wrapper.style.transition = `transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)`;
 
     popup.className = `${config.className || ''}`;
     popup.style.transform = ''; // Clear previous transform
     popup.innerHTML = config.html;
 
     const anim = popup.animate([
-      { opacity: 0, transform: 'scale(0.5) translateY(10px)', offset: 0 },
-      { opacity: 1, transform: 'scale(1.1) translateY(-2px)', offset: 0.1 },
-      { opacity: 1, transform: 'scale(1.0) translateY(0)', offset: 0.2 },
-      { opacity: 0.9, transform: 'scale(1.0) translateY(0)', offset: 0.8 },
-      { opacity: 0, transform: 'scale(0.85) translateY(-10px)', offset: 1 }
+      { opacity: 0, transform: 'translateY(8px) scale(0.92)', offset: 0 },
+      { opacity: 1, transform: 'translateY(0) scale(1)', offset: 0.14 },
+      { opacity: 1, transform: 'translateY(0) scale(1)', offset: 0.78 },
+      { opacity: 0, transform: 'translateY(-8px) scale(0.98)', offset: 1 }
     ], {
       duration: dur,
-      easing: 'ease-out',
+      easing: 'cubic-bezier(0.2, 0.75, 0.25, 1)',
       fill: 'forwards'
     });
 
@@ -376,6 +449,13 @@ export const popupMethods = {
   showDamage(elementId, damage, valueTypeOrColorClass = BATTLE_VALUE_TYPES.PLAYER_DAMAGE, delay = 0) {
     captureBattlePopup(this, elementId, damage);
     const valueType = resolveBattleValueType(elementId, damage, valueTypeOrColorClass);
+    if (!valueType || valueType === BATTLE_VALUE_TYPES.BARRIER) {
+      const badgeTextClass = String(valueTypeOrColorClass).startsWith('text-')
+        ? valueTypeOrColorClass
+        : 'text-cyan-200';
+      this.showEffectBadge(elementId, damage, badgeTextClass);
+      return;
+    }
     const valueStyle = BATTLE_VALUE_STYLES[valueType] || {};
     const playPopupSound = () => playSoundEffect(valueStyle.sound || 'battleHit', { automatic: this.isAutoBattle });
     if (delay > 0) {
@@ -414,15 +494,33 @@ export const popupMethods = {
     });
   },
 
+  showEffectBadge(elementId, effectName, textClass = 'text-cyan-200', borderClass = null) {
+    if (shouldSkipBattleAnimations()) return;
+    const label = normalizeBattleLabel(effectName);
+    const icon = getBattleBadgeIcon(label, 'effect');
+    const safeLabel = escapeBattleBadgeHtml(label);
+    const resolvedBorderClass = borderClass || getBattleBadgeBorderClass(textClass);
+    const html = `<div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border ${resolvedBorderClass} bg-slate-950/90 px-3 py-1.5 ${textClass} backdrop-blur-sm" style="box-shadow: 0 5px 14px rgba(0,0,0,0.72); text-shadow: 0 2px 4px rgba(0,0,0,0.9);"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1">${icon}</span><span class="text-[14px] font-black tracking-wide">${safeLabel}</span></div>`;
+
+    this._showLabelPopup(elementId, {
+      html,
+      duration: 1450,
+      height: 34
+    });
+  },
+
   // --- showActionName: アクション名ポップアップ (その場に留まる) ---
   showActionName(elementId, actionName, textClass = 'text-green-300', borderClass = 'border-green-500/50') {
     captureBattleActionLabel(this, elementId, actionName);
     if (shouldSkipBattleAnimations()) return;
-    const html = `<span class="font-black text-[15px] ${textClass} tracking-widest whitespace-nowrap bg-black/70 px-4 py-1.5 rounded-full border ${borderClass}" style="box-shadow: 0 4px 10px rgba(0,0,0,0.8); text-shadow: 0 2px 4px rgba(0,0,0,0.9);">${actionName}</span>`;
+    const label = normalizeBattleLabel(actionName);
+    const icon = getBattleBadgeIcon(label, 'action');
+    const safeLabel = escapeBattleBadgeHtml(label);
+    const html = `<div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border ${borderClass} bg-black/85 px-3.5 py-1.5 ${textClass} backdrop-blur-sm" style="box-shadow: 0 5px 14px rgba(0,0,0,0.78); text-shadow: 0 2px 4px rgba(0,0,0,0.9);"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1">${icon}</span><span class="text-[14px] font-black tracking-wide">${safeLabel}</span></div>`;
 
     this._showLabelPopup(elementId, {
       html,
-      duration: 1200,
+      duration: 1450,
       height: 34
     });
   },
@@ -431,7 +529,7 @@ export const popupMethods = {
   showLevelUp(elementId, type = 'base') {
     if (shouldSkipBattleAnimations()) return;
     const isJob = type === 'job';
-    const textStr = isJob ? 'JOB LEVEL UP' : 'LEVEL UP';
+    const textStr = isJob ? 'ジョブレベルアップ' : 'レベルアップ';
     const iconColor = isJob ? 'text-red-300' : 'text-orange-300';
     const gradient = isJob
       ? 'from-white via-red-400 to-red-600'

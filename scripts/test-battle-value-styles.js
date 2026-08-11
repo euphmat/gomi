@@ -4,10 +4,12 @@ globalThis.document = { hidden: false, body: { classList: { contains: () => fals
 const {
   BATTLE_VALUE_STYLES,
   BATTLE_VALUE_TYPES,
+  normalizeBattleLabel,
   popupMethods,
   resolveAttackValueType,
   resolveBattleValueType
 } = await import('../js/pages/battle/battle-popups.js');
+const { actionMethods } = await import('../js/pages/battle/battle-actions.js');
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -69,10 +71,13 @@ for (const [isPartyAttack, elementMultiplier, isCritical, expected] of attackTyp
 }
 
 const renderedConfigs = [];
+const badgeConfigs = [];
 const battleStub = {
   party: [],
   enemies: [],
-  _showFloatingPopup(elementId, config) { renderedConfigs.push({ elementId, ...config }); }
+  _showFloatingPopup(elementId, config) { renderedConfigs.push({ elementId, ...config }); },
+  _showLabelPopup(elementId, config) { badgeConfigs.push({ elementId, ...config }); },
+  showEffectBadge: popupMethods.showEffectBadge
 };
 popupMethods.showDamage.call(battleStub, 'enemy-0', 999, BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE);
 popupMethods.showDamage.call(battleStub, 'enemy-0', 100, BATTLE_VALUE_TYPES.RESISTED_DAMAGE);
@@ -81,5 +86,51 @@ popupMethods.showDamage.call(battleStub, 'party-0', 50, BATTLE_VALUE_TYPES.CURSE
 assert(renderedConfigs[0].color === '#f97316' && renderedConfigs[0].fontSize === '42px', '抜群ダメージが大きいオレンジで描画されません');
 assert(renderedConfigs[1].color === '#6366f1' && renderedConfigs[1].fontSize === '26px', '効果今ひとつダメージが小さい青紫で描画されません');
 assert(renderedConfigs[2].color === '#111111' && renderedConfigs[2].textShadow.includes('#fff'), '呪いダメージが判読可能な黒で描画されません');
+
+const translatedLabels = {
+  'DEF UP': '防御力アップ',
+  'ATB DOWN': '行動ゲージ低下',
+  'BUFF BREAK': '強化効果解除',
+  'BARRIER BLOCK': 'バリア防御',
+  'MEDAL CRITICAL': 'メダル装備・会心',
+  'INSTANT KILL': '即死',
+  'SOUL RETURN': '魂の帰還',
+  'BARRIER +80': 'バリア +80',
+  'GAIA +120': 'ガイア障壁 +120'
+};
+
+for (const [source, expected] of Object.entries(translatedLabels)) {
+  assert(normalizeBattleLabel(source) === expected, `${source} が「${expected}」へ日本語化されません`);
+}
+
+popupMethods.showDamage.call(battleStub, 'party-0', 'DEF UP', 'text-blue-400');
+popupMethods.showDamage.call(battleStub, 'party-0', 'BARRIER +80', 'text-cyan-200');
+popupMethods.showActionName.call(battleStub, 'party-0', 'MEDAL CRITICAL', 'text-amber-200', 'border-amber-400/60');
+assert(badgeConfigs.length === 3, '特殊効果が統一バッジへ振り分けられません');
+assert(badgeConfigs[0].html.includes('防御力アップ') && !badgeConfigs[0].html.includes('DEF UP'), '特殊効果バッジが日本語表示になりません');
+assert(badgeConfigs[1].html.includes('バリア +80'), '数値付き特殊効果がバッジ表示になりません');
+assert(badgeConfigs[2].html.includes('メダル装備・会心'), 'メダル装備の特殊効果が日本語バッジになりません');
+
+const medalNotices = [];
+const medalValues = [];
+const medalEntity = {
+  elementId: 'party-0',
+  equipment: { accessory1: 'recovery-medal' },
+  hp: { current: 50, max: 100 },
+  mp: { current: 60, max: 100 },
+  stats: { hp: 100, mp: 100 }
+};
+const medalBattle = {
+  equipMap: new Map([['recovery-medal', {
+    specialEffect: { actionHpRegenPercent: 10, actionMpRegenPercent: 10 }
+  }]]),
+  speedMult: 1,
+  showActionName(elementId, label) { medalNotices.push({ elementId, label }); },
+  showDamage(elementId, value) { medalValues.push({ elementId, value }); },
+  _scheduleBattleTimeout(callback) { callback(); }
+};
+actionMethods.applyMedalEquipmentActionRecovery.call(medalBattle, medalEntity);
+assert(medalNotices.length === 1 && medalNotices[0].label === 'メダル装備・自動回復', 'メダル装備の自動回復が一つのバッジで通知されません');
+assert(medalValues.some(({ value }) => value === '+10') && medalValues.some(({ value }) => value === '+10 MP'), 'メダル装備の回復数値が表示されません');
 
 console.log('Battle value style tests passed');

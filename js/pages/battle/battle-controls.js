@@ -4,6 +4,7 @@
  */
 
 import { areSoundEffectsEnabled, setSoundEffectsEnabled } from '../../utils/sound-effects.js';
+import { activateScreenLock } from '../../utils/screen-lock.js';
 
 const SPEED_OPTIONS = [1, 2, 3, 4, 5];
 
@@ -75,7 +76,9 @@ function renderSettingButton(setting) {
     <button type="button" data-battle-control-setting="${setting.id}"
             aria-pressed="${enabled}"
             class="battle-control-setting flex min-h-[54px] min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-slate-950/45 px-2 py-1.5 text-left shadow-sm transition active:scale-[0.98] active:bg-slate-800/70">
-      <span class="material-symbols-outlined flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${TONE_CLASSES[setting.tone]}" style="font-size: 17px; font-variation-settings: 'FILL' ${enabled ? 1 : 0}">${setting.icon}</span>
+      <span class="battle-control-icon h-8 w-8 shrink-0 rounded-lg border ${TONE_CLASSES[setting.tone]}" style="display: grid; place-items: center">
+        <span class="material-symbols-outlined block leading-none" style="font-size: 17px; font-variation-settings: 'FILL' ${enabled ? 1 : 0}">${setting.icon}</span>
+      </span>
       <span class="min-w-0 flex-1">
         <span class="block truncate text-[10px] font-black text-slate-100">${setting.label}</span>
         <span class="block truncate text-[8px] font-bold text-slate-500">${setting.description}</span>
@@ -90,7 +93,7 @@ function syncSettingButton(button, setting) {
   button.setAttribute('aria-pressed', String(enabled));
   const toggle = button.querySelector('.setting-toggle');
   toggle?.classList.toggle('active', enabled);
-  const icon = button.querySelector('.material-symbols-outlined');
+  const icon = button.querySelector('.battle-control-icon .material-symbols-outlined');
   if (icon) icon.style.fontVariationSettings = `'FILL' ${enabled ? 1 : 0}`;
 }
 
@@ -100,7 +103,9 @@ export function renderBattleControlsTab(container) {
     <div class="battle-controls-root mx-auto flex h-full w-full max-w-2xl flex-col gap-2 overflow-y-auto p-0.5">
       <section class="rounded-xl border border-amber-300/20 bg-gradient-to-r from-amber-950/45 to-slate-950/50 px-2.5 py-2 shadow-sm" aria-labelledby="battle-control-speed-label">
         <div class="mb-1.5 flex items-center gap-2">
-          <span class="material-symbols-outlined flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-300/20 bg-amber-400/10 text-amber-300" style="font-size: 18px">speed</span>
+          <span class="battle-control-icon h-8 w-8 shrink-0 rounded-lg border border-amber-300/20 bg-amber-400/10 text-amber-300" style="display: grid; place-items: center">
+            <span class="material-symbols-outlined block leading-none" style="font-size: 18px">speed</span>
+          </span>
           <span class="min-w-0 flex-1">
             <span id="battle-control-speed-label" class="block text-[11px] font-black text-slate-100">戦闘速度</span>
             <span class="block text-[8px] font-bold text-slate-500">変更は進行中の戦闘へすぐに反映されます</span>
@@ -113,6 +118,20 @@ export function renderBattleControlsTab(container) {
           ${SPEED_OPTIONS.map(value => `<span data-battle-control-speed-step="${value}" class="${value <= speed ? 'text-amber-300' : ''}">${value === 1 ? '等倍' : `${value}x`}</span>`).join('')}
         </div>
       </section>
+
+      <button type="button" data-battle-screen-lock
+              class="flex min-h-[54px] w-full items-center gap-2 rounded-xl border border-emerald-300/25 bg-gradient-to-r from-emerald-950/55 to-slate-950/50 px-2.5 py-1.5 text-left shadow-sm transition active:scale-[0.99] active:border-emerald-300/45 active:bg-emerald-900/40">
+        <span class="battle-control-icon h-8 w-8 shrink-0 rounded-lg border border-emerald-300/20 bg-emerald-400/10 text-emerald-300" style="display: grid; place-items: center">
+          <span class="material-symbols-outlined block leading-none" style="font-size: 18px; font-variation-settings: 'FILL' 1">screen_lock_portrait</span>
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block text-[10px] font-black text-emerald-100">画面ロック</span>
+          <span class="block truncate text-[8px] font-bold text-emerald-200/55">省エネ表示で誤操作を防止</span>
+        </span>
+        <span class="flex shrink-0 items-center gap-0.5 rounded-lg border border-emerald-300/20 bg-emerald-400/10 px-2 py-1 text-[9px] font-black text-emerald-300">
+          <span class="material-symbols-outlined leading-none" style="font-size: 13px">lock</span>ロック
+        </span>
+      </button>
 
       <section class="grid grid-cols-1 gap-1.5 min-[420px]:grid-cols-2" aria-label="戦闘設定">
         ${CONTROL_SETTINGS.map(renderSettingButton).join('')}
@@ -132,6 +151,8 @@ export function renderBattleControlsTab(container) {
     });
     dispatchBattleSettingsChanged();
   });
+
+  container.querySelector('[data-battle-screen-lock]')?.addEventListener('click', activateScreenLock);
 
   container.querySelectorAll('[data-battle-control-setting]').forEach(button => {
     const setting = CONTROL_SETTINGS.find(item => item.id === button.dataset.battleControlSetting);
