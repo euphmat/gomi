@@ -1073,7 +1073,7 @@ export const actionMethods = {
         if (!this.trySoulReaperDeathDenial(defender)) {
           defender.hp.current = 0;
           defender.isDead = true;
-          playSoundEffect('enemyDown', { automatic: this.isAutoBattle, rate: .78 });
+          playSoundEffect('allyDown', { automatic: this.isAutoBattle });
           this.clearEntityStatuses(defender);
           this.lastKilledBy = {
             monsterId: attacker.id,

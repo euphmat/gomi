@@ -39,6 +39,26 @@ for (const [name, [color, defaultFontSize]] of Object.entries(expectedStyles)) {
   assert((style.fontSize || '32px') === defaultFontSize, `${name} のフォントサイズが正しくありません`);
 }
 
+const expectedSounds = {
+  PLAYER_DAMAGE: 'battleHit',
+  ENEMY_DAMAGE: 'playerHit',
+  WEAKNESS_DAMAGE: 'weaknessHit',
+  RESISTED_DAMAGE: 'resistedHit',
+  CRITICAL_DAMAGE: 'criticalHit',
+  POISON_DAMAGE: 'poisonTick',
+  BURN_DAMAGE: 'burnTick',
+  HP_RECOVERY: 'heal',
+  MP_DAMAGE: 'mpDrain',
+  BARRIER: 'barrier'
+};
+
+for (const [name, sound] of Object.entries(expectedSounds)) {
+  assert(
+    BATTLE_VALUE_STYLES[BATTLE_VALUE_TYPES[name]]?.sound === sound,
+    `${name} に行動を判別できる効果音 ${sound} が設定されていません`
+  );
+}
+
 const inferredTypes = [
   ['party-0', 123, 'text-purple-400', BATTLE_VALUE_TYPES.ENEMY_DAMAGE],
   ['enemy-0', 123, 'text-white', BATTLE_VALUE_TYPES.PLAYER_DAMAGE],

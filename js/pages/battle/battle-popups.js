@@ -30,21 +30,21 @@ const DEFAULT_TEXT_SHADOW = '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000,
 const LIGHT_OUTLINE_SHADOW = '-2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff, 0 4px 6px rgba(0,0,0,0.8)';
 
 export const BATTLE_VALUE_STYLES = Object.freeze({
-  [BATTLE_VALUE_TYPES.PLAYER_DAMAGE]: { color: '#ffffff' },
-  [BATTLE_VALUE_TYPES.ENEMY_DAMAGE]: { color: '#ef4444' },
+  [BATTLE_VALUE_TYPES.PLAYER_DAMAGE]: { color: '#ffffff', sound: 'battleHit' },
+  [BATTLE_VALUE_TYPES.ENEMY_DAMAGE]: { color: '#ef4444', sound: 'playerHit' },
   [BATTLE_VALUE_TYPES.HP_RECOVERY]: { color: '#22c55e', textShadow: '-2px -2px 0 #14532d, 2px -2px 0 #14532d, -2px 2px 0 #14532d, 2px 2px 0 #14532d, 0 4px 6px rgba(0,0,0,0.8)', sound: 'heal' },
   [BATTLE_VALUE_TYPES.MP_RECOVERY]: { color: '#3b82f6', textShadow: '-2px -2px 0 #172554, 2px -2px 0 #172554, -2px 2px 0 #172554, 2px 2px 0 #172554, 0 4px 6px rgba(0,0,0,0.8)', sound: 'heal' },
-  [BATTLE_VALUE_TYPES.POISON_DAMAGE]: { color: '#a855f7' },
-  [BATTLE_VALUE_TYPES.CURSE_DAMAGE]: { color: '#111111', textShadow: LIGHT_OUTLINE_SHADOW },
-  [BATTLE_VALUE_TYPES.BURN_DAMAGE]: { color: '#c2410c', textShadow: LIGHT_OUTLINE_SHADOW },
-  [BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE]: { color: '#f97316', fontSize: '42px', scale: 1.25, duration: 900, italic: true },
-  [BATTLE_VALUE_TYPES.RESISTED_DAMAGE]: { color: '#6366f1', fontSize: '26px', scale: 0.85, textShadow: LIGHT_OUTLINE_SHADOW },
-  [BATTLE_VALUE_TYPES.CRITICAL_DAMAGE]: { color: '#facc15' },
+  [BATTLE_VALUE_TYPES.POISON_DAMAGE]: { color: '#a855f7', sound: 'poisonTick' },
+  [BATTLE_VALUE_TYPES.CURSE_DAMAGE]: { color: '#111111', textShadow: LIGHT_OUTLINE_SHADOW, sound: 'poisonTick' },
+  [BATTLE_VALUE_TYPES.BURN_DAMAGE]: { color: '#c2410c', textShadow: LIGHT_OUTLINE_SHADOW, sound: 'burnTick' },
+  [BATTLE_VALUE_TYPES.WEAKNESS_DAMAGE]: { color: '#f97316', fontSize: '42px', scale: 1.25, duration: 900, italic: true, sound: 'weaknessHit' },
+  [BATTLE_VALUE_TYPES.RESISTED_DAMAGE]: { color: '#6366f1', fontSize: '26px', scale: 0.85, textShadow: LIGHT_OUTLINE_SHADOW, sound: 'resistedHit' },
+  [BATTLE_VALUE_TYPES.CRITICAL_DAMAGE]: { color: '#facc15', sound: 'criticalHit' },
   // Additional battle values use their own hues so they cannot be mistaken for
   // the requested damage/recovery categories.
-  [BATTLE_VALUE_TYPES.HP_COST]: { color: '#fb7185' },
-  [BATTLE_VALUE_TYPES.MP_DAMAGE]: { color: '#06b6d4' },
-  [BATTLE_VALUE_TYPES.BARRIER]: { color: '#2dd4bf' }
+  [BATTLE_VALUE_TYPES.HP_COST]: { color: '#fb7185', sound: 'hpCost' },
+  [BATTLE_VALUE_TYPES.MP_DAMAGE]: { color: '#06b6d4', sound: 'mpDrain' },
+  [BATTLE_VALUE_TYPES.BARRIER]: { color: '#2dd4bf', sound: 'barrier' }
 });
 
 export const ATTACK_DAMAGE_ICONS = Object.freeze({
@@ -503,6 +503,9 @@ export const popupMethods = {
     captureBattlePopup(this, elementId, damage);
     const valueType = resolveBattleValueType(elementId, damage, valueTypeOrColorClass);
     if (!valueType || valueType === BATTLE_VALUE_TYPES.BARRIER) {
+      if (valueType === BATTLE_VALUE_TYPES.BARRIER) {
+        playSoundEffect('barrier', { automatic: this.isAutoBattle });
+      }
       const badgeTextClass = String(valueTypeOrColorClass).startsWith('text-')
         ? valueTypeOrColorClass
         : 'text-cyan-200';
