@@ -5,6 +5,7 @@
 
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
 import { BATTLE_VALUE_TYPES } from './battle-popups.js';
+import { getJobGaugeSkillUseState } from './job-gauge-system.js';
 
 const AILMENT_POPUP_TYPES = Object.freeze({
   POISON: BATTLE_VALUE_TYPES.POISON_DAMAGE,
@@ -144,7 +145,9 @@ export const ailmentMethods = {
           for (const [skillId, cacheData] of entity._skillCache.entries()) {
             const { level, def, levelConfig } = cacheData;
             if (level > 0 && def && levelConfig && def.type !== 'passive' && !def.isPassive) {
-              const useState = def.getUseState?.(entity, levelConfig) || { canUse: true };
+              const authoredUseState = def.getUseState?.(entity, levelConfig) || { canUse: true };
+              const gaugeUseState = getJobGaugeSkillUseState(entity, skillId);
+              const useState = authoredUseState.canUse === false ? authoredUseState : gaugeUseState;
               const effectiveMpCost = getEffectiveMedalEquipmentMpCost(entity, this.equipMap, levelConfig.mpCost);
               if (entity.mp && entity.mp.current >= effectiveMpCost && useState.canUse !== false) {
                 usableSkills.push({ skillId, def, levelConfig });

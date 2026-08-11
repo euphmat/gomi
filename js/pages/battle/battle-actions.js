@@ -16,6 +16,21 @@ import {
   rollMedalEquipmentEffect,
   sumMedalEquipmentEffect,
 } from '../../utils/medal-equipment-effects.js';
+import {
+  beginJobGaugeNormalAttack,
+  beginJobGaugeSkillAction,
+  getJobGaugeIncomingMultiplier,
+  getJobGaugeOutgoingMultiplier,
+  getJobGaugeSkillUseState,
+  getJobGaugeAnimationSnapshot,
+  recordJobGaugeDamage,
+  resolveJobGaugeAnimationEvent,
+  resetStandardJobGauge,
+} from './job-gauge-system.js';
+import {
+  makeJobGaugeReloadEvent,
+  playJobGaugeAnimation,
+} from './job-gauge-animation.js';
 
 export const MAX_STACKED_ATTACK_NEGATION_CHANCE = 85;
 
@@ -208,6 +223,7 @@ export const actionMethods = {
     entity._dragoonSpirit = 0;
     entity._shinraSigils = [];
     entity._soulReaperCorpses = 0;
+    resetStandardJobGauge(entity);
     if (entity.atkDebuffTurns > 0) {
       entity.atkDebuffTurns = 0;
       if (entity.stats && entity.originalAtk) {
@@ -250,6 +266,15 @@ export const actionMethods = {
 
   executeSkill(caster, skillDef, levelConfig, options = {}) {
     if (this.isStopped) return;
+    const gaugeAnimationBefore = getJobGaugeAnimationSnapshot(caster);
+    const gaugeUseState = (!options.isDoubleAct && !options.isEquipmentRepeat)
+      ? getJobGaugeSkillUseState(caster, skillDef.id)
+      : { canUse: true };
+    if (gaugeUseState.canUse === false) {
+      this.showActionName(caster.elementId, gaugeUseState.message, 'text-rose-300', 'border-rose-500/50');
+      this.renderEntities();
+      return;
+    }
     const effectiveMpCost = getEffectiveMedalEquipmentMpCost(caster, this.equipMap, levelConfig.mpCost);
     if (!options.isDoubleAct && caster.mp && caster.mp.current < effectiveMpCost) {
       caster.atb = 0;
@@ -267,6 +292,12 @@ export const actionMethods = {
 
     if (!options.isDoubleAct && caster.mp) {
       caster.mp.current -= effectiveMpCost;
+    }
+
+    // Repeated actions repeat the authored effect, but never duplicate a gauge
+    // payment/build step. This keeps ammo and finishers deterministic.
+    if (!options.isDoubleAct && !options.isEquipmentRepeat) {
+      beginJobGaugeSkillAction(caster, skillDef.id, effectiveMpCost);
     }
 
     const telemetrySkill = { ...skillDef, type: skillDef.type || 'active' };
@@ -298,6 +329,11 @@ export const actionMethods = {
       } catch (err) {
         console.error(`Skill Execution Error [${skillDef.id}]:`, err);
       }
+    }
+
+    if (!options.isDoubleAct && !options.isEquipmentRepeat) {
+      const gaugeAnimationEvent = resolveJobGaugeAnimationEvent(gaugeAnimationBefore, caster, skillDef.id);
+      if (gaugeAnimationEvent) playJobGaugeAnimation(caster, gaugeAnimationEvent);
     }
 
     if (!options.isDoubleAct && !options.isEquipmentRepeat
@@ -423,6 +459,21 @@ export const actionMethods = {
     // Follow-up effects can remain abilities for damage/passive bookkeeping
     // while explicitly representing another normal-attack hit.
     const isNormalAttack = !options.damageType || options.isNormalAttack === true;
+    if (isParty && !options.damageType && !options.isCounter && !options.isEquipmentRepeat) {
+      const gaugeAnimationBefore = getJobGaugeAnimationSnapshot(attacker);
+      const gaugeAction = beginJobGaugeNormalAttack(attacker);
+      if (gaugeAction.cancel) {
+        this.showActionName(attacker.elementId, gaugeAction.label, 'text-amber-200', 'border-amber-400/60');
+        playJobGaugeAnimation(attacker, makeJobGaugeReloadEvent(attacker));
+        attacker.atb = 0;
+        this.activeCharacter = null;
+        this.renderEntities();
+        this.checkBattleEnd();
+        return;
+      }
+      const gaugeAnimationEvent = resolveJobGaugeAnimationEvent(gaugeAnimationBefore, attacker, 'normal_attack');
+      if (gaugeAnimationEvent) playJobGaugeAnimation(attacker, gaugeAnimationEvent);
+    }
     if (isParty && !options.damageType && !options.isCounter) {
       attacker._lastBattleTelemetrySkill = null;
       this.battleTelemetry?.recordAction(attacker, {
@@ -671,6 +722,9 @@ export const actionMethods = {
     
     const damageMultiplier = options.damageMultiplier || 1;
     damage = Math.floor(damage * damageMultiplier);
+    if (isParty && attacker.hp !== undefined) {
+      damage = Math.floor(damage * getJobGaugeOutgoingMultiplier(attacker, defender));
+    }
 
     if (isParty && attacker.hp !== undefined) {
       let equipmentDamagePercent = sumMedalEquipmentEffect(attacker, this.equipMap, 'outgoingDamagePercent', 100);
@@ -922,6 +976,10 @@ export const actionMethods = {
       if (!(defender._barrierHp > 0)) defender._battleBarrierMetric = null;
     }
 
+    if (!isParty && defender.hp !== undefined && damage > 0) {
+      damage = Math.max(1, Math.floor(damage * getJobGaugeIncomingMultiplier(defender)));
+    }
+
     let elementDamageMultiplier = 1;
     if (totalElementPercent > 0) {
       let sumMultiplier = 0;
@@ -1113,6 +1171,13 @@ export const actionMethods = {
     
     const newHp = isDefenderParty ? defender.hp.current : defender.currentHp;
     const damageDealt = Math.max(0, prevHp - newHp);
+    const attackerGaugeBefore = getJobGaugeAnimationSnapshot(attacker);
+    const defenderGaugeBefore = getJobGaugeAnimationSnapshot(defender);
+    recordJobGaugeDamage(attacker, defender, damageDealt);
+    const attackerGaugeEvent = resolveJobGaugeAnimationEvent(attackerGaugeBefore, attacker);
+    const defenderGaugeEvent = resolveJobGaugeAnimationEvent(defenderGaugeBefore, defender);
+    if (attackerGaugeEvent) playJobGaugeAnimation(attacker, attackerGaugeEvent);
+    if (defenderGaugeEvent) playJobGaugeAnimation(defender, defenderGaugeEvent);
     this.battleTelemetry?.recordDamage(
       attacker,
       defender,

@@ -15,7 +15,7 @@ assert(JOBS.gunner?.name === 'ガンナー', 'gunner is not registered');
 assert(gunner.requirements.some(req => req.jobId === 'ranger' && req.level === 100), 'ranger requirement is missing');
 assert(gunner.requirements.some(req => req.jobId === 'assassin' && req.level === 100), 'assassin requirement is missing');
 assert(JOB_STAT_GROWTH.gunner && JOB_STAT_MULTIPLIER.gunner, 'gunner stats are missing');
-assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.gunner || {}).length === 5, 'gunner auto-battle tactics are missing');
+assert(Object.keys(AUTO_BATTLE_JOB_TACTICS.gunner || {}).length === 6, 'gunner auto-battle tactics are missing');
 assert(NORMAL_ATTACK_ANIMATION_PROFILES.gunner?.kind === 'gun_shot', 'gunner normal attack animation is missing');
 
 gunner.skills.forEach(skill => {
@@ -64,6 +64,13 @@ const battle = {
     return def ? { level: 10, levelConfig: def.levels[9], def } : { level: 0, levelConfig: null, def: null };
   }
 };
+
+const reload = byId.reload;
+caster._gunnerAmmo = 1;
+reload.execute(caster, reload.levels[9], battle);
+assert(caster._gunnerAmmo === 6, 'tactical reload did not refill the magazine');
+assert(caster._gunnerReloadBonus === .22, 'tactical reload did not prepare the next-shot bonus');
+assert(reload.autoBattle.check({ ...caster, _gunnerAmmo: 2 })?.target, 'auto battle did not reload a low magazine');
 
 const originalRandom = Math.random;
 Math.random = () => 0;

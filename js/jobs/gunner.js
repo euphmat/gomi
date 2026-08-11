@@ -2,6 +2,7 @@ import { getBattleAnimationSpeed, getBattleSpeed, shouldSkipBattleAnimations } f
 
 const LEVEL_COSTS = [1, 1, 1, 2, 2, 2, 3, 3, 3, 5];
 const ADVANCED_LEVEL_COSTS = [2, 2, 2, 3, 3, 3, 4, 4, 4, 6];
+const RELOAD_LEVEL_COSTS = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 const makeLevels = (configs, costs = LEVEL_COSTS) => configs.map((config, index) => ({
   level: index + 1,
   spCost: costs[index],
@@ -167,6 +168,31 @@ export const gunner = {
     { jobId: 'assassin', level: 100 }
   ],
   skills: [
+    {
+      id: 'reload', name: 'タクティカルリロード', icon: 'refresh',
+      actionNameClass: 'text-amber-100', actionNameBorderClass: 'border-amber-400/70',
+      maxLevel: 10,
+      levels: makeLevels([
+        { mpCost: 0, nextShotBonus: .04 }, { mpCost: 0, nextShotBonus: .06 },
+        { mpCost: 0, nextShotBonus: .08 }, { mpCost: 0, nextShotBonus: .10 },
+        { mpCost: 0, nextShotBonus: .12 }, { mpCost: 0, nextShotBonus: .14 },
+        { mpCost: 0, nextShotBonus: .16 }, { mpCost: 0, nextShotBonus: .18 },
+        { mpCost: 0, nextShotBonus: .20 }, { mpCost: 0, nextShotBonus: .22 }
+      ], RELOAD_LEVEL_COSTS),
+      getDescription: lc => `弾倉を6発まで即時補充し、次の射撃スキルの威力を${Math.round(lc.nextShotBonus * 100)}%上昇させる`,
+      execute(caster, lc, battle) {
+        caster._gunnerAmmo = 6;
+        caster._gunnerReloadBonus = lc.nextShotBonus;
+        battle?.showDamage?.(caster.elementId, `6/6  次弾+${Math.round(lc.nextShotBonus * 100)}%`, 'text-amber-200');
+        battle?.renderEntities?.();
+      },
+      autoBattle: {
+        check: (caster) => {
+          const ammo = Number.isFinite(Number(caster._gunnerAmmo)) ? Number(caster._gunnerAmmo) : 6;
+          return ammo <= 2 ? { target: caster, score: 180 + (2 - ammo) * 45 } : null;
+        }
+      }
+    },
     {
       id: 'charged_shot', name: 'チャージショット', icon: 'my_location', statDependency: 'ATK',
       actionNameClass: 'text-orange-100', actionNameBorderClass: 'border-orange-400/70',

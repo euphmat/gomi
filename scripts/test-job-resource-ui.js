@@ -59,7 +59,10 @@ const locked = getJobResourceState(makeCharacter('entertainer', null, 0, '_enter
 assert(locked && !locked.unlocked && locked.current === 0, '未習得の固有システムが有効表示されています');
 assert(renderJobResourceHtml(makeCharacter('entertainer', null, 0, '_entertainerHype', 3)).includes('未開放'), '未開放表示がありません');
 
-assert(getJobResourceState({ jobId: 'norvice' }) === null, '通常職に固有ゲージが表示されています');
+const novice = getJobResourceState({ jobId: 'norvice' });
+assert(novice?.current === 0 && novice.max === 5, 'ノービスの経験ゲージが表示されません');
+const gunner = getJobResourceState({ jobId: 'gunner' });
+assert(gunner?.current === 6 && gunner.max === 6, 'ガンナーの弾倉が装填状態で初期化されません');
 assert(getJobResourceSignature(entertainer) !== getJobResourceSignature({ ...entertainer, current: 3 }), 'ゲージ更新シグネチャが変化しません');
 
 globalThis.localStorage = { getItem: () => null };
@@ -86,7 +89,7 @@ const standardCardHtml = renderPartyCardHtml({
   exp: { current: 0, max: 1 }, jp: { current: 0, max: 1 },
   stats: { hp: 100, mp: 100, atk: 10, def: 10, matk: 10, mdef: 10, spd: 10 }
 }, null, false, null);
-assert(standardCardHtml.includes('data-has-job-resource="false"'), '通常職の固定リソーススロットがありません');
+assert(standardCardHtml.includes('data-has-job-resource="true"'), 'ノービスの職業ゲージがありません');
 assert(standardCardHtml.includes('job-resource-shell') && standardCardHtml.includes('h-[18px]'), '通常職のリソーススロット寸法が不正です');
 assert(cardHtml.includes('job-resource-shell') && cardHtml.includes('h-[18px]'), '固有職のリソーススロット寸法が不正です');
 assert(

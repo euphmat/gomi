@@ -1,5 +1,25 @@
 import { JOBS } from '../../jobs/index.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
+import { STANDARD_JOB_GAUGES } from './job-gauge-system.js';
+
+const makeStandardResourceDefinition = gauge => Object.freeze({
+  label: gauge.label,
+  icon: gauge.icon,
+  description: gauge.description,
+  valueField: gauge.field,
+  fixedMax: gauge.max,
+  initial: gauge.initial ?? 0,
+  continuous: gauge.max > 10,
+  panelClass: 'border-amber-400/35 bg-gradient-to-r from-amber-950/70 via-slate-950/55 to-cyan-950/45',
+  textClass: 'text-amber-100',
+  mutedClass: 'text-amber-300/60',
+  slotClass: 'border-amber-300/25 bg-slate-950/80',
+  filledClass: 'border-amber-100 bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.75)]'
+});
+
+const STANDARD_JOB_RESOURCE_DEFINITIONS = Object.freeze(Object.fromEntries(
+  Object.entries(STANDARD_JOB_GAUGES).map(([jobId, gauge]) => [jobId, makeStandardResourceDefinition(gauge)])
+));
 
 /**
  * Battle resources that belong to a specific current job.
@@ -8,6 +28,7 @@ import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
  * single, explicit change instead of spreading job checks throughout the HUD.
  */
 const JOB_RESOURCE_DEFINITIONS = Object.freeze({
+  ...STANDARD_JOB_RESOURCE_DEFINITIONS,
   entertainer: Object.freeze({
     label: '舞台熱',
     icon: 'theater_comedy',
@@ -123,14 +144,15 @@ export function getJobResourceState(entity) {
 
   const levelConfig = getCurrentSkillConfig(entity, definition);
   const max = normalizeCount(definition.fixedMax || levelConfig?.[definition.maxField]);
-  const current = Math.min(max, normalizeCount(entity?.[definition.valueField]));
+  const current = Math.min(max, normalizeCount(entity?.[definition.valueField] ?? definition.initial));
   return {
     jobId,
     definition,
     current,
     max,
     unlocked: max > 0,
-    slots: Array.from({ length: max }, (_, index) => ({
+    fillPercent: max > 0 ? Math.min(100, current / max * 100) : 0,
+    slots: definition.continuous ? [] : Array.from({ length: max }, (_, index) => ({
       id: String(index + 1),
       label: '',
       filled: index < current
@@ -140,12 +162,12 @@ export function getJobResourceState(entity) {
 
 export function getJobResourceSignature(state) {
   if (!state) return '';
-  return `${state.jobId}:${state.unlocked ? 1 : 0}:${state.current}/${state.max}:${state.slots.map(slot => slot.filled ? 1 : 0).join('')}`;
+  return `${state.jobId}:${state.unlocked ? 1 : 0}:${state.current}/${state.max}:${state.fillPercent || 0}:${state.slots.map(slot => slot.filled ? 1 : 0).join('')}`;
 }
 
 export function renderJobResourceContentHtml(state) {
   if (!state) return '';
-  const { definition, current, max, unlocked, slots } = state;
+  const { definition, current, max, unlocked, slots, fillPercent = 0 } = state;
   const accessibleLabel = definition.fullLabel || definition.label;
   const valueText = unlocked ? `${current}/${max}` : '未開放';
   const columnCount = Math.max(1, slots.length);
@@ -154,7 +176,11 @@ export function renderJobResourceContentHtml(state) {
     <div class="relative z-10 flex h-full min-w-0 items-center gap-0.5 leading-none">
       <span class="material-symbols-outlined shrink-0 ${definition.textClass} drop-shadow-[0_0_4px_currentColor]" style="font-size: 9px; font-variation-settings: 'FILL' 1">${definition.icon}</span>
       <span class="max-w-[24px] shrink-0 truncate text-[7px] font-black tracking-tight ${definition.textClass}">${definition.label}</span>
-      ${unlocked ? `
+      ${unlocked && definition.continuous ? `
+        <div class="relative h-[7px] min-w-[8px] flex-1 overflow-hidden rounded-[2px] border ${definition.slotClass}" aria-hidden="true">
+          <span class="absolute inset-y-0 left-0 ${definition.filledClass}" style="width:${fillPercent}%"></span>
+        </div>
+      ` : unlocked ? `
         <div class="grid min-w-[8px] flex-1 gap-px" style="grid-template-columns: repeat(${columnCount}, minmax(0, 1fr));" aria-hidden="true">
           ${slots.map(slot => `
             <span data-job-resource-slot="${slot.id}" data-resource-filled="${slot.filled ? 'true' : 'false'}" class="flex h-[7px] min-w-0 items-center justify-center rounded-[2px] border text-[5px] font-black leading-none ${slot.filled ? definition.filledClass : definition.slotClass}">${slot.label}</span>
@@ -188,6 +214,7 @@ export function renderJobResourceHtml(entity) {
          data-has-job-resource="true"
          data-job-resource="${state.jobId}"
          data-resource-signature="${getJobResourceSignature(state)}"
+         title="${state.definition.description || accessibleLabel}"
          role="status"
          aria-label="${accessibleLabel} ${state.unlocked ? `${state.current}/${state.max}` : '未開放'}">
       <span class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" aria-hidden="true"></span>

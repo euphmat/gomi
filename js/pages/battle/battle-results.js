@@ -18,6 +18,7 @@ import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-mana
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
+import { STANDARD_JOB_GAUGE_FIELDS } from './job-gauge-system.js';
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
 import { getAvailableJobSP, getJobExpToNext, normalizeJobExpProgress } from '../../data/job-progression.js';
 import { addSoulReaperCorpses } from '../../jobs/soul_reaper.js';
@@ -664,7 +665,10 @@ export const resultMethods = {
       'defDebuffTurns', 'defDebuffPercent',
       '_regenTurns', '_regenHp',
       '_manaFlowTurns', '_manaFlowAmount', '_conductorHarmony', '_entertainerHype', '_slimeSingerNotes',
-      '_dragoonSpirit', '_shinraSigils', '_soulReaperCorpses'
+      '_dragoonSpirit', '_shinraSigils', '_soulReaperCorpses',
+      ...STANDARD_JOB_GAUGE_FIELDS,
+      '_jobGaugeActionMultiplier', '_jobGaugeActionSkill', '_jobGaugeLastSkill',
+      '_jobGaugeLastElement', '_jobGaugeUsedSkills', '_assassinMarkTarget', '_gunnerReloadBonus'
     ];
 
     for (const p of this.party) {

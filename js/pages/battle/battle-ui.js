@@ -3,6 +3,7 @@ import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
 import { formatSkillDescriptionHtml } from '../../utils/skill-description.js';
 import { renderJobResourceHtml } from './job-resource-ui.js';
+import { getJobGaugeSkillHint, getJobGaugeSkillUseState } from './job-gauge-system.js';
 
 /**
  * HP バー内のバリア表示モデル。
@@ -427,9 +428,13 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equip
     const levelConfig = resolveJobSkillLevelConfig(skillDef, level, isInherited ? 'inherited' : 'current');
     const effectiveMpCost = isPassive ? 0 : getEffectiveMedalEquipmentMpCost(p, equipmentMap, levelConfig.mpCost);
     const isSilenced = !isPassive && effectiveMpCost > 0 && p.activeAilment && p.activeAilment.type === 'silence';
-    const useState = isPassive ? { canUse: true } : (skillDef.getUseState?.(p, levelConfig) || { canUse: true });
+    const authoredUseState = isPassive ? { canUse: true } : (skillDef.getUseState?.(p, levelConfig) || { canUse: true });
+    const gaugeUseState = isPassive ? { canUse: true } : getJobGaugeSkillUseState(p, skillDef.id);
+    const useState = authoredUseState.canUse === false ? authoredUseState : gaugeUseState;
     const canCast = isPassive || (canAct && p.mp.current >= effectiveMpCost && !isSilenced && useState.canUse !== false);
-    const desc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
+    const baseDesc = skillDef.getDescription ? skillDef.getDescription(levelConfig) : '';
+    const gaugeHint = isPassive ? '' : getJobGaugeSkillHint(p, skillDef.id);
+    const desc = gaugeHint ? `${baseDesc}【固有ゲージ】${gaugeHint}` : baseDesc;
     const descriptionHtml = formatSkillDescriptionHtml(desc);
     const useStateHtml = !isPassive && useState.canUse === false && useState.message
       ? `<span class="mr-1 font-black text-rose-300">${useState.message}。</span>`

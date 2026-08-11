@@ -7,6 +7,7 @@
  */
 
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+import { applyStandardJobGaugeAi } from './job-gauge-system.js';
 
 const ROLE = Object.freeze({
   OFFENSE: 'offense',
@@ -123,6 +124,7 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     dragon_sweep: skill(ROLE.COMBO_SETUP, 'area'), skyfall_dive: skill(ROLE.COMBO_FINISHER)
   }),
   gunner: Object.freeze({
+    reload: skill(ROLE.RESOURCE, 'self'),
     charged_shot: skill(ROLE.OFFENSE), elemental_charge: skill(ROLE.OFFENSE),
     arm_snipe: skill(ROLE.COMBO_SETUP), rapid_fire: skill(ROLE.AREA_OFFENSE, 'random'),
     bullet_storm: skill(ROLE.AREA_OFFENSE, 'area')
@@ -547,6 +549,8 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
       }
     }
   }
+
+  applyStandardJobGaugeAi(character, candidates);
 }
 
 function isEmergencyCandidate(candidate) {

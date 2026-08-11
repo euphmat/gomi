@@ -29,6 +29,7 @@ import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
 import { selectAutoBattleAction } from './auto-battle-ai.js';
+import { getJobGaugeSkillUseState } from './job-gauge-system.js';
 
 // --- Mixin imports ---
 import { popupMethods } from './battle-popups.js';
@@ -860,7 +861,9 @@ class BattleManager {
               const isAutoEnabled = this.autoSkillStates[character.id]?.[skillId] !== false;
               const effectiveMpCost = getEffectiveMedalEquipmentMpCost(character, this.equipMap, levelConfig.mpCost);
               const isBlockedBySilence = character.activeAilment?.type === 'silence' && effectiveMpCost > 0;
-              const useState = def.getUseState?.(character, levelConfig) || { canUse: true };
+              const authoredUseState = def.getUseState?.(character, levelConfig) || { canUse: true };
+              const gaugeUseState = getJobGaugeSkillUseState(character, skillId);
+              const useState = authoredUseState.canUse === false ? authoredUseState : gaugeUseState;
               if (isAutoEnabled && !isBlockedBySilence && character.mp.current >= effectiveMpCost && useState.canUse !== false) {
                 if (def.autoBattle && typeof def.autoBattle.check === 'function') {
                   usableSkills.push({
@@ -1362,7 +1365,9 @@ class BattleManager {
             this.showDamage(this.activeCharacter.elementId, 'MP不足', 'text-blue-400');
             return;
           }
-          const useState = found.def.getUseState?.(this.activeCharacter, levelConfig) || { canUse: true };
+          const authoredUseState = found.def.getUseState?.(this.activeCharacter, levelConfig) || { canUse: true };
+          const gaugeUseState = getJobGaugeSkillUseState(this.activeCharacter, skillId);
+          const useState = authoredUseState.canUse === false ? authoredUseState : gaugeUseState;
           if (useState.canUse === false) {
             this.showDamage(this.activeCharacter.elementId, useState.message || '使用不可', 'text-violet-300');
             return;
