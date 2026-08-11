@@ -9,6 +9,7 @@ import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { getAvailableJobSP, getJobExpToNext, getJobSPOffset, getTotalJobSP } from '../../data/job-progression.js';
+import { renderJobUniqueSkillSummary } from '../../components/job-unique-skill-cards.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -570,6 +571,7 @@ export function renderChangeJobTab() {
           </div>
           <div class="flex shrink-0 items-center">${buttonHtml}</div>
         </div>
+        <div class="relative z-10">${renderJobUniqueSkillSummary(job)}</div>
         <div class="relative z-10">${requirementsHtml}</div>
       `;
       listContainer.appendChild(row);

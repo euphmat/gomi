@@ -4,6 +4,7 @@ import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-ef
 import { formatSkillDescriptionHtml } from '../../utils/skill-description.js';
 import { renderJobResourceHtml } from './job-resource-ui.js';
 import { getJobGaugeSkillHint, getJobGaugeSkillUseState } from './job-gauge-system.js';
+import { renderJobUniqueSkillCards } from '../../components/job-unique-skill-cards.js';
 
 /**
  * HP バー内のバリア表示モデル。
@@ -349,7 +350,7 @@ export function renderItemTabHtml(obtainedItems, gridClass = 'grid-cols-5') {
 }
 
 export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equipmentMap, selectedKind = 'active', canAct = true) {
-  if (!p || !p.jobSkills) {
+  if (!p) {
     return '<div class="text-xs text-gray-500 flex items-center justify-center h-full">覚えているスキルがありません</div>';
   }
 
@@ -362,7 +363,7 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equip
     learnedSkills[kind].push({ skillDef, level, jobId, isInherited });
   };
 
-  if (p.jobId && p.jobSkills[p.jobId]) {
+  if (p.jobId && p.jobSkills?.[p.jobId]) {
     const jobId = p.jobId;
     const skillsMap = p.jobSkills[jobId];
     const jobDef = jobs[jobId];
@@ -400,19 +401,31 @@ export function renderSkillTabHtml(p, isAutoBattle, autoSkillStates, jobs, equip
     return a.skillDef.id.localeCompare(b.skillDef.id);
   }));
 
-  const activeSelected = selectedKind !== 'passive';
-  const currentSkills = learnedSkills[activeSelected ? 'active' : 'passive'];
+  const activeSelected = selectedKind === 'active';
+  const passiveSelected = selectedKind === 'passive';
+  const uniqueSelected = selectedKind === 'unique';
+  const currentJob = jobs[p.jobId];
+  const uniqueSkillCount = currentJob?.uniqueSkills?.length || 0;
+  const currentSkills = uniqueSelected ? [] : learnedSkills[passiveSelected ? 'passive' : 'active'];
   const subTabHtml = `
-    <div class="battle-skill-subtabs sticky top-0 z-20 grid grid-cols-2 gap-1 rounded-lg border border-slate-700/70 bg-slate-950/95 p-1 shadow-lg backdrop-blur" role="tablist" aria-label="スキル種別">
+    <div class="battle-skill-subtabs sticky top-0 z-20 grid grid-cols-3 gap-1 rounded-lg border border-slate-700/70 bg-slate-950/95 p-1 shadow-lg backdrop-blur" role="tablist" aria-label="スキル種別">
       <button type="button" class="skill-subtab flex min-h-9 items-center justify-center gap-1 rounded-md border px-2 text-[11px] font-black ${activeSelected ? 'border-cyan-400/60 bg-cyan-900/55 text-cyan-100 shadow-[0_0_12px_rgba(34,211,238,.18)]' : 'border-transparent bg-slate-900/70 text-slate-400'}" data-skill-kind="active" role="tab" aria-selected="${activeSelected}">
         <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${activeSelected ? 1 : 0}" aria-hidden="true">bolt</span>
         <span>アクティブ</span><span class="rounded-full bg-black/30 px-1.5 text-[9px] tabular-nums">${learnedSkills.active.length}</span>
       </button>
-      <button type="button" class="skill-subtab flex min-h-9 items-center justify-center gap-1 rounded-md border px-2 text-[11px] font-black ${!activeSelected ? 'border-emerald-400/60 bg-emerald-900/55 text-emerald-100 shadow-[0_0_12px_rgba(52,211,153,.18)]' : 'border-transparent bg-slate-900/70 text-slate-400'}" data-skill-kind="passive" role="tab" aria-selected="${!activeSelected}">
-        <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${!activeSelected ? 1 : 0}" aria-hidden="true">psychology</span>
+      <button type="button" class="skill-subtab flex min-h-9 items-center justify-center gap-1 rounded-md border px-1 text-[10px] font-black ${passiveSelected ? 'border-emerald-400/60 bg-emerald-900/55 text-emerald-100 shadow-[0_0_12px_rgba(52,211,153,.18)]' : 'border-transparent bg-slate-900/70 text-slate-400'}" data-skill-kind="passive" role="tab" aria-selected="${passiveSelected}">
+        <span class="material-symbols-outlined" style="font-size: 15px; font-variation-settings: 'FILL' ${passiveSelected ? 1 : 0}" aria-hidden="true">psychology</span>
         <span>パッシブ</span><span class="rounded-full bg-black/30 px-1.5 text-[9px] tabular-nums">${learnedSkills.passive.length}</span>
       </button>
+      <button type="button" class="skill-subtab flex min-h-9 items-center justify-center gap-1 rounded-md border px-1 text-[10px] font-black ${uniqueSelected ? 'border-amber-400/60 bg-amber-900/55 text-amber-100 shadow-[0_0_12px_rgba(245,158,11,.2)]' : 'border-transparent bg-slate-900/70 text-slate-400'}" data-skill-kind="unique" role="tab" aria-selected="${uniqueSelected}">
+        <span class="material-symbols-outlined" style="font-size: 15px; font-variation-settings: 'FILL' ${uniqueSelected ? 1 : 0}" aria-hidden="true">stars</span>
+        <span>固有</span><span class="rounded-full bg-black/30 px-1.5 text-[9px] tabular-nums">${uniqueSkillCount}</span>
+      </button>
     </div>`;
+
+  if (uniqueSelected) {
+    return `<div class="flex min-h-full flex-col gap-2 p-1">${subTabHtml}${renderJobUniqueSkillCards(currentJob, p, { compact: true })}</div>`;
+  }
 
   if (currentSkills.length === 0) {
     return `<div class="flex min-h-full flex-col gap-2 p-1">${subTabHtml}<div class="flex flex-1 items-center justify-center gap-1 text-xs text-slate-500"><span class="material-symbols-outlined" style="font-size:16px">search_off</span>${activeSelected ? 'アクティブ' : 'パッシブ'}スキルを覚えていません</div></div>`;

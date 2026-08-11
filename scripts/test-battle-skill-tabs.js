@@ -38,8 +38,15 @@ const inheritedPassiveSkill = {
   getDescription: config => `氷属性耐性が${config.iceResistPercent}%上昇する`
 };
 const jobs = {
-  fighter: { skills: [activeSkill, passiveSkill] },
-  mage: { skills: [inheritedPassiveSkill] }
+  fighter: {
+    id: 'fighter', skills: [activeSkill, passiveSkill],
+    uniqueSkills: [{
+      id: 'flame_release', name: '炎心解放', icon: 'local_fire_department',
+      activation: '炎ゲージMAX', description: '次の炎攻撃を強化する。',
+      sourceSkills: ['炎の一閃'], mode: 'automatic', unlockSkillId: null
+    }]
+  },
+  mage: { id: 'mage', skills: [inheritedPassiveSkill], uniqueSkills: [] }
 };
 const character = {
   id: 'hero',
@@ -66,6 +73,11 @@ assert(passiveHtml.includes('常時有効') && passiveHtml.includes('継承'), '
 assert(!passiveHtml.includes('data-skill-id='), '閲覧専用パッシブが実行ボタンになっています');
 assert(passiveHtml.includes('行動順待ちのため閲覧のみ'), '行動待ち中の閲覧状態が伝わりません');
 
+const uniqueHtml = renderSkillTabHtml(character, false, {}, jobs, new Map(), 'unique', false);
+assert(uniqueHtml.includes('data-skill-kind="unique"') && uniqueHtml.includes('炎心解放'), '戦闘中の固有スキルタブが表示されません');
+assert(uniqueHtml.includes('固有') && uniqueHtml.includes('自動発動') && uniqueHtml.includes('炎ゲージMAX'), '固有スキルの発動条件が表示されません');
+assert(!uniqueHtml.includes('class="skill-btn'), '閲覧用の固有スキルが実行ボタンになっています');
+
 const safeDescription = formatSkillDescriptionHtml('<img src=x onerror=alert(1)> HPを100回復');
 assert(!safeDescription.includes('<img') && safeDescription.includes('&lt;img'), '説明文がHTMLエスケープされていません');
 assert(safeDescription.includes('monitoring') && safeDescription.includes('auto_awesome'), '重要語に意味を示すアイコンがありません');
@@ -73,5 +85,6 @@ assert(safeDescription.includes('monitoring') && safeDescription.includes('auto_
 const battleIndexSource = fs.readFileSync(new URL('../js/pages/battle/index.js', import.meta.url), 'utf8');
 assert(battleIndexSource.includes("this.skillSubTab = 'active'"), 'スキル内タブの選択状態が保持されません');
 assert(battleIndexSource.includes("querySelectorAll('.skill-subtab')") && battleIndexSource.includes('this.skillSubTab = nextKind'), 'スキル内タブの切り替え操作が接続されていません');
+assert(battleIndexSource.includes("'active', 'passive', 'unique'"), '戦闘中の固有タブ切り替えが接続されていません');
 
 console.log('battle skill tabs tests passed');

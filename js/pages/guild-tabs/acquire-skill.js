@@ -2,6 +2,7 @@ import { GameDB } from '../../data/database.js';
 import { getCharactersWithRanchBonus } from '../../data/stat-calculator.js';
 import { createCharacterSelectGrid } from '../../components/character-select-grid.js';
 import { showInheritanceHelpModal } from '../../components/inheritance-help-modal.js';
+import { renderJobUniqueSkillCards } from '../../components/job-unique-skill-cards.js';
 
 import { JOBS } from '../../jobs/index.js';
 import {
@@ -38,9 +39,10 @@ export function renderAcquireSkillTab() {
   tabContainer.className = 'flex gap-2 px-1 mb-2 shrink-0';
   const renderTabs = () => {
     tabContainer.innerHTML = `
-      <button id="btn-tab-active" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'active' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">アクティブスキル</button>
-      <button id="btn-tab-passive" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'passive' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">パッシブスキル</button>
-      <button id="btn-tab-inheritance" class="flex-1 py-1.5 text-[12px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'inheritance' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">継承</button>
+      <button id="btn-tab-active" class="flex-1 py-1.5 text-[11px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'active' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">アクティブ</button>
+      <button id="btn-tab-passive" class="flex-1 py-1.5 text-[11px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'passive' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">パッシブ</button>
+      <button id="btn-tab-unique" class="flex-1 py-1.5 text-[11px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'unique' ? 'bg-amber-600 text-white border-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">固有</button>
+      <button id="btn-tab-inheritance" class="flex-1 py-1.5 text-[11px] font-black rounded-lg transition-all duration-200 border ${currentTab === 'inheritance' ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_10px_rgba(79,70,229,0.4)]' : 'bg-gray-800 text-gray-400 border-white/5 active:bg-gray-700'}">継承</button>
     `;
     tabContainer.querySelector('#btn-tab-active').onclick = () => {
       if (currentTab !== 'active') {
@@ -52,6 +54,13 @@ export function renderAcquireSkillTab() {
     tabContainer.querySelector('#btn-tab-passive').onclick = () => {
       if (currentTab !== 'passive') {
         currentTab = 'passive';
+        renderTabs();
+        render(true);
+      }
+    };
+    tabContainer.querySelector('#btn-tab-unique').onclick = () => {
+      if (currentTab !== 'unique') {
+        currentTab = 'unique';
         renderTabs();
         render(true);
       }
@@ -474,7 +483,7 @@ export function renderAcquireSkillTab() {
     bulkActionContainer.innerHTML = '';
     if (selectedChar) {
       const job = JOBS[selectedChar.jobId || 'norvice'];
-      if (currentTab !== 'inheritance' && job) {
+      if (!['inheritance', 'unique'].includes(currentTab) && job) {
         const plan = planBalancedJobSkillAcquisition(selectedChar, job, selectedChar.sp);
         const canAcquireBalanced = plan.spentSp > 0;
         bulkActionContainer.style.display = 'block';
@@ -498,6 +507,18 @@ export function renderAcquireSkillTab() {
             showBalancedAcquisitionModal(selectedChar, job, plan);
           };
         }
+      }
+
+      if (currentTab === 'unique') {
+        filterContainer.style.display = 'none';
+        listContainer.innerHTML = `
+          <div class="rounded-xl border border-amber-500/25 bg-amber-950/20 px-3 py-2 text-[10px] font-bold leading-relaxed text-amber-100">
+            <div class="mb-0.5 flex items-center gap-1 text-[11px] font-black"><span class="material-symbols-outlined text-[15px]">stars</span>${job.name}の固有スキル</div>
+            固有スキルはSPを消費せず、継承や全スキル習得判定の対象外です。
+          </div>
+          ${renderJobUniqueSkillCards(job, selectedChar)}
+        `;
+        return;
       }
 
       if (currentTab === 'inheritance') {

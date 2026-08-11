@@ -1328,7 +1328,7 @@ class BattleManager {
     this.elements.tabContent.querySelectorAll('.skill-subtab').forEach(btn => {
       btn.addEventListener('click', () => {
         const nextKind = btn.dataset.skillKind;
-        if (!['active', 'passive'].includes(nextKind) || this.skillSubTab === nextKind) return;
+        if (!['active', 'passive', 'unique'].includes(nextKind) || this.skillSubTab === nextKind) return;
         this.skillSubTab = nextKind;
         this.renderTabContent();
       });

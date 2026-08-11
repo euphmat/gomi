@@ -23,6 +23,7 @@ import { gunner } from './gunner.js';
 import { shinra_sage } from './shinra_sage.js';
 import { plague_doctor } from './plague_doctor.js';
 import { soul_reaper } from './soul_reaper.js';
+import { getJobUniqueSkills } from './job-unique-skills.js';
 
 export const JOB_STAT_GROWTH = {
   // HP/MP are weighted at 25% when budgeting growth because equipment grants
@@ -116,3 +117,7 @@ export const JOBS = {
   [plague_doctor.id]: { ...plague_doctor, statGrowth: JOB_STAT_GROWTH[plague_doctor.id], statMultiplier: JOB_STAT_MULTIPLIER[plague_doctor.id] },
   [soul_reaper.id]: { ...soul_reaper, statGrowth: JOB_STAT_GROWTH[soul_reaper.id], statMultiplier: JOB_STAT_MULTIPLIER[soul_reaper.id] }
 };
+
+Object.values(JOBS).forEach(job => {
+  job.uniqueSkills = getJobUniqueSkills(job.id);
+});
