@@ -12,7 +12,7 @@ import { calcFinalStats, buildEquipmentMap, getCharactersWithRanchBonus } from '
 import { JOBS } from '../../jobs/index.js';
 import { MEDAL_RANKS, calcMedalSpawnBonus } from '../../definitions/medal-definitions.js';
 import { renderEnemyCardHtml, renderPartyCardHtml, renderSkillTabHtml, getActiveStateIconsHTML } from './battle-ui.js';
-import { renderBattlePetTab } from './battle-pet-tab.js';
+import { refreshBattlePetInventory, renderBattlePetTab } from './battle-pet-tab.js';
 import { renderBattleMedalTab } from './battle-medal-tab.js';
 import { renderBattleControlsTab, syncBattleControlsFloor } from './battle-controls.js';
 import {
@@ -133,6 +133,7 @@ class BattleManager {
     this._skillCache = new Map();
     this._initGeneration = 0;
     this.isTabInteracting = false;
+    this._petInventoryRefreshPending = false;
     this._tabInteractionTimer = null;
     this._battleReady = false;
     this._pendingTabRender = false;
@@ -216,6 +217,12 @@ class BattleManager {
         clearTimeout(this._tabInteractionTimer);
         this._tabInteractionTimer = setTimeout(() => {
           this.isTabInteracting = false;
+          if (this._petInventoryRefreshPending) {
+            this._petInventoryRefreshPending = false;
+            this.refreshPetTabResources().catch(error => {
+              console.warn('Pet inventory refresh failed:', error);
+            });
+          }
         }, delay);
       };
 
@@ -613,6 +620,7 @@ class BattleManager {
     clearTimeout(this._tabInteractionTimer);
     this._tabInteractionTimer = null;
     this.isTabInteracting = false;
+    this._petInventoryRefreshPending = false;
     if (this._popupLayer) {
       this._popupLayer.remove();
       this._popupLayer = null;
@@ -1261,6 +1269,16 @@ class BattleManager {
     );
   }
 
+  async refreshPetTabResources() {
+    if (this.currentTab !== 'pet' || !this.container?.isConnected) return false;
+    if (this.isTabInteracting) {
+      this._petInventoryRefreshPending = true;
+      return true;
+    }
+    const body = this.elements.tabContent.querySelector('.sub-tab-body');
+    return refreshBattlePetInventory(body);
+  }
+
   async renderMedalTab() {
     const [allInventory, latestGold] = await Promise.all([
       GameDB.getAllInventory(),
@@ -1493,11 +1511,11 @@ export function renderBattlePage() {
       .battle-slider-shell {
         height: 24px;
         min-width: 0;
-        touch-action: pan-x;
+        touch-action: none;
       }
       .battle-slider-shell .quantity-slider {
         min-height: 0;
-        touch-action: pan-x;
+        touch-action: none;
       }
       .battle-quantity-input-shell {
         width: 44px;

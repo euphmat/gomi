@@ -112,11 +112,22 @@ const select = (character, usableSkills, enemies, party = [character]) =>
 {
   const enemy = makeEnemy();
   const crescendo = makeUsable('arcane_crescendo', () => null);
+  const recharge = makeUsable('resonance_recharge', caster => {
+    const ratio = caster.mp.current / caster.stats.mp;
+    return ratio <= .45 && caster._conductorHarmony > 0
+      ? { target: caster, score: 110 + (1 - ratio) * 100 }
+      : null;
+  });
   const conductor = makeCharacter({
     jobId: 'mana_conductor', _conductorHarmony: 3,
+    mp: { current: 100, max: 999 },
     skills: { conductor_core: { level: 1, def: {}, levelConfig: { maxHarmony: 3 } } }
   });
-  assert(select(conductor, [crescendo], [enemy]).skill?.id === 'arcane_crescendo',
+  assert(select(conductor, [crescendo, recharge], [enemy]).skill?.id === 'resonance_recharge',
+    'MPが少ない時は共鳴を自身のMP回復に使う');
+
+  conductor.mp.current = 900;
+  assert(select(conductor, [crescendo, recharge], [enemy]).skill?.id === 'arcane_crescendo',
     '共鳴が最大なら単体用の共鳴技を放つ');
 }
 
@@ -169,8 +180,8 @@ const select = (character, usableSkills, enemies, party = [character]) =>
 assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 25,
   '全25職業の自動戦闘プロファイルを定義する');
 assert(Object.values(AUTO_BATTLE_JOB_TACTICS)
-  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 106,
-  '全106アクティブスキルの役割を定義する');
+  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 107,
+  '全107アクティブスキルの役割を定義する');
 
 if (typeof print === 'function') print('auto-battle-ai: all tests passed');
 else console.log('auto-battle-ai: all tests passed');

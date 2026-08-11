@@ -61,6 +61,71 @@ function renderStatusMetric({ label, value, icon, color, background, valueClass 
 }
 
 /**
+ * Update only inventory-dependent controls in the visible Pet tab.
+ * This is intentionally event-driven so battle rewards do not replace the
+ * whole tab or poll IndexedDB while the user is dragging a slider.
+ */
+export async function refreshBattlePetInventory(tabContent, inventoryItems = null) {
+  const root = tabContent?.querySelector?.('.battle-pet-root');
+  if (!root) return false;
+
+  const allInventory = inventoryItems || await GameDB.getAllInventory();
+  const quantities = new Map((allInventory || []).map(item => [item.id, Math.max(0, Number(item.quantity) || 0)]));
+
+  root.querySelectorAll('.battle-pet-material[data-pet-item-id]').forEach(itemRow => {
+    const itemId = itemRow.dataset.petItemId;
+    const quantity = quantities.get(itemId) || 0;
+    const owned = itemRow.querySelector('[data-pet-owned]');
+    const slider = itemRow.querySelector('.quantity-slider');
+    const input = itemRow.querySelector('.quantity-input');
+    const feedButton = itemRow.querySelector('.btn-feed');
+    const controls = itemRow.querySelector('.battle-quantity-control');
+    const progress = itemRow.querySelector('.slider-progress');
+
+    if (owned) {
+      owned.textContent = String(quantity);
+      owned.className = quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500';
+    }
+
+    const controlMax = Math.max(1, quantity);
+    if (slider) slider.max = String(controlMax);
+    if (input) input.max = String(controlMax);
+
+    let nextValue = quantity > 0 ? quantity : 1;
+    if (globalSliderManualFlags[itemId]) {
+      nextValue = Math.min(controlMax, Math.max(1, Number(input?.value || slider?.value) || 1));
+    }
+    if (slider) {
+      slider.value = String(nextValue);
+      slider.disabled = quantity === 0;
+    }
+    if (input) {
+      input.value = String(nextValue);
+      input.disabled = quantity === 0;
+    }
+    if (feedButton) feedButton.disabled = quantity === 0;
+    controls?.classList.toggle('opacity-50', quantity === 0);
+    controls?.classList.toggle('pointer-events-none', quantity === 0);
+    if (progress) {
+      const percentage = controlMax > 1 ? ((nextValue - 1) / (controlMax - 1)) * 100 : 100;
+      progress.style.width = `${percentage}%`;
+    }
+    inventoryMapUpdate(itemId, quantity);
+  });
+
+  return true;
+}
+
+function inventoryMapUpdate(itemId, quantity) {
+  // Click handlers read their render-local map. The value is also persisted in
+  // the controls themselves, so this helper only maintains the shared slider
+  // selection when rewards lower a previously selected maximum.
+  if (globalSliderManualFlags[itemId] && Number(globalSliderValues[itemId]) > quantity) {
+    globalSliderValues[itemId] = Math.max(1, quantity);
+  }
+}
+
+/**
  * Pet タブの HTML を生成して tabContent に描画する
  * @param {HTMLElement} tabContent - タブコンテンツコンテナ
  * @param {object} targetEntity - 対象モンスターエンティティ
@@ -316,6 +381,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
       const itemRow = document.createElement('div');
       itemRow.id = `battle-pet-mat-row-${variant.key}-${drop.itemId}`;
       itemRow.className = 'battle-pet-material flex flex-col gap-1 rounded-md border border-slate-700/50 bg-slate-800/40 p-1 transition-colors';
+      itemRow.dataset.petItemId = drop.itemId;
 
       itemRow.innerHTML = `
         <div class="flex items-center justify-between gap-1">
@@ -328,7 +394,7 @@ function renderFeedSectionSync(sectionEl, variant, targetEntity, ranchData, inve
                 ${mat.name}
                 <span class="rounded border border-pink-700/50 bg-pink-900/50 px-1 py-px text-[7px] text-pink-300">${expMultiplier} EXP</span>
               </div>
-              <div class="text-[8px] font-bold text-slate-400">所持 <span id="battle-pet-mat-owned-${variant.key}-${drop.itemId}" class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
+              <div class="text-[8px] font-bold text-slate-400">所持 <span id="battle-pet-mat-owned-${variant.key}-${drop.itemId}" data-pet-owned class="${quantity > 0 ? 'text-green-400 font-black' : 'text-slate-500'}">${quantity}</span></div>
             </div>
           </div>
           <button class="battle-feed-button shrink-0 rounded-md bg-gradient-to-r from-pink-600 to-rose-600 px-2 text-[9px] font-black text-white shadow-[0_0_8px_rgba(236,72,153,0.3)] transition-all active:scale-95 active:from-pink-500 active:to-rose-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:opacity-50 btn-feed" ${maxFeed === 0 ? 'disabled' : ''}>

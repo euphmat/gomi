@@ -32,6 +32,13 @@ const getLowestManaAlly = (caster, battle) => {
   return allies.sort((a, b) => currentMpOf(a) / Math.max(1, maxMpOf(a)) - currentMpOf(b) / Math.max(1, maxMpOf(b)))[0] || null;
 };
 
+const getResonanceRechargeUseState = caster => {
+  if (!isConductor(caster)) return { canUse: false, message: 'マナコンダクター専用' };
+  if ((caster._conductorHarmony || 0) <= 0) return { canUse: false, message: '共鳴が必要' };
+  if (currentMpOf(caster) >= maxMpOf(caster)) return { canUse: false, message: 'MPが最大' };
+  return { canUse: true };
+};
+
 const animateSkill = (caster, targets, type, onImpact) => {
   const list = Array.isArray(targets) ? targets : [targets];
   if (shouldSkipBattleAnimations() || typeof document === 'undefined') {
@@ -189,6 +196,33 @@ export const mana_conductor = {
           const uncovered = dryAllies.filter(member => !member._manaFlowTurns);
           if (uncovered.length < Math.min(2, allies.length)) return null;
           return { target: caster, score: 82 + uncovered.length * 12 };
+        }
+      }
+    },
+    {
+      id: 'resonance_recharge', name: 'レゾナンス・リチャージ', icon: 'battery_charging_full',
+      maxLevel: 10,
+      levels: advancedLevels(
+        Array(10).fill(0),
+        [10, 14, 18, 22, 26, 30, 34, 38, 42, 45].map(autoUseMpPercent => ({ autoUseMpPercent }))
+      ),
+      limitBreakMaximums: { autoUseMpPercent: 85 },
+      getDescription: lc => `共鳴ゲージを全消費し、自身のMPを最大値まで回復する。自動戦闘ではMP${Math.round(lc.autoUseMpPercent)}%以下で使用`,
+      getUseState: getResonanceRechargeUseState,
+      execute(caster, levelConfig, battle) {
+        if (getResonanceRechargeUseState(caster).canUse === false) return;
+        caster._conductorHarmony = 0;
+        animateSkill(caster, caster, 'restore', () => {
+          restoreMp(caster, maxMpOf(caster), battle);
+          battle.renderEntities();
+        });
+      },
+      autoBattle: {
+        check: (caster, levelConfig) => {
+          if (getResonanceRechargeUseState(caster).canUse === false) return null;
+          const mpRatio = currentMpOf(caster) / Math.max(1, maxMpOf(caster));
+          if (mpRatio * 100 > levelConfig.autoUseMpPercent) return null;
+          return { target: caster, score: 110 + (1 - mpRatio) * 100 };
         }
       }
     },

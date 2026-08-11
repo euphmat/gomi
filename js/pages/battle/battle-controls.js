@@ -191,7 +191,7 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors, ra
     const isCurrentFloor = floorLevel === Number(currentFloorNum);
     const isBossFloor = index === dungeonDef.floors.length - 1;
     const monsterIds = getFloorMonsterIds(floor);
-    const visibleMonsters = monsterIds.slice(0, 4).map(monsterId => {
+    const floorMonsters = monsterIds.map(monsterId => {
       const monster = MONSTERS_BY_ID.get(monsterId);
       const image = monster?.image || `./assets/monster/${monsterId}.webp`;
       const owned = getOwnedState(monsterId);
@@ -206,7 +206,6 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors, ra
           </span>
         </span>`;
     }).join('');
-    const remainingMonsterCount = Math.max(0, monsterIds.length - 4);
     return `
       <button type="button" data-battle-floor-jump="${floorLevel}" data-battle-floor-boss="${isBossFloor}"
               ${isCurrentFloor ? 'disabled aria-current="location"' : ''}
@@ -216,9 +215,8 @@ function renderFloorJumpSection({ dungeonDef, currentFloorNum, canJumpFloors, ra
           <span class="material-symbols-outlined leading-none ${isBossFloor ? 'text-amber-300' : ''}" style="font-size: 11px">${isBossFloor ? 'skull' : 'layers'}</span>
           <span class="text-[9px] font-black leading-none tabular-nums">${String(floorLevel).padStart(2, '0')}F</span>
         </span>
-        <span class="flex min-w-0 flex-1 items-center gap-1 overflow-hidden" aria-hidden="true">
-          ${visibleMonsters || '<span class="truncate text-[7px] font-bold text-slate-600">敵情報なし</span>'}
-          ${remainingMonsterCount ? `<span class="shrink-0 text-[7px] font-black text-slate-500">+${remainingMonsterCount}</span>` : ''}
+        <span class="flex min-w-0 flex-1 flex-wrap items-center gap-1" aria-hidden="true">
+          ${floorMonsters || '<span class="truncate text-[7px] font-bold text-slate-600">敵情報なし</span>'}
         </span>
         <span data-battle-floor-action class="${getFloorJumpActionClass(isCurrentFloor, isBossFloor)}" aria-hidden="true">
           <span data-battle-floor-action-icon class="material-symbols-outlined leading-none" style="font-size: 14px">${isCurrentFloor ? 'location_on' : 'login'}</span>

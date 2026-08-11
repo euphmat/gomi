@@ -53,6 +53,9 @@ export function initTouchFeedback() {
       ? event.target.closest(INTERACTIVE_SELECTOR)
       : null;
     if (!target || target.matches(':disabled') || target.getAttribute('aria-disabled') === 'true') return;
+    // Scaling a native range input while its pointer is captured breaks thumb
+    // tracking in WebKit. Range inputs already provide their own active thumb.
+    if (target.matches('input[type="range"]')) return;
 
     clearPressedElement();
     pressedElement = target;

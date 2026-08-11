@@ -40,6 +40,10 @@ assert(controlsSource.includes("owned.companion ? 'bg-emerald-300'")
     && indexSource.includes('ranchData: this.ranchData')
     && indexSource.includes('playerMedals: this.playerMedals'),
   'floor jump monster icons do not show companion, legendary, and medal status');
+assert(controlsSource.includes('const floorMonsters = monsterIds.map(monsterId =>')
+    && !controlsSource.includes('monsterIds.slice(0, 4)')
+    && !controlsSource.includes('remainingMonsterCount'),
+  'floor jump controls must render every monster instead of a +N summary');
 assert(indexSource.includes("GameDB.getGameState('completed_dungeons')")
     && indexSource.includes('async jumpToFloor(floorLevel)')
     && indexSource.includes("GameDB.setGameState('currentFloor', targetFloor)")

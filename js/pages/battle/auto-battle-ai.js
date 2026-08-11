@@ -90,6 +90,7 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
   }),
   mana_conductor: Object.freeze({
     mana_relay: skill(ROLE.COMBO_SETUP, 'ally'), ether_overture: skill(ROLE.MAINTENANCE, 'party'),
+    resonance_recharge: skill(ROLE.RECOVERY, 'self'),
     arcane_crescendo: skill(ROLE.COMBO_FINISHER), resonance_storm: skill(ROLE.COMBO_FINISHER, 'area'),
     grand_symphony: skill(ROLE.RESOURCE, 'area')
   }),
@@ -439,7 +440,7 @@ function applyJobComboTactics({ character, usableSkills, context, candidates, fi
     }
   }
 
-  // マナコンダクター: 共鳴を作れる状況ではリレーを優先し、最大時にまとめて放出する。
+  // マナコンダクター: MPが尽きる前に共鳴を自己還元し、余裕があれば最大時に攻撃へ放出する。
   if (currentJob === 'mana_conductor') {
     const maxHarmony = getMaxResource(character, findSkill, 'conductor_core', 'maxHarmony');
     const harmony = character._conductorHarmony || 0;
