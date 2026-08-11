@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.42';
+export const APP_VERSION = '0.1.43';
 export const APP_RELEASE_DATE = '2026.08.11';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.11',
+    version: '0.1.43',
+    items: [
+      'ホームタウンに数独を追加しました。EASYの4×4、NORMALの6×6、HARD・VERY HARDの9×9を遊べます。',
+      '数独の難易度別クリア報酬は神経衰弱と共有され、どちらか一方で受け取ると同じ難易度の報酬は翌日まで受取済みになります。',
+      '数独に関連マス・同じ数字・重複の強調表示、入力候補、消去、難易度別ヒント、キーボード入力を追加しました。',
+    ],
+  },
   {
     date: '2026.08.11',
     version: '0.1.42',

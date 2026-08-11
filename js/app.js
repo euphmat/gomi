@@ -53,6 +53,7 @@ import { renderQuestPage }   from './pages/quest.js';
 import { renderBattlePage }  from './pages/battle/index.js';
 import { renderFishingPage } from './pages/fishing.js';
 import { renderMemoryGamePage } from './pages/memory-game.js';
+import { renderSudokuPage }     from './pages/sudoku.js';
 import { QuestManager }      from './data/quest-manager.js';
 import { settleLegacyFishFeed } from './data/fishing-manager.js';
 
@@ -180,7 +181,8 @@ class App {
       .register('/quest',   renderQuestPage)
       .register('/battle',  renderBattlePage)
       .register('/fishing', renderFishingPage)
-      .register('/memory-game', renderMemoryGamePage);
+      .register('/memory-game', renderMemoryGamePage)
+      .register('/sudoku', renderSudokuPage);
 
     // ── 5. Navigation ──
     this.renderNav();

@@ -1565,11 +1565,12 @@ export function renderBattlePage() {
       @media (max-width: 540px) {
         .battle-tab {
           min-height: 44px;
-          gap: .2rem;
+          gap: .1rem;
           padding-inline: .15rem;
-          font-size: 10px;
+          font-size: 8px;
         }
-        .battle-tab .material-symbols-outlined { font-size: 15px !important; }
+        .battle-tab .material-symbols-outlined { font-size: 13px !important; }
+        #tab-btn-controls > span:last-child { font-size: 7px; }
         .sub-tab-body { padding-right: 0; }
 
         /* Skill: preserve readable names while keeping MP and auto controls tappable. */

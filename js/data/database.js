@@ -429,22 +429,24 @@ class GameDatabase {
   }
 
   /**
-   * 神経衰弱の難易度別デイリー勝利を記録し、同じトランザクションでPrismを付与する。
-   * 複数タブで同時に勝利しても、各難易度の報酬は1日1回だけになる。
+   * ホームタウンゲーム共通の難易度別デイリークリアを記録し、
+   * 同じトランザクションでPrismを付与する。
+   * 複数タブや神経衰弱・数独で同時にクリアしても、各難易度の報酬は
+   * 1日1回だけになる。保存キーは既存セーブ互換のため従来名を維持する。
    * @param {string} dateKey - ローカル日付（YYYY-MM-DD）
    * @param {'easy'|'normal'|'hard'|'very_hard'} difficultyId
    * @param {number} amount
    * @returns {Promise<{awarded: boolean, prism: number}>}
    */
-  claimDailyMemoryGameReward(dateKey, difficultyId, amount) {
+  claimDailyTownGameReward(dateKey, difficultyId, amount) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-      return Promise.reject(new Error('Invalid memory game date key.'));
+      return Promise.reject(new Error('Invalid town game date key.'));
     }
     if (!['easy', 'normal', 'hard', 'very_hard'].includes(difficultyId)) {
-      return Promise.reject(new Error('Invalid memory game difficulty.'));
+      return Promise.reject(new Error('Invalid town game difficulty.'));
     }
     if (!Number.isInteger(amount) || amount <= 0) {
-      return Promise.reject(new Error('Invalid memory game reward amount.'));
+      return Promise.reject(new Error('Invalid town game reward amount.'));
     }
 
     const winKey = `memoryGameLastWin:${difficultyId}`;
@@ -454,8 +456,8 @@ class GameDatabase {
       let result;
 
       tx.oncomplete = () => resolve(result);
-      tx.onerror = () => reject(tx.error || new Error('Memory game reward transaction failed.'));
-      tx.onabort = () => reject(tx.error || new Error('Memory game reward transaction was aborted.'));
+      tx.onerror = () => reject(tx.error || new Error('Town game reward transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Town game reward transaction was aborted.'));
 
       const winRequest = store.get(winKey);
       winRequest.onsuccess = () => {
@@ -478,6 +480,11 @@ class GameDatabase {
     const queuedWrite = this._writeQueue.then(run, run);
     this._writeQueue = queuedWrite.catch(() => undefined);
     return queuedWrite;
+  }
+
+  /** @deprecated Use claimDailyTownGameReward. */
+  claimDailyMemoryGameReward(dateKey, difficultyId, amount) {
+    return this.claimDailyTownGameReward(dateKey, difficultyId, amount);
   }
 
   /**

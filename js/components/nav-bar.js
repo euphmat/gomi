@@ -28,7 +28,7 @@ export function createNavBar(router) {
   const isBattle = currentPath === '/battle';
 
   const tabsHTML = NAV_TABS.map(tab => {
-    const isActive = currentPath === tab.path || (tab.id === 'status' && currentPath === '/memory-game');
+    const isActive = currentPath === tab.path || (tab.id === 'status' && ['/memory-game', '/sudoku'].includes(currentPath));
 
     // Selected state stays visible; touch feedback is applied only while pressed.
     const classes = isActive
