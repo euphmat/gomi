@@ -372,7 +372,7 @@ export function renderChangeJobTab() {
     wrapperContainer.className = 'flex flex-col h-full overflow-hidden';
 
     const listContainer = document.createElement('div');
-    listContainer.className = 'grid flex-1 auto-rows-max grid-cols-2 content-start gap-2 overflow-y-auto pb-2 pr-1 sm:grid-cols-3';
+    listContainer.className = 'grid flex-1 auto-rows-max grid-cols-4 content-start gap-1.5 overflow-y-auto pb-2 pr-1';
 
     const paginationContainer = document.createElement('div');
     paginationContainer.className = 'flex items-center justify-center gap-4 py-2 shrink-0 bg-slate-950/80 border-t border-slate-800 pb-4';
@@ -420,8 +420,8 @@ export function renderChangeJobTab() {
         viewMode: 'grid',
         scrollContainer: listContainer,
         itemContainer: measuredItemContainer,
-        gridItemHeight: 164,
-        gridCols: 2
+        gridItemHeight: 126,
+        gridCols: 4
       });
       listContainer.innerHTML = '';
       
@@ -454,7 +454,7 @@ export function renderChangeJobTab() {
       const allReqsMet = jobRequirementsMet && currentGold >= cost;
 
       const row = document.createElement('div');
-      row.className = `group relative flex min-h-[164px] flex-col items-center overflow-hidden rounded-2xl border p-2.5 text-center backdrop-blur-md transition-all duration-300 ${
+      row.className = `group relative flex min-h-[126px] flex-col items-center overflow-hidden rounded-xl border p-1.5 text-center backdrop-blur-md transition-all duration-300 ${
         isCurrent
           ? 'border-emerald-500/50 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-inset ring-emerald-500/20'
           : 'border-slate-700/60 bg-slate-900/60 ring-1 ring-inset ring-white/5'
@@ -465,34 +465,33 @@ export function renderChangeJobTab() {
       }
 
       const buttonHtml = isCurrent
-        ? `<div class="flex w-full items-center justify-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-[10px] font-black tracking-widest text-emerald-400"><span class="material-symbols-outlined text-[14px]">verified</span>適用中</div>`
+        ? `<div class="inline-flex items-center justify-center gap-0.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-1 text-[8px] font-black tracking-wide text-emerald-400"><span class="material-symbols-outlined text-[11px]">verified</span>適用中</div>`
         : isUnlocked
-          ? `<button class="btn-change-job flex w-full items-center justify-center gap-1 rounded-lg border border-white/20 bg-gradient-to-br from-indigo-500 to-purple-600 px-2 py-1.5 text-[10px] font-black tracking-widest text-white shadow-[0_0_12px_rgba(99,102,241,0.35)] transition-all active:scale-95 active:from-indigo-400 active:to-purple-500" data-job-id="${job.id}">
-              <span class="material-symbols-outlined text-[14px]">swap_horiz</span><span data-action-label>転職</span>
+          ? `<button class="btn-change-job inline-flex items-center justify-center gap-0.5 rounded-md border border-white/20 bg-gradient-to-br from-indigo-500 to-purple-600 px-2 py-1 text-[8px] font-black tracking-wide text-white shadow-[0_0_8px_rgba(99,102,241,0.3)] transition-all active:scale-95 active:from-indigo-400 active:to-purple-500" data-job-id="${job.id}">
+              <span class="material-symbols-outlined text-[11px]">swap_horiz</span><span data-action-label>転職</span>
             </button>`
           : allReqsMet
-            ? `<button class="btn-change-job flex w-full items-center justify-center gap-1 rounded-lg border border-amber-300/40 bg-gradient-to-br from-amber-500 to-orange-600 px-2 py-1.5 text-[10px] font-black text-white shadow-[0_4px_12px_rgba(245,158,11,0.3)] transition-all active:scale-95 active:from-amber-400 active:to-orange-500" data-job-id="${job.id}">
-                <span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">lock_open</span>
-                <span data-action-label>解放 ${formatNumber(cost)} G</span>
+            ? `<button class="btn-change-job inline-flex items-center justify-center gap-0.5 rounded-md border border-amber-300/40 bg-gradient-to-br from-amber-500 to-orange-600 px-1.5 py-1 text-[8px] font-black text-white shadow-[0_3px_8px_rgba(245,158,11,0.25)] transition-all active:scale-95 active:from-amber-400 active:to-orange-500" data-job-id="${job.id}">
+                <span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">lock_open</span>
+                <span data-action-label>解放 ${formatNumber(cost)}G</span>
               </button>`
-            : `<button class="flex w-full cursor-not-allowed items-center justify-center gap-1 rounded-lg border border-slate-700/80 bg-slate-800/80 px-2 py-1.5 text-[10px] font-black text-slate-500 opacity-70" disabled>
-                <span class="material-symbols-outlined text-[14px]">lock</span>
+            : `<button class="inline-flex cursor-not-allowed items-center justify-center gap-0.5 rounded-md border border-slate-700/80 bg-slate-800/80 px-1.5 py-1 text-[8px] font-black text-slate-500 opacity-70" disabled>
+                <span class="material-symbols-outlined text-[11px]">lock</span>
                 <span>条件不足</span>
               </button>`;
 
       row.innerHTML = `
         <div class="absolute inset-0 bg-gradient-to-b ${isCurrent ? 'from-emerald-500/10' : 'from-indigo-500/[0.06]'} to-transparent pointer-events-none"></div>
-        <div class="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-1 shadow-inner">
+        <div class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-0.5 shadow-inner">
           <img src="${getJobImagePath(job)}" class="h-full w-full object-contain ${isCurrent ? 'scale-110 opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-90 transition-transform duration-300 group-active:scale-110'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
-        <div class="relative z-10 mt-1.5 min-w-0 w-full">
-          <h3 class="truncate text-[12px] font-black tracking-wide ${isCurrent ? 'text-emerald-300' : 'text-slate-100'}">${job.name}</h3>
-          <div class="mt-1 flex items-center justify-center gap-1">
-            <span class="flex items-center gap-0.5 rounded-md border border-slate-600/50 bg-slate-800/80 px-1.5 py-0.5 text-[8px] font-black tracking-wider text-slate-300"><span class="material-symbols-outlined text-[10px] text-slate-400">military_tech</span>JLv.${formatNumber(savedLevel)}</span>
-            ${isUnlocked && !isCurrent ? '<span class="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-black text-emerald-400">解放済み</span>' : ''}
+        <div class="relative z-10 mt-1 min-w-0 w-full">
+          <h3 class="truncate text-[10px] font-black tracking-wide ${isCurrent ? 'text-emerald-300' : 'text-slate-100'}">${job.name}</h3>
+          <div class="mt-0.5 flex items-center justify-center">
+            <span class="rounded border border-slate-600/50 bg-slate-800/80 px-1 py-px text-[7px] font-black leading-tight tracking-tight text-slate-400">JLv.${formatNumber(savedLevel)}</span>
           </div>
         </div>
-        <div class="relative z-10 mt-auto w-full pt-2">${buttonHtml}</div>
+        <div class="relative z-10 mt-auto flex min-h-[22px] w-full items-end justify-center pt-1.5">${buttonHtml}</div>
       `;
       listContainer.appendChild(row);
       });
