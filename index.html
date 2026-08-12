@@ -177,13 +177,16 @@
     /* Full notation can be much wider than compact notation. Keep the fixed
        header controls reachable even for extremely large balances. */
     html[data-number-notation="full"] #header-wallet {
-      flex: 0 1 42vw;
+      flex: 0 1 auto;
+      width: fit-content;
       max-width: 42vw;
       gap: 0.125rem;
     }
     html[data-number-notation="full"] #header-gold,
     html[data-number-notation="full"] #header-prism {
-      flex: 1 1 0;
+      flex: 0 1 auto;
+      width: fit-content;
+      max-width: calc((42vw - 0.125rem) / 2);
       padding-inline: 0.25rem;
       overflow: hidden;
     }
