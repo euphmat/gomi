@@ -4,7 +4,6 @@ import { getFishingSpotUnlockStatus, getFishingTackleLevel, getRandomCatchDelay,
 import { GameDB } from '../data/database.js';
 import { formatNumber } from '../utils/format.js';
 import { isScreenLocked, recordLockScreenProgress, setLockScreenActivity } from '../utils/screen-lock.js';
-import { playSoundEffect } from '../utils/sound-effects.js';
 
 function updateHeader(id, value) {
   const element = document.getElementById(id);
@@ -193,7 +192,6 @@ export async function renderFishingPage() {
     // The result is still applied to state while locked; only the expensive
     // reveal/splash/card-flight presentation is omitted.
     if (isScreenLocked()) return;
-    playSoundEffect('fishBite', { automatic: true });
     const display = container.querySelector('[data-catch-display]');
     if (!display) return;
     const stage = display.closest('section');
@@ -319,10 +317,6 @@ export async function renderFishingPage() {
     }
 
     // 4. 黒い魚影を解除し、取得アイテムを正式に公開する。
-    playSoundEffect('catch', {
-      automatic: true,
-      rate: isMultiCatch ? 1.12 : result.type === 'fish' ? 1 : 1.2,
-    });
     const revealedVisual = result.image
       ? result.type === 'fish'
         ? caughtFishes.length > 1

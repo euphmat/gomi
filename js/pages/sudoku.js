@@ -16,7 +16,6 @@ import {
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
 import { formatNumber } from '../utils/format.js';
-import { playSoundEffect } from '../utils/sound-effects.js';
 
 const DIFFICULTIES = {
   easy: {
@@ -282,7 +281,6 @@ export function renderSudokuPage() {
       const result = await claimReward();
       game.rewardClaimed = true;
       rewardStatus = result.awarded ? 'awarded' : 'already';
-      playSoundEffect('victory');
     } catch (error) {
       console.error('[Sudoku] Failed to award Prism.', error);
     }

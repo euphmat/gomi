@@ -24,7 +24,6 @@ import {
 import { formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
 import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
-import { playSoundEffect } from '../../utils/sound-effects.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
@@ -408,7 +407,6 @@ class BattleManager {
     this.applyStartOfBattlePassives();
     this.renderEntities();
     this._battleReady = true;
-    playSoundEffect('battleStart', { automatic: this.isAutoBattle });
 
     if (this._pendingTabRender) {
       this._pendingTabRender = false;

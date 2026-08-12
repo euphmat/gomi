@@ -18,9 +18,10 @@ assert(indexSource.includes("id: 'controls'") && indexSource.includes('renderBat
 assert(controlsSource.includes("localStorage.setItem('autoBattleSpeed'")
     && controlsSource.includes("localStorage.setItem('disableBattleAnimations'")
     && controlsSource.includes("localStorage.setItem('hideBattleStats'")
-    && controlsSource.includes("localStorage.setItem('continueOnDeath'")
-    && controlsSource.includes('setSoundEffectsEnabled(enabled, { preview: true })'),
-  'battle controls do not share all relevant settings with the settings modal');
+    && controlsSource.includes("localStorage.setItem('continueOnDeath'"),
+  'battle controls do not share all remaining relevant settings with the settings modal');
+assert(!controlsSource.includes("id: 'sound'"),
+  '廃止済みの設定が戦闘コントロールに残っています');
 assert(controlsSource.includes("new Event('settingsChanged')"),
   'control changes are not dispatched to the running battle');
 assert(controlsSource.includes("import { activateScreenLock }")

@@ -27,13 +27,12 @@ import { syncMineOfflineProgress } from './data/mine-manager.js';
 import { loadTreasureLevels } from './data/treasure-manager.js';
 import { SpecialQuestManager } from './data/special-quest-manager.js';
 import { DailyLoginManager } from './data/daily-login-manager.js';
-import { areGameNotificationsEnabled, initGameNotificationSound, setGameNotificationsEnabled } from './utils/game-notifications.js';
+import { areGameNotificationsEnabled, setGameNotificationsEnabled } from './utils/game-notifications.js';
 import { APP_VERSION } from './definitions/update-log.js';
 import { checkForAvailableUpdate, showUpdateLogModal } from './components/update-log-modal.js';
 import { initQuestHeaderBadge, showQuestModal } from './components/quest-modal.js';
 import { activateScreenLock, initScreenLock } from './utils/screen-lock.js';
 import { initTouchFeedback } from './utils/touch-feedback.js';
-import { areSoundEffectsEnabled, initSoundEffects, setSoundEffectsEnabled } from './utils/sound-effects.js';
 import { createCloudSavePanel, initCloudSavePanel } from './components/cloud-save-panel.js';
 import { initDailyCloudSave } from './data/daily-cloud-save-manager.js';
 import { clearLegacyJobSpBonus, getAvailableJobSP } from './data/job-progression.js';
@@ -64,7 +63,6 @@ class App {
     this.appEl = document.getElementById('app');
     this.router = null;
     initTouchFeedback();
-    initSoundEffects();
     initScreenLock();
     this.init();
   }
@@ -228,7 +226,6 @@ class App {
    * Bind the settings, Update log, and refresh controls in the global header.
    */
   initHeaderButtons() {
-    initGameNotificationSound();
     initQuestHeaderBadge();
 
     const questBtn = document.getElementById('btn-quest');
@@ -438,25 +435,6 @@ class App {
             </div>
           </div>
 
-          <!-- Sound Effects Toggle -->
-          <div id="setting-row-sound-effects" data-sound="none" class="settings-compact-row cursor-pointer">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                <div class="settings-compact-icon bg-orange-500/15 border border-orange-500/20">
-                  <span class="material-symbols-outlined text-base text-orange-400">volume_up</span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-bold text-gray-200 leading-tight">効果音</div>
-                  <div class="settings-row-description text-[9px] text-gray-500 mt-0.5 leading-relaxed">ボタン操作・戦闘・釣りの効果音（初期設定はOFF）</div>
-                </div>
-              </div>
-              <div id="toggle-sound-effects"
-                   role="switch" aria-checked="${areSoundEffectsEnabled()}"
-                   class="setting-toggle ${areSoundEffectsEnabled() ? 'active' : ''}"
-                   style="--toggle-color: #f97316; --toggle-glow: rgba(249,115,22,0.4)"></div>
-            </div>
-          </div>
-
           </div>
 
           <!-- Auto Battle Speed -->
@@ -608,16 +586,6 @@ class App {
     }
 
     document.getElementById('setting-screen-lock-button')?.addEventListener('click', activateScreenLock);
-
-    const rowSoundEffects = document.getElementById('setting-row-sound-effects');
-    const toggleSoundEffects = document.getElementById('toggle-sound-effects');
-    if (rowSoundEffects && toggleSoundEffects) {
-      rowSoundEffects.addEventListener('click', () => {
-        const enabled = setSoundEffectsEnabled(!areSoundEffectsEnabled(), { preview: true });
-        toggleSoundEffects.classList.toggle('active', enabled);
-        toggleSoundEffects.setAttribute('aria-checked', String(enabled));
-      });
-    }
 
     // ── Speed Slider & Step Dots ──
     const speedSlider = document.getElementById('setting-speed-slider');

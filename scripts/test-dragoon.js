@@ -9,7 +9,6 @@ if (typeof window === 'undefined') {
   globalThis.localStorage = { getItem: () => null };
   globalThis.document = { hidden: true, body: null, getElementById: () => null };
 } else {
-  localStorage.removeItem('soundEffectsEnabled');
   localStorage.setItem('disableBattleAnimations', 'true');
 }
 

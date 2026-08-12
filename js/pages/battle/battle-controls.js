@@ -3,7 +3,6 @@
  * 戦闘画面から、戦闘に関係する設定を即時変更するコントロールタブ。
  */
 
-import { areSoundEffectsEnabled, setSoundEffectsEnabled } from '../../utils/sound-effects.js';
 import { activateScreenLock } from '../../utils/screen-lock.js';
 import { MONSTERS } from '../../definitions/monsters.js';
 
@@ -38,22 +37,12 @@ const CONTROL_SETTINGS = [
     isEnabled: () => localStorage.getItem('continueOnDeath') === 'true',
     setEnabled: enabled => localStorage.setItem('continueOnDeath', String(enabled)),
   },
-  {
-    id: 'sound',
-    label: '効果音',
-    description: '戦闘・操作音を再生',
-    icon: 'volume_up',
-    tone: 'orange',
-    isEnabled: areSoundEffectsEnabled,
-    setEnabled: enabled => setSoundEffectsEnabled(enabled, { preview: true }),
-  },
 ];
 
 const TONE_CLASSES = {
   purple: 'border-purple-400/20 bg-purple-500/10 text-purple-300',
   blue: 'border-blue-400/20 bg-blue-500/10 text-blue-300',
   rose: 'border-rose-400/20 bg-rose-500/10 text-rose-300',
-  orange: 'border-orange-400/20 bg-orange-500/10 text-orange-300',
 };
 
 function getBattleSpeed() {

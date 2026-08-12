@@ -22,7 +22,6 @@ import {
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
 import { formatNumber } from '../utils/format.js';
-import { playSoundEffect } from '../utils/sound-effects.js';
 
 const DIFFICULTIES = Object.freeze({
   easy: {
@@ -450,12 +449,9 @@ export function renderMonsterTowerPage() {
         const result = await claimReward();
         game.rewardClaimed = true;
         rewardStatus = result.awarded ? 'awarded' : 'already';
-        playSoundEffect('victory');
       } catch (error) {
         console.error('[MonsterTower] Failed to award Prism.', error);
       }
-    } else {
-      playSoundEffect('defeat');
     }
     later(() => showResult(isWin, rewardStatus), 650);
   };
@@ -488,7 +484,6 @@ export function renderMonsterTowerPage() {
     game.droppedAt = performance.now();
     game.stableFrames = 0;
     setStatus(`${game.currentMonster.name}を落としました。塔が安定するまで待ちます…`, game.currentOwner === 'player' ? 'cyan' : 'amber');
-    playSoundEffect('confirm');
     updateControls();
   };
 

@@ -16,7 +16,6 @@ import { renderItemTabHtml } from './battle-ui.js';
 import { notifyGameEvent } from '../../utils/game-notifications.js';
 import { getMaterialCapacity, getTreasureEffect } from '../../data/treasure-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
-import { playSoundEffect } from '../../utils/sound-effects.js';
 import { addLockScreenCompanion, recordLockScreenProgress, setLockScreenActivity } from '../../utils/screen-lock.js';
 import { STANDARD_JOB_GAUGE_FIELDS } from './job-gauge-system.js';
 import { getBaseExpToNext, normalizeBaseExpProgress } from '../../data/level-progression.js';
@@ -413,8 +412,7 @@ export const resultMethods = {
   async endBattle(isWin, text, showModal = true) {
     this.stopAtbLoop();
     this.activeCharacter = null;
-    if (showModal) playSoundEffect(isWin ? 'victory' : 'defeat', { automatic: this.isAutoBattle });
-    
+
     await this.saveDeferredData();
     await this.savePartyState();
 

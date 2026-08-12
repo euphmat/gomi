@@ -1,4 +1,3 @@
-import { playSoundEffect } from '../../utils/sound-effects.js';
 import { playNormalAttackAnimation } from './normal-attack-animations.js';
 import { playMonsterAttackAnimation } from './monster-attack-animation.js';
 import {
@@ -315,8 +314,6 @@ export const actionMethods = {
     this._battleTelemetryAction = { actor: caster, skill: telemetrySkill, capturedAt: telemetryCapturedAt };
     this.battleTelemetry?.recordAction(caster, telemetrySkill);
 
-    playSoundEffect('battleSkill', { automatic: this.isAutoBattle });
-
     // Execution Logic
     // For now, we assume skills like first_aid don't need a specific target besides caster
     // If a skill needs a target, we would check selectedEnemyTarget or allow party target.
@@ -519,11 +516,6 @@ export const actionMethods = {
         sumMedalEquipmentEffect(attacker, this.equipMap, 'defenseIgnorePercent', 60)
       );
     }
-
-    playSoundEffect(isMagic ? 'battleMagic' : 'battleAttack', {
-      automatic: this.isAutoBattle,
-      rate: isParty ? 1.04 : .9,
-    });
 
     // --- Guardian Oath: intercept every incoming party hit, including AoE ---
     if (!isParty && defender.hp !== undefined) {
@@ -1113,7 +1105,6 @@ export const actionMethods = {
       if (defender.currentHp <= 0) {
         defender.currentHp = 0;
         defender.isDead = true;
-        playSoundEffect('enemyDown', { automatic: this.isAutoBattle });
         this.clearEntityStatuses(defender);
         this.processEnemyDeath(defender);
       }
@@ -1167,7 +1158,6 @@ export const actionMethods = {
         if (!this.trySoulReaperDeathDenial(defender)) {
           defender.hp.current = 0;
           defender.isDead = true;
-          playSoundEffect('allyDown', { automatic: this.isAutoBattle });
           this.clearEntityStatuses(defender);
           this.lastKilledBy = {
             monsterId: attacker.id,

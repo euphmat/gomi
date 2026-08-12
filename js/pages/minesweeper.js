@@ -12,7 +12,6 @@ import {
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
 import { formatNumber } from '../utils/format.js';
-import { playSoundEffect } from '../utils/sound-effects.js';
 
 const DIFFICULTIES = {
   easy: {
@@ -285,7 +284,6 @@ export function renderMinesweeperPage() {
       const result = await claimReward();
       game.rewardClaimed = true;
       rewardStatus = result.awarded ? 'awarded' : 'already';
-      playSoundEffect('victory');
     } catch (error) {
       console.error('[Minesweeper] Failed to award Prism.', error);
     }
@@ -300,7 +298,6 @@ export function renderMinesweeperPage() {
     stopTimer();
     setStatus('地雷が爆発しました', 'rose');
     updateBoard();
-    playSoundEffect('defeat');
     later(() => showResult('lose'), 500);
   };
 

@@ -7,7 +7,6 @@ import { MONSTERS } from '../definitions/monsters.js';
 import { FISH } from '../definitions/fish.js';
 import { MATERIALS } from '../definitions/materials.js';
 import { formatNumber } from '../utils/format.js';
-import { playSoundEffect } from '../utils/sound-effects.js';
 import { getTreasureEffect } from '../data/treasure-manager.js';
 import {
   TOWN_GAME_REWARDS,
@@ -537,7 +536,6 @@ export function renderMemoryGamePage() {
           ? '<span class="block text-[9px] tracking-[.2em] text-cyan-400">YOU</span>あなたが先行です！'
           : '<span class="block text-[9px] tracking-[.2em] text-rose-400">CPU</span>CPUが先行です！';
       }
-      playSoundEffect('confirm');
     }, reducedMotion ? 80 : 1480);
 
     later(() => {
@@ -768,13 +766,10 @@ export function renderMemoryGamePage() {
         const result = await claimDailyReward();
         game.rewardClaimed = true;
         rewardStatus = result.awarded ? 'awarded' : 'already';
-        playSoundEffect('victory');
       } catch (error) {
         console.error('[MemoryGame] Failed to award Prism.', error);
         rewardStatus = 'failed';
       }
-    } else {
-      playSoundEffect('defeat');
     }
     showResult(outcome, rewardStatus);
   };
