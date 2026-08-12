@@ -157,7 +157,7 @@ const enemy = {
       && container.innerHTML.includes('与ダメージ')
       && container.innerHTML.includes('HP回復'),
     'party comparison charts were not rendered');
-  assert(container.innerHTML.includes('12.5k')
+  assert(container.innerHTML.includes('12500')
       && container.innerHTML.includes('100.0%'),
     'party comparison values or contribution percentages were not rendered');
 
@@ -176,17 +176,19 @@ const enemy = {
       && !container.innerHTML.includes('軽減回数'),
     'unnecessary detailed skill statistics were rendered');
   assert(container.innerHTML.includes('data-skill-contributions')
+      && container.innerHTML.includes('data-skill-primary-result')
       && container.innerHTML.includes('100.0%')
-      && container.innerHTML.includes('1回'),
+      && container.innerHTML.includes('与ダメージ'),
     'compact skill contribution summary was not rendered');
   assert(container.innerHTML.includes('data-skill-effect-inline')
       && container.innerHTML.includes('MPを4消費し、敵単体へ1.5倍の物理攻撃を行う。')
       && container.innerHTML.includes('Lv.3'),
     'current skill effect was not rendered inline with its name');
-  assert(container.innerHTML.includes('12.5k')
+  assert(container.innerHTML.includes('12500')
+      && !container.innerHTML.includes('12.5k')
       && !container.innerHTML.includes('万')
       && !container.innerHTML.includes('億'),
-    'statistics did not use compact k/m/b notation');
+    'statistics did not use exact integer notation');
   assert(container.innerHTML.includes('data-medal-equipment-effects')
       && container.innerHTML.includes('統計のメダル剣')
       && container.innerHTML.includes('与えるダメージ+15%。'),
@@ -194,13 +196,12 @@ const enemy = {
   assert(container.innerHTML.includes('被攻撃時、20%の確率でダメージを15%軽減する。')
       && container.innerHTML.includes('Lv.2'),
     'current passive skill effect description was not rendered');
-  assert(container.innerHTML.includes('data-skill-purpose-chart')
-      && container.innerHTML.includes('conic-gradient(')
-      && container.innerHTML.includes('用途別発動割合')
-      && container.innerHTML.includes('攻撃')
-      && container.innerHTML.includes('防御')
-      && container.innerHTML.includes('50.0%'),
-    'skill purpose activation pie chart was not rendered');
+  assert(container.innerHTML.includes('data-skill-performance-summary')
+      && container.innerHTML.includes('スキル実績')
+      && container.innerHTML.includes('防いだダメージ')
+      && container.innerHTML.includes('HP回復')
+      && !container.innerHTML.includes('用途別発動割合'),
+    'skill performance totals were not rendered');
   listeners.overview();
   assert(manager.battleStatisticsCharacterKey === 'party:overview'
       && container.innerHTML.includes('data-party-overview'),

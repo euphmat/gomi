@@ -26,17 +26,9 @@ const escapeHtml = value => String(value ?? '')
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;');
 
-const compactNumberFormatter = new Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  compactDisplay: 'short',
-  maximumFractionDigits: 1
-});
-
-const compactNumber = value => {
-  const amount = Math.max(0, Math.floor(Number(value) || 0));
-  if (amount < 1000) return amount.toLocaleString('ja-JP');
-  return compactNumberFormatter.format(amount).toLowerCase();
-};
+// Statistics favor exact values over abbreviated notation so the player can
+// see the actual contribution (for example, 12500 instead of 12.5k).
+const formatStatNumber = value => String(Math.max(0, Math.floor(Number(value) || 0)));
 
 const entityName = entity => entity?.name || entity?.displayName || '不明';
 const isPartyEntity = entity => Boolean(entity?.hp);
@@ -446,7 +438,7 @@ function renderPartyComparisonChart(manager, stats, metric) {
     <div class="flex items-center gap-1.5">
       <span class="material-symbols-outlined ${metric.color}" style="font-size:15px">${metric.icon}</span>
       <h3 class="text-[11px] font-black text-slate-100">${metric.label}</h3>
-      <span class="ml-auto font-mono text-[11px] font-black ${metric.color}">${compactNumber(total)}${metric.suffix || ''}</span>
+      <span class="ml-auto font-mono text-[11px] font-black ${metric.color}">${formatStatNumber(total)}${metric.suffix || ''}</span>
     </div>
     <div class="mt-2 space-y-1.5" role="img" aria-label="キャラクター別${metric.label}比較">
       ${stats.map((stat, index) => {
@@ -461,7 +453,7 @@ function renderPartyComparisonChart(manager, stats, metric) {
           <div class="h-2.5 overflow-hidden rounded-full border border-white/[0.06] bg-slate-800/90" title="${formatPercent(share)}">
             <div class="h-full min-w-0 rounded-full transition-[width] duration-300" style="width:${width.toFixed(1)}%;background:${metric.barColor};box-shadow:0 0 7px ${metric.barColor}80"></div>
           </div>
-          <div class="min-w-[55px] text-right"><span class="font-mono text-[9px] font-black text-white">${compactNumber(value)}${metric.suffix || ''}</span><span class="ml-1 font-mono text-[8px] text-slate-400">${formatPercent(share)}</span></div>
+          <div class="min-w-[55px] text-right"><span class="font-mono text-[9px] font-black text-white">${formatStatNumber(value)}${metric.suffix || ''}</span><span class="ml-1 font-mono text-[8px] text-slate-400">${formatPercent(share)}</span></div>
         </div>`;
       }).join('')}
     </div>
@@ -480,7 +472,7 @@ function renderPartyOverview(manager, stats, elapsedMs) {
     else if (metric.key === 'damageTaken') detail = `${stats.length}人の合計`;
     return renderOverviewCell(
       metric.shortLabel,
-      `${compactNumber(totals[metric.key])}${metric.suffix || ''}`,
+      `${formatStatNumber(totals[metric.key])}${metric.suffix || ''}`,
       detail,
       metric.color,
       metric.icon
@@ -516,13 +508,13 @@ function renderOverviewCell(label, value, detail, color, icon) {
 function renderCharacterOverview(manager, stat, elapsedMs) {
   const job = getJobDisplay(manager, stat);
   const cells = [
-    ['与ダメージ', compactNumber(stat.damageDealt), `${formatDecimal(stat.damageDealt / Math.max(1, elapsedMs / 1000))}/秒`, 'text-rose-300', 'swords'],
-    ['最大ダメージ', compactNumber(stat.maxDamageDealt), `${stat.damageDealtEvents} Hit`, 'text-red-300', 'bolt'],
-    ['被ダメージ', compactNumber(stat.damageTaken), `最大 ${compactNumber(stat.maxDamageTaken)}`, 'text-orange-300', 'heart_broken'],
-    ['HP回復', compactNumber(stat.healingDone), `${formatDecimal(stat.healingDone / Math.max(1, elapsedMs / 1000))}/秒`, 'text-emerald-300', 'healing'],
-    ['被回復', compactNumber(stat.healingReceived), `最大 ${compactNumber(stat.maxHealingReceived)}`, 'text-green-200', 'favorite'],
-    ['ダメージ軽減', compactNumber(stat.prevented), `最大 ${compactNumber(stat.maxPrevented)}`, 'text-cyan-300', 'shield'],
-    ['MP回復', compactNumber(stat.mpRestored), `最大 ${compactNumber(stat.maxMpRestored)}`, 'text-sky-300', 'water_drop'],
+    ['与ダメージ', formatStatNumber(stat.damageDealt), `${formatDecimal(stat.damageDealt / Math.max(1, elapsedMs / 1000))}/秒`, 'text-rose-300', 'swords'],
+    ['最大ダメージ', formatStatNumber(stat.maxDamageDealt), `${stat.damageDealtEvents} Hit`, 'text-red-300', 'bolt'],
+    ['被ダメージ', formatStatNumber(stat.damageTaken), `最大 ${formatStatNumber(stat.maxDamageTaken)}`, 'text-orange-300', 'heart_broken'],
+    ['HP回復', formatStatNumber(stat.healingDone), `${formatDecimal(stat.healingDone / Math.max(1, elapsedMs / 1000))}/秒`, 'text-emerald-300', 'healing'],
+    ['被回復', formatStatNumber(stat.healingReceived), `最大 ${formatStatNumber(stat.maxHealingReceived)}`, 'text-green-200', 'favorite'],
+    ['ダメージ軽減', formatStatNumber(stat.prevented), `最大 ${formatStatNumber(stat.maxPrevented)}`, 'text-cyan-300', 'shield'],
+    ['MP回復', formatStatNumber(stat.mpRestored), `最大 ${formatStatNumber(stat.maxMpRestored)}`, 'text-sky-300', 'water_drop'],
     ['行動回数', `${stat.actions}回`, `${formatDecimal(ratePerMinute(stat.actions, elapsedMs))}/分`, 'text-violet-300', 'directions_run']
   ];
   return `<section class="rounded-xl border border-slate-600/70 bg-slate-950/70 p-2.5">
@@ -539,7 +531,7 @@ function renderContributionCell(label, value, share, icon, color, barColor) {
   const width = Math.min(100, Math.max(0, Number(share) || 0));
   return `<div class="min-w-0 rounded-md border border-white/[0.08] bg-black/30 px-1.5 py-1">
     <div class="flex items-center gap-1 text-[9px] font-bold text-slate-300"><span class="material-symbols-outlined ${color}" style="font-size:11px">${icon}</span><span class="truncate">${label}</span><span class="ml-auto shrink-0 font-mono text-[8px] text-amber-200">${formatPercent(width)}</span></div>
-    <div class="mt-0.5 truncate text-[13px] font-black leading-none ${color}">${compactNumber(value)}</div>
+    <div class="mt-0.5 truncate text-[13px] font-black leading-none ${color}">${formatStatNumber(value)}</div>
     <div class="mt-1 h-0.5 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full ${barColor}" style="width:${width.toFixed(1)}%"></div></div>
   </div>`;
 }
@@ -566,45 +558,35 @@ function getSkillPurpose(metric, effect) {
   return SKILL_PURPOSES[3];
 }
 
-function renderSkillPurposeChart(skillDisplays) {
-  const activations = new Map(SKILL_PURPOSES.map(purpose => [purpose.id, 0]));
-  skillDisplays.forEach(({ metric, purpose }) => {
-    activations.set(purpose.id, activations.get(purpose.id) + metric.activations);
-  });
-  const total = [...activations.values()].reduce((sum, count) => sum + count, 0);
-  if (total <= 0) return '';
+const SKILL_RESULT_METRICS = [
+  { key: 'damage', label: '与ダメージ', icon: 'swords', color: 'text-rose-200', border: 'border-rose-500/25' },
+  { key: 'prevented', label: '防いだダメージ', icon: 'shield', color: 'text-cyan-200', border: 'border-cyan-500/25' },
+  { key: 'healing', label: 'HP回復', icon: 'healing', color: 'text-emerald-200', border: 'border-emerald-500/25' },
+  { key: 'mpRestored', label: 'MP回復', icon: 'water_drop', color: 'text-sky-200', border: 'border-sky-500/25' }
+];
 
-  let cursor = 0;
-  const entries = SKILL_PURPOSES.map(purpose => {
-    const count = activations.get(purpose.id);
-    const percent = count / total * 100;
-    const start = cursor;
-    cursor += percent;
-    return { ...purpose, count, percent, start, end: cursor };
-  }).filter(entry => entry.count > 0);
-  const gradient = entries
-    .map(entry => `${entry.hex} ${entry.start.toFixed(2)}% ${entry.end.toFixed(2)}%`)
-    .join(',');
+function renderSkillPerformanceSummary(skillDisplays) {
+  const totals = Object.fromEntries(SKILL_RESULT_METRICS.map(result => [
+    result.key,
+    skillDisplays.reduce((sum, { metric }) => sum + Math.max(0, Number(metric[result.key]) || 0), 0)
+  ]));
+  if (!SKILL_RESULT_METRICS.some(result => totals[result.key] > 0)) return '';
 
-  return `<section class="flex items-center gap-2 rounded-lg border border-slate-600/70 bg-slate-950/70 p-2" data-skill-purpose-chart>
-    <div class="relative h-16 w-16 shrink-0 rounded-full" role="img" aria-label="用途別スキル発動割合" style="background:conic-gradient(${gradient})">
-      <div class="absolute inset-2 flex flex-col items-center justify-center rounded-full bg-slate-950 shadow-inner"><span class="text-[15px] font-black leading-none text-white">${compactNumber(total)}</span><span class="mt-0.5 text-[8px] font-bold text-slate-400">発動</span></div>
-    </div>
-    <div class="min-w-0 flex-1">
-      <div class="mb-1.5 flex items-center gap-1 text-[10px] font-black text-slate-200"><span class="material-symbols-outlined text-amber-300" style="font-size:13px">donut_large</span>用途別発動割合</div>
-      <div class="grid grid-cols-4 gap-1">
-        ${SKILL_PURPOSES.map(purpose => {
-          const count = activations.get(purpose.id);
-          const percent = count / total * 100;
-          return `<div class="min-w-0 rounded border border-white/[0.06] bg-black/25 px-1 py-1 text-center ${count > 0 ? '' : 'opacity-40'}">
-            <div class="flex items-center justify-center gap-0.5 truncate text-[9px] font-bold ${purpose.textClass}"><span class="h-1.5 w-1.5 shrink-0 rounded-full" style="background:${purpose.hex}"></span>${purpose.label}</div>
-            <div class="mt-0.5 font-mono text-[10px] font-black text-white">${formatPercent(percent)}</div>
-            <div class="text-[8px] text-slate-400">${count}回</div>
-          </div>`;
-        }).join('')}
-      </div>
+  return `<section class="rounded-lg border border-slate-600/70 bg-slate-950/70 p-2" data-skill-performance-summary>
+    <div class="mb-1.5 flex items-center gap-1 text-[10px] font-black text-slate-200"><span class="material-symbols-outlined text-amber-300" style="font-size:13px">query_stats</span>スキル実績</div>
+    <div class="grid grid-cols-4 gap-1">
+      ${SKILL_RESULT_METRICS.map(result => `<div class="min-w-0 rounded border ${result.border} bg-black/25 px-1 py-1.5 text-center ${totals[result.key] > 0 ? '' : 'opacity-40'}">
+        <div class="flex items-center justify-center gap-0.5 truncate text-[8px] font-bold ${result.color}"><span class="material-symbols-outlined" style="font-size:10px">${result.icon}</span>${result.label}</div>
+        <div class="mt-1 truncate font-mono text-[12px] font-black text-white">${formatStatNumber(totals[result.key])}</div>
+      </div>`).join('')}
     </div>
   </section>`;
+}
+
+function getPrimarySkillResult(metric) {
+  return SKILL_RESULT_METRICS
+    .map(result => ({ ...result, value: Math.max(0, Number(metric[result.key]) || 0) }))
+    .sort((a, b) => b.value - a.value)[0];
 }
 
 function renderSkillMetric(metric, stat, effect, purpose) {
@@ -615,6 +597,7 @@ function renderSkillMetric(metric, stat, effect, purpose) {
   if (metric.prevented > 0) contributions.push(['ダメージ軽減', metric.prevented, metric.prevented / Math.max(1, stat.prevented) * 100, 'shield', 'text-cyan-200', 'bg-cyan-400']);
 
   const icon = String(metric.icon || '').includes('/') ? 'auto_awesome' : metric.icon;
+  const primaryResult = getPrimarySkillResult(metric);
   const contributionColumns = Math.min(4, Math.max(1, contributions.length));
   return `<article class="rounded-lg border border-slate-600/70 bg-slate-950/70 p-2" data-battle-stat-skill>
     <div class="flex min-w-0 items-center gap-1.5">
@@ -624,7 +607,9 @@ function renderSkillMetric(metric, stat, effect, purpose) {
         <span class="text-[8px] font-bold ${metric.type === 'passive' ? 'text-cyan-300' : 'text-violet-300'}">${metric.type === 'passive' ? 'PASSIVE' : 'ACTIVE'}</span><span class="ml-1 text-[8px] font-bold ${purpose.textClass}">· ${purpose.label}</span>
       </div>
       <p class="line-clamp-2 min-w-0 flex-1 border-l border-cyan-800/35 pl-1.5 text-[10px] font-medium leading-snug text-slate-200" data-skill-effect-inline>${effect.level ? `<span class="mr-1 font-mono font-black text-cyan-200">Lv.${effect.level}</span>` : ''}${escapeHtml(effect.description)}</p>
-      <div class="shrink-0 rounded border border-violet-700/40 bg-violet-950/40 px-1.5 py-0.5 text-[9px] font-black text-violet-200">${metric.activations}回</div>
+      ${primaryResult.value > 0
+        ? `<div class="shrink-0 rounded border ${primaryResult.border} bg-black/30 px-1.5 py-0.5 text-right" data-skill-primary-result><div class="text-[7px] font-bold ${primaryResult.color}">${primaryResult.label}</div><div class="font-mono text-[10px] font-black text-white">${formatStatNumber(primaryResult.value)}</div></div>`
+        : '<div class="shrink-0 rounded border border-slate-600/40 bg-black/20 px-1.5 py-1 text-[8px] font-bold text-slate-400" data-skill-primary-result>数値効果なし</div>'}
     </div>
     ${contributions.length
       ? `<div class="mt-1.5 grid gap-1" data-skill-contributions style="grid-template-columns:repeat(${contributionColumns},minmax(0,1fr))">${contributions.map(item => renderContributionCell(...item)).join('')}</div>`
@@ -658,7 +643,7 @@ function renderStatistics(manager) {
     <div class="mt-1.5 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-0.5 custom-scrollbar" data-battle-statistics-list>
       ${renderCharacterOverview(manager, selected, elapsedMs)}
       ${renderMedalEquipmentEffects(manager, selected)}
-      ${renderSkillPurposeChart(skillDisplays)}
+      ${renderSkillPerformanceSummary(skillDisplays)}
       <div class="flex items-center gap-1 px-0.5 pt-1 text-[11px] font-black text-slate-200"><span class="material-symbols-outlined text-slate-300" style="font-size:14px">query_stats</span>スキル詳細 <span class="ml-auto text-[10px] font-medium text-slate-400">${skills.length}件</span></div>
       ${skillDisplays.length ? skillDisplays.map(({ metric, effect, purpose }) => renderSkillMetric(
         metric,
