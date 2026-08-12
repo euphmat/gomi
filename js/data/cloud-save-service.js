@@ -115,6 +115,28 @@ function getErrorCode(error) {
     .replace(/^auth\//, '');
 }
 
+export function mapPermissionError(error, target = 'save') {
+  if (getErrorCode(error) !== 'permission-denied') return error;
+
+  const isChunkAccess = target === 'chunks';
+  const message = isChunkAccess
+    ? '大容量クラウドセーブ用の権限がサーバーに反映されていません。管理者は最新の firestore.rules を Firebase に公開してください。'
+    : 'クラウドセーブへのアクセスが拒否されました。管理者は Firebase プロジェクトと firestore.rules の公開状態を確認してください。';
+  const mappedError = new Error(message, { cause: error });
+  mappedError.code = isChunkAccess
+    ? 'cloud-save/chunk-permission-denied'
+    : 'cloud-save/permission-denied';
+  return mappedError;
+}
+
+async function runFirestoreOperation(operation, target = 'save') {
+  try {
+    return await operation();
+  } catch (error) {
+    throw mapPermissionError(error, target);
+  }
+}
+
 function isRetryableReadError(error) {
   const message = String(error?.message || error || '');
   return RETRYABLE_READ_CODES.has(getErrorCode(error))
@@ -245,17 +267,17 @@ export const CloudSaveService = {
     const saveRef = firestoreSdk.doc(db, CLOUD_SAVE_COLLECTION, user.uid);
 
     if (payload.length <= MAX_LEGACY_PAYLOAD_LENGTH) {
-      await firestoreSdk.setDoc(saveRef, {
+      await runFirestoreOperation(() => firestoreSdk.setDoc(saveRef, {
         schemaVersion: LEGACY_SCHEMA_VERSION,
         appVersion: String(appVersion || ''),
         savedAt,
         updatedAt: firestoreSdk.serverTimestamp(),
         payload
-      });
+      }));
       return { savedAt, payloadLength: payload.length, chunkCount: 1 };
     }
 
-    const previousSnapshot = await firestoreSdk.getDoc(saveRef);
+    const previousSnapshot = await runFirestoreOperation(() => firestoreSdk.getDoc(saveRef));
     const previousManifest = previousSnapshot.exists() ? previousSnapshot.data() : null;
     const generation = createGenerationId();
     const chunks = splitPayload(payload);
@@ -276,21 +298,32 @@ export const CloudSaveService = {
       } catch (cleanupError) {
         console.warn('[CloudSave] Could not clean up an incomplete upload.', cleanupError);
       }
-      throw error;
+      throw mapPermissionError(error, 'chunks');
     }
 
     // Switch the manifest only after every chunk has been written. Readers see
     // either the complete previous generation or the complete new generation.
-    await firestoreSdk.setDoc(saveRef, {
-      schemaVersion: CHUNKED_SCHEMA_VERSION,
-      appVersion: String(appVersion || ''),
-      savedAt,
-      updatedAt: firestoreSdk.serverTimestamp(),
-      generation,
-      chunkCount: chunks.length,
-      payloadLength: payload.length,
-      checksum
-    });
+    try {
+      await firestoreSdk.setDoc(saveRef, {
+        schemaVersion: CHUNKED_SCHEMA_VERSION,
+        appVersion: String(appVersion || ''),
+        savedAt,
+        updatedAt: firestoreSdk.serverTimestamp(),
+        generation,
+        chunkCount: chunks.length,
+        payloadLength: payload.length,
+        checksum
+      });
+    } catch (error) {
+      // A rejected manifest must not leave a complete but unreachable
+      // generation behind. The previous manifest is still intact.
+      try {
+        await deleteGeneration(firestoreSdk, db, user.uid, generation, chunks.length);
+      } catch (cleanupError) {
+        console.warn('[CloudSave] Could not clean up an uncommitted upload.', cleanupError);
+      }
+      throw mapPermissionError(error);
+    }
 
     // Cleanup is best-effort: the new save is already committed and must not be
     // reported as failed merely because obsolete chunks could not be removed.
@@ -314,9 +347,9 @@ export const CloudSaveService = {
   async getMetadata() {
     const { auth, db, firestoreSdk } = await loadServices();
     const user = requireVerifiedUser(auth);
-    const snapshot = await firestoreSdk.getDoc(
+    const snapshot = await runFirestoreOperation(() => firestoreSdk.getDoc(
       firestoreSdk.doc(db, CLOUD_SAVE_COLLECTION, user.uid)
-    );
+    ));
 
     if (!snapshot.exists()) return null;
     const data = snapshot.data();
@@ -345,7 +378,9 @@ export const CloudSaveService = {
     // the complete download so restore remains reliable across devices.
     for (let downloadAttempt = 0; downloadAttempt < DOWNLOAD_ATTEMPTS; downloadAttempt += 1) {
       try {
-        const snapshot = await readDocumentWithRetry(() => firestoreSdk.getDoc(saveRef));
+        const snapshot = await readDocumentWithRetry(() => runFirestoreOperation(
+          () => firestoreSdk.getDoc(saveRef)
+        ));
 
         if (!snapshot.exists()) return null;
         const data = snapshot.data();
@@ -371,8 +406,11 @@ export const CloudSaveService = {
         for (let offset = 0; offset < indexes.length; offset += CHUNK_WRITE_CONCURRENCY) {
           const batch = indexes.slice(offset, offset + CHUNK_WRITE_CONCURRENCY);
           chunks.push(...await Promise.all(batch.map(async index => {
-            const chunkSnapshot = await readDocumentWithRetry(() => firestoreSdk.getDoc(
-              getChunkRef(firestoreSdk, db, user.uid, data.generation, index)
+            const chunkSnapshot = await readDocumentWithRetry(() => runFirestoreOperation(
+              () => firestoreSdk.getDoc(
+                getChunkRef(firestoreSdk, db, user.uid, data.generation, index)
+              ),
+              'chunks'
             ));
             const chunk = chunkSnapshot.exists() ? chunkSnapshot.data() : null;
             if (!chunk || chunk.generation !== data.generation || chunk.index !== index

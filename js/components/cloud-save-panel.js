@@ -97,7 +97,7 @@ export function createCloudSavePanel() {
   `;
 }
 
-function getErrorMessage(error) {
+export function getCloudSaveErrorMessage(error) {
   const messages = {
     'auth/email-already-in-use': 'このメールアドレスは登録済みです。',
     'auth/invalid-email': 'メールアドレスの形式を確認してください。',
@@ -107,7 +107,9 @@ function getErrorMessage(error) {
     'auth/popup-closed-by-user': 'Googleログインがキャンセルされました。',
     'auth/network-request-failed': '通信できませんでした。ネットワークを確認してください。',
     'auth/too-many-requests': '操作回数が多すぎます。時間をおいて再度お試しください。',
-    'auth/account-exists-with-different-credential': '同じメールアドレスが別のログイン方法で登録されています。'
+    'auth/account-exists-with-different-credential': '同じメールアドレスが別のログイン方法で登録されています。',
+    'permission-denied': 'クラウドセーブへのアクセスが拒否されました。管理者に Firebase の設定確認を依頼してください。',
+    'firestore/permission-denied': 'クラウドセーブへのアクセスが拒否されました。管理者に Firebase の設定確認を依頼してください。'
   };
   return messages[error?.code] || error?.message || '処理に失敗しました。';
 }
@@ -208,7 +210,7 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       await task();
     } catch (error) {
       console.error('[CloudSave]', error);
-      setStatus(getErrorMessage(error), 'error');
+      setStatus(getCloudSaveErrorMessage(error), 'error');
     } finally {
       if (!disposed) setBusy(false);
     }
@@ -304,7 +306,7 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     })
     .catch(error => {
       console.error('[CloudSave] Initialization failed.', error);
-      if (!disposed) setStatus(getErrorMessage(error), 'error');
+      if (!disposed) setStatus(getCloudSaveErrorMessage(error), 'error');
     });
 
   const handleDailyCloudSaveStatus = () => {

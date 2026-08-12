@@ -59,14 +59,16 @@ export async function renderMedalShopTab() {
   ]);
   const playerMedals = playerMedalsValue || {};
   const points = calculateMedalPoints(playerMedals);
-  const storedClaimedCount = Array.isArray(claimedValue) ? new Set(claimedValue).size : 0;
   const claimed = new Set(Array.isArray(claimedValue) ? claimedValue : []);
   const ownedBaseIds = new Set((ownedEquipment || []).map(item => item.baseId || item.id));
-  MEDAL_SHOP_DUNGEON_REWARDS.flatMap(dungeon => dungeon.rewards).forEach(reward => {
-    if (ownedBaseIds.has(reward.id)) claimed.add(reward.id);
-  });
-  if (claimed.size > storedClaimedCount) {
-    await GameDB.setGameState('medal_shop_claimed_rewards', [...claimed]);
+  const ownedRewardIds = MEDAL_SHOP_DUNGEON_REWARDS
+    .flatMap(dungeon => dungeon.rewards)
+    .filter(reward => ownedBaseIds.has(reward.id))
+    .map(reward => reward.id);
+  if (ownedRewardIds.length) {
+    const reconciledClaimed = await GameDB.reconcileMedalShopClaimedRewards(ownedRewardIds);
+    claimed.clear();
+    reconciledClaimed.forEach(rewardId => claimed.add(rewardId));
   }
 
   const allRewards = MEDAL_SHOP_DUNGEON_REWARDS
@@ -210,16 +212,15 @@ export async function renderMedalShopTab() {
         button.innerHTML = '<span class="material-symbols-outlined animate-spin text-[15px]">progress_activity</span>受け取り中...';
         const instance = createEquipmentInstance(reward);
         try {
-          await GameDB.putEquipment(instance);
+          const result = await GameDB.claimMedalShopReward(rewardId, instance);
           claimed.add(rewardId);
-          await GameDB.setGameState('medal_shop_claimed_rewards', [...claimed]);
-          window.dispatchEvent(new CustomEvent('quest:equipment-craft', { detail: { itemId: reward.id, count: 1 } }));
           render();
-          showClaimCelebration(container, reward);
+          if (result.awarded) {
+            window.dispatchEvent(new CustomEvent('quest:equipment-craft', { detail: { itemId: reward.id, count: 1 } }));
+            showClaimCelebration(container, reward);
+          }
         } catch (error) {
           console.error('[MedalShop] Reward claim failed.', error);
-          claimed.delete(rewardId);
-          try { await GameDB.deleteEquipment(instance.id); } catch (_) { /* best-effort rollback */ }
           button.disabled = false;
           button.textContent = '受け取りに失敗';
         } finally {

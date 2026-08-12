@@ -24,13 +24,22 @@ GitHub Pagesなど独自の公開先を使う場合は、Authenticationの「設
 1. Firebase ConsoleでCloud Firestoreデータベースを作成します。本番環境モードを選びます。
 2. Consoleの「ルール」に [firestore.rules](firestore.rules) の内容を貼り付けて公開します。
 
+> [!IMPORTANT]
+> GitHub Pagesへのデプロイでは、Cloud Firestoreのルールは更新されません。特にクラウドセーブの保存形式やパスを変更した場合は、Webアプリとは別に必ずルールを公開してください。
+
 Firebase CLIを使う場合は、プロジェクトを選択したうえで次のコマンドでも反映できます。
 
 ```sh
-firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules --project gomi-rpg-cloud-save
 ```
 
+公開後、Firebase Consoleの「Firestore Database」→「ルール」で、`/cloudSaves/{userId}/chunks/{chunkId}` のルールが表示されていることを確認してください。
+
 ルールにより、メール確認済みのログインユーザーだけが `/cloudSaves/{自分のUID}` と、その大容量セーブ用チャンクを読み書きできます。Googleログインは確認済みとして扱われます。他ユーザーのセーブと一覧取得は拒否されます。
+
+### `Missing or insufficient permissions` が大容量セーブだけで発生する場合
+
+圧縮後850,000文字以下のセーブは `/cloudSaves/{UID}` の1ドキュメントへ保存します。850,000文字を超えるセーブは `/cloudSaves/{UID}/chunks/*` に分割します。小さいセーブが成功し、やり込み済みデータだけが権限エラーになる場合は、チャンク対応前の古いルールがFirebase側に残っている可能性が高いため、上記のデプロイコマンドで最新ルールを公開してください。Googleログイン画面での許可操作をやり直しても、このルール不一致は解消しません。
 
 ## 通信量の考え方
 
@@ -41,7 +50,8 @@ firebase deploy --only firestore:rules
 - 同じ日の2回目以降の起動では、自動のFirestore読み書きはなし
 - 別端末で更新されたセーブを検出した場合、自動上書きは行わない
 - 定期同期・自動復元はなし
-- セーブデータはgzip圧縮し、通常は1ドキュメント、大容量時だけ複数ドキュメントへ分割
+- クラウド送信用スナップショットでは、同一性能の未装備品を「装備種別＋個数」へ集約し、装備中の個体と個別差分だけを保持
+- 上記の軽量スナップショットをgzip圧縮し、通常は1ドキュメント、大容量時だけ複数ドキュメントへ分割（旧形式のクラウドセーブも引き続き復元可能）
 - 大容量保存は世代ごとにチャンクを分離し、全チャンク保存後に最新版を切り替えるため、通信中断時も直前のセーブを維持
 - 復元時はSHA-256で全チャンクの欠損・破損を検証
 - 圧縮済みデータの上限は44,800,000文字（700,000文字 x 最大64チャンク）

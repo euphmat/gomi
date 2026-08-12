@@ -22,6 +22,7 @@ import { WEAPONS } from '../definitions/weapons.js';
 import { ARMORS } from '../definitions/armors.js';
 import { SHIELDS } from '../definitions/shields.js';
 import { ACCESSORIES } from '../definitions/accessories.js';
+import { MATERIALS } from '../definitions/materials.js';
 import {
   createMedalEquipmentScalingContext,
   scaleMedalShopEquipment,
@@ -55,6 +56,164 @@ function _mergeDef(item) {
 const DB_NAME = 'rpg_game_db';
 const DB_VERSION = 1;
 const SAVE_STORES = ['gameState', 'characters', 'equipment', 'inventory'];
+const CLOUD_SNAPSHOT_FORMAT_VERSION = 2;
+const MAX_COMPACT_EQUIPMENT_COUNT = 2_000_000;
+const EQUIPMENT_DEFS_BY_ID = new Map(ALL_EQUIPMENT_DEFS.map(item => [item.id, item]));
+const ITEM_DEFS_BY_ID = new Map([...ALL_EQUIPMENT_DEFS, ...MATERIALS].map(item => [item.id, item]));
+const EQUIPMENT_INSTANCE_KEYS = new Set(['id', 'baseId']);
+const INVENTORY_INSTANCE_KEYS = new Set(['id', 'quantity']);
+
+function _jsonValuesEqual(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function _getStableDefinitionOverrides(item, definition, excludedKeys) {
+  const overrides = {};
+  for (const [key, value] of Object.entries(item || {})) {
+    if (excludedKeys.has(key)) continue;
+    if (definition && Object.prototype.hasOwnProperty.call(definition, key)
+        && _jsonValuesEqual(value, definition[key])) continue;
+    overrides[key] = value;
+  }
+  return overrides;
+}
+
+function _getEquipmentBaseId(item) {
+  if (typeof item?.baseId === 'string' && item.baseId) return item.baseId;
+  return typeof item?.id === 'string' ? _getBaseId(item.id) : '';
+}
+
+/**
+ * Collapse identical, unequipped equipment into counts for cloud transport.
+ * Local IndexedDB keeps its existing one-record-per-item model.
+ */
+export function compactCloudSnapshot(data) {
+  const characters = Array.isArray(data?.characters) ? data.characters : [];
+  const equippedIds = new Set(characters.flatMap(character => (
+    Object.values(character?.equipment || {}).filter(id => typeof id === 'string' && id)
+  )));
+  const records = [];
+  const stackCounts = new Map();
+
+  for (const item of Array.isArray(data?.equipment) ? data.equipment : []) {
+    const baseId = _getEquipmentBaseId(item);
+    const definition = EQUIPMENT_DEFS_BY_ID.get(baseId);
+    const overrides = _getStableDefinitionOverrides(
+      item,
+      definition,
+      EQUIPMENT_INSTANCE_KEYS
+    );
+    if (equippedIds.has(item?.id) || Object.keys(overrides).length > 0) {
+      const record = [item?.id, baseId];
+      if (Object.keys(overrides).length > 0) record.push(overrides);
+      records.push(record);
+    } else {
+      stackCounts.set(baseId, (stackCounts.get(baseId) || 0) + 1);
+    }
+  }
+
+  const inventory = (Array.isArray(data?.inventory) ? data.inventory : []).map(item => {
+    const definition = ITEM_DEFS_BY_ID.get(item?.id);
+    const overrides = _getStableDefinitionOverrides(
+      item,
+      definition,
+      INVENTORY_INSTANCE_KEYS
+    );
+    const record = [item?.id, Math.max(0, Number(item?.quantity) || 0)];
+    if (Object.keys(overrides).length > 0) record.push(overrides);
+    return record;
+  });
+
+  return {
+    cloudSnapshotVersion: CLOUD_SNAPSHOT_FORMAT_VERSION,
+    gameState: (Array.isArray(data?.gameState) ? data.gameState : [])
+      .map(entry => [entry?.key, entry?.value]),
+    characters,
+    equipment: {
+      records,
+      stacks: [...stackCounts.entries()],
+    },
+    inventory,
+  };
+}
+
+function _isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+/** Expand both the compact v2 transport format and legacy snapshots. */
+export function expandCloudSnapshot(data) {
+  if (data?.cloudSnapshotVersion !== CLOUD_SNAPSHOT_FORMAT_VERSION) return data;
+  if (!Array.isArray(data.gameState) || !Array.isArray(data.characters)
+      || !_isPlainObject(data.equipment) || !Array.isArray(data.equipment.records)
+      || !Array.isArray(data.equipment.stacks) || !Array.isArray(data.inventory)) {
+    throw new Error('Invalid compact cloud save format.');
+  }
+
+  const equipment = [];
+  const usedIds = new Set();
+  for (const record of data.equipment.records) {
+    if (!Array.isArray(record) || typeof record[0] !== 'string' || !record[0]
+        || typeof record[1] !== 'string' || !record[1]
+        || (record[2] !== undefined && !_isPlainObject(record[2]))) {
+      throw new Error('Invalid compact equipment record.');
+    }
+    if (usedIds.has(record[0])) throw new Error('Duplicate compact equipment ID.');
+    usedIds.add(record[0]);
+    equipment.push({ ...(record[2] || {}), id: record[0], baseId: record[1] });
+  }
+
+  let totalEquipmentCount = equipment.length;
+  for (const stack of data.equipment.stacks) {
+    if (!Array.isArray(stack) || typeof stack[0] !== 'string' || !stack[0]
+        || !Number.isInteger(stack[1]) || stack[1] < 1) {
+      throw new Error('Invalid compact equipment stack.');
+    }
+    totalEquipmentCount += stack[1];
+    if (totalEquipmentCount > MAX_COMPACT_EQUIPMENT_COUNT) {
+      throw new Error('Cloud save contains too many equipment items.');
+    }
+
+    for (let index = 0; index < stack[1]; index += 1) {
+      const idPrefix = `cloud_${stack[0]}_${index.toString(36)}`;
+      let id = idPrefix;
+      let collision = 0;
+      while (usedIds.has(id)) {
+        collision += 1;
+        id = `${idPrefix}_${collision.toString(36)}`;
+      }
+      usedIds.add(id);
+      equipment.push({ id, baseId: stack[0] });
+    }
+  }
+
+  const inventory = data.inventory.map(record => {
+    if (!Array.isArray(record) || typeof record[0] !== 'string' || !record[0]
+        || !Number.isFinite(record[1]) || record[1] < 0
+        || (record[2] !== undefined && !_isPlainObject(record[2]))) {
+      throw new Error('Invalid compact inventory record.');
+    }
+    const definition = ITEM_DEFS_BY_ID.get(record[0]);
+    return {
+      ...(definition || {}),
+      ...(record[2] || {}),
+      id: record[0],
+      quantity: record[1],
+    };
+  });
+
+  return {
+    gameState: data.gameState.map(record => {
+      if (!Array.isArray(record) || typeof record[0] !== 'string' || !record[0]) {
+        throw new Error('Invalid compact game-state record.');
+      }
+      return { key: record[0], value: record[1] };
+    }),
+    characters: data.characters,
+    equipment,
+    inventory,
+  };
+}
 
 function _getIndexedDBError(source) {
   try {
@@ -89,7 +248,7 @@ function _waitUntilDocumentVisible() {
 }
 
 async function encodeCloudSnapshot(dataObj) {
-  const jsonStr = JSON.stringify(dataObj);
+  const jsonStr = JSON.stringify(compactCloudSnapshot(dataObj));
   
   // Compress using native CompressionStream
   const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -128,7 +287,7 @@ async function decodeCloudSnapshot(base64Str) {
     const decompressedStream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
     const response = new Response(decompressedStream);
     const jsonStr = await response.text();
-    return JSON.parse(jsonStr);
+    return expandCloudSnapshot(JSON.parse(jsonStr));
   } catch (error) {
     console.error('[GameDB] Could not decode cloud snapshot.', error);
     throw new Error('クラウドセーブデータを展開できませんでした。もう一度復元をお試しください。', { cause: error });
@@ -148,7 +307,7 @@ function validateCloudSnapshot(data) {
     && data.inventory.every(item => item && item.id !== undefined);
 }
 
-class GameDatabase {
+export class GameDatabase {
   constructor() {
     /** @type {IDBDatabase|null} */
     this.db = null;
@@ -618,6 +777,124 @@ class GameDatabase {
   putEquipment(item) {
     const clone = JSON.parse(JSON.stringify(item));
     return this._write('equipment', (store) => store.put(clone));
+  }
+
+  /**
+   * 所持装備から判明したメダルロード受取記録を、既存記録へ安全に統合する。
+   * @param {string[]} rewardIds
+   * @returns {Promise<string[]>}
+   */
+  reconcileMedalShopClaimedRewards(rewardIds) {
+    const normalizedIds = [...new Set((Array.isArray(rewardIds) ? rewardIds : [])
+      .filter(rewardId => typeof rewardId === 'string' && rewardId))];
+    if (!normalizedIds.length) {
+      return this.getGameState('medal_shop_claimed_rewards').then(value => (
+        Array.isArray(value) ? [...new Set(value)] : []
+      ));
+    }
+
+    const claimedStateKey = 'medal_shop_claimed_rewards';
+    const run = () => this._runWithConnectionRetry('medal shop claimed rewards', (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let claimed = [];
+
+      tx.oncomplete = () => resolve(claimed);
+      tx.onerror = () => reject(tx.error || new Error('Medal shop reward reconciliation failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Medal shop reward reconciliation was aborted.'));
+
+      const request = store.get(claimedStateKey);
+      request.onsuccess = () => {
+        claimed = [...new Set([
+          ...(Array.isArray(request.result?.value) ? request.result.value : []),
+          ...normalizedIds,
+        ])];
+        store.put({ key: claimedStateKey, value: claimed });
+      };
+    }));
+
+    const queuedReconciliation = this._writeQueue.then(run, run);
+    this._writeQueue = queuedReconciliation.catch(() => undefined);
+    return queuedReconciliation;
+  }
+
+  /**
+   * メダルロードの到達報酬を一度だけ付与する。
+   *
+   * 受取済み判定と装備追加を同じトランザクションで行うことで、複数タブや
+   * 複数のショップ画面から同時に操作されても同じ報酬を重複付与しない。
+   * 装備側も確認するため、旧セーブで受取記録だけが欠けている場合も再付与せず、
+   * 受取記録を復元する。
+   * @param {string} rewardId
+   * @param {{id: string, baseId: string}} instance
+   * @returns {Promise<{awarded: boolean}>}
+   */
+  claimMedalShopReward(rewardId, instance) {
+    if (typeof rewardId !== 'string' || !rewardId) {
+      return Promise.reject(new Error('Invalid medal shop reward ID.'));
+    }
+    if (!instance || typeof instance.id !== 'string' || !instance.id || instance.baseId !== rewardId) {
+      return Promise.reject(new Error('Invalid medal shop reward instance.'));
+    }
+
+    const clone = JSON.parse(JSON.stringify(instance));
+    const claimedStateKey = 'medal_shop_claimed_rewards';
+    const run = () => this._runWithConnectionRetry('medal shop reward', (db) => new Promise((resolve, reject) => {
+      let tx;
+      let transactionError;
+      let result;
+
+      try {
+        tx = db.transaction(['gameState', 'equipment'], 'readwrite');
+        const gameStateStore = tx.objectStore('gameState');
+        const equipmentStore = tx.objectStore('equipment');
+
+        tx.oncomplete = () => resolve(result || { awarded: false });
+        tx.onerror = (event) => {
+          transactionError = _getIndexedDBError(event.target) || transactionError;
+        };
+        tx.onabort = (event) => reject(
+          transactionError
+          || _getIndexedDBError(event.target)
+          || new Error('Medal shop reward transaction was aborted.')
+        );
+
+        const claimedRequest = gameStateStore.get(claimedStateKey);
+        claimedRequest.onsuccess = () => {
+          const claimed = new Set(Array.isArray(claimedRequest.result?.value)
+            ? claimedRequest.result.value
+            : []);
+          if (claimed.has(rewardId)) {
+            result = { awarded: false };
+            return;
+          }
+
+          const equipmentRequest = equipmentStore.getAll();
+          equipmentRequest.onsuccess = () => {
+            const alreadyOwned = (equipmentRequest.result || []).some(item => (
+              item?.baseId === rewardId || item?.id === rewardId
+            ));
+            claimed.add(rewardId);
+            gameStateStore.put({ key: claimedStateKey, value: [...claimed] });
+
+            if (alreadyOwned) {
+              result = { awarded: false };
+              return;
+            }
+
+            equipmentStore.add(clone);
+            result = { awarded: true };
+          };
+        };
+      } catch (error) {
+        try { tx?.abort(); } catch (_) { /* Transaction may not have started. */ }
+        reject(error);
+      }
+    }));
+
+    const queuedClaim = this._writeQueue.then(run, run);
+    this._writeQueue = queuedClaim.catch(() => undefined);
+    return queuedClaim;
   }
 
   /**
