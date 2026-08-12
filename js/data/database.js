@@ -28,6 +28,11 @@ import {
   scaleMedalShopEquipment,
   scaleMedalShopEquipmentList,
 } from '../utils/medal-equipment-scaling.js';
+import {
+  TOWN_GAME_DIFFICULTY_IDS,
+  TOWN_GAME_IDS,
+  getTownGameRewardStateKey,
+} from './town-game-rewards.js';
 
 const ALL_EQUIPMENT_DEFS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
 
@@ -588,27 +593,30 @@ export class GameDatabase {
   }
 
   /**
-   * ホームタウンゲーム共通の難易度別デイリークリアを記録し、
+   * ホームタウンゲームごとの難易度別デイリークリアを記録し、
    * 同じトランザクションでPrismを付与する。
-   * 複数タブや各ホームタウンゲームで同時にクリアしても、各難易度の報酬は
-   * 1日1回だけになる。保存キーは既存セーブ互換のため従来名を維持する。
+   * 複数タブで同時にクリアしても、各ゲーム・難易度の報酬は1日1回だけになる。
    * @param {string} dateKey - ローカル日付（YYYY-MM-DD）
+   * @param {'memory-game'|'sudoku'|'minesweeper'|'monster-tower'} gameId
    * @param {'easy'|'normal'|'hard'|'very_hard'} difficultyId
    * @param {number} amount
    * @returns {Promise<{awarded: boolean, prism: number}>}
    */
-  claimDailyTownGameReward(dateKey, difficultyId, amount) {
+  claimDailyTownGameReward(dateKey, gameId, difficultyId, amount) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
       return Promise.reject(new Error('Invalid town game date key.'));
     }
-    if (!['easy', 'normal', 'hard', 'very_hard'].includes(difficultyId)) {
+    if (!TOWN_GAME_IDS.includes(gameId)) {
+      return Promise.reject(new Error('Invalid town game.'));
+    }
+    if (!TOWN_GAME_DIFFICULTY_IDS.includes(difficultyId)) {
       return Promise.reject(new Error('Invalid town game difficulty.'));
     }
     if (!Number.isInteger(amount) || amount <= 0) {
       return Promise.reject(new Error('Invalid town game reward amount.'));
     }
 
-    const winKey = `memoryGameLastWin:${difficultyId}`;
+    const winKey = getTownGameRewardStateKey(gameId, difficultyId);
     const run = () => this._runWithConnectionRetry('gameState', (db) => new Promise((resolve, reject) => {
       const tx = db.transaction('gameState', 'readwrite');
       const store = tx.objectStore('gameState');
@@ -643,7 +651,7 @@ export class GameDatabase {
 
   /** @deprecated Use claimDailyTownGameReward. */
   claimDailyMemoryGameReward(dateKey, difficultyId, amount) {
-    return this.claimDailyTownGameReward(dateKey, difficultyId, amount);
+    return this.claimDailyTownGameReward(dateKey, 'memory-game', difficultyId, amount);
   }
 
   /**

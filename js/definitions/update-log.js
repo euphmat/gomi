@@ -1,8 +1,16 @@
-export const APP_VERSION = '0.1.47';
+export const APP_VERSION = '0.1.48';
 export const APP_RELEASE_DATE = '2026.08.12';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.12',
+    version: '0.1.48',
+    items: [
+      'ホームタウンの神経衰弱・数独・マインスイーパー・モンスタータワーで、難易度別のデイリーPrism報酬をゲームごとに独立して受け取れるようにしました。',
+      '各ゲームの報酬をEASY 1、NORMAL 2、HARD 3、VERY HARD 5 Prismへ調整しました。',
+    ],
+  },
   {
     date: '2026.08.12',
     version: '0.1.47',

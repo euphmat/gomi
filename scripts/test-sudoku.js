@@ -8,6 +8,7 @@ import {
   toggleSudokuNote,
 } from '../js/data/sudoku-engine.js';
 import {
+  TOWN_GAME_IDS,
   TOWN_GAME_REWARDS,
   getLocalDateKey,
   getTownGameRewardStateKey,
@@ -46,8 +47,20 @@ const conflicting = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const conflicts = findSudokuConflicts(conflicting, conflictRules);
 assert(conflicts.has(0) && conflicts.has(1), 'duplicate row values were not marked as conflicts');
 
-assert(TOWN_GAME_REWARDS.easy === 1 && TOWN_GAME_REWARDS.very_hard === 10, 'shared reward amounts changed unexpectedly');
-assert(getTownGameRewardStateKey('normal') === 'memoryGameLastWin:normal', 'shared reward key is not save-compatible');
+assert(
+  TOWN_GAME_REWARDS.easy === 1
+    && TOWN_GAME_REWARDS.normal === 2
+    && TOWN_GAME_REWARDS.hard === 3
+    && TOWN_GAME_REWARDS.very_hard === 5,
+  'town game reward amounts changed unexpectedly',
+);
+assert(TOWN_GAME_IDS.length === 4, 'the town game reward list is incomplete');
+assert(getTownGameRewardStateKey('memory-game', 'normal') === 'memoryGameLastWin:normal', 'memory game reward key is not save-compatible');
+assert(getTownGameRewardStateKey('sudoku', 'normal') === 'townGameLastWin:sudoku:normal', 'sudoku reward key is not independent');
+const rewardKeys = TOWN_GAME_IDS.flatMap(gameId => (
+  Object.keys(TOWN_GAME_REWARDS).map(difficultyId => getTownGameRewardStateKey(gameId, difficultyId))
+));
+assert(new Set(rewardKeys).size === 16, 'town game reward keys overlap');
 assert(getLocalDateKey(new Date(2026, 7, 11, 23, 59)) === '2026-08-11', 'reward date key is not based on the local date');
 
 let notes = toggleSudokuNote(new Set(), 5);

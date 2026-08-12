@@ -1,18 +1,23 @@
 /**
- * ホームタウンのミニゲームで共有する、難易度別のデイリー報酬定義。
+ * ホームタウンのミニゲームで使う、難易度別のデイリー報酬定義。
  *
- * 保存キーは既存の神経衰弱セーブと互換性を保つため、従来名のまま使う。
- * 神経衰弱・数独・マインスイーパー・モンスタータワーのいずれかで受け取ると、同じ難易度の
- * 報酬は翌日まで、すべてのゲームで受取済みになる。
+ * 報酬の受取状況はゲーム・難易度ごとに独立する。神経衰弱だけは既存セーブとの
+ * 互換性を保つため、従来の保存キーを引き続き使う。
  */
 export const TOWN_GAME_REWARDS = Object.freeze({
   easy: 1,
-  normal: 3,
-  hard: 5,
-  very_hard: 10,
+  normal: 2,
+  hard: 3,
+  very_hard: 5,
 });
 
 export const TOWN_GAME_DIFFICULTY_IDS = Object.freeze(Object.keys(TOWN_GAME_REWARDS));
+export const TOWN_GAME_IDS = Object.freeze([
+  'memory-game',
+  'sudoku',
+  'minesweeper',
+  'monster-tower',
+]);
 
 export function getLocalDateKey(date = new Date()) {
   const year = date.getFullYear();
@@ -21,9 +26,14 @@ export function getLocalDateKey(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
-export function getTownGameRewardStateKey(difficultyId) {
+export function getTownGameRewardStateKey(gameId, difficultyId) {
+  if (!TOWN_GAME_IDS.includes(gameId)) {
+    throw new Error('Invalid town game.');
+  }
   if (!TOWN_GAME_DIFFICULTY_IDS.includes(difficultyId)) {
     throw new Error('Invalid town game difficulty.');
   }
-  return `memoryGameLastWin:${difficultyId}`;
+  return gameId === 'memory-game'
+    ? `memoryGameLastWin:${difficultyId}`
+    : `townGameLastWin:${gameId}:${difficultyId}`;
 }

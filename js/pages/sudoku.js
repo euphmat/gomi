@@ -1,6 +1,4 @@
-/**
- * ホームタウンから遊べる数独。神経衰弱と難易度別のデイリー報酬を共有する。
- */
+/** ホームタウンから遊べる数独。 */
 import { GameDB } from '../data/database.js';
 import {
   clearSudokuPeerNotes,
@@ -16,6 +14,8 @@ import {
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
 import { formatNumber } from '../utils/format.js';
+
+const GAME_ID = 'sudoku';
 
 const DIFFICULTIES = {
   easy: {
@@ -79,7 +79,7 @@ function difficultyCard(config, claimed) {
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-black tracking-[.16em] text-white">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.description}</span>
-        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${claimed ? 'task_alt' : 'diamond'}</span>${claimed ? '本日の共通報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${claimed ? 'task_alt' : 'diamond'}</span>${claimed ? '本日の報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
       </span>
       <span class="material-symbols-outlined text-white/45">chevron_right</span>
     </button>
@@ -116,7 +116,7 @@ export function renderSudokuPage() {
       <div class="mx-auto flex min-h-[360px] max-w-sm flex-col items-center justify-center p-5 text-center">
         <span class="material-symbols-outlined text-5xl text-amber-300">sync_problem</span>
         <h1 class="mt-2 text-base font-black">プレイ状況を確認できません</h1>
-        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">共通報酬の受取状況を確認できないため、数独を開始できませんでした。</p>
+        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">本日の報酬状況を確認できないため、数独を開始できませんでした。</p>
         <button data-reload class="mt-4 w-full rounded-xl border border-amber-300/40 bg-amber-500/15 py-2.5 text-xs font-black text-amber-100">もう一度読み込む</button>
         <button data-home class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">ホームタウンへ戻る</button>
       </div>`;
@@ -131,11 +131,11 @@ export function renderSudokuPage() {
       const dateKey = getLocalDateKey();
       const states = await Promise.all(Object.values(DIFFICULTIES).map(async config => ({
         id: config.id,
-        claimed: (await GameDB.getGameState(getTownGameRewardStateKey(config.id))) === dateKey,
+        claimed: (await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, config.id))) === dateKey,
       })));
       claimedDifficulties = new Set(states.filter(state => state.claimed).map(state => state.id));
     } catch (error) {
-      console.error('[Sudoku] Failed to load shared rewards.', error);
+      console.error('[Sudoku] Failed to load daily rewards.', error);
       if (!disposed && currentRenderId === renderId) renderLoadError();
       return;
     }
@@ -154,7 +154,7 @@ export function renderSudokuPage() {
         <section class="mb-3 rounded-2xl border border-cyan-300/20 bg-cyan-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-cyan-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
           縦・横・太線で囲まれたブロックに、同じ数字が重ならないよう全マスを埋めます。「仮数字」へ切り替えると、1マス内に最大9個の候補を記録できます。
-          <div class="mt-1.5 border-t border-cyan-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬は神経衰弱・マインスイーパーと共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
+          <div class="mt-1.5 border-t border-cyan-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬は数独専用です。各難易度で1日1回受け取れ、受取後も何度でも遊べます。</div>
         </section>
 
         <div class="grid gap-2" aria-label="数独の難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id))).join('')}</div>
@@ -244,7 +244,7 @@ export function renderSudokuPage() {
   };
 
   const claimReward = async () => {
-    const result = await GameDB.claimDailyTownGameReward(getLocalDateKey(), game.config.id, game.config.reward);
+    const result = await GameDB.claimDailyTownGameReward(getLocalDateKey(), GAME_ID, game.config.id, game.config.reward);
     claimedDifficulties.add(game.config.id);
     updateHeaderPrism(result.prism);
     return result;
@@ -261,8 +261,8 @@ export function renderSudokuPage() {
         <div class="mt-1 text-[10px] font-black tracking-[.25em] text-cyan-300">PUZZLE CLEAR</div>
         <h2 id="sudoku-result-title" class="mt-1 text-xl font-black">数独クリア！</h2>
         <div class="mx-auto mt-3 flex max-w-[220px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/25 p-3"><span class="material-symbols-outlined text-slate-400">timer</span><span class="font-mono text-xl font-black">${formatTime(elapsedSeconds)}</span></div>
-        <div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '共通報酬は受取済み' : '報酬を保存できませんでした'}</div>
-        <p class="mt-2 text-[9px] leading-relaxed text-slate-400">ホームタウンゲーム共通の${game.config.label}報酬です。次の報酬は翌日ですが、数独は何度でも遊べます。</p>
+        <div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の報酬は受取済み' : '報酬を保存できませんでした'}</div>
+        <p class="mt-2 text-[9px] leading-relaxed text-slate-400">数独の${game.config.label}報酬です。次の報酬は翌日ですが、数独は何度でも遊べます。</p>
         <div class="mt-4 grid gap-2">
           ${rewardStatus === 'failed' ? '<button data-claim-reward class="rounded-xl border border-fuchsia-300/50 bg-fuchsia-600 py-2.5 text-xs font-black">報酬の保存を再試行</button>' : ''}
           <button data-select class="rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">難易度選択へ戻る</button>
@@ -358,12 +358,12 @@ export function renderSudokuPage() {
     if (!config || startingGame) return;
     startingGame = true;
     try {
-      const latestClaim = await GameDB.getGameState(getTownGameRewardStateKey(difficultyId));
+      const latestClaim = await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, difficultyId));
       if (latestClaim === getLocalDateKey()) {
         claimedDifficulties.add(difficultyId);
       }
     } catch (error) {
-      console.error('[Sudoku] Failed to verify shared reward.', error);
+      console.error('[Sudoku] Failed to verify daily reward.', error);
       renderLoadError();
       return;
     } finally {

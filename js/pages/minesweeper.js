@@ -1,4 +1,4 @@
-/** ホームタウンから遊べるマインスイーパー。報酬は他の町ゲームと共有する。 */
+/** ホームタウンから遊べるマインスイーパー。 */
 import { GameDB } from '../data/database.js';
 import {
   createLogicalMinefield,
@@ -12,6 +12,8 @@ import {
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
 import { formatNumber } from '../utils/format.js';
+
+const GAME_ID = 'minesweeper';
 
 const DIFFICULTIES = {
   easy: {
@@ -68,7 +70,7 @@ function difficultyCard(config, claimed) {
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-black tracking-[.16em] text-white">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.rows}×${config.columns} ・ 地雷${config.mines}個</span>
-        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${claimed ? 'task_alt' : 'diamond'}</span>${claimed ? '本日の共通報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${claimed ? 'task_alt' : 'diamond'}</span>${claimed ? '本日の報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
       </span>
       <span class="material-symbols-outlined text-white/45">chevron_right</span>
     </button>`;
@@ -118,7 +120,7 @@ export function renderMinesweeperPage() {
       <div class="mx-auto flex min-h-[360px] max-w-sm flex-col items-center justify-center p-5 text-center">
         <span class="material-symbols-outlined text-5xl text-amber-300">sync_problem</span>
         <h1 class="mt-2 text-base font-black">プレイ状況を確認できません</h1>
-        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">共通報酬の受取状況を確認できないため、ゲームを開始できませんでした。</p>
+        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">本日の報酬状況を確認できないため、ゲームを開始できませんでした。</p>
         <button data-reload class="mt-4 w-full rounded-xl border border-amber-300/40 bg-amber-500/15 py-2.5 text-xs font-black text-amber-100">もう一度読み込む</button>
         <button data-home class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">ホームタウンへ戻る</button>
       </div>`;
@@ -134,11 +136,11 @@ export function renderMinesweeperPage() {
       const dateKey = getLocalDateKey();
       const states = await Promise.all(Object.values(DIFFICULTIES).map(async config => ({
         id: config.id,
-        claimed: (await GameDB.getGameState(getTownGameRewardStateKey(config.id))) === dateKey,
+        claimed: (await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, config.id))) === dateKey,
       })));
       claimedDifficulties = new Set(states.filter(state => state.claimed).map(state => state.id));
     } catch (error) {
-      console.error('[Minesweeper] Failed to load shared rewards.', error);
+      console.error('[Minesweeper] Failed to load daily rewards.', error);
       if (!disposed && currentRenderId === renderId) renderLoadError();
       return;
     }
@@ -157,7 +159,7 @@ export function renderMinesweeperPage() {
         <section class="mb-3 rounded-2xl border border-amber-300/20 bg-amber-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-amber-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
           数字は周囲8マスにある地雷の数です。「旗」モードで地雷候補に印を付け、地雷以外の全マスを開けばクリア。初手周囲は安全で、すべての盤面が推測なしで論理的に解けます。
-          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-fuchsia-100/85">報酬は神経衰弱・数独と共有で1日1回。受取後も何度でも遊べます。</div>
+          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬はマインスイーパー専用です。各難易度で1日1回受け取れ、受取後も何度でも遊べます。</div>
         </section>
 
         <div class="grid gap-2" aria-label="マインスイーパーの難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id))).join('')}</div>
@@ -242,7 +244,7 @@ export function renderMinesweeperPage() {
   };
 
   const claimReward = async () => {
-    const result = await GameDB.claimDailyTownGameReward(getLocalDateKey(), game.config.id, game.config.reward);
+    const result = await GameDB.claimDailyTownGameReward(getLocalDateKey(), GAME_ID, game.config.id, game.config.reward);
     claimedDifficulties.add(game.config.id);
     updateHeaderPrism(result.prism);
     return result;
@@ -261,7 +263,7 @@ export function renderMinesweeperPage() {
         <div class="mt-1 text-[10px] font-black tracking-[.25em] ${isWin ? 'text-amber-300' : 'text-rose-300'}">${isWin ? 'FIELD CLEAR' : 'BOOM'}</div>
         <h2 id="mine-result-title" class="mt-1 text-xl font-black">${isWin ? '地雷原を制覇！' : '地雷を踏みました'}</h2>
         <div class="mx-auto mt-3 flex max-w-[220px] items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/25 p-3"><span class="material-symbols-outlined text-slate-400">timer</span><span class="font-mono text-xl font-black">${formatTime(elapsed)}</span></div>
-        ${isWin ? `<div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の共通報酬は受取済み' : '報酬を保存できませんでした'}</div><p class="mt-2 text-[9px] text-slate-400">報酬受取後も、この難易度で何度でも遊べます。</p>` : '<p class="mt-3 text-[10px] text-slate-400">盤面は毎回変わります。何度でも再挑戦できます。</p>'}
+        ${isWin ? `<div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の報酬は受取済み' : '報酬を保存できませんでした'}</div><p class="mt-2 text-[9px] text-slate-400">報酬受取後も、この難易度で何度でも遊べます。</p>` : '<p class="mt-3 text-[10px] text-slate-400">盤面は毎回変わります。何度でも再挑戦できます。</p>'}
         <div class="mt-4 grid gap-2">
           ${isWin && rewardStatus === 'failed' ? '<button data-claim-reward class="rounded-xl border border-fuchsia-300/50 bg-fuchsia-600 py-2.5 text-xs font-black">報酬の保存を再試行</button>' : ''}
           <button data-retry class="rounded-xl border border-amber-300/35 bg-amber-600 py-2.5 text-xs font-black text-white">同じ難易度でもう一度</button>
@@ -372,10 +374,10 @@ export function renderMinesweeperPage() {
     if (!config || startingGame) return;
     startingGame = true;
     try {
-      const latestClaim = await GameDB.getGameState(getTownGameRewardStateKey(difficultyId));
+      const latestClaim = await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, difficultyId));
       if (latestClaim === getLocalDateKey()) claimedDifficulties.add(difficultyId);
     } catch (error) {
-      console.error('[Minesweeper] Failed to verify shared reward.', error);
+      console.error('[Minesweeper] Failed to verify daily reward.', error);
       renderLoadError();
       return;
     } finally {

@@ -23,6 +23,7 @@ import {
 
 const PLAYABLE_FISH = FISH.filter(fish => fish.id !== 'zeus_cetus');
 const CARD_PALETTE_CACHE = new Map();
+const GAME_ID = 'memory-game';
 
 const DIFFICULTIES = {
   easy: {
@@ -68,7 +69,7 @@ const shuffle = (items) => {
   return result;
 };
 
-const dailyWinKey = getTownGameRewardStateKey;
+const dailyWinKey = difficultyId => getTownGameRewardStateKey(GAME_ID, difficultyId);
 
 /** プレイヤーが残りをすべて取っても勝てない状態か判定する。 */
 function getDecidedNonWinOutcome(game) {
@@ -249,7 +250,7 @@ function difficultyCard(config, cleared) {
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-black tracking-[.16em] text-white">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.category} ・ ${config.pairs}ペア</span>
-        <span class="mt-1 flex items-center gap-1 text-[10px] font-black ${cleared ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[14px]">${cleared ? 'task_alt' : 'diamond'}</span>${cleared ? '本日の共通報酬は受取済み ・ プレイ可能' : `勝利報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[10px] font-black ${cleared ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[14px]">${cleared ? 'task_alt' : 'diamond'}</span>${cleared ? '本日の報酬は受取済み ・ プレイ可能' : `勝利報酬 ${config.reward} Prism`}</span>
       </span>
       <span class="material-symbols-outlined text-white/45">chevron_right</span>
     </button>
@@ -369,7 +370,7 @@ export function renderMemoryGamePage() {
         <section class="mb-3 rounded-2xl border border-amber-300/20 bg-amber-950/15 px-3 py-2.5 text-[10px] leading-relaxed text-slate-300">
           <div class="mb-1 flex items-center gap-1 font-black text-amber-200"><span class="material-symbols-outlined text-base">lightbulb</span>遊び方</div>
           同じ画像を2枚揃えると1ポイント。揃えた側は続けてカードをめくり、すべてのペアを取るか、途中で敗北または引き分けが確定した時点でゲーム終了です。
-          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は数独・マインスイーパーと共有です。報酬は1日1回ですが、受取後も何度でも遊べます。</div>
+          <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は神経衰弱専用です。各難易度で1日1回受け取れ、受取後も何度でも遊べます。</div>
         </section>
 
         ${memoryLevelPanel(memoryProgress)}
@@ -701,6 +702,7 @@ export function renderMemoryGamePage() {
   const claimDailyReward = async () => {
     const result = await GameDB.claimDailyTownGameReward(
       getLocalDateKey(),
+      GAME_ID,
       game.config.id,
       game.config.reward,
     );
