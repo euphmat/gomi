@@ -1,8 +1,17 @@
-export const APP_VERSION = '0.1.45';
-export const APP_RELEASE_DATE = '2026.08.11';
+export const APP_VERSION = '0.1.46';
+export const APP_RELEASE_DATE = '2026.08.12';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.12',
+    version: '0.1.46',
+    items: [
+      'クラウドセーブ送信時に、同じ性能の未装備品を個数へまとめる軽量化を追加しました。装備中の品や個別の差分は維持され、従来形式のクラウドセーブも引き続き復元できます。',
+      '大容量クラウドセーブで権限設定に問題がある場合、原因と必要な対応が分かるエラーメッセージを表示するようにしました。保存の確定に失敗した際は、未使用データも安全に整理します。',
+      'メダルロードの到達報酬を複数画面から同時に受け取っても、同じ装備が重複して付与されないようにしました。受取記録が欠けた旧セーブでも、所持装備から記録を復元します。',
+    ],
+  },
   {
     date: '2026.08.11',
     version: '0.1.45',
