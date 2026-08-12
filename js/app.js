@@ -559,7 +559,7 @@ class App {
               </div>
               <div class="flex-1 min-w-0">
                 <div class="text-xs font-bold text-red-300/90 leading-tight">端末データリセット</div>
-                <div class="text-[9px] text-red-400/50 mt-0.5 leading-tight">この端末のデータを削除（クラウドは維持）</div>
+                <div class="settings-row-description text-[9px] text-red-400/50 mt-0.5 leading-tight">この端末のデータを削除（クラウドは維持）</div>
               </div>
               <button id="settings-reset" type="button" aria-label="セーブデータを削除してリセット"
                     class="settings-action-btn shrink-0 px-2.5 py-2 rounded-lg text-[9px] font-bold

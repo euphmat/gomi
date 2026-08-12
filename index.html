@@ -900,25 +900,25 @@
         min-height: 28px;
       }
       .settings-modal-body {
-        gap: 5px;
-        padding: 6px 7px;
+        gap: 4px;
+        padding: 5px 7px;
         overscroll-behavior: contain;
         scrollbar-width: thin;
       }
       .settings-screen-lock,
       .settings-speed-panel {
-        padding: 6px 8px;
+        padding: 5px 7px;
         border-radius: 9px;
       }
       #setting-screen-lock-button {
-        min-height: 40px;
+        min-height: 34px;
       }
       .settings-group {
         border-radius: 9px;
       }
       .settings-compact-row {
-        min-height: 40px;
-        padding: 6px 8px;
+        min-height: 34px;
+        padding: 5px 7px;
       }
       .settings-compact-row .gap-2\.5,
       .settings-screen-lock .gap-2\.5,
@@ -926,49 +926,57 @@
         gap: 7px;
       }
       .settings-compact-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 7px;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
       }
       .settings-compact-icon .material-symbols-outlined {
-        font-size: 14px;
+        font-size: 13px;
       }
       .settings-row-description {
-        margin-top: 1px;
-        font-size: 8px;
-        line-height: 1.25;
+        display: none;
       }
       .settings-section-label {
-        min-height: 12px;
-        font-size: 8px;
+        min-height: 11px;
+        font-size: 7px;
         line-height: 1;
       }
+      .settings-section-label .material-symbols-outlined {
+        font-size: 10px;
+      }
       .setting-toggle {
-        width: 34px;
-        height: 20px;
+        width: 32px;
+        height: 18px;
       }
       .setting-toggle::after {
-        top: 3px;
-        left: 3px;
+        top: 2px;
+        left: 2px;
         width: 14px;
         height: 14px;
       }
       .setting-toggle.active::after {
         transform: translateX(14px);
       }
+      #setting-number-notation .number-notation-option {
+        min-width: 2.75rem;
+        padding-block: 3px;
+      }
       .settings-speed-panel > .flex:first-child {
-        margin-bottom: 4px;
+        margin-bottom: 2px;
+      }
+      .settings-speed-panel > .px-1 {
+        padding-bottom: 0;
       }
       .setting-slider::-webkit-slider-thumb {
-        width: 15px;
-        height: 15px;
+        width: 14px;
+        height: 14px;
       }
       .setting-slider::-moz-range-thumb {
-        width: 15px;
-        height: 15px;
+        width: 14px;
+        height: 14px;
       }
       .speed-step {
-        gap: 2px;
+        gap: 1px;
       }
       .speed-step::before {
         width: 6px;
@@ -978,9 +986,13 @@
         gap: 7px;
       }
       #cloud-save-status {
-        margin-top: 2px;
-        font-size: 8px;
-        line-height: 1.25;
+        display: -webkit-box;
+        margin-top: 1px;
+        overflow: hidden;
+        font-size: 7px;
+        line-height: 1.2;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
       }
       #cloud-signed-out,
       #cloud-signed-in,
@@ -997,47 +1009,58 @@
         margin-block-end: 0;
       }
       #cloud-signed-out input {
-        min-height: 28px;
-        padding: 4px 8px;
+        min-height: 26px;
+        padding: 3px 7px;
       }
       #cloud-signed-out .settings-action-btn,
       #cloud-signed-in .settings-action-btn {
-        min-height: 28px;
-        padding-block: 4px;
+        min-height: 26px;
+        padding-block: 3px;
       }
       #cloud-save-panel button {
-        min-height: 28px;
+        min-height: 26px;
       }
-      .settings-cloud-note {
-        margin-top: 4px;
-        font-size: 7px;
-        line-height: 1.25;
+      #cloud-signed-in > div:first-child,
+      #cloud-auto-save-state {
+        padding: 4px 7px;
+        border-radius: 7px;
       }
-      #settings-reset {
-        min-height: 32px;
-        padding: 5px 8px;
+      #cloud-auto-save-state {
+        gap: 6px;
       }
-    }
-
-    @media (max-width: 480px) and (max-height: 720px) {
-      .settings-modal-body {
-        gap: 4px;
-        padding-block: 5px;
+      #cloud-auto-save-state > .material-symbols-outlined {
+        font-size: 14px;
       }
-      .settings-row-description,
+      #cloud-auto-save-detail {
+        display: none;
+      }
       .settings-cloud-note {
         display: none;
       }
+      #settings-reset {
+        min-height: 28px;
+        padding: 4px 7px;
+      }
+    }
+
+    @media (max-width: 480px) and (max-height: 680px) {
+      .settings-modal-body {
+        gap: 3px;
+        padding-block: 4px;
+      }
       .settings-compact-row {
-        min-height: 36px;
-        padding-block: 5px;
+        min-height: 32px;
+        padding-block: 4px;
       }
       .settings-screen-lock,
       .settings-speed-panel {
-        padding-block: 5px;
+        padding-block: 4px;
       }
       #setting-screen-lock-button {
-        min-height: 36px;
+        min-height: 32px;
+      }
+      #cloud-last-upload {
+        display: none;
       }
     }
 
