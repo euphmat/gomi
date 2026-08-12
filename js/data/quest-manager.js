@@ -1,4 +1,5 @@
 import { GameDB } from './database.js';
+import { formatNumber } from '../utils/format.js';
 
 function getJSTDateString() {
   const now = new Date();
@@ -9,7 +10,7 @@ function getJSTDateString() {
 export const DAILY_QUESTS = [
   {
     id: 'daily_kill_10000',
-    label: '任意のモンスターを10,000体討伐する',
+    get label() { return `任意のモンスターを${formatNumber(10000)}体討伐する`; },
     icon: 'swords',
     eventType: 'quest:monster-kill',
     target: 10000,
@@ -200,7 +201,7 @@ class QuestManagerClass {
     // Update Header
     const headerPrismDisplay = document.getElementById('header-prism-display');
     if (headerPrismDisplay) {
-      headerPrismDisplay.textContent = newPrism.toString();
+      headerPrismDisplay.textContent = formatNumber(newPrism);
     }
     
     window.dispatchEvent(new CustomEvent('quest:reward-claimed'));

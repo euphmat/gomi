@@ -1,8 +1,18 @@
-export const APP_VERSION = '0.1.46';
+export const APP_VERSION = '0.1.47';
 export const APP_RELEASE_DATE = '2026.08.12';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.12',
+    version: '0.1.47',
+    guide: 'cloud-save',
+    items: [
+      '設定の「数値の表示」から、大きな数値を10kのような省略表記と10,000のような桁区切り表記へ切り替えられるようにしました。Gold・能力値・報酬・戦闘統計など、ゲーム内の数量表示へまとめて反映されます。',
+      '複数端末のクラウドセーブを安全化しました。自動保存は最後に保存または復元した端末だけで実行し、復元すると所有権もその端末へ移ります。保存直前に別端末の更新が入った場合も古いデータでは上書きしません。',
+      'ゲーム内の効果音と通知音を廃止し、設定画面と戦闘画面から効果音の切り替えを削除しました。通知のON・OFF設定は引き続き利用できます。',
+    ],
+  },
   {
     date: '2026.08.12',
     version: '0.1.46',

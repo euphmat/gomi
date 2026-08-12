@@ -572,11 +572,11 @@ export const resultMethods = {
           <div class="w-full bg-gray-800/80 p-2 rounded-lg border border-gray-700 shadow-sm mb-4 flex justify-around">
             <div class="flex flex-col items-center">
               <span class="text-[9px] text-gray-400 font-bold mb-1">獲得 Gold</span>
-              <span class="text-xs text-yellow-400 font-bold">+ ${this.obtainedGold || 0} G</span>
+              <span class="text-xs text-yellow-400 font-bold tabular-nums">+ ${formatNumber(this.obtainedGold || 0)} G</span>
             </div>
             <div class="flex flex-col items-center">
               <span class="text-[9px] text-gray-400 font-bold mb-1">獲得 EXP</span>
-              <span class="text-xs text-blue-400 font-bold">+ ${this.obtainedExp || 0} EXP</span>
+              <span class="text-xs text-blue-400 font-bold tabular-nums">+ ${formatNumber(this.obtainedExp || 0)} EXP</span>
             </div>
           </div>
 
@@ -596,7 +596,7 @@ export const resultMethods = {
             <p class="text-[10px] text-gray-400 leading-relaxed">
               パーティーは救出され、治療を受けました。<br>
               <span class="text-gray-300 font-bold bg-slate-950/60 border border-slate-850 px-2 py-0.5 rounded inline-block mt-1">
-                救出・治療費: <span class="text-red-400 font-black">-${actualFee.toLocaleString()} G</span>
+                救出・治療費: <span class="text-red-400 font-black tabular-nums">-${formatNumber(actualFee)} G</span>
               </span>
             </p>
           </div>

@@ -19,7 +19,7 @@
  *   4. Add a tab to NAV_TABS in js/components/nav-bar.js
  */
 import { Router } from './router.js';
-import { createHeader } from './components/header.js';
+import { createHeader, initHeaderNumberDisplays } from './components/header.js';
 import { createNavBar, initNavBar } from './components/nav-bar.js';
 import { GameDB } from './data/database.js';
 import { JOBS } from './jobs/index.js';
@@ -36,12 +36,21 @@ import { initTouchFeedback } from './utils/touch-feedback.js';
 import { createCloudSavePanel, initCloudSavePanel } from './components/cloud-save-panel.js';
 import { initDailyCloudSave } from './data/daily-cloud-save-manager.js';
 import { clearLegacyJobSpBonus, getAvailableJobSP } from './data/job-progression.js';
+import {
+  NUMBER_NOTATION,
+  NUMBER_NOTATION_CHANGED_EVENT,
+  applyNumberNotationToDocument,
+  formatNumber,
+  getNumberNotation,
+  setNumberNotation,
+} from './utils/format.js';
 
 // Clamp values left by older versions to the supported speed range.
 localStorage.removeItem('devModeEnabled');
 if (parseInt(localStorage.getItem('autoBattleSpeed') || 1) > 5) {
   localStorage.setItem('autoBattleSpeed', 5);
 }
+applyNumberNotationToDocument();
 
 // ─── Page Imports ────────────────────────────────────────
 import { renderStatusPage }  from './pages/status.js';
@@ -170,6 +179,7 @@ class App {
 
     // ── 3. Render Header ──
     document.getElementById('header-container').innerHTML = createHeader(gameState);
+    initHeaderNumberDisplays();
 
     // ── 4. Setup Router ──
     this.router = new Router(document.getElementById('content'));
@@ -210,6 +220,38 @@ class App {
 
     // ── 7. Start ──
     this.router.start();
+
+    // Display-only notation changes re-render regular routes. Battle owns an
+    // in-memory encounter, so its manager refreshes only the HUD instead.
+    window.addEventListener(NUMBER_NOTATION_CHANGED_EVENT, async () => {
+      const routeAtChange = this.router.getCurrentRoute();
+      try {
+        const [gold, prism] = await Promise.all([
+          GameDB.getGameState('gold'),
+          GameDB.getGameState('prism'),
+        ]);
+        const goldDisplay = document.getElementById('header-gold-display');
+        const prismDisplay = document.getElementById('header-prism-display');
+        if (goldDisplay) goldDisplay.textContent = formatNumber(gold ?? 0);
+        if (prismDisplay) prismDisplay.textContent = formatNumber(prism ?? 0);
+        goldDisplay?.parentElement?.setAttribute('title', `所持ゴールド ${formatNumber(gold ?? 0)}`);
+        prismDisplay?.parentElement?.setAttribute('title', `プリズム ${formatNumber(prism ?? 0)}`);
+      } catch (error) {
+        console.warn('[Settings] Could not refresh header balances:', error);
+      }
+      if (this.router.getCurrentRoute() !== routeAtChange) return;
+      const route = this.router.getCurrentRoute();
+      if (route === '/battle') return;
+      const currentPage = document.getElementById('content')?.firstElementChild;
+      if (!currentPage?.isConnected) return;
+      if (typeof currentPage?.refreshNumberNotation === 'function') {
+        currentPage.refreshNumberNotation();
+      } else if (route === '/dungeon') {
+        // Dungeon pagination/tab state lives at module scope and survives this
+        // route refresh. Session-based mini-games are deliberately not reset.
+        this.router.refresh();
+      }
+    });
 
     // Firebaseの読み込みはゲーム起動をブロックしない。ログイン済みの場合のみ、
     // ローカル日付ごとの初回起動時に安全確認をしてクラウド保存する。
@@ -363,6 +405,23 @@ class App {
           </div>
 
           <div class="settings-section settings-group">
+
+          <!-- Number Notation -->
+          <div id="setting-row-number-notation" class="settings-compact-row">
+            <div class="flex items-center gap-2.5">
+              <div class="settings-compact-icon shrink-0 bg-emerald-500/15 border border-emerald-500/20">
+                <span class="material-symbols-outlined text-base text-emerald-400">pin</span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-xs font-bold text-gray-200 leading-tight">数値の表示</div>
+                <div class="settings-row-description mt-0.5 text-[9px] leading-relaxed text-gray-500">大きな数値の読み方を切り替えます</div>
+              </div>
+              <div id="setting-number-notation" class="grid shrink-0 grid-cols-2 rounded-lg border border-gray-700/60 bg-gray-950/70 p-0.5" role="group" aria-label="数値の表示形式">
+                <button type="button" data-number-notation="compact" class="number-notation-option min-w-[3.25rem] rounded-md px-1.5 py-1 text-[9px] font-black tabular-nums transition-colors">10k</button>
+                <button type="button" data-number-notation="full" class="number-notation-option min-w-[3.25rem] rounded-md px-1.5 py-1 text-[9px] font-black tabular-nums transition-colors">10,000</button>
+              </div>
+            </div>
+          </div>
 
           <!-- Battle Stats Toggle -->
           <div id="setting-row-battle-stats" class="settings-compact-row cursor-pointer">
@@ -524,7 +583,7 @@ class App {
 
     const disposeCloudSavePanel = initCloudSavePanel(overlay, {
       onRestored: () => {
-        alert('クラウドセーブを復元しました。ページを再読み込みします。');
+        alert('クラウドセーブを復元し、この端末へ自動保存の所有権を移しました。ページを再読み込みします。');
         window.location.reload();
       }
     });
@@ -551,6 +610,30 @@ class App {
         window.dispatchEvent(new Event('settingsChanged'));
       });
     }
+
+    const notationButtons = overlay.querySelectorAll('[data-number-notation]');
+    const updateNotationUI = notation => {
+      notationButtons.forEach(button => {
+        const active = button.dataset.numberNotation === notation;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('bg-emerald-600', active);
+        button.classList.toggle('text-white', active);
+        button.classList.toggle('shadow-sm', active);
+        button.classList.toggle('text-gray-500', !active);
+        button.classList.toggle('active:bg-gray-800', !active);
+      });
+    };
+    updateNotationUI(getNumberNotation());
+    notationButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const notation = button.dataset.numberNotation === NUMBER_NOTATION.FULL
+          ? NUMBER_NOTATION.FULL
+          : NUMBER_NOTATION.COMPACT;
+        if (notation === getNumberNotation()) return;
+        updateNotationUI(setNumberNotation(notation));
+        closeSettings();
+      });
+    });
 
     const rowBattleAnim = document.getElementById('setting-row-battle-anim');
     const toggleBattleAnim = document.getElementById('toggle-battle-anim');

@@ -82,7 +82,7 @@ export function renderInnTab() {
       btnRest.disabled = false;
       btnRest.innerHTML = `
         <span class="material-symbols-outlined text-xl drop-shadow-md" style="font-variation-settings: 'FILL' 1">hotel</span>
-        <span class="relative z-10 tracking-widest text-sm">休む (${currentCost.toLocaleString()} G)</span>
+        <span class="relative z-10 truncate tracking-widest text-sm">休む (${formatNumber(currentCost)} G)</span>
       `;
     } else {
       btnRest.disabled = true;

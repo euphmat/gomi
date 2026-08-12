@@ -89,7 +89,7 @@ export function createCloudSavePanel() {
           </div>
 
           <p class="settings-cloud-note mt-2 text-[8px] leading-relaxed text-gray-600">
-            通常の進行は端末内へ保存されます。ログイン中はその日の初回起動時に1回だけクラウドへ自動保存し、ボタンからも手動で保存・復元できます。
+            通常の進行は端末内へ保存されます。自動保存は、最後にクラウドへ保存またはクラウドから復元した端末だけで実行されます。
           </p>
         </div>
       </div>
@@ -176,8 +176,8 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     panel.querySelector('#cloud-account-email').textContent = user.email || 'Googleアカウント';
     const lastUpload = getLastCloudUpload(user.uid);
     panel.querySelector('#cloud-last-upload').textContent = lastUpload
-      ? `この端末からの最終保存: ${formatSavedAt(lastUpload)}`
-      : 'この端末からの保存履歴はありません';
+      ? `この端末の最終同期: ${formatSavedAt(lastUpload)}`
+      : 'この端末の同期履歴はありません';
     const needsVerification = !user.emailVerified
       && user.providerData.some(item => item.providerId === 'password');
     const verificationActions = panel.querySelector('#cloud-verification-actions');
@@ -191,11 +191,11 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     } else if (dailyRecord?.status === 'saving') {
       setStatus('本日の起動時クラウドセーブを実行しています…');
     } else if (autoNotice?.status === 'conflict') {
-      setStatus('別端末で更新されたセーブがあります。復元または手動保存を選んでください。', 'warning');
+      setStatus('この端末の自動保存は停止中です。クラウドから復元するか、現在のデータを確認して手動保存してください。', 'warning');
     } else if (dailyRecord?.status === 'saved') {
       setStatus('本日の起動時クラウドセーブは完了しています。', 'success');
     } else {
-      setStatus('1日1回の起動時自動保存と、手動の保存・復元を利用できます。');
+      setStatus('最後にクラウドへ保存または復元した端末では、1日1回の起動時自動保存を利用できます。');
     }
   };
 
@@ -259,24 +259,26 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
   }));
 
   panel.querySelector('#cloud-upload').addEventListener('click', () => {
-    if (!window.confirm('現在の端末内セーブで、クラウド上のセーブを上書きしますか？')) return;
+    if (!window.confirm('現在の端末内セーブでクラウドを上書きし、この端末を今後の自動保存端末にしますか？')) return;
     run('セーブデータを圧縮しています…', async () => {
       const payload = await GameDB.createCloudSnapshot();
       setStatus('クラウドへ保存しています…');
       const result = await CloudSaveService.upload(payload, APP_VERSION);
       recordCloudUpload(currentUser.uid, result.savedAt);
-      panel.querySelector('#cloud-last-upload').textContent = `この端末からの最終保存: ${formatSavedAt(result.savedAt)}`;
-      setStatus(`クラウドへ保存しました（約${Math.ceil(result.payloadLength / 1024)}KB）。`, 'success');
+      panel.querySelector('#cloud-last-upload').textContent = `この端末の最終同期: ${formatSavedAt(result.savedAt)}`;
+      setStatus(`クラウドへ保存しました。この端末で自動保存が有効です（約${Math.ceil(result.payloadLength / 1024)}KB）。`, 'success');
     });
   });
 
   panel.querySelector('#cloud-download').addEventListener('click', () => {
     if (!window.confirm('クラウドセーブで現在の端末内セーブを上書きします。元に戻せません。復元しますか？')) return;
     run('クラウドセーブを読み込んでいます…', async () => {
-      const cloudSave = await CloudSaveService.download({
-        onProgress: ({ completed, total, retrying }) => {
+      const cloudSave = await CloudSaveService.downloadAndClaimOwnership({
+        onProgress: ({ completed, total, retrying, claimingOwnership }) => {
           if (retrying) {
-            setStatus('クラウドの更新を検出しました。最新データを読み直しています…');
+            setStatus(claimingOwnership
+              ? '別端末の更新を検出しました。最新データで所有権を取り直しています…'
+              : 'クラウドの更新を検出しました。最新データを読み直しています…');
           } else if (total > 1) {
             setStatus(`クラウドセーブを読み込んでいます… (${completed}/${total})`);
           }
@@ -285,8 +287,10 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       if (!cloudSave) throw new Error('クラウドセーブがまだありません。先に保存してください。');
       setStatus('端末のセーブデータを安全に置き換えています…');
       await GameDB.restoreCloudSnapshot(cloudSave.payload);
-      recordCloudRestore(currentUser.uid, cloudSave.savedAt);
-      setStatus(`${formatSavedAt(cloudSave.savedAt)} のセーブを復元しました。`, 'success');
+      recordCloudRestore(currentUser.uid, cloudSave.sourceSavedAt);
+      recordCloudUpload(currentUser.uid, cloudSave.savedAt);
+      panel.querySelector('#cloud-last-upload').textContent = `この端末の最終同期: ${formatSavedAt(cloudSave.savedAt)}`;
+      setStatus(`${formatSavedAt(cloudSave.sourceSavedAt)} のセーブを復元し、この端末へ自動保存を切り替えました。`, 'success');
       if (onRestored) onRestored(cloudSave);
     });
   });

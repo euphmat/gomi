@@ -119,6 +119,7 @@ export function renderShopPage() {
 
   container.appendChild(tabHeader);
   container.appendChild(contentArea);
+  container.refreshNumberNotation = () => renderContent();
 
   return container;
 }

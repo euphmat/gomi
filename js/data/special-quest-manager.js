@@ -19,6 +19,7 @@ import { TREASURES, TREASURE_STATE_KEY } from '../definitions/treasures.js';
 import { JOBS } from '../jobs/index.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
 import { getMemoryLevel, MEMORY_PROGRESS_STATE_KEY } from './memory-game-progression.js';
+import { formatNumber } from '../utils/format.js';
 
 const STATE_KEY = 'quest_special_progress';
 const COMPLETED_DUNGEONS_KEY = 'completed_dungeons';
@@ -56,12 +57,11 @@ const makeMilestoneQuests = (type, targets, options) => targets.map((target, ind
   reward: 1,
   prerequisiteId: index > 0 ? `${type}_${targets[index - 1]}` : null,
   ...options,
-  title: `${options.titlePrefix} ${target}種類達成`,
-  description: `${options.descriptionPrefix}${target}種類集める`,
+  get title() { return `${options.titlePrefix} ${formatNumber(target)}種類達成`; },
+  get description() { return `${options.descriptionPrefix}${formatNumber(target)}種類集める`; },
 }));
 
 const makeMetricMilestoneQuests = (idPrefix, metricKey, targets, options) => targets.map((target, index) => {
-  const formattedTarget = target.toLocaleString('ja-JP');
   return {
     id: `${idPrefix}_${target}`,
     category: options.category,
@@ -69,8 +69,8 @@ const makeMetricMilestoneQuests = (idPrefix, metricKey, targets, options) => tar
     target,
     reward: options.reward || 1,
     prerequisiteId: index > 0 ? `${idPrefix}_${targets[index - 1]}` : null,
-    title: `${options.titlePrefix}${formattedTarget}${options.titleSuffix || ''}`,
-    description: `${options.descriptionPrefix}${formattedTarget}${options.descriptionSuffix}`,
+    get title() { return `${options.titlePrefix}${formatNumber(target)}${options.titleSuffix || ''}`; },
+    get description() { return `${options.descriptionPrefix}${formatNumber(target)}${options.descriptionSuffix}`; },
     icon: options.icon,
     destination: options.destination,
   };
@@ -632,7 +632,7 @@ class SpecialQuestManagerClass {
     const newPrism = prism + definition.reward;
     await GameDB.setGameState('prism', newPrism);
     const header = document.getElementById('header-prism-display');
-    if (header) header.textContent = newPrism.toLocaleString();
+    if (header) header.textContent = formatNumber(newPrism);
     window.dispatchEvent(new CustomEvent('quest:special-updated'));
     return true;
   }

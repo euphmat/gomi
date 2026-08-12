@@ -287,23 +287,23 @@ export function renderPartyCardHtml(p, activeCharacter, isAutoBattle, selectedPa
       <div class="battle-stats-container flex flex-col gap-[1px] text-[9px] text-gray-400 mt-auto leading-tight w-full px-0.5 pb-0.5 ${localStorage.getItem('hideBattleStats') !== 'false' ? 'hidden' : ''}">
         <div class="stat-row-atk flex h-[17px] shrink-0 justify-between items-center ${atkTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-atk material-symbols-outlined ${atkTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">swords</span><span class="stat-label-atk font-bold tracking-wider ${atkTheme.text}">ATK</span></div>
-          <span class="stat-val-atk ${atkTheme.val} font-black drop-shadow-md">${formatNumber(finalAtk)}</span>
+          <span class="stat-val-atk min-w-0 truncate tabular-nums ${atkTheme.val} font-black drop-shadow-md" title="${formatNumber(finalAtk)}">${formatNumber(finalAtk)}</span>
         </div>
         <div class="stat-row-def flex h-[17px] shrink-0 justify-between items-center ${defTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-def material-symbols-outlined ${defTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">shield</span><span class="stat-label-def font-bold tracking-wider ${defTheme.text}">DEF</span></div>
-          <span class="stat-val-def ${defTheme.val} font-black drop-shadow-md">${formatNumber(finalDef)}</span>
+          <span class="stat-val-def min-w-0 truncate tabular-nums ${defTheme.val} font-black drop-shadow-md" title="${formatNumber(finalDef)}">${formatNumber(finalDef)}</span>
         </div>
         <div class="stat-row-mat flex h-[17px] shrink-0 justify-between items-center ${matkTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mat material-symbols-outlined ${matkTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">auto_awesome</span><span class="stat-label-mat font-bold tracking-wider ${matkTheme.text}">MAT</span></div>
-          <span class="stat-val-mat ${matkTheme.val} font-black drop-shadow-md">${formatNumber(finalMatk)}</span>
+          <span class="stat-val-mat min-w-0 truncate tabular-nums ${matkTheme.val} font-black drop-shadow-md" title="${formatNumber(finalMatk)}">${formatNumber(finalMatk)}</span>
         </div>
         <div class="stat-row-mdf flex h-[17px] shrink-0 justify-between items-center ${mdefTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-mdf material-symbols-outlined ${mdefTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">security</span><span class="stat-label-mdf font-bold tracking-wider ${mdefTheme.text}">MDF</span></div>
-          <span class="stat-val-mdf ${mdefTheme.val} font-black drop-shadow-md">${formatNumber(finalMdef)}</span>
+          <span class="stat-val-mdf min-w-0 truncate tabular-nums ${mdefTheme.val} font-black drop-shadow-md" title="${formatNumber(finalMdef)}">${formatNumber(finalMdef)}</span>
         </div>
         <div class="stat-row-spd flex h-[17px] shrink-0 justify-between items-center ${spdTheme.bg} border rounded px-1 py-0.5 ${transColorClass}">
           <div class="flex items-center gap-[3px]"><span class="stat-icon-spd material-symbols-outlined ${spdTheme.icon}" style="font-size: 10px; font-variation-settings: 'FILL' 1">directions_run</span><span class="stat-label-spd font-bold tracking-wider ${spdTheme.text}">SPD</span></div>
-          <span class="stat-val-spd ${spdTheme.val} font-black drop-shadow-md">${formatNumber(finalSpd)}</span>
+          <span class="stat-val-spd min-w-0 truncate tabular-nums ${spdTheme.val} font-black drop-shadow-md" title="${formatNumber(finalSpd)}">${formatNumber(finalSpd)}</span>
         </div>
       </div>
     </div>

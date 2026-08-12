@@ -157,7 +157,7 @@ const enemy = {
       && container.innerHTML.includes('与ダメージ')
       && container.innerHTML.includes('HP回復'),
     'party comparison charts were not rendered');
-  assert(container.innerHTML.includes('12500')
+  assert(container.innerHTML.includes('12.5k')
       && container.innerHTML.includes('100.0%'),
     'party comparison values or contribution percentages were not rendered');
 
@@ -184,11 +184,10 @@ const enemy = {
       && container.innerHTML.includes('MPを4消費し、敵単体へ1.5倍の物理攻撃を行う。')
       && container.innerHTML.includes('Lv.3'),
     'current skill effect was not rendered inline with its name');
-  assert(container.innerHTML.includes('12500')
-      && !container.innerHTML.includes('12.5k')
+  assert(container.innerHTML.includes('12.5k')
       && !container.innerHTML.includes('万')
       && !container.innerHTML.includes('億'),
-    'statistics did not use exact integer notation');
+    'statistics did not use the shared compact notation');
   assert(container.innerHTML.includes('data-medal-equipment-effects')
       && container.innerHTML.includes('統計のメダル剣')
       && container.innerHTML.includes('与えるダメージ+15%。'),

@@ -115,6 +115,40 @@ function getErrorCode(error) {
     .replace(/^auth\//, '');
 }
 
+function createSaveConflictError() {
+  const error = new Error('別端末でクラウドセーブが更新されたため、自動保存を中止しました。');
+  error.code = 'cloud-save/conflict';
+  return error;
+}
+
+function matchesExpectedSave(snapshot, expectedSavedAt) {
+  if (expectedSavedAt === null) return !snapshot.exists();
+  return snapshot.exists() && snapshot.data()?.savedAt === expectedSavedAt;
+}
+
+function createNextSavedAt(previousSavedAt) {
+  const previousTime = Date.parse(previousSavedAt);
+  const nextTime = Number.isFinite(previousTime)
+    ? Math.max(Date.now(), previousTime + 1)
+    : Date.now();
+  return new Date(nextTime).toISOString();
+}
+
+async function commitSaveDocument(firestoreSdk, db, saveRef, data, expectedSavedAt) {
+  if (expectedSavedAt === undefined) {
+    await firestoreSdk.setDoc(saveRef, data);
+    return;
+  }
+
+  await firestoreSdk.runTransaction(db, async transaction => {
+    const currentSnapshot = await transaction.get(saveRef);
+    if (!matchesExpectedSave(currentSnapshot, expectedSavedAt)) {
+      throw createSaveConflictError();
+    }
+    transaction.set(saveRef, data);
+  });
+}
+
 export function mapPermissionError(error, target = 'save') {
   if (getErrorCode(error) !== 'permission-denied') return error;
 
@@ -253,7 +287,7 @@ export const CloudSaveService = {
     await authSdk.signOut(auth);
   },
 
-  async upload(payload, appVersion) {
+  async upload(payload, appVersion, { expectedSavedAt } = {}) {
     if (typeof payload !== 'string' || payload.length === 0) {
       throw new Error('ローカルセーブデータを作成できませんでした。');
     }
@@ -267,17 +301,20 @@ export const CloudSaveService = {
     const saveRef = firestoreSdk.doc(db, CLOUD_SAVE_COLLECTION, user.uid);
 
     if (payload.length <= MAX_LEGACY_PAYLOAD_LENGTH) {
-      await runFirestoreOperation(() => firestoreSdk.setDoc(saveRef, {
+      await runFirestoreOperation(() => commitSaveDocument(firestoreSdk, db, saveRef, {
         schemaVersion: LEGACY_SCHEMA_VERSION,
         appVersion: String(appVersion || ''),
         savedAt,
         updatedAt: firestoreSdk.serverTimestamp(),
         payload
-      }));
+      }, expectedSavedAt));
       return { savedAt, payloadLength: payload.length, chunkCount: 1 };
     }
 
     const previousSnapshot = await runFirestoreOperation(() => firestoreSdk.getDoc(saveRef));
+    if (expectedSavedAt !== undefined && !matchesExpectedSave(previousSnapshot, expectedSavedAt)) {
+      throw createSaveConflictError();
+    }
     const previousManifest = previousSnapshot.exists() ? previousSnapshot.data() : null;
     const generation = createGenerationId();
     const chunks = splitPayload(payload);
@@ -304,7 +341,7 @@ export const CloudSaveService = {
     // Switch the manifest only after every chunk has been written. Readers see
     // either the complete previous generation or the complete new generation.
     try {
-      await firestoreSdk.setDoc(saveRef, {
+      await commitSaveDocument(firestoreSdk, db, saveRef, {
         schemaVersion: CHUNKED_SCHEMA_VERSION,
         appVersion: String(appVersion || ''),
         savedAt,
@@ -313,7 +350,7 @@ export const CloudSaveService = {
         chunkCount: chunks.length,
         payloadLength: payload.length,
         checksum
-      });
+      }, expectedSavedAt);
     } catch (error) {
       // A rejected manifest must not leave a complete but unreachable
       // generation behind. The previous manifest is still intact.
@@ -342,6 +379,48 @@ export const CloudSaveService = {
     }
 
     return { savedAt, payloadLength: payload.length, chunkCount: chunks.length };
+  },
+
+  /**
+   * Move automatic-save ownership to the device that just restored this exact
+   * cloud generation. Only manifest metadata changes; the payload/chunks are
+   * not uploaded again.
+   */
+  async claimOwnership(expectedSavedAt) {
+    if (typeof expectedSavedAt !== 'string' || !expectedSavedAt) {
+      throw new Error('所有権を取得するクラウドセーブを確認できませんでした。');
+    }
+
+    const { auth, db, firestoreSdk } = await loadServices();
+    const user = requireVerifiedUser(auth);
+    const saveRef = firestoreSdk.doc(db, CLOUD_SAVE_COLLECTION, user.uid);
+    const savedAt = createNextSavedAt(expectedSavedAt);
+    let payloadLength = 0;
+
+    await runFirestoreOperation(() => firestoreSdk.runTransaction(db, async transaction => {
+      const snapshot = await transaction.get(saveRef);
+      if (!matchesExpectedSave(snapshot, expectedSavedAt)) {
+        throw createSaveConflictError();
+      }
+
+      const data = snapshot.data();
+      const isLegacySave = data.schemaVersion === LEGACY_SCHEMA_VERSION
+        && typeof data.payload === 'string'
+        && data.payload.length > 0
+        && data.payload.length <= MAX_LEGACY_PAYLOAD_LENGTH;
+      if (!isLegacySave && !isChunkedManifest(data)) {
+        throw new Error('クラウドセーブの形式に対応していません。');
+      }
+
+      payloadLength = isLegacySave ? data.payload.length : data.payloadLength;
+      transaction.set(saveRef, {
+        ...data,
+        savedAt,
+        updatedAt: firestoreSdk.serverTimestamp(),
+      });
+    }));
+
+    return { savedAt, payloadLength };
   },
 
   async getMetadata() {
@@ -442,5 +521,30 @@ export const CloudSaveService = {
     }
 
     throw new Error('クラウドセーブを読み込めませんでした。');
+  },
+
+  /** Download the latest payload and atomically make this restoring device the owner. */
+  async downloadAndClaimOwnership({ onProgress } = {}) {
+    for (let attempt = 0; attempt < DOWNLOAD_ATTEMPTS; attempt += 1) {
+      const cloudSave = await this.download({ onProgress });
+      if (!cloudSave) return null;
+
+      try {
+        const ownership = await this.claimOwnership(cloudSave.savedAt);
+        return {
+          ...cloudSave,
+          sourceSavedAt: cloudSave.savedAt,
+          savedAt: ownership.savedAt,
+        };
+      } catch (error) {
+        if (error?.code !== 'cloud-save/conflict' || attempt === DOWNLOAD_ATTEMPTS - 1) {
+          throw error;
+        }
+        onProgress?.({ completed: 0, total: 0, retrying: true, claimingOwnership: true });
+        await waitBeforeRetry(attempt);
+      }
+    }
+
+    throw new Error('最新クラウドセーブの所有権を取得できませんでした。');
   }
 };

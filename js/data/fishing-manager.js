@@ -21,6 +21,7 @@ import {
 } from '../definitions/fishing-tackle.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
 import { getMaterialCapacity, loadTreasureLevels } from './treasure-manager.js';
+import { formatNumber } from '../utils/format.js';
 
 const FISHING_STATE_KEY = 'fishing_data';
 const LEGACY_RANCH_FISH_STATE_KEY = 'ranch_fish_data';
@@ -158,8 +159,8 @@ function groupRecentBonuses(items) {
   }
 
   for (const item of grouped) {
-    if (item.type === 'gold') item.name = `Gold袋（${item.amount.toLocaleString()} G）`;
-    if (item.type === 'material') item.name = `${item.baseName} ×${item.amount.toLocaleString()}`;
+    if (item.type === 'gold') item.name = `Gold袋（${formatNumber(item.amount)} G）`;
+    if (item.type === 'material') item.name = `${item.baseName} ×${formatNumber(item.amount)}`;
   }
   return grouped;
 }
@@ -269,7 +270,7 @@ async function catchGoldBag(state) {
   const amount = (5 + Math.floor(Math.random() * 46)) * 100;
   const gold = Number(await GameDB.getGameState('gold')) || 0;
   await GameDB.setGameState('gold', gold + amount);
-  const result = { type: 'gold', name: `Gold袋（${amount.toLocaleString()} G）`, amount, icon: 'paid' };
+  const result = { type: 'gold', name: `Gold袋（${formatNumber(amount)} G）`, amount, icon: 'paid' };
   addRecentBonus(state, result);
   return result;
 }

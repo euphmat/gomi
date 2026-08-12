@@ -21,7 +21,7 @@ import {
   renderBattleStatisticsTab,
   scheduleBattleStatisticsRender
 } from './battle-statistics.js';
-import { formatNumber } from '../../utils/format.js';
+import { NUMBER_NOTATION_CHANGED_EVENT, formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
 import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
@@ -142,6 +142,13 @@ class BattleManager {
     this.battleTelemetry = new BattleTelemetry({
       onChange: () => scheduleBattleStatisticsRender(this)
     });
+    this._numberNotationHandler = () => {
+      if (!this.container?.isConnected) return;
+      this._lastSkillRenderKey = null;
+      this.updateEntities();
+      this.renderTabContent(true);
+    };
+    window.addEventListener(NUMBER_NOTATION_CHANGED_EVENT, this._numberNotationHandler);
 
     // Register lifecycle cleanup before any asynchronous initialization starts.
     // Otherwise a quick route change can occur while init() is awaiting IndexedDB,
@@ -620,6 +627,10 @@ class BattleManager {
     this._tabInteractionTimer = null;
     this.isTabInteracting = false;
     this._petInventoryRefreshPending = false;
+    if (this._numberNotationHandler) {
+      window.removeEventListener(NUMBER_NOTATION_CHANGED_EVENT, this._numberNotationHandler);
+      this._numberNotationHandler = null;
+    }
     if (this._popupLayer) {
       this._popupLayer.remove();
       this._popupLayer = null;

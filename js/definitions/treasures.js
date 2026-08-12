@@ -2,6 +2,8 @@
  * プリズムガチャの秘宝定義。
  * 排出率・レベルごとの成長値・表示文言はこのファイルを唯一の正とする。
  */
+import { formatNumber } from '../utils/format.js';
+
 export const PRISM_GACHA_COST = 5;
 export const TREASURE_STATE_KEY = 'treasure_levels';
 export const BASE_MATERIAL_CAPACITY = 99999;
@@ -21,7 +23,7 @@ export const TREASURES = [
   { id: 'subjugation_king_crown', name: '討伐王の王冠', effect: 'extraKillCount', perLevel: 1, display: v => `モンスター討伐数が追加で +${v}体` },
   { id: 'monster_tamer_flute', name: '魔物使いの笛', effect: 'petStatsPercent', perLevel: 3, display: v => `ペットの全能力が +${v}%` },
   { id: 'miracle_feed_box', name: '奇跡の飼料箱', effect: 'ranchExpPercent', perLevel: 5, display: v => `牧場の素材育成EXPが +${v}%` },
-  { id: 'treasury_key', name: '宝物庫の鍵', effect: 'materialCapacityBonus', perLevel: 5000, display: v => `素材の最大所持数が +${v.toLocaleString('ja-JP')}` },
+  { id: 'treasury_key', name: '宝物庫の鍵', effect: 'materialCapacityBonus', perLevel: 5000, display: v => `素材の最大所持数が +${formatNumber(v)}` },
   { id: 'divine_smith_hammer', name: '神匠の金槌', effect: 'craftGoldDiscountPercent', perLevel: 2, cap: 80, display: v => `装備作成に必要なGoldが ${v}%割引` },
   { id: 'alchemist_crucible', name: '錬金術師の坩堝', effect: 'craftMaterialDiscountPercent', perLevel: 2, cap: 80, display: v => `装備作成に必要な素材が ${v}%減少` },
   { id: 'rainbow_piggy_bank', name: '虹の貯金箱', effect: 'prismRefundPercent', perLevel: 2, cap: 10, display: v => `ガチャ時に ${v}%の確率で5 Prism返却` },

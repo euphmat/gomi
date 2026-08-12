@@ -3,7 +3,7 @@ import { CloudSaveService } from './cloud-save-service.js';
 import {
   clearDailyAutoRecord,
   getDailyAutoRecord,
-  getKnownCloudSavedAt,
+  getLastCloudUpload,
   recordCloudUpload,
   setCloudAutoNotice,
   setDailyAutoRecord,
@@ -13,6 +13,14 @@ import { getLocalDateKey } from './daily-login-manager.js';
 
 const PENDING_TIMEOUT_MS = 2 * 60 * 1000;
 const activeSaves = new Map();
+
+export function canDeviceAutoSave(cloudSave, lastUpload) {
+  return !cloudSave || (
+    typeof lastUpload === 'string'
+    && lastUpload.length > 0
+    && cloudSave.savedAt === lastUpload
+  );
+}
 
 function createToken() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -57,8 +65,11 @@ async function saveOnceForDate(user, now = new Date()) {
       // 競合判定に必要なのは更新日時だけ。大容量セーブの全チャンクを
       // 起動のたびにダウンロードしないよう、マニフェストだけを読む。
       const cloudSave = await CloudSaveService.getMetadata();
-      const knownSavedAt = getKnownCloudSavedAt(user.uid);
-      if (cloudSave && cloudSave.savedAt !== knownSavedAt) {
+      // 自動保存できるのは、現在のクラウドセーブを最後にアップロードしたか、
+      // 復元時に所有権を取得した端末だけ。所有権取得では savedAt が原子的に
+      // 更新されるため、以前の端末は同じ世代を自動上書きできない。
+      const lastUpload = getLastCloudUpload(user.uid);
+      if (!canDeviceAutoSave(cloudSave, lastUpload)) {
         const result = { date: dateKey, status: 'conflict', checkedAt: new Date().toISOString() };
         setDailyAutoRecord(user.uid, result);
         setCloudAutoNotice(user.uid, result);
@@ -68,7 +79,11 @@ async function saveOnceForDate(user, now = new Date()) {
       }
 
       const payload = await GameDB.createCloudSnapshot();
-      const upload = await CloudSaveService.upload(payload, APP_VERSION);
+      // メタデータ確認後に別端末が保存した場合も上書きしないよう、確認した
+      // savedAt を条件にしてクラウド側で原子的に保存する。
+      const upload = await CloudSaveService.upload(payload, APP_VERSION, {
+        expectedSavedAt: cloudSave?.savedAt ?? null,
+      });
       recordCloudUpload(user.uid, upload.savedAt);
       const result = { date: dateKey, status: 'saved', savedAt: upload.savedAt };
       setDailyAutoRecord(user.uid, result);
@@ -76,6 +91,14 @@ async function saveOnceForDate(user, now = new Date()) {
       console.log('[CloudSave] Daily auto-save completed.');
       return result;
     } catch (error) {
+      if (error?.code === 'cloud-save/conflict') {
+        const result = { date: dateKey, status: 'conflict', checkedAt: new Date().toISOString() };
+        setDailyAutoRecord(user.uid, result);
+        setCloudAutoNotice(user.uid, result);
+        window.dispatchEvent(new CustomEvent('dailyCloudSaveStatus', { detail: result }));
+        console.warn('[CloudSave] Daily auto-save stopped because another device saved first.');
+        return result;
+      }
       clearDailyAutoRecord(user.uid, token);
       console.warn('[CloudSave] Daily auto-save failed; it will retry on the next launch.', error);
       throw error;

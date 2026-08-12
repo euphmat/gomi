@@ -125,6 +125,15 @@ export class Router {
   }
 
   /**
+   * Re-render the active route without changing its URL. This is used for
+   * display-only preferences such as number notation.
+   */
+  refresh() {
+    this.currentRoute = null;
+    this.handleRoute();
+  }
+
+  /**
    * Start the router. Navigates to default route if no hash is set.
    */
   start() {

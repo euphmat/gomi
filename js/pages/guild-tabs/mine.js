@@ -40,8 +40,7 @@ function updateHeader(id, value) {
 
 function formatMineAmount(value, maximumFractionDigits = 3) {
   if (!Number.isFinite(value)) return '0';
-  if (Math.abs(value) >= 1000) return formatNumber(value);
-  return value.toLocaleString('ja-JP', { maximumFractionDigits });
+  return formatNumber(value, { maximumFractionDigits });
 }
 
 function formatMineRateUpgrade(current, next) {
@@ -49,7 +48,7 @@ function formatMineRateUpgrade(current, next) {
   while (fractionDigits < 8 && current.toFixed(fractionDigits) === next.toFixed(fractionDigits)) {
     fractionDigits += 1;
   }
-  const format = value => value.toLocaleString('ja-JP', {
+  const format = value => formatNumber(value, {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits
   });
@@ -58,7 +57,7 @@ function formatMineRateUpgrade(current, next) {
   while (increaseFractionDigits < 8 && increase.toFixed(increaseFractionDigits) === (0).toFixed(increaseFractionDigits)) {
     increaseFractionDigits += 1;
   }
-  const formatIncrease = value => value.toLocaleString('ja-JP', {
+  const formatIncrease = value => formatNumber(value, {
     minimumFractionDigits: increaseFractionDigits,
     maximumFractionDigits: increaseFractionDigits
   });

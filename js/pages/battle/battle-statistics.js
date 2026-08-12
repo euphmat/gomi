@@ -1,4 +1,5 @@
 import { getEquippedMedalRewardItems } from '../../utils/medal-equipment-effects.js';
+import { formatNumber } from '../../utils/format.js';
 
 /**
  * Lightweight, session-only battle statistics telemetry.
@@ -26,9 +27,7 @@ const escapeHtml = value => String(value ?? '')
   .replaceAll('"', '&quot;')
   .replaceAll("'", '&#39;');
 
-// Statistics favor exact values over abbreviated notation so the player can
-// see the actual contribution (for example, 12500 instead of 12.5k).
-const formatStatNumber = value => String(Math.max(0, Math.floor(Number(value) || 0)));
+const formatStatNumber = value => formatNumber(Math.max(0, Math.floor(Number(value) || 0)));
 
 const entityName = entity => entity?.name || entity?.displayName || '不明';
 const isPartyEntity = entity => Boolean(entity?.hp);

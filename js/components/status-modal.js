@@ -88,7 +88,7 @@ export function showDetailedStatusModal(character, finalStats, onNameChanged) {
         <span class="material-symbols-outlined ${s.color}" style="font-size: 11px; font-variation-settings: 'FILL' 1">${s.icon}</span>
         <span class="text-[8px] text-gray-300 font-bold tracking-wider leading-none">${s.label}</span>
       </div>
-      <span class="text-[12px] font-black text-gray-100 leading-tight mt-0.5 drop-shadow-md">${formatNumber(finalStats[s.key])}</span>
+      <span class="max-w-full truncate text-[12px] font-black tabular-nums text-gray-100 leading-tight mt-0.5 drop-shadow-md" title="${formatNumber(finalStats[s.key])}">${formatNumber(finalStats[s.key])}</span>
     </div>
   `).join('');
 

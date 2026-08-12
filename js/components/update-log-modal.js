@@ -183,7 +183,7 @@ function renderCloudSaveGuide() {
 
       <div class="mx-3.5 mb-3 flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-400/[.07] p-2.5 text-[8px] leading-relaxed text-amber-100/75">
         <span class="material-symbols-outlined text-sm text-amber-300">lightbulb</span>
-        <span>サインイン中は1日最初の起動時に自動保存。保存・復元はいつでも手動で実行できます。</span>
+        <span>自動保存は最後に保存または復元した端末だけ。クラウドから復元すると、その端末へ自動的に切り替わります。</span>
       </div>
       <div class="px-3.5 pb-3.5">
         <button data-open-cloud-settings type="button" class="flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-sky-300/35 bg-gradient-to-r from-sky-600 to-cyan-600 px-3 py-2 text-[10px] font-black text-white shadow-[0_8px_24px_rgba(8,145,178,.22)] active:scale-[.98]">

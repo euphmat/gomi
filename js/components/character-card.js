@@ -100,7 +100,7 @@ export function createCharacterCard(character, finalStats, equippedItems, isAlre
         <span class="material-symbols-outlined ${s.color}" style="font-size: 10px; font-variation-settings: 'FILL' 1">${s.icon}</span>
         <span class="text-[7px] text-gray-300 font-bold tracking-wider leading-none">${s.label}</span>
       </div>
-      <span class="text-[11px] font-black text-gray-100 leading-none mt-0.5 drop-shadow-md">${formatNumber(finalStats[s.key])}</span>
+      <span class="max-w-full truncate text-[11px] font-black tabular-nums text-gray-100 leading-none mt-0.5 drop-shadow-md" title="${formatNumber(finalStats[s.key])}">${formatNumber(finalStats[s.key])}</span>
     </div>
   `).join('');
 

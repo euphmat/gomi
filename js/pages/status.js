@@ -36,6 +36,7 @@ export function renderStatusPage() {
 
   // Load data from IndexedDB asynchronously
   _loadStatusData(container);
+  container.refreshNumberNotation = () => _loadStatusData(container);
 
   return container;
 }

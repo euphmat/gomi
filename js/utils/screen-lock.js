@@ -1,3 +1,5 @@
+import { formatNumber } from './format.js';
+
 let initialized = false;
 let locked = false;
 let overlay = null;
@@ -122,7 +124,7 @@ function unlockScreen() {
 }
 
 function formatCount(value) {
-  return Math.max(0, Number(value) || 0).toLocaleString('ja-JP');
+  return formatNumber(Math.max(0, Number(value) || 0));
 }
 
 function requestLockScreenActivityRender(immediate = false) {

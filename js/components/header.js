@@ -25,9 +25,9 @@ export function createHeader(gameState) {
       </div>
 
       <!-- Balances -->
-      <div id="header-wallet" class="flex shrink-0 items-center gap-1 sm:gap-2">
-        <div id="header-gold" class="flex items-center gap-0.5 sm:gap-1 bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.15)] rounded-md px-1.5 sm:px-2.5 py-1 shrink-0" aria-label="所持ゴールド ${formatNumber(gameState.gold)}"> <span class="material-symbols-outlined text-[14px] text-amber-200 leading-none">toll</span> <span id="header-gold-display" class="text-[11px] sm:text-xs text-amber-200 font-mono font-bold tracking-tight">${formatNumber(gameState.gold)}</span> </div>
-        <div id="header-prism" class="flex items-center gap-0.5 sm:gap-1 bg-gradient-to-r from-fuchsia-500/20 to-cyan-500/20 border border-fuchsia-400/50 shadow-[0_0_6px_rgba(232,121,249,0.15)] rounded-md px-1.5 sm:px-2.5 py-1 shrink-0" aria-label="プリズム ${formatNumber(gameState.prism || 0)}"> <span class="material-symbols-outlined text-[14px] text-fuchsia-200 leading-none">diamond</span> <span id="header-prism-display" class="text-[11px] sm:text-xs text-fuchsia-200 font-mono font-bold tracking-tight">${formatNumber(gameState.prism || 0)}</span> </div>
+      <div id="header-wallet" class="flex min-w-0 shrink items-center gap-1 sm:gap-2">
+        <div id="header-gold" class="flex min-w-0 shrink items-center gap-0.5 sm:gap-1 bg-gradient-to-r from-amber-500/20 to-yellow-600/20 border border-amber-500/50 shadow-[0_0_6px_rgba(245,158,11,0.15)] rounded-md px-1.5 sm:px-2.5 py-1" aria-label="所持ゴールド ${formatNumber(gameState.gold)}" title="所持ゴールド ${formatNumber(gameState.gold)}"> <span class="material-symbols-outlined shrink-0 text-[14px] text-amber-200 leading-none">toll</span> <span id="header-gold-display" class="min-w-0 truncate text-[11px] sm:text-xs text-amber-200 font-mono font-bold tracking-tight tabular-nums">${formatNumber(gameState.gold)}</span> </div>
+        <div id="header-prism" class="flex min-w-0 shrink items-center gap-0.5 sm:gap-1 bg-gradient-to-r from-fuchsia-500/20 to-cyan-500/20 border border-fuchsia-400/50 shadow-[0_0_6px_rgba(232,121,249,0.15)] rounded-md px-1.5 sm:px-2.5 py-1" aria-label="プリズム ${formatNumber(gameState.prism || 0)}" title="プリズム ${formatNumber(gameState.prism || 0)}"> <span class="material-symbols-outlined shrink-0 text-[14px] text-fuchsia-200 leading-none">diamond</span> <span id="header-prism-display" class="min-w-0 truncate text-[11px] sm:text-xs text-fuchsia-200 font-mono font-bold tracking-tight tabular-nums">${formatNumber(gameState.prism || 0)}</span> </div>
       </div>
 
       <!-- Quest -->
@@ -46,4 +46,25 @@ export function createHeader(gameState) {
       <button id="btn-setting" class="touch-compact flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-600/50 bg-gray-700/80 text-gray-200 transition duration-150 active:scale-95 active:bg-gray-600" aria-label="設定を開く"> <span class="material-symbols-outlined text-lg leading-none">settings</span> </button>
     </header>
   `;
+}
+
+export function initHeaderNumberDisplays() {
+  const observe = (displayId, label) => {
+    const display = document.getElementById(displayId);
+    const holder = display?.parentElement;
+    if (!display || !holder) return;
+    const syncAccessibleValue = () => {
+      const text = display.textContent || '0';
+      holder.setAttribute('aria-label', `${label} ${text}`);
+      holder.setAttribute('title', `${label} ${text}`);
+    };
+    syncAccessibleValue();
+    new MutationObserver(syncAccessibleValue).observe(display, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  };
+  observe('header-gold-display', '所持ゴールド');
+  observe('header-prism-display', 'プリズム');
 }

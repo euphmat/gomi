@@ -64,7 +64,7 @@ export async function renderFishingPage() {
         <div class="flex items-center justify-between gap-2 rounded-2xl border bg-slate-950/70 px-3 py-2.5 shadow-xl backdrop-blur-md" style="border-color:rgba(${themeColor},.3)">
           <div class="min-w-0">
             <div class="flex items-center gap-2"><span class="material-symbols-outlined" style="color:rgba(${themeColor},1)">phishing</span><h1 class="truncate text-lg font-black text-white">${spot.name}</h1><span class="rounded-full border border-white/15 bg-black/30 px-1.5 py-0.5 text-[8px] font-black text-slate-300">${spot.tier}</span></div>
-            <p class="mt-0.5 text-[10px] text-slate-400">餌 ${formatNumber(spot.baitCost)} G / 1匹 ・ 固有魚 ${spotFish.length}種</p>
+            <p class="mt-0.5 text-[10px] text-slate-400">餌 <span data-bait-cost>${formatNumber(spot.baitCost)}</span> G / 1匹 ・ 固有魚 ${spotFish.length}種</p>
           </div>
           <button data-back class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/35 text-slate-200"><span class="material-symbols-outlined">arrow_back</span></button>
         </div>
@@ -125,6 +125,7 @@ export async function renderFishingPage() {
     </div>`;
 
   const renderState = () => {
+    container.querySelector('[data-bait-cost]').textContent = formatNumber(spot.baitCost);
     container.querySelector('[data-gold]').textContent = formatNumber(gold);
     container.querySelector('[data-total]').textContent = formatNumber(state.totalCaught);
     container.querySelector('[data-shards]').textContent = `${state.prismShards}/10`;
@@ -584,5 +585,6 @@ export async function renderFishingPage() {
   });
   renderState();
   switchCatchTab(activeCatchTab);
+  container.refreshNumberNotation = renderState;
   return container;
 }
