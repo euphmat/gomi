@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { canDeviceAutoSave } from '../js/data/daily-cloud-save-manager.js';
 
 const values = new Map();
 globalThis.localStorage = {
@@ -10,6 +9,7 @@ globalThis.localStorage = {
 };
 
 const {
+  canDeviceAutoSave,
   getKnownCloudSavedAt,
   getLastCloudUpload,
   recordCloudRestore,
@@ -43,10 +43,17 @@ const cloudService = readFileSync(
   new URL('../js/data/cloud-save-service.js', import.meta.url),
   'utf8',
 );
+const cloudPanel = readFileSync(
+  new URL('../js/components/cloud-save-panel.js', import.meta.url),
+  'utf8',
+);
 assert.match(dailyManager, /expectedSavedAt:\s*cloudSave\?\.savedAt \?\? null/);
 assert.match(cloudService, /runTransaction\(db/);
 assert.match(cloudService, /cloud-save\/conflict/);
 assert.match(cloudService, /async claimOwnership\(expectedSavedAt\)/);
 assert.match(cloudService, /async downloadAndClaimOwnership\(/);
+assert.match(cloudPanel, /自動セーブ：有効/);
+assert.match(cloudPanel, /自動セーブ：無効/);
+assert.match(cloudPanel, /canDeviceAutoSave\(cloudSave, getLastCloudUpload\(user\.uid\)\)/);
 
 console.log('Cloud-save multi-device safety tests passed.');

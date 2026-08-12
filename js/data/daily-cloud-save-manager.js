@@ -1,6 +1,7 @@
 import { APP_VERSION } from '../definitions/update-log.js';
 import { CloudSaveService } from './cloud-save-service.js';
 import {
+  canDeviceAutoSave,
   clearDailyAutoRecord,
   getDailyAutoRecord,
   getLastCloudUpload,
@@ -13,14 +14,6 @@ import { getLocalDateKey } from './daily-login-manager.js';
 
 const PENDING_TIMEOUT_MS = 2 * 60 * 1000;
 const activeSaves = new Map();
-
-export function canDeviceAutoSave(cloudSave, lastUpload) {
-  return !cloudSave || (
-    typeof lastUpload === 'string'
-    && lastUpload.length > 0
-    && cloudSave.savedAt === lastUpload
-  );
-}
 
 function createToken() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();

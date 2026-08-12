@@ -18,11 +18,13 @@ const assert = (condition, message) => {
 };
 
 const configs = [
-  { size: 4, boxRows: 2, boxColumns: 2, emptyCells: 8 },
-  { size: 6, boxRows: 2, boxColumns: 3, emptyCells: 20 },
+  { size: 9, boxRows: 3, boxColumns: 3, emptyCells: 35 },
+  { size: 9, boxRows: 3, boxColumns: 3, emptyCells: 40 },
   { size: 9, boxRows: 3, boxColumns: 3, emptyCells: 45 },
   { size: 9, boxRows: 3, boxColumns: 3, emptyCells: 52 },
 ];
+
+assert(configs.every(config => config.size === 9 && config.boxRows === 3 && config.boxColumns === 3), 'all difficulties must use a 9x9 board');
 
 configs.forEach(config => {
   const solution = createSudokuSolution(config);

@@ -2,6 +2,7 @@ import { APP_VERSION } from '../definitions/update-log.js';
 import { GameDB } from '../data/database.js';
 import { CloudSaveService } from '../data/cloud-save-service.js';
 import {
+  canDeviceAutoSave,
   getCloudAutoNotice,
   getDailyAutoRecord,
   getLastCloudUpload,
@@ -60,6 +61,14 @@ export function createCloudSavePanel() {
             <div class="rounded-lg border border-gray-700/60 bg-gray-950/40 px-2.5 py-2">
               <div id="cloud-account-email" class="truncate text-[9px] font-bold text-gray-300"></div>
               <div id="cloud-last-upload" class="mt-0.5 text-[8px] text-gray-500">この端末からの保存履歴はありません</div>
+            </div>
+            <div id="cloud-auto-save-state" role="status" aria-live="polite"
+                 class="flex items-center gap-2 rounded-lg border border-gray-700/60 bg-gray-950/40 px-2.5 py-2">
+              <span id="cloud-auto-save-icon" class="material-symbols-outlined text-base text-gray-500">sync</span>
+              <div class="min-w-0">
+                <div id="cloud-auto-save-label" class="text-[9px] font-black text-gray-400">自動セーブ：確認中</div>
+                <div id="cloud-auto-save-detail" class="mt-0.5 text-[8px] leading-relaxed text-gray-600">セーブ権を確認しています</div>
+              </div>
             </div>
             <div class="grid grid-cols-2 gap-1.5">
               <button id="cloud-upload" type="button"
@@ -132,9 +141,67 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
   const configRequired = panel.querySelector('#cloud-config-required');
   const status = panel.querySelector('#cloud-save-status');
   const badge = panel.querySelector('#cloud-auth-badge');
+  const autoSaveState = panel.querySelector('#cloud-auto-save-state');
+  const autoSaveIcon = panel.querySelector('#cloud-auto-save-icon');
+  const autoSaveLabel = panel.querySelector('#cloud-auto-save-label');
+  const autoSaveDetail = panel.querySelector('#cloud-auto-save-detail');
   let currentUser = null;
   let disposed = false;
   let unsubscribe = null;
+  let ownershipCheckId = 0;
+
+  const setAutoSaveState = (state) => {
+    const states = {
+      checking: {
+        icon: 'sync', label: '自動セーブ：確認中', detail: 'セーブ権を確認しています',
+        box: 'border-gray-700/60 bg-gray-950/40', iconTone: 'text-gray-500', labelTone: 'text-gray-400', detailTone: 'text-gray-600',
+      },
+      enabled: {
+        icon: 'cloud_done', label: '自動セーブ：有効', detail: 'この端末にセーブ権があります',
+        box: 'border-emerald-500/35 bg-emerald-950/30', iconTone: 'text-emerald-400', labelTone: 'text-emerald-300', detailTone: 'text-emerald-500/80',
+      },
+      disabled: {
+        icon: 'cloud_off', label: '自動セーブ：無効', detail: 'この端末にセーブ権はありません',
+        box: 'border-amber-500/30 bg-amber-950/25', iconTone: 'text-amber-400', labelTone: 'text-amber-300', detailTone: 'text-amber-500/80',
+      },
+      unavailable: {
+        icon: 'cloud_off', label: '自動セーブ：無効', detail: 'ログインとメール確認が必要です',
+        box: 'border-gray-700/60 bg-gray-950/40', iconTone: 'text-gray-600', labelTone: 'text-gray-500', detailTone: 'text-gray-600',
+      },
+      unknown: {
+        icon: 'sync_problem', label: '自動セーブ：確認できません', detail: '通信状態を確認してください',
+        box: 'border-rose-500/30 bg-rose-950/25', iconTone: 'text-rose-400', labelTone: 'text-rose-300', detailTone: 'text-rose-500/80',
+      },
+    };
+    const view = states[state] || states.unknown;
+    autoSaveState.className = `flex items-center gap-2 rounded-lg border px-2.5 py-2 ${view.box}`;
+    autoSaveIcon.textContent = view.icon;
+    autoSaveIcon.className = `material-symbols-outlined text-base ${view.iconTone}`;
+    autoSaveLabel.textContent = view.label;
+    autoSaveLabel.className = `text-[9px] font-black ${view.labelTone}`;
+    autoSaveDetail.textContent = view.detail;
+    autoSaveDetail.className = `mt-0.5 text-[8px] leading-relaxed ${view.detailTone}`;
+  };
+
+  const refreshAutoSaveState = async (user = currentUser) => {
+    const checkId = ++ownershipCheckId;
+    if (!user?.emailVerified) {
+      setAutoSaveState('unavailable');
+      return;
+    }
+
+    setAutoSaveState('checking');
+    try {
+      const cloudSave = await CloudSaveService.getMetadata();
+      if (disposed || checkId !== ownershipCheckId || currentUser?.uid !== user.uid) return;
+      setAutoSaveState(canDeviceAutoSave(cloudSave, getLastCloudUpload(user.uid)) ? 'enabled' : 'disabled');
+    } catch (error) {
+      console.warn('[CloudSave] Could not confirm automatic-save ownership.', error);
+      if (!disposed && checkId === ownershipCheckId && currentUser?.uid === user.uid) {
+        setAutoSaveState('unknown');
+      }
+    }
+  };
 
   const updateActionAvailability = () => {
     const dailySaveRunning = getDailyAutoRecord(currentUser?.uid)?.status === 'saving';
@@ -165,6 +232,8 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     configRequired.classList.add('hidden');
 
     if (!user) {
+      ownershipCheckId += 1;
+      setAutoSaveState('unavailable');
       badge.textContent = '未ログイン';
       badge.className = 'text-[8px] font-bold text-gray-500';
       setStatus('登録またはログインするとクラウドセーブを利用できます。');
@@ -183,6 +252,8 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
     const verificationActions = panel.querySelector('#cloud-verification-actions');
     verificationActions.classList.toggle('hidden', !needsVerification);
     verificationActions.classList.toggle('flex', needsVerification);
+    if (needsVerification) setAutoSaveState('unavailable');
+    else refreshAutoSaveState(user);
     updateActionAvailability();
     const dailyRecord = getDailyAutoRecord(user.uid);
     const autoNotice = getCloudAutoNotice(user.uid);
@@ -266,6 +337,8 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       const result = await CloudSaveService.upload(payload, APP_VERSION);
       recordCloudUpload(currentUser.uid, result.savedAt);
       panel.querySelector('#cloud-last-upload').textContent = `この端末の最終同期: ${formatSavedAt(result.savedAt)}`;
+      ownershipCheckId += 1;
+      setAutoSaveState('enabled');
       setStatus(`クラウドへ保存しました。この端末で自動保存が有効です（約${Math.ceil(result.payloadLength / 1024)}KB）。`, 'success');
     });
   });
@@ -290,6 +363,8 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
       recordCloudRestore(currentUser.uid, cloudSave.sourceSavedAt);
       recordCloudUpload(currentUser.uid, cloudSave.savedAt);
       panel.querySelector('#cloud-last-upload').textContent = `この端末の最終同期: ${formatSavedAt(cloudSave.savedAt)}`;
+      ownershipCheckId += 1;
+      setAutoSaveState('enabled');
       setStatus(`${formatSavedAt(cloudSave.sourceSavedAt)} のセーブを復元し、この端末へ自動保存を切り替えました。`, 'success');
       if (onRestored) onRestored(cloudSave);
     });
@@ -320,6 +395,7 @@ export function initCloudSavePanel(root, { onRestored } = {}) {
 
   return () => {
     disposed = true;
+    ownershipCheckId += 1;
     if (unsubscribe) unsubscribe();
     window.removeEventListener('dailyCloudSaveStatus', handleDailyCloudSaveStatus);
   };

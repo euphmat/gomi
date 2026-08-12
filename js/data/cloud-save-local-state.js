@@ -11,6 +11,14 @@ function readJson(key) {
   }
 }
 
+export function canDeviceAutoSave(cloudSave, lastUpload) {
+  return !cloudSave || (
+    typeof lastUpload === 'string'
+    && lastUpload.length > 0
+    && cloudSave.savedAt === lastUpload
+  );
+}
+
 export function getLastCloudUpload(uid) {
   return localStorage.getItem(`${LAST_UPLOAD_KEY_PREFIX}${uid}`);
 }

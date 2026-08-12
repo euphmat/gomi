@@ -19,14 +19,14 @@ import { formatNumber } from '../utils/format.js';
 
 const DIFFICULTIES = {
   easy: {
-    id: 'easy', label: 'EASY', size: 4, boxRows: 2, boxColumns: 2,
-    emptyCells: 8, hints: 3, reward: TOWN_GAME_REWARDS.easy,
-    description: '4×4 ・ はじめてでも安心', icon: 'filter_4', tone: 'emerald',
+    id: 'easy', label: 'EASY', size: 9, boxRows: 3, boxColumns: 3,
+    emptyCells: 35, hints: 3, reward: TOWN_GAME_REWARDS.easy,
+    description: '9×9 ・ はじめてでも安心', icon: 'grid_3x3', tone: 'emerald',
   },
   normal: {
-    id: 'normal', label: 'NORMAL', size: 6, boxRows: 2, boxColumns: 3,
-    emptyCells: 20, hints: 2, reward: TOWN_GAME_REWARDS.normal,
-    description: '6×6 ・ ほどよく考える', icon: 'view_module', tone: 'sky',
+    id: 'normal', label: 'NORMAL', size: 9, boxRows: 3, boxColumns: 3,
+    emptyCells: 40, hints: 2, reward: TOWN_GAME_REWARDS.normal,
+    description: '9×9 ・ ほどよく考える', icon: 'grid_3x3', tone: 'sky',
   },
   hard: {
     id: 'hard', label: 'HARD', size: 9, boxRows: 3, boxColumns: 3,
