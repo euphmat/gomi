@@ -18,7 +18,7 @@ import { MEDAL_RANKS } from '../definitions/medal-definitions.js';
 import { TREASURES, TREASURE_STATE_KEY } from '../definitions/treasures.js';
 import { JOBS } from '../jobs/index.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
-import { getMemoryLevel, MEMORY_PROGRESS_STATE_KEY } from './memory-game-progression.js';
+import { loadMemoryRecord } from './memory-game-record.js';
 import { formatNumber } from '../utils/format.js';
 
 const STATE_KEY = 'quest_special_progress';
@@ -45,9 +45,8 @@ const CHANGED_JOB_TARGETS = [3, 5, 10, 15, 20, 25];
 const TACKLE_UPGRADE_TARGETS = [3, 6, 12, 21, 30, 42];
 const MEMORY_GAME_TARGETS = [1, 10, 50, 100, 500, 1000];
 const MEMORY_WIN_TARGETS = [1, 10, 50, 100, 500];
-const MEMORY_LEVEL_TARGETS = [5, 10, 20, 30];
-const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21];
-const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 200, 300, 350];
+const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21, 24];
+const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 200, 300, 350, 366];
 const LEGACY_TREASURE_LEVEL_QUEST_MIGRATIONS = {
   treasure_levels_250: 'treasure_levels_200',
   treasure_levels_500: 'treasure_levels_300',
@@ -189,8 +188,6 @@ export const SPECIAL_QUESTS = [
     metricQuestOptions('memory', '神経衰弱プレイ ', '回', '神経衰弱を', '回プレイする', 'neurology', '/memory-game', '神経衰弱へ')),
   ...makeMetricMilestoneQuests('memory_wins', 'memoryWins', MEMORY_WIN_TARGETS,
     metricQuestOptions('memory', '神経衰弱勝利 ', '回', '神経衰弱で', '回勝利する', 'emoji_events', '/memory-game', '神経衰弱へ')),
-  ...makeMetricMilestoneQuests('memory_level', 'memoryLevel', MEMORY_LEVEL_TARGETS,
-    metricQuestOptions('memory', '神経衰弱 Lv.', '', '神経衰弱レベルをLv.', 'まで上げる', 'psychology', '/memory-game', '神経衰弱へ')),
   ...makeMetricMilestoneQuests('treasure_kinds', 'treasureKinds', TREASURE_KIND_TARGETS,
     metricQuestOptions('treasure', '秘宝収集 ', '種類', '異なる秘宝を', '種類獲得する', 'deployed_code', '/shop?tab=gacha', 'ガチャへ')),
   ...makeMetricMilestoneQuests('treasure_levels', 'treasureLevels', TREASURE_LEVEL_TARGETS,
@@ -253,7 +250,7 @@ export function calculateExtendedSpecialQuestMetrics({
   completedDungeonFloors = {},
   ranchData = {},
   characters = [],
-  memoryProgress = {},
+  memoryRecord = {},
   treasureLevels = {},
 } = {}) {
   const validMonsterIds = new Set(MONSTERS.map(monster => monster.id));
@@ -320,9 +317,8 @@ export function calculateExtendedSpecialQuestMetrics({
     companionLevel,
     jobLevel,
     tackleUpgrades,
-    memoryGames: nonNegativeInteger(memoryProgress?.gamesPlayed),
-    memoryWins: nonNegativeInteger(memoryProgress?.wins),
-    memoryLevel: getMemoryLevel(memoryProgress?.xp),
+    memoryGames: nonNegativeInteger(memoryRecord?.gamesPlayed),
+    memoryWins: nonNegativeInteger(memoryRecord?.wins),
     treasureKinds: normalizedTreasureLevels.filter(level => level > 0).length,
     treasureLevels: normalizedTreasureLevels.reduce((total, level) => total + level, 0),
   };
@@ -361,6 +357,8 @@ class SpecialQuestManagerClass {
       };
     }
 
+    const obsoleteMemoryLevelProgress = Object.keys(saved).some(id => id.startsWith('memory_level_'));
+
     let migratedTreasureProgress = false;
     for (const [legacyId, currentId] of Object.entries(LEGACY_TREASURE_LEVEL_QUEST_MIGRATIONS)) {
       const legacyState = saved[legacyId];
@@ -373,7 +371,7 @@ class SpecialQuestManagerClass {
     // Older saves used the same key for this first quest, so its claimed state
     // is retained by the generic migration above.
     await this.refreshAchievements();
-    if (migratedTreasureProgress) await this.save();
+    if (migratedTreasureProgress || obsoleteMemoryLevelProgress) await this.save();
 
     if (!this.listenersReady) {
       window.addEventListener('quest:mine-unlock', () => this.completeMineFirstUnlock());
@@ -397,7 +395,7 @@ class SpecialQuestManagerClass {
       characters,
       completedDungeonFloorsValue,
       ranchDataValue,
-      memoryProgressValue,
+      memoryRecordValue,
       treasureLevelsValue,
     ] = await Promise.all([
       GameDB.getGameState('mine_data'),
@@ -414,7 +412,7 @@ class SpecialQuestManagerClass {
       GameDB.getAllCharacters(),
       GameDB.getGameState('completed_dungeon_floors'),
       GameDB.getGameState('ranch_data'),
-      GameDB.getGameState(MEMORY_PROGRESS_STATE_KEY),
+      loadMemoryRecord(true),
       GameDB.getGameState(TREASURE_STATE_KEY),
     ]);
 
@@ -507,7 +505,7 @@ class SpecialQuestManagerClass {
       completedDungeonFloors: completedDungeonFloorsValue,
       ranchData: ranchDataValue,
       characters,
-      memoryProgress: memoryProgressValue,
+      memoryRecord: memoryRecordValue,
       treasureLevels: treasureLevelsValue,
     });
 

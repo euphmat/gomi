@@ -30,6 +30,9 @@ export const TREASURES = [
   { id: 'clairvoyant_crystal', name: '千里眼の水晶', effect: 'memoryClairvoyancePercent', perLevel: 10, maxLevel: 5, display: v => `神経衰弱でペアを外すと、めくった各カードを${v}%の確率で透視` },
   { id: 'forgetting_hourglass', name: '忘却の砂時計', effect: 'memoryCpuForgetPercent', perLevel: 5, maxLevel: 10, display: v => `神経衰弱のCPU記憶力を${v}%低下` },
   { id: 'resonance_compass', name: '共鳴の羅針盤', effect: 'memoryHintPercent', perLevel: 5, maxLevel: 10, display: v => `神経衰弱で1枚目をめくると${v}%の確率でペアが光る` },
+  { id: 'royal_forging_seal', name: '王立鋳造印', effect: 'medalCraftDiscountPercent', perLevel: 2, maxLevel: 10, display: v => `メダル鋳造・強化に必要な素材とGoldが ${v}%減少` },
+  { id: 'number_sage_quill', name: '数聖の羽根筆', effect: 'sudokuHintBonus', perLevel: 1, maxLevel: 2, display: v => `数独の開始時ヒントが +${v}回` },
+  { id: 'prospector_canary', name: '探鉱師のカナリア', effect: 'minesweeperMineGuardPercent', perLevel: 5, maxLevel: 4, display: v => `マインスイーパーで1プレイに1度、地雷を${v}%の確率で無効化` },
 ].map(treasure => ({
   ...treasure,
   image: `./assets/treasure/${treasure.id}.webp`,

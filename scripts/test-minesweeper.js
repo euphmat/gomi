@@ -4,8 +4,10 @@ import {
   getMinefieldNeighbors,
   isMinefieldCleared,
   revealMinefieldCells,
+  rollMineGuard,
   solveMinefieldLogically,
 } from '../js/data/minesweeper-engine.js';
+import { readFileSync } from 'node:fs';
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -40,6 +42,10 @@ assert(revealed.size === 8 && !revealed.has(8), 'blank-cell flood reveal failed'
 assert(isMinefieldCleared(emptyBoard, revealed), 'cleared board was not recognized');
 const blockedReveal = revealMinefieldCells(emptyBoard, new Set(), 0, emptyConfig, new Set([1]));
 assert(!blockedReveal.has(1), 'flagged cell was opened by flood reveal');
+assert(rollMineGuard(20, false, () => 0.1999), 'the canary should trigger below its chance');
+assert(!rollMineGuard(20, false, () => 0.2), 'the canary chance boundary is incorrect');
+assert(!rollMineGuard(100, true, () => 0), 'the canary must not trigger twice in one game');
+assert(!rollMineGuard(0, false, () => 0), 'an unowned canary must not trigger');
 
 configs.forEach(config => {
   const safeIndex = Math.floor((config.rows * config.columns) / 2);
@@ -47,5 +53,9 @@ configs.forEach(config => {
   assert(generated, `${config.rows}x${config.columns} no-guess board could not be generated`);
   assert(solveMinefieldLogically(generated.board, safeIndex, config).solved, 'generated board requires guessing');
 });
+
+const minesweeperPageSource = readFileSync(new URL('../js/pages/minesweeper.js', import.meta.url), 'utf8');
+assert(minesweeperPageSource.includes("getTreasureEffect('minesweeperMineGuardPercent')"), 'the Prospector canary is not applied');
+assert(minesweeperPageSource.includes('game.flags.add(index)'), 'a guarded mine is not automatically flagged');
 
 console.log('Minesweeper engine tests passed.');

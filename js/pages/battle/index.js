@@ -30,6 +30,7 @@ import {
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
+import { getMedalCraftGoldCost, getMedalCraftMaterialCost } from '../../utils/medal-craft-cost.js';
 import { selectAutoBattleAction } from './auto-battle-ai.js';
 import { getJobGaugeSkillUseState } from './job-gauge-system.js';
 
@@ -985,9 +986,10 @@ class BattleManager {
       const currentRankIndex = this.playerMedals[monsterId] !== undefined ? this.playerMedals[monsterId] : -1;
       const isMaxRank = currentRankIndex >= MEDAL_RANKS.length - 1;
       const nextRank = !isMaxRank ? MEDAL_RANKS[currentRankIndex + 1] : null;
-      const goldCost = nextRank ? (monster.rewards?.gold || 0) * nextRank.goldMultiplier : 0;
+      const goldCost = nextRank ? getMedalCraftGoldCost(monster, nextRank) : 0;
+      const materialCost = nextRank ? getMedalCraftMaterialCost(nextRank) : 0;
       const hasMaterials = nextRank && (monster.drops || []).every(
-        drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
+        drop => (inventoryMap[drop.itemId] || 0) >= materialCost
       );
       const canAcquireOrUpgrade = Boolean(nextRank && hasMaterials && gold >= goldCost);
 

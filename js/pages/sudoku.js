@@ -13,6 +13,12 @@ import {
   getLocalDateKey,
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
+import {
+  TOWN_GAME_PROGRESS_KEYS,
+  createSudokuProgressSnapshot,
+  restoreSudokuProgress,
+} from '../data/town-game-progress.js';
+import { getTreasureEffect } from '../data/treasure-manager.js';
 import { formatNumber } from '../utils/format.js';
 
 const GAME_ID = 'sudoku';
@@ -71,15 +77,15 @@ const formatTime = totalSeconds => {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
-function difficultyCard(config, claimed) {
+function difficultyCard(config, claimed, hasProgress = false) {
   return `
     <button data-difficulty="${config.id}"
             class="flex min-h-[88px] items-center gap-3 rounded-2xl border bg-gradient-to-br p-3 text-left shadow-lg active:scale-[.98] ${TONE_CLASSES[config.tone]}">
-      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/25"><span class="material-symbols-outlined text-2xl">${claimed ? 'check_circle' : config.icon}</span></span>
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/25"><span class="material-symbols-outlined text-2xl">${hasProgress ? 'resume' : claimed ? 'check_circle' : config.icon}</span></span>
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-black tracking-[.16em] text-white">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.description}</span>
-        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${claimed ? 'task_alt' : 'diamond'}</span>${claimed ? '本日の報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${hasProgress ? 'text-cyan-200' : claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${hasProgress ? 'history' : claimed ? 'task_alt' : 'diamond'}</span>${hasProgress ? '進行中の盤面から再開' : claimed ? '本日の報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
       </span>
       <span class="material-symbols-outlined text-white/45">chevron_right</span>
     </button>
@@ -97,6 +103,28 @@ export function renderSudokuPage() {
   let claimedDifficulties = new Set();
   let timerId = 0;
   let startingGame = false;
+  let savedProgress = null;
+  let lastProgressSaveAt = 0;
+  let progressWritePromise = Promise.resolve();
+
+  const persistProgress = () => {
+    if (!game || game.completed) return progressWritePromise;
+    const now = Date.now();
+    const snapshot = createSudokuProgressSnapshot(game, now);
+    lastProgressSaveAt = now;
+    progressWritePromise = GameDB.setGameState(TOWN_GAME_PROGRESS_KEYS.sudoku, snapshot).catch(error => {
+      console.error('[Sudoku] Failed to save in-progress game.', error);
+    });
+    return progressWritePromise;
+  };
+
+  const clearProgress = () => {
+    savedProgress = null;
+    progressWritePromise = GameDB.setGameState(TOWN_GAME_PROGRESS_KEYS.sudoku, null).catch(error => {
+      console.error('[Sudoku] Failed to clear in-progress game.', error);
+    });
+    return progressWritePromise;
+  };
 
   const stopTimer = () => {
     if (timerId) window.clearInterval(timerId);
@@ -122,24 +150,33 @@ export function renderSudokuPage() {
       </div>`;
   };
 
-  const renderSelect = async () => {
+  const renderSelect = async (resumeSaved = false) => {
     stopTimer();
     game = null;
     const currentRenderId = ++renderId;
     container.innerHTML = `${pageStyles()}<div class="flex min-h-[320px] items-center justify-center text-xs font-black text-slate-500"><span class="animate-pulse">本日の報酬状況を確認中…</span></div>`;
     try {
       const dateKey = getLocalDateKey();
-      const states = await Promise.all(Object.values(DIFFICULTIES).map(async config => ({
-        id: config.id,
-        claimed: (await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, config.id))) === dateKey,
-      })));
+      const [states, snapshot] = await Promise.all([
+        Promise.all(Object.values(DIFFICULTIES).map(async config => ({
+          id: config.id,
+          claimed: (await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, config.id))) === dateKey,
+        }))),
+        GameDB.getGameState(TOWN_GAME_PROGRESS_KEYS.sudoku),
+      ]);
       claimedDifficulties = new Set(states.filter(state => state.claimed).map(state => state.id));
+      savedProgress = restoreSudokuProgress(snapshot, DIFFICULTIES);
+      if (snapshot && !savedProgress) void clearProgress();
     } catch (error) {
       console.error('[Sudoku] Failed to load daily rewards.', error);
       if (!disposed && currentRenderId === renderId) renderLoadError();
       return;
     }
     if (disposed || currentRenderId !== renderId) return;
+    if (resumeSaved && savedProgress) {
+      await startGame(savedProgress.config.id, savedProgress);
+      return;
+    }
 
     container.innerHTML = `
       ${pageStyles()}
@@ -157,7 +194,7 @@ export function renderSudokuPage() {
           <div class="mt-1.5 border-t border-cyan-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬は数独専用です。各難易度で1日1回受け取れ、受取後も何度でも遊べます。</div>
         </section>
 
-        <div class="grid gap-2" aria-label="数独の難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id))).join('')}</div>
+        <div class="grid gap-2" aria-label="数独の難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id), savedProgress?.config.id === config.id)).join('')}</div>
       </div>`;
   };
 
@@ -241,6 +278,7 @@ export function renderSudokuPage() {
     const elapsed = Math.floor((Date.now() - game.startedAt) / 1000);
     const display = container.querySelector('[data-timer]');
     if (display) display.textContent = formatTime(elapsed);
+    if (Date.now() - lastProgressSaveAt >= 5000) void persistProgress();
   };
 
   const claimReward = async () => {
@@ -276,6 +314,7 @@ export function renderSudokuPage() {
     game.completed = true;
     stopTimer();
     const elapsedSeconds = Math.floor((Date.now() - game.startedAt) / 1000);
+    await clearProgress();
     let rewardStatus = 'failed';
     try {
       const result = await claimReward();
@@ -296,6 +335,7 @@ export function renderSudokuPage() {
       game.showErrors = true;
       setStatus('赤いマスを見直してください', 'rose');
       updateBoard();
+      void persistProgress();
     }
   };
 
@@ -317,6 +357,7 @@ export function renderSudokuPage() {
       game.notes[index] = toggleSudokuNote(game.notes[index], value);
       updateBoard();
       setStatus(game.notes[index].has(value) ? `仮数字 ${value} を追加しました` : `仮数字 ${value} を外しました`);
+      void persistProgress();
       return;
     }
     const hadValue = Boolean(game.values[index]);
@@ -329,6 +370,7 @@ export function renderSudokuPage() {
     updateBoard();
     if (findSudokuConflicts(game.values, game.config).size) setStatus('同じ列・行・ブロックに重複があります', 'rose');
     else setStatus(value ? '数字を入力しました' : hadValue ? '数字を消しました' : hadNotes ? '仮数字をすべて消しました' : '選択マスを消去しました');
+    void persistProgress();
     checkCompletion();
   };
 
@@ -350,10 +392,11 @@ export function renderSudokuPage() {
     }
     setStatus('ヒントで正しい数字を1つ埋めました', 'emerald');
     updateBoard();
+    void persistProgress();
     checkCompletion();
   };
 
-  const startGame = async difficultyId => {
+  const startGame = async (difficultyId, restoredGame = null) => {
     const config = DIFFICULTIES[difficultyId];
     if (!config || startingGame) return;
     startingGame = true;
@@ -371,22 +414,29 @@ export function renderSudokuPage() {
     }
     if (disposed) return;
 
-    const generated = createSudokuPuzzle(config, config.emptyCells);
-    game = {
-      config,
-      puzzle: generated.puzzle,
-      solution: generated.solution,
-      values: [...generated.puzzle],
-      notes: Array.from({ length: generated.puzzle.length }, () => new Set()),
-      inputMode: 'number',
-      selectedIndex: generated.puzzle.findIndex(value => !value),
-      hintsRemaining: config.hints,
-      startedAt: Date.now(),
-      completed: false,
-      rewardClaimed: false,
-      questPlayRecorded: false,
-      showErrors: false,
-    };
+    const treasureHintBonus = getTreasureEffect('sudokuHintBonus');
+    const isResuming = restoredGame?.config.id === difficultyId;
+    if (isResuming) {
+      game = restoredGame;
+    } else {
+      const generated = createSudokuPuzzle(config, config.emptyCells);
+      game = {
+        config,
+        puzzle: generated.puzzle,
+        solution: generated.solution,
+        values: [...generated.puzzle],
+        notes: Array.from({ length: generated.puzzle.length }, () => new Set()),
+        inputMode: 'number',
+        selectedIndex: generated.puzzle.findIndex(value => !value),
+        hintsRemaining: config.hints + treasureHintBonus,
+        startedAt: Date.now(),
+        completed: false,
+        rewardClaimed: false,
+        questPlayRecorded: false,
+        showErrors: false,
+      };
+    }
+    savedProgress = game;
 
     container.innerHTML = `
       ${pageStyles()}
@@ -396,10 +446,11 @@ export function renderSudokuPage() {
           <button data-select class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="難易度選択へ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
           <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-500/15"><span class="material-symbols-outlined text-cyan-200">grid_on</span></span>
           <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-cyan-300">${config.label}</div><div class="truncate text-xs font-black">${config.size}×${config.size} 数独</div></div>
-          <div class="flex items-center gap-2 text-[9px]"><span class="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-mono"><span class="material-symbols-outlined text-[13px]">timer</span><span data-timer>00:00</span></span><span class="flex items-center gap-0.5 rounded-lg border border-fuchsia-300/25 bg-fuchsia-500/10 px-2 py-1 font-black text-fuchsia-200"><span class="material-symbols-outlined text-[13px]">diamond</span>${config.reward}</span></div>
+          <div class="flex items-center gap-2 text-[9px]"><span class="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-mono"><span class="material-symbols-outlined text-[13px]">timer</span><span data-timer>${formatTime((Date.now() - game.startedAt) / 1000)}</span></span><span class="flex items-center gap-0.5 rounded-lg border border-fuchsia-300/25 bg-fuchsia-500/10 px-2 py-1 font-black text-fuchsia-200"><span class="material-symbols-outlined text-[13px]">diamond</span>${config.reward}</span></div>
         </header>
 
         <section class="mb-2 grid grid-cols-[1fr_auto] items-center gap-2 rounded-xl border border-white/10 bg-slate-950/65 px-3 py-2 text-[9px] text-slate-400"><span data-candidates>空いているマスを選んでください</span><span class="font-mono"><span data-filled>${game.values.filter(Boolean).length} / ${game.values.length}</span> マス</span></section>
+        ${treasureHintBonus ? `<div class="mb-2 flex items-center justify-center gap-1 rounded-xl border border-cyan-300/20 bg-cyan-950/25 px-3 py-1.5 text-[9px] font-black text-cyan-100"><span class="material-symbols-outlined text-sm">ink_pen</span>数聖の羽根筆：開始ヒント +${treasureHintBonus}</div>` : ''}
         <div data-status class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-cyan-300/20 bg-cyan-950/25 px-3 text-center text-[10px] font-black text-cyan-100" role="status" aria-live="polite">空いているマスを選び、数字を入力してください</div>
 
         <section class="sudoku-board mx-auto aspect-square w-full" style="grid-template-columns:repeat(${config.size},minmax(0,1fr));max-width:${config.size <= 4 ? '340px' : config.size <= 6 ? '400px' : '460px'}" aria-label="${config.size}かける${config.size}の数独盤面">
@@ -415,24 +466,28 @@ export function renderSudokuPage() {
         </div>
         <div class="mx-auto mt-2 grid grid-cols-2 gap-2" style="max-width:${config.size <= 4 ? '340px' : config.size <= 6 ? '400px' : '460px'}">
           <button data-erase class="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 py-2 text-[10px] font-black text-slate-300"><span class="material-symbols-outlined text-base">backspace</span>消す</button>
-          <button data-hint ${config.hints ? '' : 'disabled'} class="flex items-center justify-center gap-1 rounded-xl border border-amber-300/25 bg-amber-500/10 py-2 text-[10px] font-black text-amber-100 disabled:opacity-35"><span class="material-symbols-outlined text-base">auto_awesome</span>ヒント ${config.hints}</button>
+          <button data-hint ${game.hintsRemaining ? '' : 'disabled'} class="flex items-center justify-center gap-1 rounded-xl border border-amber-300/25 bg-amber-500/10 py-2 text-[10px] font-black text-amber-100 disabled:opacity-35"><span class="material-symbols-outlined text-base">auto_awesome</span>ヒント ${game.hintsRemaining}</button>
         </div>
       </div>`;
     updateBoard();
     updateInputMode();
+    if (isResuming) setStatus('保存した盤面から再開しました', 'emerald');
     stopTimer();
+    void persistProgress();
     timerId = window.setInterval(updateTimer, 1000);
   };
 
   container.addEventListener('click', async event => {
     if (event.target.closest('[data-home]')) {
+      await persistProgress();
       window.location.hash = '/status';
       return;
     }
     const difficulty = event.target.closest('[data-difficulty]');
     if (difficulty) {
       difficulty.disabled = true;
-      await startGame(difficulty.dataset.difficulty);
+      const progress = savedProgress?.config.id === difficulty.dataset.difficulty ? savedProgress : null;
+      await startGame(difficulty.dataset.difficulty, progress);
       if (difficulty.isConnected && !game) difficulty.disabled = false;
       return;
     }
@@ -444,6 +499,7 @@ export function renderSudokuPage() {
     if (cell && game && !game.completed) {
       game.selectedIndex = Number(cell.dataset.cellIndex);
       updateBoard();
+      void persistProgress();
       return;
     }
     const numberButton = event.target.closest('[data-number]');
@@ -457,6 +513,7 @@ export function renderSudokuPage() {
       updateInputMode();
       updateBoard();
       setStatus(game.inputMode === 'note' ? '仮数字モード：候補を複数記録できます' : '確定数字モードに切り替えました');
+      void persistProgress();
       return;
     }
     if (event.target.closest('[data-erase]')) {
@@ -469,7 +526,8 @@ export function renderSudokuPage() {
     }
     if (event.target.closest('[data-select]')) {
       container.querySelector('[data-result]')?.remove();
-      renderSelect();
+      await persistProgress();
+      renderSelect(false);
       return;
     }
     const claimButton = event.target.closest('[data-claim-reward]');
@@ -489,12 +547,23 @@ export function renderSudokuPage() {
     }
   });
 
+  const handleVisibilityChange = () => {
+    if (document.hidden) void persistProgress();
+  };
+  const handlePageHide = () => { void persistProgress(); };
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide);
+
   container.cleanup = () => {
+    const savePromise = persistProgress();
     disposed = true;
     stopTimer();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pagehide', handlePageHide);
     container.querySelector('[data-result]')?.remove();
+    return savePromise;
   };
 
-  renderSelect();
+  renderSelect(true);
   return container;
 }

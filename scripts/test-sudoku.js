@@ -13,6 +13,7 @@ import {
   getLocalDateKey,
   getTownGameRewardStateKey,
 } from '../js/data/town-game-rewards.js';
+import { readFileSync } from 'node:fs';
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
@@ -72,5 +73,9 @@ const noteGrid = Array.from({ length: 81 }, () => new Set([5]));
 const clearedNotes = clearSudokuPeerNotes(noteGrid, 0, 5, noteRules);
 assert(!clearedNotes[1].has(5) && !clearedNotes[9].has(5) && !clearedNotes[10].has(5), 'peer provisional numbers were not cleared');
 assert(clearedNotes[40].has(5), 'an unrelated provisional number was cleared');
+
+const sudokuPageSource = readFileSync(new URL('../js/pages/sudoku.js', import.meta.url), 'utf8');
+assert(sudokuPageSource.includes("getTreasureEffect('sudokuHintBonus')"), 'the Number Sage quill is not applied');
+assert(sudokuPageSource.includes('hintsRemaining: config.hints + treasureHintBonus'), 'treasure hints are not added at game start');
 
 console.log('Sudoku engine tests passed.');

@@ -10,7 +10,7 @@ import { GameDB } from '../js/data/database.js';
 
 const ids = SPECIAL_QUESTS.map(quest => quest.id);
 assert.equal(new Set(ids).size, ids.length, 'Special achievement ids must be unique.');
-assert.equal(SPECIAL_QUESTS.length, 227, 'The complete special achievement catalog changed unexpectedly.');
+assert.equal(SPECIAL_QUESTS.length, 225, 'The complete special achievement catalog changed unexpectedly.');
 
 for (const quest of SPECIAL_QUESTS) {
   assert.ok(quest.id && quest.category && quest.title && quest.description && quest.icon, `Invalid achievement: ${quest.id}`);
@@ -64,7 +64,7 @@ const metrics = calculateExtendedSpecialQuestMetrics({
     jobLevel: 9,
     jobLevels: { knight: { level: 20 }, mage: { level: 12 } },
   }],
-  memoryProgress: { xp: 500, gamesPlayed: 42, wins: 17 },
+  memoryRecord: { gamesPlayed: 42, wins: 17 },
   treasureLevels: { pocket_watch: 3, hero_medal: 7, invalid_treasure: 999 },
 });
 
@@ -80,7 +80,6 @@ assert.equal(metrics.jobLevel, 20);
 assert.equal(metrics.tackleUpgrades, 6);
 assert.equal(metrics.memoryGames, 42);
 assert.equal(metrics.memoryWins, 17);
-assert.ok(metrics.memoryLevel > 1);
 assert.equal(metrics.treasureKinds, 2);
 assert.equal(metrics.treasureLevels, 10);
 const cappedTreasureMetrics = calculateExtendedSpecialQuestMetrics({
@@ -107,10 +106,11 @@ const state = new Map([
   ['job_change_history', ['knight']],
   ['completed_dungeon_floors', { [secondDungeon.id]: [1, 2] }],
   ['ranch_data', { [firstDungeon.id]: { [monsterA.id]: { fedMaterials: 100 } } }],
-  ['memoryGameProgress', { xp: 500, gamesPlayed: 42, wins: 17 }],
+  ['memoryGameProgress', { gamesPlayed: 42, wins: 17, draws: 4, losses: 21 }],
   ['treasure_levels', { pocket_watch: 3, hero_medal: 7 }],
   ['quest_special_progress', {
     monster_30: { completed: true, claimed: true },
+    memory_level_10: { completed: true, claimed: true },
     treasure_levels_500: { completed: true, claimed: true },
   }],
 ]);
@@ -136,6 +136,7 @@ assert.equal(SpecialQuestManager.getState('medal_rank_stela_1').completed, true)
 assert.equal(SpecialQuestManager.getState('monster_30').claimed, true, 'Existing claimed achievements must survive catalog migration.');
 assert.equal(SpecialQuestManager.getState('treasure_levels_300').claimed, true, 'Legacy treasure-level rewards must migrate to reachable targets.');
 assert.equal(state.get('quest_special_progress').treasure_levels_300.claimed, true, 'Migrated treasure progress must be persisted.');
+assert.equal(state.get('quest_special_progress').memory_level_10, undefined, 'Removed memory-level progress must be deleted.');
 assert.ok(state.get('quest_special_progress').total_kills_100, 'New achievement state should be persisted.');
 
 for (const category of ['all', 'battle', 'fish', 'medal']) {

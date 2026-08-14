@@ -17,6 +17,12 @@ const shuffled = (items, random = Math.random) => {
   return result;
 };
 
+export function rollMineGuard(percent, alreadyUsed = false, random = Math.random) {
+  if (alreadyUsed) return false;
+  const chance = Math.max(0, Math.min(100, Number(percent) || 0)) / 100;
+  return chance > 0 && random() < chance;
+}
+
 export function getMinefieldNeighbors(cellIndex, config) {
   const { rows, columns } = config;
   const row = Math.floor(cellIndex / columns);

@@ -6,6 +6,7 @@ import { DUNGEONS } from '../../definitions/dungeons.js';
 import { SPECIAL_DUNGEONS } from '../../definitions/special_dungeons.js';
 import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { formatNumber } from '../../utils/format.js';
+import { getMedalCraftGoldCost, getMedalCraftMaterialCost } from '../../utils/medal-craft-cost.js';
 
 /**
  * メダル鋳造タブ
@@ -143,13 +144,14 @@ export function renderMedalTab() {
     if (nextRankIndex >= MEDAL_RANKS.length) return;
     const nextRank = MEDAL_RANKS[nextRankIndex];
     
-    const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
+    const goldCost = getMedalCraftGoldCost(monster, nextRank);
+    const materialCost = getMedalCraftMaterialCost(nextRank);
     const materialDrops = monster.drops || [];
     
     let canCraft = true;
     materialDrops.forEach(drop => {
       const owned = inventoryMap[drop.itemId] || 0;
-      const required = nextRank.materialQty;
+      const required = materialCost;
       const sufficient = owned >= required;
       if (!sufficient) canCraft = false;
       
@@ -193,9 +195,10 @@ export function renderMedalTab() {
     const currentRankIndex = playerMedals[monster.id] !== undefined ? playerMedals[monster.id] : -1;
     const isMaxRank = currentRankIndex >= MEDAL_RANKS.length - 1;
     const nextRank = !isMaxRank ? MEDAL_RANKS[currentRankIndex + 1] : null;
-    const goldCost = nextRank ? (monster.rewards?.gold || 0) * nextRank.goldMultiplier : 0;
+    const goldCost = nextRank ? getMedalCraftGoldCost(monster, nextRank) : 0;
+    const materialCost = nextRank ? getMedalCraftMaterialCost(nextRank) : 0;
     const hasMaterials = nextRank && (monster.drops || []).every(
-      drop => (inventoryMap[drop.itemId] || 0) >= nextRank.materialQty
+      drop => (inventoryMap[drop.itemId] || 0) >= materialCost
     );
     const canCraft = Boolean(nextRank && hasMaterials && currentGold >= goldCost);
 
@@ -358,7 +361,8 @@ export function renderMedalTab() {
           craftSection.className = 'border-t border-slate-700/60 pt-2 flex flex-col gap-1.5 h-[134px]';
 
           const actionLabel = currentRank ? 'ランクアップ' : '鋳造';
-          const goldCost = monster.rewards.gold * nextRank.goldMultiplier;
+          const goldCost = getMedalCraftGoldCost(monster, nextRank);
+          const materialCost = getMedalCraftMaterialCost(nextRank);
           const materialDrops = monster.drops || [];
 
           // 必要素材チェック
@@ -366,7 +370,7 @@ export function renderMedalTab() {
           const materialRequirements = materialDrops.map(drop => {
             const mat = MATERIALS.find(m => m.id === drop.itemId);
             const owned = inventoryMap[drop.itemId] || 0;
-            const required = nextRank.materialQty;
+            const required = materialCost;
             const sufficient = owned >= required;
             if (!sufficient) canCraft = false;
             return { mat, itemId: drop.itemId, owned, required, sufficient };
@@ -454,20 +458,20 @@ export function renderMedalTab() {
             // 再チェック
             if (currentGold < goldCost) return;
             for (const drop of materialDrops) {
-              if ((inventoryMap[drop.itemId] || 0) < nextRank.materialQty) return;
+              if ((inventoryMap[drop.itemId] || 0) < materialCost) return;
             }
 
             // 素材消費
             for (const drop of materialDrops) {
               const invItem = await GameDB.getInventoryItem(drop.itemId);
               if (invItem) {
-                invItem.quantity -= nextRank.materialQty;
+                invItem.quantity -= materialCost;
                 if (invItem.quantity <= 0) {
                   await GameDB.deleteInventoryItem(drop.itemId);
                 } else {
                   await GameDB.putInventoryItem(invItem);
                 }
-                inventoryMap[drop.itemId] = Math.max(0, (inventoryMap[drop.itemId] || 0) - nextRank.materialQty);
+                inventoryMap[drop.itemId] = Math.max(0, (inventoryMap[drop.itemId] || 0) - materialCost);
               }
             }
 

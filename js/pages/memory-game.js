@@ -14,12 +14,9 @@ import {
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
 import {
-  MEMORY_MAX_LEVEL,
-  getMemoryLevel,
-  getMemoryLevelStartXp,
-  loadMemoryProgress,
+  loadMemoryRecord,
   recordMemoryGameResult,
-} from '../data/memory-game-progression.js';
+} from '../data/memory-game-record.js';
 
 const PLAYABLE_FISH = FISH.filter(fish => fish.id !== 'zeus_cetus');
 const CARD_PALETTE_CACHE = new Map();
@@ -257,27 +254,14 @@ function difficultyCard(config, cleared) {
   `;
 }
 
-function getMemoryLevelView(progress) {
-  const level = getMemoryLevel(progress.xp);
-  const levelStart = getMemoryLevelStartXp(level);
-  const levelEnd = level >= MEMORY_MAX_LEVEL ? levelStart : getMemoryLevelStartXp(level + 1);
-  const current = level >= MEMORY_MAX_LEVEL ? levelStart : progress.xp;
-  const percent = level >= MEMORY_MAX_LEVEL
-    ? 100
-    : Math.max(0, Math.min(100, ((current - levelStart) / (levelEnd - levelStart)) * 100));
-  return { level, levelStart, levelEnd, current, percent };
-}
-
-function memoryLevelPanel(progress) {
-  const view = getMemoryLevelView(progress);
+function memoryRecordPanel(record) {
   return `
-    <section class="mb-3 rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-cyan-950/35 via-slate-950/80 to-violet-950/35 p-3 shadow-lg">
+    <section class="mb-3 rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-cyan-950/35 via-slate-950/80 to-violet-950/35 p-3 shadow-lg" aria-label="神経衰弱の対戦記録">
       <div class="flex items-center gap-3">
         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-500/10"><span class="material-symbols-outlined text-2xl text-cyan-200">neurology</span></span>
         <div class="min-w-0 flex-1">
-          <div class="text-sm font-black text-white">神経衰弱 LV.${view.level}</div>
-          <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-800"><div class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400" style="width:${view.percent}%"></div></div>
-          <div class="mt-1 flex justify-between text-[8px] text-slate-400"><span>${progress.gamesPlayed}戦 ${progress.wins}勝</span><span>${view.level >= MEMORY_MAX_LEVEL ? 'MAX' : `${view.current - view.levelStart} / ${view.levelEnd - view.levelStart} EXP`}</span></div>
+          <div class="text-[9px] font-black tracking-[.18em] text-cyan-200">対戦記録</div>
+          <div class="mt-1 text-sm font-black text-white">${record.gamesPlayed}戦 ${record.wins}勝 ${record.draws}分 ${record.losses}敗</div>
         </div>
       </div>
     </section>
@@ -293,7 +277,7 @@ export function renderMemoryGamePage() {
   let disposed = false;
   let selectRenderId = 0;
   let dailyWins = new Set();
-  let memoryProgress = null;
+  let memoryRecord = null;
   let startingGame = false;
   const timers = new Set();
 
@@ -337,15 +321,15 @@ export function renderMemoryGamePage() {
 
     const dateKey = getLocalDateKey();
     try {
-      const [states, progress] = await Promise.all([
+      const [states, record] = await Promise.all([
         Promise.all(Object.values(DIFFICULTIES).map(async config => ({
           id: config.id,
           cleared: (await GameDB.getGameState(dailyWinKey(config.id))) === dateKey,
         }))),
-        loadMemoryProgress(),
+        loadMemoryRecord(),
       ]);
       dailyWins = new Set(states.filter(state => state.cleared).map(state => state.id));
-      memoryProgress = progress;
+      memoryRecord = record;
     } catch (error) {
       console.error('[MemoryGame] Failed to load daily wins.', error);
       if (!disposed && renderId === selectRenderId) renderDailyLoadError();
@@ -373,7 +357,7 @@ export function renderMemoryGamePage() {
           <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-amber-100/80">難易度別報酬は神経衰弱専用です。各難易度で1日1回受け取れ、受取後も何度でも遊べます。</div>
         </section>
 
-        ${memoryLevelPanel(memoryProgress)}
+        ${memoryRecordPanel(memoryRecord)}
 
         <div class="grid gap-2" aria-label="難易度を選択">
           ${Object.values(DIFFICULTIES).map(config => difficultyCard(config, dailyWins.has(config.id))).join('')}
@@ -435,9 +419,7 @@ export function renderMemoryGamePage() {
       over: false,
       rewardClaimed: false,
       questPlayRecorded: false,
-      progressionRecorded: false,
-      progressionResult: null,
-      progressionFailed: false,
+      resultRecorded: false,
       clairvoyancePercent,
       cpuMemoryRate: Math.max(0, config.memoryRate * (1 - cpuForgetPercent / 100)),
       hintPercent,
@@ -716,8 +698,6 @@ export function renderMemoryGamePage() {
     const isWin = outcome === 'win';
     const isDraw = outcome === 'draw';
     const isDrawOrLose = outcome === 'draw_or_lose';
-    const progression = game.progressionResult;
-    const leveledUp = progression && progression.level > progression.previousLevel;
     const overlay = document.createElement('div');
     overlay.dataset.result = 'true';
     overlay.className = 'fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-slate-950/85 p-4 backdrop-blur-md';
@@ -728,9 +708,6 @@ export function renderMemoryGamePage() {
         <h2 id="memory-result-title" class="mt-1 text-xl font-black">${isWin ? 'CPUに勝利！' : isDraw ? '引き分け' : isDrawOrLose ? '引き分けまたは敗北が確定' : 'CPUの勝利'}</h2>
         <div class="mx-auto mt-3 grid max-w-[220px] grid-cols-3 items-center rounded-2xl border border-white/10 bg-black/25 p-2">
           <div><div class="text-[8px] text-cyan-300">YOU</div><div class="text-xl font-black">${game.scores.player}</div></div><div class="text-xs text-slate-600">―</div><div><div class="text-[8px] text-rose-300">CPU</div><div class="text-xl font-black">${game.scores.cpu}</div></div>
-        </div>
-        <div class="mt-3 rounded-xl border ${leveledUp ? 'border-cyan-300/40 bg-cyan-500/10' : 'border-violet-300/20 bg-violet-500/10'} px-3 py-2">
-          ${progression ? `<div class="flex items-center justify-center gap-1 text-sm font-black text-violet-100"><span class="material-symbols-outlined text-lg">neurology</span>神経衰弱EXP +${progression.xpGained}</div>${leveledUp ? `<div class="mt-1 text-xs font-black text-cyan-200">LEVEL UP! LV.${progression.previousLevel} → LV.${progression.level}</div>` : `<div class="mt-0.5 text-[8px] text-slate-400">神経衰弱 LV.${progression.level}</div>`}` : '<div class="text-[9px] font-black text-rose-300">EXPを保存できませんでした</div>'}
         </div>
         ${isWin ? `<div class="mt-3 flex items-center justify-center gap-1 rounded-xl border border-fuchsia-300/30 bg-fuchsia-500/10 py-2 text-sm font-black text-fuchsia-100"><span class="material-symbols-outlined text-fuchsia-300">diamond</span>${rewardStatus === 'awarded' ? `${game.config.reward} Prism 獲得！` : rewardStatus === 'already' ? '本日の報酬は受取済み' : '報酬を保存できませんでした'}</div><p class="mt-2 text-[10px] text-slate-400">報酬受取後も、この難易度で何度でも遊べます。</p>` : '<p class="mt-3 text-[10px] leading-relaxed text-slate-400">勝利するまで何度でも挑戦できます。</p>'}
         <div class="mt-4 grid gap-2">
@@ -748,18 +725,12 @@ export function renderMemoryGamePage() {
     game.over = true;
     game.locked = true;
     const outcome = decidedOutcome || (game.scores.player > game.scores.cpu ? 'win' : game.scores.player < game.scores.cpu ? 'lose' : 'draw');
-    if (!game.progressionRecorded) {
-      game.progressionRecorded = true;
+    if (!game.resultRecorded) {
+      game.resultRecorded = true;
       try {
-        game.progressionResult = await recordMemoryGameResult({
-          difficultyId: game.config.id,
-          outcome,
-          playerPairs: game.scores.player,
-        });
-        memoryProgress = game.progressionResult.progress;
+        memoryRecord = await recordMemoryGameResult({ outcome });
       } catch (error) {
-        console.error('[MemoryGame] Failed to save progression.', error);
-        game.progressionFailed = true;
+        console.error('[MemoryGame] Failed to save play record.', error);
       }
     }
     let rewardStatus = 'awarded';

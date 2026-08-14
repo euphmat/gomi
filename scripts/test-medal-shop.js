@@ -25,6 +25,11 @@ import {
   getMedalEquipmentMultiplier,
   scaleMedalShopEquipment,
 } from '../js/utils/medal-equipment-scaling.js';
+import { getMedalCraftGoldCost, getMedalCraftMaterialCost } from '../js/utils/medal-craft-cost.js';
+
+assert.equal(getMedalCraftGoldCost({ rewards: { gold: 3 } }, { goldMultiplier: 100 }, 20), 240);
+assert.equal(getMedalCraftMaterialCost({ materialQty: 101 }, 20), 81);
+assert.equal(getMedalCraftGoldCost({ rewards: { gold: 3 } }, { goldMultiplier: 100 }, 0), 300);
 
 assert.equal(MEDAL_SHOP_DUNGEON_REWARDS.length, 17);
 assert.equal(MEDAL_SHOP_REWARDS.length, 51);

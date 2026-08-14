@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   TREASURES,
   TREASURE_STATE_KEY,
@@ -13,12 +13,17 @@ import {
 } from '../js/data/treasure-manager.js';
 import { GameDB } from '../js/data/database.js';
 
-assert.equal(TREASURES.length, 21);
+assert.equal(TREASURES.length, 24);
 assert.equal(new Set(TREASURES.map(treasure => treasure.id)).size, TREASURES.length);
-assert.equal(TREASURES.reduce((sum, treasure) => sum + treasure.maxLevel, 0), 350);
+assert.equal(TREASURES.reduce((sum, treasure) => sum + treasure.maxLevel, 0), 366);
 
 for (const treasure of TREASURES) {
   assert.ok(Number.isInteger(treasure.maxLevel) && treasure.maxLevel > 0, `${treasure.id} needs a maximum level`);
+  assert.equal(
+    existsSync(new URL(`../assets/treasure/${treasure.id}.webp`, import.meta.url)),
+    true,
+    `${treasure.id} needs a treasure image`,
+  );
   assert.equal(
     getTreasureValue(treasure, treasure.maxLevel + 999),
     getTreasureValue(treasure, treasure.maxLevel),
@@ -49,6 +54,9 @@ const expectedMaximumEffects = {
   clairvoyant_crystal: 50,
   forgetting_hourglass: 50,
   resonance_compass: 50,
+  royal_forging_seal: 20,
+  number_sage_quill: 2,
+  prospector_canary: 20,
 };
 assert.equal(Object.keys(expectedMaximumEffects).length, TREASURES.length);
 for (const [id, expected] of Object.entries(expectedMaximumEffects)) {

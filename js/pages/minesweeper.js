@@ -5,12 +5,19 @@ import {
   getMinefieldNeighbors,
   isMinefieldCleared,
   revealMinefieldCells,
+  rollMineGuard,
 } from '../data/minesweeper-engine.js';
 import {
   TOWN_GAME_REWARDS,
   getLocalDateKey,
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
+import {
+  TOWN_GAME_PROGRESS_KEYS,
+  createMinesweeperProgressSnapshot,
+  restoreMinesweeperProgress,
+} from '../data/town-game-progress.js';
+import { getTreasureEffect } from '../data/treasure-manager.js';
 import { formatNumber } from '../utils/format.js';
 
 const GAME_ID = 'minesweeper';
@@ -63,14 +70,14 @@ const formatTime = totalSeconds => {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
-function difficultyCard(config, claimed) {
+function difficultyCard(config, claimed, hasProgress = false) {
   return `
     <button data-difficulty="${config.id}" class="flex min-h-[88px] items-center gap-3 rounded-2xl border bg-gradient-to-br p-3 text-left shadow-lg active:scale-[.98] ${TONE_CLASSES[config.tone]}">
-      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/25"><span class="material-symbols-outlined text-2xl">${claimed ? 'check_circle' : config.icon}</span></span>
+      <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-black/25"><span class="material-symbols-outlined text-2xl">${hasProgress ? 'resume' : claimed ? 'check_circle' : config.icon}</span></span>
       <span class="min-w-0 flex-1">
         <span class="block text-sm font-black tracking-[.16em] text-white">${config.label}</span>
         <span class="mt-0.5 block text-[10px] text-slate-300">${config.rows}×${config.columns} ・ 地雷${config.mines}個</span>
-        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${claimed ? 'task_alt' : 'diamond'}</span>${claimed ? '本日の報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
+        <span class="mt-1 flex items-center gap-1 text-[9px] font-black ${hasProgress ? 'text-amber-200' : claimed ? 'text-emerald-300' : 'text-fuchsia-200'}"><span class="material-symbols-outlined text-[13px]">${hasProgress ? 'history' : claimed ? 'task_alt' : 'diamond'}</span>${hasProgress ? '進行中の盤面から再開' : claimed ? '本日の報酬は受取済み ・ プレイ可能' : `クリア報酬 ${config.reward} Prism`}</span>
       </span>
       <span class="material-symbols-outlined text-white/45">chevron_right</span>
     </button>`;
@@ -87,7 +94,29 @@ export function renderMinesweeperPage() {
   let claimedDifficulties = new Set();
   let timerId = 0;
   let startingGame = false;
+  let savedProgress = null;
+  let lastProgressSaveAt = 0;
+  let progressWritePromise = Promise.resolve();
   const timers = new Set();
+
+  const persistProgress = () => {
+    if (!game || game.over) return progressWritePromise;
+    const now = Date.now();
+    const snapshot = createMinesweeperProgressSnapshot(game, now);
+    lastProgressSaveAt = now;
+    progressWritePromise = GameDB.setGameState(TOWN_GAME_PROGRESS_KEYS.minesweeper, snapshot).catch(error => {
+      console.error('[Minesweeper] Failed to save in-progress game.', error);
+    });
+    return progressWritePromise;
+  };
+
+  const clearProgress = () => {
+    savedProgress = null;
+    progressWritePromise = GameDB.setGameState(TOWN_GAME_PROGRESS_KEYS.minesweeper, null).catch(error => {
+      console.error('[Minesweeper] Failed to clear in-progress game.', error);
+    });
+    return progressWritePromise;
+  };
 
   const stopTimer = () => {
     if (timerId) window.clearInterval(timerId);
@@ -126,7 +155,7 @@ export function renderMinesweeperPage() {
       </div>`;
   };
 
-  const renderSelect = async () => {
+  const renderSelect = async (resumeSaved = false) => {
     stopTimer();
     clearTimers();
     game = null;
@@ -134,17 +163,26 @@ export function renderMinesweeperPage() {
     container.innerHTML = `${pageStyles()}<div class="flex min-h-[320px] items-center justify-center text-xs font-black text-slate-500"><span class="animate-pulse">本日の報酬状況を確認中…</span></div>`;
     try {
       const dateKey = getLocalDateKey();
-      const states = await Promise.all(Object.values(DIFFICULTIES).map(async config => ({
-        id: config.id,
-        claimed: (await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, config.id))) === dateKey,
-      })));
+      const [states, snapshot] = await Promise.all([
+        Promise.all(Object.values(DIFFICULTIES).map(async config => ({
+          id: config.id,
+          claimed: (await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, config.id))) === dateKey,
+        }))),
+        GameDB.getGameState(TOWN_GAME_PROGRESS_KEYS.minesweeper),
+      ]);
       claimedDifficulties = new Set(states.filter(state => state.claimed).map(state => state.id));
+      savedProgress = restoreMinesweeperProgress(snapshot, DIFFICULTIES);
+      if (snapshot && !savedProgress) void clearProgress();
     } catch (error) {
       console.error('[Minesweeper] Failed to load daily rewards.', error);
       if (!disposed && currentRenderId === renderId) renderLoadError();
       return;
     }
     if (disposed || currentRenderId !== renderId) return;
+    if (resumeSaved && savedProgress) {
+      await startGame(savedProgress.config.id, savedProgress);
+      return;
+    }
 
     container.innerHTML = `
       ${pageStyles()}
@@ -162,7 +200,7 @@ export function renderMinesweeperPage() {
           <div class="mt-1.5 border-t border-amber-300/10 pt-1.5 text-fuchsia-100/85">難易度別報酬はマインスイーパー専用です。各難易度で1日1回受け取れ、受取後も何度でも遊べます。</div>
         </section>
 
-        <div class="grid gap-2" aria-label="マインスイーパーの難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id))).join('')}</div>
+        <div class="grid gap-2" aria-label="マインスイーパーの難易度を選択">${Object.values(DIFFICULTIES).map(config => difficultyCard(config, claimedDifficulties.has(config.id), savedProgress?.config.id === config.id)).join('')}</div>
       </div>`;
   };
 
@@ -170,6 +208,7 @@ export function renderMinesweeperPage() {
     if (!game || game.over || !game.startedAt) return;
     const display = container.querySelector('[data-timer]');
     if (display) display.textContent = formatTime((Date.now() - game.startedAt) / 1000);
+    if (Date.now() - lastProgressSaveAt >= 5000) void persistProgress();
   };
 
   const setStatus = (message, tone = 'amber') => {
@@ -279,6 +318,7 @@ export function renderMinesweeperPage() {
     game.outcome = 'win';
     game.finishedAt = Date.now();
     stopTimer();
+    await clearProgress();
     setStatus('すべての安全なマスを開きました！', 'emerald');
     updateBoard();
     let rewardStatus = 'failed';
@@ -298,6 +338,7 @@ export function renderMinesweeperPage() {
     game.outcome = 'lose';
     game.finishedAt = Date.now();
     stopTimer();
+    void clearProgress();
     setStatus('地雷が爆発しました', 'rose');
     updateBoard();
     later(() => showResult('lose'), 500);
@@ -305,6 +346,27 @@ export function renderMinesweeperPage() {
 
   const checkClear = () => {
     if (game?.board && isMinefieldCleared(game.board, game.revealed)) finishWin();
+  };
+
+  const tryCanaryGuard = index => {
+    if (!game || !rollMineGuard(game.canaryGuardPercent, game.canaryGuardUsed)) return false;
+    game.canaryGuardUsed = true;
+
+    // 旗を上限まで誤配置していた場合は、そのうち1本を地雷へ付け替える。
+    if (game.flags.size >= game.config.mines) {
+      const wrongFlag = [...game.flags].find(flagIndex => game.board[flagIndex] !== -1);
+      if (wrongFlag !== undefined) game.flags.delete(wrongFlag);
+    }
+    game.flags.add(index);
+    const canaryState = container.querySelector('[data-canary-state]');
+    if (canaryState) {
+      canaryState.innerHTML = '<span class="material-symbols-outlined text-sm">health_and_safety</span>探鉱師のカナリア：発動済み';
+      canaryState.className = 'mb-2 flex items-center justify-center gap-1 rounded-xl border border-slate-600/30 bg-slate-900/45 px-3 py-1.5 text-[9px] font-black text-slate-400';
+    }
+    setStatus('探鉱師のカナリアが地雷を察知し、自動で旗を立てました！', 'emerald');
+    updateBoard();
+    void persistProgress();
+    return true;
   };
 
   const openCell = index => {
@@ -320,12 +382,15 @@ export function renderMinesweeperPage() {
         return;
       }
       const targets = neighbors.filter(neighbor => !game.flags.has(neighbor) && !game.revealed.has(neighbor));
-      if (targets.some(target => game.board[target] === -1)) {
+      const mineTarget = targets.find(target => game.board[target] === -1);
+      if (mineTarget !== undefined) {
+        if (tryCanaryGuard(mineTarget)) return;
         loseGame();
         return;
       }
       targets.forEach(target => { game.revealed = revealMinefieldCells(game.board, game.revealed, target, game.config, game.flags); });
     } else if (value === -1) {
+      if (tryCanaryGuard(index)) return;
       loseGame();
       return;
     } else {
@@ -333,6 +398,7 @@ export function renderMinesweeperPage() {
     }
     setStatus(value === 0 ? '安全地帯をまとめて開きました' : '安全なマスです', 'emerald');
     updateBoard();
+    void persistProgress();
     checkClear();
   };
 
@@ -348,6 +414,7 @@ export function renderMinesweeperPage() {
       setStatus('置ける旗をすべて使用しています', 'rose');
     }
     updateBoard();
+    void persistProgress();
   };
 
   const useHint = () => {
@@ -366,10 +433,11 @@ export function renderMinesweeperPage() {
     }
     setStatus('安全なマスを探知しました', 'emerald');
     updateBoard();
+    void persistProgress();
     checkClear();
   };
 
-  const startGame = async difficultyId => {
+  const startGame = async (difficultyId, restoredGame = null) => {
     const config = DIFFICULTIES[difficultyId];
     if (!config || startingGame) return;
     startingGame = true;
@@ -386,11 +454,15 @@ export function renderMinesweeperPage() {
     if (disposed) return;
     stopTimer();
     clearTimers();
-    game = {
+    const canaryGuardPercent = getTreasureEffect('minesweeperMineGuardPercent');
+    const isResuming = restoredGame?.config.id === difficultyId;
+    game = isResuming ? restoredGame : {
       config, board: null, revealed: new Set(), flags: new Set(), mode: 'open', generationAttempts: 0,
       hintsRemaining: config.hints, startedAt: 0, finishedAt: 0,
       over: false, outcome: null, rewardClaimed: false, questPlayRecorded: false,
+      canaryGuardPercent, canaryGuardUsed: false,
     };
+    savedProgress = game;
 
     container.innerHTML = `
       ${pageStyles()}
@@ -400,10 +472,13 @@ export function renderMinesweeperPage() {
           <button data-select class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="難易度選択へ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
           <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-500/15"><span class="material-symbols-outlined text-amber-200">bomb</span></span>
           <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-amber-300">${config.label}</div><div class="truncate text-xs font-black">${config.rows}×${config.columns} ・ 地雷${config.mines}</div></div>
-          <div class="flex items-center gap-1.5 text-[9px]"><span class="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 px-1.5 py-1 font-mono"><span class="material-symbols-outlined text-[13px]">timer</span><span data-timer>00:00</span></span><span class="flex items-center gap-0.5 rounded-lg border border-fuchsia-300/25 bg-fuchsia-500/10 px-1.5 py-1 font-black text-fuchsia-200"><span class="material-symbols-outlined text-[13px]">diamond</span>${config.reward}</span></div>
+          <div class="flex items-center gap-1.5 text-[9px]"><span class="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 px-1.5 py-1 font-mono"><span class="material-symbols-outlined text-[13px]">timer</span><span data-timer>${formatTime(game.startedAt ? (Date.now() - game.startedAt) / 1000 : 0)}</span></span><span class="flex items-center gap-0.5 rounded-lg border border-fuchsia-300/25 bg-fuchsia-500/10 px-1.5 py-1 font-black text-fuchsia-200"><span class="material-symbols-outlined text-[13px]">diamond</span>${config.reward}</span></div>
         </header>
 
         <section class="mb-2 grid grid-cols-3 gap-2 rounded-xl border border-white/10 bg-slate-950/65 px-3 py-2 text-center text-[9px] text-slate-400"><span><span class="material-symbols-outlined mr-0.5 align-middle text-[13px] text-amber-300">flag</span>残り <b data-mines-left class="font-mono text-white">${config.mines}</b></span><span>安全マス <b data-safe-left class="font-mono text-white">${config.rows * config.columns - config.mines}</b></span><span class="font-black text-emerald-300">推測不要</span></section>
+        ${game.canaryGuardPercent ? game.canaryGuardUsed
+    ? '<div data-canary-state class="mb-2 flex items-center justify-center gap-1 rounded-xl border border-slate-600/30 bg-slate-900/45 px-3 py-1.5 text-[9px] font-black text-slate-400"><span class="material-symbols-outlined text-sm">health_and_safety</span>探鉱師のカナリア：発動済み</div>'
+    : `<div data-canary-state class="mb-2 flex items-center justify-center gap-1 rounded-xl border border-lime-300/25 bg-lime-950/20 px-3 py-1.5 text-[9px] font-black text-lime-100"><span class="material-symbols-outlined text-sm">flutter_dash</span>探鉱師のカナリア：地雷無効化 ${game.canaryGuardPercent}%・未使用</div>` : ''}
         <div data-status class="mb-2 flex min-h-8 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-950/25 px-3 text-center text-[10px] font-black text-amber-100" role="status" aria-live="polite">最初に開くマスを選んでください</div>
 
         <section class="mine-board mx-auto aspect-square w-full" style="grid-template-columns:repeat(${config.columns},minmax(0,1fr));max-width:${config.columns <= 8 ? '400px' : config.columns <= 10 ? '440px' : '500px'}" aria-label="${config.rows}かける${config.columns}の地雷原">
@@ -413,22 +488,27 @@ export function renderMinesweeperPage() {
         <div class="mx-auto mt-2 grid grid-cols-2 gap-2" style="max-width:${config.columns <= 8 ? '400px' : config.columns <= 10 ? '440px' : '500px'}">
           <button data-mode="open" class="flex items-center justify-center gap-1 rounded-xl border py-2 text-[10px] font-black"><span class="material-symbols-outlined text-base">ads_click</span>開く</button>
           <button data-mode="flag" class="flex items-center justify-center gap-1 rounded-xl border py-2 text-[10px] font-black"><span class="material-symbols-outlined text-base">flag</span>旗</button>
-          <button data-hint ${config.hints ? '' : 'disabled'} class="col-span-2 flex items-center justify-center gap-1 rounded-xl border border-cyan-300/25 bg-cyan-500/10 py-2 text-[10px] font-black text-cyan-100 disabled:opacity-35"><span class="material-symbols-outlined text-base">radar</span>安全探知 ${config.hints}</button>
+          <button data-hint ${game.hintsRemaining ? '' : 'disabled'} class="col-span-2 flex items-center justify-center gap-1 rounded-xl border border-cyan-300/25 bg-cyan-500/10 py-2 text-[10px] font-black text-cyan-100 disabled:opacity-35"><span class="material-symbols-outlined text-base">radar</span>安全探知 ${game.hintsRemaining}</button>
         </div>
       </div>`;
     updateMode();
     updateBoard();
+    if (isResuming) setStatus(game.board ? '保存した盤面から再開しました' : '保存したゲームから再開しました', 'emerald');
+    void persistProgress();
+    if (game.startedAt) timerId = window.setInterval(updateTimer, 1000);
   };
 
   container.addEventListener('click', async event => {
     if (event.target.closest('[data-home]')) {
+      await persistProgress();
       window.location.hash = '/status';
       return;
     }
     const difficulty = event.target.closest('[data-difficulty]');
     if (difficulty) {
       difficulty.disabled = true;
-      await startGame(difficulty.dataset.difficulty);
+      const progress = savedProgress?.config.id === difficulty.dataset.difficulty ? savedProgress : null;
+      await startGame(difficulty.dataset.difficulty, progress);
       if (difficulty.isConnected && !game) difficulty.disabled = false;
       return;
     }
@@ -448,6 +528,7 @@ export function renderMinesweeperPage() {
       game.mode = modeButton.dataset.mode;
       updateMode();
       setStatus(game.mode === 'flag' ? '旗を置くマスを選んでください' : '開くマスを選んでください');
+      void persistProgress();
       return;
     }
     if (event.target.closest('[data-hint]')) {
@@ -456,7 +537,8 @@ export function renderMinesweeperPage() {
     }
     if (event.target.closest('[data-select]')) {
       container.querySelector('[data-result]')?.remove();
-      renderSelect();
+      await persistProgress();
+      renderSelect(false);
       return;
     }
     const retry = event.target.closest('[data-retry]');
@@ -491,13 +573,24 @@ export function renderMinesweeperPage() {
     toggleFlag(Number(cell.dataset.mineCell));
   });
 
+  const handleVisibilityChange = () => {
+    if (document.hidden) void persistProgress();
+  };
+  const handlePageHide = () => { void persistProgress(); };
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', handlePageHide);
+
   container.cleanup = () => {
+    const savePromise = persistProgress();
     disposed = true;
     stopTimer();
     clearTimers();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pagehide', handlePageHide);
     container.querySelector('[data-result]')?.remove();
+    return savePromise;
   };
 
-  renderSelect();
+  renderSelect(true);
   return container;
 }
