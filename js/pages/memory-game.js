@@ -729,6 +729,7 @@ export function renderMemoryGamePage() {
       game.resultRecorded = true;
       try {
         memoryRecord = await recordMemoryGameResult({ outcome });
+        window.dispatchEvent(new CustomEvent('quest:special-record-updated'));
       } catch (error) {
         console.error('[MemoryGame] Failed to save play record.', error);
       }

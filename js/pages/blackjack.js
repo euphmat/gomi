@@ -442,6 +442,7 @@ export function renderBlackjackPage() {
       const marked = await GameDB.markBlackjackResultSynced(round.id);
       if (!marked.updated) throw new Error('ラウンド結果が変更されました。');
       round = marked.round;
+      window.dispatchEvent(new CustomEvent('quest:special-record-updated'));
       updateResultContinueButton({ ready: true });
     } catch (error) {
       console.error('[Blackjack] Failed to sync result.', error);

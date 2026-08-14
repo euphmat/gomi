@@ -15,6 +15,11 @@ const CATEGORIES = [
   { id: 'growth', label: '育成', icon: 'trending_up' },
   { id: 'memory', label: '神経衰弱', icon: 'neurology' },
   { id: 'treasure', label: '秘宝', icon: 'deployed_code' },
+  { id: 'login', label: 'ログイン', icon: 'calendar_month' },
+  { id: 'sudoku', label: '数独', icon: 'grid_on' },
+  { id: 'minesweeper', label: '地雷原', icon: 'explosion' },
+  { id: 'tower', label: 'タワー', icon: 'view_in_ar' },
+  { id: 'blackjack', label: 'カード', icon: 'playing_cards' },
 ];
 const QUESTS_PER_PAGE = 6;
 

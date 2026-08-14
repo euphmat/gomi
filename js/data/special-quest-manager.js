@@ -19,6 +19,15 @@ import { TREASURES, TREASURE_STATE_KEY } from '../definitions/treasures.js';
 import { JOBS } from '../jobs/index.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
 import { loadMemoryRecord } from './memory-game-record.js';
+import {
+  SPECIAL_QUEST_GAME_RECORD_KEY,
+  mergeTownGameClearHistory,
+  normalizeSpecialQuestGameRecord,
+} from './special-quest-game-record.js';
+import {
+  TOWN_GAME_DIFFICULTY_IDS,
+  getTownGameRewardStateKey,
+} from './town-game-rewards.js';
 import { formatNumber } from '../utils/format.js';
 
 const STATE_KEY = 'quest_special_progress';
@@ -26,6 +35,7 @@ const COMPLETED_DUNGEONS_KEY = 'completed_dungeons';
 const JOB_CHANGE_HISTORY_KEY = 'job_change_history';
 const ALL_DUNGEONS = [...DUNGEONS, ...SPECIAL_DUNGEONS];
 const ALL_ITEMS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES, ...MATERIALS];
+const TRACKED_TOWN_GAME_IDS = ['sudoku', 'minesweeper', 'monster-tower'];
 
 const MONSTER_LIBRARY_TARGETS = [10, 20, 30, 50, 75, 100, 125, 150, 176];
 const FISH_LIBRARY_TARGETS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
@@ -47,6 +57,12 @@ const MEMORY_GAME_TARGETS = [1, 10, 50, 100, 500, 1000];
 const MEMORY_WIN_TARGETS = [1, 10, 50, 100, 500];
 const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21, 24, 27];
 const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 200, 300, 350, 366, 389];
+const LOGIN_DAY_TARGETS = [1, 3, 7, 30, 100, 365, 1000];
+const TOWN_GAME_CLEAR_TARGETS = [1, 10, 50, 100, 500, 1000];
+const TOWN_GAME_DIFFICULTY_TARGETS = [1, 2, 3, 4];
+const BLACKJACK_GAME_TARGETS = [1, 10, 50, 100, 500, 1000];
+const BLACKJACK_WIN_TARGETS = [1, 10, 50, 100, 500];
+const BLACKJACK_NATURAL_TARGETS = [1, 5, 10, 25, 100];
 const LEGACY_TREASURE_LEVEL_QUEST_MIGRATIONS = {
   treasure_levels_250: 'treasure_levels_200',
   treasure_levels_500: 'treasure_levels_300',
@@ -192,6 +208,26 @@ export const SPECIAL_QUESTS = [
     metricQuestOptions('treasure', '秘宝収集 ', '種類', '異なる秘宝を', '種類獲得する', 'deployed_code', '/shop?tab=gacha', 'ガチャへ')),
   ...makeMetricMilestoneQuests('treasure_levels', 'treasureLevels', TREASURE_LEVEL_TARGETS,
     metricQuestOptions('treasure', '秘宝合計 Lv.', '', '全秘宝のレベル合計を', 'にする', 'auto_awesome', '/shop?tab=gacha', 'ガチャへ')),
+  ...makeMetricMilestoneQuests('login_days', 'loginDays', LOGIN_DAY_TARGETS,
+    metricQuestOptions('login', 'ログイン ', '日', 'ログインボーナスを累計', '日受け取る', 'calendar_month', '/status', 'ホームタウンへ')),
+  ...makeMetricMilestoneQuests('sudoku_clears', 'sudokuClears', TOWN_GAME_CLEAR_TARGETS,
+    metricQuestOptions('sudoku', '数独クリア ', '回', '数独を', '回クリアする', 'grid_on', '/sudoku', '数独へ')),
+  ...makeMetricMilestoneQuests('sudoku_difficulties', 'sudokuDifficulties', TOWN_GAME_DIFFICULTY_TARGETS,
+    metricQuestOptions('sudoku', '数独 難易度制覇 ', '種類', '数独の異なる難易度を', '種類クリアする', 'workspace_premium', '/sudoku', '数独へ')),
+  ...makeMetricMilestoneQuests('minesweeper_clears', 'minesweeperClears', TOWN_GAME_CLEAR_TARGETS,
+    metricQuestOptions('minesweeper', '地雷原制覇 ', '回', 'マインスイーパーを', '回クリアする', 'explosion', '/minesweeper', '地雷原へ')),
+  ...makeMetricMilestoneQuests('minesweeper_difficulties', 'minesweeperDifficulties', TOWN_GAME_DIFFICULTY_TARGETS,
+    metricQuestOptions('minesweeper', '地雷原 難易度制覇 ', '種類', 'マインスイーパーの異なる難易度を', '種類クリアする', 'workspace_premium', '/minesweeper', '地雷原へ')),
+  ...makeMetricMilestoneQuests('tower_wins', 'towerWins', TOWN_GAME_CLEAR_TARGETS,
+    metricQuestOptions('tower', 'タワー勝利 ', '回', 'モンスタータワーで', '回勝利する', 'view_in_ar', '/monster-tower', 'タワーへ')),
+  ...makeMetricMilestoneQuests('tower_difficulties', 'towerDifficulties', TOWN_GAME_DIFFICULTY_TARGETS,
+    metricQuestOptions('tower', 'タワー 難易度制覇 ', '種類', 'モンスタータワーの異なる難易度を', '種類クリアする', 'emoji_events', '/monster-tower', 'タワーへ')),
+  ...makeMetricMilestoneQuests('blackjack_games', 'blackjackGames', BLACKJACK_GAME_TARGETS,
+    metricQuestOptions('blackjack', 'ブラックジャック勝負 ', '回', 'ブラックジャックを', '回最後までプレイする', 'playing_cards', '/blackjack', 'テーブルへ')),
+  ...makeMetricMilestoneQuests('blackjack_wins', 'blackjackWins', BLACKJACK_WIN_TARGETS,
+    metricQuestOptions('blackjack', 'ディーラーに勝利 ', '回', 'ブラックジャックで', '回勝利する', 'emoji_events', '/blackjack', 'テーブルへ')),
+  ...makeMetricMilestoneQuests('blackjack_naturals', 'blackjackNaturals', BLACKJACK_NATURAL_TARGETS,
+    metricQuestOptions('blackjack', 'ナチュラル21 ', '回', '最初の2枚でブラックジャックを', '回成立させる', 'auto_awesome', '/blackjack', 'テーブルへ')),
   ...MEDAL_RANKS.slice(1).flatMap((rank, rankOffset) => {
     const rankIndex = rankOffset + 1;
     const rankName = rank.name.replace('メダル', '');
@@ -252,6 +288,7 @@ export function calculateExtendedSpecialQuestMetrics({
   characters = [],
   memoryRecord = {},
   treasureLevels = {},
+  gameRecord = {},
 } = {}) {
   const validMonsterIds = new Set(MONSTERS.map(monster => monster.id));
   const totalKills = Object.entries(monsterKills || {}).reduce(
@@ -305,6 +342,7 @@ export function calculateExtendedSpecialQuestMetrics({
   const normalizedTreasureLevels = Object.entries(treasureLevels || {})
     .filter(([id]) => treasureById.has(id))
     .map(([id, level]) => Math.min(treasureById.get(id).maxLevel, nonNegativeInteger(level)));
+  const normalizedGameRecord = normalizeSpecialQuestGameRecord(gameRecord);
 
   const metrics = {
     totalKills,
@@ -321,6 +359,16 @@ export function calculateExtendedSpecialQuestMetrics({
     memoryWins: nonNegativeInteger(memoryRecord?.wins),
     treasureKinds: normalizedTreasureLevels.filter(level => level > 0).length,
     treasureLevels: normalizedTreasureLevels.reduce((total, level) => total + level, 0),
+    loginDays: normalizedGameRecord.loginDays,
+    sudokuClears: normalizedGameRecord.townGames.sudoku.clears,
+    sudokuDifficulties: normalizedGameRecord.townGames.sudoku.clearedDifficulties.length,
+    minesweeperClears: normalizedGameRecord.townGames.minesweeper.clears,
+    minesweeperDifficulties: normalizedGameRecord.townGames.minesweeper.clearedDifficulties.length,
+    towerWins: normalizedGameRecord.townGames['monster-tower'].clears,
+    towerDifficulties: normalizedGameRecord.townGames['monster-tower'].clearedDifficulties.length,
+    blackjackGames: normalizedGameRecord.blackjack.gamesPlayed,
+    blackjackWins: normalizedGameRecord.blackjack.wins,
+    blackjackNaturals: normalizedGameRecord.blackjack.blackjacks,
   };
   MEDAL_RANKS.slice(1).forEach((_, rankOffset) => {
     const rankIndex = rankOffset + 1;
@@ -345,6 +393,7 @@ class SpecialQuestManagerClass {
     };
     this.listenersReady = false;
     this.claimQueue = Promise.resolve();
+    this.refreshQueue = Promise.resolve();
   }
 
   async init() {
@@ -375,11 +424,24 @@ class SpecialQuestManagerClass {
 
     if (!this.listenersReady) {
       window.addEventListener('quest:mine-unlock', () => this.completeMineFirstUnlock());
+      window.addEventListener('quest:special-record-updated', () => {
+        const refresh = () => this.refreshAchievements();
+        this.refreshQueue = this.refreshQueue.then(refresh, refresh).catch(error => {
+          console.error('[SpecialQuest] Failed to refresh game records.', error);
+        });
+      });
       this.listenersReady = true;
     }
   }
 
   async refreshAchievements() {
+    const townGameClearMarkerKeys = TRACKED_TOWN_GAME_IDS.flatMap(gameId => (
+      TOWN_GAME_DIFFICULTY_IDS.map(difficultyId => ({
+        gameId,
+        difficultyId,
+        key: getTownGameRewardStateKey(gameId, difficultyId),
+      }))
+    ));
     const [
       mineData,
       completedDungeonsValue,
@@ -397,6 +459,9 @@ class SpecialQuestManagerClass {
       ranchDataValue,
       memoryRecordValue,
       treasureLevelsValue,
+      gameRecordValue,
+      townGameClearMarkerValues,
+      lastDailyLoginBonusDate,
     ] = await Promise.all([
       GameDB.getGameState('mine_data'),
       GameDB.getGameState(COMPLETED_DUNGEONS_KEY),
@@ -414,7 +479,21 @@ class SpecialQuestManagerClass {
       GameDB.getGameState('ranch_data'),
       loadMemoryRecord(true),
       GameDB.getGameState(TREASURE_STATE_KEY),
+      GameDB.getGameState(SPECIAL_QUEST_GAME_RECORD_KEY),
+      Promise.all(townGameClearMarkerKeys.map(marker => GameDB.getGameState(marker.key))),
+      GameDB.getGameState('lastDailyLoginBonusDate'),
     ]);
+
+    const townGameClearHistory = {};
+    townGameClearMarkerKeys.forEach((marker, index) => {
+      townGameClearHistory[marker.gameId] ||= {};
+      townGameClearHistory[marker.gameId][marker.difficultyId] = townGameClearMarkerValues[index];
+    });
+    const normalizedStoredGameRecord = normalizeSpecialQuestGameRecord(gameRecordValue);
+    const gameRecord = mergeTownGameClearHistory(normalizedStoredGameRecord, townGameClearHistory);
+    if (lastDailyLoginBonusDate && gameRecord.loginDays === 0) gameRecord.loginDays = 1;
+    const gameRecordChanged = JSON.stringify(normalizedStoredGameRecord) !== JSON.stringify(gameRecord);
+    if (gameRecordChanged) await GameDB.setGameState(SPECIAL_QUEST_GAME_RECORD_KEY, gameRecord);
 
     const completedDungeons = new Set(Array.isArray(completedDungeonsValue) ? completedDungeonsValue : []);
     const unlockedDungeons = new Set(Array.isArray(unlockedDungeonsValue) ? unlockedDungeonsValue : ['slime_forest']);
@@ -507,6 +586,7 @@ class SpecialQuestManagerClass {
       characters,
       memoryRecord: memoryRecordValue,
       treasureLevels: treasureLevelsValue,
+      gameRecord,
     });
 
     this.metrics = {
@@ -542,7 +622,7 @@ class SpecialQuestManagerClass {
       await this.save();
       window.dispatchEvent(new CustomEvent('quest:special-updated'));
     }
-    return changed || dungeonHistoryChanged || discoveredItemsChanged || jobHistoryChanged;
+    return changed || dungeonHistoryChanged || discoveredItemsChanged || jobHistoryChanged || gameRecordChanged;
   }
 
   markCompleted(questId) {

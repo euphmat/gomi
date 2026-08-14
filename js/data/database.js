@@ -39,6 +39,12 @@ import {
   isValidBlackjackRoundState,
   normalizeBlackjackCurrency,
 } from './blackjack-engine.js';
+import {
+  SPECIAL_QUEST_GAME_RECORD_KEY,
+  recordBlackjackOutcome,
+  recordLoginDay,
+  recordTownGameClear,
+} from './special-quest-game-record.js';
 
 const ALL_EQUIPMENT_DEFS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
 
@@ -756,10 +762,17 @@ export class GameDatabase {
       const request = store.get(BLACKJACK_STATE_KEY);
       request.onsuccess = () => {
         const round = request.result?.value;
-        if (!round || round.id !== roundId || round.phase !== 'completed') return;
-        round.resultSynced = true;
-        store.put({ key: BLACKJACK_STATE_KEY, value: round });
-        result = { updated: true, round };
+        if (!round || round.id !== roundId || round.phase !== 'completed' || round.resultSynced === true) return;
+        const recordRequest = store.get(SPECIAL_QUEST_GAME_RECORD_KEY);
+        recordRequest.onsuccess = () => {
+          round.resultSynced = true;
+          store.put({ key: BLACKJACK_STATE_KEY, value: round });
+          store.put({
+            key: SPECIAL_QUEST_GAME_RECORD_KEY,
+            value: recordBlackjackOutcome(recordRequest.result?.value, round.outcome),
+          });
+          result = { updated: true, round };
+        };
       };
     }));
     const queuedWrite = this._writeQueue.then(run, run);
@@ -803,18 +816,25 @@ export class GameDatabase {
 
       const winRequest = store.get(winKey);
       winRequest.onsuccess = () => {
-        const prismRequest = store.get('prism');
-        prismRequest.onsuccess = () => {
-          const currentPrism = Number(prismRequest.result?.value) || 0;
-          if (winRequest.result?.value === dateKey) {
-            result = { awarded: false, prism: currentPrism };
-            return;
-          }
+        const recordRequest = store.get(SPECIAL_QUEST_GAME_RECORD_KEY);
+        recordRequest.onsuccess = () => {
+          const prismRequest = store.get('prism');
+          prismRequest.onsuccess = () => {
+            const currentPrism = Number(prismRequest.result?.value) || 0;
+            const record = recordTownGameClear(recordRequest.result?.value, gameId, difficultyId);
+            if (gameId !== 'memory-game') {
+              store.put({ key: SPECIAL_QUEST_GAME_RECORD_KEY, value: record });
+            }
+            if (winRequest.result?.value === dateKey) {
+              result = { awarded: false, prism: currentPrism };
+              return;
+            }
 
-          const prism = currentPrism + amount;
-          store.put({ key: 'prism', value: prism });
-          store.put({ key: winKey, value: dateKey });
-          result = { awarded: true, prism };
+            const prism = currentPrism + amount;
+            store.put({ key: 'prism', value: prism });
+            store.put({ key: winKey, value: dateKey });
+            result = { awarded: true, prism };
+          };
         };
       };
     }));
@@ -856,18 +876,25 @@ export class GameDatabase {
 
       const lastClaimRequest = store.get('lastDailyLoginBonusDate');
       lastClaimRequest.onsuccess = () => {
-        const prismRequest = store.get('prism');
-        prismRequest.onsuccess = () => {
-          const currentPrism = Number(prismRequest.result?.value) || 0;
-          if (lastClaimRequest.result?.value === dateKey) {
-            result = { awarded: false, prism: currentPrism };
-            return;
-          }
+        const recordRequest = store.get(SPECIAL_QUEST_GAME_RECORD_KEY);
+        recordRequest.onsuccess = () => {
+          const prismRequest = store.get('prism');
+          prismRequest.onsuccess = () => {
+            const currentPrism = Number(prismRequest.result?.value) || 0;
+            if (lastClaimRequest.result?.value === dateKey) {
+              result = { awarded: false, prism: currentPrism };
+              return;
+            }
 
-          const prism = currentPrism + amount;
-          store.put({ key: 'prism', value: prism });
-          store.put({ key: 'lastDailyLoginBonusDate', value: dateKey });
-          result = { awarded: true, prism };
+            const prism = currentPrism + amount;
+            store.put({ key: 'prism', value: prism });
+            store.put({ key: 'lastDailyLoginBonusDate', value: dateKey });
+            store.put({
+              key: SPECIAL_QUEST_GAME_RECORD_KEY,
+              value: recordLoginDay(recordRequest.result?.value),
+            });
+            result = { awarded: true, prism };
+          };
         };
       };
     });

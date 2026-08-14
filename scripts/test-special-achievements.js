@@ -10,7 +10,7 @@ import { GameDB } from '../js/data/database.js';
 
 const ids = SPECIAL_QUESTS.map(quest => quest.id);
 assert.equal(new Set(ids).size, ids.length, 'Special achievement ids must be unique.');
-assert.equal(SPECIAL_QUESTS.length, 227, 'The complete special achievement catalog changed unexpectedly.');
+assert.equal(SPECIAL_QUESTS.length, 280, 'The complete special achievement catalog changed unexpectedly.');
 
 for (const quest of SPECIAL_QUESTS) {
   assert.ok(quest.id && quest.category && quest.title && quest.description && quest.icon, `Invalid achievement: ${quest.id}`);
@@ -66,6 +66,15 @@ const metrics = calculateExtendedSpecialQuestMetrics({
   }],
   memoryRecord: { gamesPlayed: 42, wins: 17 },
   treasureLevels: { pocket_watch: 3, hero_medal: 7, invalid_treasure: 999 },
+  gameRecord: {
+    loginDays: 42,
+    townGames: {
+      sudoku: { clears: 51, clearedDifficulties: ['easy', 'normal', 'hard'] },
+      minesweeper: { clears: 12, clearedDifficulties: ['easy', 'very_hard'] },
+      'monster-tower': { clears: 7, clearedDifficulties: ['normal'] },
+    },
+    blackjack: { gamesPlayed: 123, wins: 45, blackjacks: 6 },
+  },
 });
 
 assert.equal(metrics.totalKills, 200, 'Only valid monster kill counts should be included.');
@@ -82,6 +91,16 @@ assert.equal(metrics.memoryGames, 42);
 assert.equal(metrics.memoryWins, 17);
 assert.equal(metrics.treasureKinds, 2);
 assert.equal(metrics.treasureLevels, 10);
+assert.equal(metrics.loginDays, 42);
+assert.equal(metrics.sudokuClears, 51);
+assert.equal(metrics.sudokuDifficulties, 3);
+assert.equal(metrics.minesweeperClears, 12);
+assert.equal(metrics.minesweeperDifficulties, 2);
+assert.equal(metrics.towerWins, 7);
+assert.equal(metrics.towerDifficulties, 1);
+assert.equal(metrics.blackjackGames, 123);
+assert.equal(metrics.blackjackWins, 45);
+assert.equal(metrics.blackjackNaturals, 6);
 const cappedTreasureMetrics = calculateExtendedSpecialQuestMetrics({
   treasureLevels: { pocket_watch: 999, hero_medal: 999, invalid_treasure: 999 },
 });
@@ -108,6 +127,15 @@ const state = new Map([
   ['ranch_data', { [firstDungeon.id]: { [monsterA.id]: { fedMaterials: 100 } } }],
   ['memoryGameProgress', { gamesPlayed: 42, wins: 17, draws: 4, losses: 21 }],
   ['treasure_levels', { pocket_watch: 3, hero_medal: 7 }],
+  ['special_quest_game_record', {
+    loginDays: 42,
+    townGames: {
+      sudoku: { clears: 51, clearedDifficulties: ['easy', 'normal', 'hard'] },
+      minesweeper: { clears: 12, clearedDifficulties: ['easy', 'very_hard'] },
+      'monster-tower': { clears: 7, clearedDifficulties: ['normal'] },
+    },
+    blackjack: { gamesPlayed: 123, wins: 45, blackjacks: 6 },
+  }],
   ['quest_special_progress', {
     monster_30: { completed: true, claimed: true },
     memory_level_10: { completed: true, claimed: true },
@@ -133,6 +161,9 @@ assert.equal(SpecialQuestManager.getState('total_kills_100').completed, true);
 assert.equal(SpecialQuestManager.getState('total_catches_1000').completed, true);
 assert.equal(SpecialQuestManager.getState('mineFirstUnlock').completed, true);
 assert.equal(SpecialQuestManager.getState('medal_rank_stela_1').completed, true);
+assert.equal(SpecialQuestManager.getState('login_days_30').completed, true);
+assert.equal(SpecialQuestManager.getState('sudoku_clears_50').completed, true);
+assert.equal(SpecialQuestManager.getState('blackjack_naturals_5').completed, true);
 assert.equal(SpecialQuestManager.getState('monster_30').claimed, true, 'Existing claimed achievements must survive catalog migration.');
 assert.equal(SpecialQuestManager.getState('treasure_levels_300').claimed, true, 'Legacy treasure-level rewards must migrate to reachable targets.');
 assert.equal(state.get('quest_special_progress').treasure_levels_300.claimed, true, 'Migrated treasure progress must be persisted.');

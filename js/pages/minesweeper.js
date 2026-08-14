@@ -286,6 +286,7 @@ export function renderMinesweeperPage() {
     const result = await GameDB.claimDailyTownGameReward(getLocalDateKey(), GAME_ID, game.config.id, game.config.reward);
     claimedDifficulties.add(game.config.id);
     updateHeaderPrism(result.prism);
+    window.dispatchEvent(new CustomEvent('quest:special-record-updated'));
     return result;
   };
 
