@@ -19,14 +19,14 @@ export function getEffectiveBattleSpd(entity) {
 }
 
 export function getAverageBattleSpd(entities) {
-  const livingEntities = entities.filter(entity => entity && !entity.isDead);
-  if (livingEntities.length === 0) return 1;
-
-  const totalSpd = livingEntities.reduce(
-    (total, entity) => total + getEffectiveBattleSpd(entity),
-    0
-  );
-  return totalSpd / livingEntities.length;
+  let livingCount = 0;
+  let totalSpd = 0;
+  for (const entity of entities || []) {
+    if (!entity || entity.isDead) continue;
+    livingCount += 1;
+    totalSpd += getEffectiveBattleSpd(entity);
+  }
+  return livingCount > 0 ? totalSpd / livingCount : 1;
 }
 
 export function getAtbSpeedMultiplier(spd, averageSpd) {
@@ -36,4 +36,28 @@ export function getAtbSpeedMultiplier(spd, averageSpd) {
 
   return MIN_ATB_SPEED_MULTIPLIER
     + (1 - MIN_ATB_SPEED_MULTIPLIER) * normalizedSpd;
+}
+
+/**
+ * Return the number of identical ATB advances needed before somebody can act.
+ *
+ * Fast-forward battle used to repeat the full party/enemy scan up to 50 times
+ * per timer callback. ATB gain is constant during that scan, so jumping to the
+ * first threshold is mathematically equivalent and keeps the same actor order.
+ */
+export function getAtbAdvanceSteps(entries, maxSteps = 1) {
+  const boundedMax = Math.max(1, Math.floor(Number(maxSteps) || 1));
+  let advanceSteps = boundedMax;
+
+  for (const entry of entries || []) {
+    const entity = entry?.entity;
+    const gain = Number(entry?.gain);
+    if (!entity || entity.isDead || !Number.isFinite(gain) || gain <= 0) continue;
+
+    const currentAtb = Number.isFinite(entity.atb) ? entity.atb : 0;
+    const stepsToReady = Math.max(1, Math.ceil((1000 - currentAtb) / gain));
+    advanceSteps = Math.min(advanceSteps, stepsToReady);
+  }
+
+  return advanceSteps;
 }

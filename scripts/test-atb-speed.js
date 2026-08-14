@@ -1,4 +1,5 @@
 import {
+  getAtbAdvanceSteps,
   getAtbSpeedMultiplier,
   getAverageBattleSpd,
   getEffectiveBattleSpd,
@@ -42,5 +43,17 @@ assert(getAtbSpeedMultiplier(1000000, 1)
 // guaranteed gain must fill its gauge within a normal-length encounter.
 const ticksUntilSlowActs = Math.ceil(1000 / (slowMultiplier * (1000 / 35)));
 assert(ticksUntilSlowActs <= 70, 'low SPD still takes too long to receive a turn');
+
+const fastForwardEntries = [
+  { entity: { atb: 120, isDead: false }, gain: 20 },
+  { entity: { atb: 520, isDead: false }, gain: 60 },
+  { entity: { atb: 999, isDead: true }, gain: 500 }
+];
+assert(getAtbAdvanceSteps(fastForwardEntries, 50) === 8,
+  'fast-forward did not jump directly to the first living actor threshold');
+assert(getAtbAdvanceSteps([{ entity: { atb: 1000, isDead: false }, gain: 20 }], 50) === 1,
+  'an already-ready actor skipped an ATB advance');
+assert(getAtbAdvanceSteps([{ entity: { atb: 0, isDead: false }, gain: 1 }], 5) === 5,
+  'fast-forward exceeded its configured maximum');
 
 console.log('ATB speed balance tests passed');

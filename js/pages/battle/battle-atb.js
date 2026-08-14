@@ -5,6 +5,7 @@
 
 import { isScreenLocked } from '../../utils/screen-lock.js';
 import {
+  getAtbAdvanceSteps,
   getAtbSpeedMultiplier,
   getAverageBattleSpd,
   getEffectiveBattleSpd
@@ -143,72 +144,73 @@ export const atbMethods = {
       if (this.isStopped) return;
 
       let nextActor = null;
-      
-      let loops = 0;
+
       // アニメ無効時はティックを待たずに次の行動者が決まるまで一気に時間を進める
       // The user animation setting intentionally enables ATB fast-forward.
       // Screen lock only suppresses presentation; treating it as fast-forward
       // multiplied both farming speed and CPU use while the display was off.
-      const MAX_LOOPS = this._cachedFastForwardAtb ? 50 : (battleSpeed >= 5 ? 5 : 1);
+      const maxAdvanceSteps = this._cachedFastForwardAtb ? 50 : (battleSpeed >= 5 ? 5 : 1);
 
       // Recalculate from living combatants so deaths and in-battle SPD changes
       // immediately affect the baseline. A guaranteed portion of ATB gain keeps
       // low-SPD entities active while the SPD-scaled portion preserves the
       // advantage of investing in speed.
-      const avgSpd = getAverageBattleSpd([...this.party, ...this.enemies]);
-      
-      while (!nextActor && loops < MAX_LOOPS) {
-        loops++;
-        
-        this.party.forEach(p => {
-          if (p.isDead) return;
-          const spd = getEffectiveBattleSpd(p);
-          const speedRatio = getAtbSpeedMultiplier(spd, avgSpd);
-          p.atb += speedRatio * BASE_TICK_RATE * battleSpeed;
-          if (p.atb >= 1000 && (!nextActor || p.atb > nextActor.atb)) {
-            nextActor = { type: 'party', entity: p, atb: p.atb };
-          }
-          
-          if (!document.hidden && !this._cachedScreenLocked && loops === 1) { // 描画更新は最初のループのみ
-            const atbEl = this.atbElements[p.elementId];
-            if(atbEl) {
-               if (disableAnim || battleSpeed >= 5) {
-                 if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
-               } else {
-                 if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-                 const nextTransform = `scaleX(${Math.min(1000, p.atb) / 1000})`;
-                 if (atbEl.style.transform !== nextTransform) atbEl.style.transform = nextTransform;
-               }
-            }
-          }
-        });
-        
-        this.enemies.forEach(e => {
-          if (e.isDead) return;
-          const spd = getEffectiveBattleSpd(e);
-          const speedRatio = getAtbSpeedMultiplier(spd, avgSpd);
-          e.atb += speedRatio * BASE_TICK_RATE * battleSpeed;
-          if (e.atb >= 1000 && (!nextActor || e.atb > nextActor.atb)) {
-            nextActor = { type: 'enemy', entity: e, atb: e.atb };
-          }
+      const combatants = this._atbCombatants || (this._atbCombatants = []);
+      combatants.length = 0;
+      combatants.push(...this.party, ...this.enemies);
+      const avgSpd = getAverageBattleSpd(combatants);
 
-          if (!document.hidden && !this._cachedScreenLocked && loops === 1) {
-            const atbEl = this.atbElements[e.elementId];
-            if(atbEl) {
-               if (disableAnim || battleSpeed >= 5) {
-                 if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
-               } else {
-                 if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
-                 const nextTransform = `scaleX(${Math.min(1000, e.atb) / 1000})`;
-                 if (atbEl.style.transform !== nextTransform) atbEl.style.transform = nextTransform;
-               }
+      const atbEntries = this._atbAdvanceEntries || (this._atbAdvanceEntries = []);
+      let entryCount = 0;
+      this.party.forEach(entity => {
+        if (entity.isDead) return;
+        const speedRatio = getAtbSpeedMultiplier(getEffectiveBattleSpd(entity), avgSpd);
+        const entry = atbEntries[entryCount] || {};
+        entry.type = 'party';
+        entry.entity = entity;
+        entry.gain = speedRatio * BASE_TICK_RATE * battleSpeed;
+        atbEntries[entryCount] = entry;
+        entryCount += 1;
+      });
+      this.enemies.forEach(entity => {
+        if (entity.isDead) return;
+        const speedRatio = getAtbSpeedMultiplier(getEffectiveBattleSpd(entity), avgSpd);
+        const entry = atbEntries[entryCount] || {};
+        entry.type = 'enemy';
+        entry.entity = entity;
+        entry.gain = speedRatio * BASE_TICK_RATE * battleSpeed;
+        atbEntries[entryCount] = entry;
+        entryCount += 1;
+      });
+      atbEntries.length = entryCount;
+
+      // Jump directly to the first ready actor instead of rescanning every
+      // combatant for each fast-forward step. This preserves every final ATB
+      // value and tie-break while removing most animation-off CPU work.
+      const advanceSteps = getAtbAdvanceSteps(atbEntries, maxAdvanceSteps);
+      atbEntries.forEach(entry => {
+        const { entity } = entry;
+        entity.atb += entry.gain * advanceSteps;
+        if (entity.atb >= 1000 && (!nextActor || entity.atb > nextActor.atb)) {
+          nextActor = { type: entry.type, entity, atb: entity.atb };
+        }
+
+        if (!document.hidden && !this._cachedScreenLocked) {
+          const atbEl = this.atbElements[entity.elementId];
+          if (atbEl) {
+            if (disableAnim || battleSpeed >= 5) {
+              if (atbEl.style.opacity !== '0') atbEl.style.opacity = '0';
+            } else {
+              if (atbEl.style.opacity !== '1') atbEl.style.opacity = '1';
+              const nextTransform = `scaleX(${Math.min(1000, entity.atb) / 1000})`;
+              if (atbEl.style.transform !== nextTransform) atbEl.style.transform = nextTransform;
             }
           }
-        });
-        
-        // 待機中のキャラクターのATBを1000に制限すると、高速戦闘時に
-        // 1tickで1000以上稼ぐ高速キャラクターが無限に割り込むため制限しない。
-      }
+        }
+      });
+
+      // 待機中のキャラクターのATBを1000に制限すると、高速戦闘時に
+      // 1tickで1000以上稼ぐ高速キャラクターが無限に割り込むため制限しない。
 
       if (nextActor) {
         if (this.decrementBuffTurns) {

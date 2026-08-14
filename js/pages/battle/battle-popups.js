@@ -276,6 +276,26 @@ export const popupMethods = {
     return el;
   },
 
+  _getBattleElementRect(elementId) {
+    const now = performance.now();
+    const cacheLifetime = this.isAutoBattle ? 250 : 16;
+    if (!this._rectCache || now - this._rectCache.time > cacheLifetime) {
+      this._rectCache = { time: now, rects: {} };
+    }
+
+    let rect = this._rectCache.rects[elementId];
+    if (rect) return rect;
+
+    const el = this.domCache?.party?.[elementId]?.root
+      || this.domCache?.enemies?.[elementId]?.root
+      || this.container.querySelector(`#${elementId}`);
+    if (!el) return null;
+
+    rect = el.getBoundingClientRect();
+    this._rectCache.rects[elementId] = rect;
+    return rect;
+  },
+
   _releasePoolElement(elOrWrapper, generation = null) {
     if (!this._domPool) return;
     const poolItem = this._domPool.find(item => item.el === elOrWrapper);
@@ -297,9 +317,15 @@ export const popupMethods = {
 
     const speed = this.speedMult || 1;
 
-    // Limit active floating popups at the highest supported speed.
-    const maxActive = speed >= 5 ? 30 : 150;
-    const activeCount = this._domPool ? this._domPool.filter(p => p.active && p.type === 'float').length : 0;
+    // Auto battle keeps the most recent values readable instead of compositing
+    // an ever-growing cloud of already-obsolete numbers.
+    const maxActive = this.isAutoBattle
+      ? (speed >= 5 ? 18 : 48)
+      : (speed >= 5 ? 30 : 150);
+    let activeCount = 0;
+    for (const item of this._domPool || []) {
+      if (item.active && item.type === 'float') activeCount += 1;
+    }
     if (activeCount >= maxActive) {
       // Release the oldest active float to make room
       const oldest = this._domPool.find(p => p.active && p.type === 'float');
@@ -309,21 +335,8 @@ export const popupMethods = {
       }
     }
 
-    const el = this.container.querySelector(`#${elementId}`);
-    if (!el) return;
-
-    // Cache rect to avoid severe layout thrashing when hundreds of damage numbers pop
-    if (!this._rectCache) this._rectCache = { time: 0, rects: {} };
-    const now = performance.now();
-    if (now - this._rectCache.time > 16) {
-      this._rectCache.time = now;
-      this._rectCache.rects = {};
-    }
-    let rect = this._rectCache.rects[elementId];
-    if (!rect) {
-      rect = el.getBoundingClientRect();
-      this._rectCache.rects[elementId] = rect;
-    }
+    const rect = this._getBattleElementRect(elementId);
+    if (!rect) return;
 
     // Limit popup animation speed at high game speeds so numbers remain readable
     const effectiveSpeed = Math.min(speed, 2.0);
@@ -350,8 +363,18 @@ export const popupMethods = {
     if (config.fontSize) popup.style.fontSize = config.fontSize;
     
     if (config.damageIcon && config.text !== undefined && config.text !== null) {
-      const icon = document.createElement('span');
-      icon.className = 'material-symbols-outlined shrink-0';
+      // Keep the two child nodes with their pooled wrapper. Multi-hit auto
+      // battle can now update text/style without allocating two nodes per hit.
+      let icon = popup._battleDamageIcon;
+      let value = popup._battleDamageValue;
+      if (!icon || !value) {
+        icon = document.createElement('span');
+        value = document.createElement('span');
+        icon.className = 'material-symbols-outlined shrink-0';
+        value.style.lineHeight = '1';
+        popup._battleDamageIcon = icon;
+        popup._battleDamageValue = value;
+      }
       icon.textContent = config.damageIcon.icon;
       icon.setAttribute('aria-hidden', 'true');
       icon.style.color = config.damageIcon.color;
@@ -360,10 +383,8 @@ export const popupMethods = {
       icon.style.fontVariationSettings = "'FILL' 1, 'wght' 650, 'GRAD' 0, 'opsz' 24";
       icon.style.textShadow = `0 0 8px ${config.damageIcon.color}, 1px 2px 2px rgba(0,0,0,0.95)`;
 
-      const value = document.createElement('span');
       value.textContent = config.text;
-      value.style.lineHeight = '1';
-      popup.append(icon, value);
+      popup.replaceChildren(icon, value);
       popup.style.gap = '4px';
     } else if (config.text !== undefined && config.text !== null) {
       // Most efficient text insertion when an icon is not needed.
@@ -408,16 +429,13 @@ export const popupMethods = {
 
     const speed = this.speedMult || 1;
 
-    const el = this.container.querySelector(`#${elementId}`);
-    if (!el) return;
-
     if (!this._labelStacks) this._labelStacks = {};
     if (!this._labelStacks[elementId]) this._labelStacks[elementId] = [];
 
     const stack = this._labelStacks[elementId];
     
     // limit stack size — tighter at high speed to prevent severe layout thrashing
-    const maxStack = speed >= 5 ? 5 : 10;
+    const maxStack = this.isAutoBattle ? (speed >= 5 ? 4 : 6) : (speed >= 5 ? 5 : 10);
     while (stack.length >= maxStack) {
       const oldest = stack.shift();
       if (oldest.anim) oldest.anim.cancel();
@@ -433,18 +451,8 @@ export const popupMethods = {
 
     const bump = itemHeight + stackGap;
 
-    // Reuse shared rect cache to avoid forced layout reflow
-    if (!this._rectCache) this._rectCache = { time: 0, rects: {} };
-    const now = performance.now();
-    if (now - this._rectCache.time > 16) {
-      this._rectCache.time = now;
-      this._rectCache.rects = {};
-    }
-    let rect = this._rectCache.rects[elementId];
-    if (!rect) {
-      rect = el.getBoundingClientRect();
-      this._rectCache.rects[elementId] = rect;
-    }
+    const rect = this._getBattleElementRect(elementId);
+    if (!rect) return;
     const centerX = rect.left + rect.width / 2;
     const baseY = rect.top - 8;
 
@@ -544,7 +552,8 @@ export const popupMethods = {
     const icon = getBattleBadgeIcon(label, 'effect');
     const safeLabel = escapeBattleBadgeHtml(label);
     const resolvedBorderClass = borderClass || getBattleBadgeBorderClass(textClass);
-    const html = `<div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border ${resolvedBorderClass} bg-slate-950/90 px-3 py-1.5 ${textClass} backdrop-blur-sm" style="box-shadow: 0 5px 14px rgba(0,0,0,0.72); text-shadow: 0 2px 4px rgba(0,0,0,0.9);"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1">${icon}</span><span class="text-[14px] font-black tracking-wide">${safeLabel}</span></div>`;
+    const backdropClass = this.isAutoBattle ? '' : 'backdrop-blur-sm';
+    const html = `<div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border ${resolvedBorderClass} bg-slate-950/90 px-3 py-1.5 ${textClass} ${backdropClass}" style="box-shadow: 0 5px 14px rgba(0,0,0,0.72); text-shadow: 0 2px 4px rgba(0,0,0,0.9);"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1">${icon}</span><span class="text-[14px] font-black tracking-wide">${safeLabel}</span></div>`;
 
     this._showLabelPopup(elementId, {
       html,
@@ -560,7 +569,8 @@ export const popupMethods = {
     const label = normalizeBattleLabel(actionName);
     const icon = getBattleBadgeIcon(label, 'action');
     const safeLabel = escapeBattleBadgeHtml(label);
-    const html = `<div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border ${borderClass} bg-black/85 px-3.5 py-1.5 ${textClass} backdrop-blur-sm" style="box-shadow: 0 5px 14px rgba(0,0,0,0.78); text-shadow: 0 2px 4px rgba(0,0,0,0.9);"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1">${icon}</span><span class="text-[14px] font-black tracking-wide">${safeLabel}</span></div>`;
+    const backdropClass = this.isAutoBattle ? '' : 'backdrop-blur-sm';
+    const html = `<div class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border ${borderClass} bg-black/85 px-3.5 py-1.5 ${textClass} ${backdropClass}" style="box-shadow: 0 5px 14px rgba(0,0,0,0.78); text-shadow: 0 2px 4px rgba(0,0,0,0.9);"><span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1">${icon}</span><span class="text-[14px] font-black tracking-wide">${safeLabel}</span></div>`;
 
     this._showLabelPopup(elementId, {
       html,

@@ -16,8 +16,8 @@ import { getBattleAnimationDuration } from '../../utils/battle-animation.js';
 // Combat effects use CSS/Web Animations and remain display-refresh-rate smooth.
 // The HUD itself does not need to recalculate styles on every animation frame,
 // especially during unattended auto battle.
-const AUTO_BATTLE_HUD_INTERVAL = 1000 / 30;
-const FAST_AUTO_BATTLE_HUD_INTERVAL = 1000 / 20;
+const AUTO_BATTLE_HUD_INTERVAL = 1000 / 15;
+const FAST_AUTO_BATTLE_HUD_INTERVAL = 1000 / 10;
 const PARTY_BG_CLASSES = ['bg-purple-900/70', 'bg-red-900/70', 'bg-yellow-900/70', 'bg-cyan-950/80', 'bg-blue-900/70', 'bg-stone-900/90', 'bg-slate-300/30', 'bg-black/80', 'bg-pink-900/70', 'bg-gray-800/80'];
 const STAT_TEXT_COLORS = ['text-gray-100', 'text-green-400', 'text-red-400', 'text-purple-400', 'text-slate-400', 'text-indigo-400', 'text-indigo-300', 'text-yellow-400', 'text-teal-300'];
 const ENEMY_EXIT_DURATION = 160;
@@ -75,7 +75,7 @@ function updateBarrierIndicator(cache, entity, maxHp) {
   indicator.setAttribute('aria-valuemax', String(Math.max(1, Math.floor(maxHp), barrier.amount)));
 }
 
-function playEnemyDefeatAnimation(iconContainer) {
+function playEnemyDefeatAnimation(iconContainer, { compact = false, fast = false } = {}) {
   if (!iconContainer || iconContainer.dataset.defeatAnimated === 'true') return;
   iconContainer.dataset.defeatAnimated = 'true';
 
@@ -97,8 +97,10 @@ function playEnemyDefeatAnimation(iconContainer) {
     contain: 'layout style',
   });
 
-  const rows = 4;
-  const columns = 5;
+  // The silhouette still breaks apart in auto battle, but unattended/high-speed
+  // runs do not need twenty independently composited image clones per defeat.
+  const rows = compact ? (fast ? 2 : 3) : 4;
+  const columns = compact ? (fast ? 3 : 4) : 5;
   const duration = getBattleAnimationDuration(330, 190);
   let longestAnimation = duration;
 
@@ -280,12 +282,17 @@ export const rendererMethods = {
     const fastMode = speed >= 5;
     if (!this.domCache) return;
 
-    const aliveEnemiesCount = this.enemies.filter(e => (
-      !e.isDead || this._pendingAttackAnimationTargets?.has(e)
-    )).length || 1;
+    let aliveEnemiesCount = 0;
+    for (const enemy of this.enemies) {
+      if (!enemy.isDead || this._pendingAttackAnimationTargets?.has(enemy)) aliveEnemiesCount += 1;
+    }
+    aliveEnemiesCount ||= 1;
     if (this._lastAliveEnemiesCount !== aliveEnemiesCount) {
       this._lastAliveEnemiesCount = aliveEnemiesCount;
       this.elements.enemyArea.style.setProperty('--enemy-cols', aliveEnemiesCount);
+      // Popup positions remain stable between enemy-card layout changes. Clear
+      // the longer auto-battle rect cache only when that layout actually moves.
+      this._rectCache = null;
     }
 
     this.enemies.forEach(e => {
@@ -319,7 +326,10 @@ export const rendererMethods = {
       if (e.isDead && !isFinishingAttack && cache.uiState.dead !== enemyDeadState) {
         cache.uiState.dead = enemyDeadState;
         if (!disableAnim) {
-          playEnemyDefeatAnimation(iconContainer);
+          playEnemyDefeatAnimation(iconContainer, {
+            compact: this.isAutoBattle,
+            fast: fastMode
+          });
           el.classList.remove('transition-transform');
           el.style.transition = `opacity 100ms ease, min-width ${ENEMY_EXIT_DURATION}ms ease, max-width ${ENEMY_EXIT_DURATION}ms ease, margin ${ENEMY_EXIT_DURATION}ms ease`;
           hpContainer.style.transition = 'opacity 80ms ease';
@@ -563,6 +573,7 @@ export const rendererMethods = {
   },
 
   cacheDOMElements() {
+    this._rectCache = null;
     this.atbElements = {};
     this.domCache = { party: {}, enemies: {} };
 

@@ -23,7 +23,10 @@ import {
 } from './battle-statistics.js';
 import { NUMBER_NOTATION_CHANGED_EVENT, formatNumber } from '../../utils/format.js';
 import { loadTreasureLevels } from '../../data/treasure-manager.js';
-import { configureBattleEffectsLayer } from '../../utils/battle-animation.js';
+import {
+  configureBattleEffectsLayer,
+  setAutoBattlePerformanceMode
+} from '../../utils/battle-animation.js';
 import { setLockScreenActivity } from '../../utils/screen-lock.js';
 import { resolveJobSkillLevelConfig } from '../../utils/job-skill-potency.js';
 import { getEffectiveMedalEquipmentMpCost } from '../../utils/medal-equipment-effects.js';
@@ -109,6 +112,7 @@ class BattleManager {
     this.selectedEnemyTarget = null;
     this.selectedPartyMember = null;
     this.autoBattleMode = sessionStorage.getItem('autoBattleMode') || 'none'; // 'none', 'floor', 'dungeon'
+    setAutoBattlePerformanceMode(this.autoBattleMode !== 'none');
     setLockScreenActivity('battle', this.autoBattleMode !== 'none', {
       mode: this.autoBattleMode,
       reset: this.autoBattleMode !== 'none',
@@ -620,6 +624,7 @@ class BattleManager {
   }
 
   cleanupBattleDOM() {
+    setAutoBattlePerformanceMode(false);
     cleanupBattleStatistics(this);
     clearTimeout(this._scheduledTabRenderTimer);
     this._scheduledTabRenderTimer = null;
@@ -736,6 +741,7 @@ class BattleManager {
       if (!this.isAutoBattle && !this.activeCharacter) return;
       sessionStorage.removeItem('autoBattleMode');
       this.autoBattleMode = 'none';
+      setAutoBattlePerformanceMode(false);
       setLockScreenActivity('battle', false, { mode: 'none' });
       this.endBattle(false, '撤退した！', false);
     };
@@ -819,6 +825,7 @@ class BattleManager {
   }
 
   updateCommandUI() {
+    setAutoBattlePerformanceMode(this.isAutoBattle);
     setLockScreenActivity('battle', this.isAutoBattle, { mode: this.autoBattleMode });
     this.elements.btnAutoFloor.className = "battle-command flex-1 min-w-0 bg-blue-950/90 active:bg-blue-800 rounded-lg font-bold text-[9px] border border-blue-700/80 flex items-center justify-center gap-1 transition-all active:scale-[0.97] shadow-md text-blue-100 px-1";
     this.elements.btnAutoFloor.innerHTML = `<span class="material-symbols-outlined text-[17px] text-blue-400">autorenew</span><span>階層周回</span>`;

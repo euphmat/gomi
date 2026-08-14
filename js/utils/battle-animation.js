@@ -1,10 +1,30 @@
 const MIN_BATTLE_SPEED = 1;
 const MAX_BATTLE_SPEED = 5;
+let autoBattlePerformanceMode = false;
 
-function getBattleEffectLimit(battleSpeed = getBattleSpeed()) {
+export function getBattleEffectLimit(
+  battleSpeed = getBattleSpeed(),
+  autoBattle = autoBattlePerformanceMode
+) {
+  // Keep the authored core animation while limiting overlapping decoration in
+  // unattended combat. Manual battle retains the full visual budget.
+  if (autoBattle) {
+    if (battleSpeed >= 5) return 24;
+    if (battleSpeed >= 3) return 44;
+    return 72;
+  }
   if (battleSpeed >= 5) return 40;
   if (battleSpeed >= 3) return 72;
   return 120;
+}
+
+export function setAutoBattlePerformanceMode(active) {
+  autoBattlePerformanceMode = Boolean(active);
+  if (typeof document === 'undefined') return;
+
+  document.body?.classList.toggle('battle-auto-performance', autoBattlePerformanceMode);
+  const layer = document.getElementById?.('battle-effects-layer');
+  if (layer) layer._battleEffectLimit = getBattleEffectLimit();
 }
 
 /**
@@ -58,6 +78,8 @@ export function canCreateBattleEffect(layer) {
 /** Keep decorative effects bounded so longer high-speed animations stay cheap. */
 export function configureBattleEffectsLayer(layer) {
   if (!layer || layer._effectBudgetObserver) return;
+
+  layer._battleEffectLimit = getBattleEffectLimit();
 
   const trimExcessEffects = () => {
     const maxActiveEffects = getBattleEffectLimit();
