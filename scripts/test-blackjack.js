@@ -97,6 +97,25 @@ assert.match(pageSource, /CloudSaveService\.getCurrentUser\(\)/);
 assert.match(pageSource, /expectedSavedAt:\s*metadata\?\.savedAt \?\? null/);
 assert.match(pageSource, /metadata\.savedAt !== getLastCloudUpload\(currentUser\.uid\)/);
 assert.match(pageSource, /recordCloudUpload\(user\.uid, uploaded\.savedAt\)/);
+assert.match(pageSource, /dramaticPause\(650\)/);
+assert.match(pageSource, /dramaticPause\(900\)/);
+assert.match(pageSource, /blackjack-result-card/);
+assert.match(pageSource, /resultEffectsMarkup\(view\.effect\)/);
+assert.match(pageSource, /insertAdjacentHTML\('beforeend', cardMarkup/);
+assert.ok(!pageSource.includes("return error?.message || 'クラウド"));
+for (const hiddenSaveLabel of [
+  '結果をクラウドへ保存しています',
+  '開始前セーブ',
+  '自動セーブが有効です',
+  'クラウド保存を完了してください',
+]) {
+  assert.ok(!pageSource.includes(hiddenSaveLabel), `player-facing save label remains: ${hiddenSaveLabel}`);
+}
+const settlementUiSource = pageSource.slice(
+  pageSource.indexOf('const syncCompletedResult'),
+  pageSource.indexOf('const startRound'),
+);
+assert.ok(!settlementUiSource.includes('renderTable('), 'settlement must not redraw the full table');
 assert.match(appSource, /\.register\('\/blackjack', renderBlackjackPage\)/);
 assert.match(statusSource, /data-blackjack/);
 

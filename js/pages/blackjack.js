@@ -29,13 +29,31 @@ const escapeHtml = value => String(value ?? '')
 
 const pageStyles = () => `
   <style>
-    .blackjack-felt { background:radial-gradient(circle at 50% 42%,#176246 0%,#0b3b2c 54%,#05251d 100%); box-shadow:inset 0 0 60px rgba(0,0,0,.52),0 18px 45px rgba(0,0,0,.38); }
+    .blackjack-felt { position:relative; background:radial-gradient(circle at 50% 42%,#176246 0%,#0b3b2c 54%,#05251d 100%); box-shadow:inset 0 0 60px rgba(0,0,0,.52),0 18px 45px rgba(0,0,0,.38); transition:filter .8s ease,box-shadow .8s ease; }
+    .blackjack-felt.is-victory { animation:blackjack-table-win 1.1s ease-out both; box-shadow:inset 0 0 50px rgba(253,224,71,.2),0 0 40px rgba(250,204,21,.3),0 18px 45px rgba(0,0,0,.38); }
+    .blackjack-felt.is-defeat { animation:blackjack-table-lose .8s ease-out both; filter:saturate(.45) brightness(.7); }
     .blackjack-card { width:clamp(3.8rem,17vw,5.25rem); aspect-ratio:5/7; border-radius:.65rem; background:linear-gradient(145deg,#fff,#e2e8f0); box-shadow:0 6px 12px rgba(0,0,0,.36),inset 0 0 0 1px rgba(15,23,42,.18); }
     .blackjack-card + .blackjack-card { margin-left:clamp(-1.5rem,-5vw,-.7rem); }
     .blackjack-card.is-hidden { border:3px solid #dbeafe; background:repeating-linear-gradient(45deg,#172554 0 5px,#1d4ed8 5px 10px); box-shadow:0 6px 12px rgba(0,0,0,.36),inset 0 0 0 3px #0f172a,inset 0 0 0 5px #93c5fd; }
-    .blackjack-card-deal { animation:blackjack-deal .28s cubic-bezier(.2,.8,.2,1) both; }
+    .blackjack-card-deal { animation:blackjack-deal .42s cubic-bezier(.2,.8,.2,1) both; }
+    .blackjack-card-reveal { animation:blackjack-reveal .62s cubic-bezier(.2,.8,.2,1) both; transform-style:preserve-3d; }
+    .blackjack-result-stage { animation:blackjack-stage-in .38s ease-out both; }
+    .blackjack-result-card { animation:blackjack-result-in .7s cubic-bezier(.18,.9,.2,1.15) both; }
+    .blackjack-result-card.is-loss { animation:blackjack-loss-in .8s ease-out both; }
+    .blackjack-result-halo { animation:blackjack-halo 1.35s ease-in-out infinite alternate; }
+    .blackjack-fx-piece { position:absolute; left:var(--x); top:-12%; color:var(--color); font-size:var(--size); animation:blackjack-confetti var(--duration) var(--delay) cubic-bezier(.18,.72,.32,1) both; text-shadow:0 0 10px currentColor; }
+    .blackjack-fx-rain { position:absolute; left:var(--x); top:-15%; width:2px; height:42px; border-radius:999px; background:linear-gradient(transparent,rgba(148,163,184,.65)); animation:blackjack-rain var(--duration) var(--delay) linear infinite; transform:rotate(12deg); }
     @keyframes blackjack-deal { from { opacity:0; transform:translate(38px,-28px) rotate(8deg) scale(.82); } to { opacity:1; transform:none; } }
-    @media (prefers-reduced-motion:reduce) { .blackjack-card-deal { animation:none; } }
+    @keyframes blackjack-reveal { 0% { opacity:.5; transform:rotateY(90deg) scale(.92); } 60% { transform:rotateY(-8deg) scale(1.04); } 100% { opacity:1; transform:none; } }
+    @keyframes blackjack-table-win { 0% { transform:none; } 35% { transform:scale(1.012); } 100% { transform:none; } }
+    @keyframes blackjack-table-lose { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 48% { transform:translateX(3px); } 70% { transform:translateX(-2px); } }
+    @keyframes blackjack-stage-in { from { opacity:0; backdrop-filter:blur(0); } to { opacity:1; backdrop-filter:blur(6px); } }
+    @keyframes blackjack-result-in { 0% { opacity:0; transform:translateY(24px) scale(.78); } 55% { transform:translateY(-5px) scale(1.04); } 100% { opacity:1; transform:none; } }
+    @keyframes blackjack-loss-in { 0% { opacity:0; transform:translateY(-12px) scale(1.06); } 30% { transform:translateX(-5px) rotate(-1deg); } 55% { transform:translateX(4px) rotate(1deg); } 100% { opacity:1; transform:none; } }
+    @keyframes blackjack-halo { from { opacity:.45; transform:scale(.88) rotate(0); } to { opacity:.9; transform:scale(1.08) rotate(12deg); } }
+    @keyframes blackjack-confetti { 0% { opacity:0; transform:translateY(0) rotate(0) scale(.5); } 12% { opacity:1; } 100% { opacity:0; transform:translate(calc(var(--drift) * 1px),110vh) rotate(var(--spin)) scale(1.1); } }
+    @keyframes blackjack-rain { from { opacity:0; transform:translateY(0) rotate(12deg); } 15% { opacity:.7; } to { opacity:0; transform:translateY(110vh) rotate(12deg); } }
+    @media (prefers-reduced-motion:reduce) { .blackjack-card-deal,.blackjack-card-reveal,.blackjack-result-stage,.blackjack-result-card,.blackjack-result-card.is-loss,.blackjack-result-halo,.blackjack-fx-piece,.blackjack-fx-rain,.blackjack-felt.is-victory,.blackjack-felt.is-defeat { animation:none; } }
   </style>`;
 
 function createRoundId() {
@@ -48,13 +66,14 @@ function updateHeaderGold(gold) {
   if (display) display.textContent = formatNumber(gold);
 }
 
-function cardMarkup(card, hidden = false, index = 0) {
+function cardMarkup(card, { hidden = false, index = 0, owner = '', reveal = false } = {}) {
+  const ownerAttribute = owner ? ` data-${owner}-card="${index}"` : '';
   if (hidden) {
-    return `<div class="blackjack-card is-hidden blackjack-card-deal shrink-0" style="animation-delay:${index * 35}ms" aria-label="伏せられたカード"></div>`;
+    return `<div${ownerAttribute} class="blackjack-card is-hidden blackjack-card-deal shrink-0" style="animation-delay:${index * 100}ms" aria-label="伏せられたカード"></div>`;
   }
   const red = card?.color === 'red';
   return `
-    <div class="blackjack-card blackjack-card-deal relative shrink-0 p-1.5 ${red ? 'text-rose-600' : 'text-slate-950'}" style="animation-delay:${index * 35}ms" aria-label="${card?.symbol || ''}${card?.rank || ''}">
+    <div${ownerAttribute} class="blackjack-card ${reveal ? 'blackjack-card-reveal' : 'blackjack-card-deal'} relative shrink-0 p-1.5 ${red ? 'text-rose-600' : 'text-slate-950'}" style="animation-delay:${reveal ? 0 : index * 100}ms" aria-label="${card?.symbol || ''}${card?.rank || ''}">
       <div class="text-base font-black leading-none">${card?.rank || '?'}</div>
       <div class="text-lg leading-none">${card?.symbol || ''}</div>
       <div class="absolute inset-0 flex items-center justify-center text-3xl">${card?.symbol || ''}</div>
@@ -65,22 +84,43 @@ function cardMarkup(card, hidden = false, index = 0) {
 function outcomeView(round) {
   const profit = round.payout - round.wager;
   const views = {
-    blackjack: { title: 'BLACKJACK!', detail: `配当 +${formatNumber(profit)} Gold`, icon: 'auto_awesome', tone: 'text-amber-200' },
-    win: { title: 'YOU WIN', detail: `利益 +${formatNumber(profit)} Gold`, icon: 'emoji_events', tone: 'text-emerald-200' },
-    push: { title: 'PUSH', detail: '賭け金を返却しました', icon: 'handshake', tone: 'text-sky-200' },
-    lose: { title: 'DEALER WINS', detail: `${formatNumber(round.wager)} Goldを失いました`, icon: 'sentiment_dissatisfied', tone: 'text-rose-200' },
+    blackjack: { title: 'BLACKJACK!', detail: `配当 +${formatNumber(profit)} Gold`, icon: 'auto_awesome', tone: 'text-amber-200', effect: 'win' },
+    win: { title: 'YOU WIN', detail: `利益 +${formatNumber(profit)} Gold`, icon: 'emoji_events', tone: 'text-emerald-200', effect: 'win' },
+    push: { title: 'PUSH', detail: '賭け金を返却しました', icon: 'handshake', tone: 'text-sky-200', effect: 'push' },
+    lose: { title: 'DEALER WINS', detail: `${formatNumber(round.wager)} Goldを失いました`, icon: 'heart_broken', tone: 'text-rose-200', effect: 'lose' },
   };
   return views[round.outcome] || views.lose;
 }
 
 function errorMessage(error) {
   if (error?.code === 'blackjack/ownership-required') {
-    return '別端末のクラウドセーブを検出しました。設定の「データ管理」からクラウドセーブを復元して、この端末へセーブ権を移してください。';
+    return '別端末に新しいデータがあります。設定の「データ管理」から、この端末へ最新データを反映してください。';
   }
   if (error?.code === 'cloud-save/conflict') {
-    return '保存中に別端末でセーブされました。この端末の自動セーブは無効です。クラウドから復元してください。';
+    return '別端末でデータが更新されました。設定の「データ管理」から最新データを反映してください。';
   }
-  return error?.message || 'クラウドセーブに失敗しました。通信状態を確認してください。';
+  const message = String(error?.message || '');
+  const playerSafePrefixes = [
+    '賭け金', 'Goldが', '未完了のラウンド', 'カードを処理', 'ダブルに必要',
+    'ダブルを処理', 'ブラックジャックを遊ぶには', 'メールアドレスを確認',
+    'ログイン状態が変更',
+  ];
+  if (playerSafePrefixes.some(prefix => message.startsWith(prefix))) return message;
+  return '通信に失敗しました。接続状態を確認して、もう一度お試しください。';
+}
+
+function resultEffectsMarkup(effect) {
+  if (effect === 'win') {
+    return Array.from({ length: 34 }, (_, index) => {
+      const colors = ['#fde047', '#fbbf24', '#86efac', '#67e8f9', '#f0abfc'];
+      const symbols = ['✦', '◆', '●', '★'];
+      return `<span class="blackjack-fx-piece" style="--x:${(index * 29) % 101}%;--color:${colors[index % colors.length]};--size:${12 + (index % 5) * 3}px;--duration:${1.8 + (index % 7) * .16}s;--delay:${(index % 9) * .06}s;--drift:${(index % 2 ? 1 : -1) * (18 + (index % 6) * 7)};--spin:${180 + (index % 6) * 90}deg">${symbols[index % symbols.length]}</span>`;
+    }).join('');
+  }
+  if (effect === 'lose') {
+    return Array.from({ length: 18 }, (_, index) => `<span class="blackjack-fx-rain" style="--x:${(index * 17) % 103}%;--duration:${1.1 + (index % 5) * .16}s;--delay:${(index % 7) * -.18}s"></span>`).join('');
+  }
+  return '';
 }
 
 export function renderBlackjackPage() {
@@ -95,6 +135,16 @@ export function renderBlackjackPage() {
   let disposed = false;
   let unsubscribe = null;
   let authRenderId = 0;
+  const pendingPauses = new Map();
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+
+  const dramaticPause = milliseconds => new Promise(resolve => {
+    const id = window.setTimeout(() => {
+      pendingPauses.delete(id);
+      resolve(!disposed);
+    }, reducedMotion ? Math.min(milliseconds, 80) : milliseconds);
+    pendingPauses.set(id, resolve);
+  });
 
   const openSettings = () => document.getElementById('btn-setting')?.click();
 
@@ -147,7 +197,7 @@ export function renderBlackjackPage() {
       loading: { icon: 'progress_activity', title: 'ログイン状態を確認中', tone: 'text-emerald-300', action: '' },
       loggedOut: { icon: 'lock', title: 'ログインが必要です', tone: 'text-amber-300', action: '<button data-settings class="mt-4 w-full rounded-xl border border-amber-300/35 bg-amber-500/15 py-2.5 text-xs font-black text-amber-100">設定からログイン</button>' },
       unverified: { icon: 'mark_email_unread', title: 'メール確認が必要です', tone: 'text-cyan-300', action: '<button data-settings class="mt-4 w-full rounded-xl border border-cyan-300/35 bg-cyan-500/15 py-2.5 text-xs font-black text-cyan-100">設定で確認状態を更新</button>' },
-      error: { icon: 'sync_problem', title: 'セーブデータを確認できません', tone: 'text-rose-300', action: '<button data-reload-state class="mt-4 w-full rounded-xl border border-rose-300/35 bg-rose-500/15 py-2.5 text-xs font-black text-rose-100">もう一度確認</button>' },
+      error: { icon: 'sync_problem', title: 'データを確認できません', tone: 'text-rose-300', action: '<button data-reload-state class="mt-4 w-full rounded-xl border border-rose-300/35 bg-rose-500/15 py-2.5 text-xs font-black text-rose-100">もう一度確認</button>' },
     };
     const view = views[kind] || views.error;
     container.innerHTML = `
@@ -155,7 +205,7 @@ export function renderBlackjackPage() {
       <div class="mx-auto flex min-h-[390px] max-w-sm flex-col items-center justify-center p-5 text-center">
         <span class="material-symbols-outlined text-5xl ${view.tone} ${kind === 'loading' ? 'animate-spin' : ''}">${view.icon}</span>
         <h1 class="mt-2 text-lg font-black">${view.title}</h1>
-        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">${escapeHtml(detail || 'Goldを扱うため、ブラックジャックはクラウドセーブを利用できるアカウントだけが遊べます。')}</p>
+        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">${escapeHtml(detail || 'Goldを扱うため、ブラックジャックは確認済みのアカウントで遊べます。')}</p>
         ${view.action}
         <button data-home class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">ホームタウンへ戻る</button>
       </div>`;
@@ -176,8 +226,8 @@ export function renderBlackjackPage() {
         </header>
 
         <section class="mb-3 rounded-2xl border border-emerald-300/20 bg-emerald-950/20 p-3 text-[10px] leading-relaxed text-slate-300">
-          <div class="mb-1 flex items-center gap-1 font-black text-emerald-200"><span class="material-symbols-outlined text-base">verified_user</span>セーフプレイ</div>
-          ラウンド開始前に賭け金と配札をクラウドへ自動保存し、この端末の自動セーブを有効にします。別端末の自動セーブは無効になります。
+          <div class="mb-1 flex items-center gap-1 font-black text-emerald-200"><span class="material-symbols-outlined text-base">style</span>テーブルルール</div>
+          ディーラーは17以上でスタンド。Aは1または11として数えます。伏せ札が開く瞬間まで、勝負の行方をお楽しみください。
         </section>
 
         <section class="rounded-3xl border border-amber-300/20 bg-slate-950/80 p-4 shadow-2xl">
@@ -196,6 +246,11 @@ export function renderBlackjackPage() {
       </div>`;
   };
 
+  const playerActionsMarkup = () => {
+    const canDouble = !busy && round?.phase === 'player' && round.playerHand.length === 2 && gold >= round.wager;
+    return `<div class="grid grid-cols-3 gap-2"><button data-hit ${busy ? 'disabled' : ''} class="rounded-xl border border-cyan-300/30 bg-cyan-500/15 py-2.5 text-[10px] font-black text-cyan-100 disabled:opacity-35">ヒット</button><button data-stand ${busy ? 'disabled' : ''} class="rounded-xl border border-emerald-300/30 bg-emerald-500/15 py-2.5 text-[10px] font-black text-emerald-100 disabled:opacity-35">スタンド</button><button data-double ${canDouble ? '' : 'disabled'} class="rounded-xl border border-amber-300/30 bg-amber-500/15 py-2.5 text-[10px] font-black text-amber-100 disabled:opacity-35">ダブル</button></div>`;
+  };
+
   const renderTable = (message = '', tone = 'normal') => {
     if (!round) return;
     const playerValue = getBlackjackHandValue(round.playerHand);
@@ -203,52 +258,147 @@ export function renderBlackjackPage() {
     const pending = round.phase === 'pending_sync';
     const dealerVisibleHand = completed ? round.dealerHand : round.dealerHand.slice(0, 1);
     const dealerValue = getBlackjackHandValue(dealerVisibleHand);
-    const canDouble = !busy && !pending && !completed && round.playerHand.length === 2 && gold >= round.wager;
-    const result = completed ? outcomeView(round) : null;
-    const statusTone = tone === 'error' ? 'border-rose-300/30 bg-rose-950/40 text-rose-100' : pending ? 'border-cyan-300/25 bg-cyan-950/30 text-cyan-100' : 'border-amber-300/20 bg-amber-950/30 text-amber-100';
+    const statusTone = tone === 'error'
+      ? 'border-rose-300/30 bg-rose-950/40 text-rose-100'
+      : pending
+        ? 'border-cyan-300/25 bg-cyan-950/30 text-cyan-100'
+        : 'border-amber-300/20 bg-amber-950/30 text-amber-100';
 
     container.innerHTML = `
       ${pageStyles()}
-      <div class="relative mx-auto max-w-xl p-2 pb-5">
+      <div data-blackjack-root class="relative mx-auto max-w-xl p-2 pb-5">
         <header class="mb-2 flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 shadow-lg">
           <button data-home class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="ホームタウンへ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
-          <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-emerald-300">BLACKJACK TABLE</div><div class="text-xs font-black">賭け金 ${formatNumber(round.wager)} Gold</div></div>
-          <div class="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2 py-1 text-right"><div class="text-[7px] text-slate-500">所持Gold</div><div class="text-[11px] font-black tabular-nums text-amber-200">${formatNumber(gold)}</div></div>
+          <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-emerald-300">BLACKJACK TABLE</div><div data-table-wager class="text-xs font-black">賭け金 ${formatNumber(round.wager)} Gold</div></div>
+          <div class="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2 py-1 text-right"><div class="text-[7px] text-slate-500">所持Gold</div><div data-table-gold class="text-[11px] font-black tabular-nums text-amber-200">${formatNumber(gold)}</div></div>
         </header>
 
-        <section class="blackjack-felt min-h-[410px] rounded-[2rem] border-4 border-amber-900/70 p-3">
-          <div class="text-center"><div class="text-[9px] font-black tracking-[.2em] text-emerald-200/70">DEALER</div><div class="mt-0.5 text-sm font-black">${completed ? dealerValue.total : `${dealerValue.total} + ?`}</div></div>
-          <div class="mt-2 flex min-h-[7.5rem] items-center justify-center" aria-label="ディーラーの手札">${round.dealerHand.map((card, index) => cardMarkup(card, !completed && index === 1, index)).join('')}</div>
-          <div class="my-3 flex items-center gap-2"><div class="h-px flex-1 bg-emerald-200/20"></div><div class="rounded-full border border-amber-300/25 bg-black/25 px-3 py-1 text-[9px] font-black text-amber-200">BET ${formatNumber(round.wager)}</div><div class="h-px flex-1 bg-emerald-200/20"></div></div>
-          <div class="flex min-h-[7.5rem] items-center justify-center" aria-label="あなたの手札">${round.playerHand.map((card, index) => cardMarkup(card, false, index)).join('')}</div>
-          <div class="mt-2 text-center"><div class="text-sm font-black ${playerValue.busted ? 'text-rose-200' : 'text-white'}">${playerValue.total}${playerValue.soft ? ' SOFT' : ''}</div><div class="text-[9px] font-black tracking-[.2em] text-emerald-200/70">YOU</div></div>
+        <section data-blackjack-felt class="blackjack-felt min-h-[410px] rounded-[2rem] border-4 border-amber-900/70 p-3">
+          <div class="text-center"><div class="text-[9px] font-black tracking-[.2em] text-emerald-200/70">DEALER</div><div data-dealer-score class="mt-0.5 text-sm font-black">${completed ? dealerValue.total : `${dealerValue.total} + ?`}</div></div>
+          <div data-dealer-hand class="mt-2 flex min-h-[7.5rem] items-center justify-center" aria-label="ディーラーの手札">${round.dealerHand.map((card, index) => cardMarkup(card, { hidden: !completed && index === 1, index, owner: 'dealer' })).join('')}</div>
+          <div class="my-3 flex items-center gap-2"><div class="h-px flex-1 bg-emerald-200/20"></div><div data-bet-chip class="rounded-full border border-amber-300/25 bg-black/25 px-3 py-1 text-[9px] font-black text-amber-200">BET ${formatNumber(round.wager)}</div><div class="h-px flex-1 bg-emerald-200/20"></div></div>
+          <div data-player-hand class="flex min-h-[7.5rem] items-center justify-center" aria-label="あなたの手札">${round.playerHand.map((card, index) => cardMarkup(card, { index, owner: 'player' })).join('')}</div>
+          <div class="mt-2 text-center"><div data-player-score class="text-sm font-black ${playerValue.busted ? 'text-rose-200' : 'text-white'}">${playerValue.total}${playerValue.soft ? ' SOFT' : ''}</div><div class="text-[9px] font-black tracking-[.2em] text-emerald-200/70">YOU</div></div>
         </section>
 
-        <div class="mt-2 min-h-9 rounded-xl border px-3 py-2 text-center text-[9px] font-black leading-relaxed ${statusTone}" role="status" aria-live="polite">${escapeHtml(message || (pending ? '賭け金と配札をクラウドへ自動保存しています…' : completed ? (round.resultSynced ? '結果をクラウドへ保存しました' : '結果をクラウドへ保存しています…') : 'カードを引くか、勝負するか選んでください'))}</div>
-
-        ${completed ? `
-          <section class="mt-2 rounded-2xl border border-white/10 bg-slate-950/90 p-4 text-center shadow-xl">
-            <span class="material-symbols-outlined text-4xl ${result.tone}">${result.icon}</span><h2 class="mt-1 text-xl font-black ${result.tone}">${result.title}</h2><p class="mt-1 text-[10px] font-bold text-slate-300">${result.detail}</p>
-            ${round.resultSynced ? '<button data-new-round class="mt-3 w-full rounded-xl border border-emerald-300/35 bg-emerald-500/15 py-2.5 text-xs font-black text-emerald-100">次のラウンド</button>' : '<button data-sync-result class="mt-3 w-full rounded-xl border border-cyan-300/35 bg-cyan-500/15 py-2.5 text-xs font-black text-cyan-100">結果の保存を再試行</button>'}
-          </section>` : pending ? `
-          <button data-sync-start class="mt-2 w-full rounded-xl border border-cyan-300/35 bg-cyan-500/15 py-2.5 text-xs font-black text-cyan-100 disabled:opacity-40" ${busy ? 'disabled' : ''}>開始前セーブを再試行</button>` : `
-          <div class="mt-2 grid grid-cols-3 gap-2"><button data-hit ${busy ? 'disabled' : ''} class="rounded-xl border border-cyan-300/30 bg-cyan-500/15 py-2.5 text-[10px] font-black text-cyan-100 disabled:opacity-35">ヒット</button><button data-stand ${busy ? 'disabled' : ''} class="rounded-xl border border-emerald-300/30 bg-emerald-500/15 py-2.5 text-[10px] font-black text-emerald-100 disabled:opacity-35">スタンド</button><button data-double ${canDouble ? '' : 'disabled'} class="rounded-xl border border-amber-300/30 bg-amber-500/15 py-2.5 text-[10px] font-black text-amber-100 disabled:opacity-35">ダブル</button></div>`}
+        <div data-table-status class="mt-2 min-h-9 rounded-xl border px-3 py-2 text-center text-[9px] font-black leading-relaxed ${statusTone}" role="status" aria-live="polite">${escapeHtml(message || (pending ? 'カードを準備しています…' : completed ? '勝負が決まりました' : 'カードを引くか、勝負するか選んでください'))}</div>
+        <div data-table-actions class="mt-2">${completed || pending ? '' : playerActionsMarkup()}</div>
       </div>`;
+  };
+
+  const setTableStatus = (message, tone = 'normal') => {
+    const status = container.querySelector('[data-table-status]');
+    if (!status) return;
+    const tones = {
+      normal: 'border-amber-300/20 bg-amber-950/30 text-amber-100',
+      suspense: 'border-violet-300/25 bg-violet-950/35 text-violet-100',
+      success: 'border-emerald-300/25 bg-emerald-950/35 text-emerald-100',
+      error: 'border-rose-300/30 bg-rose-950/40 text-rose-100',
+    };
+    status.className = `mt-2 min-h-9 rounded-xl border px-3 py-2 text-center text-[9px] font-black leading-relaxed ${tones[tone] || tones.normal}`;
+    status.textContent = message;
+  };
+
+  const setControlsDisabled = disabled => {
+    container.querySelectorAll('[data-hit],[data-stand],[data-double]').forEach(button => {
+      button.disabled = disabled || (button.hasAttribute('data-double') && (round?.playerHand.length !== 2 || gold < round.wager));
+    });
+  };
+
+  const showPlayerActions = () => {
+    const actions = container.querySelector('[data-table-actions]');
+    if (actions) actions.innerHTML = playerActionsMarkup();
+  };
+
+  const updateTableBalances = () => {
+    const goldDisplay = container.querySelector('[data-table-gold]');
+    const wagerDisplay = container.querySelector('[data-table-wager]');
+    const betChip = container.querySelector('[data-bet-chip]');
+    if (goldDisplay) goldDisplay.textContent = formatNumber(gold);
+    if (wagerDisplay) wagerDisplay.textContent = `賭け金 ${formatNumber(round.wager)} Gold`;
+    if (betChip) betChip.textContent = `BET ${formatNumber(round.wager)}`;
+  };
+
+  const updatePlayerDisplay = (appendLatest = false) => {
+    const hand = container.querySelector('[data-player-hand]');
+    if (appendLatest && hand) {
+      const index = round.playerHand.length - 1;
+      hand.insertAdjacentHTML('beforeend', cardMarkup(round.playerHand[index], { index, owner: 'player', reveal: true }));
+    }
+    const value = getBlackjackHandValue(round.playerHand);
+    const score = container.querySelector('[data-player-score]');
+    if (score) {
+      score.textContent = `${value.total}${value.soft ? ' SOFT' : ''}`;
+      score.className = `text-sm font-black ${value.busted ? 'text-rose-200' : 'text-white'}`;
+    }
+  };
+
+  const revealDealerCard = index => {
+    const cardElement = container.querySelector(`[data-dealer-card="${index}"]`);
+    if (cardElement) cardElement.outerHTML = cardMarkup(round.dealerHand[index], { index, owner: 'dealer', reveal: true });
+    const score = container.querySelector('[data-dealer-score]');
+    if (score) score.textContent = String(getBlackjackHandValue(round.dealerHand.slice(0, index + 1)).total);
+  };
+
+  const appendDealerCard = (card, index) => {
+    const hand = container.querySelector('[data-dealer-hand]');
+    hand?.insertAdjacentHTML('beforeend', cardMarkup(card, { index, owner: 'dealer', reveal: true }));
+    const score = container.querySelector('[data-dealer-score]');
+    if (score) score.textContent = String(getBlackjackHandValue(round.dealerHand).total);
+  };
+
+  const showResultPanel = () => {
+    if (!round || round.phase !== 'completed' || container.querySelector('[data-result-stage]')) return;
+    const view = outcomeView(round);
+    const win = view.effect === 'win';
+    const lose = view.effect === 'lose';
+    const felt = container.querySelector('[data-blackjack-felt]');
+    if (win) felt?.classList.add('is-victory');
+    if (lose) felt?.classList.add('is-defeat');
+    const root = container.querySelector('[data-blackjack-root]');
+    root?.insertAdjacentHTML('beforeend', `
+      <div data-result-stage class="blackjack-result-stage absolute inset-0 z-30 flex min-h-full items-center justify-center overflow-hidden rounded-2xl ${win ? 'bg-amber-950/45' : lose ? 'bg-slate-950/72' : 'bg-slate-950/55'} p-4 backdrop-blur-sm">
+        <div class="pointer-events-none absolute inset-0 overflow-hidden">${resultEffectsMarkup(view.effect)}</div>
+        ${win ? '<div class="blackjack-result-halo pointer-events-none absolute h-64 w-64 rounded-full bg-[conic-gradient(from_0deg,transparent,#fde04766,transparent,#f59e0b55,transparent)] blur-xl"></div>' : ''}
+        <section class="blackjack-result-card ${lose ? 'is-loss border-rose-300/30 bg-gradient-to-b from-slate-900/95 to-rose-950/95' : win ? 'border-amber-200/55 bg-gradient-to-b from-amber-950/95 via-slate-900/95 to-emerald-950/95 shadow-[0_0_45px_rgba(250,204,21,.35)]' : 'border-sky-300/35 bg-slate-900/95'} relative z-10 w-full max-w-xs rounded-3xl border p-5 text-center shadow-2xl">
+          <span class="material-symbols-outlined text-5xl ${view.tone}">${view.icon}</span>
+          <h2 class="mt-1 text-2xl font-black tracking-wide ${view.tone}">${view.title}</h2>
+          <p class="mt-2 text-xs font-bold text-slate-200">${view.detail}</p>
+          <button data-result-continue ${round.resultSynced ? '' : 'disabled'} class="mt-5 flex w-full items-center justify-center gap-1 rounded-xl border ${win ? 'border-amber-200/50 bg-amber-400/20 text-amber-100' : lose ? 'border-slate-500/40 bg-slate-700/35 text-slate-200' : 'border-sky-300/35 bg-sky-500/15 text-sky-100'} py-3 text-xs font-black disabled:opacity-45"><span class="material-symbols-outlined text-base">${round.resultSynced ? 'replay' : 'hourglass_top'}</span><span data-result-button-label>${round.resultSynced ? '次の勝負' : 'チップを数えています…'}</span></button>
+          <p data-result-network class="mt-2 hidden text-[9px] font-bold text-rose-300"></p>
+        </section>
+      </div>`);
+  };
+
+  const updateResultContinueButton = ({ ready, failed = false } = {}) => {
+    const button = container.querySelector('[data-result-continue]');
+    const label = container.querySelector('[data-result-button-label]');
+    const icon = button?.querySelector('.material-symbols-outlined');
+    const network = container.querySelector('[data-result-network]');
+    if (!button || !label) return;
+    button.disabled = !ready && !failed;
+    button.dataset.retryConnection = failed ? 'true' : 'false';
+    label.textContent = failed ? '再接続して続ける' : ready ? '次の勝負' : 'チップを数えています…';
+    if (icon) icon.textContent = failed ? 'wifi_off' : ready ? 'replay' : 'hourglass_top';
+    if (network) {
+      network.textContent = failed ? '通信が不安定です。接続を確認してください。' : '';
+      network.classList.toggle('hidden', !failed);
+    }
   };
 
   const syncCompletedResult = async () => {
     if (!round || round.phase !== 'completed' || round.resultSynced || busy) return;
     busy = true;
-    renderTable('結果をクラウドへ保存しています…');
+    updateResultContinueButton({ ready: false });
     try {
       await syncCurrentSnapshot();
       const marked = await GameDB.markBlackjackResultSynced(round.id);
       if (!marked.updated) throw new Error('ラウンド結果が変更されました。');
       round = marked.round;
-      renderTable('結果を保存しました。この端末の自動セーブが有効です。');
+      updateResultContinueButton({ ready: true });
     } catch (error) {
       console.error('[Blackjack] Failed to sync result.', error);
-      renderTable(errorMessage(error), 'error');
+      updateResultContinueButton({ ready: false, failed: true });
     } finally {
       busy = false;
     }
@@ -269,7 +419,11 @@ export function renderBlackjackPage() {
     round = result.round;
     gold = result.gold;
     updateHeaderGold(gold);
-    renderTable();
+    updateTableBalances();
+    setTableStatus(outcome === 'lose' ? '勝負が決まりました…' : '結果を確認しています…', outcome === 'lose' ? 'error' : 'success');
+    await dramaticPause(450);
+    if (disposed) return;
+    showResultPanel();
     busy = false;
     await syncCompletedResult();
   };
@@ -277,18 +431,50 @@ export function renderBlackjackPage() {
   const playDealer = async () => {
     if (!round || busy) return;
     busy = true;
+    setControlsDisabled(true);
+    setTableStatus('ディーラーが伏せ札を確認しています…', 'suspense');
+    if (!await dramaticPause(650)) return;
+    revealDealerCard(1);
+    setTableStatus('伏せ札が開きました', 'suspense');
+    if (!await dramaticPause(850)) return;
+
     const working = JSON.parse(JSON.stringify(round));
-    while (shouldBlackjackDealerHit(working.dealerHand)) {
+    const playerBusted = getBlackjackHandValue(working.playerHand).busted;
+    const natural = getBlackjackHandValue(working.playerHand).blackjack
+      || getBlackjackHandValue(working.dealerHand).blackjack;
+    while (!playerBusted && !natural && shouldBlackjackDealerHit(working.dealerHand)) {
+      const beforeDraw = getBlackjackHandValue(working.dealerHand).total;
+      setTableStatus(`${beforeDraw}… ディーラーはもう1枚引きます`, 'suspense');
+      if (!await dramaticPause(700)) return;
       drawBlackjackCard(working, 'dealerHand');
+      round = working;
+      appendDealerCard(working.dealerHand.at(-1), working.dealerHand.length - 1);
+      const value = getBlackjackHandValue(working.dealerHand);
+      setTableStatus(value.busted ? `${value.total}、ディーラーがバースト！` : `${value.total}…`, value.busted ? 'success' : 'suspense');
+      if (!await dramaticPause(900)) return;
     }
     round = working;
-    await finishRound(resolveBlackjackOutcome(round.playerHand, round.dealerHand));
+    const dealerValue = getBlackjackHandValue(round.dealerHand);
+    if (playerBusted) setTableStatus('あなたはバーストしました…', 'error');
+    else if (!dealerValue.busted && !natural) setTableStatus(`ディーラーは${dealerValue.total}でスタンド`, 'suspense');
+    if (!await dramaticPause(800)) return;
+    try {
+      await finishRound(resolveBlackjackOutcome(round.playerHand, round.dealerHand));
+    } catch (error) {
+      console.error('[Blackjack] Could not settle dealer turn.', error);
+      busy = false;
+      setTableStatus('勝負を確定できませんでした。もう一度お試しください。', 'error');
+      const actions = container.querySelector('[data-table-actions]');
+      if (actions) actions.innerHTML = '<button data-retry-dealer class="w-full rounded-xl border border-rose-300/35 bg-rose-500/15 py-2.5 text-xs font-black text-rose-100">勝負を確定する</button>';
+    }
   };
 
   const syncPendingStart = async () => {
     if (!round || round.phase !== 'pending_sync' || busy) return;
     busy = true;
-    renderTable('賭け金と配札をクラウドへ自動保存しています…');
+    setTableStatus('カードを準備しています…', 'suspense');
+    const retryButton = container.querySelector('[data-sync-start]');
+    if (retryButton) retryButton.disabled = true;
     try {
       await syncCurrentSnapshot();
       const shouldRecordQuest = round.questPlayRecorded !== true;
@@ -298,14 +484,21 @@ export function renderBlackjackPage() {
       round = updated.round;
       if (shouldRecordQuest) window.dispatchEvent(new CustomEvent('quest:mini-game-play'));
       busy = false;
-      renderTable('開始前セーブ完了。この端末の自動セーブが有効です。');
       const player = getBlackjackHandValue(round.playerHand);
       const dealer = getBlackjackHandValue(round.dealerHand);
-      if (player.blackjack || dealer.blackjack) await finishRound(resolveBlackjackOutcome(round.playerHand, round.dealerHand));
+      if (player.blackjack || dealer.blackjack) {
+        setTableStatus('最初の2枚で勝負が動きます…', 'suspense');
+        await playDealer();
+      } else {
+        showPlayerActions();
+        setTableStatus('カードを引くか、勝負するか選んでください');
+      }
     } catch (error) {
       console.error('[Blackjack] Failed to sync round start.', error);
       busy = false;
-      renderTable(errorMessage(error), 'error');
+      setTableStatus(errorMessage(error), 'error');
+      const actions = container.querySelector('[data-table-actions]');
+      if (actions) actions.innerHTML = '<button data-sync-start class="w-full rounded-xl border border-cyan-300/35 bg-cyan-500/15 py-2.5 text-xs font-black text-cyan-100">もう一度カードを準備</button>';
     }
   };
 
@@ -358,17 +551,20 @@ export function renderBlackjackPage() {
       const nextRound = JSON.parse(JSON.stringify(round));
       drawBlackjackCard(nextRound, 'playerHand');
       const updated = await GameDB.updateBlackjackRound(nextRound);
-      if (!updated.updated) throw new Error('カードを保存できませんでした。');
+      if (!updated.updated) throw new Error('カードを処理できませんでした。');
       round = updated.round;
-      busy = false;
-      renderTable('カードを1枚引きました');
+      updatePlayerDisplay(true);
+      setTableStatus('カードを1枚引きました');
+      if (!await dramaticPause(420)) return;
       const value = getBlackjackHandValue(round.playerHand);
-      if (value.busted) await finishRound('lose');
-      else if (value.total === 21) await playDealer();
+      busy = false;
+      if (value.busted || value.total === 21) await playDealer();
+      else setControlsDisabled(false);
     } catch (error) {
       console.error('[Blackjack] Hit failed.', error);
       busy = false;
-      renderTable(errorMessage(error), 'error');
+      setTableStatus(errorMessage(error), 'error');
+      setControlsDisabled(false);
     }
   };
 
@@ -381,17 +577,21 @@ export function renderBlackjackPage() {
       nextRound.wager += previousWager;
       drawBlackjackCard(nextRound, 'playerHand');
       const updated = await GameDB.updateBlackjackRound(nextRound, previousWager);
-      if (!updated.updated) throw new Error(updated.reason === 'insufficient-gold' ? 'ダブルに必要なGoldが足りません。' : 'ダブルを保存できませんでした。');
+      if (!updated.updated) throw new Error(updated.reason === 'insufficient-gold' ? 'ダブルに必要なGoldが足りません。' : 'ダブルを処理できませんでした。');
       round = updated.round;
       gold = updated.gold;
       updateHeaderGold(gold);
+      updateTableBalances();
+      updatePlayerDisplay(true);
+      setTableStatus('賭け金を倍にして、最後の1枚を引きました', 'suspense');
+      if (!await dramaticPause(620)) return;
       busy = false;
-      if (getBlackjackHandValue(round.playerHand).busted) await finishRound('lose');
-      else await playDealer();
+      await playDealer();
     } catch (error) {
       console.error('[Blackjack] Double down failed.', error);
       busy = false;
-      renderTable(errorMessage(error), 'error');
+      setTableStatus(errorMessage(error), 'error');
+      setControlsDisabled(false);
     }
   };
 
@@ -420,10 +620,15 @@ export function renderBlackjackPage() {
       updateHeaderGold(gold);
       if (!round || (round.phase === 'completed' && round.resultSynced)) renderLobby();
       else if (round.phase === 'pending_sync') {
-        renderTable('開始前のクラウドセーブを完了してください', 'error');
+        renderTable('カードを準備しています…');
+        await syncPendingStart();
       } else if (round.phase === 'player') renderTable('未完了のラウンドを再開しました');
-      else if (round.phase === 'completed') renderTable('結果のクラウド保存を完了してください', 'error');
-      else throw new Error('保存されているラウンド形式を読み込めません。');
+      else if (round.phase === 'completed') {
+        renderTable('勝負が決まりました');
+        showResultPanel();
+        syncCompletedResult();
+      }
+      else throw new Error('ラウンドデータを読み込めません。');
     } catch (error) {
       console.error('[Blackjack] Could not load state.', error);
       if (!disposed && renderId === authRenderId) renderGate('error', errorMessage(error));
@@ -473,26 +678,36 @@ export function renderBlackjackPage() {
       await doubleDown();
       return;
     }
-    if (event.target.closest('[data-sync-result]')) {
-      await syncCompletedResult();
+    if (event.target.closest('[data-retry-dealer]')) {
+      await playDealer();
       return;
     }
-    if (event.target.closest('[data-new-round]')) {
-      round = null;
-      gold = Math.max(0, Math.floor(Number(await GameDB.getGameState('gold')) || 0));
-      renderLobby();
+    const resultContinue = event.target.closest('[data-result-continue]');
+    if (resultContinue) {
+      if (!round?.resultSynced || resultContinue.dataset.retryConnection === 'true') {
+        await syncCompletedResult();
+      } else {
+        round = null;
+        gold = Math.max(0, Math.floor(Number(await GameDB.getGameState('gold')) || 0));
+        renderLobby();
+      }
     }
   });
 
   container.cleanup = () => {
     disposed = true;
     authRenderId += 1;
+    for (const [id, resolve] of pendingPauses) {
+      window.clearTimeout(id);
+      resolve(false);
+    }
+    pendingPauses.clear();
     unsubscribe?.();
   };
 
   renderGate('loading');
   if (!CloudSaveService.isConfigured) {
-    renderGate('error', 'クラウドセーブが設定されていないため、ブラックジャックを開始できません。');
+    renderGate('error', 'オンライン機能を利用できないため、ブラックジャックを開始できません。');
     return container;
   }
   CloudSaveService.observeAuthState(user => loadForUser(user))
