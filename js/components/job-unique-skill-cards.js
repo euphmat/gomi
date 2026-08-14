@@ -46,9 +46,9 @@ export function renderJobUniqueSkillCards(job, character = null, { compact = fal
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-1.5">
                 <h3 class="${compact ? 'text-[12px]' : 'text-[13px]'} font-black tracking-wide ${unlocked ? 'text-amber-50' : 'text-slate-400'}">${escapeHtml(skill.name)}</h3>
-                <span class="rounded border border-amber-500/35 bg-amber-950/60 px-1.5 py-px text-[8px] font-black tracking-wider text-amber-200">固有</span>
-                <span class="rounded border border-cyan-600/30 bg-cyan-950/45 px-1.5 py-px text-[8px] font-bold text-cyan-200">${modeLabel}</span>
-                ${unlocked ? '' : '<span class="rounded border border-slate-600/50 bg-slate-950/70 px-1.5 py-px text-[8px] font-black text-slate-400">未習得</span>'}
+                <span class="rounded border border-amber-500/35 bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-black leading-tight tracking-wider text-amber-200">固有</span>
+                <span class="rounded border border-cyan-600/30 bg-cyan-950/45 px-1.5 py-0.5 text-[10px] font-bold leading-tight text-cyan-200">${modeLabel}</span>
+                ${unlocked ? '' : '<span class="rounded border border-slate-600/50 bg-slate-950/70 px-1.5 py-0.5 text-[10px] font-black leading-tight text-slate-400">未習得</span>'}
               </div>
               <p class="mt-1 ${compact ? 'text-[10px]' : 'text-[11px]'} font-bold leading-relaxed text-slate-200">${escapeHtml(skill.description)}</p>
               <div class="mt-1.5 flex flex-wrap items-center gap-1 text-[9px]">
@@ -81,7 +81,7 @@ export function renderJobUniqueSkillSummary(job) {
         <div class="flex items-center gap-1.5">
           <span class="material-symbols-outlined shrink-0 text-[13px] text-amber-200" style="font-variation-settings:'FILL' 1">${escapeHtml(skill.icon)}</span>
           <span class="text-[10px] font-black text-amber-50">${escapeHtml(skill.name)}</span>
-          <span class="rounded border border-cyan-600/25 bg-cyan-950/40 px-1 py-px text-[7px] font-black text-cyan-200">${skill.mode === 'command' ? 'コマンド' : '自動発動'}</span>
+          <span class="rounded border border-cyan-600/25 bg-cyan-950/40 px-1.5 py-0.5 text-[9px] font-black leading-tight text-cyan-200">${skill.mode === 'command' ? 'コマンド' : '自動発動'}</span>
         </div>
         <div class="mt-0.5 pl-[19px] text-[9px] font-bold leading-relaxed text-slate-300">
           <span class="text-amber-300">発動：</span>${escapeHtml(skill.activation)}<span class="mx-1 text-slate-600">/</span>${escapeHtml(skill.description)}

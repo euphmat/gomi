@@ -92,10 +92,10 @@ export function createCharacterSelectGrid(characters, selectedCharId, onSelect) 
           <div class="flex items-center justify-between mb-1 gap-1">
             <span class="text-[11px] font-black text-gray-100 truncate drop-shadow-md group-active:text-white transition-colors leading-tight">${char.name}</span>
             <div class="flex gap-1 shrink-0">
-              <span class="text-[8px] font-bold text-orange-300 bg-orange-900/40 px-1 py-px rounded border border-orange-500/30 shadow-inner">Lv ${char.level || 1}</span>
-              <span class="text-[8px] font-bold text-pink-300 bg-pink-900/40 px-1 py-px rounded border border-pink-500/30 shadow-inner">Job ${char.jobLevel || 1}</span>
-              <span class="text-[8px] font-bold text-yellow-300 bg-yellow-900/40 px-1 py-px rounded border border-yellow-500/30 flex items-center gap-0.5 shadow-inner">
-                <span class="material-symbols-outlined !text-[8px]">stars</span>${char.sp || 0}
+              <span class="text-[10px] font-bold leading-tight text-orange-300 bg-orange-900/40 px-1.5 py-0.5 rounded border border-orange-500/30 shadow-inner">Lv ${char.level || 1}</span>
+              <span class="text-[10px] font-bold leading-tight text-pink-300 bg-pink-900/40 px-1.5 py-0.5 rounded border border-pink-500/30 shadow-inner">Job ${char.jobLevel || 1}</span>
+              <span class="text-[10px] font-bold leading-tight text-yellow-300 bg-yellow-900/40 px-1.5 py-0.5 rounded border border-yellow-500/30 flex items-center gap-0.5 shadow-inner">
+                <span class="material-symbols-outlined !text-[10px]">stars</span>${char.sp || 0}
               </span>
             </div>
           </div>

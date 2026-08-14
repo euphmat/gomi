@@ -93,5 +93,25 @@ assert(acquireSource.includes('btn-tab-unique') && acquireSource.includes('rende
 
 const changeJobSource = fs.readFileSync(new URL('../js/pages/guild-tabs/change-job.js', import.meta.url), 'utf8');
 assert(changeJobSource.includes('renderJobUniqueSkillSummary(job)'), '職業一覧に固有スキル概要が接続されていません');
+const listAppendIndex = changeJobSource.indexOf('wrapperContainer.appendChild(listContainer);');
+const paginationAppendIndex = changeJobSource.indexOf('wrapperContainer.appendChild(paginationContainer);', listAppendIndex);
+const uniqueSummaryAppendIndex = changeJobSource.indexOf('wrapperContainer.appendChild(uniqueSummaryContainer);');
+assert(
+  listAppendIndex >= 0 && paginationAppendIndex > listAppendIndex && uniqueSummaryAppendIndex > paginationAppendIndex,
+  '固有スキル概要が転職ページ下部に配置されていません'
+);
+assert(
+  changeJobSource.includes('aria-label="転職条件"')
+    && changeJobSource.includes('魚図鑑 ${discovered}/${required}')
+    && changeJobSource.includes('${formatNumber(currentLv)}/${formatNumber(req.level)}'),
+  '転職条件の進捗バッジが職業カードに表示されません'
+);
+
+const characterSelectSource = fs.readFileSync(new URL('../js/components/character-select-grid.js', import.meta.url), 'utf8');
+assert(
+  characterSelectSource.includes('text-[10px] font-bold leading-tight text-orange-300')
+    && characterSelectSource.includes('material-symbols-outlined !text-[10px]'),
+  'キャラクター選択バッジの文字サイズが拡大されていません'
+);
 
 console.log('job unique skills tests passed');
