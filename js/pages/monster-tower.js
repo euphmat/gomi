@@ -29,21 +29,25 @@ const DIFFICULTIES = Object.freeze({
   easy: {
     id: 'easy', label: 'EASY', reward: TOWN_GAME_REWARDS.easy,
     candidates: 4, noise: 190, maxRotation: Math.PI / 6,
+    stoppers: true,
     description: 'CPUは置き場所にかなり迷う', icon: 'sentiment_satisfied', tone: 'emerald',
   },
   normal: {
     id: 'normal', label: 'NORMAL', reward: TOWN_GAME_REWARDS.normal,
     candidates: 8, noise: 90, maxRotation: Math.PI / 3,
+    stoppers: true,
     description: 'CPUは安定する場所を探す', icon: 'smart_toy', tone: 'sky',
   },
   hard: {
     id: 'hard', label: 'HARD', reward: TOWN_GAME_REWARDS.hard,
     candidates: 15, noise: 32, maxRotation: Math.PI / 2,
+    stoppers: true,
     description: 'CPUが多数の配置を比較する', icon: 'psychology', tone: 'amber',
   },
   very_hard: {
     id: 'very_hard', label: 'VERY HARD', reward: TOWN_GAME_REWARDS.very_hard,
     candidates: 24, noise: 4, maxRotation: Math.PI * .72,
+    stoppers: false,
     description: 'CPUが角度まで精密に予測する', icon: 'skull', tone: 'violet',
   },
 });
@@ -384,6 +388,26 @@ export function renderMonsterTowerPage() {
     else context.rect(platform.x, platform.y, platform.width, platform.height);
     context.fill();
     context.stroke();
+    if (game.world.hasStoppers) {
+      const stopper = TOWER_WORLD.stopper;
+      const stopperGradient = context.createLinearGradient(0, platform.y - stopper.height, 0, platform.y);
+      stopperGradient.addColorStop(0, '#f8fafc');
+      stopperGradient.addColorStop(.3, '#94a3b8');
+      stopperGradient.addColorStop(1, '#334155');
+      context.fillStyle = stopperGradient;
+      context.strokeStyle = '#cbd5e1';
+      context.lineWidth = 1.5;
+      [platform.x, platform.x + platform.width - stopper.width].forEach(x => {
+        context.beginPath();
+        if (typeof context.roundRect === 'function') {
+          context.roundRect(x, platform.y - stopper.height, stopper.width, stopper.height + 2, [3, 3, 0, 0]);
+        } else {
+          context.rect(x, platform.y - stopper.height, stopper.width, stopper.height + 2);
+        }
+        context.fill();
+        context.stroke();
+      });
+    }
     context.fillStyle = '#0f172a';
     context.fillRect(width / 2 - 18, platform.y + platform.height, 36, height - platform.y - platform.height);
 
@@ -651,7 +675,7 @@ export function renderMonsterTowerPage() {
     clearTimers();
     game = {
       config,
-      world: createTowerWorld(),
+      world: createTowerWorld([], { stoppers: config.stoppers }),
       deck: shuffle(MONSTERS),
       deckIndex: 0,
       readyImages: new Map(),

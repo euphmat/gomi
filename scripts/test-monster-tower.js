@@ -111,6 +111,27 @@ if (globalThis.Matter) {
 }
 
 const profile = createFallbackCollisionProfile(1, 60);
+assert(TOWER_WORLD.platform.width === 260, 'tower platform width is not the enlarged size');
+assert(TOWER_WORLD.platform.x === 50, 'enlarged tower platform is not centered');
+
+const stoppedWorld = createTowerWorld([], { stoppers: true });
+assert(stoppedWorld.hasStoppers, 'difficulty stoppers were not enabled in the tower world');
+if (globalThis.Matter) {
+  assert(stoppedWorld.stopperBodies.length === 2, 'Matter.js world does not have both platform stoppers');
+}
+
+const edgeProfile = createFallbackCollisionProfile(1, 30);
+for (const side of [-1, 1]) {
+  const edgeWorld = createTowerWorld([], { stoppers: true });
+  const edgeBody = addTowerBody(edgeWorld, createTowerBody({
+    id: `edge-stop-${side}`, monsterId: 'edge-test', owner: 'player', profile: edgeProfile,
+    x: TOWER_WORLD.width / 2 + side * 105, y: 395,
+  }));
+  edgeBody.vx = side * 60;
+  for (let frame = 0; frame < 480; frame += 1) stepTowerWorld(edgeWorld, 1 / 120, 3);
+  assert(getFallenBodies(edgeWorld).length === 0, `${side < 0 ? 'left' : 'right'} platform stopper did not catch an edge-bound monster`);
+}
+
 const stableWorld = createTowerWorld();
 addTowerBody(stableWorld, createTowerBody({
   id: 'stable', monsterId: 'slime_green', owner: 'player', profile,

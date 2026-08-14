@@ -7,7 +7,8 @@ export const TOWER_WORLD = Object.freeze({
   width: 360,
   height: 520,
   gravity: 620,
-  platform: Object.freeze({ x: 65, y: 430, width: 230, height: 24 }),
+  platform: Object.freeze({ x: 50, y: 430, width: 260, height: 24 }),
+  stopper: Object.freeze({ width: 10, height: 14 }),
   lossY: 512,
 });
 
@@ -475,7 +476,21 @@ export function createTowerBody({ id, monsterId, owner, profile, x, y = 48, angl
   };
 }
 
-export function createTowerWorld(bodies = []) {
+function getStopperRectangles() {
+  const { platform, stopper } = TOWER_WORLD;
+  return [
+    { x: platform.x, y: platform.y - stopper.height, width: stopper.width, height: stopper.height },
+    {
+      x: platform.x + platform.width - stopper.width,
+      y: platform.y - stopper.height,
+      width: stopper.width,
+      height: stopper.height,
+    },
+  ];
+}
+
+export function createTowerWorld(bodies = [], options = {}) {
+  const hasStoppers = Boolean(options.stoppers);
   const Matter = getMatter();
   if (Matter) {
     const engine = Matter.Engine.create({
@@ -502,18 +517,36 @@ export function createTowerWorld(bodies = []) {
         label: 'tower-platform',
       },
     );
-    const world = { bodies: [], elapsed: 0, engine, platformBody, usingMatter: true };
-    Matter.Composite.add(engine.world, platformBody);
+    const stopperBodies = hasStoppers
+      ? getStopperRectangles().map((stopper, index) => Matter.Bodies.rectangle(
+        stopper.x + stopper.width / 2,
+        stopper.y + stopper.height / 2,
+        stopper.width,
+        stopper.height,
+        {
+          isStatic: true,
+          friction: 1,
+          frictionStatic: 1.3,
+          restitution: .015,
+          chamfer: { radius: 2 },
+          label: `tower-stopper-${index === 0 ? 'left' : 'right'}`,
+        },
+      ))
+      : [];
+    const world = {
+      bodies: [], elapsed: 0, engine, platformBody, stopperBodies, hasStoppers, usingMatter: true,
+    };
+    Matter.Composite.add(engine.world, [platformBody, ...stopperBodies]);
     bodies.forEach(body => addTowerBody(world, body));
     return world;
   }
-  return { bodies: [...bodies], elapsed: 0 };
+  return { bodies: [...bodies], elapsed: 0, hasStoppers };
 }
 
 export function cloneTowerWorld(world, useCoarseGeometry = false) {
   if (world.usingMatter) {
     const Matter = getMatter();
-    const clone = createTowerWorld();
+    const clone = createTowerWorld([], { stoppers: world.hasStoppers });
     world.bodies.forEach(source => {
       const body = createMatterTowerBody({
         id: source.towerId,
@@ -534,6 +567,7 @@ export function cloneTowerWorld(world, useCoarseGeometry = false) {
   }
   return {
     elapsed: world.elapsed || 0,
+    hasStoppers: world.hasStoppers,
     bodies: world.bodies.map(body => ({
       ...body,
       profile: {
@@ -642,8 +676,7 @@ function resolveContact(bodyA, bodyB, normal, penetration, point, restitution = 
   applyImpulse(bodyB, tangentImpulse, point, 1);
 }
 
-function collideBodyWithPlatform(body) {
-  const rectangle = TOWER_WORLD.platform;
+function collideBodyWithRectangle(body, rectangle) {
   const right = rectangle.x + rectangle.width;
   const bottom = rectangle.y + rectangle.height;
   body.profile.parts.forEach(part => {
@@ -671,6 +704,13 @@ function collideBodyWithPlatform(body) {
     const normal = { x: dx / distance, y: dy / distance };
     resolveContact(body, null, normal, circle.r - distance, { x: nearestX, y: nearestY });
   });
+}
+
+function collideBodyWithPlatform(body, world) {
+  collideBodyWithRectangle(body, TOWER_WORLD.platform);
+  if (world.hasStoppers) {
+    getStopperRectangles().forEach(rectangle => collideBodyWithRectangle(body, rectangle));
+  }
 }
 
 function collideBodies(bodyA, bodyB) {
@@ -716,7 +756,7 @@ export function stepTowerWorld(world, deltaSeconds = 1 / 60, iterations = 3) {
   });
 
   for (let pass = 0; pass < iterations; pass += 1) {
-    world.bodies.forEach(collideBodyWithPlatform);
+    world.bodies.forEach(body => collideBodyWithPlatform(body, world));
     for (let first = 0; first < world.bodies.length; first += 1) {
       for (let second = first + 1; second < world.bodies.length; second += 1) {
         collideBodies(world.bodies[first], world.bodies[second]);

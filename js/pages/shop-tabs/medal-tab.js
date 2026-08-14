@@ -515,6 +515,13 @@ export function renderMedalTab() {
               prismBtn.dataset.processing = 'true';
               const targetMonsterId = selectedMonsterId;
 
+              const confirmed = await showPrismUpgradeConfirmation(monster, nextRank);
+              if (!confirmed) {
+                delete prismBtn.dataset.processing;
+                updateDynamicValues();
+                return;
+              }
+
               // 保存直前に最新値を読み直し、連打や別画面からの更新による二重消費を防ぐ
               const [latestPrismValue, latestMedalsValue] = await Promise.all([
                 GameDB.getGameState('prism'),
@@ -523,7 +530,8 @@ export function renderMedalTab() {
               const latestPrism = latestPrismValue || 0;
               const latestMedals = latestMedalsValue || {};
               const latestRankIndex = latestMedals[targetMonsterId] !== undefined ? latestMedals[targetMonsterId] : -1;
-              if (latestPrism < 1 || latestRankIndex < 0 || latestRankIndex >= MEDAL_RANKS.length - 1) {
+              // 確認中に別画面でランクが変わった場合は、確認した内容と異なる強化を実行しない
+              if (latestPrism < 1 || latestRankIndex !== nextRankIndex - 1 || latestRankIndex >= MEDAL_RANKS.length - 1) {
                 currentPrism = latestPrism;
                 playerMedals = latestMedals;
                 render();
@@ -749,6 +757,60 @@ export function renderMedalTab() {
   }, 1000);
 
   return container;
+}
+
+/**
+ * Prismを消費するメダルランクアップの確認モーダルを表示する
+ */
+function showPrismUpgradeConfirmation(monster, nextRank) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.id = 'medal-prism-confirm-modal';
+    overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'medal-prism-confirm-title');
+    overlay.innerHTML = `
+      <div class="w-full max-w-[300px] overflow-hidden rounded-2xl border border-fuchsia-300/35 bg-slate-950 shadow-[0_0_40px_rgba(217,70,239,0.25)]">
+        <div class="p-5 text-center">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-fuchsia-300/35 bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/20">
+            <span class="material-symbols-outlined text-2xl text-fuchsia-200">diamond</span>
+          </div>
+          <h3 id="medal-prism-confirm-title" class="mt-3 text-base font-black text-white">Prismを使用しますか？</h3>
+          <p class="mt-2 text-[11px] leading-relaxed text-slate-400">
+            本当にPrismを1個使用して、<strong class="text-slate-200">${monster.name}</strong>のメダルを<strong class="text-fuchsia-200">${nextRank.name}</strong>へランクアップしますか？
+          </p>
+          <div class="mt-5 grid grid-cols-2 gap-2">
+            <button type="button" data-prism-confirm-no class="h-11 rounded-xl border border-slate-700 bg-slate-900 text-sm font-black text-slate-300 transition-colors active:bg-slate-800">いいえ</button>
+            <button type="button" data-prism-confirm-yes class="h-11 rounded-xl border border-fuchsia-300/45 bg-gradient-to-r from-fuchsia-600 to-cyan-600 text-sm font-black text-white shadow-lg shadow-fuchsia-950/50 transition-transform active:scale-[0.98]">はい</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const previousFocus = document.activeElement;
+    let settled = false;
+    const finish = confirmed => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener('keydown', handleKeydown);
+      overlay.remove();
+      if (previousFocus?.isConnected) previousFocus.focus();
+      resolve(confirmed);
+    };
+    const handleKeydown = event => {
+      if (event.key === 'Escape') finish(false);
+    };
+
+    overlay.querySelector('[data-prism-confirm-no]').onclick = () => finish(false);
+    overlay.querySelector('[data-prism-confirm-yes]').onclick = () => finish(true);
+    overlay.onclick = event => {
+      if (event.target === overlay) finish(false);
+    };
+    document.addEventListener('keydown', handleKeydown);
+    document.body.appendChild(overlay);
+    overlay.querySelector('[data-prism-confirm-no]').focus();
+  });
 }
 
 /**
