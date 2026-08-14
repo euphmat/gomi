@@ -2,6 +2,10 @@
 
 export const BLACKJACK_MIN_BET = 10;
 export const BLACKJACK_BET_STEP = 10;
+export const BLACKJACK_CURRENCY_RULES = Object.freeze({
+  gold: Object.freeze({ id: 'gold', label: 'Gold', minBet: 10, betStep: 10 }),
+  prism: Object.freeze({ id: 'prism', label: 'Prism', minBet: 2, betStep: 2 }),
+});
 
 export const BLACKJACK_SUITS = Object.freeze([
   { id: 'spade', symbol: '♠', color: 'black' },
@@ -14,10 +18,19 @@ export const BLACKJACK_RANKS = Object.freeze([
   'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K',
 ]);
 
-export function isValidBlackjackBet(value) {
+export function normalizeBlackjackCurrency(currency) {
+  return currency === 'prism' ? 'prism' : 'gold';
+}
+
+export function getBlackjackCurrencyRules(currency) {
+  return BLACKJACK_CURRENCY_RULES[normalizeBlackjackCurrency(currency)];
+}
+
+export function isValidBlackjackBet(value, currency = 'gold') {
+  const rules = getBlackjackCurrencyRules(currency);
   return Number.isSafeInteger(value)
-    && value >= BLACKJACK_MIN_BET
-    && value % BLACKJACK_BET_STEP === 0;
+    && value >= rules.minBet
+    && value % rules.betStep === 0;
 }
 
 export function createBlackjackDeck() {
@@ -99,11 +112,13 @@ export function drawBlackjackCard(round, target) {
   return card;
 }
 
-export function createBlackjackRound(wager, { id, now = Date.now(), deck } = {}) {
-  if (!isValidBlackjackBet(wager)) throw new Error('Invalid blackjack wager.');
+export function createBlackjackRound(wager, { id, now = Date.now(), deck, currency = 'gold' } = {}) {
+  const normalizedCurrency = normalizeBlackjackCurrency(currency);
+  if (!isValidBlackjackBet(wager, normalizedCurrency)) throw new Error('Invalid blackjack wager.');
   const round = {
     id: id || `${now}-${Math.random().toString(36).slice(2)}`,
     wager,
+    currency: normalizedCurrency,
     deck: deck ? deck.map(card => ({ ...card })) : shuffleBlackjackDeck(),
     nextCardIndex: 0,
     playerHand: [],
@@ -138,8 +153,8 @@ export function resolveBlackjackOutcome(playerHand, dealerHand) {
 }
 
 /** Total amount returned to the bankroll; the wager was already deducted. */
-export function getBlackjackPayout(wager, outcome) {
-  if (!isValidBlackjackBet(wager)) throw new Error('Invalid blackjack wager.');
+export function getBlackjackPayout(wager, outcome, currency = 'gold') {
+  if (!isValidBlackjackBet(wager, currency)) throw new Error('Invalid blackjack wager.');
   if (outcome === 'blackjack') return (wager * 5) / 2;
   if (outcome === 'win') return wager * 2;
   if (outcome === 'push') return wager;
@@ -152,7 +167,7 @@ const jsonEqual = (left, right) => JSON.stringify(left) === JSON.stringify(right
 /** Validate the persisted deck and reconstruct every dealt card from its history. */
 export function isValidBlackjackRoundState(round) {
   if (!round || typeof round.id !== 'string' || !round.id
-      || !isValidBlackjackBet(round.wager)
+      || !isValidBlackjackBet(round.wager, round.currency)
       || !['pending_sync', 'player', 'completed'].includes(round.phase)
       || !Array.isArray(round.deck) || round.deck.length !== 52
       || !Array.isArray(round.playerHand) || !Array.isArray(round.dealerHand)
@@ -180,6 +195,7 @@ export function isValidBlackjackRoundState(round) {
 function hasImmutableRoundCore(previous, next) {
   return previous.id === next.id
     && previous.createdAt === next.createdAt
+    && normalizeBlackjackCurrency(previous.currency) === normalizeBlackjackCurrency(next.currency)
     && jsonEqual(previous.deck, next.deck);
 }
 
@@ -232,5 +248,5 @@ export function isLegalBlackjackSettlement(previous, next) {
     && expected.nextCardIndex === next.nextCardIndex
     && jsonEqual(expected.drawHistory, next.drawHistory)
     && next.outcome === outcome
-    && next.payout === getBlackjackPayout(next.wager, outcome);
+    && next.payout === getBlackjackPayout(next.wager, outcome, next.currency);
 }

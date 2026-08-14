@@ -1,4 +1,4 @@
-/** ログインとクラウドセーブ所有権を必須にした、Gold賭けブラックジャック。 */
+/** ログインとクラウドセーブ所有権を必須にした、通貨賭けブラックジャック。 */
 import { GameDB } from '../data/database.js';
 import { CloudSaveService } from '../data/cloud-save-service.js';
 import {
@@ -7,19 +7,23 @@ import {
 } from '../data/cloud-save-local-state.js';
 import { APP_VERSION } from '../definitions/update-log.js';
 import {
-  BLACKJACK_BET_STEP,
-  BLACKJACK_MIN_BET,
   createBlackjackRound,
   drawBlackjackCard,
+  getBlackjackCurrencyRules,
   getBlackjackHandValue,
   getBlackjackPayout,
   isValidBlackjackBet,
+  normalizeBlackjackCurrency,
   resolveBlackjackOutcome,
   shouldBlackjackDealerHit,
 } from '../data/blackjack-engine.js';
 import { formatNumber } from '../utils/format.js';
 
 const ROUND_STATE_KEY = 'blackjack_round';
+const CURRENCY_VIEWS = Object.freeze({
+  gold: { label: 'Gold', icon: 'toll', text: 'text-amber-200', accent: 'accent-amber-400', defaultBet: 50 },
+  prism: { label: 'Prism', icon: 'diamond', text: 'text-fuchsia-200', accent: 'accent-fuchsia-400', defaultBet: 10 },
+});
 const escapeHtml = value => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -61,9 +65,9 @@ function createRoundId() {
     || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function updateHeaderGold(gold) {
-  const display = document.getElementById('header-gold-display');
-  if (display) display.textContent = formatNumber(gold);
+function updateHeaderBalance(currency, balance) {
+  const display = document.getElementById(`header-${currency}-display`);
+  if (display) display.textContent = formatNumber(balance);
 }
 
 function cardMarkup(card, { hidden = false, index = 0, owner = '', reveal = false } = {}) {
@@ -83,11 +87,12 @@ function cardMarkup(card, { hidden = false, index = 0, owner = '', reveal = fals
 
 function outcomeView(round) {
   const profit = round.payout - round.wager;
+  const currency = CURRENCY_VIEWS[normalizeBlackjackCurrency(round.currency)];
   const views = {
-    blackjack: { title: 'BLACKJACK!', detail: `配当 +${formatNumber(profit)} Gold`, icon: 'auto_awesome', tone: 'text-amber-200', effect: 'win' },
-    win: { title: 'YOU WIN', detail: `利益 +${formatNumber(profit)} Gold`, icon: 'emoji_events', tone: 'text-emerald-200', effect: 'win' },
+    blackjack: { title: 'BLACKJACK!', detail: `配当 +${formatNumber(profit)} ${currency.label}`, icon: 'auto_awesome', tone: 'text-amber-200', effect: 'win' },
+    win: { title: 'YOU WIN', detail: `利益 +${formatNumber(profit)} ${currency.label}`, icon: 'emoji_events', tone: 'text-emerald-200', effect: 'win' },
     push: { title: 'PUSH', detail: '賭け金を返却しました', icon: 'handshake', tone: 'text-sky-200', effect: 'push' },
-    lose: { title: 'DEALER WINS', detail: `${formatNumber(round.wager)} Goldを失いました`, icon: 'heart_broken', tone: 'text-rose-200', effect: 'lose' },
+    lose: { title: 'DEALER WINS', detail: `${formatNumber(round.wager)} ${currency.label}を失いました`, icon: 'heart_broken', tone: 'text-rose-200', effect: 'lose' },
   };
   return views[round.outcome] || views.lose;
 }
@@ -101,7 +106,7 @@ function errorMessage(error) {
   }
   const message = String(error?.message || '');
   const playerSafePrefixes = [
-    '賭け金', 'Goldが', '未完了のラウンド', 'カードを処理', 'ダブルに必要',
+    '賭け金', 'Goldが', 'Prismが', '未完了のラウンド', 'カードを処理', 'ダブルに必要',
     'ダブルを処理', 'ブラックジャックを遊ぶには', 'メールアドレスを確認',
     'ログイン状態が変更',
   ];
@@ -130,7 +135,8 @@ export function renderBlackjackPage() {
 
   let currentUser = null;
   let round = null;
-  let gold = 0;
+  let balances = { gold: 0, prism: 0 };
+  let selectedCurrency = 'gold';
   let busy = false;
   let disposed = false;
   let unsubscribe = null;
@@ -147,6 +153,13 @@ export function renderBlackjackPage() {
   });
 
   const openSettings = () => document.getElementById('btn-setting')?.click();
+  const getRoundCurrency = () => normalizeBlackjackCurrency(round?.currency || selectedCurrency);
+  const getBalance = (currency = getRoundCurrency()) => Math.max(0, Math.floor(Number(balances[currency]) || 0));
+  const setBalance = (currency, value) => {
+    const normalized = normalizeBlackjackCurrency(currency);
+    balances[normalized] = Math.max(0, Math.floor(Number(value) || 0));
+    updateHeaderBalance(normalized, balances[normalized]);
+  };
 
   const withSessionLock = task => {
     if (navigator.locks?.request && currentUser?.uid) {
@@ -205,16 +218,23 @@ export function renderBlackjackPage() {
       <div class="mx-auto flex min-h-[390px] max-w-sm flex-col items-center justify-center p-5 text-center">
         <span class="material-symbols-outlined text-5xl ${view.tone} ${kind === 'loading' ? 'animate-spin' : ''}">${view.icon}</span>
         <h1 class="mt-2 text-lg font-black">${view.title}</h1>
-        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">${escapeHtml(detail || 'Goldを扱うため、ブラックジャックは確認済みのアカウントで遊べます。')}</p>
+        <p class="mt-2 text-[10px] leading-relaxed text-slate-400">${escapeHtml(detail || '通貨を扱うため、ブラックジャックは確認済みのアカウントで遊べます。')}</p>
         ${view.action}
         <button data-home class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-black text-slate-300">ホームタウンへ戻る</button>
       </div>`;
   };
 
   const renderLobby = (message = '') => {
-    const maxBet = Math.floor(gold / BLACKJACK_BET_STEP) * BLACKJACK_BET_STEP;
-    const defaultBet = Math.min(Math.max(BLACKJACK_MIN_BET, 50), maxBet);
-    const canBet = maxBet >= BLACKJACK_MIN_BET;
+    const currency = normalizeBlackjackCurrency(selectedCurrency);
+    const rules = getBlackjackCurrencyRules(currency);
+    const view = CURRENCY_VIEWS[currency];
+    const balance = getBalance(currency);
+    const maxBet = Math.floor(balance / rules.betStep) * rules.betStep;
+    const canBet = maxBet >= rules.minBet;
+    const preferredBet = Math.min(view.defaultBet, maxBet);
+    const defaultBet = canBet
+      ? Math.max(rules.minBet, Math.floor(preferredBet / rules.betStep) * rules.betStep)
+      : 0;
     container.innerHTML = `
       ${pageStyles()}
       <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(16,185,129,.18),transparent_34%),radial-gradient(circle_at_88%_24%,rgba(245,158,11,.13),transparent_34%)]"></div>
@@ -231,15 +251,22 @@ export function renderBlackjackPage() {
         </section>
 
         <section class="rounded-3xl border border-amber-300/20 bg-slate-950/80 p-4 shadow-2xl">
-          <div class="text-center"><div class="text-[9px] font-black tracking-[.2em] text-slate-500">YOUR BANKROLL</div><div class="mt-1 text-3xl font-black tabular-nums text-amber-200">${formatNumber(gold)} <span class="text-xs">Gold</span></div></div>
+          <div class="grid grid-cols-2 gap-2" role="group" aria-label="賭ける通貨を選択">
+            ${Object.entries(CURRENCY_VIEWS).map(([id, item]) => {
+              const selected = id === currency;
+              return `<button data-wager-currency="${id}" aria-pressed="${selected}" class="rounded-2xl border px-3 py-2.5 text-left transition active:scale-[.98] ${selected ? id === 'gold' ? 'border-amber-300/50 bg-amber-500/15' : 'border-fuchsia-300/50 bg-fuchsia-500/15' : 'border-white/10 bg-white/5'}"><span class="flex items-center gap-1 text-[9px] font-black ${selected ? item.text : 'text-slate-400'}"><span class="material-symbols-outlined text-base">${item.icon}</span>${item.label}</span><span class="mt-1 block text-lg font-black tabular-nums ${selected ? item.text : 'text-slate-300'}">${formatNumber(getBalance(id))}</span></button>`;
+            }).join('')}
+          </div>
+
           <div class="mt-4 rounded-2xl border border-white/10 bg-black/25 p-3">
-            <label for="blackjack-wager" class="text-[9px] font-black text-slate-400">賭け金（10 Gold刻み）</label>
-            <div class="mt-1.5 flex items-center gap-2"><input id="blackjack-wager" data-wager type="number" min="${BLACKJACK_MIN_BET}" max="${maxBet}" step="${BLACKJACK_BET_STEP}" value="${canBet ? defaultBet : 0}" ${canBet ? '' : 'disabled'} class="min-w-0 flex-1 rounded-xl border border-amber-300/25 bg-slate-900 px-3 py-2.5 text-center text-lg font-black tabular-nums text-amber-100 outline-none focus:border-amber-300"><span class="text-[10px] font-black text-slate-500">Gold</span></div>
-            <div class="mt-2 grid grid-cols-4 gap-1.5">${[10, 50, 100].map(value => `<button data-chip="${value}" ${gold >= value ? '' : 'disabled'} class="rounded-lg border border-white/10 bg-white/5 py-2 text-[9px] font-black text-slate-300 disabled:opacity-30">${value}</button>`).join('')}<button data-chip="max" ${canBet ? '' : 'disabled'} class="rounded-lg border border-amber-300/20 bg-amber-500/10 py-2 text-[9px] font-black text-amber-200 disabled:opacity-30">MAX</button></div>
+            <div class="flex items-end justify-between gap-3"><label for="blackjack-wager" class="text-[9px] font-black text-slate-400">賭け金</label><div class="text-right"><span data-wager-output class="text-2xl font-black tabular-nums ${view.text}">${formatNumber(defaultBet)}</span><span class="ml-1 text-[9px] font-black text-slate-400">${view.label}</span></div></div>
+            <input id="blackjack-wager" data-wager-range type="range" min="${rules.minBet}" max="${Math.max(rules.minBet, maxBet)}" step="${rules.betStep}" value="${canBet ? defaultBet : rules.minBet}" ${canBet ? '' : 'disabled'} class="mt-3 h-2 w-full cursor-pointer ${view.accent} disabled:cursor-not-allowed disabled:opacity-35" aria-label="${view.label}の賭け金">
+            <div class="mt-1.5 flex justify-between text-[8px] font-bold text-slate-500"><span>MIN ${formatNumber(rules.minBet)}</span><span>MAX ${formatNumber(maxBet)}</span></div>
+            <p class="mt-2 text-center text-[8px] text-slate-500">${view.label}は${rules.betStep}単位で調整できます</p>
           </div>
           ${message ? `<div class="mt-3 rounded-xl border border-rose-300/25 bg-rose-950/30 px-3 py-2 text-center text-[9px] font-bold leading-relaxed text-rose-200" role="alert">${escapeHtml(message)}</div>` : ''}
           <button data-deal ${canBet ? '' : 'disabled'} class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-200/40 bg-gradient-to-r from-emerald-600 to-teal-700 py-3 text-sm font-black text-white shadow-lg active:scale-[.99] disabled:opacity-35"><span class="material-symbols-outlined">playing_cards</span>賭けて配る</button>
-          ${canBet ? '' : '<p class="mt-2 text-center text-[9px] text-rose-300">プレイには10 Gold以上必要です。</p>'}
+          ${canBet ? '' : `<p class="mt-2 text-center text-[9px] text-rose-300">プレイには${rules.minBet} ${view.label}以上必要です。</p>`}
         </section>
 
         <section class="mt-3 grid grid-cols-3 gap-1.5 text-center text-[8px] text-slate-400"><div class="rounded-xl border border-white/10 bg-white/5 p-2"><b class="block text-[10px] text-white">通常勝利</b>2倍返却</div><div class="rounded-xl border border-white/10 bg-white/5 p-2"><b class="block text-[10px] text-amber-200">BLACKJACK</b>2.5倍返却</div><div class="rounded-xl border border-white/10 bg-white/5 p-2"><b class="block text-[10px] text-sky-200">PUSH</b>全額返却</div></section>
@@ -247,7 +274,7 @@ export function renderBlackjackPage() {
   };
 
   const playerActionsMarkup = () => {
-    const canDouble = !busy && round?.phase === 'player' && round.playerHand.length === 2 && gold >= round.wager;
+    const canDouble = !busy && round?.phase === 'player' && round.playerHand.length === 2 && getBalance() >= round.wager;
     return `<div class="grid grid-cols-3 gap-2"><button data-hit ${busy ? 'disabled' : ''} class="rounded-xl border border-cyan-300/30 bg-cyan-500/15 py-2.5 text-[10px] font-black text-cyan-100 disabled:opacity-35">ヒット</button><button data-stand ${busy ? 'disabled' : ''} class="rounded-xl border border-emerald-300/30 bg-emerald-500/15 py-2.5 text-[10px] font-black text-emerald-100 disabled:opacity-35">スタンド</button><button data-double ${canDouble ? '' : 'disabled'} class="rounded-xl border border-amber-300/30 bg-amber-500/15 py-2.5 text-[10px] font-black text-amber-100 disabled:opacity-35">ダブル</button></div>`;
   };
 
@@ -256,6 +283,8 @@ export function renderBlackjackPage() {
     const playerValue = getBlackjackHandValue(round.playerHand);
     const completed = round.phase === 'completed';
     const pending = round.phase === 'pending_sync';
+    const currency = getRoundCurrency();
+    const currencyView = CURRENCY_VIEWS[currency];
     const dealerVisibleHand = completed ? round.dealerHand : round.dealerHand.slice(0, 1);
     const dealerValue = getBlackjackHandValue(dealerVisibleHand);
     const statusTone = tone === 'error'
@@ -269,8 +298,8 @@ export function renderBlackjackPage() {
       <div data-blackjack-root class="relative mx-auto max-w-xl p-2 pb-5">
         <header class="mb-2 flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 shadow-lg">
           <button data-home class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300" aria-label="ホームタウンへ戻る"><span class="material-symbols-outlined">arrow_back</span></button>
-          <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-emerald-300">BLACKJACK TABLE</div><div data-table-wager class="text-xs font-black">賭け金 ${formatNumber(round.wager)} Gold</div></div>
-          <div class="rounded-lg border border-amber-300/20 bg-amber-500/10 px-2 py-1 text-right"><div class="text-[7px] text-slate-500">所持Gold</div><div data-table-gold class="text-[11px] font-black tabular-nums text-amber-200">${formatNumber(gold)}</div></div>
+          <div class="min-w-0 flex-1"><div class="text-[9px] font-black tracking-[.2em] text-emerald-300">BLACKJACK TABLE</div><div data-table-wager class="text-xs font-black">賭け金 ${formatNumber(round.wager)} ${currencyView.label}</div></div>
+          <div class="rounded-lg border ${currency === 'gold' ? 'border-amber-300/20 bg-amber-500/10' : 'border-fuchsia-300/20 bg-fuchsia-500/10'} px-2 py-1 text-right"><div class="text-[7px] text-slate-500">所持${currencyView.label}</div><div data-table-balance class="text-[11px] font-black tabular-nums ${currencyView.text}">${formatNumber(getBalance())}</div></div>
         </header>
 
         <section data-blackjack-felt class="blackjack-felt min-h-[410px] rounded-[2rem] border-4 border-amber-900/70 p-3">
@@ -301,7 +330,7 @@ export function renderBlackjackPage() {
 
   const setControlsDisabled = disabled => {
     container.querySelectorAll('[data-hit],[data-stand],[data-double]').forEach(button => {
-      button.disabled = disabled || (button.hasAttribute('data-double') && (round?.playerHand.length !== 2 || gold < round.wager));
+      button.disabled = disabled || (button.hasAttribute('data-double') && (round?.playerHand.length !== 2 || getBalance() < round.wager));
     });
   };
 
@@ -311,11 +340,12 @@ export function renderBlackjackPage() {
   };
 
   const updateTableBalances = () => {
-    const goldDisplay = container.querySelector('[data-table-gold]');
+    const balanceDisplay = container.querySelector('[data-table-balance]');
     const wagerDisplay = container.querySelector('[data-table-wager]');
     const betChip = container.querySelector('[data-bet-chip]');
-    if (goldDisplay) goldDisplay.textContent = formatNumber(gold);
-    if (wagerDisplay) wagerDisplay.textContent = `賭け金 ${formatNumber(round.wager)} Gold`;
+    const currencyView = CURRENCY_VIEWS[getRoundCurrency()];
+    if (balanceDisplay) balanceDisplay.textContent = formatNumber(getBalance());
+    if (wagerDisplay) wagerDisplay.textContent = `賭け金 ${formatNumber(round.wager)} ${currencyView.label}`;
     if (betChip) betChip.textContent = `BET ${formatNumber(round.wager)}`;
   };
 
@@ -410,15 +440,14 @@ export function renderBlackjackPage() {
       ...round,
       phase: 'completed',
       outcome,
-      payout: getBlackjackPayout(round.wager, outcome),
+      payout: getBlackjackPayout(round.wager, outcome, round.currency),
       completedAt: Date.now(),
       resultSynced: false,
     };
     const result = await GameDB.settleBlackjackRound(completedRound);
     if (!result.settled) throw new Error('ラウンドを精算できませんでした。');
     round = result.round;
-    gold = result.gold;
-    updateHeaderGold(gold);
+    setBalance(result.currency, result.balance);
     updateTableBalances();
     setTableStatus(outcome === 'lose' ? '勝負が決まりました…' : '結果を確認しています…', outcome === 'lose' ? 'error' : 'success');
     await dramaticPause(450);
@@ -508,8 +537,14 @@ export function renderBlackjackPage() {
     await withSessionLock(async () => {
       try {
         await requirePlayableUser();
-        const latestGold = Math.max(0, Math.floor(Number(await GameDB.getGameState('gold')) || 0));
-        if (!isValidBlackjackBet(wager) || wager > latestGold) throw new Error('賭け金を10 Gold刻みで入力してください。');
+        const currency = normalizeBlackjackCurrency(selectedCurrency);
+        const rules = getBlackjackCurrencyRules(currency);
+        const view = CURRENCY_VIEWS[currency];
+        const latestBalance = Math.max(0, Math.floor(Number(await GameDB.getGameState(currency)) || 0));
+        setBalance(currency, latestBalance);
+        if (!isValidBlackjackBet(wager, currency) || wager > latestBalance) {
+          throw new Error(`賭け金を${rules.betStep} ${view.label}刻みで選んでください。`);
+        }
 
         // Ownership is checked before local mutation. A stale secondary device
         // must restore instead of overwriting the current bankroll.
@@ -520,17 +555,17 @@ export function renderBlackjackPage() {
           throw ownershipError;
         }
 
-        const newRound = createBlackjackRound(wager, { id: createRoundId() });
+        const newRound = createBlackjackRound(wager, { id: createRoundId(), currency });
         const result = await GameDB.startBlackjackRound(newRound);
         if (!result.started) {
-          if (result.reason === 'insufficient-gold') throw new Error('Goldが足りません。');
+          if (result.reason === 'insufficient-balance') throw new Error(`${view.label}が足りません。`);
           round = result.round;
-          gold = Math.max(0, Number(await GameDB.getGameState('gold')) || 0);
+          const activeCurrency = normalizeBlackjackCurrency(round?.currency);
+          setBalance(activeCurrency, await GameDB.getGameState(activeCurrency));
           throw new Error('未完了のラウンドがあります。');
         }
         round = result.round;
-        gold = result.gold;
-        updateHeaderGold(gold);
+        setBalance(result.currency, result.balance);
       } catch (error) {
         console.error('[Blackjack] Could not start round.', error);
         if (round && round.phase !== 'completed') renderTable(errorMessage(error), 'error');
@@ -569,7 +604,7 @@ export function renderBlackjackPage() {
   };
 
   const doubleDown = async () => {
-    if (!round || round.phase !== 'player' || round.playerHand.length !== 2 || busy || gold < round.wager) return;
+    if (!round || round.phase !== 'player' || round.playerHand.length !== 2 || busy || getBalance() < round.wager) return;
     busy = true;
     try {
       const previousWager = round.wager;
@@ -577,10 +612,10 @@ export function renderBlackjackPage() {
       nextRound.wager += previousWager;
       drawBlackjackCard(nextRound, 'playerHand');
       const updated = await GameDB.updateBlackjackRound(nextRound, previousWager);
-      if (!updated.updated) throw new Error(updated.reason === 'insufficient-gold' ? 'ダブルに必要なGoldが足りません。' : 'ダブルを処理できませんでした。');
+      const currencyView = CURRENCY_VIEWS[getRoundCurrency()];
+      if (!updated.updated) throw new Error(updated.reason === 'insufficient-balance' ? `ダブルに必要な${currencyView.label}が足りません。` : 'ダブルを処理できませんでした。');
       round = updated.round;
-      gold = updated.gold;
-      updateHeaderGold(gold);
+      setBalance(updated.currency, updated.balance);
       updateTableBalances();
       updatePlayerDisplay(true);
       setTableStatus('賭け金を倍にして、最後の1枚を引きました', 'suspense');
@@ -605,19 +640,25 @@ export function renderBlackjackPage() {
     }
     if (!user.emailVerified) {
       round = null;
-      renderGate('unverified', 'メール確認済みのアカウントだけがGoldを賭けられます。確認メールのリンクを開いた後、設定で確認状態を更新してください。');
+      renderGate('unverified', 'メール確認済みのアカウントだけが通貨を賭けられます。確認メールのリンクを開いた後、設定で確認状態を更新してください。');
       return;
     }
-    renderGate('loading', '所持Goldと未完了のラウンドを確認しています…');
+    renderGate('loading', '所持通貨と未完了のラウンドを確認しています…');
     try {
-      const [storedGold, storedRound] = await Promise.all([
+      const [storedGold, storedPrism, storedRound] = await Promise.all([
         GameDB.getGameState('gold'),
+        GameDB.getGameState('prism'),
         GameDB.getGameState(ROUND_STATE_KEY),
       ]);
       if (disposed || renderId !== authRenderId) return;
-      gold = Math.max(0, Math.floor(Number(storedGold) || 0));
+      balances = {
+        gold: Math.max(0, Math.floor(Number(storedGold) || 0)),
+        prism: Math.max(0, Math.floor(Number(storedPrism) || 0)),
+      };
       round = storedRound || null;
-      updateHeaderGold(gold);
+      updateHeaderBalance('gold', balances.gold);
+      updateHeaderBalance('prism', balances.prism);
+      if (round) selectedCurrency = normalizeBlackjackCurrency(round.currency);
       if (!round || (round.phase === 'completed' && round.resultSynced)) renderLobby();
       else if (round.phase === 'pending_sync') {
         renderTable('カードを準備しています…');
@@ -648,17 +689,14 @@ export function renderBlackjackPage() {
       await loadForUser(currentUser);
       return;
     }
-    const chip = event.target.closest('[data-chip]');
-    if (chip) {
-      const input = container.querySelector('[data-wager]');
-      if (!input) return;
-      input.value = chip.dataset.chip === 'max'
-        ? String(Math.floor(gold / BLACKJACK_BET_STEP) * BLACKJACK_BET_STEP)
-        : chip.dataset.chip;
+    const currencyButton = event.target.closest('[data-wager-currency]');
+    if (currencyButton) {
+      selectedCurrency = normalizeBlackjackCurrency(currencyButton.dataset.wagerCurrency);
+      renderLobby();
       return;
     }
     if (event.target.closest('[data-deal]')) {
-      const value = Number(container.querySelector('[data-wager]')?.value);
+      const value = Number(container.querySelector('[data-wager-range]')?.value);
       await startRound(value);
       return;
     }
@@ -688,10 +726,24 @@ export function renderBlackjackPage() {
         await syncCompletedResult();
       } else {
         round = null;
-        gold = Math.max(0, Math.floor(Number(await GameDB.getGameState('gold')) || 0));
+        const [latestGold, latestPrism] = await Promise.all([
+          GameDB.getGameState('gold'),
+          GameDB.getGameState('prism'),
+        ]);
+        balances = {
+          gold: Math.max(0, Math.floor(Number(latestGold) || 0)),
+          prism: Math.max(0, Math.floor(Number(latestPrism) || 0)),
+        };
         renderLobby();
       }
     }
+  });
+
+  container.addEventListener('input', event => {
+    const slider = event.target.closest('[data-wager-range]');
+    if (!slider) return;
+    const output = container.querySelector('[data-wager-output]');
+    if (output) output.textContent = formatNumber(Number(slider.value) || 0);
   });
 
   container.cleanup = () => {

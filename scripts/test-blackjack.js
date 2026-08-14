@@ -4,6 +4,7 @@ import {
   createBlackjackDeck,
   createBlackjackRound,
   drawBlackjackCard,
+  getBlackjackCurrencyRules,
   getBlackjackHandValue,
   getBlackjackPayout,
   isValidBlackjackBet,
@@ -46,19 +47,39 @@ assert.equal(resolveBlackjackOutcome([card('K'), card('Q'), card('2')], [card('2
 assert.equal(isValidBlackjackBet(10), true);
 assert.equal(isValidBlackjackBet(25), false);
 assert.equal(isValidBlackjackBet(0), false);
+assert.equal(isValidBlackjackBet(2, 'prism'), true);
+assert.equal(isValidBlackjackBet(3, 'prism'), false);
+assert.deepEqual(getBlackjackCurrencyRules('prism'), {
+  id: 'prism', label: 'Prism', minBet: 2, betStep: 2,
+});
 assert.equal(getBlackjackPayout(100, 'blackjack'), 250);
 assert.equal(getBlackjackPayout(100, 'win'), 200);
 assert.equal(getBlackjackPayout(100, 'push'), 100);
 assert.equal(getBlackjackPayout(100, 'lose'), 0);
+assert.equal(getBlackjackPayout(2, 'blackjack', 'prism'), 5);
 
 const orderedDeck = createBlackjackDeck();
 const round = createBlackjackRound(50, { id: 'test-round', now: 123, deck: orderedDeck });
 assert.equal(round.id, 'test-round');
+assert.equal(round.currency, 'gold');
 assert.equal(round.phase, 'pending_sync');
 assert.equal(round.nextCardIndex, 4);
 assert.deepEqual(round.playerHand.map(item => item.id), [orderedDeck[0].id, orderedDeck[2].id]);
 assert.deepEqual(round.dealerHand.map(item => item.id), [orderedDeck[1].id, orderedDeck[3].id]);
 assert.equal(isValidBlackjackRoundState(round), true);
+const prismRound = createBlackjackRound(2, { id: 'prism-round', now: 124, deck: orderedDeck, currency: 'prism' });
+assert.equal(prismRound.currency, 'prism');
+assert.equal(isValidBlackjackRoundState(prismRound), true);
+const prismPlayableRound = structuredClone(prismRound);
+prismPlayableRound.phase = 'player';
+assert.equal(isLegalBlackjackPlayerUpdate(prismRound, prismPlayableRound), true);
+const changedCurrencyRound = structuredClone(prismPlayableRound);
+changedCurrencyRound.currency = 'gold';
+changedCurrencyRound.wager = 10;
+assert.equal(isLegalBlackjackPlayerUpdate(prismRound, changedCurrencyRound), false, 'currency changes must be rejected');
+const legacyGoldRound = structuredClone(round);
+delete legacyGoldRound.currency;
+assert.equal(isValidBlackjackRoundState(legacyGoldRound), true, 'legacy Gold rounds must remain valid');
 
 const playableRound = structuredClone(round);
 playableRound.phase = 'player';
@@ -102,6 +123,10 @@ assert.match(pageSource, /dramaticPause\(900\)/);
 assert.match(pageSource, /blackjack-result-card/);
 assert.match(pageSource, /resultEffectsMarkup\(view\.effect\)/);
 assert.match(pageSource, /insertAdjacentHTML\('beforeend', cardMarkup/);
+assert.match(pageSource, /type="range"/);
+assert.match(pageSource, /data-wager-currency="\$\{id\}"/);
+assert.ok(!pageSource.includes('data-chip='), 'fixed wager buttons must be removed');
+assert.match(databaseSource, /store\.get\(currency\)/);
 assert.ok(!pageSource.includes("return error?.message || 'クラウド"));
 for (const hiddenSaveLabel of [
   '結果をクラウドへ保存しています',

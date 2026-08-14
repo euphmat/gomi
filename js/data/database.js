@@ -37,6 +37,7 @@ import {
   isLegalBlackjackPlayerUpdate,
   isLegalBlackjackSettlement,
   isValidBlackjackRoundState,
+  normalizeBlackjackCurrency,
 } from './blackjack-engine.js';
 
 const ALL_EQUIPMENT_DEFS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
@@ -605,6 +606,8 @@ export class GameDatabase {
       return Promise.reject(new Error('Invalid blackjack round.'));
     }
 
+    const currency = normalizeBlackjackCurrency(clone.currency);
+    clone.currency = currency;
     const run = () => this._runWithConnectionRetry('blackjack start', (db) => new Promise((resolve, reject) => {
       const tx = db.transaction('gameState', 'readwrite');
       const store = tx.objectStore('gameState');
@@ -618,21 +621,21 @@ export class GameDatabase {
       roundRequest.onsuccess = () => {
         const previous = roundRequest.result?.value;
         if (previous && (previous.phase !== 'completed' || previous.resultSynced !== true)) {
-          result = { started: false, reason: 'round-active', gold: null, round: previous };
+          result = { started: false, reason: 'round-active', balance: null, currency, round: previous };
           return;
         }
 
-        const goldRequest = store.get('gold');
-        goldRequest.onsuccess = () => {
-          const gold = Math.max(0, Math.floor(Number(goldRequest.result?.value) || 0));
-          if (gold < clone.wager) {
-            result = { started: false, reason: 'insufficient-gold', gold, round: previous || null };
+        const balanceRequest = store.get(currency);
+        balanceRequest.onsuccess = () => {
+          const balance = Math.max(0, Math.floor(Number(balanceRequest.result?.value) || 0));
+          if (balance < clone.wager) {
+            result = { started: false, reason: 'insufficient-balance', balance, currency, round: previous || null };
             return;
           }
-          const remainingGold = gold - clone.wager;
-          store.put({ key: 'gold', value: remainingGold });
+          const remainingBalance = balance - clone.wager;
+          store.put({ key: currency, value: remainingBalance });
           store.put({ key: BLACKJACK_STATE_KEY, value: clone });
-          result = { started: true, gold: remainingGold, round: clone };
+          result = { started: true, balance: remainingBalance, currency, round: clone };
         };
       };
     }));
@@ -650,6 +653,8 @@ export class GameDatabase {
       return Promise.reject(new Error('Invalid blackjack round update.'));
     }
 
+    const currency = normalizeBlackjackCurrency(clone.currency);
+    clone.currency = currency;
     const run = () => this._runWithConnectionRetry('blackjack update', (db) => new Promise((resolve, reject) => {
       const tx = db.transaction('gameState', 'readwrite');
       const store = tx.objectStore('gameState');
@@ -672,21 +677,21 @@ export class GameDatabase {
         }
         if (additionalWager === 0) {
           store.put({ key: BLACKJACK_STATE_KEY, value: clone });
-          result = { updated: true, gold: null, round: clone };
+          result = { updated: true, balance: null, currency, round: clone };
           return;
         }
 
-        const goldRequest = store.get('gold');
-        goldRequest.onsuccess = () => {
-          const gold = Math.max(0, Math.floor(Number(goldRequest.result?.value) || 0));
-          if (gold < additionalWager) {
-            result = { updated: false, reason: 'insufficient-gold', gold };
+        const balanceRequest = store.get(currency);
+        balanceRequest.onsuccess = () => {
+          const balance = Math.max(0, Math.floor(Number(balanceRequest.result?.value) || 0));
+          if (balance < additionalWager) {
+            result = { updated: false, reason: 'insufficient-balance', balance, currency };
             return;
           }
-          const remainingGold = gold - additionalWager;
-          store.put({ key: 'gold', value: remainingGold });
+          const remainingBalance = balance - additionalWager;
+          store.put({ key: currency, value: remainingBalance });
           store.put({ key: BLACKJACK_STATE_KEY, value: clone });
-          result = { updated: true, gold: remainingGold, round: clone };
+          result = { updated: true, balance: remainingBalance, currency, round: clone };
         };
       };
     }));
@@ -703,6 +708,8 @@ export class GameDatabase {
       return Promise.reject(new Error('Invalid blackjack settlement.'));
     }
 
+    const currency = normalizeBlackjackCurrency(clone.currency);
+    clone.currency = currency;
     const run = () => this._runWithConnectionRetry('blackjack settlement', (db) => new Promise((resolve, reject) => {
       const tx = db.transaction('gameState', 'readwrite');
       const store = tx.objectStore('gameState');
@@ -720,12 +727,12 @@ export class GameDatabase {
           result = { settled: false, reason: 'round-changed', round: previous || null };
           return;
         }
-        const goldRequest = store.get('gold');
-        goldRequest.onsuccess = () => {
-          const gold = Math.max(0, Math.floor(Number(goldRequest.result?.value) || 0)) + clone.payout;
-          store.put({ key: 'gold', value: gold });
+        const balanceRequest = store.get(currency);
+        balanceRequest.onsuccess = () => {
+          const balance = Math.max(0, Math.floor(Number(balanceRequest.result?.value) || 0)) + clone.payout;
+          store.put({ key: currency, value: balance });
           store.put({ key: BLACKJACK_STATE_KEY, value: clone });
-          result = { settled: true, gold, round: clone };
+          result = { settled: true, balance, currency, round: clone };
         };
       };
     }));
