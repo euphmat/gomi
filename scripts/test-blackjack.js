@@ -126,6 +126,12 @@ assert.match(pageSource, /insertAdjacentHTML\('beforeend', cardMarkup/);
 assert.match(pageSource, /type="range"/);
 assert.match(pageSource, /data-wager-currency="\$\{id\}"/);
 assert.ok(!pageSource.includes('data-chip='), 'fixed wager buttons must be removed');
+for (const actionIcon of ['add_card', 'front_hand', 'keyboard_double_arrow_up']) {
+  assert.ok(pageSource.includes(`>${actionIcon}</span>`), `missing blackjack action icon: ${actionIcon}`);
+}
+assert.match(pageSource, /aria-label="ヒット：カードを1枚引く"/);
+assert.match(pageSource, /aria-label="スタンド：この手札で勝負する"/);
+assert.match(pageSource, /aria-label="ダブル：賭け金を2倍にして1枚引く"/);
 assert.match(databaseSource, /store\.get\(currency\)/);
 assert.ok(!pageSource.includes("return error?.message || 'クラウド"));
 for (const hiddenSaveLabel of [

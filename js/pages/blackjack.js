@@ -275,7 +275,24 @@ export function renderBlackjackPage() {
 
   const playerActionsMarkup = () => {
     const canDouble = !busy && round?.phase === 'player' && round.playerHand.length === 2 && getBalance() >= round.wager;
-    return `<div class="grid grid-cols-3 gap-2"><button data-hit ${busy ? 'disabled' : ''} class="rounded-xl border border-cyan-300/30 bg-cyan-500/15 py-2.5 text-[10px] font-black text-cyan-100 disabled:opacity-35">ヒット</button><button data-stand ${busy ? 'disabled' : ''} class="rounded-xl border border-emerald-300/30 bg-emerald-500/15 py-2.5 text-[10px] font-black text-emerald-100 disabled:opacity-35">スタンド</button><button data-double ${canDouble ? '' : 'disabled'} class="rounded-xl border border-amber-300/30 bg-amber-500/15 py-2.5 text-[10px] font-black text-amber-100 disabled:opacity-35">ダブル</button></div>`;
+    return `
+      <div class="grid grid-cols-3 gap-2" role="group" aria-label="ブラックジャックの操作">
+        <button data-hit ${busy ? 'disabled' : ''} aria-label="ヒット：カードを1枚引く" title="ヒット：カードを1枚引く" class="group flex min-h-[76px] flex-col items-center justify-center rounded-2xl border border-cyan-300/35 bg-gradient-to-b from-cyan-500/20 to-cyan-950/35 px-1.5 py-2 text-cyan-100 shadow-lg transition active:scale-95 disabled:opacity-35">
+          <span class="material-symbols-outlined text-[28px] leading-none" aria-hidden="true">add_card</span>
+          <span class="mt-1 text-[10px] font-black">ヒット</span>
+          <span class="mt-0.5 text-[7px] font-bold text-cyan-200/65">1枚引く</span>
+        </button>
+        <button data-stand ${busy ? 'disabled' : ''} aria-label="スタンド：この手札で勝負する" title="スタンド：この手札で勝負する" class="group flex min-h-[76px] flex-col items-center justify-center rounded-2xl border border-emerald-300/35 bg-gradient-to-b from-emerald-500/20 to-emerald-950/35 px-1.5 py-2 text-emerald-100 shadow-lg transition active:scale-95 disabled:opacity-35">
+          <span class="material-symbols-outlined text-[28px] leading-none" aria-hidden="true">front_hand</span>
+          <span class="mt-1 text-[10px] font-black">スタンド</span>
+          <span class="mt-0.5 text-[7px] font-bold text-emerald-200/65">この手で勝負</span>
+        </button>
+        <button data-double ${canDouble ? '' : 'disabled'} aria-label="ダブル：賭け金を2倍にして1枚引く" title="ダブル：賭け金を2倍にして1枚引く" class="group flex min-h-[76px] flex-col items-center justify-center rounded-2xl border border-amber-300/35 bg-gradient-to-b from-amber-500/20 to-amber-950/35 px-1.5 py-2 text-amber-100 shadow-lg transition active:scale-95 disabled:opacity-35">
+          <span class="material-symbols-outlined text-[28px] leading-none" aria-hidden="true">keyboard_double_arrow_up</span>
+          <span class="mt-1 text-[10px] font-black">ダブル</span>
+          <span class="mt-0.5 text-[7px] font-bold text-amber-200/65">賭け金 ×2</span>
+        </button>
+      </div>`;
   };
 
   const renderTable = (message = '', tone = 'normal') => {
