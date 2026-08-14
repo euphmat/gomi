@@ -797,56 +797,123 @@ function evaluateCpuResult(world, newBodyId) {
   if (fallen.length) return -100000 - fallen.length * 1000;
   const body = world.bodies.find(candidate => candidate.id === newBodyId);
   if (!body) return -100000;
-  const centerDistance = Math.abs(body.x - TOWER_WORLD.width * .5);
+  const center = TOWER_WORLD.width * .5;
+  const centerDistance = Math.abs(body.x - center);
   const motion = getTowerMotion(world);
-  const tilt = Math.abs(normalizeAngle(body.angle));
-  const highestPoint = Math.min(...world.bodies.map(candidate => candidate.y - candidate.profile.height * .5));
-  return 2200 - centerDistance * 1.4 - motion * 5.5 - tilt * 42 - Math.max(0, 145 - highestPoint) * .22;
+  const totalMass = world.bodies.reduce((sum, candidate) => sum + Math.max(.01, Number(candidate.mass) || 1), 0);
+  const towerCenter = world.bodies.reduce(
+    (sum, candidate) => sum + candidate.x * Math.max(.01, Number(candidate.mass) || 1),
+    0,
+  ) / totalMass;
+  const bodySpeed = world.usingMatter
+    ? body.speed * 60 + Math.abs(body.angularSpeed) * 1080
+    : Math.hypot(body.vx, body.vy) + Math.abs(body.angularVelocity) * 18;
+  const circles = body.profile.parts.map(part => getWorldCircle(body, part));
+  const left = Math.min(...circles.map(circle => circle.x - circle.r));
+  const right = Math.max(...circles.map(circle => circle.x + circle.r));
+  const platformRight = TOWER_WORLD.platform.x + TOWER_WORLD.platform.width;
+  const edgeOverhang = Math.max(0, TOWER_WORLD.platform.x - left) + Math.max(0, right - platformRight);
+  return 3000
+    - centerDistance * 1.15
+    - Math.abs(towerCenter - center) * 2.1
+    - motion * 8.5
+    - bodySpeed * 5
+    - edgeOverhang * 6;
+}
+
+function createCpuCandidates(range, options, rng) {
+  const maxRotation = clamp(Number(options.maxRotation ?? Math.PI / 3), 0, Math.PI);
+  if (!options.exhaustiveSearch) {
+    const candidateCount = clamp(Math.floor(options.candidateCount || 10), 3, 36);
+    const candidates = [{ x: TOWER_WORLD.width * .5, angle: 0 }];
+    for (let index = 0; index < candidateCount; index += 1) {
+      const fraction = candidateCount <= 1 ? .5 : index / (candidateCount - 1);
+      const jitter = (rng() - .5) * ((range.max - range.min) / candidateCount) * .65;
+      const x = clamp(range.min + (range.max - range.min) * fraction + jitter, range.min, range.max);
+      const rotationStep = (index * 2) % 5;
+      const angle = maxRotation === 0 ? 0 : ((rotationStep / 4) * 2 - 1) * maxRotation;
+      candidates.push({ x, angle });
+    }
+    return candidates;
+  }
+
+  const positionCount = clamp(Math.floor(options.positionCount || 13), 5, 21);
+  const angleCount = clamp(Math.floor(options.angleCount || 9), 3, 16);
+  const candidates = [];
+  for (let positionIndex = 0; positionIndex < positionCount; positionIndex += 1) {
+    const positionFraction = positionIndex / (positionCount - 1);
+    const x = range.min + (range.max - range.min) * positionFraction;
+    for (let angleIndex = 0; angleIndex < angleCount; angleIndex += 1) {
+      // ±πは同じ向きなので、全周探索時は終点を重複させない。
+      const angleFraction = maxRotation === Math.PI
+        ? angleIndex / angleCount
+        : angleIndex / (angleCount - 1);
+      candidates.push({ x, angle: -maxRotation + maxRotation * 2 * angleFraction });
+    }
+  }
+  candidates.push({ x: TOWER_WORLD.width * .5, angle: 0 });
+  return candidates;
+}
+
+function simulateCpuCandidate(world, profile, candidate, options) {
+  const simulation = cloneTowerWorld(world, options.useCoarseGeometry);
+  const previewBody = addTowerBody(simulation, createTowerBody({
+    id: options.id,
+    monsterId: options.monsterId,
+    owner: 'cpu',
+    profile,
+    x: candidate.x,
+    y: 48,
+    angle: candidate.angle,
+    useCoarseGeometry: options.useCoarseGeometry && simulation.usingMatter,
+  }));
+  let stableFrames = 0;
+  for (let frame = 0; frame < options.frames; frame += 1) {
+    stepTowerWorld(simulation, 1 / 60, 2);
+    if (getFallenBodies(simulation).length) break;
+    stableFrames = frame >= options.minimumFrames && getTowerMotion(simulation) < 3
+      ? stableFrames + 1
+      : 0;
+    if (stableFrames >= options.requiredStableFrames) break;
+  }
+  return evaluateCpuResult(simulation, previewBody.id);
 }
 
 /** 候補配置を内部シミュレーションし、CPUの落下位置と角度を返す。 */
 export function chooseCpuPlacement(world, profile, options = {}) {
-  const candidateCount = clamp(Math.floor(options.candidateCount || 10), 3, 36);
-  const maxRotation = clamp(Number(options.maxRotation ?? Math.PI / 3), 0, Math.PI);
   const noise = Math.max(0, Number(options.noise ?? 40));
   const rng = typeof options.rng === 'function' ? options.rng : Math.random;
   const range = getDropRange(profile);
-  const candidates = [{ x: TOWER_WORLD.width * .5, angle: 0 }];
+  const candidates = createCpuCandidates(range, options, rng);
+  const simulationFrames = clamp(Math.floor(options.simulationFrames || 180), 120, 600);
+  const scored = candidates.map((candidate, index) => ({
+    ...candidate,
+    score: simulateCpuCandidate(world, profile, candidate, {
+      id: `cpu-preview-${index}`,
+      monsterId: options.monsterId || `cpu-preview-${index}`,
+      frames: simulationFrames,
+      minimumFrames: Math.min(180, Math.floor(simulationFrames * .5)),
+      requiredStableFrames: 45,
+      useCoarseGeometry: true,
+    }) + (rng() - .5) * noise,
+  })).sort((first, second) => second.score - first.score);
 
-  // 台の左端から右端まで偏りなく探索し、中央の無回転も必ず比較する。
-  for (let index = 0; index < candidateCount; index += 1) {
-    const fraction = candidateCount <= 1 ? .5 : index / (candidateCount - 1);
-    const jitter = (rng() - .5) * ((range.max - range.min) / candidateCount) * .65;
-    const x = clamp(range.min + (range.max - range.min) * fraction + jitter, range.min, range.max);
-    const rotationStep = (index * 2) % 5;
-    const angle = maxRotation === 0 ? 0 : ((rotationStep / 4) * 2 - 1) * maxRotation;
-    candidates.push({ x, angle });
-  }
+  const refineCount = options.exhaustiveSearch
+    ? clamp(Math.floor(options.refineCount || 8), 1, Math.min(16, scored.length))
+    : 0;
+  if (!refineCount || !world.usingMatter) return scored[0];
 
-  let best = candidates[0];
-  let bestScore = -Infinity;
-  candidates.forEach((candidate, index) => {
-    const simulation = cloneTowerWorld(world, true);
-    const id = `cpu-preview-${index}`;
-    const previewBody = addTowerBody(simulation, createTowerBody({
-      id,
-      monsterId: options.monsterId || id,
-      owner: 'cpu',
-      profile,
-      x: candidate.x,
-      y: 42,
-      angle: candidate.angle,
-      useCoarseGeometry: simulation.usingMatter,
-    }));
-    for (let frame = 0; frame < 180; frame += 1) {
-      stepTowerWorld(simulation, 1 / 60, 2);
-      if (getFallenBodies(simulation).length) break;
-    }
-    const score = evaluateCpuResult(simulation, previewBody.id) + (rng() - .5) * noise;
-    if (score > bestScore) {
-      bestScore = score;
-      best = candidate;
-    }
-  });
-  return { ...best, score: bestScore };
+  const refineFrames = clamp(Math.floor(options.refineFrames || simulationFrames), simulationFrames, 900);
+  return scored.slice(0, refineCount).map((candidate, index) => ({
+    x: candidate.x,
+    angle: candidate.angle,
+    score: simulateCpuCandidate(world, profile, candidate, {
+      id: `cpu-refine-${index}`,
+      monsterId: options.monsterId || `cpu-refine-${index}`,
+      frames: refineFrames,
+      minimumFrames: Math.min(240, Math.floor(refineFrames * .5)),
+      requiredStableFrames: 60,
+      useCoarseGeometry: false,
+    }),
+  })).sort((first, second) => second.score - first.score)[0];
 }

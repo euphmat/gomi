@@ -161,6 +161,22 @@ assert(Number.isFinite(placement.x) && Number.isFinite(placement.angle), 'CPU pl
 assert(placement.x >= TOWER_WORLD.platform.x && placement.x <= TOWER_WORLD.platform.x + TOWER_WORLD.platform.width, 'CPU selected a position outside the platform');
 assert(placement.score > -100000, 'CPU could not find a safe placement on an empty platform');
 
+const exhaustivePlacement = chooseCpuPlacement(cpuWorld, profile, {
+  exhaustiveSearch: true,
+  positionCount: 7,
+  angleCount: 5,
+  simulationFrames: 120,
+  refineCount: 2,
+  refineFrames: 120,
+  maxRotation: Math.PI,
+  noise: 0,
+  rng: () => .5,
+  monsterId: 'slime_green',
+});
+assert(Number.isFinite(exhaustivePlacement.x) && Number.isFinite(exhaustivePlacement.angle), 'exhaustive CPU placement is invalid');
+assert(exhaustivePlacement.x >= TOWER_WORLD.platform.x && exhaustivePlacement.x <= TOWER_WORLD.platform.x + TOWER_WORLD.platform.width, 'exhaustive CPU selected a position outside the platform');
+assert(exhaustivePlacement.score > -100000, 'exhaustive CPU could not find a safe placement on an empty platform');
+
 assert(MONSTERS.length > 0, 'monster definitions are empty');
 assert(new Set(MONSTERS.map(monster => monster.id)).size === MONSTERS.length, 'monster definitions contain duplicate IDs');
 const missingImages = MONSTERS.filter(monster => !fs.existsSync(monster.image.replace('./', '')));

@@ -46,9 +46,11 @@ const DIFFICULTIES = Object.freeze({
   },
   very_hard: {
     id: 'very_hard', label: 'VERY HARD', reward: TOWN_GAME_REWARDS.very_hard,
-    candidates: 24, noise: 4, maxRotation: Math.PI * .72,
+    candidates: 24, noise: 0, maxRotation: Math.PI,
+    exhaustiveSearch: true, positionCount: 15, angleCount: 12,
+    simulationFrames: 420, refineCount: 10, refineFrames: 600,
     stoppers: false,
-    description: 'CPUが角度まで精密に予測する', icon: 'skull', tone: 'violet',
+    description: 'CPUが長考し、位置と角度を精密に予測する', icon: 'skull', tone: 'violet',
   },
 });
 
@@ -551,6 +553,12 @@ export function renderMonsterTowerPage() {
           candidateCount: activeGame.config.candidates,
           maxRotation: activeGame.config.maxRotation,
           noise: activeGame.config.noise,
+          exhaustiveSearch: activeGame.config.exhaustiveSearch,
+          positionCount: activeGame.config.positionCount,
+          angleCount: activeGame.config.angleCount,
+          simulationFrames: activeGame.config.simulationFrames,
+          refineCount: activeGame.config.refineCount,
+          refineFrames: activeGame.config.refineFrames,
           monsterId: activeGame.currentMonster.id,
         });
         activeGame.previewX = placement.x;
