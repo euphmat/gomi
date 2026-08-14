@@ -92,14 +92,7 @@ const acquireSource = fs.readFileSync(new URL('../js/pages/guild-tabs/acquire-sk
 assert(acquireSource.includes('btn-tab-unique') && acquireSource.includes('renderJobUniqueSkillCards'), '修練場の固有スキルタブが接続されていません');
 
 const changeJobSource = fs.readFileSync(new URL('../js/pages/guild-tabs/change-job.js', import.meta.url), 'utf8');
-assert(changeJobSource.includes('renderJobUniqueSkillSummary(job)'), '職業一覧に固有スキル概要が接続されていません');
-const listAppendIndex = changeJobSource.indexOf('wrapperContainer.appendChild(listContainer);');
-const paginationAppendIndex = changeJobSource.indexOf('wrapperContainer.appendChild(paginationContainer);', listAppendIndex);
-const uniqueSummaryAppendIndex = changeJobSource.indexOf('wrapperContainer.appendChild(uniqueSummaryContainer);');
-assert(
-  listAppendIndex >= 0 && paginationAppendIndex > listAppendIndex && uniqueSummaryAppendIndex > paginationAppendIndex,
-  '固有スキル概要が転職ページ下部に配置されていません'
-);
+assert(!changeJobSource.includes('renderJobUniqueSkillSummary'), '転職ページに固有スキル概要が表示されています');
 assert(
   changeJobSource.includes('aria-label="転職条件"')
     && changeJobSource.includes('魚図鑑 ${discovered}/${required}')
