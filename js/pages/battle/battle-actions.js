@@ -1111,6 +1111,7 @@ export const actionMethods = {
     } else {
       let survivedBySlimeCore = false;
       let survivedByLastBastion = false;
+      let survivedByDealerInsurance = false;
       let survivedByMedalArmor = false;
       let survivedBySoulWard = false;
       const medalSurvival = this.applyMedalEquipmentLethalSurvival(defender, damage);
@@ -1125,7 +1126,20 @@ export const actionMethods = {
         this.showDamage(defender.elementId, `HP ${survivingHp}`, 'text-cyan-200');
       }
       if (!survivedByMedalArmor && !survivedBySoulWard && defender.hp.current - damage <= 0 && defender.jobSkills) {
-        const lastBastion = this._findSkill(defender, 'last_bastion');
+        const insurance = defender.jobId === 'dealer' ? this._findSkill(defender, 'dealer_insurance') : null;
+        if (insurance?.level > 0 && insurance.levelConfig && !defender._dealerInsuranceUsed) {
+          const maxHp = defender.stats?.hp || defender.hp.max;
+          const survivingHp = Math.max(1, Math.floor(maxHp * insurance.levelConfig.revivePercent / 100));
+          damage = prevHp - survivingHp;
+          defender._dealerInsuranceUsed = true;
+          survivedByDealerInsurance = true;
+          this._scheduleBattleTimeout(() => {
+            this.showActionName(defender.elementId, 'インシュランス', 'text-amber-100', 'border-amber-300/80');
+            this.showDamage(defender.elementId, `HP ${survivingHp}`, 'text-emerald-300');
+          }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
+        }
+
+        const lastBastion = !survivedByDealerInsurance ? this._findSkill(defender, 'last_bastion') : null;
         if (lastBastion?.level > 0 && lastBastion.levelConfig && !defender._guardianLastBastionUsed) {
           const maxHp = defender.stats?.hp || defender.hp.max;
           const survivingHp = Math.max(1, Math.floor(maxHp * lastBastion.levelConfig.revivePercent / 100));
@@ -1138,7 +1152,9 @@ export const actionMethods = {
           }, this.speedMult >= 5 ? 0 : 300 / this.speedMult);
         }
 
-        const slimeCoreSkill = !survivedByLastBastion ? this._findSkill(defender, 'slime_core') : null;
+        const slimeCoreSkill = !survivedByLastBastion && !survivedByDealerInsurance
+          ? this._findSkill(defender, 'slime_core')
+          : null;
         if (slimeCoreSkill && slimeCoreSkill.level > 0 && slimeCoreSkill.levelConfig) {
           const thresholdPercent = slimeCoreSkill.levelConfig.threshold || 50;
           const currentPercent = (prevHp / (defender.stats.hp || defender.hp.max)) * 100;
@@ -1154,7 +1170,7 @@ export const actionMethods = {
 
       defender.hp.current -= damage;
       if (defender.hp.current <= 0 && !survivedBySlimeCore && !survivedByLastBastion
-        && !survivedByMedalArmor && !survivedBySoulWard) {
+        && !survivedByDealerInsurance && !survivedByMedalArmor && !survivedBySoulWard) {
         if (!this.trySoulReaperDeathDenial(defender)) {
           defender.hp.current = 0;
           defender.isDead = true;

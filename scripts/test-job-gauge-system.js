@@ -25,8 +25,8 @@ const resourceJobs = new Set([
   'entertainer', 'mana_conductor', 'slime_singer', 'dragoon', 'shinra_sage', 'soul_reaper'
 ]);
 const missingGaugeJobs = Object.keys(JOBS).filter(jobId => !resourceJobs.has(jobId));
-assert(missingGaugeJobs.length === 19, '19職のゲージ網羅テストがジョブ一覧と一致しません');
-assert(Object.keys(STANDARD_JOB_GAUGES).length === 19, '新規ゲージ定義が19職を網羅していません');
+assert(missingGaugeJobs.length === 20, '20職のゲージ網羅テストがジョブ一覧と一致しません');
+assert(Object.keys(STANDARD_JOB_GAUGES).length === 20, '新規ゲージ定義が20職を網羅していません');
 for (const jobId of missingGaugeJobs) {
   assert(STANDARD_JOB_GAUGES[jobId], `${jobId} のゲージ定義がありません`);
 }
@@ -37,7 +37,8 @@ const builders = {
   slime_master: ['slime_throw', 0], dancer: ['poison_salsa', 0], bird: ['lullaby', 0],
   paladin: ['divine_shield', 0], poseidon: ['trident_tempest', 0], pyromancer: ['flare_lance', 0],
   guardian: ['guardian_oath', 0], cryomancer: ['frost_spear', 0],
-  magic_archer: ['arcane_arrow', 40], plague_doctor: ['pathogen_injection', 0]
+  magic_archer: ['arcane_arrow', 40], plague_doctor: ['pathogen_injection', 0],
+  dealer: ['marked_deck', 0]
 };
 for (const [jobId, [skillId, mpCost]] of Object.entries(builders)) {
   const actor = { jobId, mp: { current: 100, max: 100 } };
@@ -92,7 +93,7 @@ const aiSkills = {
   dancer: 'curse_step', bird: 'nightmare', black_knight: 'hell_gate', paladin: 'holy_smite',
   poseidon: 'leviathan_judgment', pyromancer: 'meteor_catastrophe', assassin: 'assassinate',
   guardian: 'aegis_bash', cryomancer: 'absolute_zero', magic_archer: 'astral_arrow_rain',
-  gunner: 'bullet_storm', plague_doctor: 'black_death'
+  gunner: 'bullet_storm', plague_doctor: 'black_death', dealer: 'blackjack_finale'
 };
 for (const [jobId, skillId] of Object.entries(aiSkills)) {
   const actor = { jobId };
@@ -136,7 +137,7 @@ assert(getStandardJobGaugeValue(awakenedGunner) === 0 && awakenedGunner._jobGaug
 
 const offensiveHoldingJobs = [
   'norvice', 'mage', 'ranger', 'magic_knight', 'dancer', 'bird', 'black_knight',
-  'poseidon', 'pyromancer', 'assassin', 'cryomancer', 'magic_archer', 'gunner', 'plague_doctor'
+  'poseidon', 'pyromancer', 'assassin', 'cryomancer', 'magic_archer', 'gunner', 'plague_doctor', 'dealer'
 ];
 for (const jobId of offensiveHoldingJobs) {
   const actor = { id: `actor-${jobId}`, jobId };
@@ -149,7 +150,7 @@ for (const jobId of offensiveHoldingJobs) {
   assert(high > low && low > 1, `${jobId}のゲージ保持量が増えても与ダメージ恩恵が増えません`);
 }
 
-for (const jobId of ['knight', 'priest', 'slime_master', 'paladin', 'guardian']) {
+for (const jobId of ['knight', 'priest', 'slime_master', 'paladin', 'guardian', 'dealer']) {
   const actor = { jobId };
   setStandardJobGaugeValue(actor, 1);
   const low = getJobGaugeIncomingMultiplier(actor);
@@ -164,7 +165,7 @@ const releaseSkills = {
   bird: 'nightmare', black_knight: 'blood_saber', paladin: 'holy_smite',
   poseidon: 'leviathan_judgment', pyromancer: 'meteor_catastrophe', assassin: 'assassinate',
   guardian: 'aegis_bash', cryomancer: 'absolute_zero', magic_archer: 'astral_arrow_rain',
-  gunner: 'bullet_storm', plague_doctor: 'black_death'
+  gunner: 'bullet_storm', plague_doctor: 'black_death', dealer: 'blackjack_finale'
 };
 for (const [jobId, skillId] of Object.entries(releaseSkills)) {
   const actor = { jobId };

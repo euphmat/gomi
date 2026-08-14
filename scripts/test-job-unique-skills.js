@@ -13,7 +13,7 @@ const assert = (condition, message) => {
 };
 
 const jobIds = Object.keys(JOBS);
-assert(jobIds.length === 25, `職業数が想定外です: ${jobIds.length}`);
+assert(jobIds.length === 26, `職業数が想定外です: ${jobIds.length}`);
 assert(Object.keys(JOB_GAUGE_UNIQUE_SKILLS).length === jobIds.length, '固有スキル定義と職業数が一致しません');
 
 const uniqueIds = new Set();
@@ -29,7 +29,7 @@ for (const jobId of jobIds) {
     assert(!job.skills.some(normalSkill => normalSkill.id === skill.id), `${skill.name}が通常スキル配列へ混入しています`);
   }
 }
-assert(uniqueIds.size === 26, `固有スキル総数が想定外です: ${uniqueIds.size}`);
+assert(uniqueIds.size === 27, `固有スキル総数が想定外です: ${uniqueIds.size}`);
 
 for (const [jobId, gaugeDefinition] of Object.entries(STANDARD_JOB_GAUGES)) {
   const fullText = JOBS[jobId].uniqueSkills.flatMap(skill => skill.mechanics.map(item => item.text)).join(' ');
@@ -57,6 +57,7 @@ const requiredMechanicFragments = {
   magic_archer: ['実消費MP40ごとに+1', '与ダメージ3%上昇', '威力20%上昇'],
   gunner: ['戦闘開始時は現在上限', 'ラピッドファイア3', '攻撃せず自動リロード'],
   plague_doctor: ['腐蝕ミアズマ+2', '与ダメージ2%上昇', '威力15%上昇'],
+  dealer: ['通常攻撃+1', '与ダメージ2%上昇', '被ダメージ1%軽減', '敵全体7連撃'],
   entertainer: ['ショーストッパーのLv', '4つのアクティブスキル', '16～22%'],
   mana_conductor: ['マナリレー', '威力+0.24倍', '威力+0.20倍'],
   slime_singer: ['共鳴ジェルのLv', '4つのアクティブスキル', '+0.22～0.42倍'],

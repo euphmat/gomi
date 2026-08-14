@@ -17,6 +17,7 @@ export const passiveMethods = {
     aliveParty.forEach(p => {
       // Last Bastion can trigger once on every floor battle.
       p._guardianLastBastionUsed = false;
+      p._dealerInsuranceUsed = false;
       p._medalLethalSurvivalUsed = false;
       const startingAtb = sumMedalEquipmentEffect(p, this.equipMap, 'startingAtb', 1000);
       if (startingAtb > 0) p.atb = Math.max(p.atb || 0, startingAtb);

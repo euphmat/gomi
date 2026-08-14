@@ -69,6 +69,11 @@ export function renderChangeJobTab() {
               showNotification(container, `条件未達成: ${req.description}`, 'error');
               return;
             }
+          } else if (req.type === 'specialQuest') {
+            if (!SpecialQuestManager.getState(req.questId).completed) {
+              showNotification(container, `条件未達成: ${req.description || '指定のスペシャルクエスト達成が必要'}`, 'error');
+              return;
+            }
           } else if (req.type === 'fishLibrary') {
             const required = Math.max(1, Number(req.discoveredSpecies) || 1);
             const discovered = getDiscoveredFishCount(currentFishingData);
@@ -446,6 +451,13 @@ export function renderChangeJobTab() {
           return {
             label: req.description || '特別条件',
             met: req.check(currentCapturedMonsters)
+          };
+        }
+        if (req.type === 'specialQuest') {
+          const met = SpecialQuestManager.getState(req.questId).completed;
+          return {
+            label: req.description || 'スペシャルクエスト達成',
+            met,
           };
         }
         if (req.type === 'fishLibrary') {

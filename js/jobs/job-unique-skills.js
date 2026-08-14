@@ -27,7 +27,8 @@ const UNIQUE_RELEASE_DESCRIPTIONS = Object.freeze({
   king_chorus_unique: 'ぷるぷる加護：音符1つごとに味方全体へ最大HP8%分のバリアと、最大HP2%ずつ回復する再生を3回付与する。',
   dragon_spirit_release_unique: '天翔返し：天墜竜槍の着地後、解放した竜気に応じて自身のATBを最大80%まで即時回復する。',
   three_realms_wheel_unique: '三界の祝福：印1つごとに、草のHP4%回復・風のATB10%加速・土のMATK18%分バリアを味方全体へ同時に与える。',
-  corpse_arts_unique: '魂の身代わり：消費した亡骸数に応じて味方全体へ最大3回の死の身代わりを付与し、致死ダメージをHP15%で耐える。'
+  corpse_arts_unique: '魂の身代わり：消費した亡骸数に応じて味方全体へ最大3回の死の身代わりを付与し、致死ダメージをHP15%で耐える。',
+  dealer_blackjack_unique: '総取り：カウント21解放時、味方全体の状態異常を解除し、HP・MPを21%回復、ATBを500進め、ディーラーのMATK210%分のバリアを付与する。'
 });
 
 const unique = (id, name, icon, activation, description, sourceSkills, options = {}) => Object.freeze({
@@ -268,6 +269,17 @@ export const JOB_GAUGE_UNIQUE_SKILLS = Object.freeze({
       ] }
     )
   ]),
+  dealer: Object.freeze([unique(
+    'dealer_blackjack_unique', 'BLACKJACK', 'playing_cards', 'カウント21でBLACKJACK・ワールドを使用',
+    '通常攻撃とカード技でカウントを21へ近づけ、絶対的な全体攻撃と総取り効果へ変換する。',
+    ['通常攻撃', 'マークドデック', 'ダブルダウン', 'ハウスエッジ', 'ロイヤルペイアウト', 'BLACKJACK・ワールド'],
+    { mechanics: gauge(
+      'カウント 0～21（戦闘開始時0）',
+      '通常攻撃+1、マークドデック+3、ダブルダウン+5、ハウスエッジ+4、ロイヤルペイアウト+7。21を超える分は切り捨て。',
+      '1点ごとに与ダメージ2%上昇・被ダメージ1%軽減（21で与ダメージ+42%・被ダメージ-21%）。',
+      '21到達時だけBLACKJACK・ワールドを使用可能。全消費して固有解放倍率約2倍の敵全体7連撃を行う。'
+    ) }
+  )]),
   plague_doctor: Object.freeze([unique(
     'pathogen_release', '病原解放', 'biotech', '培養をパンデミックまたは黒死病で解放',
     '病原技で培養を進め、全攻撃と感染系の大技を強化する。',

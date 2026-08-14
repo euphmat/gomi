@@ -148,6 +148,7 @@ export function calcFinalStats(character, equipmentMap) {
         if (levelConfig.bonusMdef) result.mdef += levelConfig.bonusMdef;
         if (levelConfig.bonusMdefPercent) mdefMultiplier += levelConfig.bonusMdefPercent / 100;
         if (levelConfig.bonusSpd) result.spd += levelConfig.bonusSpd;
+        if (levelConfig.bonusSpdPercent) spdMultiplier += levelConfig.bonusSpdPercent / 100;
         if (levelConfig.waterResistPercent) {
           result.elementResist.water = (result.elementResist.water || 0) + levelConfig.waterResistPercent;
         }

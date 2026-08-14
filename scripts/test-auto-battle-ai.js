@@ -205,11 +205,11 @@ const select = (character, usableSkills, enemies, party = [character]) =>
     '残弾2以下では射撃よりタクティカルリロードを優先する');
 }
 
-assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 25,
-  '全25職業の自動戦闘プロファイルを定義する');
+assert(Object.keys(AUTO_BATTLE_JOB_TACTICS).length === 26,
+  '全26職業の自動戦闘プロファイルを定義する');
 assert(Object.values(AUTO_BATTLE_JOB_TACTICS)
-  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 108,
-  '全108アクティブスキルの役割を定義する');
+  .reduce((count, tactics) => count + Object.keys(tactics).length, 0) === 113,
+  '全113アクティブスキルの役割を定義する');
 
 if (typeof print === 'function') print('auto-battle-ai: all tests passed');
 else console.log('auto-battle-ai: all tests passed');

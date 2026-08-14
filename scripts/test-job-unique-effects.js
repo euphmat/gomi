@@ -12,7 +12,7 @@ const assert = (condition, message) => {
 };
 
 const jobIds = Object.keys(JOBS);
-assert(jobIds.length === 25, '全職業の固有解放テストが職業一覧と一致しません');
+assert(jobIds.length === 26, '全職業の固有解放テストが職業一覧と一致しません');
 assert(Object.keys(JOB_UNIQUE_RELEASE_EFFECTS).length === jobIds.length,
   '強力な固有解放効果が全職業を網羅していません');
 assert(new Set(Object.values(JOB_UNIQUE_RELEASE_EFFECTS).map(definition => definition.mechanicId)).size === jobIds.length,
@@ -51,7 +51,7 @@ for (const jobId of jobIds) {
   };
   const max = legacyMax[jobId] || ({ priest: 100, slime_master: 100, black_knight: 100, pyromancer: 100 }[jobId] ||
     { mage: 3, magic_knight: 6, bird: 8, paladin: 3, poseidon: 3, cryomancer: 6,
-      magic_archer: 6, gunner: 6, plague_doctor: 9 }[jobId] || 5);
+      magic_archer: 6, gunner: 6, plague_doctor: 9, dealer: 21 }[jobId] || 5);
   const skillId = definition.skillIds[definition.skillIds.length - 1] === '*'
     ? 'curse_step'
     : definition.skillIds[definition.skillIds.length - 1];

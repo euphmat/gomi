@@ -28,7 +28,8 @@ export const STANDARD_JOB_GAUGES = Object.freeze({
   cryomancer:    Object.freeze({ label: '氷晶', icon: 'diamond', field: '_cryomancerCrystals', max: 6, description: '氷魔法で結晶を蓄え、絶対零度で粉砕' }),
   magic_archer:  Object.freeze({ label: '魔矢', icon: 'arrow_right_alt', field: '_magicArcherArrows', max: 6, description: 'MPを魔矢に変換し、通常攻撃や大技で放つ' }),
   gunner:        Object.freeze({ label: '弾倉', icon: 'radio_button_checked', field: '_gunnerAmmo', max: 6, initial: 6, startsFull: true, description: '射撃で弾丸を消費し、弾切れ後の通常攻撃でリロード' }),
-  plague_doctor: Object.freeze({ label: '培養', icon: 'biotech', field: '_plagueCulture', max: 9, description: '病原スキルで培養し、パンデミック・黒死病で消費' })
+  plague_doctor: Object.freeze({ label: '培養', icon: 'biotech', field: '_plagueCulture', max: 9, description: '病原スキルで培養し、パンデミック・黒死病で消費' }),
+  dealer:        Object.freeze({ label: 'カウント', icon: 'playing_cards', field: '_dealerCount', max: 21, description: 'カード技と通常攻撃で21を作り、BLACKJACK・ワールドで総取りする' })
 });
 
 export const STANDARD_JOB_GAUGE_FIELDS = Object.freeze(
@@ -71,7 +72,11 @@ const GAUGE_SKILL_HINTS = Object.freeze({
     reload: '弾倉を6発まで補充し、次の射撃を強化', charged_shot: '弾丸1発消費', elemental_charge: '弾丸1発消費',
     arm_snipe: '弾丸2発消費', rapid_fire: '弾丸3発消費', bullet_storm: '弾丸6発以上で全弾消費し、6発で威力2倍（拡張分も加算）'
   },
-  plague_doctor: { pandemic: '培養を最大3消費し、1つごとに威力+35%', black_death: '培養を全消費し、1つごとに威力+15%' }
+  plague_doctor: { pandemic: '培養を最大3消費し、1つごとに威力+35%', black_death: '培養を全消費し、1つごとに威力+15%' },
+  dealer: {
+    marked_deck: 'カウント+3', double_down: 'カウント+5', house_edge: 'カウント+4', royal_payout: 'カウント+7',
+    blackjack_finale: 'カウント21を全消費し、最終倍率約2倍'
+  }
 });
 
 const getDefinition = entity => STANDARD_JOB_GAUGES[jobIdOf(entity)] || null;
@@ -127,6 +132,12 @@ export function resetStandardJobGauge(entity) {
 }
 
 export function getJobGaugeSkillUseState(caster, skillId) {
+  if (jobIdOf(caster) === 'dealer' && skillId === 'blackjack_finale') {
+    const count = getStandardJobGaugeValue(caster);
+    return count >= 21
+      ? { canUse: true }
+      : { canUse: false, message: `カウント21が必要（${count}/21）` };
+  }
   if (jobIdOf(caster) !== 'gunner') return { canUse: true };
   const ammo = getStandardJobGaugeValue(caster);
   const max = getStandardJobGaugeMax(caster);
@@ -295,6 +306,14 @@ export function beginJobGaugeSkillAction(caster, skillId, effectiveMpCost = 0) {
       else if (skillId === 'pandemic') setActionMultiplier(caster, 1 + spend(caster, 3) * .35, skillId);
       else addStandardJobGauge(caster, ({ pathogen_injection: 1, corrosive_miasma: 2, virulent_mutation: 2 }[skillId] || 0));
       break;
+    case 'dealer':
+      if (skillId === 'blackjack_finale' && current >= max) {
+        caster._dealerBlackjackSpent = current;
+        setActionMultiplier(caster, 1 + consumeAll(caster) / 20, skillId);
+      } else {
+        addStandardJobGauge(caster, ({ marked_deck: 3, double_down: 5, house_edge: 4, royal_payout: 7 }[skillId] || 0));
+      }
+      break;
   }
 }
 
@@ -320,7 +339,7 @@ export function beginJobGaugeNormalAttack(attacker) {
       attacker._jobGaugeUsedSkills = [...used, 'normal_attack'];
       addStandardJobGauge(attacker, 1);
     }
-  } else if (['ranger', 'black_knight'].includes(jobId)) {
+  } else if (['ranger', 'black_knight', 'dealer'].includes(jobId)) {
     addStandardJobGauge(attacker, jobId === 'black_knight' ? 5 : 1);
   }
   return { cancel: false };
@@ -343,6 +362,7 @@ export function getJobGaugeOutgoingMultiplier(attacker, defender) {
   if (jobId === 'magic_archer') multiplier *= 1 + value * .03;
   if (jobId === 'gunner') multiplier *= 1 + value * .02;
   if (jobId === 'plague_doctor') multiplier *= 1 + value * .02;
+  if (jobId === 'dealer') multiplier *= 1 + value * .02;
   if (jobId === 'assassin' && attacker._assassinMarkTarget === defender?.id) multiplier *= 1 + value * .04;
   return multiplier;
 }
@@ -355,6 +375,7 @@ export function getJobGaugeIncomingMultiplier(defender) {
     case 'slime_master': return Math.max(.65, 1 - value * .001);
     case 'paladin': return Math.max(.65, 1 - value * .02);
     case 'guardian': return Math.max(.55, 1 - value * .03);
+    case 'dealer': return Math.max(.70, 1 - value * .01);
     default: return 1;
   }
 }
@@ -421,6 +442,7 @@ export function applyStandardJobGaugeAi(character, candidates) {
       finish('bullet_storm');
       break;
     case 'plague_doctor': finish('black_death'); boost(['pathogen_injection', 'corrosive_miasma', 'virulent_mutation'], value < max ? 35 : 0); break;
+    case 'dealer': finish('blackjack_finale'); boost(['marked_deck', 'double_down', 'house_edge', 'royal_payout'], value < max ? 55 : 0); break;
   }
 }
 
@@ -453,6 +475,7 @@ const SPECIAL_GAUGE_ACTIONS = Object.freeze({
   magic_archer: { mana_barrage: '魔矢斉射', astral_arrow_rain: '魔矢斉射' },
   gunner: { reload: 'タクティカルリロード', bullet_storm: 'フルバースト' },
   plague_doctor: { pandemic: '病原解放', black_death: '病原解放' },
+  dealer: { blackjack_finale: 'BLACKJACK' },
   entertainer: { grand_finale: 'グランド・フィナーレ' },
   mana_conductor: {
     resonance_recharge: '共鳴還元', arcane_crescendo: '共鳴解放',

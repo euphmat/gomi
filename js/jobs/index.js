@@ -23,6 +23,7 @@ import { gunner } from './gunner.js';
 import { shinra_sage } from './shinra_sage.js';
 import { plague_doctor } from './plague_doctor.js';
 import { soul_reaper } from './soul_reaper.js';
+import { dealer } from './dealer.js';
 import { getJobUniqueSkills } from './job-unique-skills.js';
 import { installJobGaugeCapacityMilestones } from './job-gauge-progression.js';
 
@@ -57,7 +58,8 @@ export const JOB_STAT_GROWTH = {
   [shinra_sage.id]: { hp: [1, 3], mp: [2, 4], atk: [0, 0], def: [1, 2], matk: [2, 3], mdef: [1, 2], spd: [1, 2] },
   [plague_doctor.id]: { hp: [1, 3], mp: [3, 5], atk: [0, 0], def: [0, 2], matk: [3, 4], mdef: [2, 3], spd: [1, 2] },
   // Super-advanced jobs intentionally sit above the normal growth budget.
-  [soul_reaper.id]: { hp: [2, 4], mp: [3, 5], atk: [1, 3], def: [0, 2], matk: [3, 5], mdef: [1, 3], spd: [1, 3] }
+  [soul_reaper.id]: { hp: [2, 4], mp: [3, 5], atk: [1, 3], def: [0, 2], matk: [3, 5], mdef: [1, 3], spd: [1, 3] },
+  [dealer.id]:     { hp: [2, 5], mp: [3, 6], atk: [2, 5], def: [1, 3], matk: [3, 6], mdef: [2, 4], spd: [2, 4] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
@@ -88,7 +90,8 @@ export const JOB_STAT_MULTIPLIER = {
   [gunner.id]:      { hp: 0.95, mp: 1.10, atk: 1.65, def: 0.75, matk: 0.30, mdef: 1.00, spd: 0.95 },
   [shinra_sage.id]: { hp: 1.00, mp: 1.65, atk: 0.40, def: 1.10, matk: 1.70, mdef: 1.35, spd: 1.05 },
   [plague_doctor.id]: { hp: 0.95, mp: 1.85, atk: 0.30, def: 0.80, matk: 1.95, mdef: 1.50, spd: 1.15 },
-  [soul_reaper.id]: { hp: 1.10, mp: 1.90, atk: 1.15, def: 0.75, matk: 2.10, mdef: 1.25, spd: 1.15 }
+  [soul_reaper.id]: { hp: 1.10, mp: 1.90, atk: 1.15, def: 0.75, matk: 2.10, mdef: 1.25, spd: 1.15 },
+  [dealer.id]:     { hp: 1.25, mp: 1.90, atk: 1.65, def: 1.10, matk: 2.15, mdef: 1.45, spd: 1.50 }
 };
 
 export const JOBS = {
@@ -116,7 +119,8 @@ export const JOBS = {
   [gunner.id]: { ...gunner, statGrowth: JOB_STAT_GROWTH[gunner.id], statMultiplier: JOB_STAT_MULTIPLIER[gunner.id] },
   [shinra_sage.id]: { ...shinra_sage, statGrowth: JOB_STAT_GROWTH[shinra_sage.id], statMultiplier: JOB_STAT_MULTIPLIER[shinra_sage.id] },
   [plague_doctor.id]: { ...plague_doctor, statGrowth: JOB_STAT_GROWTH[plague_doctor.id], statMultiplier: JOB_STAT_MULTIPLIER[plague_doctor.id] },
-  [soul_reaper.id]: { ...soul_reaper, statGrowth: JOB_STAT_GROWTH[soul_reaper.id], statMultiplier: JOB_STAT_MULTIPLIER[soul_reaper.id] }
+  [soul_reaper.id]: { ...soul_reaper, statGrowth: JOB_STAT_GROWTH[soul_reaper.id], statMultiplier: JOB_STAT_MULTIPLIER[soul_reaper.id] },
+  [dealer.id]: { ...dealer, statGrowth: JOB_STAT_GROWTH[dealer.id], statMultiplier: JOB_STAT_MULTIPLIER[dealer.id] }
 };
 
 Object.values(JOBS).forEach(job => {

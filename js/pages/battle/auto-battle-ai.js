@@ -150,6 +150,13 @@ export const AUTO_BATTLE_JOB_TACTICS = Object.freeze({
     ossuary_aegis: skill(ROLE.MAINTENANCE, 'party'),
     march_of_dead: skill(ROLE.COMBO_FINISHER, 'area'),
     last_requiem: skill(ROLE.COMBO_FINISHER, 'area')
+  }),
+  dealer: Object.freeze({
+    marked_deck: skill(ROLE.COMBO_SETUP, 'random'),
+    double_down: skill(ROLE.COMBO_SETUP),
+    house_edge: skill(ROLE.COMBO_SETUP, 'area'),
+    royal_payout: skill(ROLE.RECOVERY, 'party'),
+    blackjack_finale: skill(ROLE.COMBO_FINISHER, 'area')
   })
 });
 

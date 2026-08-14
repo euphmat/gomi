@@ -219,7 +219,7 @@ assert(compoundBreak.defenseIgnorePercent === 55, 'defense bypass awakening is i
 assert(compoundBreak.detonationMultiplier === 2, 'conditional multiplier awakening is invalid');
 assert(compoundBreak.maxHarmony === 6, 'resource cap awakening is invalid');
 
-assert(Object.keys(JOBS).length === 25, 'the all-job limit break test is missing a job');
+assert(Object.keys(JOBS).length === 26, 'the all-job limit break test is missing a job');
 const nonScalingSkills = [];
 for (const job of Object.values(JOBS)) {
   const masteredLevels = Object.fromEntries(

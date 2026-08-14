@@ -221,6 +221,15 @@ const effects = {
     for (const ally of livingParty(battle)) {
       ally._soulReaperDeathWard = Math.max(Number(ally._soulReaperDeathWard) || 0, Math.min(3, spent));
     }
+  },
+  dealer: ({ caster, battle }) => {
+    for (const ally of livingParty(battle)) {
+      ally.activeAilment = null;
+      restoreHp(ally, maxHpOf(ally) * .21, battle);
+      restoreMp(ally, maxMpOf(ally) * .21, battle);
+      ally.atb = Math.min(1000, (Number(ally.atb) || 0) + 500);
+    }
+    addPartyBarrier(battle, (caster.stats?.matk || 1) * 2.1, 5);
   }
 };
 
@@ -249,7 +258,8 @@ const definitions = {
   slime_singer: ['ぷるぷる加護', ['king_slime_chorus'], 'elastic_regenerating_barrier'],
   dragoon: ['天翔返し', ['skyfall_dive'], 'landing_atb_refund'],
   shinra_sage: ['三界の祝福', ['shinra_mandala'], 'three_distinct_realm_boons'],
-  soul_reaper: ['魂の身代わり', ['corpse_vanguard', 'ossuary_aegis', 'march_of_dead', 'last_requiem'], 'party_death_ward']
+  soul_reaper: ['魂の身代わり', ['corpse_vanguard', 'ossuary_aegis', 'march_of_dead', 'last_requiem'], 'party_death_ward'],
+  dealer: ['総取り', ['blackjack_finale'], 'blackjack_party_jackpot']
 };
 
 export const JOB_UNIQUE_RELEASE_EFFECTS = Object.freeze(Object.fromEntries(

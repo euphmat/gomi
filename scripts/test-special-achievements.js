@@ -10,7 +10,7 @@ import { GameDB } from '../js/data/database.js';
 
 const ids = SPECIAL_QUESTS.map(quest => quest.id);
 assert.equal(new Set(ids).size, ids.length, 'Special achievement ids must be unique.');
-assert.equal(SPECIAL_QUESTS.length, 280, 'The complete special achievement catalog changed unexpectedly.');
+assert.equal(SPECIAL_QUESTS.length, 282, 'The complete special achievement catalog changed unexpectedly.');
 
 for (const quest of SPECIAL_QUESTS) {
   assert.ok(quest.id && quest.category && quest.title && quest.description && quest.icon, `Invalid achievement: ${quest.id}`);
