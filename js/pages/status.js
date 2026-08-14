@@ -114,6 +114,12 @@ async function _loadStatusData(container) {
                 aria-label="モンスタータワーで遊ぶ">
           <span class="material-symbols-outlined text-[27px] text-violet-100" aria-hidden="true">balance</span>
         </button>
+
+        <button data-blackjack
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/35 bg-gradient-to-br from-emerald-950/80 to-amber-950/80 shadow-[0_8px_20px_rgba(0,0,0,.28)] active:scale-95"
+                aria-label="ブラックジャックで遊ぶ">
+          <span class="material-symbols-outlined text-[27px] text-emerald-100" aria-hidden="true">casino</span>
+        </button>
       </section>
 
       <div class="grid grid-cols-2 gap-2">
@@ -132,6 +138,9 @@ async function _loadStatusData(container) {
     });
     container.querySelector('[data-monster-tower]')?.addEventListener('click', () => {
       window.location.hash = '/monster-tower';
+    });
+    container.querySelector('[data-blackjack]')?.addEventListener('click', () => {
+      window.location.hash = '/blackjack';
     });
 
     // Bind equipment modal click events

@@ -232,6 +232,12 @@ export const CloudSaveService = {
   isConfigured: isFirebaseConfigured,
   maxPayloadLength: MAX_PAYLOAD_LENGTH,
 
+  async getCurrentUser() {
+    if (!isFirebaseConfigured) return null;
+    const { auth } = await loadServices();
+    return auth.currentUser;
+  },
+
   async observeAuthState(callback) {
     if (!isFirebaseConfigured) {
       callback(null);

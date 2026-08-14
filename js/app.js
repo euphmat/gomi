@@ -64,6 +64,7 @@ import { renderMemoryGamePage } from './pages/memory-game.js';
 import { renderSudokuPage }     from './pages/sudoku.js';
 import { renderMinesweeperPage } from './pages/minesweeper.js';
 import { renderMonsterTowerPage } from './pages/monster-tower.js';
+import { renderBlackjackPage } from './pages/blackjack.js';
 import { QuestManager }      from './data/quest-manager.js';
 import { settleLegacyFishFeed } from './data/fishing-manager.js';
 
@@ -194,7 +195,8 @@ class App {
       .register('/memory-game', renderMemoryGamePage)
       .register('/sudoku', renderSudokuPage)
       .register('/minesweeper', renderMinesweeperPage)
-      .register('/monster-tower', renderMonsterTowerPage);
+      .register('/monster-tower', renderMonsterTowerPage)
+      .register('/blackjack', renderBlackjackPage);
 
     // ── 5. Navigation ──
     this.renderNav();

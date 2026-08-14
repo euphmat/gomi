@@ -1,8 +1,18 @@
-export const APP_VERSION = '0.1.48';
-export const APP_RELEASE_DATE = '2026.08.12';
+export const APP_VERSION = '0.1.49';
+export const APP_RELEASE_DATE = '2026.08.14';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.08.14',
+    version: '0.1.49',
+    guide: 'cloud-save',
+    items: [
+      'ホームタウンに、Goldを賭けてディーラーと勝負する「ブラックジャック」を追加しました。ヒット・スタンド・ダブルに対応し、通常勝利は2倍、ブラックジャックは2.5倍、引き分けは賭け金を返却します。',
+      'ブラックジャックはログインとメール確認を必須にしました。ラウンド開始前に賭け金と配札をクラウドへ自動保存し、プレイ端末へ自動セーブ権を設定します。別端末の古いセーブからは開始できません。',
+      '未完了のラウンドと山札を端末内に保存し、再読み込み後も同じ状態から再開できるようにしました。精算結果も次のラウンド前にクラウドへ同期します。',
+    ],
+  },
   {
     date: '2026.08.12',
     version: '0.1.48',

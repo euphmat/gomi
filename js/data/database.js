@@ -33,6 +33,11 @@ import {
   TOWN_GAME_IDS,
   getTownGameRewardStateKey,
 } from './town-game-rewards.js';
+import {
+  isLegalBlackjackPlayerUpdate,
+  isLegalBlackjackSettlement,
+  isValidBlackjackRoundState,
+} from './blackjack-engine.js';
 
 const ALL_EQUIPMENT_DEFS = [...WEAPONS, ...ARMORS, ...SHIELDS, ...ACCESSORIES];
 
@@ -63,6 +68,7 @@ const DB_VERSION = 1;
 const SAVE_STORES = ['gameState', 'characters', 'equipment', 'inventory'];
 const CLOUD_SNAPSHOT_FORMAT_VERSION = 2;
 const MAX_COMPACT_EQUIPMENT_COUNT = 2_000_000;
+const BLACKJACK_STATE_KEY = 'blackjack_round';
 const EQUIPMENT_DEFS_BY_ID = new Map(ALL_EQUIPMENT_DEFS.map(item => [item.id, item]));
 const ITEM_DEFS_BY_ID = new Map([...ALL_EQUIPMENT_DEFS, ...MATERIALS].map(item => [item.id, item]));
 const EQUIPMENT_INSTANCE_KEYS = new Set(['id', 'baseId']);
@@ -590,6 +596,168 @@ export class GameDatabase {
    */
   async setGameState(key, value) {
     await this._write('gameState', (store) => store.put({ key, value }));
+  }
+
+  /** Reserve a blackjack wager and persist the shuffled round atomically. */
+  startBlackjackRound(round) {
+    const clone = JSON.parse(JSON.stringify(round));
+    if (!isValidBlackjackRoundState(clone) || clone.phase !== 'pending_sync') {
+      return Promise.reject(new Error('Invalid blackjack round.'));
+    }
+
+    const run = () => this._runWithConnectionRetry('blackjack start', (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let result;
+
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Blackjack start transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Blackjack start transaction was aborted.'));
+
+      const roundRequest = store.get(BLACKJACK_STATE_KEY);
+      roundRequest.onsuccess = () => {
+        const previous = roundRequest.result?.value;
+        if (previous && (previous.phase !== 'completed' || previous.resultSynced !== true)) {
+          result = { started: false, reason: 'round-active', gold: null, round: previous };
+          return;
+        }
+
+        const goldRequest = store.get('gold');
+        goldRequest.onsuccess = () => {
+          const gold = Math.max(0, Math.floor(Number(goldRequest.result?.value) || 0));
+          if (gold < clone.wager) {
+            result = { started: false, reason: 'insufficient-gold', gold, round: previous || null };
+            return;
+          }
+          const remainingGold = gold - clone.wager;
+          store.put({ key: 'gold', value: remainingGold });
+          store.put({ key: BLACKJACK_STATE_KEY, value: clone });
+          result = { started: true, gold: remainingGold, round: clone };
+        };
+      };
+    }));
+
+    const queuedWrite = this._writeQueue.then(run, run);
+    this._writeQueue = queuedWrite.catch(() => undefined);
+    return queuedWrite;
+  }
+
+  /** Persist a hit/stand transition and optionally reserve the double-down wager. */
+  updateBlackjackRound(round, additionalWager = 0) {
+    const clone = JSON.parse(JSON.stringify(round));
+    if (!clone?.id || !['pending_sync', 'player'].includes(clone.phase)
+        || !Number.isSafeInteger(additionalWager) || additionalWager < 0) {
+      return Promise.reject(new Error('Invalid blackjack round update.'));
+    }
+
+    const run = () => this._runWithConnectionRetry('blackjack update', (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let result;
+
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Blackjack update transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Blackjack update transaction was aborted.'));
+
+      const roundRequest = store.get(BLACKJACK_STATE_KEY);
+      roundRequest.onsuccess = () => {
+        const previous = roundRequest.result?.value;
+        if (!previous || previous.id !== clone.id || !['pending_sync', 'player'].includes(previous.phase)) {
+          result = { updated: false, reason: 'round-changed' };
+          return;
+        }
+        if (!isLegalBlackjackPlayerUpdate(previous, clone, additionalWager)) {
+          result = { updated: false, reason: 'invalid-wager' };
+          return;
+        }
+        if (additionalWager === 0) {
+          store.put({ key: BLACKJACK_STATE_KEY, value: clone });
+          result = { updated: true, gold: null, round: clone };
+          return;
+        }
+
+        const goldRequest = store.get('gold');
+        goldRequest.onsuccess = () => {
+          const gold = Math.max(0, Math.floor(Number(goldRequest.result?.value) || 0));
+          if (gold < additionalWager) {
+            result = { updated: false, reason: 'insufficient-gold', gold };
+            return;
+          }
+          const remainingGold = gold - additionalWager;
+          store.put({ key: 'gold', value: remainingGold });
+          store.put({ key: BLACKJACK_STATE_KEY, value: clone });
+          result = { updated: true, gold: remainingGold, round: clone };
+        };
+      };
+    }));
+
+    const queuedWrite = this._writeQueue.then(run, run);
+    this._writeQueue = queuedWrite.catch(() => undefined);
+    return queuedWrite;
+  }
+
+  /** Credit a completed round once. The payout includes any returned wager. */
+  settleBlackjackRound(round) {
+    const clone = JSON.parse(JSON.stringify(round));
+    if (!clone?.id || clone.phase !== 'completed' || clone.resultSynced !== false) {
+      return Promise.reject(new Error('Invalid blackjack settlement.'));
+    }
+
+    const run = () => this._runWithConnectionRetry('blackjack settlement', (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let result;
+
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Blackjack settlement transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Blackjack settlement transaction was aborted.'));
+
+      const roundRequest = store.get(BLACKJACK_STATE_KEY);
+      roundRequest.onsuccess = () => {
+        const previous = roundRequest.result?.value;
+        if (!previous || previous.id !== clone.id || previous.phase !== 'player'
+            || !isLegalBlackjackSettlement(previous, clone)) {
+          result = { settled: false, reason: 'round-changed', round: previous || null };
+          return;
+        }
+        const goldRequest = store.get('gold');
+        goldRequest.onsuccess = () => {
+          const gold = Math.max(0, Math.floor(Number(goldRequest.result?.value) || 0)) + clone.payout;
+          store.put({ key: 'gold', value: gold });
+          store.put({ key: BLACKJACK_STATE_KEY, value: clone });
+          result = { settled: true, gold, round: clone };
+        };
+      };
+    }));
+
+    const queuedWrite = this._writeQueue.then(run, run);
+    this._writeQueue = queuedWrite.catch(() => undefined);
+    return queuedWrite;
+  }
+
+  markBlackjackResultSynced(roundId) {
+    if (typeof roundId !== 'string' || !roundId) {
+      return Promise.reject(new Error('Invalid blackjack round ID.'));
+    }
+    const run = () => this._runWithConnectionRetry('blackjack result sync', (db) => new Promise((resolve, reject) => {
+      const tx = db.transaction('gameState', 'readwrite');
+      const store = tx.objectStore('gameState');
+      let result = { updated: false };
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Blackjack sync transaction failed.'));
+      tx.onabort = () => reject(tx.error || new Error('Blackjack sync transaction was aborted.'));
+      const request = store.get(BLACKJACK_STATE_KEY);
+      request.onsuccess = () => {
+        const round = request.result?.value;
+        if (!round || round.id !== roundId || round.phase !== 'completed') return;
+        round.resultSynced = true;
+        store.put({ key: BLACKJACK_STATE_KEY, value: round });
+        result = { updated: true, round };
+      };
+    }));
+    const queuedWrite = this._writeQueue.then(run, run);
+    this._writeQueue = queuedWrite.catch(() => undefined);
+    return queuedWrite;
   }
 
   /**
