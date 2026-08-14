@@ -83,6 +83,10 @@ assert.equal(metrics.memoryWins, 17);
 assert.ok(metrics.memoryLevel > 1);
 assert.equal(metrics.treasureKinds, 2);
 assert.equal(metrics.treasureLevels, 10);
+const cappedTreasureMetrics = calculateExtendedSpecialQuestMetrics({
+  treasureLevels: { pocket_watch: 999, hero_medal: 999, invalid_treasure: 999 },
+});
+assert.equal(cappedTreasureMetrics.treasureLevels, 30, 'Achievement totals must respect treasure maximum levels.');
 assert.equal(metrics.medalRank1, 2, 'Upgraded medals should continue counting toward lower-rank goals.');
 assert.equal(metrics.medalRank2, 2);
 assert.equal(metrics.medalRank3, 1);
@@ -107,6 +111,7 @@ const state = new Map([
   ['treasure_levels', { pocket_watch: 3, hero_medal: 7 }],
   ['quest_special_progress', {
     monster_30: { completed: true, claimed: true },
+    treasure_levels_500: { completed: true, claimed: true },
   }],
 ]);
 
@@ -129,6 +134,8 @@ assert.equal(SpecialQuestManager.getState('total_catches_1000').completed, true)
 assert.equal(SpecialQuestManager.getState('mineFirstUnlock').completed, true);
 assert.equal(SpecialQuestManager.getState('medal_rank_stela_1').completed, true);
 assert.equal(SpecialQuestManager.getState('monster_30').claimed, true, 'Existing claimed achievements must survive catalog migration.');
+assert.equal(SpecialQuestManager.getState('treasure_levels_300').claimed, true, 'Legacy treasure-level rewards must migrate to reachable targets.');
+assert.equal(state.get('quest_special_progress').treasure_levels_300.claimed, true, 'Migrated treasure progress must be persisted.');
 assert.ok(state.get('quest_special_progress').total_kills_100, 'New achievement state should be persisted.');
 
 for (const category of ['all', 'battle', 'fish', 'medal']) {

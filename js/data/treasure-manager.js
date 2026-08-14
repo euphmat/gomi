@@ -5,7 +5,6 @@ import {
   TREASURES,
   TREASURE_MAP,
   TREASURE_STATE_KEY,
-  TREASURE_TOTAL_WEIGHT,
   getTreasureValue,
 } from '../definitions/treasures.js';
 
@@ -16,7 +15,7 @@ function normalizeLevels(value) {
   const normalized = {};
   if (!value || typeof value !== 'object' || Array.isArray(value)) return normalized;
   for (const treasure of TREASURES) {
-    const level = Math.floor(Number(value[treasure.id]) || 0);
+    const level = Math.min(treasure.maxLevel, Math.floor(Number(value[treasure.id]) || 0));
     if (level > 0) normalized[treasure.id] = level;
   }
   return normalized;
@@ -60,24 +59,30 @@ export function getMaterialCapacity() {
   return BASE_MATERIAL_CAPACITY + getTreasureEffect('materialCapacityBonus');
 }
 
-function selectTreasure(random = Math.random()) {
-  let cursor = Math.max(0, Math.min(0.999999999999, random)) * TREASURE_TOTAL_WEIGHT;
-  for (const treasure of TREASURES) {
+function selectTreasure(levels, random = Math.random()) {
+  const available = TREASURES.filter(treasure => (levels[treasure.id] || 0) < treasure.maxLevel);
+  const totalWeight = available.reduce((sum, treasure) => sum + treasure.weight, 0);
+  if (totalWeight <= 0) return null;
+  let cursor = Math.max(0, Math.min(0.999999999999, random)) * totalWeight;
+  for (const treasure of available) {
     cursor -= treasure.weight;
     if (cursor < 0) return treasure;
   }
-  return TREASURES[TREASURES.length - 1];
+  return available[available.length - 1];
 }
 
 export async function drawPrismGacha(random = Math.random) {
   await loadTreasureLevels();
+  const treasure = selectTreasure(cachedLevels, random());
+  if (!treasure) throw new Error('すべての秘宝が上限レベルに到達しています。');
+
   const prism = Number(await GameDB.getGameState('prism')) || 0;
   if (prism < PRISM_GACHA_COST) throw new Error('Prismが足りません。');
 
-  const treasure = selectTreasure(random());
   if (!TREASURE_MAP.has(treasure.id)) throw new Error('秘宝の抽選に失敗しました。');
   const previousLevel = getTreasureLevel(treasure.id);
-  cachedLevels[treasure.id] = previousLevel + 1;
+  const level = Math.min(treasure.maxLevel, previousLevel + 1);
+  cachedLevels[treasure.id] = level;
 
   const refundChance = getTreasureEffect('prismRefundPercent') / 100;
   const refunded = random() < refundChance;
@@ -91,8 +96,8 @@ export async function drawPrismGacha(random = Math.random) {
   return {
     treasure,
     previousLevel,
-    level: previousLevel + 1,
-    value: getTreasureValue(treasure, previousLevel + 1),
+    level,
+    value: getTreasureValue(treasure, level),
     refunded,
     prism: nextPrism,
   };

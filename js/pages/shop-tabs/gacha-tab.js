@@ -17,6 +17,8 @@ export async function renderGachaTab() {
   let drawing = false;
 
   const render = () => {
+    const availableCount = TREASURES.filter(treasure => (levels[treasure.id] || 0) < treasure.maxLevel).length;
+    const collectionComplete = availableCount === 0;
     container.innerHTML = `
       <div class="mx-auto max-w-2xl space-y-4">
         <section class="relative isolate overflow-hidden rounded-3xl border border-fuchsia-400/35 bg-gradient-to-br from-violet-950 via-slate-950 to-cyan-950 p-5 shadow-[0_0_45px_rgba(168,85,247,0.18)]">
@@ -24,7 +26,7 @@ export async function renderGachaTab() {
           <div class="pointer-events-none absolute -bottom-20 -right-12 h-52 w-52 rounded-full bg-cyan-400/20 blur-3xl"></div>
           <div class="relative flex flex-col items-center text-center">
             <h2 class="bg-gradient-to-r from-fuchsia-300 via-white to-cyan-300 bg-clip-text text-2xl font-black tracking-wider text-transparent">伝説の秘宝ガチャ</h2>
-            <p class="mt-2 max-w-md text-[11px] leading-relaxed text-slate-300">手に入れた瞬間から効果は常時発動。重複すれば秘宝レベルが上がり、効果がさらに強化されます。</p>
+            <p class="mt-2 max-w-md text-[11px] leading-relaxed text-slate-300">手に入れた瞬間から効果は常時発動。重複すると上限レベルまで効果が強化され、上限到達後は排出対象から外れます。</p>
             <div class="my-4 grid w-full max-w-sm grid-cols-3 gap-2" aria-hidden="true">
               ${['pocket_watch', 'hero_medal', 'rainbow_piggy_bank'].map((id, index) => {
                 const treasure = TREASURES.find(item => item.id === id);
@@ -33,22 +35,23 @@ export async function renderGachaTab() {
                 </div>`;
               }).join('')}
             </div>
-            <button data-draw class="group flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl border border-fuchsia-300/60 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-600 py-3.5 text-sm font-black text-white shadow-[0_0_24px_rgba(192,38,211,0.35)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:grayscale disabled:opacity-45" ${prism < PRISM_GACHA_COST || drawing ? 'disabled' : ''}>
-              <span class="material-symbols-outlined text-xl">${drawing ? 'progress_activity' : 'auto_awesome'}</span>
-              ${drawing ? '秘宝を召喚中…' : `${PRISM_GACHA_COST} Prismで召喚`}
+            <button data-draw class="group flex w-full max-w-sm items-center justify-center gap-2 rounded-2xl border border-fuchsia-300/60 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-600 py-3.5 text-sm font-black text-white shadow-[0_0_24px_rgba(192,38,211,0.35)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:grayscale disabled:opacity-45" ${prism < PRISM_GACHA_COST || drawing || collectionComplete ? 'disabled' : ''}>
+              <span class="material-symbols-outlined text-xl">${drawing ? 'progress_activity' : collectionComplete ? 'workspace_premium' : 'auto_awesome'}</span>
+              ${drawing ? '秘宝を召喚中…' : collectionComplete ? '全秘宝 MAX' : `${PRISM_GACHA_COST} Prismで召喚`}
             </button>
           </div>
         </section>
 
         <section class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/75">
           <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-            <div><h3 class="text-sm font-black text-white">秘宝ラインナップ</h3><p class="mt-0.5 text-[9px] text-slate-500">全${TREASURES.length}種・各秘宝は同じ確率で排出</p></div>
-            <span class="rounded-full border border-cyan-800/60 bg-cyan-950/40 px-2 py-1 text-[9px] font-bold text-cyan-300">合計 100%</span>
+            <div><h3 class="text-sm font-black text-white">秘宝ラインナップ</h3><p class="mt-0.5 text-[9px] text-slate-500">${collectionComplete ? `全${TREASURES.length}種が上限レベルに到達` : `全${TREASURES.length}種・未上限の${availableCount}種から同率で排出`}</p></div>
+            <span class="rounded-full border border-cyan-800/60 bg-cyan-950/40 px-2 py-1 text-[9px] font-bold text-cyan-300">${collectionComplete ? 'COMPLETE' : '合計 100%'}</span>
           </div>
           <div class="divide-y divide-slate-800/75">
             ${TREASURES.map(treasure => {
               const level = levels[treasure.id] || 0;
               const owned = level > 0;
+              const maxed = level >= treasure.maxLevel;
               const effectText = treasure.display(getTreasureValue(treasure, owned ? level : 1));
               return `<article class="flex items-center gap-3 px-3 py-3 transition-colors ${owned ? 'bg-gradient-to-r from-fuchsia-950/20 via-slate-950/20 to-cyan-950/10' : 'bg-slate-950/30'}">
                 <div class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border ${owned ? 'border-fuchsia-500/40 bg-gradient-to-br from-violet-950/70 to-slate-900 shadow-[0_0_14px_rgba(217,70,239,0.14)]' : 'border-slate-800 bg-slate-950'}">
@@ -56,13 +59,13 @@ export async function renderGachaTab() {
                   ${owned ? '<div class="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-cyan-300/10"></div>' : ''}
                 </div>
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2"><h4 class="truncate text-xs font-black ${owned ? 'text-white' : 'text-slate-500'}">${treasure.name}</h4>${owned ? `<span class="shrink-0 rounded-md border border-fuchsia-700/50 bg-fuchsia-950/70 px-1.5 py-0.5 text-[9px] font-black text-fuchsia-300">Lv.${level}</span>` : '<span class="shrink-0 rounded-md border border-slate-800 px-1.5 py-0.5 text-[9px] font-bold text-slate-600">未所持</span>'}</div>
+                  <div class="flex items-center gap-2"><h4 class="truncate text-xs font-black ${owned ? 'text-white' : 'text-slate-500'}">${treasure.name}</h4>${owned ? `<span class="shrink-0 rounded-md border ${maxed ? 'border-amber-500/60 bg-amber-950/60 text-amber-300' : 'border-fuchsia-700/50 bg-fuchsia-950/70 text-fuchsia-300'} px-1.5 py-0.5 text-[9px] font-black">${maxed ? 'MAX' : `Lv.${level} / ${treasure.maxLevel}`}</span>` : `<span class="shrink-0 rounded-md border border-slate-800 px-1.5 py-0.5 text-[9px] font-bold text-slate-600">未所持・上限Lv.${treasure.maxLevel}</span>`}</div>
                   <div class="mt-1.5 rounded-lg border px-2 py-1.5 ${owned ? 'border-cyan-900/60 bg-cyan-950/25' : 'border-slate-800/70 bg-slate-900/30'}">
                     <div class="text-[8px] font-black tracking-wider ${owned ? 'text-cyan-500' : 'text-slate-600'}">${owned ? '現在の効果' : 'Lv.1 獲得時'}</div>
                     <p class="mt-0.5 text-[10px] font-bold leading-snug ${owned ? 'text-cyan-100' : 'text-slate-500'}">${effectText}</p>
                   </div>
                 </div>
-                <div class="shrink-0 text-right"><div class="text-[8px] font-bold text-slate-600">排出率</div><div class="font-mono text-xs font-black text-cyan-300">${(getTreasureRate(treasure) * 100).toFixed(2)}%</div></div>
+                <div class="shrink-0 text-right"><div class="text-[8px] font-bold text-slate-600">${maxed ? '排出対象' : '現在の排出率'}</div><div class="font-mono text-xs font-black ${maxed ? 'text-amber-400' : 'text-cyan-300'}">${maxed ? 'MAX' : `${(getTreasureRate(treasure, levels) * 100).toFixed(2)}%`}</div></div>
               </article>`;
             }).join('')}
           </div>
@@ -123,7 +126,7 @@ export async function renderGachaTab() {
               <img src="${result.treasure.image}" alt="${result.treasure.name}" class="gacha-treasure-image h-full w-full object-contain p-3 drop-shadow-[0_0_16px_rgba(255,255,255,.45)]">
             </div>
             <h3 class="bg-gradient-to-r from-fuchsia-200 via-white to-cyan-200 bg-clip-text text-2xl font-black tracking-wider text-transparent drop-shadow">${result.treasure.name}</h3>
-            <div class="mt-1 text-sm font-black text-amber-300">${result.previousLevel > 0 ? `Lv.${result.previousLevel} → Lv.${result.level}` : `Lv.${result.level}`}</div>
+            <div class="mt-1 text-sm font-black text-amber-300">${result.level >= result.treasure.maxLevel ? `Lv.${result.level} MAX` : result.previousLevel > 0 ? `Lv.${result.previousLevel} → Lv.${result.level} / ${result.treasure.maxLevel}` : `Lv.${result.level} / ${result.treasure.maxLevel}`}</div>
             <div class="mt-3 rounded-xl border border-cyan-400/30 bg-slate-950/60 p-3">
               <div class="text-[8px] font-black tracking-widest text-cyan-500">現在の効果</div>
               <p class="mt-1 text-xs font-black text-cyan-100">${result.treasure.display(result.value)}</p>

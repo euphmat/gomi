@@ -47,7 +47,12 @@ const MEMORY_GAME_TARGETS = [1, 10, 50, 100, 500, 1000];
 const MEMORY_WIN_TARGETS = [1, 10, 50, 100, 500];
 const MEMORY_LEVEL_TARGETS = [5, 10, 20, 30];
 const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21];
-const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 250, 500, 1000];
+const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 200, 300, 350];
+const LEGACY_TREASURE_LEVEL_QUEST_MIGRATIONS = {
+  treasure_levels_250: 'treasure_levels_200',
+  treasure_levels_500: 'treasure_levels_300',
+  treasure_levels_1000: 'treasure_levels_350',
+};
 
 const makeMilestoneQuests = (type, targets, options) => targets.map((target, index) => ({
   id: `${type}_${target}`,
@@ -299,10 +304,10 @@ export function calculateExtendedSpecialQuestMetrics({
     return total + level - FISHING_TACKLE_MIN_LEVEL;
   }, 0);
 
-  const validTreasureIds = new Set(TREASURES.map(treasure => treasure.id));
+  const treasureById = new Map(TREASURES.map(treasure => [treasure.id, treasure]));
   const normalizedTreasureLevels = Object.entries(treasureLevels || {})
-    .filter(([id]) => validTreasureIds.has(id))
-    .map(([, level]) => nonNegativeInteger(level));
+    .filter(([id]) => treasureById.has(id))
+    .map(([id, level]) => Math.min(treasureById.get(id).maxLevel, nonNegativeInteger(level)));
 
   const metrics = {
     totalKills,
@@ -356,9 +361,19 @@ class SpecialQuestManagerClass {
       };
     }
 
+    let migratedTreasureProgress = false;
+    for (const [legacyId, currentId] of Object.entries(LEGACY_TREASURE_LEVEL_QUEST_MIGRATIONS)) {
+      const legacyState = saved[legacyId];
+      if (!legacyState?.completed && !legacyState?.claimed) continue;
+      this.progress[currentId].completed ||= Boolean(legacyState.completed || legacyState.claimed);
+      this.progress[currentId].claimed ||= Boolean(legacyState.claimed);
+      migratedTreasureProgress = true;
+    }
+
     // Older saves used the same key for this first quest, so its claimed state
     // is retained by the generic migration above.
     await this.refreshAchievements();
+    if (migratedTreasureProgress) await this.save();
 
     if (!this.listenersReady) {
       window.addEventListener('quest:mine-unlock', () => this.completeMineFirstUnlock());
