@@ -33,6 +33,9 @@ export const TREASURES = [
   { id: 'royal_forging_seal', name: '王立鋳造印', effect: 'medalCraftDiscountPercent', perLevel: 2, maxLevel: 10, display: v => `メダル鋳造・強化に必要な素材とGoldが ${v}%減少` },
   { id: 'number_sage_quill', name: '数聖の羽根筆', effect: 'sudokuHintBonus', perLevel: 1, maxLevel: 2, display: v => `数独の開始時ヒントが +${v}回` },
   { id: 'prospector_canary', name: '探鉱師のカナリア', effect: 'minesweeperMineGuardPercent', perLevel: 5, maxLevel: 4, display: v => `マインスイーパーで1プレイに1度、地雷を${v}%の確率で無効化` },
+  { id: 'sea_echo_stopwatch', name: '海鳴りのストップウォッチ', effect: 'fishingWaitReductionPercent', perLevel: 1, maxLevel: 10, display: v => `釣りの待ち時間が ${v}%短縮` },
+  { id: 'rainbow_float', name: '七色の浮き', effect: 'sameFishBonusPercent', perLevel: 2, maxLevel: 10, display: v => `釣った魚と同じ魚を${v}%の確率でもう1匹獲得` },
+  { id: 'beast_tower_plumb', name: '獣塔の下げ振り', effect: 'towerPlacementGuideLevel', perLevel: 1, maxLevel: 3, display: v => `モンスタータワーの配置予測 Lv.${v}` },
 ].map(treasure => ({
   ...treasure,
   image: `./assets/treasure/${treasure.id}.webp`,

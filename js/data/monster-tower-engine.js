@@ -855,12 +855,12 @@ function createCpuCandidates(range, options, rng) {
   return candidates;
 }
 
-function simulateCpuCandidate(world, profile, candidate, options) {
+function simulatePlacement(world, profile, candidate, options) {
   const simulation = cloneTowerWorld(world, options.useCoarseGeometry);
   const previewBody = addTowerBody(simulation, createTowerBody({
     id: options.id,
     monsterId: options.monsterId,
-    owner: 'cpu',
+    owner: options.owner || 'cpu',
     profile,
     x: candidate.x,
     y: 48,
@@ -876,7 +876,42 @@ function simulateCpuCandidate(world, profile, candidate, options) {
       : 0;
     if (stableFrames >= options.requiredStableFrames) break;
   }
-  return evaluateCpuResult(simulation, previewBody.id);
+  const settledBody = simulation.bodies.find(body => body.id === previewBody.id);
+  const fallenBodyIds = getFallenBodies(simulation).map(body => body.id);
+  return {
+    score: evaluateCpuResult(simulation, previewBody.id),
+    x: settledBody?.x ?? candidate.x,
+    y: settledBody?.y ?? 48,
+    angle: settledBody?.angle ?? candidate.angle,
+    fallenBodyIds,
+  };
+}
+
+function simulateCpuCandidate(world, profile, candidate, options) {
+  return simulatePlacement(world, profile, candidate, options).score;
+}
+
+/** プレイヤーの指定位置を短時間シミュレーションし、配置ガイド用の予測を返す。 */
+export function getTowerPlacementGuide(world, profile, candidate, options = {}) {
+  if (!world || !profile || !Number.isFinite(candidate?.x) || !Number.isFinite(candidate?.angle)) return null;
+  const id = options.id || 'player-placement-guide';
+  const result = simulatePlacement(world, profile, candidate, {
+    id,
+    monsterId: options.monsterId || id,
+    owner: 'player',
+    frames: clamp(Math.floor(options.simulationFrames || 180), 120, 360),
+    minimumFrames: 60,
+    requiredStableFrames: 30,
+    useCoarseGeometry: options.useCoarseGeometry !== false,
+  });
+  const hasFall = result.fallenBodyIds.length > 0;
+  return {
+    x: result.x,
+    y: result.y,
+    angle: normalizeAngle(result.angle),
+    score: result.score,
+    risk: hasFall ? 'danger' : result.score < 2500 ? 'warning' : 'safe',
+  };
 }
 
 /** 候補配置を内部シミュレーションし、CPUの落下位置と角度を返す。 */

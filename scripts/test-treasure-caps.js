@@ -13,9 +13,9 @@ import {
 } from '../js/data/treasure-manager.js';
 import { GameDB } from '../js/data/database.js';
 
-assert.equal(TREASURES.length, 24);
+assert.equal(TREASURES.length, 27);
 assert.equal(new Set(TREASURES.map(treasure => treasure.id)).size, TREASURES.length);
-assert.equal(TREASURES.reduce((sum, treasure) => sum + treasure.maxLevel, 0), 366);
+assert.equal(TREASURES.reduce((sum, treasure) => sum + treasure.maxLevel, 0), 389);
 
 for (const treasure of TREASURES) {
   assert.ok(Number.isInteger(treasure.maxLevel) && treasure.maxLevel > 0, `${treasure.id} needs a maximum level`);
@@ -57,6 +57,9 @@ const expectedMaximumEffects = {
   royal_forging_seal: 20,
   number_sage_quill: 2,
   prospector_canary: 20,
+  sea_echo_stopwatch: 10,
+  rainbow_float: 20,
+  beast_tower_plumb: 3,
 };
 assert.equal(Object.keys(expectedMaximumEffects).length, TREASURES.length);
 for (const [id, expected] of Object.entries(expectedMaximumEffects)) {

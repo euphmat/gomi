@@ -45,8 +45,8 @@ const CHANGED_JOB_TARGETS = [3, 5, 10, 15, 20, 25];
 const TACKLE_UPGRADE_TARGETS = [3, 6, 12, 21, 30, 42];
 const MEMORY_GAME_TARGETS = [1, 10, 50, 100, 500, 1000];
 const MEMORY_WIN_TARGETS = [1, 10, 50, 100, 500];
-const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21, 24];
-const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 200, 300, 350, 366];
+const TREASURE_KIND_TARGETS = [1, 5, 10, 15, 21, 24, 27];
+const TREASURE_LEVEL_TARGETS = [10, 25, 50, 100, 200, 300, 350, 366, 389];
 const LEGACY_TREASURE_LEVEL_QUEST_MIGRATIONS = {
   treasure_levels_250: 'treasure_levels_200',
   treasure_levels_500: 'treasure_levels_300',

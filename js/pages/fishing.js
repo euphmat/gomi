@@ -2,6 +2,7 @@ import { FISHING_SPOTS, FISH_RARITY, getFishForSpot } from '../definitions/fish.
 import { FISHING_TACKLE, FISHING_TACKLE_ORDER, getFishingTackleEffect, getFishingTackleVisual } from '../definitions/fishing-tackle.js';
 import { getFishingSpotUnlockStatus, getFishingTackleLevel, getRandomCatchDelay, loadFishingData, performFishingCatch, settleFishingSession } from '../data/fishing-manager.js';
 import { GameDB } from '../data/database.js';
+import { getTreasureEffect } from '../data/treasure-manager.js';
 import { formatNumber } from '../utils/format.js';
 import { isScreenLocked, recordLockScreenProgress, setLockScreenActivity } from '../utils/screen-lock.js';
 
@@ -38,6 +39,8 @@ export async function renderFishingPage() {
     : FISHING_SPOTS[0];
   const spotFish = getFishForSpot(spot.id);
   const themeColor = spot.theme?.color || '34, 211, 238';
+  const fishingWaitReduction = getTreasureEffect('fishingWaitReductionPercent');
+  const sameFishBonus = getTreasureEffect('sameFishBonusPercent');
   const container = document.createElement('div');
   // スクロールはアプリ共通の #content に一本化し、入れ子スクロールによる操作不能を防ぐ。
   container.className = 'relative min-h-full overflow-hidden bg-[#07101c] text-white';
@@ -71,6 +74,10 @@ export async function renderFishingPage() {
       </header>
 
       <main class="flex flex-col gap-2.5 px-2.5 pb-3">
+        ${fishingWaitReduction || sameFishBonus ? `<section class="flex flex-wrap items-center justify-center gap-1.5 rounded-xl border border-cyan-300/20 bg-slate-950/65 px-2 py-1.5 text-[8px] font-black text-cyan-100 backdrop-blur-sm">
+          ${fishingWaitReduction ? `<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">timer</span>海鳴りのストップウォッチ −${fishingWaitReduction}%</span>` : ''}
+          ${sameFishBonus ? `<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[12px]">water</span>七色の浮き ${sameFishBonus}%</span>` : ''}
+        </section>` : ''}
         <section class="relative flex min-h-[155px] flex-col items-center justify-center overflow-hidden rounded-2xl border border-cyan-300/25 bg-cyan-950/20 shadow-[0_14px_40px_rgba(0,0,0,.35)] backdrop-blur-[2px]">
           <div data-ripple class="absolute h-28 w-28 rounded-full border border-cyan-200/20 opacity-0"></div>
           <div data-catch-display class="relative z-10 flex flex-col items-center px-4 text-center">
@@ -199,7 +206,7 @@ export async function renderFishingPage() {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     const caughtFishes = result.type === 'fish' && Array.isArray(result.fishes) && result.fishes.length
-      ? result.fishes.slice(0, 3)
+      ? result.fishes.slice(0, 4)
       : result.type === 'fish'
         ? [{ fishId: result.fishId, name: result.name, image: result.image }]
         : [];
@@ -252,7 +259,9 @@ export async function renderFishingPage() {
       const lureVisual = getFishingTackleVisual('lure', getFishingTackleLevel(state, 'lure'));
       const shadowPositions = caughtFishes.length === 2
         ? [{ x: -58, y: -4, rotate: -12 }, { x: 58, y: -4, rotate: 12 }]
-        : [{ x: -72, y: 2, rotate: -14 }, { x: 0, y: -22, rotate: 0 }, { x: 72, y: 2, rotate: 14 }];
+        : caughtFishes.length === 3
+          ? [{ x: -72, y: 2, rotate: -14 }, { x: 0, y: -22, rotate: 0 }, { x: 72, y: 2, rotate: 14 }]
+          : [{ x: -90, y: 4, rotate: -16 }, { x: -30, y: -22, rotate: -5 }, { x: 30, y: -22, rotate: 5 }, { x: 90, y: 4, rotate: 16 }];
       display.innerHTML = `
         <div data-multi-stage class="relative h-20 w-[230px] overflow-visible">
           <div data-multi-flash class="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/40 blur-xl"></div>
@@ -268,8 +277,8 @@ export async function renderFishingPage() {
             ${lureVisual?.image ? `<img src="${lureVisual.image}" onerror="this.remove()" class="relative h-10 w-10 object-contain drop-shadow-[0_0_10px_rgba(103,232,249,.9)]" alt="">` : ''}
           </div>
         </div>
-        <p data-multi-copy class="-mt-1 text-xs font-black tracking-wide text-white">集魚ルアーが魚群を捉えた！</p>
-        <p class="text-[9px] font-black tracking-[.24em] text-violet-300">FISH SHADOW ×${caughtFishes.length}</p>`;
+        <p data-multi-copy class="-mt-1 text-xs font-black tracking-wide text-white">${result.rainbowFloatBonus ? '七色の浮きが同じ魚を呼び寄せた！' : '集魚ルアーが魚群を捉えた！'}</p>
+        <p class="text-[9px] font-black tracking-[.24em] text-violet-300">${result.rainbowFloatBonus ? 'RAINBOW FLOAT BONUS' : 'FISH SHADOW'} ×${caughtFishes.length}</p>`;
 
       const multiStage = display.querySelector('[data-multi-stage]');
       const multiLure = display.querySelector('[data-multi-lure]');
@@ -327,9 +336,9 @@ export async function renderFishingPage() {
       : `<span data-reveal class="material-symbols-outlined text-6xl ${result.type === 'prism_shard' ? 'text-fuchsia-300' : 'text-amber-300'}">${result.icon || 'redeem'}</span>`;
     display.innerHTML = `${revealedVisual}
       <p data-reveal-name class="mt-1 text-sm font-black text-white">${caughtFishes.length > 1 ? `同時釣果 ×${caughtFishes.length}` : result.name}</p>
-      <p class="text-[9px] font-bold uppercase tracking-widest ${caughtFishes.length > 1 ? 'text-violet-300' : 'text-cyan-200/70'}">${caughtFishes.length > 1 ? 'LURE MULTI CATCH' : result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;
+      <p class="text-[9px] font-bold uppercase tracking-widest ${caughtFishes.length > 1 ? 'text-violet-300' : 'text-cyan-200/70'}">${caughtFishes.length > 1 ? result.rainbowFloatBonus ? 'RAINBOW FLOAT BONUS' : 'LURE MULTI CATCH' : result.type === 'fish' ? ' ' : 'BONUS CATCH'}</p>`;
     if (isMultiCatch) {
-      const fanAngles = caughtFishes.length === 2 ? [-5, 5] : [-7, 0, 7];
+      const fanAngles = caughtFishes.length === 2 ? [-5, 5] : caughtFishes.length === 3 ? [-7, 0, 7] : [-9, -3, 3, 9];
       display.querySelectorAll('[data-multi-card]').forEach((card, index) => {
         const angle = fanAngles[index];
         card.animate(

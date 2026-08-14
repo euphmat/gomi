@@ -23,6 +23,7 @@ const {
   createTowerWorld,
   getFallenBodies,
   getMonsterPhysicsTraits,
+  getTowerPlacementGuide,
   stepTowerWorld,
 } = await import('../js/data/monster-tower-engine.js');
 
@@ -161,6 +162,17 @@ assert(Number.isFinite(placement.x) && Number.isFinite(placement.angle), 'CPU pl
 assert(placement.x >= TOWER_WORLD.platform.x && placement.x <= TOWER_WORLD.platform.x + TOWER_WORLD.platform.width, 'CPU selected a position outside the platform');
 assert(placement.score > -100000, 'CPU could not find a safe placement on an empty platform');
 
+const playerGuide = getTowerPlacementGuide(cpuWorld, profile, {
+  x: TOWER_WORLD.width / 2,
+  angle: 0,
+}, {
+  simulationFrames: 120,
+  monsterId: 'slime_green',
+});
+assert(playerGuide, 'player placement guide was not generated');
+assert(Number.isFinite(playerGuide.x) && Number.isFinite(playerGuide.y) && Number.isFinite(playerGuide.angle), 'player placement guide contains invalid coordinates');
+assert(['safe', 'warning', 'danger'].includes(playerGuide.risk), 'player placement guide has an invalid risk level');
+
 const exhaustivePlacement = chooseCpuPlacement(cpuWorld, profile, {
   exhaustiveSearch: true,
   positionCount: 7,
@@ -190,5 +202,6 @@ assert(appSource.includes(".register('/monster-tower', renderMonsterTowerPage)")
 assert(statusSource.includes('data-monster-tower'), 'hometown monster tower button is missing');
 assert(navSource.includes("'/monster-tower'"), 'monster tower does not keep the hometown navigation active');
 assert(pageSource.includes('if (!matterReady)'), 'monster tower can start without image-accurate Matter.js geometry');
+assert(pageSource.includes("getTreasureEffect('towerPlacementGuideLevel')"), 'Beast Tower plumb is not applied');
 
 console.log(`Monster Tower tests passed (${globalThis.Matter ? 'Matter.js' : 'fallback'} physics, ${MONSTERS.length} monsters).`);

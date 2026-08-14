@@ -20,7 +20,7 @@ import {
   getFishingTackleRecipe,
 } from '../definitions/fishing-tackle.js';
 import { getRanchLevelInfo } from './stat-calculator.js';
-import { getMaterialCapacity, loadTreasureLevels } from './treasure-manager.js';
+import { getMaterialCapacity, getTreasureEffect, loadTreasureLevels } from './treasure-manager.js';
 import { formatNumber } from '../utils/format.js';
 
 const FISHING_STATE_KEY = 'fishing_data';
@@ -166,6 +166,7 @@ function groupRecentBonuses(items) {
 }
 
 export async function loadFishingData() {
+  await loadTreasureLevels();
   const saved = await GameDB.getGameState(FISHING_STATE_KEY) || {};
   const hasDeprecatedFishOil = Object.prototype.hasOwnProperty.call(saved, 'fishOil');
   const state = { ...createFishingState(), ...saved };
@@ -229,14 +230,26 @@ function addRecentBonus(state, result) {
   ]).slice(0, 12);
 }
 
+export function applySameFishCatchBonus(fishes, percent, random = Math.random) {
+  const catches = Array.isArray(fishes) ? [...fishes] : [];
+  const chance = Math.max(0, Math.min(100, Number(percent) || 0)) / 100;
+  const bonusTriggered = catches.length > 0 && chance > 0 && random() < chance;
+  if (bonusTriggered) catches.push(catches[0]);
+  return { fishes: catches, bonusTriggered };
+}
+
 async function catchFish(state, spotId) {
   const baitLevel = getFishingTackleLevel(state, 'bait');
   const lureLevel = getFishingTackleLevel(state, 'lure');
   const lureChance = FISHING_LURE_CHANCE_PER_LEVEL * lureLevel;
-  const fishes = [weightedFish(spotId, baitLevel)];
-  while (fishes.length < FISHING_LURE_MAX_CATCH && Math.random() < lureChance) {
-    fishes.push(weightedFish(spotId, baitLevel));
+  const lureCatches = [weightedFish(spotId, baitLevel)];
+  while (lureCatches.length < FISHING_LURE_MAX_CATCH && Math.random() < lureChance) {
+    lureCatches.push(weightedFish(spotId, baitLevel));
   }
+  const { fishes, bonusTriggered } = applySameFishCatchBonus(
+    lureCatches,
+    getTreasureEffect('sameFishBonusPercent'),
+  );
   for (const fish of fishes) {
     state.sessionInventory[fish.id] = normalizeFishCount(state.sessionInventory[fish.id]) + 1;
     state.discovered[fish.id] = true;
@@ -255,6 +268,7 @@ async function catchFish(state, spotId) {
       rarity: item.rarity,
     })),
     catchCount: fishes.length,
+    rainbowFloatBonus: bonusTriggered,
   };
   window.dispatchEvent(new CustomEvent('quest:fish-caught', {
     detail: {
@@ -391,14 +405,20 @@ export async function settleFishingSession() {
   return { state, movedCount };
 }
 
-export function getRandomCatchDelay(spotId = FISHING_SPOTS[0].id, rodLevel = 0) {
+export function getRandomCatchDelay(
+  spotId = FISHING_SPOTS[0].id,
+  rodLevel = 0,
+  treasureReductionPercent = getTreasureEffect('fishingWaitReductionPercent'),
+  random = Math.random,
+) {
   const spot = FISHING_SPOTS.find(item => item.id === spotId) || FISHING_SPOTS[0];
-  const baseDelay = spot.minCatchMs + Math.random() * (spot.maxCatchMs - spot.minCatchMs + 1);
-  const speedMultiplier = Math.max(
+  const baseDelay = spot.minCatchMs + random() * (spot.maxCatchMs - spot.minCatchMs + 1);
+  const rodMultiplier = Math.max(
     1 - FISHING_ROD_SPEED_PER_LEVEL * FISHING_TACKLE_MAX_LEVEL,
     1 - FISHING_ROD_SPEED_PER_LEVEL * normalizeTackleLevel(rodLevel)
   );
-  return Math.floor(baseDelay * speedMultiplier);
+  const treasureMultiplier = 1 - Math.max(0, Math.min(100, Number(treasureReductionPercent) || 0)) / 100;
+  return Math.max(1, Math.floor(baseDelay * rodMultiplier * treasureMultiplier));
 }
 
 export function getFishingTackleUpgradeStatus(state, type) {

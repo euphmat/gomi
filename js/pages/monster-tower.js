@@ -12,6 +12,7 @@ import {
   getDropRange,
   getFallenBodies,
   getMonsterPhysicsTraits,
+  getTowerPlacementGuide,
   getTowerMotion,
   normalizeAngle,
   stepTowerWorld,
@@ -21,6 +22,7 @@ import {
   getLocalDateKey,
   getTownGameRewardStateKey,
 } from '../data/town-game-rewards.js';
+import { getTreasureEffect, loadTreasureLevels } from '../data/treasure-manager.js';
 import { formatNumber } from '../utils/format.js';
 
 const GAME_ID = 'monster-tower';
@@ -351,6 +353,20 @@ export function renderMonsterTowerPage() {
     context.restore();
   };
 
+  const refreshPlacementGuide = () => {
+    if (!game?.towerGuideLevel || game.currentOwner !== 'player' || !game.currentProfile
+        || game.placing || game.loading || game.over) {
+      if (game) game.placementGuide = null;
+      return;
+    }
+    game.placementGuide = getTowerPlacementGuide(
+      game.world,
+      game.currentProfile,
+      { x: game.previewX, angle: game.previewAngle },
+      { monsterId: game.currentMonster?.id, simulationFrames: 180 },
+    );
+  };
+
   const drawScene = () => {
     if (!game?.context) return;
     const context = game.context;
@@ -424,6 +440,51 @@ export function renderMonsterTowerPage() {
       context.lineTo(game.previewX, platform.y - 5);
       context.stroke();
       context.restore();
+      const guide = game.currentOwner === 'player' ? game.placementGuide : null;
+      if (guide && game.towerGuideLevel > 0) {
+        const guideTone = game.towerGuideLevel >= 3
+          ? guide.risk === 'danger' ? '#fb7185' : guide.risk === 'warning' ? '#fbbf24' : '#34d399'
+          : '#67e8f9';
+        context.save();
+        context.strokeStyle = guideTone;
+        context.fillStyle = guideTone;
+        context.lineWidth = 2;
+        context.setLineDash([3, 4]);
+        context.beginPath();
+        context.moveTo(game.previewX, 72);
+        context.lineTo(guide.x, guide.y);
+        context.stroke();
+        context.setLineDash([]);
+        context.beginPath();
+        context.arc(guide.x, guide.y, 8, 0, Math.PI * 2);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(guide.x - 12, guide.y);
+        context.lineTo(guide.x + 12, guide.y);
+        context.moveTo(guide.x, guide.y - 12);
+        context.lineTo(guide.x, guide.y + 12);
+        context.stroke();
+        if (game.towerGuideLevel >= 2) {
+          const guideLength = Math.max(22, Math.min(46, game.currentProfile.width * .42));
+          const dx = Math.cos(guide.angle) * guideLength;
+          const dy = Math.sin(guide.angle) * guideLength;
+          context.lineWidth = 3;
+          context.beginPath();
+          context.moveTo(guide.x - dx, guide.y - dy);
+          context.lineTo(guide.x + dx, guide.y + dy);
+          context.stroke();
+          context.font = '900 10px ui-monospace, monospace';
+          context.textAlign = 'center';
+          context.fillText(`${Math.round(guide.angle * 180 / Math.PI)}°`, guide.x, Math.max(88, guide.y - 17));
+        }
+        if (game.towerGuideLevel >= 3) {
+          const riskLabel = guide.risk === 'danger' ? '危険' : guide.risk === 'warning' ? '注意' : '安全';
+          context.font = '900 11px sans-serif';
+          context.textAlign = 'center';
+          context.fillText(riskLabel, guide.x, Math.min(platform.y - 8, guide.y + 27));
+        }
+        context.restore();
+      }
       drawMonster(context, {
         monsterId: game.currentMonster.id,
         owner: game.currentOwner,
@@ -508,6 +569,7 @@ export function renderMonsterTowerPage() {
     addTowerBody(game.world, body);
     game.lastActor = game.currentOwner;
     game.activeBodyId = body.id;
+    game.placementGuide = null;
     game.placing = true;
     game.droppedAt = performance.now();
     game.stableFrames = 0;
@@ -523,6 +585,7 @@ export function renderMonsterTowerPage() {
     activeGame.currentProfile = null;
     activeGame.previewAngle = 0;
     activeGame.previewX = TOWER_WORLD.width / 2;
+    activeGame.placementGuide = null;
     updateControls();
     setStatus(`${activeGame.currentMonster.name}を召喚中…`, activeGame.currentOwner === 'player' ? 'cyan' : 'amber');
     const [profile, image] = await Promise.all([
@@ -535,6 +598,7 @@ export function renderMonsterTowerPage() {
     activeGame.loading = false;
     const range = getDropRange(profile);
     activeGame.previewX = Math.max(range.min, Math.min(range.max, TOWER_WORLD.width / 2));
+    refreshPlacementGuide();
     updateControls();
     drawScene();
 
@@ -624,6 +688,7 @@ export function renderMonsterTowerPage() {
         </header>
 
         <div data-status class="mb-2 flex min-h-9 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-950/35 px-3 text-center text-[10px] font-black text-cyan-100">対戦を準備しています…</div>
+        ${game.towerGuideLevel ? `<div class="mb-2 flex items-center justify-center gap-1 rounded-xl border border-emerald-300/20 bg-emerald-950/25 px-3 py-1.5 text-[9px] font-black text-emerald-100"><span class="material-symbols-outlined text-sm">architecture</span>獣塔の下げ振り Lv.${game.towerGuideLevel}：${game.towerGuideLevel >= 3 ? '着地点・角度・安全度' : game.towerGuideLevel >= 2 ? '着地点・角度' : '着地点'}を予測</div>` : ''}
 
         <div class="relative mx-auto max-w-[360px]">
           <canvas data-tower-canvas class="tower-canvas" width="360" height="520" aria-label="モンスターを積み上げる対戦フィールド"></canvas>
@@ -657,6 +722,7 @@ export function renderMonsterTowerPage() {
       const x = (event.clientX - rectangle.left) * (TOWER_WORLD.width / rectangle.width);
       const range = getDropRange(game.currentProfile);
       game.previewX = Math.max(range.min, Math.min(range.max, x));
+      refreshPlacementGuide();
       drawScene();
     });
   };
@@ -665,7 +731,10 @@ export function renderMonsterTowerPage() {
     const config = DIFFICULTIES[difficultyId];
     if (!config) return;
     try {
-      const latestClaim = await GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, difficultyId));
+      const [latestClaim] = await Promise.all([
+        GameDB.getGameState(getTownGameRewardStateKey(GAME_ID, difficultyId)),
+        loadTreasureLevels(),
+      ]);
       if (latestClaim === getLocalDateKey()) claimedDifficulties.add(difficultyId);
     } catch (error) {
       console.error('[MonsterTower] Failed to verify daily reward.', error);
@@ -692,6 +761,8 @@ export function renderMonsterTowerPage() {
       currentProfile: null,
       previewX: TOWER_WORLD.width / 2,
       previewAngle: 0,
+      towerGuideLevel: getTreasureEffect('towerPlacementGuideLevel'),
+      placementGuide: null,
       loading: false,
       placing: false,
       over: false,
@@ -731,12 +802,14 @@ export function renderMonsterTowerPage() {
     if (move && game?.currentOwner === 'player' && !game.placing && !game.loading && game.currentProfile) {
       const range = getDropRange(game.currentProfile);
       game.previewX = Math.max(range.min, Math.min(range.max, game.previewX + Number(move.dataset.move) * 14));
+      refreshPlacementGuide();
       drawScene();
       return;
     }
     const rotate = event.target.closest('[data-rotate]');
     if (rotate && game?.currentOwner === 'player' && !game.placing && !game.loading) {
       game.previewAngle = normalizeAngle(game.previewAngle + Number(rotate.dataset.rotate) * Math.PI / 12);
+      refreshPlacementGuide();
       drawScene();
       return;
     }
