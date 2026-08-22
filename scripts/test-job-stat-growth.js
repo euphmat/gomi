@@ -24,4 +24,14 @@ for (const job of Object.values(JOBS)) {
   }
 }
 
+assert.deepEqual(JOBS.dealer.statGrowth, {
+  hp: [1, 1],
+  mp: [1, 1],
+  atk: [1, 1],
+  def: [1, 1],
+  matk: [1, 1],
+  mdef: [1, 1],
+  spd: [1, 1],
+});
+
 console.log(`Job stat growth display tests passed for ${Object.keys(JOBS).length} jobs.`);

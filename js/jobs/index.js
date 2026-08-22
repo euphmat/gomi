@@ -57,9 +57,9 @@ export const JOB_STAT_GROWTH = {
   [gunner.id]:      { hp: [1, 3], mp: [1, 3], atk: [2, 4], def: [0, 2], matk: [0, 0], mdef: [1, 2], spd: [1, 2] },
   [shinra_sage.id]: { hp: [1, 3], mp: [2, 4], atk: [0, 0], def: [1, 2], matk: [2, 3], mdef: [1, 2], spd: [1, 2] },
   [plague_doctor.id]: { hp: [1, 3], mp: [3, 5], atk: [0, 0], def: [0, 2], matk: [3, 4], mdef: [2, 3], spd: [1, 2] },
-  // Super-advanced jobs intentionally sit above the normal growth budget.
   [soul_reaper.id]: { hp: [2, 4], mp: [3, 5], atk: [1, 3], def: [0, 2], matk: [3, 5], mdef: [1, 3], spd: [1, 3] },
-  [dealer.id]:     { hp: [2, 5], mp: [3, 6], atk: [2, 5], def: [1, 3], matk: [3, 6], mdef: [2, 4], spd: [2, 4] }
+  // Dealer growth is fixed instead of randomized: every base stat gains 1.
+  [dealer.id]:     { hp: [1, 1], mp: [1, 1], atk: [1, 1], def: [1, 1], matk: [1, 1], mdef: [1, 1], spd: [1, 1] }
 };
 
 export const JOB_STAT_MULTIPLIER = {
