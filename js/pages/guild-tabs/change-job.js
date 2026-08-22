@@ -9,6 +9,7 @@ import { calcItemsPerPage, observePageSize } from '../../data/page-utils.js';
 import { getDiscoveredFishCount, loadFishingData } from '../../data/fishing-manager.js';
 import { SpecialQuestManager } from '../../data/special-quest-manager.js';
 import { getAvailableJobSP, getJobExpToNext, getJobSPOffset, getTotalJobSP } from '../../data/job-progression.js';
+import { getJobGrowthStats } from '../../data/job-stat-growth.js';
 
 const getJobImagePath = jobOrId => {
   const job = typeof jobOrId === 'string' ? JOBS[jobOrId] : jobOrId;
@@ -188,6 +189,73 @@ export function renderChangeJobTab() {
       overlay.style.opacity = '0';
       setTimeout(() => overlay.remove(), 200);
     });
+  };
+
+  const showJobGrowthModal = (job) => {
+    const previousFocus = document.activeElement;
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fade-in';
+
+    const toneClasses = {
+      red: 'border-red-400/25 bg-red-500/10 text-red-300',
+      blue: 'border-blue-400/25 bg-blue-500/10 text-blue-300',
+      orange: 'border-orange-400/25 bg-orange-500/10 text-orange-300',
+      emerald: 'border-emerald-400/25 bg-emerald-500/10 text-emerald-300',
+      fuchsia: 'border-fuchsia-400/25 bg-fuchsia-500/10 text-fuchsia-300',
+      indigo: 'border-indigo-400/25 bg-indigo-500/10 text-indigo-300',
+      amber: 'border-amber-400/25 bg-amber-500/10 text-amber-300',
+    };
+
+    const statsHtml = getJobGrowthStats(job).map(stat => `
+      <div class="flex items-center justify-between gap-2 rounded-xl border px-2.5 py-2 ${toneClasses[stat.tone]}">
+        <span class="flex min-w-0 items-center gap-1.5">
+          <span class="material-symbols-outlined text-[17px]" style="font-variation-settings: 'FILL' 1">${stat.icon}</span>
+          <span class="text-[10px] font-black tracking-wide">${stat.label}</span>
+        </span>
+        <span class="font-mono text-[13px] font-black tabular-nums">${stat.displayValue}</span>
+      </div>
+    `).join('');
+
+    overlay.innerHTML = `
+      <section class="w-full max-w-[330px] overflow-hidden rounded-2xl border border-violet-400/25 bg-slate-950 shadow-2xl shadow-violet-950/60" role="dialog" aria-modal="true" aria-labelledby="job-growth-title">
+        <header class="flex items-center gap-3 border-b border-white/10 bg-gradient-to-r from-violet-950/80 to-indigo-950/60 p-3">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-violet-300/25 bg-slate-900 p-0.5">
+            <img src="${getJobImagePath(job)}" class="h-full w-full object-contain" alt="" onerror="this.src='./assets/job/job_norvice.webp'">
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-[9px] font-black tracking-[0.16em] text-violet-300">ベースLv UP時</p>
+            <h3 id="job-growth-title" class="truncate text-base font-black text-white">${job.name}の能力成長率</h3>
+          </div>
+          <button type="button" data-close-job-growth class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300 active:bg-white/10" aria-label="閉じる">
+            <span class="material-symbols-outlined text-[19px]">close</span>
+          </button>
+        </header>
+        <div class="p-3">
+          <p class="mb-2.5 text-[10px] font-bold leading-relaxed text-slate-300">ベースLvが1上がるたび、現在の職業に応じて以下の範囲からランダムに基礎能力が上昇します。</p>
+          <div class="grid grid-cols-2 gap-1.5">${statsHtml}</div>
+          <div class="mt-2.5 flex items-start gap-1.5 rounded-xl border border-cyan-400/20 bg-cyan-950/25 px-2.5 py-2 text-[9px] font-bold leading-relaxed text-cyan-100">
+            <span class="material-symbols-outlined mt-px text-[15px] text-cyan-300">info</span>
+            <span>成長した基礎能力は転職後も残ります。ジョブLvアップ時は能力値ではなくSPを獲得します。</span>
+          </div>
+        </div>
+      </section>
+    `;
+
+    const close = () => {
+      document.removeEventListener('keydown', handleKeydown);
+      overlay.remove();
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+    const handleKeydown = event => {
+      if (event.key === 'Escape') close();
+    };
+    overlay.querySelector('[data-close-job-growth]').addEventListener('click', close);
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) close();
+    });
+    document.addEventListener('keydown', handleKeydown);
+    document.body.appendChild(overlay);
+    overlay.querySelector('[data-close-job-growth]').focus();
   };
 
   // ─── 転生処理 ─────────────────────────────────────────
@@ -478,19 +546,15 @@ export function renderChangeJobTab() {
       const jobRequirementsMet = requirementStatuses.every(status => status.met);
       const allReqsMet = jobRequirementsMet && currentGold >= cost;
 
-      const row = document.createElement('button');
-      row.type = 'button';
+      const canChangeJob = !isCurrent && (isUnlocked || allReqsMet);
+      const row = document.createElement('div');
       row.className = `group relative flex min-h-[132px] flex-col items-center justify-start overflow-hidden rounded-xl border px-1.5 py-2 text-center backdrop-blur-md transition-all duration-200 ${
         isCurrent
           ? 'border-emerald-500/50 bg-emerald-950/20 shadow-[0_0_15px_rgba(16,185,129,0.1)] ring-1 ring-inset ring-emerald-500/20'
           : 'border-slate-700/60 bg-slate-900/60 ring-1 ring-inset ring-white/5'
       }`;
-      if (!isCurrent && (isUnlocked || allReqsMet)) {
-        row.classList.add('active:scale-[0.98]', 'active:bg-slate-800/80', 'active:border-indigo-500/50', 'cursor-pointer', 'btn-change-job');
-        row.dataset.jobId = job.id;
-        row.setAttribute('aria-label', `${job.name}へ${isUnlocked ? '転職' : '解放して転職'}`);
-      } else {
-        row.disabled = true;
+      if (canChangeJob) {
+        row.classList.add('active:scale-[0.98]', 'active:bg-slate-800/80', 'active:border-indigo-500/50', 'cursor-pointer');
       }
 
       const statusHtml = isCurrent
@@ -510,7 +574,11 @@ export function renderChangeJobTab() {
 
       row.innerHTML = `
         <div class="absolute inset-0 bg-gradient-to-b ${isCurrent ? 'from-emerald-500/10' : 'from-indigo-500/[0.06]'} to-transparent pointer-events-none"></div>
+        ${canChangeJob ? `<button type="button" class="btn-change-job absolute inset-0 z-20 rounded-xl" data-job-id="${job.id}" aria-label="${job.name}へ${isUnlocked ? '転職' : '解放して転職'}"><span class="sr-only">${job.name}へ転職</span></button>` : ''}
         ${statusHtml}
+        <button type="button" data-job-growth="${job.id}" aria-label="${job.name}の能力成長率を見る" class="absolute left-1 top-1 z-30 inline-flex items-center gap-0.5 rounded-md border border-violet-400/30 bg-violet-950/90 px-1 py-0.5 text-[8px] font-black leading-none text-violet-200 shadow-sm active:bg-violet-900">
+          <span class="material-symbols-outlined !text-[11px]">trending_up</span>成長率
+        </button>
         <div class="relative z-10 flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-700/60 bg-gradient-to-br from-slate-800 to-slate-900 p-0.5 shadow-inner transition-transform duration-200 group-active:scale-95">
           <img src="${getJobImagePath(job)}" class="h-full w-full object-contain ${isCurrent ? 'scale-110 opacity-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-90 transition-transform duration-300 group-active:scale-110'}" alt="${job.name}" onerror="this.src='./assets/job/job_norvice.webp'">
         </div>
@@ -534,6 +602,15 @@ export function renderChangeJobTab() {
     };
 
     listContainer.addEventListener('click', async (e) => {
+      const growthButton = e.target.closest('[data-job-growth]');
+      if (growthButton) {
+        e.preventDefault();
+        e.stopPropagation();
+        const growthJob = JOBS[growthButton.dataset.jobGrowth];
+        if (growthJob) showJobGrowthModal(growthJob);
+        return;
+      }
+
       const btn = e.target.closest('.btn-change-job');
       const jobId = btn?.dataset.jobId;
       if (!jobId) return;
