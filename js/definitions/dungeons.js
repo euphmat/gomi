@@ -1,4 +1,5 @@
 import { ADVANCED_DUNGEONS } from './advanced-dungeon-content.js';
+import { FINAL_DUNGEON } from './final-dungeon-content.js';
 
 export const DUNGEONS = [{
   id: 'slime_forest',
@@ -138,5 +139,6 @@ export const DUNGEONS = [{
     { level: 8, monsters: [{ sanctum_talos: 1, weight: 100 }] }
   ]
 },
-...ADVANCED_DUNGEONS
+...ADVANCED_DUNGEONS,
+FINAL_DUNGEON
 ];

@@ -81,6 +81,18 @@ function getStoredCompletedFloors(floorProgress, dungeonId) {
   return new Set();
 }
 
+function getNormalDungeonClearRequirement(dungeon) {
+  if (!dungeon?.unlockCondition?.allNormalDungeons) return [];
+  return DUNGEONS
+    .filter(candidate => candidate.id !== dungeon.id && !candidate.unlockCondition?.allNormalDungeons)
+    .map(candidate => candidate.id);
+}
+
+function hasClearedRequiredNormalDungeons(dungeon, completedDungeonIds) {
+  const requiredIds = getNormalDungeonClearRequirement(dungeon);
+  return requiredIds.length > 0 && requiredIds.every(id => completedDungeonIds.includes(id));
+}
+
 window.closeDungeonFloorModal = () => {
   dungeonModalRequestId += 1;
   const modal = document.querySelector('[data-dungeon-floor-modal]');
@@ -277,6 +289,13 @@ window.enterDungeonFloor = async (dungeonId, floorLevel) => {
 };
 
 window.enterDungeon = async (dungeonId) => {
+  const dungeon = ALL_DUNGEONS.find(item => item.id === dungeonId);
+  if (!dungeon) return;
+  if (dungeon.unlockCondition?.allNormalDungeons) {
+    const completedDungeonIdsValue = await GameDB.getGameState('completed_dungeons');
+    const completedDungeonIds = Array.isArray(completedDungeonIdsValue) ? completedDungeonIdsValue : [];
+    if (!hasClearedRequiredNormalDungeons(dungeon, completedDungeonIds)) return;
+  }
   window.closeDungeonFloorModal();
   await GameDB.setGameState('currentDungeon', dungeonId);
   await GameDB.setGameState('currentFloor', 1);
@@ -531,8 +550,13 @@ export async function renderDungeonPage() {
     const theme = d.theme || { color: '107, 114, 128', icon: 'swords' };
     const themeRgb = theme.color;
 
-    let isUnlocked = d.isUnlocked || unlockedDungeons.includes(d.id) ||
-      (d.unlockCondition?.medals != null && medalCount >= d.unlockCondition.medals);
+    const normalDungeonRequirement = getNormalDungeonClearRequirement(d);
+    const clearedNormalDungeonCount = normalDungeonRequirement.filter(id => completedDungeonIds.includes(id)).length;
+    const clearedAllNormalDungeons = hasClearedRequiredNormalDungeons(d, completedDungeonIds);
+    let isUnlocked = d.unlockCondition?.allNormalDungeons
+      ? clearedAllNormalDungeons
+      : d.isUnlocked || unlockedDungeons.includes(d.id) ||
+        (d.unlockCondition?.medals != null && medalCount >= d.unlockCondition.medals);
     const isCleared = completedDungeonIds.includes(d.id);
     const hasFloors = d.floors.length > 0;
       
@@ -590,7 +614,12 @@ export async function renderDungeonPage() {
             <span class="material-symbols-outlined text-gray-400 text-lg sm:text-xl">lock</span>
             <span class="text-xs sm:text-sm tracking-widest text-gray-300 font-bold uppercase">Locked</span>
           </div>
-          ${d.unlockCondition?.medals != null
+          ${d.unlockCondition?.allNormalDungeons
+            ? `<div class="bg-fuchsia-950/55 border border-fuchsia-400/50 text-fuchsia-200 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold shadow-lg flex items-center gap-1.5 sm:gap-2">
+                 <span class="material-symbols-outlined text-[12px] sm:text-sm">military_tech</span>
+                 全ノーマルダンジョン踏破 ${clearedNormalDungeonCount} / ${normalDungeonRequirement.length}
+               </div>`
+            : d.unlockCondition?.medals != null
             ? `<div class="bg-amber-900/40 border border-amber-500/50 text-amber-400 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold shadow-lg flex items-center gap-1.5 sm:gap-2">
                  <span class="material-symbols-outlined text-[12px] sm:text-sm">stars</span>
                  解放条件: メダルを${d.unlockCondition.medals}種類以上獲得 (現在: ${medalCount}種類)

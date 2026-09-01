@@ -1630,6 +1630,14 @@ export const actionMethods = {
       this.checkBattleEnd();
       return;
     }
+
+    if (typeof enemy.onTurnStart === 'function') {
+      try {
+        enemy.onTurnStart(enemy, this);
+      } catch (error) {
+        console.error(`Enemy Turn Hook Error [${enemy.id}]:`, error);
+      }
+    }
     
     let target = aliveParty[Math.floor(Math.random() * aliveParty.length)];
 

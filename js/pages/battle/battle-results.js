@@ -66,6 +66,14 @@ export const resultMethods = {
   },
 
   async processEnemyDeath(enemy) {
+    if (typeof enemy.onBeforeDefeat === 'function') {
+      try {
+        if (enemy.onBeforeDefeat(enemy, this)) return;
+      } catch (error) {
+        console.error(`Enemy Defeat Hook Error [${enemy.id}]:`, error);
+      }
+    }
+
     let drops = [];
 
     // 墓標の王: every defeated enemy leaves one usable corpse behind.
@@ -409,6 +417,56 @@ export const resultMethods = {
     }
   },
 
+  showEndingRoll() {
+    this.elements.resultOverlay.innerHTML = `
+      <div class="relative h-full w-full overflow-hidden bg-[radial-gradient(circle_at_center,rgba(88,28,135,.38),rgba(0,0,0,.96)_65%)] text-center">
+        <div class="pointer-events-none absolute inset-0 opacity-40" style="background-image:radial-gradient(circle at 20% 20%,rgba(255,255,255,.9) 0 1px,transparent 1.5px),radial-gradient(circle at 80% 35%,rgba(244,114,182,.9) 0 1px,transparent 1.5px);background-size:73px 91px,109px 127px"></div>
+        <div data-ending-roll class="final-ending-roll absolute inset-x-4 flex flex-col items-center gap-12 text-center">
+          <section class="space-y-3">
+            <p class="text-[10px] font-black tracking-[.5em] text-fuchsia-300">THE LAST HORIZON</p>
+            <h2 class="text-3xl font-black tracking-[.18em] text-white drop-shadow-[0_0_18px_rgba(244,114,182,.85)]">終界・踏破</h2>
+            <p class="text-xs font-bold text-slate-300">万象終焉エスカトンは倒れた</p>
+          </section>
+          <section class="space-y-7 text-[11px] font-bold tracking-[.16em] text-slate-300">
+            <div><p class="text-[8px] text-fuchsia-400">FINAL DUNGEON DESIGN</p><p class="mt-1 text-white">LAST HORIZON PROJECT</p></div>
+            <div><p class="text-[8px] text-fuchsia-400">MONSTER DESIGN</p><p class="mt-1 text-white">THE FINAL FOUR</p></div>
+            <div><p class="text-[8px] text-fuchsia-400">BATTLE SYSTEM</p><p class="mt-1 text-white">GOMI RPG TEAM</p></div>
+            <div><p class="text-[8px] text-fuchsia-400">SPECIAL THANKS</p><p class="mt-1 text-white">全てのダンジョンを制した冒険者たち</p></div>
+          </section>
+          <section class="space-y-4">
+            <p class="text-sm font-black tracking-[.25em] text-amber-200">そして、最後まで戦い抜いた</p>
+            <p class="text-2xl font-black tracking-[.3em] text-white">あなたへ</p>
+          </section>
+          <section class="space-y-4 pb-16">
+            <p class="text-[10px] font-bold tracking-[.45em] text-fuchsia-300">THANK YOU FOR PLAYING</p>
+            <p class="text-4xl font-black tracking-[.25em] text-white drop-shadow-[0_0_24px_rgba(250,204,21,.7)]">THE END</p>
+          </section>
+        </div>
+        <button data-ending-skip type="button" class="absolute right-3 top-3 min-h-11 rounded-full border border-white/20 bg-black/55 px-4 text-[10px] font-black text-slate-200 backdrop-blur-sm active:scale-95">スキップ</button>
+        <button data-ending-exit type="button" class="hidden absolute inset-x-6 bottom-8 min-h-12 rounded-xl border border-amber-300/60 bg-amber-500/20 text-xs font-black tracking-widest text-amber-100 shadow-[0_0_24px_rgba(250,204,21,.22)] backdrop-blur-sm active:scale-[.98]">冒険の記録へ戻る</button>
+      </div>
+    `;
+
+    const roll = this.elements.resultOverlay.querySelector('[data-ending-roll]');
+    const skipButton = this.elements.resultOverlay.querySelector('[data-ending-skip]');
+    const exitButton = this.elements.resultOverlay.querySelector('[data-ending-exit]');
+    const finishRoll = () => {
+      if (roll) roll.classList.add('final-ending-roll--finished');
+      skipButton?.classList.add('hidden');
+      exitButton?.classList.remove('hidden');
+    };
+    roll?.addEventListener('animationend', finishRoll, { once: true });
+    if (skipButton) skipButton.onclick = finishRoll;
+    if (exitButton) {
+      exitButton.onclick = () => {
+        this.elements.resultOverlay.classList.add('hidden');
+        setLockScreenActivity('battle', false, { mode: 'none' });
+        window.location.hash = '/dungeon';
+      };
+    }
+    this.elements.resultOverlay.classList.remove('hidden');
+  },
+
   async endBattle(isWin, text, showModal = true) {
     this.stopAtbLoop();
     this.activeCharacter = null;
@@ -447,6 +505,15 @@ export const resultMethods = {
             await GameDB.setGameState('unlockedDungeons', unlocked);
           }
         }
+      }
+
+      if (this.isDungeonClear && this.dungeonDef?.endingRoll) {
+        sessionStorage.removeItem('autoBattleMode');
+        this.autoBattleMode = 'none';
+        setLockScreenActivity('battle', false, { mode: 'none' });
+        await GameDB.setGameState('ending_roll_seen', true);
+        this.showEndingRoll();
+        return;
       }
       
       if (this.isDungeonClear && this.autoBattleMode !== 'floor') {

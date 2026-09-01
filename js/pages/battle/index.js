@@ -436,6 +436,22 @@ class BattleManager {
     }
     
     this.startAtbLoop();
+    this.executeOpeningEnemyActions();
+  }
+
+  executeOpeningEnemyActions() {
+    for (const enemy of this.enemies) {
+      if (enemy.isDead || enemy._openingActionUsed || typeof enemy.openingAction !== 'function') continue;
+      enemy._openingActionUsed = true;
+      try {
+        enemy.openingAction(enemy, this);
+      } catch (error) {
+        console.error(`Opening Action Error [${enemy.id}]:`, error);
+      }
+      if (this.party.every(member => member.isDead)) break;
+    }
+    this.renderEntities();
+    this.checkBattleEnd();
   }
 
   async applyBattleTheme(imageUrl) {
@@ -1420,6 +1436,18 @@ export function renderBattlePage() {
         50% { transform: translateY(0) scale(1.1); opacity: 1; }
         75% { transform: translateY(-3px) scale(1); }
         100% { transform: translateY(0) scale(1); opacity: 1; }
+      }
+      @keyframes final-ending-roll {
+        0% { transform: translateY(100vh); }
+        100% { transform: translateY(-125%); }
+      }
+      .final-ending-roll {
+        animation: final-ending-roll 42s linear forwards;
+        will-change: transform;
+      }
+      .final-ending-roll--finished {
+        animation: none;
+        transform: translateY(-82%);
       }
       .enemy-card {
         transition: opacity 0.5s ease, transform 0.3s ease;

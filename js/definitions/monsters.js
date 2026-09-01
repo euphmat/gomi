@@ -1,4 +1,5 @@
 import { ADVANCED_MONSTERS } from './advanced-dungeon-content.js';
+import { FINAL_MONSTERS } from './final-dungeon-content.js';
 
 const getEntityCurrentHp = entity => {
   const value = entity?.hp ? entity.hp.current : entity?.currentHp;
@@ -251,5 +252,6 @@ export const MONSTERS = [
   { id: 'sanctum_talos'      , name: 'サンクトゥム・タロス', stats: { hp: 3000000, atk: 35000, def: 30000, matk: 25000, mdef: 25000, spd: 600 }, elements: { light: 150, dark: -200, fire: 90, water: 90, grass: 90, ice: 90, thunder: 90, wind: 90, earth: 90 }, ailments: { curse: 50, silence: 50, paralysis: 50 }, rewards: { exp: 3000, jp: 800, gold: 1500 }, drops: [{ itemId: 'mat_sacred_bronze', rate: 5 }, { itemId: 'mat_talos_armor_plate', rate: 1 }, { itemId: 'mat_sanctum_key_fragment', rate: 0.1 }], actions: [{ name: '神罰の鉄槌', chance: 30, description: '神聖な金属の拳で対象を粉砕する。', execute: (attacker, defender, battle) => { const origE = attacker.stats.attackElements; attacker.stats.attackElements = { light: 100 }; battle.executeAttack(attacker, defender, false, { actionName: '神罰の鉄槌', damageMultiplier: 10.0, isMagic: false, damageType: 'skill' }); attacker.stats.attackElements = origE; } }, { name: '至聖所の裁き', chance: 20, description: '自身の防御力・魔法防御力を高めつつ、全体に強烈な光属性魔法を放つ。', execute: (attacker, defender, battle) => { attacker._defBuffPercent = (attacker._defBuffPercent || 0) + 50; attacker._defBuffTurns = 3; attacker._mdefBuffPercent = (attacker._mdefBuffPercent || 0) + 50; attacker._mdefBuffTurns = 3; battle.showActionName(attacker.elementId, '至聖所の裁き', 'text-blue-300', 'border-blue-500/50'); battle.showDamage(attacker.elementId, 'DEF/MDEF UP', 'text-blue-400'); const origE = attacker.stats.attackElements; attacker.stats.attackElements = { light: 100 }; battle.party.forEach(p => { if (!p.isDead) battle.executeAttack(attacker, p, false, { actionName: '至聖所の裁き', damageMultiplier: 8.0, isMagic: true, damageType: 'skill', hideActionName: true }); }); attacker.stats.attackElements = origE; } }] },
 
   ...ADVANCED_MONSTERS,
+  ...FINAL_MONSTERS,
 
 ].map(item => ({ ...item, image: `./assets/monster/${item.id}.webp` }));
