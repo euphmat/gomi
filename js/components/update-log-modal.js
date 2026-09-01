@@ -291,6 +291,7 @@ function renderVersionSection(entry, isLast) {
 function renderDayPage(day, dayIndex) {
   const date = formatDate(day.date);
   const versions = day.entries.map(entry => entry.version ? `v${entry.version}` : '未記入').join(' / ');
+  const isFinalUpdate = day.entries.some(entry => entry.final === true);
   return `
     <div class="mx-auto max-w-lg">
       <div class="mb-3 flex items-end justify-between gap-3">
@@ -298,7 +299,11 @@ function renderDayPage(day, dayIndex) {
           <div class="flex items-baseline gap-2"><h2 class="text-xl font-black tracking-tight text-white">${escapeHtml(date.full)}</h2><span class="text-[9px] font-bold text-slate-500">${escapeHtml(date.weekday)}</span></div>
           <p class="mt-1 font-mono text-[8px] font-bold text-violet-300/70">${escapeHtml(versions)}</p>
         </div>
-        ${dayIndex === 0 ? '<span class="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 text-[8px] font-black text-emerald-300">LATEST</span>' : ''}
+        ${isFinalUpdate
+          ? '<span class="rounded-full border border-amber-300/35 bg-amber-300/10 px-2 py-1 text-[8px] font-black tracking-wide text-amber-200">最終更新</span>'
+          : dayIndex === 0
+            ? '<span class="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-1 text-[8px] font-black text-emerald-300">LATEST</span>'
+            : ''}
       </div>
       <div class="mt-4 space-y-4">${day.entries.map((entry, index) => renderVersionSection(entry, index === day.entries.length - 1)).join('')}</div>
       <div class="mt-5 flex items-center justify-center gap-2 text-[8px] font-bold text-slate-600"><span class="h-px w-8 bg-slate-800"></span>この日の記録はここまで<span class="h-px w-8 bg-slate-800"></span></div>
@@ -354,7 +359,7 @@ export function showUpdateLogModal() {
           </span>
           <div class="min-w-0 flex-1">
             <h2 id="update-log-title" class="text-[15px] font-black text-white">アップデート履歴</h2>
-            <p class="mt-0.5 text-[8px] text-slate-500">最新 v${APP_VERSION} ・ ${APP_RELEASE_DATE} ・ 全${days.length}日分</p>
+            <p class="mt-0.5 text-[8px] text-slate-500">最終更新 v${APP_VERSION} ・ ${APP_RELEASE_DATE} ・ 全${days.length}日分</p>
           </div>
           <button data-update-close class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[.06] bg-black/10 text-slate-400 active:scale-95 active:bg-white/10 active:text-white" aria-label="更新記録を閉じる"><span class="material-symbols-outlined text-lg">close</span></button>
         </div>

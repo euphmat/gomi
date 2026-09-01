@@ -1,8 +1,18 @@
-export const APP_VERSION = '0.1.50';
-export const APP_RELEASE_DATE = '2026.08.14';
+export const APP_VERSION = '0.1.51';
+export const APP_RELEASE_DATE = '2026.09.01';
 
 // One entry is rendered as one page in the header Update modal.
 export const UPDATE_LOG = [
+  {
+    date: '2026.09.01',
+    version: '0.1.51',
+    final: true,
+    items: [
+      '本アップデートを本作の最終更新として公開しました。これまで遊んでくださった皆さま、ありがとうございました。',
+      'すべてのノーマルダンジョンを制覇した猛者だけが挑める、全4階層の最終ダンジョン「終界・ラストホライズン」を追加しました。開幕から壊滅級の全体攻撃を放つ4体の強敵が、固有能力を駆使して立ちはだかります。',
+      '最終ダンジョン4Fのボスを撃破すると、本作のエンディングロールが再生されるようにしました。',
+    ],
+  },
   {
     date: '2026.08.14',
     version: '0.1.50',
