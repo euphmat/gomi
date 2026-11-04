@@ -284,7 +284,7 @@ const apocalyion = {
 
 const eschaton = {
   id: 'eschaton', name: '万象終焉エスカトン',
-  stats: { hp: 750000000, atk: 2650000, def: 1800000, matk: 2850000, mdef: 1950000, spd: 2850 },
+  stats: { hp: 675000000, atk: 2385000, def: 1800000, matk: 2565000, mdef: 1950000, spd: 2850 },
   elements: { fire: 130, water: 130, grass: 130, ice: 130, thunder: 130, wind: 130, earth: 130, light: 160, dark: 160 },
   ailments: { poison: 100, burn: 100, paralysis: 95, sleep: 100, confusion: 95, curse: 100, blind: 95, silence: 95 },
   rewards: { exp: 100000, jp: 25000, gold: 100000 }, drops: [],
